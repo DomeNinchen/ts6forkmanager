@@ -8,6 +8,7 @@ import { VoiceBotManager } from './voice/voice-bot-manager.js';
 import { MusicCommandHandler } from './voice/music-command-handler.js';
 import { config } from './config.js';
 import { setYtCookieFile } from './voice/audio/youtube.js';
+import { sweepStreamTempFiles } from './voice/streaming/video-download.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
@@ -34,6 +35,9 @@ async function main() {
   } else if (cookiePath) {
     console.warn(`[yt-dlp] Cookie file not found: ${cookiePath}`);
   }
+
+  // Remove any pre-downloaded video temp files left over from a crash/restart
+  sweepStreamTempFiles();
 
   const prisma = new PrismaClient();
   const app = createApp();
