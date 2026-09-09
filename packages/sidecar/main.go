@@ -938,7 +938,11 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 	args = append(args,
 		"-pix_fmt", "yuv420p",
 		"-c:v", "libvpx",
-		"-cpu-used", "6",
+		// Lower = better quality per bit, more CPU per frame. 6 was the
+		// fastest/lowest-quality setting, chosen back when encoding ran on
+		// a single core; now that -threads/-row-mt spread it across all of
+		// them, there's headroom to trade some of that back for quality.
+		"-cpu-used", envOrDefault("VIDEO_CPU_USED", "4"),
 		"-deadline", "realtime",
 		// libvpx doesn't auto-scale across cores like most ffmpeg encoders --
 		// without these it was effectively encoding on one core regardless of
