@@ -824,7 +824,7 @@ export class VoiceBot extends EventEmitter {
     // Pre-download YouTube/streaming URLs via yt-dlp, then start ffmpeg on the
     // local file (see streaming/video-download.ts for why: real HD quality +
     // no live googlevideo CDN flakiness during playback).
-    const resolved = await this.resolveStreamSource(source, presetConfig.height);
+    const resolved = await this.resolveStreamSource(source);
     await this.sidecarHttp.setSource(
       resolved.path,
       presetConfig.width,
@@ -880,8 +880,8 @@ export class VoiceBot extends EventEmitter {
    * an admin-provided local file (e.g. an idle/background video) keeps the
    * prior looping behavior.
    */
-  private async resolveStreamSource(source: string, maxHeight: number): Promise<{ path: string; loop: boolean }> {
-    const { path: filePath, durationSec } = await downloadVideoForStream(source, maxHeight, DEFAULT_MAX_VIDEO_DURATION_SEC);
+  private async resolveStreamSource(source: string): Promise<{ path: string; loop: boolean }> {
+    const { path: filePath, durationSec } = await downloadVideoForStream(source, DEFAULT_MAX_VIDEO_DURATION_SEC);
     const isDownloadedTemp = filePath.includes('.stream-') && filePath.endsWith('.mp4');
 
     this.clearVideoEndTimer();
@@ -949,7 +949,7 @@ export class VoiceBot extends EventEmitter {
     }
     this._videoSource = source;
     const currentPreset = STREAM_PRESETS[this._videoPreset] || STREAM_PRESETS[DEFAULT_PRESET];
-    const resolved = await this.resolveStreamSource(source, currentPreset.height);
+    const resolved = await this.resolveStreamSource(source);
 
     await this.sidecarHttp.setSource(
       resolved.path,
