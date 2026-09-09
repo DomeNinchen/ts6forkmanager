@@ -17,6 +17,7 @@ import (
 	"time"
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/intervalpli"
+	"github.com/pion/logging"
 	"github.com/pion/rtcp"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
@@ -600,7 +601,22 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 		return "", err
 	}
 
-	api := webrtc.NewAPI(webrtc.WithMediaEngine(m), webrtc.WithInterceptorRegistry(i))
+	// Pin ICE candidate gathering to a fixed UDP range so it can actually be
+	// firewalled -- the vserver's firewall only allows explicitly listed
+	// ports; pion's default random ephemeral ports can't be opened one by one.
+	se := webrtc.SettingEngine{}
+	portMin := uint16(envIntOrDefault("ICE_UDP_PORT_MIN", 50000))
+	portMax := uint16(envIntOrDefault("ICE_UDP_PORT_MAX", 50100))
+	if err := se.SetEphemeralUDPPortRange(portMin, portMax); err != nil {
+		return "", fmt.Errorf("set ICE UDP port range: %w", err)
+	}
+	if debugLogsEnabled() {
+		lf := logging.NewDefaultLoggerFactory()
+		lf.DefaultLogLevel = logging.LogLevelTrace
+		se.LoggerFactory = lf
+	}
+
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(m), webrtc.WithInterceptorRegistry(i), webrtc.WithSettingEngine(se))
 
 	pc, err := api.NewPeerConnection(webrtc.Configuration{
 		ICEServers: iceServers,
@@ -1115,7 +1131,7 @@ func main() {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		log.Printf("[API] Setting source: %s (%dx%d @ %dfps)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate)
+		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate)
 		sidecar.StartFFmpeg(req.Source, req.Width, req.Height, req.Framerate, req.Bitrate)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})

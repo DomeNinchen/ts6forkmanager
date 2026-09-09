@@ -1,5 +1,6 @@
 #### DISCLAIMER: 
 ![AI Assisted](https://img.shields.io/badge/AI%20Assisted-Project-00ADD8?style=for-the-badge&logo=dependabot&logoColor=white)
+This is a fork of clusterzx/ts6-manager
 
 # TS6 Manager
 
