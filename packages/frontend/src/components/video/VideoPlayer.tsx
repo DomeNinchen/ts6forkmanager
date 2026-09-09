@@ -4,6 +4,7 @@
  */
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { musicBotsApi } from '@/api/music.api';
 
 interface VideoPlayerProps {
@@ -16,6 +17,10 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Starts muted so autoplay isn't blocked by the browser; the toggle below
+  // lets an admin unmute to check whether audio issues are server-side
+  // (present here too) or specific to the TS client.
+  const [muted, setMuted] = useState(true);
 
   const cleanup = useCallback(() => {
     if (pcRef.current) {
@@ -109,9 +114,18 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
         ref={videoRef}
         autoPlay
         playsInline
-        muted
+        muted={muted}
         className="w-full h-full object-contain"
       />
+      {connected && (
+        <button
+          onClick={() => setMuted((m) => !m)}
+          className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded"
+          title={muted ? 'Unmute' : 'Mute'}
+        >
+          {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+        </button>
+      )}
       {!connected && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70">
           <p className="text-white text-sm animate-pulse">Connecting to stream...</p>
