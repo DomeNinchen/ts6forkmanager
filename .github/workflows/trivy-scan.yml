@@ -9,7 +9,7 @@ on:
       severity:
         description: "Minimum severity to report"
         required: false
-        default: "CRITICAL,HIGH,MEDIUM"
+        default: "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"
         type: string
 
 permissions:
@@ -18,16 +18,38 @@ permissions:
 
 jobs:
   filesystem:
-    name: Filesystem & dependency scan
+    name: Filesystem, dependency, secret & misconfig scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Trivy (filesystem)
+      # Human-readable table report, same format as the one referenced in
+      # clusterzx/ts6-manager#80 -- downloadable from the run's Summary page.
+      - name: Run Trivy (table report)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: ${{ inputs.severity }}
+          format: table
+          output: trivy-fs-report.txt
+          exit-code: "0"
+
+      - name: Upload table report as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-filesystem-report
+          path: trivy-fs-report.txt
+
+      # Same scan again as SARIF, for the repo's Security tab (findings
+      # linked to exact file/line, tracked across runs).
+      - name: Run Trivy (SARIF for Security tab)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
           severity: ${{ inputs.severity }}
           format: sarif
           output: trivy-fs.sarif
@@ -64,11 +86,29 @@ jobs:
           load: true
           tags: ts6-${{ matrix.name }}:scan
 
-      - name: Run Trivy (image)
+      - name: Run Trivy (table report)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: ts6-${{ matrix.name }}:scan
+          scanners: vuln,secret,misconfig
+          severity: ${{ inputs.severity }}
+          format: table
+          output: trivy-${{ matrix.name }}-report.txt
+          exit-code: "0"
+
+      - name: Upload table report as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-${{ matrix.name }}-image-report
+          path: trivy-${{ matrix.name }}-report.txt
+
+      - name: Run Trivy (SARIF for Security tab)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ts6-${{ matrix.name }}:scan
+          scanners: vuln,secret,misconfig
           severity: ${{ inputs.severity }}
           format: sarif
           output: trivy-${{ matrix.name }}.sarif
