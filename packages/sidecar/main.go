@@ -863,7 +863,7 @@ func (s *Sidecar) ClosePeer(id string) {
 	s.peersLock.Unlock()
 }
 
-func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate int, bitrate string) {
+func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate int, bitrate string, loop bool) {
 	s.ffmpegLock.Lock()
 	defer s.ffmpegLock.Unlock()
 
@@ -895,7 +895,7 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 	if source != "" {
 		if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
 			args = append(args, "-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5")
-		} else {
+		} else if loop {
 			args = append(args, "-stream_loop", "-1")
 		}
 
@@ -1125,14 +1125,20 @@ func main() {
 			Width     int    `json:"width"`
 			Height    int    `json:"height"`
 			Framerate int    `json:"framerate"`
-			Bitrate   string `json:"bitrate"` 
+			Bitrate   string `json:"bitrate"`
+			// Loop defaults to true (matches prior behavior for local files,
+			// e.g. an admin-provided background video) when omitted; the
+			// backend sets it false for on-demand downloaded clips, which
+			// should play once, not repeat.
+			Loop *bool `json:"loop"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate)
-		sidecar.StartFFmpeg(req.Source, req.Width, req.Height, req.Framerate, req.Bitrate)
+		loop := req.Loop == nil || *req.Loop
+		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s, loop=%v)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop)
+		sidecar.StartFFmpeg(req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 

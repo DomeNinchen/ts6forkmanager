@@ -823,13 +823,14 @@ export class VoiceBot extends EventEmitter {
     // Pre-download YouTube/streaming URLs via yt-dlp, then start ffmpeg on the
     // local file (see streaming/video-download.ts for why: real HD quality +
     // no live googlevideo CDN flakiness during playback).
-    const resolvedSource = await this.resolveStreamSource(source, presetConfig.height);
+    const resolved = await this.resolveStreamSource(source, presetConfig.height);
     await this.sidecarHttp.setSource(
-      resolvedSource,
+      resolved.path,
       presetConfig.width,
       presetConfig.height,
       effectiveFramerate,
       effectiveBitrate,
+      resolved.loop,
     );
 
     console.log(`[VoiceBot ${this.config.id}] Video stream started: ${stream.id}, source: ${source}`);
@@ -849,14 +850,20 @@ export class VoiceBot extends EventEmitter {
    * YouTube/Twitch URLs to a local file (see video-download.ts), pass
    * anything else through untouched. Tracks the temp file so it can be
    * cleaned up before the next download and when the stream stops.
+   *
+   * `loop` tells the sidecar whether to play the local file on repeat: a
+   * downloaded on-demand clip should play once, not loop forever, whereas
+   * an admin-provided local file (e.g. an idle/background video) keeps the
+   * prior looping behavior.
    */
-  private async resolveStreamSource(source: string, maxHeight: number): Promise<string> {
+  private async resolveStreamSource(source: string, maxHeight: number): Promise<{ path: string; loop: boolean }> {
     const filePath = await downloadVideoForStream(source, maxHeight, DEFAULT_MAX_VIDEO_DURATION_SEC);
-    if (filePath.includes('.stream-') && filePath.endsWith('.mp4')) {
+    const isDownloadedTemp = filePath.includes('.stream-') && filePath.endsWith('.mp4');
+    if (isDownloadedTemp) {
       this.cleanupVideoTempFile();
       this._videoTempFile = filePath;
     }
-    return filePath;
+    return { path: filePath, loop: !isDownloadedTemp };
   }
 
   /** Stop video streaming */
@@ -911,14 +918,15 @@ export class VoiceBot extends EventEmitter {
     }
     this._videoSource = source;
     const currentPreset = STREAM_PRESETS[this._videoPreset] || STREAM_PRESETS[DEFAULT_PRESET];
-    const resolvedSource = await this.resolveStreamSource(source, currentPreset.height);
+    const resolved = await this.resolveStreamSource(source, currentPreset.height);
 
     await this.sidecarHttp.setSource(
-      resolvedSource,
+      resolved.path,
       currentPreset.width,
       currentPreset.height,
       this._videoFramerate,
       this._videoBitrate,
+      resolved.loop,
     );
     console.log(`[VoiceBot ${this.config.id}] Video source changed: ${source}`);
     this.emit('videoSourceChanged', source);
