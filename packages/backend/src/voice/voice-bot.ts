@@ -35,7 +35,7 @@ function resolveVideoUrl(url: string, maxHeight: number = 720): Promise<string> 
 
     proc.on('close', (code) => {
       if (code !== 0) {
-        return reject(new Error(`yt-dlp failed (code ${code}): ${stderr.slice(0, 200)}`));
+        return reject(new Error(`yt-dlp failed (code ${code}): ${stderr.slice(-2000)}`));
       }
       // yt-dlp -g returns the direct URL(s), take the first one
       const directUrl = stdout.trim().split('\n')[0];
