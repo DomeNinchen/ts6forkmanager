@@ -41,6 +41,13 @@ services:
     restart: unless-stopped
     environment:
       - SIDECAR_PORT=9800
+      - VIDEO_QUEUE_SIZE=8192
+      - AUDIO_QUEUE_SIZE=16384
+    volumes:
+      # Must match the backend's mount 1:1 -- the backend pre-downloads
+      # videos here (see video-download.ts) and ffmpeg (run by this
+      # container) reads them back by the same path.
+      - music-data:/data/music
     ports:
       - "9800:9800"
       # WebRTC ICE media (video/audio) -- must also be opened in the host
