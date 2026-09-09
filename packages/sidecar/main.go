@@ -3,6 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pion/interceptor"
+	"github.com/pion/interceptor/pkg/intervalpli"
+	"github.com/pion/logging"
+	"github.com/pion/rtcp"
+	"github.com/pion/rtp"
+	"github.com/pion/webrtc/v4"
 	"log"
 	"net"
 	"net/http"
@@ -15,12 +21,6 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
-	"github.com/pion/interceptor"
-	"github.com/pion/interceptor/pkg/intervalpli"
-	"github.com/pion/logging"
-	"github.com/pion/rtcp"
-	"github.com/pion/rtp"
-	"github.com/pion/webrtc/v4"
 )
 
 var defaultStunServers = []string{
@@ -232,6 +232,14 @@ func (s *Sidecar) computeTrackDelay(kind string, ts uint32, now time.Time) time.
 	if observedLatency < 0 {
 		observedLatency = 0
 	}
+	// A single bad RTP timestamp (source discontinuity, PTS reset) can
+	// otherwise produce an enormous one-off observedLatency sample; letting
+	// it into the smoothed average would keep dragging the target delay up
+	// for many frames afterward (9:1 EMA decays slowly), stalling this
+	// track's forwarder and overflowing its queue. Clamp before smoothing.
+	if observedLatency > s.maxTrackDelay {
+		observedLatency = s.maxTrackDelay
+	}
 
 	current.latency = smoothDuration(current.latency, observedLatency)
 
@@ -248,6 +256,11 @@ func (s *Sidecar) computeTrackDelay(kind string, ts uint32, now time.Time) time.
 	delay := targetWall.Sub(now)
 	if delay < 0 {
 		return 0
+	}
+	// Belt-and-suspenders: never actually sleep longer than the clamp above
+	// would imply, even if syncBuffer/videoBias push targetWall out further.
+	if delay > s.maxTrackDelay {
+		delay = s.maxTrackDelay
 	}
 
 	return delay
@@ -280,16 +293,16 @@ type createInFlight struct {
 }
 
 type Peer struct {
-	ID              string
-	PC              *webrtc.PeerConnection
-	VideoTrack      *webrtc.TrackLocalStaticRTP
-	AudioTrack      *webrtc.TrackLocalStaticRTP
-	VideoSSRC       uint32
-	AudioSSRC       uint32
-	Active          bool
-	Started         bool
-	mu              sync.Mutex
-	stopSR          chan struct{}
+	ID         string
+	PC         *webrtc.PeerConnection
+	VideoTrack *webrtc.TrackLocalStaticRTP
+	AudioTrack *webrtc.TrackLocalStaticRTP
+	VideoSSRC  uint32
+	AudioSSRC  uint32
+	Active     bool
+	Started    bool
+	mu         sync.Mutex
+	stopSR     chan struct{}
 }
 
 type Sidecar struct {
@@ -308,13 +321,13 @@ type Sidecar struct {
 	running    bool
 
 	// Atomic timestamps for RTCP Sender Report generation
-	lastVideoRTPTs uint64 // atomic: latest video RTP timestamp seen
-	lastAudioRTPTs uint64 // atomic: latest audio RTP timestamp seen
-	videoPktCount  uint64 // atomic
-	videOctetCount uint64 // atomic
-	audioPktCount  uint64 // atomic
+	lastVideoRTPTs  uint64 // atomic: latest video RTP timestamp seen
+	lastAudioRTPTs  uint64 // atomic: latest audio RTP timestamp seen
+	videoPktCount   uint64 // atomic
+	videOctetCount  uint64 // atomic
+	audioPktCount   uint64 // atomic
 	audioOctetCount uint64 // atomic
-	
+
 	videoQueue chan *rtp.Packet
 	audioQueue chan *rtp.Packet
 
@@ -326,19 +339,20 @@ type Sidecar struct {
 	audioTiming    TrackTiming
 	syncBuffer     time.Duration
 	videoBias      time.Duration
+	maxTrackDelay  time.Duration
 }
 
 func NewSidecar() *Sidecar {
 	return &Sidecar{
-		peers:      make(map[string]*Peer),
-		creating:   make(map[string]*createInFlight),
-		syncBuffer: time.Duration(envIntOrDefault("SYNC_PLAYOUT_BUFFER_MS", 50)) * time.Millisecond,
-		videoBias:  time.Duration(envIntOrDefault("SYNC_VIDEO_BIAS_MS", 0)) * time.Millisecond,
-		videoQueue: make(chan *rtp.Packet, envIntOrDefault("VIDEO_QUEUE_SIZE", 1024)),
-		audioQueue: make(chan *rtp.Packet, envIntOrDefault("AUDIO_QUEUE_SIZE", 2048)),
+		peers:         make(map[string]*Peer),
+		creating:      make(map[string]*createInFlight),
+		syncBuffer:    time.Duration(envIntOrDefault("SYNC_PLAYOUT_BUFFER_MS", 50)) * time.Millisecond,
+		videoBias:     time.Duration(envIntOrDefault("SYNC_VIDEO_BIAS_MS", 0)) * time.Millisecond,
+		maxTrackDelay: time.Duration(envIntOrDefault("SYNC_MAX_DELAY_MS", 500)) * time.Millisecond,
+		videoQueue:    make(chan *rtp.Packet, envIntOrDefault("VIDEO_QUEUE_SIZE", 1024)),
+		audioQueue:    make(chan *rtp.Packet, envIntOrDefault("AUDIO_QUEUE_SIZE", 2048)),
 	}
 }
-
 
 func (s *Sidecar) StartRTP() error {
 	var err error
@@ -564,7 +578,7 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 	}()
 
 	iceServers := []webrtc.ICEServer{}
-    
+
 	for _, stun := range getStunServers() {
 		iceServers = append(iceServers, webrtc.ICEServer{URLs: []string{stun}})
 	}
@@ -905,9 +919,9 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 	}
 
 	vBitrate := strings.TrimSpace(bitrate)
-		if vBitrate == "" {
-			vBitrate = envOrDefault("VIDEO_BITRATE", "1500k")
-		}
+	if vBitrate == "" {
+		vBitrate = envOrDefault("VIDEO_BITRATE", "1500k")
+	}
 	audioDelayMs := envIntOrDefault("AUDIO_DELAY_MS", 0)
 
 	if source != "" {
@@ -963,7 +977,6 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 			fmt.Sprintf("rtp://127.0.0.1:%d", s.audioPort),
 		)
 	}
-
 
 	log.Printf("[FFmpeg] Starting: source=%s video=:%d audio=:%d", source, s.videoPort, s.audioPort)
 
