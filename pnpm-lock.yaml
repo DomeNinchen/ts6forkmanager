@@ -74,9 +74,15 @@ importers:
       pino-pretty:
         specifier: ^11.3.0
         version: 11.3.0
+      prisma:
+        specifier: ^6.19.3
+        version: 6.19.3(typescript@5.9.3)
       ssh2:
         specifier: ^1.17.0
         version: 1.17.0
+      tsx:
+        specifier: ^4.23.13
+        version: 4.23.13
       ws:
         specifier: ^8.21.3
         version: 8.21.3
@@ -111,12 +117,6 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
-      prisma:
-        specifier: ^6.19.3
-        version: 6.19.3(typescript@5.9.3)
-      tsx:
-        specifier: ^4.23.13
-        version: 4.23.13
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
