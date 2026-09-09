@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -939,6 +940,12 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 		"-c:v", "libvpx",
 		"-cpu-used", "6",
 		"-deadline", "realtime",
+		// libvpx doesn't auto-scale across cores like most ffmpeg encoders --
+		// without these it was effectively encoding on one core regardless of
+		// how many were available, a likely contributor to residual
+		// micro-stutter under CPU load.
+		"-threads", strconv.Itoa(envIntOrDefault("VIDEO_ENCODE_THREADS", runtime.NumCPU())),
+		"-row-mt", "1",
 		"-lag-in-frames", "0",
 		"-error-resilient", "1",
 		"-b:v", vBitrate,
