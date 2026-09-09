@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM node:24-slim AS base
+FROM node:20-slim AS base
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
 # Install system deps: openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp),
@@ -23,13 +23,7 @@ WORKDIR /app
 # Copy everything at once to avoid BuildKit ordering bug on Windows
 FROM base AS build
 COPY . .
-# Scoped to @ts6/backend and its workspace deps (just @ts6/common) --
-# an unfiltered install here pulls in the frontend's entire dependency
-# tree too (react-dom, floating-ui, etc.) since this is a shared
-# workspace node_modules, none of which backend uses but which still
-# ends up copied into the production image below and scanned as if it
-# mattered.
-RUN pnpm install --no-frozen-lockfile --filter @ts6/backend...
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @ts6/common run build
 RUN pnpm --filter @ts6/backend exec prisma generate
 RUN pnpm --filter @ts6/backend run build
@@ -39,7 +33,7 @@ RUN pnpm --filter @ts6/backend run build
 # production image below. None of it runs at runtime, and it was
 # dragging in a lot of avoidable CVE surface (esbuild ships its own
 # compiled Go binary per platform, for example) for zero benefit.
-RUN CI=true pnpm prune --prod
+RUN pnpm prune --prod
 
 # Production image
 FROM base AS production
