@@ -140,9 +140,16 @@ export interface DownloadedStream {
   durationSec: number | null;
 }
 
+// Always download close to the source's best available quality, independent
+// of what resolution the stream will actually be encoded/output at. ffmpeg's
+// -vf scale step downscales for the chosen preset -- starting from a much
+// higher-detail source than the target (e.g. a video's real 4K master
+// instead of YouTube's own, much lower-bitrate 1080p transcode) produces a
+// visibly sharper result at the same output resolution and bitrate.
+const DOWNLOAD_MAX_HEIGHT = parseInt(process.env.DOWNLOAD_MAX_HEIGHT || '', 10) || 2160;
+
 export async function downloadVideoForStream(
   url: string,
-  maxHeight: number = 720,
   maxDurationSec: number = 900,
 ): Promise<DownloadedStream> {
   rejectYtDlpOptionUrl(url);
@@ -165,7 +172,7 @@ export async function downloadVideoForStream(
   }
 
   const musicRoot = ensureMusicDir();
-  const formatFilter = `bv*[height<=${maxHeight}]+ba/b[height<=${maxHeight}]/b`;
+  const formatFilter = `bv*[height<=${DOWNLOAD_MAX_HEIGHT}]+ba/b[height<=${DOWNLOAD_MAX_HEIGHT}]/b`;
   // Name is fully server-controlled; join to trusted root only.
   const tempName = `.stream-${Date.now()}.mp4`;
   const tempPath = path.join(musicRoot, tempName);
