@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   backend:
-    image: clusterzx/ts6-manager:backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     container_name: ts6-backend
     restart: unless-stopped
     environment:
@@ -16,15 +18,40 @@ services:
       - JWT_REFRESH_EXPIRY=7d
       - FRONTEND_URL=${FRONTEND_URL:-https://ts6.example.com}
       - MUSIC_DIR=/data/music
+      - SIDECAR_URL=http://ts6-sidecar:9800
     volumes:
       - backend-data:/app/packages/backend/data
       - music-data:/data/music
+    depends_on:
+      - sidecar
     networks:
       - ts6-network
       - coolify-ts
 
+  sidecar:
+    build:
+      context: .
+      dockerfile: Dockerfile.sidecar
+    container_name: ts6-sidecar
+    restart: unless-stopped
+    environment:
+      - SIDECAR_PORT=9800
+      - VIDEO_QUEUE_SIZE=8192
+      - AUDIO_QUEUE_SIZE=16384
+    volumes:
+      - music-data:/data/music
+    ports:
+      # WebRTC media is UDP and can't go through Coolify's HTTP reverse
+      # proxy -- these must stay published directly and be opened in the
+      # host firewall, matching ICE_UDP_PORT_MIN/MAX below.
+      - "50000-50100:50000-50100/udp"
+    networks:
+      - ts6-network
+
   frontend:
-    image: clusterzx/ts6-manager:frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     container_name: ts6-frontend
     restart: unless-stopped
     depends_on:
