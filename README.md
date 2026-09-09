@@ -176,21 +176,12 @@ docker compose up -d
 > `JWT_SECRET` is **required** — the backend will refuse to start in production without it.
 > `ENCRYPTION_KEY` is optional but recommended — if not set, `JWT_SECRET` is used as fallback for credential encryption.
 
-### Building from Source
-
-```bash
-git clone https://github.com/DomeNinchen/ts6forkmanager.git
-cd ts6forkmanager
-echo "JWT_SECRET=$(openssl rand -base64 32)" >> .env
-echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
-docker compose -f docker-compose.local.yml up -d --build
-```
-
 ### Coolify / Reverse Proxy
 
 Use [`docker-compose.coolify.yml`](docker-compose.coolify.yml) as a starting point. Key differences from the standard compose:
 
-- No `ports` section — the reverse proxy handles routing
+- No `ports` section on backend/frontend — the reverse proxy handles routing
+- The sidecar's WebRTC media ports (`50000-50100/udp`) stay published directly regardless — that's UDP traffic and can't go through an HTTP reverse proxy, so it needs its own firewall rule on the host
 - Set the domain on the **frontend** service in Coolify (port 80)
 - If your TS server runs in a separate Docker network, add it as an external network on the backend service:
 
