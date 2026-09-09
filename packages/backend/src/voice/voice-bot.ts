@@ -7,50 +7,10 @@ import { StreamSignaling, type ActiveStream, type SignalingMessage } from './str
 import { SidecarClient } from './streaming/sidecar-client.js';
 import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.js';
 import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus } from './streaming/types.js';
-import { getCookieArgs } from './audio/youtube.js';
-import { spawn } from 'child_process';
+import { downloadVideoForStream, safeUnlinkStreamTemp } from './streaming/video-download.js';
 
-/** Resolve a YouTube/yt-dlp-compatible URL to a direct stream URL */
-function resolveVideoUrl(url: string, maxHeight: number = 720): Promise<string> {
-  // Only resolve YouTube and other yt-dlp-supported sites
-  if (!url.includes('youtube.com/') && !url.includes('youtu.be/') && !url.includes('twitch.tv/')) {
-    return Promise.resolve(url);
-  }
-
-  return new Promise((resolve, reject) => {
-    // Request best combined format (video+audio) up to the target height
-    const formatFilter = `best[height<=${maxHeight}][ext=mp4]/best[height<=${maxHeight}]/best[ext=mp4]/best`;
-    const proc = spawn('yt-dlp', [
-      ...getCookieArgs(),
-      '-f', formatFilter,
-      '--no-playlist',
-      '-g',  // print direct URL only
-      url,
-    ], { shell: false });
-
-    let stdout = '';
-    let stderr = '';
-    proc.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
-    proc.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
-
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        return reject(new Error(`yt-dlp failed (code ${code}): ${stderr.slice(-2000)}`));
-      }
-      // yt-dlp -g returns the direct URL(s), take the first one
-      const directUrl = stdout.trim().split('\n')[0];
-      if (!directUrl) {
-        return reject(new Error('yt-dlp returned no URL'));
-      }
-      console.log(`[VideoResolve] Resolved: ${url.substring(0, 60)}... → direct URL`);
-      resolve(directUrl);
-    });
-
-    proc.on('error', (err) => {
-      reject(new Error(`yt-dlp not found: ${err.message}`));
-    });
-  });
-}
+/** Default cap on how long a pre-downloaded video may run, in seconds. */
+const DEFAULT_MAX_VIDEO_DURATION_SEC = 900;
 
 export type VoiceBotStatus = 'stopped' | 'starting' | 'connected' | 'playing' | 'paused' | 'error';
 
@@ -130,6 +90,7 @@ export class VoiceBot extends EventEmitter {
   private _videoFramerate: number = STREAM_PRESETS[DEFAULT_PRESET]?.framerate ?? 30;
   private _videoBitrate: string = STREAM_PRESETS[DEFAULT_PRESET]?.bitrate ?? '2500k';
   private _videoStartedAt: number | null = null;
+  private _videoTempFile: string | null = null;
   private _viewers: Map<number, VideoViewerInfo> = new Map();
 
   constructor(config: VoiceBotConfig) {
@@ -859,8 +820,10 @@ export class VoiceBot extends EventEmitter {
     this._videoSource = source;
     this._videoStartedAt = Date.now();
 
-    // Resolve YouTube/streaming URLs via yt-dlp, then start ffmpeg
-    const resolvedSource = await resolveVideoUrl(source, presetConfig.height);
+    // Pre-download YouTube/streaming URLs via yt-dlp, then start ffmpeg on the
+    // local file (see streaming/video-download.ts for why: real HD quality +
+    // no live googlevideo CDN flakiness during playback).
+    const resolvedSource = await this.resolveStreamSource(source, presetConfig.height);
     await this.sidecarHttp.setSource(
       resolvedSource,
       presetConfig.width,
@@ -872,6 +835,28 @@ export class VoiceBot extends EventEmitter {
     console.log(`[VoiceBot ${this.config.id}] Video stream started: ${stream.id}, source: ${source}`);
     this.emit('videoStreamStarted', { streamId: stream.id, source, preset: this._videoPreset });
     this.emit('statusChange', this._status);
+  }
+
+  /** Remove this bot's own pre-downloaded video temp file, if any. */
+  private cleanupVideoTempFile(): void {
+    if (!this._videoTempFile) return;
+    safeUnlinkStreamTemp(this._videoTempFile);
+    this._videoTempFile = null;
+  }
+
+  /**
+   * Resolve a stream source to something ffmpeg can read: pre-download
+   * YouTube/Twitch URLs to a local file (see video-download.ts), pass
+   * anything else through untouched. Tracks the temp file so it can be
+   * cleaned up before the next download and when the stream stops.
+   */
+  private async resolveStreamSource(source: string, maxHeight: number): Promise<string> {
+    const filePath = await downloadVideoForStream(source, maxHeight, DEFAULT_MAX_VIDEO_DURATION_SEC);
+    if (filePath.includes('.stream-') && filePath.endsWith('.mp4')) {
+      this.cleanupVideoTempFile();
+      this._videoTempFile = filePath;
+    }
+    return filePath;
   }
 
   /** Stop video streaming */
@@ -912,6 +897,7 @@ export class VoiceBot extends EventEmitter {
     this._videoStreaming = false;
     this._videoStartedAt = null;
     this.signaling = null;
+    this.cleanupVideoTempFile();
 
     console.log(`[VoiceBot ${this.config.id}] Video stream stopped`);
     this.emit('videoStreamStopped');
@@ -925,7 +911,7 @@ export class VoiceBot extends EventEmitter {
     }
     this._videoSource = source;
     const currentPreset = STREAM_PRESETS[this._videoPreset] || STREAM_PRESETS[DEFAULT_PRESET];
-    const resolvedSource = await resolveVideoUrl(source, currentPreset.height);
+    const resolvedSource = await this.resolveStreamSource(source, currentPreset.height);
 
     await this.sidecarHttp.setSource(
       resolvedSource,
