@@ -61,11 +61,13 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Music request history tracking
 
 ### Video Streaming
-- Live video streaming from YouTube, Twitch, or direct URLs to TeamSpeak channels
+- Video streaming from YouTube, Twitch, or direct URLs to TeamSpeak channels
+- YouTube/Twitch sources are downloaded once (real `bestvideo+bestaudio` merge via yt-dlp) before playback starts, then streamed from disk — this avoids feeding ffmpeg a live, rate-limited CDN URL and gives noticeably better quality than a single pre-muxed format
 - WebRTC-based with Go sidecar relay (Pion) for low-latency delivery
 - Quality presets (480p, 720p, 1080p)
-- In-browser preview with WebRTC playback
-- A/V synchronization via RTCP Sender Reports
+- In-browser preview with WebRTC playback (with a mute/unmute toggle)
+- Adaptive A/V pacing based on RTP timestamps vs. wall clock, with a clamp to prevent a single bad timestamp from stalling playback
+- Multi-threaded VP8 encoding, scaled to the host's available cores
 - Runs as a Docker sidecar container alongside the backend
 
 ### Bot Flow Engine
@@ -177,8 +179,8 @@ docker compose up -d
 ### Building from Source
 
 ```bash
-git clone https://github.com/clusterzx/ts6-manager.git
-cd ts6-manager
+git clone https://github.com/DomeNinchen/ts6forkmanager.git
+cd ts6forkmanager
 echo "JWT_SECRET=$(openssl rand -base64 32)" >> .env
 echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 docker compose -f docker-compose.local.yml up -d --build
@@ -240,21 +242,37 @@ The Docker images handle migrations automatically on startup.
 | `FRONTEND_URL` | `http://localhost:3000` | CORS origin |
 | `MUSIC_DIR` | `/data/music` | Directory for downloaded music files |
 | `SIDECAR_URL` | — | Optional. Full URL of the WebRTC sidecar service (e.g. `http://ts6-sidecar:9800`). Set in Docker when sidecar runs as a separate container. |
+| `SIDECAR_BINARY_PATH` | `sidecar` | Path to the sidecar binary/command, used only in local mode (running the sidecar as a subprocess instead of a separate container). |
 | `YT_COOKIE_FILE` | — | Optional. Path to a Netscape-format cookies.txt file for yt-dlp. Can also be managed via **Settings → YouTube** in the UI. |
+| `TS_ALLOW_SELF_SIGNED` | `false` | Set to `true`/`1` to accept self-signed TLS certs when connecting to the TeamSpeak WebQuery API. |
+| `VOICE_DEBUG` | unset (off) | Set to `1` to enable verbose voice-bot/audio-pipeline debug logging. |
+| `NODE_ENV` | `development` | Set to `production` in Docker; enables the startup guard that refuses a default `JWT_SECRET`. |
 
-## Environment Variables Sidecar(VideoStreaming)
+## Environment Variables — Sidecar (Video Streaming)
+
+Read directly from `packages/sidecar/main.go`; defaults below are the sidecar's own built-in fallbacks. The shipped `docker-compose.yml` overrides `VIDEO_QUEUE_SIZE`/`AUDIO_QUEUE_SIZE` to `8192`/`16384` (noted below) — sized for the vserver this fork was tuned against, not a hard requirement.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VIDEO_QUEUE_SIZE` | `2048` | Size of the video RTP queue |
-| `AUDIO_QUEUE_SIZE` | `4096` | Size of the audio RTP queue |
-| `SYNC_PLAYOUT_BUFFER_MS` | `4` | Small playout buffer used by the adaptive pacing logic |
-| `SYNC_VIDEO_BIAS_MS` | `4` | Optional extra holdback for video to fine-tune sync |
-| `AUDIO_DELAY_MS` | `0` | Legacy / manual audio delay option With the current pacing logic this is typically expected to stay at 0 |
-| `SIDECAR_DEBUG_LOGS` | `1` | Enables verbose debug logging for high-frequency runtime details |
-| `VIDEO_READ_RTP_BUFFER` | `4194304` | UDP OS-socketbuffer for video port |
-| `AUDIO_READ_RTP_BUFFER` | `1048576` | UDP OS-socketbuffer for audio port |
-| `VIDEO_BUFSIZE` | `1M` | FFmpeg Video Buffer |
+| `SIDECAR_PORT` | `9800` | HTTP API port |
+| `FFMPEG_PATH` | `ffmpeg` | Path to the ffmpeg binary |
+| `SIDECAR_DEBUG_LOGS` | unset (off) | Set to `1` to enable verbose per-packet debug logging |
+| `STUN_SERVERS` | built-in public STUN list | Comma-separated STUN server URLs to override the default list |
+| `ICE_UDP_PORT_MIN` / `ICE_UDP_PORT_MAX` | `50000` / `50100` | Fixed UDP port range for WebRTC ICE candidates, so it can be firewalled explicitly. Must match the published Docker port range. |
+| `VIDEO_QUEUE_SIZE` | `1024` (compose: `8192`) | Size of the video RTP queue between the UDP reader and the pacing/forwarder goroutine |
+| `AUDIO_QUEUE_SIZE` | `2048` (compose: `16384`) | Size of the audio RTP queue |
+| `VIDEO_RTP_READ_BUFFER` | `4194304` (4 MiB) | OS-level UDP socket read buffer for the video port |
+| `AUDIO_RTP_READ_BUFFER` | `1048576` (1 MiB) | OS-level UDP socket read buffer for the audio port |
+| `SYNC_PLAYOUT_BUFFER_MS` | `50` | Baseline playout buffer added on top of measured latency in the A/V sync pacing logic |
+| `SYNC_VIDEO_BIAS_MS` | `0` | Optional extra holdback applied to video only, to fine-tune A/V sync |
+| `SYNC_MAX_DELAY_MS` | `500` | Upper bound on the computed pacing delay — clamps a single bad RTP timestamp (source discontinuity) from stalling playback and overflowing the RTP queues |
+| `VIDEO_WIDTH` / `VIDEO_HEIGHT` / `VIDEO_FRAMERATE` | `1280` / `720` / `30` | Fallback video dimensions/framerate when the caller doesn't specify a preset (e.g. the idle black-screen source) |
+| `VIDEO_BITRATE` | `1500k` | Fallback video bitrate when none is passed by the app |
+| `AUDIO_BITRATE` | `128k` | Audio encode bitrate |
+| `AUDIO_DELAY_MS` | `0` | Manual audio delay (`adelay` filter); expected to stay `0` under the current pacing logic |
+| `VIDEO_CPU_USED` | `4` | libvpx `-cpu-used` — a speed/quality tradeoff (0 = slowest/best quality, 8 = fastest/worst), **not** a core count |
+| `VIDEO_ENCODE_THREADS` | number of host CPU cores | `-threads` passed to libvpx; unlike most ffmpeg encoders, libvpx doesn't auto-scale across cores |
+| `VIDEO_BUFSIZE` | `2x` the target bitrate | ffmpeg `-bufsize` rate-control buffer. Auto-scales with bitrate so high-bitrate streams aren't rate-limited by too small a buffer; set explicitly to override |
 
 ## Music Bot Text Commands
 
