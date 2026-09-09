@@ -35,7 +35,7 @@ import {
   Music, Plus, Trash2, Play, Pause, SkipForward, SkipBack, Square,
   Volume2, VolumeX, Upload, Search, Download, ListMusic, Shuffle,
   Repeat, Repeat1, Power, PowerOff, RefreshCw, Pencil, X, Loader2,
-  Youtube, FileAudio, Link, GripVertical, Music2, Radio, Clock,
+  Film, FileAudio, Link, GripVertical, Music2, Radio, Clock,
   Video,
 } from 'lucide-react';
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
@@ -778,7 +778,7 @@ function LibraryTab() {
 
   const sourceIcon = (source: string) => {
     switch (source) {
-      case 'youtube': return <Youtube className="h-3 w-3" />;
+      case 'youtube': return <Film className="h-3 w-3" />;
       case 'url': return <Link className="h-3 w-3" />;
       default: return <FileAudio className="h-3 w-3" />;
     }
@@ -866,7 +866,7 @@ function LibraryTab() {
               />
             </div>
             <Button variant="outline" size="sm" onClick={handleLoadUrl} disabled={ytInfo.isPending || !ytUrl.trim()}>
-              {ytInfo.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Youtube className="h-4 w-4 mr-1" />}
+              {ytInfo.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Film className="h-4 w-4 mr-1" />}
               Load
             </Button>
             {urlInfo && (
@@ -963,7 +963,7 @@ function LibraryTab() {
           />
         </div>
         <Button variant="outline" size="sm" onClick={handleYtSearch} disabled={ytSearch.isPending || !searchQuery.trim()}>
-          {ytSearch.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Youtube className="h-4 w-4 mr-1" />}
+          {ytSearch.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Film className="h-4 w-4 mr-1" />}
           Search
         </Button>
       </div>
