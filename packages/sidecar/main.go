@@ -63,6 +63,35 @@ func getFfmpegPath() string {
 	return envOrDefault("FFMPEG_PATH", "ffmpeg")
 }
 
+// parseBitrateKbps parses ffmpeg-style bitrate strings ("4500k", "20000K",
+// or a bare number already in kbps) into kbps. Returns 0 if unparseable.
+func parseBitrateKbps(s string) int {
+	s = strings.TrimSpace(s)
+	s = strings.TrimSuffix(strings.TrimSuffix(s, "k"), "K")
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+// videoBufsize picks the VP8 rate-control buffer size for a given target
+// bitrate. A fixed 500k default was fine at 1500-4500k, but at higher
+// bitrates it's only tens of milliseconds of headroom -- far too tight,
+// forcing the encoder into an overly strict per-frame rate constraint that
+// capped actual quality well below what the target bitrate should allow
+// (confirmed on the vserver: 10k/15k/20k all looked the same as ~4.5k).
+// Scale it to ~2x the target bitrate instead, unless explicitly overridden.
+func videoBufsize(vBitrate string) string {
+	if v := os.Getenv("VIDEO_BUFSIZE"); v != "" {
+		return v
+	}
+	if kbps := parseBitrateKbps(vBitrate); kbps > 0 {
+		return fmt.Sprintf("%dk", kbps*2)
+	}
+	return "500k"
+}
+
 func debugLogsEnabled() bool {
 	return os.Getenv("SIDECAR_DEBUG_LOGS") == "1"
 }
@@ -954,7 +983,7 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 		"-error-resilient", "1",
 		"-b:v", vBitrate,
 		"-maxrate", vBitrate,
-		"-bufsize", envOrDefault("VIDEO_BUFSIZE", "500k"),
+		"-bufsize", videoBufsize(vBitrate),
 		"-keyint_min", "15",
 		"-g", "15",
 		"-auto-alt-ref", "0",
