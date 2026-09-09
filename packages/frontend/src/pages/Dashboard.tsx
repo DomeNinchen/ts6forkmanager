@@ -172,7 +172,7 @@ export default function Dashboard() {
                     <ReTooltip
                       contentStyle={{ background: 'hsl(218, 28%, 10%)', border: '1px solid hsl(215, 22%, 14%)', borderRadius: '6px', fontSize: '12px' }}
                       labelStyle={{ color: 'hsl(213, 20%, 85%)' }}
-                      formatter={(value: number, name: string) => [formatBytes(value) + '/s', name === 'in' ? 'Download' : 'Upload']}
+                      formatter={(value, name) => [formatBytes(Number(value) || 0) + '/s', name === 'in' ? 'Download' : 'Upload']}
                     />
                     <Area type="monotone" dataKey="in" stroke="hsl(186, 72%, 42%)" fill="url(#inGrad)" strokeWidth={2} />
                     <Area type="monotone" dataKey="out" stroke="hsl(280, 55%, 60%)" fill="url(#outGrad)" strokeWidth={2} />
