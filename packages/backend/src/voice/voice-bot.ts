@@ -91,6 +91,7 @@ export class VoiceBot extends EventEmitter {
   private _videoBitrate: string = STREAM_PRESETS[DEFAULT_PRESET]?.bitrate ?? '2500k';
   private _videoStartedAt: number | null = null;
   private _videoTempFile: string | null = null;
+  private _videoEndTimer: ReturnType<typeof setTimeout> | null = null;
   private _viewers: Map<number, VideoViewerInfo> = new Map();
 
   constructor(config: VoiceBotConfig) {
@@ -845,11 +846,34 @@ export class VoiceBot extends EventEmitter {
     this._videoTempFile = null;
   }
 
+  private clearVideoEndTimer(): void {
+    if (!this._videoEndTimer) return;
+    clearTimeout(this._videoEndTimer);
+    this._videoEndTimer = null;
+  }
+
+  /**
+   * A downloaded clip isn't looped (see resolveStreamSource), so once ffmpeg
+   * plays through it there's nothing left to show -- but the sidecar has no
+   * way to tell the backend it reached the end. Since we already know the
+   * file's real duration from ffprobe, just stop the stream ourselves once
+   * that much time (plus a couple seconds of slack) has passed.
+   */
+  private scheduleVideoEndStop(durationSec: number): void {
+    this.clearVideoEndTimer();
+    this._videoEndTimer = setTimeout(() => {
+      this._videoEndTimer = null;
+      console.log(`[VoiceBot ${this.config.id}] Video ended, auto-stopping`);
+      this.stopVideoStream().catch((err) => this.emit('error', err));
+    }, (durationSec + 2) * 1000);
+  }
+
   /**
    * Resolve a stream source to something ffmpeg can read: pre-download
    * YouTube/Twitch URLs to a local file (see video-download.ts), pass
    * anything else through untouched. Tracks the temp file so it can be
-   * cleaned up before the next download and when the stream stops.
+   * cleaned up before the next download and when the stream stops, and
+   * schedules an auto-stop once a downloaded clip's known duration elapses.
    *
    * `loop` tells the sidecar whether to play the local file on repeat: a
    * downloaded on-demand clip should play once, not loop forever, whereas
@@ -857,11 +881,16 @@ export class VoiceBot extends EventEmitter {
    * prior looping behavior.
    */
   private async resolveStreamSource(source: string, maxHeight: number): Promise<{ path: string; loop: boolean }> {
-    const filePath = await downloadVideoForStream(source, maxHeight, DEFAULT_MAX_VIDEO_DURATION_SEC);
+    const { path: filePath, durationSec } = await downloadVideoForStream(source, maxHeight, DEFAULT_MAX_VIDEO_DURATION_SEC);
     const isDownloadedTemp = filePath.includes('.stream-') && filePath.endsWith('.mp4');
+
+    this.clearVideoEndTimer();
     if (isDownloadedTemp) {
       this.cleanupVideoTempFile();
       this._videoTempFile = filePath;
+      if (durationSec != null) {
+        this.scheduleVideoEndStop(durationSec);
+      }
     }
     return { path: filePath, loop: !isDownloadedTemp };
   }
@@ -869,6 +898,8 @@ export class VoiceBot extends EventEmitter {
   /** Stop video streaming */
   async stopVideoStream(): Promise<void> {
     if (!this._videoStreaming) return;
+
+    this.clearVideoEndTimer();
 
     // Remove all viewers from TS6 stream first
     if (this.signaling && this._activeStreamId) {
