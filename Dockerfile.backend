@@ -2,15 +2,19 @@
 FROM node:20-slim AS base
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
-# Install system deps: openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp)
+# Install system deps: openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp),
+# curl (Deno installer)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       openssl \
       ffmpeg \
       python3 \
       python3-pip \
+      curl \
+      unzip \
       ca-certificates \
-    && python3 -m pip install --break-system-packages --no-cache-dir -U "yt-dlp[default]" \ 
+    && python3 -m pip install --break-system-packages --no-cache-dir -U "yt-dlp[default]" \
+    && curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -41,9 +45,17 @@ COPY --from=build /app/packages/backend/package.json ./packages/backend/package.
 COPY --from=build /app/packages/backend/node_modules ./packages/backend/node_modules
 
 WORKDIR /app/packages/backend
+# --js-runtimes deno: YouTube extraction needs a JS runtime to solve the nsig
+# challenge; Deno is yt-dlp's supported default (see deno.land install above).
+# --extractor-args web_music: the plain "web" client only returns format 18
+# (progressive mp4) for age-restricted videos and can trip age verification;
+# web_music avoids both. Proven combo from this same vserver's SinusBot setup.
 RUN mkdir -p data /data/music && \
     mkdir -p /root/.config/yt-dlp && \
-    echo "--js-runtimes node" > /root/.config/yt-dlp/config
+    printf '%s\n' \
+      '--js-runtimes deno' \
+      '--extractor-args "youtube:player_client=default,web_music"' \
+      > /root/.config/yt-dlp/config
 
 EXPOSE 3001
 ENV SIDECAR_URL=http://ts6-sidecar:9800
