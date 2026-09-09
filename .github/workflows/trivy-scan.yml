@@ -1,0 +1,81 @@
+name: Trivy security scan
+
+# Manual only -- no push/pull_request/schedule triggers. Run from the
+# Actions tab ("Run workflow") when you want a security pass, e.g. before
+# a release or after bumping dependencies.
+on:
+  workflow_dispatch:
+    inputs:
+      severity:
+        description: "Minimum severity to report"
+        required: false
+        default: "CRITICAL,HIGH,MEDIUM"
+        type: string
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  filesystem:
+    name: Filesystem & dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy (filesystem)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: ${{ inputs.severity }}
+          format: sarif
+          output: trivy-fs.sarif
+          exit-code: "0"
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-filesystem
+
+  images:
+    name: Docker image scan (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            dockerfile: Dockerfile.backend
+          - name: sidecar
+            dockerfile: Dockerfile.sidecar
+          - name: frontend
+            dockerfile: Dockerfile.frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.name }} image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: ts6-${{ matrix.name }}:scan
+
+      - name: Run Trivy (image)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: ts6-${{ matrix.name }}:scan
+          severity: ${{ inputs.severity }}
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          exit-code: "0"
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.name }}.sarif
+          category: trivy-image-${{ matrix.name }}
