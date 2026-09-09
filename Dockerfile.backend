@@ -27,6 +27,13 @@ RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @ts6/common run build
 RUN pnpm --filter @ts6/backend exec prisma generate
 RUN pnpm --filter @ts6/backend run build
+# Strip devDependencies (typescript, @types/*, and -- since this is a
+# workspace-wide node_modules -- frontend-only build tooling like
+# vite/esbuild/rollup/postcss too) before it gets copied into the
+# production image below. None of it runs at runtime, and it was
+# dragging in a lot of avoidable CVE surface (esbuild ships its own
+# compiled Go binary per platform, for example) for zero benefit.
+RUN pnpm prune --prod
 
 # Production image
 FROM base AS production
