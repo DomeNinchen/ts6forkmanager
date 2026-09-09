@@ -47,14 +47,13 @@ COPY --from=build /app/packages/backend/node_modules ./packages/backend/node_mod
 WORKDIR /app/packages/backend
 # --js-runtimes deno: YouTube extraction needs a JS runtime to solve the nsig
 # challenge; Deno is yt-dlp's supported default (see deno.land install above).
-# --extractor-args web_music: the plain "web" client only returns format 18
-# (progressive mp4) for age-restricted videos and can trip age verification;
-# web_music avoids both. Proven combo from this same vserver's SinusBot setup.
+# (No player_client override here: web_music was this vserver's SinusBot
+# audio-only workaround and caps video formats to itag 18/360p -- wrong for
+# the video streaming path, which needs the default client's full format list.)
 RUN mkdir -p data /data/music && \
     mkdir -p /root/.config/yt-dlp && \
     printf '%s\n' \
       '--js-runtimes deno' \
-      '--extractor-args "youtube:player_client=default,web_music"' \
       > /root/.config/yt-dlp/config
 
 EXPOSE 3001
