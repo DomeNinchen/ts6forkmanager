@@ -28,12 +28,12 @@ export default function MusicRequests() {
                         <Music className="w-5 h-5 text-primary" /> Music Request History
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        History of songs requested via the <code className="text-xs bg-muted px-1 rounded text-primary">!play</code> command on this server.
+                        History of songs requested via the <code className="text-xs bg-muted px-1 rounded-sm text-primary">!play</code> command on this server.
                     </p>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden flex flex-col border border-border rounded-lg bg-card shadow-sm relative">
+            <div className="flex-1 overflow-hidden flex flex-col border border-border rounded-lg bg-card shadow-xs relative">
                 {requests.length === 0 ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                         <EmptyState
@@ -53,7 +53,7 @@ export default function MusicRequests() {
                                     rel="noopener noreferrer"
                                     className={cn(
                                         "flex items-center gap-4 p-4 rounded-xl",
-                                        "bg-muted/30 border border-border/50 shadow-sm",
+                                        "bg-muted/30 border border-border/50 shadow-xs",
                                         "hover:bg-muted/50 hover:border-border hover:shadow-md",
                                         "transition-all duration-200 group"
                                     )}

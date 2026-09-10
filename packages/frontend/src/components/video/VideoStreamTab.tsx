@@ -259,7 +259,7 @@ export function VideoStreamTab({ botId, botStatus }: VideoStreamTabProps) {
                   return (
                     <div
                       key={viewer.clid}
-                      className="flex items-center justify-between py-1.5 px-3 rounded bg-muted/50"
+                      className="flex items-center justify-between py-1.5 px-3 rounded-sm bg-muted/50"
                     >
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${

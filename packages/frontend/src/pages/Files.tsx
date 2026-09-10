@@ -276,7 +276,7 @@ export default function Files() {
                         <div className="col-span-1 flex justify-end">
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeleteTarget(file); }}
-                            className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                            className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>

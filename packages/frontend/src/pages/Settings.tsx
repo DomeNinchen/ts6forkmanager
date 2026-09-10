@@ -560,7 +560,7 @@ function YouTubeTab() {
           {pasteMode && (
             <div className="space-y-2">
               <textarea
-                className="w-full h-32 rounded-md border border-border bg-background px-3 py-2 text-xs font-mono resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                className="w-full h-32 rounded-md border border-border bg-background px-3 py-2 text-xs font-mono resize-none focus:outline-hidden focus:ring-1 focus:ring-ring"
                 placeholder="# Netscape HTTP Cookie File&#10;.youtube.com&#9;TRUE&#9;/&#9;TRUE&#9;0&#9;COOKIE_NAME&#9;COOKIE_VALUE"
                 value={cookieText}
                 onChange={(e) => setCookieText(e.target.value)}

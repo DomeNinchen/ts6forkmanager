@@ -304,7 +304,7 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                       <code className="flex-1 bg-muted rounded-md p-2 text-xs font-mono break-all">
                         {`${origin}/api/widget/${embedTarget.token}/image.svg`}
                       </code>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => copyText(`${origin}/api/widget/${embedTarget.token}/image.svg`)}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyText(`${origin}/api/widget/${embedTarget.token}/image.svg`)}>
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -315,7 +315,7 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                       <code className="flex-1 bg-muted rounded-md p-2 text-xs font-mono break-all">
                         {`${origin}/api/widget/${embedTarget.token}/image.png`}
                       </code>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => copyText(`${origin}/api/widget/${embedTarget.token}/image.png`)}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyText(`${origin}/api/widget/${embedTarget.token}/image.png`)}>
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -326,7 +326,7 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                       <code className="flex-1 bg-muted rounded-md p-2 text-xs font-mono break-all">
                         {`<img src="${origin}/api/widget/${embedTarget.token}/image.png" alt="TeamSpeak Server" />`}
                       </code>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => copyText(`<img src="${origin}/api/widget/${embedTarget.token}/image.png" alt="TeamSpeak Server" />`)}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyText(`<img src="${origin}/api/widget/${embedTarget.token}/image.png" alt="TeamSpeak Server" />`)}>
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                     </div>

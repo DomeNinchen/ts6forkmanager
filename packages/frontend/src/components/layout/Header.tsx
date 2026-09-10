@@ -11,7 +11,7 @@ export function Header() {
   const logout = useLogout();
 
   return (
-    <header className="flex items-center justify-between h-14 px-5 border-b border-border bg-card/50 backdrop-blur-sm">
+    <header className="flex items-center justify-between h-14 px-5 border-b border-border bg-card/50 backdrop-blur-xs">
       <ServerSelector />
 
       <div className="flex items-center gap-2">

@@ -511,7 +511,7 @@ export default function BotEditor() {
                 key={node.id}
                 data-node-id={node.id}
                 className={cn(
-                  'flow-node absolute rounded-lg border bg-card/95 backdrop-blur-sm shadow-sm select-none transition-shadow',
+                  'flow-node absolute rounded-lg border bg-card/95 backdrop-blur-xs shadow-xs select-none transition-shadow',
                   selectedNode === node.id ? 'border-primary ring-1 ring-primary/30 shadow-md' : 'border-border hover:border-muted-foreground/30',
                   dragging === node.id ? 'cursor-grabbing shadow-lg z-20' : 'cursor-grab z-10',
                 )}
@@ -595,7 +595,7 @@ export default function BotEditor() {
 
           {/* Connection hint */}
           {connectFrom && (
-            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-primary/20 border border-primary/30 text-primary text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-primary/20 border border-primary/30 text-primary text-xs px-3 py-1.5 rounded-full backdrop-blur-xs">
               Click an input port or node to connect — ESC to cancel
             </div>
           )}
@@ -626,7 +626,7 @@ export default function BotEditor() {
 
                 <div>
                   <Label className="text-[10px] text-muted-foreground">Type</Label>
-                  <div className={cn('mt-1 text-xs px-2 py-1 rounded border', nodeTypeMeta?.color || 'bg-muted/30')}>
+                  <div className={cn('mt-1 text-xs px-2 py-1 rounded-sm border', nodeTypeMeta?.color || 'bg-muted/30')}>
                     {selectedNodeData.type.replace(/_/g, ' ')}
                   </div>
                 </div>
@@ -1475,7 +1475,7 @@ export default function BotEditor() {
                     {edges.filter((e) => e.source === selectedNodeData.id).map((edge) => {
                       const target = nodes.find((n) => n.id === edge.target);
                       return (
-                        <div key={edge.id} className="flex items-center justify-between text-[10px] bg-muted/20 rounded px-2 py-1">
+                        <div key={edge.id} className="flex items-center justify-between text-[10px] bg-muted/20 rounded-sm px-2 py-1">
                           <span className="flex items-center gap-1">
                             <span className="text-muted-foreground">{edge.sourcePort}</span>
                             <span>→</span>
@@ -1488,7 +1488,7 @@ export default function BotEditor() {
                     {edges.filter((e) => e.target === selectedNodeData.id).map((edge) => {
                       const source = nodes.find((n) => n.id === edge.source);
                       return (
-                        <div key={edge.id} className="flex items-center justify-between text-[10px] bg-muted/20 rounded px-2 py-1">
+                        <div key={edge.id} className="flex items-center justify-between text-[10px] bg-muted/20 rounded-sm px-2 py-1">
                           <span className="flex items-center gap-1">
                             <span>{source?.label || '?'}</span>
                             <span>→</span>

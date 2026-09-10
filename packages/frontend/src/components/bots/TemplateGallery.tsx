@@ -55,7 +55,7 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl !grid-rows-none !block p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl grid-rows-none! block! p-0 overflow-hidden">
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

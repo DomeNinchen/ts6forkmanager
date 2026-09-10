@@ -416,7 +416,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onEnqueue, onLo
               {filtered.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-8">No songs found. Upload songs in the Library tab first.</p>
               ) : filtered.map((song) => (
-                <div key={song.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 transition-colors rounded group">
+                <div key={song.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 transition-colors rounded-sm group">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium truncate">{song.title}</p>
                     {song.artist && <p className="text-[10px] text-muted-foreground truncate">{song.artist}</p>}
@@ -445,7 +445,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onEnqueue, onLo
             {playlistList.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No playlists. Create one in the Playlists tab.</p>
             ) : playlistList.map((pl) => (
-              <div key={pl.id} className="flex items-center gap-2 py-2 px-2 hover:bg-muted/30 transition-colors rounded group">
+              <div key={pl.id} className="flex items-center gap-2 py-2 px-2 hover:bg-muted/30 transition-colors rounded-sm group">
                 <ListMusic className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate">{pl.name}</p>
@@ -466,7 +466,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onEnqueue, onLo
             {history.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No music requests found. Use !play in chat to build history.</p>
             ) : history.map((req: any) => (
-              <div key={req.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 transition-colors rounded group">
+              <div key={req.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 transition-colors rounded-sm group">
                 <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate" title={req.title}>{req.title}</p>
@@ -912,7 +912,7 @@ function LibraryTab() {
                 {urlInfo.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-3 px-2 py-1.5 rounded transition-colors ${
+                    className={`flex items-center gap-3 px-2 py-1.5 rounded-sm transition-colors ${
                       urlInfo.type === 'playlist'
                         ? `cursor-pointer ${selectedUrlIds.has(item.id) ? 'bg-primary/10' : 'hover:bg-muted/50'}`
                         : 'hover:bg-muted/50'
@@ -928,7 +928,7 @@ function LibraryTab() {
                       />
                     )}
                     {item.thumbnail && (
-                      <img src={item.thumbnail} alt="" className="h-8 w-12 rounded object-cover shrink-0" />
+                      <img src={item.thumbnail} alt="" className="h-8 w-12 rounded-sm object-cover shrink-0" />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium truncate">{item.title}</p>
@@ -984,7 +984,7 @@ function LibraryTab() {
               {ytResults.map((r) => (
                 <div key={r.id} className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 transition-colors">
                   {r.thumbnail && (
-                    <img src={r.thumbnail} alt="" className="h-10 w-14 rounded object-cover shrink-0" />
+                    <img src={r.thumbnail} alt="" className="h-10 w-14 rounded-sm object-cover shrink-0" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium truncate">{r.title}</p>
@@ -1201,7 +1201,7 @@ function PlaylistsTab() {
             {availableSongs.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No songs available. Upload songs to the library first.</p>
             ) : availableSongs.map((song) => (
-              <div key={song.id} className="flex items-center gap-2 py-1.5 hover:bg-muted/30 transition-colors rounded px-2">
+              <div key={song.id} className="flex items-center gap-2 py-1.5 hover:bg-muted/30 transition-colors rounded-sm px-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs truncate">{song.title}</p>
                   {song.artist && <p className="text-[10px] text-muted-foreground truncate">{song.artist}</p>}
@@ -1447,7 +1447,7 @@ function RadioTab() {
             {presetList.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No presets available.</p>
             ) : presetList.map((preset, i) => (
-              <div key={i} className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 transition-colors rounded">
+              <div key={i} className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 transition-colors rounded-sm">
                 <Radio className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium">{preset.name}</p>
@@ -1631,7 +1631,7 @@ function QueueTab() {
                     <div className="flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       {i > 0 && (
                         <button
-                          className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                          className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i - 1 })}
                           title="Move up"
                         >
@@ -1640,7 +1640,7 @@ function QueueTab() {
                       )}
                       {i < queue.length - 1 && (
                         <button
-                          className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                          className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i + 1 })}
                           title="Move down"
                         >
@@ -1650,7 +1650,7 @@ function QueueTab() {
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                        className="p-0.5 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                         onClick={() => selectedBot && removeFromQueue.mutate({ botId: selectedBot, index: i })}
                         title="Remove from queue"
                       >

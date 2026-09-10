@@ -22,7 +22,7 @@ export default function Tokens() {
     { accessorKey: 'token', header: 'Token', cell: ({ getValue }) => (
       <div className="flex items-center gap-1">
         <span className="font-mono-data text-xs truncate max-w-[200px]">{getValue() as string}</span>
-        <button onClick={() => { navigator.clipboard.writeText(getValue() as string); toast.success('Copied'); }} className="p-1 hover:bg-muted rounded"><Copy className="h-3 w-3 text-muted-foreground" /></button>
+        <button onClick={() => { navigator.clipboard.writeText(getValue() as string); toast.success('Copied'); }} className="p-1 hover:bg-muted rounded-sm"><Copy className="h-3 w-3 text-muted-foreground" /></button>
       </div>
     )},
     { accessorKey: 'token_type', header: 'Type', cell: ({ getValue }) => <span className="text-xs">{(getValue() as number) === 0 ? 'Server Group' : 'Channel Group'}</span> },

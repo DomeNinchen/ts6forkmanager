@@ -36,7 +36,7 @@ export default function Login() {
           <p className="text-sm text-muted-foreground mt-1">Server Administration Panel</p>
         </div>
 
-        <Card className="border-border/50 backdrop-blur-sm">
+        <Card className="border-border/50 backdrop-blur-xs">
           <CardHeader className="pb-4">
             <h2 className="text-sm font-medium text-center text-muted-foreground">Sign in to continue</h2>
           </CardHeader>
@@ -87,7 +87,7 @@ export default function Login() {
         </Card>
 
         <p className="text-center text-[10px] text-muted-foreground/50 mt-6 font-mono-data">
-          TS6 WEBUI v1.2.0
+          TS6 WEBUI v1.3.0
         </p>
       </div>
     </div>
