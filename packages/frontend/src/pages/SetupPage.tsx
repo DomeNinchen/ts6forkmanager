@@ -147,7 +147,7 @@ export default function SetupPage() {
         </Card>
 
         <p className="text-center text-[10px] text-muted-foreground/50 mt-6 font-mono-data">
-          TS6 WEBUI v1.1.0
+          TS6 WEBUI v1.2.0
         </p>
       </div>
     </div>
