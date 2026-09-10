@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { complaintsApi } from '@/api/bans.api';
 import { useServerStore } from '@/stores/server.store';
-import { DataTable } from '@/components/shared/DataTable';
+import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { MessageSquareWarning } from 'lucide-react';
@@ -14,7 +14,7 @@ export default function Complaints() {
   const { data, isLoading } = useQuery({ queryKey: ['complaints', c, s], queryFn: () => complaintsApi.list(c!, s!), enabled: !!c && !!s });
 
   const complaints = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const columns: ColumnDef<any>[] = useMemo(() => [
+  const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => [
     { accessorKey: 'fname', header: 'From' },
     { accessorKey: 'tname', header: 'About' },
     { accessorKey: 'message', header: 'Message' },

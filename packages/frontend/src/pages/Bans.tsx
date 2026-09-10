@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useBans, useAddBan, useDeleteBan } from '@/hooks/use-bans';
 import { useServerStore } from '@/stores/server.store';
-import { DataTable } from '@/components/shared/DataTable';
+import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +27,7 @@ export default function Bans() {
 
   const bans = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
-  const columns: ColumnDef<any>[] = useMemo(() => [
+  const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => [
     { accessorKey: 'lastnickname', header: 'Last Nickname', cell: ({ getValue }) => <span className="font-medium">{(getValue() as string) || '-'}</span> },
     { accessorKey: 'ip', header: 'IP', cell: ({ getValue }) => <span className="font-mono-data text-xs">{(getValue() as string) || '-'}</span> },
     { accessorKey: 'uid', header: 'UID', cell: ({ getValue }) => <span className="font-mono-data text-xs truncate max-w-[120px] block">{(getValue() as string) || '-'}</span> },

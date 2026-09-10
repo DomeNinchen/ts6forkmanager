@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messagesApi } from '@/api/bans.api';
 import { useServerStore } from '@/stores/server.store';
-import { DataTable } from '@/components/shared/DataTable';
+import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ export default function Messages() {
 
   const messages = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
-  const columns: ColumnDef<any>[] = useMemo(() => [
+  const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => [
     { accessorKey: 'senderName', header: 'From', cell: ({ getValue }) => <span className="font-medium">{(getValue() as string) || '-'}</span> },
     { accessorKey: 'subject', header: 'Subject' },
     { accessorKey: 'timestamp', header: 'Date', cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{timeAgo(getValue() as number)}</span> },
