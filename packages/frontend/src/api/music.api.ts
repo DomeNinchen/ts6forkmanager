@@ -39,11 +39,14 @@ export const musicBotsApi = {
   playerWidgetToken: (id: number) => api.get(`/music-bots/${id}/player-widget-token`).then((r) => r.data),
 
   // Video Streaming
+  // start/source both await a full video download server-side before responding
+  // (can run well past the client's default 15s timeout), so they get a longer,
+  // bounded one of their own instead of the global default.
   startStream: (id: number, source: string, preset?: string, framerate?: number, bitrate?: string) =>
-    api.post(`/music-bots/${id}/stream/start`, { source, preset, framerate, bitrate }).then((r) => r.data),
+    api.post(`/music-bots/${id}/stream/start`, { source, preset, framerate, bitrate }, { timeout: 120000 }).then((r) => r.data),
   stopStream: (id: number) => api.post(`/music-bots/${id}/stream/stop`).then((r) => r.data),
   setStreamSource: (id: number, source: string) =>
-    api.post(`/music-bots/${id}/stream/source`, { source }).then((r) => r.data),
+    api.post(`/music-bots/${id}/stream/source`, { source }, { timeout: 120000 }).then((r) => r.data),
   streamStatus: (id: number) => api.get(`/music-bots/${id}/stream/status`).then((r) => r.data),
   kickViewer: (id: number, clid: number) => api.delete(`/music-bots/${id}/stream/viewer/${clid}`).then((r) => r.data),
   webrtcOffer: (id: number) => api.post(`/music-bots/${id}/stream/webrtc/offer`).then((r) => r.data),
