@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM node:20-slim AS base
+FROM node:24-slim AS base
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
 # Install system deps: openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp),
