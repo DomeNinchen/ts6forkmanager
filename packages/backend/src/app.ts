@@ -65,7 +65,7 @@ export function createApp(): Express {
   app.use('/api/auth', authRoutes);
 
   // Bot webhook route (unauthenticated — called by external systems)
-  app.all('/api/bots/webhook/:path(*)', (req, res) => {
+  app.all('/api/bots/webhook/*path', (req, res) => {
     const engine = req.app.locals.botEngine;
     if (!engine) return res.status(503).json({ error: 'Bot engine not running' });
     engine.handleWebhookRequest(req, res);
