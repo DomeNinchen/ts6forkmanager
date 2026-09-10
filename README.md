@@ -27,6 +27,9 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - Branch protection enabled on `main`
 - Fixed a real injection surface in the bot flow engine: condition expressions were run through raw string substitution before evaluation, so a crafted chat message could alter what the expression actually checked instead of just being compared as data
 
+### Reliability
+- Fixed a Docker signal-handling bug: the backend's `CMD` ran node as a child of a shell (`sh -c "... && node ..."`), so `SIGTERM` on container restart never reached node — it hung for the full shutdown grace period and then got hard-killed, leaving the old SSH query session and music bot connection registered on the TeamSpeak server until *it* eventually timed them out (surfacing as `nickname already in use` / `already member of channel` errors on the next start). Fixed by `exec`-ing into node so it becomes PID 1 and receives the signal directly — restarts now disconnect cleanly and immediately, and the music bot reconnects on its own right after.
+
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
 - Node 20 → 24, Express 4 → 5, Prisma 6 → 7 (backend)
