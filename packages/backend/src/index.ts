@@ -1,7 +1,8 @@
 import { createApp } from './app.js';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { PrismaClient } from '../generated/prisma/index.js';
+import { PrismaClient } from './generated/prisma/client.js';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { ConnectionPool } from './ts-client/connection-pool.js';
 import { BotEngine } from './bot-engine/engine.js';
 import { VoiceBotManager } from './voice/voice-bot-manager.js';
@@ -39,7 +40,8 @@ async function main() {
   // Remove any pre-downloaded video temp files left over from a crash/restart
   sweepStreamTempFiles();
 
-  const prisma = new PrismaClient();
+  const adapter = new PrismaBetterSqlite3({ url: config.databaseUrl });
+  const prisma = new PrismaClient({ adapter });
   const app = createApp();
   const server = createServer(app);
 

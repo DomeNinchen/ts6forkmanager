@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import type { PrismaClient } from '../../generated/prisma/index.js';
+import type { PrismaClient } from '../generated/prisma/client.js';
 import type { WebSocketServer } from 'ws';
 import { VoiceBot, type VoiceBotConfig, type VoiceBotStatus } from './voice-bot.js';
 import { generateIdentityAsync, restoreIdentity, type IdentityData } from './tslib/index.js';

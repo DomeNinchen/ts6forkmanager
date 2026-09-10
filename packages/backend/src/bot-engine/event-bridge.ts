@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import type { PrismaClient } from '../../generated/prisma/index.js';
+import type { PrismaClient } from '../generated/prisma/client.js';
 import { SshQueryClient } from './ssh-query-client.js';
 import { decrypt } from '../utils/crypto.js';
 

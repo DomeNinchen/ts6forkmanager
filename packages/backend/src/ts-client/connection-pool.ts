@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma/index.js';
+import { PrismaClient } from '../generated/prisma/client.js';
 import { WebQueryClient } from './webquery-client.js';
 import { decrypt } from '../utils/crypto.js';
 

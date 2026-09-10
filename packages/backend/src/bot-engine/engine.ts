@@ -1,4 +1,4 @@
-import type { PrismaClient } from '../../generated/prisma/index.js';
+import type { PrismaClient } from '../generated/prisma/client.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { EventBridge } from './event-bridge.js';
 import { FlowRunner } from './flow-runner.js';

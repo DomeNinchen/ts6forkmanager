@@ -1,5 +1,5 @@
 import { Parser } from 'expr-eval';
-import type { PrismaClient } from '../../generated/prisma/index.js';
+import type { PrismaClient } from '../generated/prisma/client.js';
 
 function resolveDotPath(obj: any, path: string): any {
   const parts = path.split('.');
