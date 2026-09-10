@@ -10,6 +10,27 @@ Built on the **WebQuery HTTP API** (the ServerQuery replacement in modern TeamSp
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+## What This Fork Changes
+
+This fork exists because upstream had a persistent video/audio streaming stutter that was never resolved, plus a pile of security findings nobody had triaged. Here's what's different:
+
+### Video Streaming: Stutter Fixed, Quality Improved
+- Root-caused and fixed the stutter — three separate issues: a missing shared volume between the backend and the sidecar container, a single bad RTP timestamp poisoning the adaptive A/V-sync estimate, and VP8 encoding that ran effectively single-threaded regardless of available CPU cores
+- Videos are pre-downloaded and streamed from disk instead of feeding ffmpeg a live, rate-limited CDN URL — real HD quality instead of whatever single combined format YouTube happens to offer live (often capped at 360p, or not offered at all). Ported from [uniskela/ts6-manager](https://github.com/uniskela/ts6-manager), itself adapted from [uniplayer1/ts6-manager](https://github.com/uniplayer1/ts6-manager) — credit where it's due
+- Multi-threaded VP8 encoding tuned for quality-per-bit, with a rate-control buffer that scales to the target bitrate
+- A/V sync pacing is clamped so a single bad timestamp can't stall playback or overflow the RTP queues
+- Streams auto-stop when a clip ends instead of looping forever; added a mute/unmute toggle to the in-browser preview
+
+### Security
+- [clusterzx/ts6-manager#80](https://github.com/clusterzx/ts6-manager/issues/80) pointed out that a Trivy scan against upstream turned up critical, never-triaged findings — ran the same scan here and fixed what it found (a Go WebRTC dependency chain with 8 critical advisories, multer DoS CVEs, and others)
+- Dependabot enabled, plus a manual, on-demand Trivy workflow scanning both the source tree and all three built Docker images
+- Branch protection enabled on `main`
+
+### Kept Up to Date
+- Working through outdated dependencies incrementally, easiest to hardest, verifying each with a real container run — not just a successful build — before it ships
+
+See the [merged pull requests](https://github.com/DomeNinchen/ts6forkmanager/pulls?q=is%3Apr+is%3Amerged) for the full, itemized history of changes.
+
 ## Screenshots
 
 ### Dashboard
