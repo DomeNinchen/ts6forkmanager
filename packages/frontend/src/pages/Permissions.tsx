@@ -303,7 +303,7 @@ export default function Permissions() {
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
               layer === key
-                ? 'bg-background text-foreground shadow-sm'
+                ? 'bg-background text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
@@ -383,7 +383,7 @@ export default function Permissions() {
                     <div key={catKey} className="mb-1">
                       <button
                         onClick={() => toggleCat(catKey)}
-                        className="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded"
+                        className="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-sm"
                       >
                         {expandedCats.has(catKey) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                         {PERM_CATEGORIES[catKey] || catKey}
@@ -409,7 +409,7 @@ export default function Permissions() {
                               <div
                                 key={perm.permsid}
                                 className={cn(
-                                  'grid grid-cols-12 gap-2 px-2 py-1 rounded text-xs items-center group',
+                                  'grid grid-cols-12 gap-2 px-2 py-1 rounded-sm text-xs items-center group',
                                   isChanged && 'bg-primary/5',
                                   isSet ? 'text-foreground' : 'text-muted-foreground',
                                 )}
@@ -425,7 +425,7 @@ export default function Permissions() {
                                         else setPermValue(perm.permsid, 1, 0, 0);
                                       }}
                                       className={cn(
-                                        'h-5 w-5 rounded border flex items-center justify-center transition-colors',
+                                        'h-5 w-5 rounded-sm border flex items-center justify-center transition-colors',
                                         isSet
                                           ? 'bg-primary border-primary text-primary-foreground'
                                           : 'border-border hover:border-primary/50',
@@ -459,7 +459,7 @@ export default function Permissions() {
                                         setPermValue(perm.permsid, effective?.permvalue || 0, effective?.permnegated || 0, newSkip);
                                       }}
                                       className={cn(
-                                        'h-4 w-4 rounded border flex items-center justify-center text-[9px] transition-colors',
+                                        'h-4 w-4 rounded-sm border flex items-center justify-center text-[9px] transition-colors',
                                         isSet && effective?.permskip
                                           ? 'bg-amber-500/20 border-amber-500 text-amber-400'
                                           : 'border-border/50',
@@ -479,7 +479,7 @@ export default function Permissions() {
                                         setPermValue(perm.permsid, effective?.permvalue || 0, newNeg, effective?.permskip || 0);
                                       }}
                                       className={cn(
-                                        'h-4 w-4 rounded border flex items-center justify-center text-[9px] transition-colors',
+                                        'h-4 w-4 rounded-sm border flex items-center justify-center text-[9px] transition-colors',
                                         isSet && effective?.permnegated
                                           ? 'bg-destructive/20 border-destructive text-destructive'
                                           : 'border-border/50',
@@ -494,7 +494,7 @@ export default function Permissions() {
                                   {isSet && (
                                     <button
                                       onClick={() => removePerm(perm.permsid)}
-                                      className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                                      className="p-0.5 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                                       title="Remove permission"
                                     >
                                       <Minus className="h-3 w-3" />

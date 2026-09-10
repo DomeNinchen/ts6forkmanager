@@ -90,15 +90,15 @@ export default function ServerLogs() {
         </Select>
       </div>
 
-      <div className="rounded-md border border-border bg-card overflow-hidden shadow-sm">
+      <div className="rounded-md border border-border bg-card overflow-hidden shadow-xs">
         <ScrollArea className="h-[calc(100vh-260px)]">
           <div className="p-3 space-y-0.5">
             {logs.length === 0 ? (
               <p className="text-center text-muted-foreground text-sm py-10">No log entries found.</p>
             ) : (
               logs.map((entry, i) => (
-                <div key={i} className="flex items-start gap-2 py-0.5 group hover:bg-muted/10 rounded px-1">
-                  <span className={cn('text-[10px] px-1.5 py-0.5 rounded border shrink-0 font-mono-data uppercase tracking-wider mt-0.5', LEVEL_COLORS[entry.level] || LEVEL_COLORS.INFO)}>
+                <div key={i} className="flex items-start gap-2 py-0.5 group hover:bg-muted/10 rounded-sm px-1">
+                  <span className={cn('text-[10px] px-1.5 py-0.5 rounded-sm border shrink-0 font-mono-data uppercase tracking-wider mt-0.5', LEVEL_COLORS[entry.level] || LEVEL_COLORS.INFO)}>
                     {entry.level.slice(0, 3)}
                   </span>
                   <span className="text-xs font-mono-data text-muted-foreground leading-relaxed break-all">

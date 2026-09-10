@@ -137,7 +137,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
     <div>
       <div
         className={cn(
-          'flex items-center gap-1 py-1 px-2 rounded-sm hover:bg-muted/30 transition-colors group text-sm',
+          'flex items-center gap-1 py-1 px-2 rounded-xs hover:bg-muted/30 transition-colors group text-sm',
           isAdmin && 'cursor-grab active:cursor-grabbing',
           dropOver && 'bg-primary/10 ring-1 ring-primary/40',
           draggedCid === node.cid && 'opacity-40',
@@ -151,7 +151,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
         onDragEnd={handleDragEnd}
       >
         {hasContent ? (
-          <button onClick={() => setExpanded(!expanded)} className="p-0.5 hover:bg-muted rounded">
+          <button onClick={() => setExpanded(!expanded)} className="p-0.5 hover:bg-muted rounded-xs">
             {expanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
           </button>
         ) : (
@@ -168,13 +168,13 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onEdit(node)}
-              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1 rounded-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             >
               <Pencil className="h-3 w-3" />
             </button>
             <button
               onClick={() => onDelete(node.cid, node.channel_name)}
-              className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+              className="p-1 rounded-xs hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
             >
               <Trash2 className="h-3 w-3" />
             </button>

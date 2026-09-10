@@ -35,7 +35,7 @@ export default function Messages() {
     { accessorKey: 'subject', header: 'Subject' },
     { accessorKey: 'timestamp', header: 'Date', cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{timeAgo(getValue() as number)}</span> },
     { accessorKey: 'flag_read', header: 'Status', cell: ({ getValue }) => (
-      <span className={`text-xs px-1.5 py-0.5 rounded ${getValue() ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary font-medium'}`}>
+      <span className={`text-xs px-1.5 py-0.5 rounded-sm ${getValue() ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary font-medium'}`}>
         {getValue() ? 'Read' : 'Unread'}
       </span>
     )},

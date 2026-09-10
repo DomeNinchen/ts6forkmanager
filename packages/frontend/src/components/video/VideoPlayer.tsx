@@ -120,7 +120,7 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
       {connected && (
         <button
           onClick={() => setMuted((m) => !m)}
-          className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded"
+          className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-sm"
           title={muted ? 'Unmute' : 'Mute'}
         >
           {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -143,7 +143,7 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
         </div>
       )}
       {connected && (
-        <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded text-xs">
+        <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-sm text-xs">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           <span className="text-white">LIVE</span>
         </div>

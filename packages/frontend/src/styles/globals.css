@@ -1,8 +1,117 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap')
+layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility font-mono-data {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@utility grid-bg {
+  background-image:
+    linear-gradient(rgba(56, 189, 198, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 198, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@utility scan-line {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(186 72% 42% / 0.4),
+      transparent
+    );
+    animation: scan 4s linear infinite;
+  }
+}
+
+@utility glow-teal {
+  box-shadow: 0 0 20px -5px hsl(186 72% 42% / 0.3);
+}
+
+@utility text-glow {
+  text-shadow: 0 0 10px hsl(186 72% 42% / 0.5);
+}
+
+@utility fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@utility slide-in-left {
+  animation: slideInLeft 0.2s ease-out;
+}
+
+@utility pulse-dot {
+  animation: pulseDot 2s ease-in-out infinite;
+}
 
 @layer base {
   :root {
@@ -102,64 +211,19 @@
 }
 
 @layer utilities {
-  .font-mono-data {
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .grid-bg {
-    background-image:
-      linear-gradient(rgba(56, 189, 198, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(56, 189, 198, 0.03) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  .scan-line {
-    position: relative;
-    overflow: hidden;
-  }
-  .scan-line::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(186 72% 42% / 0.4), transparent);
-    animation: scan 4s linear infinite;
-  }
   @keyframes scan {
     0% { top: 0; opacity: 0; }
     10% { opacity: 1; }
     90% { opacity: 1; }
     100% { top: 100%; opacity: 0; }
   }
-
-  .glow-teal {
-    box-shadow: 0 0 20px -5px hsl(186 72% 42% / 0.3);
-  }
-
-  .text-glow {
-    text-shadow: 0 0 10px hsl(186 72% 42% / 0.5);
-  }
-
-  .fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
   }
-
-  .slide-in-left {
-    animation: slideInLeft 0.2s ease-out;
-  }
   @keyframes slideInLeft {
     from { opacity: 0; transform: translateX(-8px); }
     to { opacity: 1; transform: translateX(0); }
-  }
-
-  .pulse-dot {
-    animation: pulseDot 2s ease-in-out infinite;
   }
   @keyframes pulseDot {
     0%, 100% { opacity: 1; }

@@ -35,7 +35,7 @@ function StatsCard({ icon: Icon, label, value, sub, accentColor = 'text-primary'
           </div>
         </div>
       </CardContent>
-      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent ${accentColor === 'text-primary' ? 'via-primary/50' : accentColor === 'text-emerald-400' ? 'via-emerald-500/50' : accentColor === 'text-amber-400' ? 'via-amber-500/50' : 'via-violet-500/50'} to-transparent`} />
+      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent ${accentColor === 'text-primary' ? 'via-primary/50' : accentColor === 'text-emerald-400' ? 'via-emerald-500/50' : accentColor === 'text-amber-400' ? 'via-amber-500/50' : 'via-violet-500/50'} to-transparent`} />
     </Card>
   );
 }
@@ -212,7 +212,7 @@ export default function Dashboard() {
               </div>
               <div className="h-2 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-500"
+                  className="h-full rounded-full bg-linear-to-r from-primary to-primary/60 transition-all duration-500"
                   style={{ width: `${Math.min((data.onlineUsers / data.maxClients) * 100, 100)}%` }}
                 />
               </div>

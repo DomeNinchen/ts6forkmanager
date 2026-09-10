@@ -19,7 +19,7 @@ function P({ code, desc, example }: { code: string; desc: string; example?: stri
       <code className="text-[11px] font-mono text-emerald-400 break-all">{code}</code>
       <span className="text-muted-foreground">{desc}</span>
       {example ? (
-        <code className="text-[10px] font-mono text-muted-foreground/70 bg-muted/40 rounded px-1.5 py-0.5 break-all">{example}</code>
+        <code className="text-[10px] font-mono text-muted-foreground/70 bg-muted/40 rounded-sm px-1.5 py-0.5 break-all">{example}</code>
       ) : <span />}
     </div>
   );
@@ -35,7 +35,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 export function PlaceholderReference({ open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl !grid-rows-none !block p-0 overflow-hidden">
+      <DialogContent className="max-w-3xl grid-rows-none! block! p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-2">
           <DialogTitle className="text-base">Placeholder Reference</DialogTitle>
           <p className="text-xs text-muted-foreground">
