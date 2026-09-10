@@ -25,9 +25,13 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - [clusterzx/ts6-manager#80](https://github.com/clusterzx/ts6-manager/issues/80) pointed out that a Trivy scan against upstream turned up critical, never-triaged findings — ran the same scan here and fixed what it found (a Go WebRTC dependency chain with 8 critical advisories, multer DoS CVEs, and others)
 - Dependabot enabled, plus a manual, on-demand Trivy workflow scanning both the source tree and all three built Docker images
 - Branch protection enabled on `main`
+- Fixed a real injection surface in the bot flow engine: condition expressions were run through raw string substitution before evaluation, so a crafted chat message could alter what the expression actually checked instead of just being compared as data
 
 ### Kept Up to Date
-- Working through outdated dependencies incrementally, easiest to hardest, verifying each with a real container run — not just a successful build — before it ships
+Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
+- Node 20 → 24, Express 4 → 5, Prisma 6 → 7 (backend)
+- React 18 → 19, Vite 6 → 8, Tailwind 3 → 4, `react-router-dom` → the unified `react-router` 8, TypeScript 5 → 7 (frontend)
+- Removed `zod`, `react-hook-form`, and `@hookform/resolvers` — installed but never actually used anywhere in the codebase
 
 See the [merged pull requests](https://github.com/DomeNinchen/ts6forkmanager/pulls?q=is%3Apr+is%3Amerged) for the full, itemized history of changes.
 
@@ -160,7 +164,7 @@ The backend proxies all TeamSpeak API calls. The frontend never has direct acces
 
 ## Tech Stack
 
-**Frontend:** React 18, Vite, TailwindCSS, shadcn/ui, TanStack Query + Table, React Flow, Recharts, Zustand
+**Frontend:** React 19, Vite, TailwindCSS, shadcn/ui, TanStack Query + Table, React Flow, Recharts, Zustand
 
 **Backend:** Node.js, Express, Prisma (SQLite), JWT authentication, WebQuery HTTP client, SSH event listener
 
@@ -221,7 +225,7 @@ networks:
 
 ## Development
 
-Requires: Node.js 20+, pnpm 9+
+Requires: Node.js 24+, pnpm 9+
 
 ```bash
 pnpm install
@@ -236,10 +240,10 @@ Prisma with SQLite. On first run:
 
 ```bash
 cd packages/backend
-npx prisma migrate deploy
+npx prisma db push
 ```
 
-The Docker images handle migrations automatically on startup.
+The Docker images run this automatically on startup.
 
 ## Environment Variables
 

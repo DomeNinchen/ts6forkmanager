@@ -7,16 +7,16 @@
     "dev:frontend": "pnpm --filter @ts6/frontend run dev",
     "build": "pnpm -r run build",
     "db:generate": "pnpm --filter @ts6/backend exec prisma generate",
-    "db:migrate": "pnpm --filter @ts6/backend exec prisma migrate dev",
+    "db:push": "pnpm --filter @ts6/backend exec prisma db push",
     "db:seed": "pnpm --filter @ts6/backend exec prisma db seed",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.22.0",
     "pnpm": ">=9.0.0"
   },
   "pnpm": {
