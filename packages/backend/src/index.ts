@@ -99,7 +99,7 @@ async function main() {
   const shutdown = async () => {
     console.log('\n[TS6 WebUI] Shutting down...');
     await voiceBotManager.stopAll();
-    botEngine.destroy();
+    await botEngine.destroy();
     connectionPool.destroy();
     wss.close();
     server.close();

@@ -267,7 +267,16 @@ export class SshQueryClient extends EventEmitter {
     return this.fatalError;
   }
 
-  destroy(): void {
+  /**
+   * Closes the SSH connection and waits for the underlying socket to actually
+   * finish tearing down (ssh2's 'close' event) before resolving, up to a
+   * short safety timeout. `ssh.end()` only starts an async teardown — if the
+   * caller (process shutdown) doesn't wait for it, the TS server can still
+   * see this query client as connected for a while after we've moved on,
+   * which is what caused the "nickname already in use" / "already member of
+   * channel" errors on a fast container restart.
+   */
+  destroy(): Promise<void> {
     this.destroyed = true;
     this.stopKeepalive();
     if (this.reconnectTimer) {
@@ -279,11 +288,25 @@ export class SshQueryClient extends EventEmitter {
       this.shell.close();
       this.shell = null;
     }
-    if (this.ssh) {
-      this.ssh.end();
-      this.ssh = null;
-    }
     this.connected = false;
+
+    const ssh = this.ssh;
+    this.ssh = null;
+    if (!ssh) return Promise.resolve();
+
+    return new Promise<void>((resolve) => {
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(safety);
+        resolve();
+      };
+      const safety = setTimeout(done, 2000);
+      safety.unref?.();
+      ssh.once('close', done);
+      ssh.end();
+    });
   }
 
   private forceDisconnect(): void {

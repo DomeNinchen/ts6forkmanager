@@ -91,7 +91,7 @@ export class EventBridge extends EventEmitter {
     const key = this.makeKey(configId, sid);
     const client = this.connections.get(key);
     if (client) {
-      client.destroy();
+      await client.destroy();
       this.connections.delete(key);
     }
   }
@@ -176,7 +176,7 @@ export class EventBridge extends EventEmitter {
     const key = this.makeCmdKey(configId, sid, channelId);
     const client = this.commandListeners.get(key);
     if (client) {
-      client.destroy();
+      await client.destroy();
       this.commandListeners.delete(key);
     }
   }
@@ -193,19 +193,22 @@ export class EventBridge extends EventEmitter {
     return Array.from(this.commandListeners.keys());
   }
 
-  destroy(): void {
-  // existing "base" SSH connections
+  async destroy(): Promise<void> {
+    const closing: Promise<void>[] = [];
+
+    // existing "base" SSH connections
     for (const client of this.connections.values()) {
-      client.destroy();
+      closing.push(client.destroy());
     }
     this.connections.clear();
 
-    // NEW: command listener SSH connections
+    // command listener SSH connections
     for (const client of this.commandListeners.values()) {
-      client.destroy();
+      closing.push(client.destroy());
     }
     this.commandListeners.clear();
 
+    await Promise.all(closing);
     this.removeAllListeners();
   }
 }
