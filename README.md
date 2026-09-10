@@ -256,6 +256,9 @@ The Docker images run this automatically on startup.
 
 ## Environment Variables
 
+<details>
+<summary>Click to expand (15 variables — <code>JWT_SECRET</code> is the only one you actually need to set)</summary>
+
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `JWT_SECRET` | — | **Required.** Secret for JWT signing. Must be set in production. |
@@ -273,9 +276,14 @@ The Docker images run this automatically on startup.
 | `VOICE_DEBUG` | unset (off) | Set to `1` to enable verbose voice-bot/audio-pipeline debug logging. |
 | `NODE_ENV` | `development` | Set to `production` in Docker; enables the startup guard that refuses a default `JWT_SECRET`. |
 
+</details>
+
 ## Environment Variables — Sidecar (Video Streaming)
 
 Read directly from `packages/sidecar/main.go`; defaults below are the sidecar's own built-in fallbacks. The shipped `docker-compose.yml` overrides `VIDEO_QUEUE_SIZE`/`AUDIO_QUEUE_SIZE` to `8192`/`16384` (noted below) — sized for the vserver this fork was tuned against, not a hard requirement.
+
+<details>
+<summary>Click to expand (18 variables — tuning knobs, none required for a default setup)</summary>
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -298,6 +306,8 @@ Read directly from `packages/sidecar/main.go`; defaults below are the sidecar's 
 | `VIDEO_CPU_USED` | `4` | libvpx `-cpu-used` — a speed/quality tradeoff (0 = slowest/best quality, 8 = fastest/worst), **not** a core count |
 | `VIDEO_ENCODE_THREADS` | number of host CPU cores | `-threads` passed to libvpx; unlike most ffmpeg encoders, libvpx doesn't auto-scale across cores |
 | `VIDEO_BUFSIZE` | `2x` the target bitrate | ffmpeg `-bufsize` rate-control buffer. Auto-scales with bitrate so high-bitrate streams aren't rate-limited by too small a buffer; set explicitly to override |
+
+</details>
 
 ## Music Bot Text Commands
 
