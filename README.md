@@ -32,9 +32,11 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - That fix alone wasn't enough: the SSH query client's own `destroy()` call started closing the connection but never waited for it to actually finish before the process exited, so a fast restart could still occasionally race a fresh login against the still-registered old session. Now properly awaits the real SSH close event before shutdown proceeds.
 - Also closed a narrower reentrancy gap where a reconnect attempt already in flight at the exact moment of a restart could end up acting on a connection that was simultaneously being torn down.
 
-### Feature Requests from Upstream
+### Feature Requests & Fixes from Upstream
 - [clusterzx/ts6-manager#77](https://github.com/clusterzx/ts6-manager/issues/77) asked for adding/removing clients from server groups directly in the UI — the backend and API layer already supported it, just needed the UI: a searchable "Add Member" dialog and a remove button per member on the Server Groups page
 - [clusterzx/ts6-manager#57](https://github.com/clusterzx/ts6-manager/issues/57) asked for a way to clear the music queue — already covered here by the dedicated Queue tab on the Music Bots page (clear button, per-item remove, reorder, click-to-play)
+- [clusterzx/ts6-manager#39](https://github.com/clusterzx/ts6-manager/pull/39) by [s3bul](https://github.com/s3bul) fixed music chat commands breaking when TeamSpeak auto-wraps links in BBCode (`[URL]...[/URL]`) — adapted here to strip the wrapper once for every command that takes a raw URL, which in this fork is `!play`, `!queue`, and `!stream` (upstream only has the first two)
+- [clusterzx/ts6-manager#66](https://github.com/clusterzx/ts6-manager/pull/66) by [ValiOff8](https://github.com/ValiOff8) added the bot's numeric ID next to its name on the Music Bots overview cards — useful when a bot flow's voice-action node needs to reference a specific bot by ID
 
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
