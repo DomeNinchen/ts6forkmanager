@@ -404,7 +404,10 @@ export class BotEngine {
   }
 
   handleWebhookRequest(req: Request, res: Response): void {
-    const webhookPath = String(req.params.path || req.params[0] || '');
+    // Express 5 / path-to-regexp v8's named wildcard (*path) yields an array
+    // of matched segments, not a single string like the old :path(*) did.
+    const pathParam = req.params.path;
+    const webhookPath = Array.isArray(pathParam) ? pathParam.join('/') : String(pathParam || '');
     const method = req.method.toUpperCase();
     const providedSecret = String(req.headers['x-webhook-secret'] || req.query.secret || '');
 
