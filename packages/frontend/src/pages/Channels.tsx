@@ -14,7 +14,7 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Hash, Plus, Trash2, Pencil, ChevronRight, ChevronDown, Users, Lock, Volume2 } from 'lucide-react';
+import { Hash, Plus, Trash2, Pencil, ChevronRight, ChevronDown, Users, Lock, Volume2, Terminal } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ChannelNode {
@@ -61,15 +61,23 @@ function buildTree(channels: any[]): ChannelNode[] {
 }
 
 function ClientEntry({ client, depth }: { client: ClientInfo; depth: number }) {
+  const isQuery = client.client_type === '1';
   return (
     <div
       className="flex items-center gap-1.5 py-0.5 px-2 text-xs text-muted-foreground"
       style={{ paddingLeft: `${depth * 16 + 28}px` }}
     >
-      <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center text-[8px] font-mono-data text-primary shrink-0">
-        {client.client_nickname?.[0]?.toUpperCase() || '?'}
-      </div>
+      {isQuery ? (
+        <div className="h-4 w-4 rounded-full bg-muted flex items-center justify-center shrink-0">
+          <Terminal className="h-2.5 w-2.5 text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center text-[8px] font-mono-data text-primary shrink-0">
+          {client.client_nickname?.[0]?.toUpperCase() || '?'}
+        </div>
+      )}
       <span className="truncate">{client.client_nickname}</span>
+      {isQuery && <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5">Query</Badge>}
       {client.client_away === 1 && <Badge variant="warning" className="text-[8px] px-1 py-0 h-3.5">Away</Badge>}
       {client.client_input_muted === 1 && !client.client_away && <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5">Muted</Badge>}
     </div>
@@ -243,7 +251,6 @@ export default function Channels() {
     const map = new Map<number, ClientInfo[]>();
     if (!clientData || !Array.isArray(clientData)) return map;
     for (const c of clientData) {
-      if (String(c.client_type) !== '0') continue;
       const cid = Number(c.cid);
       const entry: ClientInfo = {
         clid: Number(c.clid),
