@@ -5,6 +5,7 @@
     "rootDir": "./src",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "rewriteRelativeImportExtensions": true,
     "target": "ES2022",
     "lib": ["ES2022"],
     "skipLibCheck": true

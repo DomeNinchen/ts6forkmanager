@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 FROM node:24-slim AS base
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@9 --activate && npm install -g npm@12.0.2
 
 # Install system deps: openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp),
 # curl (Deno installer)
@@ -46,8 +46,11 @@ COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=build /app/packages/common/dist ./packages/common/dist
 COPY --from=build /app/packages/common/package.json ./packages/common/package.json
 COPY --from=build /app/packages/backend/dist ./packages/backend/dist
-COPY --from=build /app/packages/backend/generated ./packages/backend/generated
+# prisma/seed.ts runs via tsx against source, not dist -- it needs the
+# generated client's .ts source alongside it, not just the compiled dist copy.
+COPY --from=build /app/packages/backend/src/generated ./packages/backend/src/generated
 COPY --from=build /app/packages/backend/prisma ./packages/backend/prisma
+COPY --from=build /app/packages/backend/prisma.config.ts ./packages/backend/prisma.config.ts
 COPY --from=build /app/packages/backend/package.json ./packages/backend/package.json
 COPY --from=build /app/packages/backend/node_modules ./packages/backend/node_modules
 
@@ -65,4 +68,4 @@ RUN mkdir -p data /data/music && \
 
 EXPOSE 3001
 ENV SIDECAR_URL=http://ts6-sidecar:9800
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npx prisma db seed || true && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push && npx prisma db seed || true && node dist/index.js"]

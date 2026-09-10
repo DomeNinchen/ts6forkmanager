@@ -1,4 +1,4 @@
-import type { PrismaClient } from '../../generated/prisma/index.js';
+import type { PrismaClient } from '../generated/prisma/client.js';
 import { VoiceBotManager } from './voice-bot-manager.js';
 import type { VoiceBot } from './voice-bot.js';
 import type { QueueItem } from './playlist/queue.js';

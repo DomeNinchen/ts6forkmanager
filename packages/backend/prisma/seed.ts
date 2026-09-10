@@ -1,6 +1,13 @@
-import { PrismaClient } from '../generated/prisma/index.js';
+import { PrismaClient } from '../src/generated/prisma/client.js';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
-const prisma = new PrismaClient();
+// Standalone on purpose: this script (and the generated client it needs)
+// runs directly via tsx against source, both in local dev and via `npx prisma
+// db seed` in the production image -- it must not depend on anything under
+// src/ other than src/generated/, since that's all the Dockerfile copies
+// alongside it. Same DATABASE_URL fallback as src/config.ts and prisma.config.ts.
+const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL || 'file:./data/ts6webui.db' });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   // Seed default app settings (no default admin — use /setup wizard instead)
