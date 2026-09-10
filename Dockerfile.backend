@@ -68,4 +68,4 @@ RUN mkdir -p data /data/music && \
 
 EXPOSE 3001
 ENV SIDECAR_URL=http://ts6-sidecar:9800
-CMD ["sh", "-c", "npx prisma db push && npx prisma db seed || true && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push && npx prisma db seed || true && exec node dist/index.js"]
