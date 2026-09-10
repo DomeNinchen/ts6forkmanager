@@ -54,7 +54,15 @@ export class SshQueryClient extends EventEmitter {
     if (this.destroyed) return;
 
     return new Promise<void>((resolve, reject) => {
-      this.ssh = new SSH2Client();
+      // Captured locally and used throughout instead of re-reading `this.ssh`
+      // inside the callbacks below: if destroy() runs while this connect()
+      // is still in flight, it clears `this.ssh` (and may even be racing a
+      // *different* reconnect attempt that already replaced it) - reading
+      // `this.ssh` at callback time could then act on the wrong instance,
+      // or throw on null. The `this.destroyed` checks below let an in-flight
+      // attempt notice a concurrent destroy() and cleanly abort instead.
+      const ssh = new SSH2Client();
+      this.ssh = ssh;
       let settled = false;
 
       // Timeout for the entire connect+banner sequence
@@ -65,17 +73,19 @@ export class SshQueryClient extends EventEmitter {
           console.error(`[SshQueryClient] ${err.message}`);
           this.emit('error', err);
           reject(err);
-          try { this.ssh?.end(); } catch { }
+          try { ssh.end(); } catch { }
         }
       }, 15000);
 
-      this.ssh.on('ready', () => {
-        this.ssh!.shell(false, (err, channel) => {
+      ssh.on('ready', () => {
+        if (this.destroyed) { try { ssh.end(); } catch { } return; }
+        ssh.shell(false, (err, channel) => {
           if (err) {
             if (!settled) { settled = true; clearTimeout(connectTimeout); reject(err); }
             this.emit('error', err);
             return;
           }
+          if (this.destroyed) { try { channel.close(); } catch { } try { ssh.end(); } catch { } return; }
 
           this.shell = channel;
           this.responseBuffer = '';
@@ -85,6 +95,7 @@ export class SshQueryClient extends EventEmitter {
             this.onShellData(data);
             // Check if banner has been received after processing data
             if (!this.connected && this.bannerReceived) {
+              if (this.destroyed) { try { channel.close(); } catch { } try { ssh.end(); } catch { } return; }
               this.connected = true;
               this.reconnectAttempt = 0;
               this.reconnecting = false;
@@ -110,7 +121,7 @@ export class SshQueryClient extends EventEmitter {
         });
       });
 
-      this.ssh.on('error', (err: Error) => {
+      ssh.on('error', (err: Error) => {
         const isAuthError = err.message.includes('authentication') || err.message.includes('Auth');
         if (isAuthError) {
           this.fatalError = true;
@@ -124,7 +135,7 @@ export class SshQueryClient extends EventEmitter {
         }
       });
 
-      this.ssh.on('close', () => {
+      ssh.on('close', () => {
         const wasConnected = this.connected;
         this.connected = false;
         this.bannerReceived = false;
@@ -136,7 +147,7 @@ export class SshQueryClient extends EventEmitter {
         }
       });
 
-      this.ssh.connect({
+      ssh.connect({
         host: this.options.host,
         port: this.options.port,
         username: this.options.username,
@@ -181,6 +192,7 @@ export class SshQueryClient extends EventEmitter {
   }
 
   async registerEvents(sid: number): Promise<void> {
+    if (this.destroyed) return;
     console.log(`[SshQueryClient] Registering events for sid=${sid} on ${this.options.host}`);
     await this.executeCommand(`use sid=${sid}`);
 
@@ -207,6 +219,7 @@ export class SshQueryClient extends EventEmitter {
   }
 
   async registerCommandListener(sid: number, channelId: number): Promise<void> {
+    if (this.destroyed) return;
     console.log(`[SshQueryClient] Registering command listener for sid=${sid}, channelId=${channelId} on ${this.options.host}`);
 
     await this.executeCommand(`use sid=${sid}`);
