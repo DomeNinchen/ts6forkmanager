@@ -57,7 +57,12 @@ export class MusicCommandHandler {
     const command = parts[0].toLowerCase();
     if (!MUSIC_COMMANDS.has(command)) return;
 
-    const args = parts.slice(1).join(' ').trim();
+    const rawArgs = parts.slice(1).join(' ').trim();
+    // TS3 auto-wraps links in chat as BBCode: [URL]https://...[/URL]. Every
+    // command here that expects a bare URL (!play, !queue, !stream) reads
+    // straight from `args`, so strip the wrapper once instead of at each
+    // call site.
+    const args = rawArgs.replace(/\[URL\](.*?)\[\/URL\]/gi, '$1');
     const userClid = parseInt(data.invokerid || '0');
     if (!userClid) return;
 

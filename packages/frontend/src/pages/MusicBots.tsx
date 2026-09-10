@@ -102,11 +102,14 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
     <Card className="group hover:border-primary/30 transition-colors">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className={`h-2 w-2 rounded-full shrink-0 ${statusColors[bot.status] || 'bg-zinc-500'}`} />
-            <CardTitle className="text-sm font-medium truncate">{bot.name}</CardTitle>
+            <CardTitle className="flex min-w-0 flex-1 items-center gap-1 text-sm font-medium">
+              <span className="min-w-0 truncate">{bot.name}</span>
+              <span className="shrink-0 text-muted-foreground">#{bot.id}</span>
+            </CardTitle>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" title="Player Widget"
               onClick={() => {
                 musicBotsApi.playerWidgetToken(bot.id).then(setWidgetData);
