@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tokensApi } from '@/api/bans.api';
 import { useServerStore } from '@/stores/server.store';
-import { DataTable } from '@/components/shared/DataTable';
+import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -18,7 +18,7 @@ export default function Tokens() {
 
   const tokens = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
-  const columns: ColumnDef<any>[] = useMemo(() => [
+  const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => [
     { accessorKey: 'token', header: 'Token', cell: ({ getValue }) => (
       <div className="flex items-center gap-1">
         <span className="font-mono-data text-xs truncate max-w-[200px]">{getValue() as string}</span>

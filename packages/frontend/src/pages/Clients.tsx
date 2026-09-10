@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useClients, useKickClient, useBanClient, usePokeClient } from '@/hooks/use-clients';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { DataTable } from '@/components/shared/DataTable';
+import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -32,8 +32,8 @@ export default function Clients() {
     return data.filter((c: any) => String(c.client_type) === '0');
   }, [data]);
 
-  const columns: ColumnDef<any>[] = useMemo(() => {
-    const cols: ColumnDef<any>[] = [
+  const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => {
+    const cols: ColumnDef<DataTableFeatures, any>[] = [
       {
         accessorKey: 'client_nickname',
         header: 'Nickname',
