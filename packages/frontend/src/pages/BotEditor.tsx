@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import { useBot, useUpdateBot } from '@/hooks/use-bots';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
