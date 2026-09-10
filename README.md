@@ -32,6 +32,10 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - That fix alone wasn't enough: the SSH query client's own `destroy()` call started closing the connection but never waited for it to actually finish before the process exited, so a fast restart could still occasionally race a fresh login against the still-registered old session. Now properly awaits the real SSH close event before shutdown proceeds.
 - Also closed a narrower reentrancy gap where a reconnect attempt already in flight at the exact moment of a restart could end up acting on a connection that was simultaneously being torn down.
 
+### Feature Requests from Upstream
+- [clusterzx/ts6-manager#77](https://github.com/clusterzx/ts6-manager/issues/77) asked for adding/removing clients from server groups directly in the UI — the backend and API layer already supported it, just needed the UI: a searchable "Add Member" dialog and a remove button per member on the Server Groups page
+- [clusterzx/ts6-manager#57](https://github.com/clusterzx/ts6-manager/issues/57) asked for a way to clear the music queue — already covered here by the dedicated Queue tab on the Music Bots page (clear button, per-item remove, reorder, click-to-play)
+
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
 - Node 20 → 24, Express 4 → 5, Prisma 6 → 7 (backend)
@@ -69,7 +73,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Virtual server list with start/stop controls
 - Channel tree with drag-and-drop ordering, including ServerQuery/bot clients (visually distinguished from regular users)
 - Client list with kick, ban, move, poke actions
-- Server & channel group management
+- Server & channel group management, including adding/removing members via a searchable client picker
 - Permission editor (server, channel, client, group-level)
 - Ban list management
 - Token / privilege key management
