@@ -29,11 +29,13 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 
 ### Reliability
 - Fixed a Docker signal-handling bug: the backend's `CMD` ran node as a child of a shell (`sh -c "... && node ..."`), so `SIGTERM` on container restart never reached node — it hung for the full shutdown grace period and then got hard-killed, leaving the old SSH query session and music bot connection registered on the TeamSpeak server until *it* eventually timed them out (surfacing as `nickname already in use` / `already member of channel` errors on the next start). Fixed by `exec`-ing into node so it becomes PID 1 and receives the signal directly — restarts now disconnect cleanly and immediately, and the music bot reconnects on its own right after.
+- That fix alone wasn't enough: the SSH query client's own `destroy()` call started closing the connection but never waited for it to actually finish before the process exited, so a fast restart could still occasionally race a fresh login against the still-registered old session. Now properly awaits the real SSH close event before shutdown proceeds.
+- Also closed a narrower reentrancy gap where a reconnect attempt already in flight at the exact moment of a restart could end up acting on a connection that was simultaneously being torn down.
 
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
 - Node 20 → 24, Express 4 → 5, Prisma 6 → 7 (backend)
-- React 18 → 19, Vite 6 → 8, Tailwind 3 → 4, `react-router-dom` → the unified `react-router` 8, TypeScript 5 → 7 (frontend)
+- React 18 → 19, Vite 6 → 8, Tailwind 3 → 4, `react-router-dom` → the unified `react-router` 8, TypeScript 5 → 7, `@tanstack/react-table` 8 → 9 (frontend)
 - Removed `zod`, `react-hook-form`, and `@hookform/resolvers` — installed but never actually used anywhere in the codebase
 
 See the [merged pull requests](https://github.com/DomeNinchen/ts6forkmanager/pulls?q=is%3Apr+is%3Amerged) for the full, itemized history of changes.
@@ -65,7 +67,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 ### Server Management
 - Dashboard with live server stats, bandwidth graph, and capacity overview
 - Virtual server list with start/stop controls
-- Channel tree with drag-and-drop ordering
+- Channel tree with drag-and-drop ordering, including ServerQuery/bot clients (visually distinguished from regular users)
 - Client list with kick, ban, move, poke actions
 - Server & channel group management
 - Permission editor (server, channel, client, group-level)
