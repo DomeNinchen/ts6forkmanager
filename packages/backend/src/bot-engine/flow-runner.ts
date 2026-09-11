@@ -615,12 +615,16 @@ export class FlowRunner {
           try {
             await client.executePost(ctx.sid, 'servergroupaddclient', { sgid: rank.groupId, cldbid });
             promoted++;
-          } catch { /* skip */ }
+            console.log(`[BotEngine] Rank Check: added cldbid=${cldbid} to group ${rank.groupId} (${totalHours.toFixed(2)}h >= ${rank.hours}h threshold, mode=${mode})`);
+          } catch (err: any) {
+            console.warn(`[BotEngine] Rank Check: failed to add cldbid=${cldbid} to group ${rank.groupId}: ${err.message}`);
+          }
           break; // Only assign highest eligible rank
         }
       }
     }
     ctx.setTemp('rankPromotedCount', promoted);
+    console.log(`[BotEngine] Rank Check: checked ${clients.length} client(s), ${promoted} promoted`);
   }
 
   private async executeTempChannelCleanup(data: TempChannelCleanupActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
