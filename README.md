@@ -50,6 +50,7 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - `!stop` no longer claims "Playback stopped." when nothing was actually playing (e.g. only a video stream was active — that's stopped separately via `!stopstream`, which `!stop` intentionally doesn't touch)
 - [clusterzx/ts6-manager#79](https://github.com/clusterzx/ts6-manager/issues/79) asked for songs already sitting in the music folder (e.g. a volume shared with another app) to show up in the library without a manual upload or YouTube download. Added a "Scan for New Files" button on the Music Bots Library tab, plus the same scan automatically on backend startup — both skip files already known to the library, so re-running is safe
 - [clusterzx/ts6-manager#33](https://github.com/clusterzx/ts6-manager/issues/33) — titled "Video Random Playlist" but the actual ask was picking a video already on disk instead of typing its filename or a URL. The Video Stream tab now lists video files already sitting in the music folder and lets you pick one directly as the stream source
+- Extended the above: since there was no way to get a video file into the shared folder short of `docker cp`-ing it in by hand, the Library tab now also accepts video uploads (not just audio), with an All/Audio/Video filter to browse either. New uploads and downloads are organized into `music/`/`video/` subfolders (files from before this existed are still found via scan/the stream picker, for backward compatibility)
 
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
@@ -102,7 +103,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Multiple bots per server, each with independent queue and playback
 - Radio station streaming with ICY metadata and live title updates
 - YouTube playback via yt-dlp (search, download, queue)
-- Music library management (upload, organize, playlists)
+- Media library management: upload audio or video, or scan for files already sitting in the shared music folder (e.g. a volume shared with another app), organized into `music/`/`video/` subfolders and filterable by type; playlists
 - Volume control, pause, skip, previous, shuffle, repeat
 - Stereo audio support with stable 20ms pacing
 - Auto-reconnect with exponential backoff on disconnect
@@ -110,7 +111,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Music request history tracking
 
 ### Video Streaming
-- Video streaming from YouTube, Twitch, or direct URLs to TeamSpeak channels
+- Video streaming from YouTube, Twitch, direct URLs, or an uploaded video already in the library to TeamSpeak channels
 - YouTube/Twitch sources are downloaded once (real `bestvideo+bestaudio` merge via yt-dlp) before playback starts, then streamed from disk — this avoids feeding ffmpeg a live, rate-limited CDN URL and gives noticeably better quality than a single pre-muxed format
 - WebRTC-based with Go sidecar relay (Pion) for low-latency delivery
 - Quality presets (480p, 720p, 1080p)

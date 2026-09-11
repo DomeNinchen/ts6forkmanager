@@ -58,6 +58,7 @@ export interface SongInfo {
   source: 'local' | 'youtube' | 'url';
   sourceUrl: string | null;
   fileSize: number | null;
+  mediaType: 'audio' | 'video';
   serverConfigId: number;
   createdAt: string;
 }

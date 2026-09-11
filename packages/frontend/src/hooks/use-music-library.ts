@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { musicLibraryApi } from '../api/music.api';
 
-export function useSongs(configId: number | null) {
+export function useSongs(configId: number | null, mediaType?: 'audio' | 'video') {
   return useQuery({
-    queryKey: ['songs', configId],
-    queryFn: () => musicLibraryApi.songs(configId!),
+    queryKey: ['songs', configId, mediaType],
+    queryFn: () => musicLibraryApi.songs(configId!, mediaType),
     enabled: !!configId,
   });
 }

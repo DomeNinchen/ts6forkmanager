@@ -2,9 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import type { PrismaClient } from '../../generated/prisma/client.js';
-
-const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
-const ALLOWED_EXTENSIONS = ['.mp3', '.wav', '.flac', '.ogg', '.opus', '.m4a', '.aac', '.wma', '.webm'];
+import { MUSIC_DIR, AUDIO_DIR, VIDEO_DIR, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS } from './media-dirs.js';
 
 export function getAudioDuration(filePath: string): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -30,22 +28,17 @@ export function getAudioDuration(filePath: string): Promise<number> {
   });
 }
 
-/**
- * Scan MUSIC_DIR for audio files not yet tracked as a Song for this server
- * config (e.g. dropped in directly, or shared with another app like Plex -
- * see clusterzx/ts6-manager#79) and add them. Same title/artist parsing and
- * duration extraction as the manual upload handler.
- */
-export async function scanMusicLibrary(prisma: PrismaClient, serverConfigId: number): Promise<{ added: number; skipped: number }> {
-  if (!fs.existsSync(MUSIC_DIR)) return { added: 0, skipped: 0 };
+async function scanDir(
+  prisma: PrismaClient,
+  serverConfigId: number,
+  dir: string,
+  extensions: string[],
+  mediaType: 'audio' | 'video',
+  knownPaths: Set<string>,
+): Promise<{ added: number; skipped: number }> {
+  if (!fs.existsSync(dir)) return { added: 0, skipped: 0 };
 
-  const existing = await prisma.song.findMany({
-    where: { serverConfigId },
-    select: { filePath: true },
-  });
-  const knownPaths = new Set(existing.map((s: { filePath: string }) => s.filePath));
-
-  const entries = fs.readdirSync(MUSIC_DIR, { withFileTypes: true });
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
   let added = 0;
   let skipped = 0;
 
@@ -54,9 +47,9 @@ export async function scanMusicLibrary(prisma: PrismaClient, serverConfigId: num
     // Dotfiles include our own temp video-stream downloads (.stream-<ts>.mp4) - never library content.
     if (entry.name.startsWith('.')) continue;
     const ext = path.extname(entry.name).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(ext)) continue;
+    if (!extensions.includes(ext)) continue;
 
-    const filePath = path.join(MUSIC_DIR, entry.name);
+    const filePath = path.join(dir, entry.name);
     if (knownPaths.has(filePath)) {
       skipped++;
       continue;
@@ -84,11 +77,49 @@ export async function scanMusicLibrary(prisma: PrismaClient, serverConfigId: num
         duration,
         filePath,
         source: 'local',
+        mediaType,
         fileSize: stat.size,
         serverConfigId,
       },
     });
     added++;
+    knownPaths.add(filePath);
+  }
+
+  return { added, skipped };
+}
+
+/**
+ * Scan for audio/video files not yet tracked as a Song for this server config
+ * and add them. Covers the organized `music/`/`video/` subfolders (where new
+ * uploads/downloads land) plus MUSIC_DIR's own root, for files that were
+ * already there before the subfolder split (or dropped in directly, e.g. a
+ * volume shared with another app) - see clusterzx/ts6-manager#79 and #33.
+ * Same title/artist parsing and duration extraction as the manual upload handler.
+ */
+export async function scanMusicLibrary(prisma: PrismaClient, serverConfigId: number): Promise<{ added: number; skipped: number }> {
+  const existing = await prisma.song.findMany({
+    where: { serverConfigId },
+    select: { filePath: true },
+  });
+  const knownPaths = new Set(existing.map((s: { filePath: string }) => s.filePath));
+
+  let added = 0;
+  let skipped = 0;
+
+  const passes: Array<{ dir: string; extensions: string[]; mediaType: 'audio' | 'video' }> = [
+    { dir: AUDIO_DIR, extensions: AUDIO_EXTENSIONS, mediaType: 'audio' },
+    { dir: VIDEO_DIR, extensions: VIDEO_EXTENSIONS, mediaType: 'video' },
+    // Legacy flat layout: classify by extension, defaulting the ambiguous
+    // .webm case to audio to match this scan's own pre-subfolder behavior.
+    { dir: MUSIC_DIR, extensions: VIDEO_EXTENSIONS.filter((e) => e !== '.webm'), mediaType: 'video' },
+    { dir: MUSIC_DIR, extensions: AUDIO_EXTENSIONS, mediaType: 'audio' },
+  ];
+
+  for (const pass of passes) {
+    const result = await scanDir(prisma, serverConfigId, pass.dir, pass.extensions, pass.mediaType, knownPaths);
+    added += result.added;
+    skipped += result.skipped;
   }
 
   return { added, skipped };

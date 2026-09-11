@@ -45,6 +45,11 @@ import type { MusicBotSummary, PlaybackState, SongInfo, PlaylistSummary, Playlis
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
+// Extensions that are only ever video (unlike e.g. .webm, which the backend
+// treats as audio by default when uploaded - see media-dirs.ts), used to
+// auto-pick the mediaType an upload is tagged with.
+const VIDEO_ONLY_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.flv', '.wmv', '.m4v'];
+
 function formatTime(seconds: number | null | undefined): string {
   if (!seconds || seconds <= 0) return '0:00';
   const m = Math.floor(seconds / 60);
@@ -352,7 +357,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onEnqueue, onLo
   const { data: servers } = useServers();
   const [serverId, setServerId] = useState<number | null>(selectedConfigId);
   const configId = serverId || selectedConfigId;
-  const { data: songs } = useSongs(configId);
+  const { data: songs } = useSongs(configId, 'audio');
   const { data: playlists } = usePlaylists();
   const { data: history = [] } = useQuery({
     queryKey: ['music-requests', configId],
@@ -736,6 +741,7 @@ function LibraryTab() {
   const [showYt, setShowYt] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [filter, setFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'audio' | 'video'>('all');
   const [ytUrl, setYtUrl] = useState('');
   const [urlInfo, setUrlInfo] = useState<{ type: 'video' | 'playlist'; items: YouTubeSearchResult[] } | null>(null);
   const [selectedUrlIds, setSelectedUrlIds] = useState<Set<string>>(new Set());
@@ -743,16 +749,20 @@ function LibraryTab() {
 
   const serverList = Array.isArray(servers) ? servers : [];
   const songList = (Array.isArray(songs) ? songs : []) as SongInfo[];
+  const byType = typeFilter === 'all' ? songList : songList.filter((s) => s.mediaType === typeFilter);
   const filtered = filter
-    ? songList.filter((s) => s.title.toLowerCase().includes(filter.toLowerCase()) || (s.artist || '').toLowerCase().includes(filter.toLowerCase()))
-    : songList;
+    ? byType.filter((s) => s.title.toLowerCase().includes(filter.toLowerCase()) || (s.artist || '').toLowerCase().includes(filter.toLowerCase()))
+    : byType;
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || !configId) return;
     Array.from(files).forEach((file) => {
+      const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+      const mediaType = VIDEO_ONLY_EXTENSIONS.includes(ext) ? 'video' : 'audio';
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('mediaType', mediaType);
       uploadSong.mutate({ configId, formData }, {
         onSuccess: () => toast.success(`Uploaded: ${file.name}`),
         onError: () => toast.error(`Failed to upload: ${file.name}`),
@@ -842,6 +852,21 @@ function LibraryTab() {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-1 rounded-md border p-0.5">
+          {(['all', 'audio', 'video'] as const).map((t) => (
+            <Button
+              key={t}
+              variant={typeFilter === t ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-2 text-xs capitalize"
+              onClick={() => setTypeFilter(t)}
+            >
+              {t === 'audio' && <FileAudio className="h-3 w-3 mr-1" />}
+              {t === 'video' && <Video className="h-3 w-3 mr-1" />}
+              {t}
+            </Button>
+          ))}
+        </div>
         <div className="flex-1" />
         <Input
           value={filter}
@@ -849,7 +874,7 @@ function LibraryTab() {
           placeholder="Filter songs..."
           className="w-48"
         />
-        <input ref={fileInputRef} type="file" accept="audio/*" multiple hidden onChange={handleUpload} />
+        <input ref={fileInputRef} type="file" accept="audio/*,video/*" multiple hidden onChange={handleUpload} />
         <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadSong.isPending}>
           <Upload className="h-4 w-4 mr-1" /> {uploadSong.isPending ? 'Uploading...' : 'Upload'}
         </Button>
@@ -861,12 +886,12 @@ function LibraryTab() {
             if (!configId) return;
             scanLibrary.mutate(configId, {
               onSuccess: (result) => toast.success(
-                result.added > 0 ? `Found ${result.added} new track(s)` : 'No new tracks found'
+                result.added > 0 ? `Found ${result.added} new file(s)` : 'No new files found'
               ),
               onError: () => toast.error('Scan failed'),
             });
           }}
-          title="Scan for audio files already in the music folder (e.g. shared with another app)"
+          title="Scan for audio/video files already in the music folder (e.g. shared with another app)"
         >
           <RefreshCw className={`h-4 w-4 mr-1 ${scanLibrary.isPending ? 'animate-spin' : ''}`} /> {scanLibrary.isPending ? 'Scanning...' : 'Scan for New Files'}
         </Button>
@@ -1026,11 +1051,12 @@ function LibraryTab() {
 
       {/* Song List */}
       {isLoading ? <PageLoader /> : filtered.length === 0 ? (
-        <EmptyState icon={Music} title="No songs yet" description="Upload audio files or download from YouTube to build your library." />
+        <EmptyState icon={Music} title="No files yet" description="Upload audio/video files or download from YouTube to build your library." />
       ) : (
         <div className="border rounded-lg overflow-hidden">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] gap-2 px-3 py-2 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto] gap-2 px-3 py-2 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             <span>Title</span>
+            <span className="w-14 text-center">Type</span>
             <span className="w-20 text-right">Duration</span>
             <span className="w-16 text-center">Source</span>
             <span className="w-16 text-right">Size</span>
@@ -1038,11 +1064,17 @@ function LibraryTab() {
           </div>
           <div className="max-h-[400px] overflow-y-auto">
             {filtered.map((song) => (
-              <div key={song.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] gap-2 px-3 py-2 hover:bg-muted/30 transition-colors items-center border-t border-border/50">
+              <div key={song.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto] gap-2 px-3 py-2 hover:bg-muted/30 transition-colors items-center border-t border-border/50">
                 <div className="min-w-0">
                   <p className="text-xs font-medium truncate">{song.title}</p>
                   {song.artist && <p className="text-[10px] text-muted-foreground truncate">{song.artist}</p>}
                 </div>
+                <span className="w-14 flex justify-center">
+                  <Badge variant="secondary" className="text-[9px] gap-1">
+                    {song.mediaType === 'video' ? <Video className="h-3 w-3" /> : <FileAudio className="h-3 w-3" />}
+                    {song.mediaType}
+                  </Badge>
+                </span>
                 <span className="text-xs text-muted-foreground w-20 text-right">{formatTime(song.duration)}</span>
                 <span className="w-16 flex justify-center">
                   <Badge variant="outline" className="text-[9px] gap-1">{sourceIcon(song.source)} {song.source}</Badge>
@@ -1064,8 +1096,8 @@ function LibraryTab() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete Song?"
-        description="This will permanently remove this song from the library."
+        title="Delete File?"
+        description="This will permanently remove this file from the library."
         onConfirm={() => {
           if (deleteId && configId) deleteSong.mutate({ configId, songId: deleteId }, {
             onSuccess: () => { toast.success('Song deleted'); setDeleteId(null); },
@@ -1087,7 +1119,7 @@ function PlaylistsTab() {
   const addSong = useAddSongToPlaylist();
   const removeSong = useRemoveSongFromPlaylist();
 
-  const { data: songs } = useSongs(selectedConfigId);
+  const { data: songs } = useSongs(selectedConfigId, 'audio');
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
@@ -1550,7 +1582,7 @@ function VideoTab() {
           </div>
 
           {selectedBot ? (
-            <VideoStreamTab botId={selectedBot.id} botStatus={selectedBot.status} />
+            <VideoStreamTab botId={selectedBot.id} botStatus={selectedBot.status} serverConfigId={selectedBot.serverConfigId} />
           ) : (
             <p className="text-sm text-muted-foreground">Select a bot to manage video streaming.</p>
           )}

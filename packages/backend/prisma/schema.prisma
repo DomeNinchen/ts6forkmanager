@@ -166,6 +166,7 @@ model Song {
   source          String    @default("local")
   sourceUrl       String?
   fileSize        Int?
+  mediaType       String    @default("audio")
   serverConfigId  Int
   serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
   createdAt       DateTime  @default(now())

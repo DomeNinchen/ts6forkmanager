@@ -3,21 +3,19 @@ import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { downloadYouTube, searchYouTube, getYouTubeUrlInfo } from '../voice/audio/youtube.js';
 import { scanMusicLibrary, getAudioDuration } from '../voice/audio/music-library-scan.js';
+import { MUSIC_DIR, AUDIO_DIR, VIDEO_DIR, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS } from '../voice/audio/media-dirs.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { randomUUID } from 'crypto';
 
-const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
-const ALLOWED_EXTENSIONS = ['.mp3', '.wav', '.flac', '.ogg', '.opus', '.m4a', '.aac', '.wma', '.webm'];
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-
-// Ensure music directory exists
-if (!fs.existsSync(MUSIC_DIR)) {
-  fs.mkdirSync(MUSIC_DIR, { recursive: true });
-}
+const ALL_EXTENSIONS = Array.from(new Set([...AUDIO_EXTENSIONS, ...VIDEO_EXTENSIONS]));
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB (raised from 100MB to fit video uploads)
 
 const storage = multer.diskStorage({
+  // Landed in MUSIC_DIR itself; moved into music/ or video/ once the upload
+  // handler knows the claimed media type (multer only guarantees req.body is
+  // fully populated once parsing is done, not yet inside this callback).
   destination: (_req, _file, cb) => cb(null, MUSIC_DIR),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -30,7 +28,7 @@ const upload = multer({
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (ALLOWED_EXTENSIONS.includes(ext)) {
+    if (ALL_EXTENSIONS.includes(ext)) {
       cb(null, true);
     } else {
       cb(new Error(`Unsupported file type: ${ext}`));
@@ -42,13 +40,14 @@ export const musicLibraryRoutes: Router = Router({ mergeParams: true });
 
 musicLibraryRoutes.use(requireRole('admin'));
 
-// GET /songs — List songs for this server
+// GET /songs — List songs for this server, optionally filtered to one media type
 musicLibraryRoutes.get('/songs', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const configId = parseInt(req.params.configId as string);
+    const mediaType = req.query.mediaType === 'audio' || req.query.mediaType === 'video' ? req.query.mediaType : undefined;
     const songs = await prisma.song.findMany({
-      where: { serverConfigId: configId },
+      where: { serverConfigId: configId, ...(mediaType ? { mediaType } : {}) },
       orderBy: { createdAt: 'desc' },
     });
     res.json(songs);
@@ -66,7 +65,10 @@ musicLibraryRoutes.post('/scan', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /upload — Upload audio file
+// POST /upload — Upload an audio or video file. `mediaType` (audio|video, a
+// regular form field alongside `file`) picks the destination folder and
+// resolves the .webm ambiguity between the two extension lists; defaults to
+// audio for older frontends that don't send it yet.
 musicLibraryRoutes.post('/upload', upload.single('file'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
@@ -74,10 +76,23 @@ musicLibraryRoutes.post('/upload', upload.single('file'), async (req: Request, r
     const file = req.file;
     if (!file) throw new AppError(400, 'No file uploaded');
 
-    // Extract duration via ffprobe
+    const mediaType: 'audio' | 'video' = req.body.mediaType === 'video' ? 'video' : 'audio';
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedForType = mediaType === 'video' ? VIDEO_EXTENSIONS : AUDIO_EXTENSIONS;
+    if (!allowedForType.includes(ext)) {
+      fs.unlinkSync(file.path);
+      throw new AppError(400, `${ext} is not a supported ${mediaType} file type`);
+    }
+
+    // Move out of the MUSIC_DIR landing spot into music/ or video/.
+    const destDir = mediaType === 'video' ? VIDEO_DIR : AUDIO_DIR;
+    const finalPath = path.join(destDir, path.basename(file.path));
+    fs.renameSync(file.path, finalPath);
+
+    // Extract duration via ffprobe (works for both audio and video containers)
     let duration: number | null = null;
     try {
-      duration = await getAudioDuration(file.path);
+      duration = await getAudioDuration(finalPath);
     } catch { /* ignore duration extraction failure */ }
 
     // Parse title/artist from filename
@@ -95,8 +110,9 @@ musicLibraryRoutes.post('/upload', upload.single('file'), async (req: Request, r
         title,
         artist,
         duration,
-        filePath: file.path,
+        filePath: finalPath,
         source: 'local',
+        mediaType,
         fileSize: file.size,
         serverConfigId: configId,
       },

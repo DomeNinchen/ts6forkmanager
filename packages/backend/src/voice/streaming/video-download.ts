@@ -3,8 +3,7 @@ import path from 'path';
 import { spawn } from 'child_process';
 import { getCookieArgs } from '../audio/youtube.js';
 import { validateUrl } from '../../utils/url-validator.js';
-
-const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
+import { MUSIC_DIR, VIDEO_SUBDIR } from '../audio/media-dirs.js';
 
 /** Temp files we create: `.stream-<digits>.mp4` */
 const STREAM_TEMP_NAME = /^\.stream-\d+\.mp4$/;
@@ -26,14 +25,61 @@ function ensureMusicDir(): string {
   return fs.realpathSync(musicRoot);
 }
 
+function ensureDir(root: string): string {
+  const resolved = path.resolve(root);
+  if (!fs.existsSync(resolved)) {
+    fs.mkdirSync(resolved, { recursive: true });
+  }
+  return fs.realpathSync(resolved);
+}
+
+function isUnderRoot(root: string, absolute: string): boolean {
+  const relative = path.relative(root, absolute);
+  return (
+    !relative.startsWith('..') &&
+    !path.isAbsolute(relative) &&
+    !relative.split(path.sep).some((p) => p === '..')
+  );
+}
+
 /**
- * Map a user-supplied local reference to a path under MUSIC_DIR.
- * Only basenames (or MUSIC_DIR/basename) are accepted — never raw absolute paths.
- * The returned path is always `path.join(musicRoot, basename)` so FS ops are not
- * driven by uncontrolled path expressions (CodeQL path-injection).
+ * Try to resolve an already-allowlisted plain filename directly under `root`
+ * (one path segment, no further subdirectories), re-checking the allowlist
+ * against its realpath to rule out a symlink escape. Returns null (not found
+ * / escapes root) rather than throwing, so callers can try multiple roots.
+ */
+function resolveBasenameUnder(root: string, base: string): string | null {
+  const candidate = path.join(root, base);
+  if (!fs.existsSync(candidate)) return null;
+
+  const realFile = fs.realpathSync(candidate);
+  const realRel = path.relative(root, realFile);
+  if (
+    realRel.startsWith('..') ||
+    path.isAbsolute(realRel) ||
+    realRel.split(path.sep).length !== 1
+  ) {
+    return null;
+  }
+  const realBase = path.basename(realFile);
+  if (!SAFE_LOCAL_BASENAME.test(realBase) && !STREAM_TEMP_NAME.test(realBase)) {
+    return null;
+  }
+  return path.join(root, realBase);
+}
+
+/**
+ * Map a user-supplied local reference to a path under MUSIC_DIR's video/
+ * subfolder (where new video content lives) or, for anything predating that
+ * split, MUSIC_DIR's own root - see clusterzx/ts6-manager#33.
+ * Only basenames (or a path resolving under one of those two roots) are
+ * accepted — never raw absolute paths. The returned path is always
+ * `path.join(<trusted root>, basename)` so FS ops are not driven by
+ * uncontrolled path expressions (CodeQL path-injection).
  */
 export function resolvePathUnderMusicDir(filePath: string): string {
   const musicRoot = ensureMusicDir();
+  const videoRoot = ensureDir(path.join(MUSIC_DIR, VIDEO_SUBDIR));
   const trimmed = filePath.trim();
   if (!trimmed || trimmed.includes('\0')) {
     throw new Error('Invalid local video path');
@@ -46,16 +92,12 @@ export function resolvePathUnderMusicDir(filePath: string): string {
     throw new Error('Local video path must be a filename under MUSIC_DIR');
   }
 
-  // If the caller passed a path with directories, require it to resolve under MUSIC_DIR
-  // before we discard the directory part — prevents surprising basename-only fallback.
+  // If the caller passed a path with directories, require it to resolve under
+  // one of the two roots before we discard the directory part — prevents
+  // surprising basename-only fallback.
   if (trimmed !== base) {
     const absolute = path.resolve(trimmed);
-    const relative = path.relative(musicRoot, absolute);
-    if (
-      relative.startsWith('..') ||
-      path.isAbsolute(relative) ||
-      relative.split(path.sep).some((p) => p === '..')
-    ) {
+    if (!isUnderRoot(musicRoot, absolute) && !isUnderRoot(videoRoot, absolute)) {
       throw new Error('Local video path must be under MUSIC_DIR');
     }
     if (path.basename(absolute) !== base) {
@@ -63,28 +105,13 @@ export function resolvePathUnderMusicDir(filePath: string): string {
     }
   }
 
-  // Reconstruct exclusively from trusted root + allowlisted basename.
-  const safePath = path.join(musicRoot, base);
-  if (!fs.existsSync(safePath)) {
+  // Prefer video/ (where new content lands), fall back to MUSIC_DIR's own
+  // root (files from before the music/video split).
+  const resolved = resolveBasenameUnder(videoRoot, base) ?? resolveBasenameUnder(musicRoot, base);
+  if (!resolved) {
     throw new Error('Local video file not found');
   }
-
-  // Symlink escape: realpath must still land under MUSIC_DIR; return join(root, base)
-  // of the real basename only if it remains allowlisted.
-  const realFile = fs.realpathSync(safePath);
-  const realRel = path.relative(musicRoot, realFile);
-  if (
-    realRel.startsWith('..') ||
-    path.isAbsolute(realRel) ||
-    realRel.split(path.sep).length !== 1
-  ) {
-    throw new Error('Local video path must be under MUSIC_DIR');
-  }
-  const realBase = path.basename(realFile);
-  if (!SAFE_LOCAL_BASENAME.test(realBase) && !STREAM_TEMP_NAME.test(realBase)) {
-    throw new Error('Local video path must be under MUSIC_DIR');
-  }
-  return path.join(musicRoot, realBase);
+  return resolved;
 }
 
 /** Probe a local media file's duration in seconds, or null if it can't be determined. */
