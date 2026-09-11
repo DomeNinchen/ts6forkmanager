@@ -276,6 +276,7 @@ The Docker images run this automatically on startup.
 | `YT_COOKIE_FILE` | — | Optional. Path to a Netscape-format cookies.txt file for yt-dlp. Can also be managed via **Settings → YouTube** in the UI. |
 | `TS_ALLOW_SELF_SIGNED` | `false` | Set to `true`/`1` to accept self-signed TLS certs when connecting to the TeamSpeak WebQuery API. |
 | `VOICE_DEBUG` | unset (off) | Set to `1` to enable verbose voice-bot/audio-pipeline debug logging. |
+| `RANK_CHECK_DEBUG` | unset (off) | Set to `1` to log per-client detail (computed hours, group membership) for the Rank Check bot-flow action. Promotions, errors, and the per-run summary always log regardless. |
 | `NODE_ENV` | `development` | Set to `production` in Docker; enables the startup guard that refuses a default `JWT_SECRET`. |
 
 </details>

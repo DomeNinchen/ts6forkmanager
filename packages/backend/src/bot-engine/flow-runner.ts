@@ -558,6 +558,12 @@ export class FlowRunner {
   }
 
   private async executeRankCheck(data: RankCheckActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+    // Per-client detail (computed hours, group membership, why a client was
+    // or wasn't promoted) is verbose - every eligible client, every tick.
+    // Off by default; set RANK_CHECK_DEBUG=1 to see it while diagnosing.
+    // Promotions, errors, and the per-tick summary always log regardless.
+    const RANK_CHECK_DEBUG = process.env.RANK_CHECK_DEBUG === '1';
+
     // ranks is JSON: [{ "hours": 10, "groupId": "7" }, { "hours": 50, "groupId": "8" }]
     let ranks: Array<{ hours: number; groupId: string }>;
     try {
@@ -632,14 +638,16 @@ export class FlowRunner {
         totalHours = totalSeconds / 3600;
       }
 
-      console.log(`[BotEngine] Rank Check: cldbid=${cldbid} at ${totalHours.toFixed(4)}h (mode=${mode}), current groups=[${clientGroups.join(',')}]`);
+      if (RANK_CHECK_DEBUG) {
+        console.log(`[BotEngine] Rank Check: cldbid=${cldbid} at ${totalHours.toFixed(4)}h (mode=${mode}), current groups=[${clientGroups.join(',')}]`);
+      }
 
       let matchedRank = false;
       for (const rank of ranks) {
         if (totalHours >= rank.hours) {
           matchedRank = true;
           if (clientGroups.includes(rank.groupId)) {
-            console.log(`[BotEngine] Rank Check: cldbid=${cldbid} already has group ${rank.groupId}, skipping`);
+            if (RANK_CHECK_DEBUG) console.log(`[BotEngine] Rank Check: cldbid=${cldbid} already has group ${rank.groupId}, skipping`);
             break;
           }
           try {
@@ -652,7 +660,7 @@ export class FlowRunner {
           break; // Only assign highest eligible rank
         }
       }
-      if (!matchedRank) {
+      if (!matchedRank && RANK_CHECK_DEBUG) {
         console.log(`[BotEngine] Rank Check: cldbid=${cldbid} doesn't meet any rank threshold yet (lowest is ${Math.min(...ranks.map(r => r.hours))}h)`);
       }
     }
