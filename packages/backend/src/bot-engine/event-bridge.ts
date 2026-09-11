@@ -96,6 +96,34 @@ export class EventBridge extends EventEmitter {
     }
   }
 
+  /**
+   * Tear down every SSH connection (base + command listeners) for a server
+   * config, across all virtual servers/channels. Used when that config's SSH
+   * credentials are edited — existing connections keep running on the old
+   * credentials otherwise, since connectServer() no-ops while one is already
+   * open. Callers are expected to reconnect afterwards (e.g. via
+   * BotEngine.refreshServerConnections()).
+   */
+  async disconnectAllForConfig(configId: number): Promise<void> {
+    const closing: Promise<void>[] = [];
+    const prefix = `${configId}:`;
+
+    for (const [key, client] of this.connections) {
+      if (key.startsWith(prefix)) {
+        closing.push(client.destroy());
+        this.connections.delete(key);
+      }
+    }
+    for (const [key, client] of this.commandListeners) {
+      if (key.startsWith(prefix)) {
+        closing.push(client.destroy());
+        this.commandListeners.delete(key);
+      }
+    }
+
+    await Promise.all(closing);
+  }
+
   isConnected(configId: number, sid: number): boolean {
     const key = this.makeKey(configId, sid);
     const client = this.connections.get(key);
