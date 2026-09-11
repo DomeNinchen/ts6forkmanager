@@ -270,6 +270,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
     icon: Award,
     configFields: [
       { key: 'ranks', label: 'Ranks (JSON)', type: 'text', placeholder: '[{"hours":10,"groupId":"7"},{"hours":50,"groupId":"8"}]', required: true },
+      { key: 'mode', label: 'Hours measured as', type: 'select', defaultValue: 'accumulatedTime', options: [{ label: 'Actual online time (accumulated across sessions)', value: 'accumulatedTime' }, { label: 'Time since first connection (member age)', value: 'firstConnectionAge' }] },
       { key: 'pollInterval', label: 'Check Interval', type: 'select', defaultValue: '*/5 * * * *', options: [{ label: 'Every 5 min', value: '*/5 * * * *' }, { label: 'Every 15 min', value: '*/15 * * * *' }, { label: 'Every hour', value: '0 * * * *' }] },
     ],
     flowDataFactory: (cfg) => {
@@ -278,7 +279,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       return {
         nodes: [
           makeNode(n1, 'trigger_cron', 'Rank Timer', { cron: cfg.pollInterval || '*/5 * * * *' }, 60, 80),
-          makeNode(n2, 'action_rankCheck', 'Check Ranks', { ranks: cfg.ranks || '[]' }, 300, 80),
+          makeNode(n2, 'action_rankCheck', 'Check Ranks', { ranks: cfg.ranks || '[]', mode: cfg.mode || 'accumulatedTime' }, 300, 80),
         ],
         edges: [makeEdge(eid(), n1, n2)],
       };
