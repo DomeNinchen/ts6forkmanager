@@ -105,7 +105,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Multiple bots per server, each with independent queue and playback
 - Radio station streaming with ICY metadata and live title updates
 - YouTube playback via yt-dlp (search, download, queue)
-- Media library management: upload audio or video, or scan for files already sitting in the shared music folder (e.g. a volume shared with another app), organized into `music/`/`video/` subfolders and filterable by type; playlists
+- Media library management: upload audio or video, or scan for files already sitting in the shared music folder (e.g. a volume shared with another app), organized into `music/`/`video/` subfolders, filterable by type and sortable by title/type/duration; playlists
 - Volume control, pause, skip, previous, shuffle, repeat
 - Stereo audio support with stable 20ms pacing
 - Auto-reconnect with exponential backoff on disconnect

@@ -36,7 +36,7 @@ import {
   Volume2, VolumeX, Upload, Search, Download, ListMusic, Shuffle,
   Repeat, Repeat1, Power, PowerOff, RefreshCw, Pencil, X, Loader2,
   Film, FileAudio, Link, GripVertical, Music2, Radio, Clock,
-  Video,
+  Video, ArrowUp, ArrowDown, ArrowUpDown,
 } from 'lucide-react';
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
 import { toast } from 'sonner';
@@ -55,6 +55,11 @@ function formatTime(seconds: number | null | undefined): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function SortIcon({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
+  if (!active) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+  return dir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
 }
 
 const statusColors: Record<string, string> = {
@@ -742,6 +747,8 @@ function LibraryTab() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [filter, setFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'audio' | 'video'>('all');
+  const [sortBy, setSortBy] = useState<'title' | 'type' | 'duration'>('title');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [ytUrl, setYtUrl] = useState('');
   const [urlInfo, setUrlInfo] = useState<{ type: 'video' | 'playlist'; items: YouTubeSearchResult[] } | null>(null);
   const [selectedUrlIds, setSelectedUrlIds] = useState<Set<string>>(new Set());
@@ -753,6 +760,26 @@ function LibraryTab() {
   const filtered = filter
     ? byType.filter((s) => s.title.toLowerCase().includes(filter.toLowerCase()) || (s.artist || '').toLowerCase().includes(filter.toLowerCase()))
     : byType;
+  const sorted = [...filtered].sort((a, b) => {
+    let cmp: number;
+    if (sortBy === 'duration') {
+      cmp = (a.duration ?? 0) - (b.duration ?? 0);
+    } else if (sortBy === 'type') {
+      cmp = a.mediaType.localeCompare(b.mediaType) || a.title.localeCompare(b.title);
+    } else {
+      cmp = a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const toggleSort = (column: 'title' | 'type' | 'duration') => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(column);
+      setSortDir('asc');
+    }
+  };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -1058,22 +1085,38 @@ function LibraryTab() {
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto] gap-2 px-3 py-2 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            <span className="flex items-center gap-1.5">
-              Title
+            <button
+              type="button"
+              className="flex items-center gap-1.5 text-left hover:text-foreground transition-colors"
+              onClick={() => toggleSort('title')}
+            >
+              Title <SortIcon active={sortBy === 'title'} dir={sortDir} />
               {isFetching && (
                 <span className="flex items-center gap-1 normal-case font-normal text-muted-foreground/80">
                   <RefreshCw className="h-3 w-3 animate-spin" /> Refreshing...
                 </span>
               )}
-            </span>
-            <span className="w-14 text-center">Type</span>
-            <span className="w-20 text-right">Duration</span>
+            </button>
+            <button
+              type="button"
+              className="w-14 flex items-center justify-center gap-1 hover:text-foreground transition-colors"
+              onClick={() => toggleSort('type')}
+            >
+              Type <SortIcon active={sortBy === 'type'} dir={sortDir} />
+            </button>
+            <button
+              type="button"
+              className="w-20 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
+              onClick={() => toggleSort('duration')}
+            >
+              Duration <SortIcon active={sortBy === 'duration'} dir={sortDir} />
+            </button>
             <span className="w-16 text-center">Source</span>
             <span className="w-16 text-right">Size</span>
             <span className="w-16" />
           </div>
           <div className="max-h-[400px] overflow-y-auto">
-            {filtered.map((song) => (
+            {sorted.map((song) => (
               <div key={song.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto] gap-2 px-3 py-2 hover:bg-muted/30 transition-colors items-center border-t border-border/50">
                 <div className="min-w-0">
                   <p className="text-xs font-medium truncate">{song.title}</p>
