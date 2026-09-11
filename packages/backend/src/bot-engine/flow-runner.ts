@@ -573,19 +573,40 @@ export class FlowRunner {
     const clients = await client.executePost(ctx.sid, 'clientlist', { '-times': '', '-groups': '' });
     if (!Array.isArray(clients)) return;
 
+    const mode = data.mode || 'accumulatedTime';
     let promoted = 0;
     for (const cl of clients) {
       if (String(cl.client_type) === '1') continue;
       const cldbid = String(cl.client_database_id);
 
-      // Get total online time from BotVariable (accumulate via cron)
-      const varName = `onlinetime_${cldbid}`;
-      const storedStr = await ctx.getVariable(varName);
-      const storedSeconds = parseFloat(storedStr) || 0;
-      // Add current connection time
-      const connectionTime = parseInt(cl.connection_connected_time) || 0;
-      const totalSeconds = storedSeconds + connectionTime / 1000;
-      const totalHours = totalSeconds / 3600;
+      let totalHours: number;
+      if (mode === 'firstConnectionAge') {
+        // Time since this client's TS database record was first created,
+        // regardless of how much of it was actually spent online.
+        const createdUnix = parseInt(cl.client_created) || 0;
+        if (!createdUnix) continue;
+        totalHours = (Date.now() / 1000 - createdUnix) / 3600;
+      } else {
+        // Total time actually spent connected, accumulated across sessions.
+        // `connection_connected_time` is cumulative since the CURRENT
+        // session started, not since the last time we checked - naively
+        // adding it to the stored total on every tick would recount the
+        // same session's time over and over as it keeps growing. Instead we
+        // track the last-seen session position and only add the delta
+        // since then; a value lower than what we last saw means the client
+        // reconnected (a new session started), so the whole current value
+        // is new elapsed time.
+        const varName = `onlinetime_${cldbid}`;
+        const lastSessionVarName = `onlinetime_${cldbid}_lastsession`;
+        const storedSeconds = parseFloat(await ctx.getVariable(varName)) || 0;
+        const lastSessionSeconds = parseFloat(await ctx.getVariable(lastSessionVarName)) || 0;
+        const connectionTime = (parseInt(cl.connection_connected_time) || 0) / 1000;
+        const delta = connectionTime < lastSessionSeconds ? connectionTime : connectionTime - lastSessionSeconds;
+        const totalSeconds = storedSeconds + Math.max(0, delta);
+        await ctx.setVariable(varName, String(totalSeconds));
+        await ctx.setVariable(lastSessionVarName, String(connectionTime));
+        totalHours = totalSeconds / 3600;
+      }
 
       const clientGroups = String(cl.client_servergroups || '').split(',');
 

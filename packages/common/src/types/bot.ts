@@ -206,6 +206,15 @@ export interface RankCheckActionData {
   actionType: 'rankCheck';
   label: string;
   ranks: string;
+  /**
+   * How the hours in `ranks` are measured:
+   * - 'accumulatedTime' (default): total time actually spent connected,
+   *   summed across every session and persisted between them.
+   * - 'firstConnectionAge': time since the client's TS database record was
+   *   first created (`client_created`), regardless of how much of that time
+   *   was actually spent online.
+   */
+  mode?: 'accumulatedTime' | 'firstConnectionAge';
 }
 
 export interface TempChannelCleanupActionData {

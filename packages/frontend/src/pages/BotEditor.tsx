@@ -1140,10 +1140,22 @@ export default function BotEditor() {
                   )}
 
                   {selectedNodeData.type === 'action_rankCheck' && (
-                    <div>
-                      <Label className="text-[10px] text-muted-foreground">Ranks (JSON)</Label>
-                      <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='[{"hours":10,"groupId":"7"},{"hours":50,"groupId":"8"}]' value={selectedNodeData.config.ranks || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, ranks: e.target.value } } : n))} />
-                      <p className="text-[9px] text-muted-foreground mt-1">Array of {'{hours, groupId}'} — highest eligible rank is assigned</p>
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Ranks (JSON)</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='[{"hours":10,"groupId":"7"},{"hours":50,"groupId":"8"}]' value={selectedNodeData.config.ranks || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, ranks: e.target.value } } : n))} />
+                        <p className="text-[9px] text-muted-foreground mt-1">Array of {'{hours, groupId}'} — highest eligible rank is assigned</p>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Hours measured as</Label>
+                        <Select value={selectedNodeData.config.mode || 'accumulatedTime'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, mode: v } } : n))}>
+                          <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="accumulatedTime">Actual online time (accumulated across sessions)</SelectItem>
+                            <SelectItem value="firstConnectionAge">Time since first connection (member age)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
 

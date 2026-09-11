@@ -140,7 +140,7 @@ function normalizeFlowData(raw: any): FlowDefinition {
       data = { actionType: 'pokeGroup', label, groupId: config.groupId || '', message: config.message || '' };
     } else if (nodeType === 'action_rankCheck') {
       type = 'action';
-      data = { actionType: 'rankCheck', label, ranks: config.ranks || '[]' };
+      data = { actionType: 'rankCheck', label, ranks: config.ranks || '[]', mode: config.mode || 'accumulatedTime' };
     } else if (nodeType === 'action_tempChannelCleanup') {
       type = 'action';
       data = { actionType: 'tempChannelCleanup', label, parentChannelId: config.parentChannelId || '', protectedChannelIds: config.protectedChannelIds || '' };
