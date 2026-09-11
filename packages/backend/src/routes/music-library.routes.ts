@@ -60,7 +60,7 @@ musicLibraryRoutes.post('/scan', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const configId = parseInt(req.params.configId as string);
-    const result = await scanMusicLibrary(prisma, configId);
+    const result = await scanMusicLibrary(prisma, configId, { recoverYouTubeTitles: true });
     res.json(result);
   } catch (err) { next(err); }
 });

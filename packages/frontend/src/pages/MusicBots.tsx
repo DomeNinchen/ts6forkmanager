@@ -885,9 +885,12 @@ function LibraryTab() {
           onClick={() => {
             if (!configId) return;
             scanLibrary.mutate(configId, {
-              onSuccess: (result) => toast.success(
-                result.added > 0 ? `Found ${result.added} new file(s)` : 'No new files found'
-              ),
+              onSuccess: (result) => {
+                const parts: string[] = [];
+                if (result.added > 0) parts.push(`found ${result.added} new file(s)`);
+                if (result.healed > 0) parts.push(`fixed ${result.healed} title(s)`);
+                toast.success(parts.length > 0 ? parts.join(', ') : 'No new files found');
+              },
               onError: () => toast.error('Scan failed'),
             });
           }}

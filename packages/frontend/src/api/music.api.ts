@@ -76,7 +76,7 @@ export const musicLibraryApi = {
     api.post(`/servers/${configId}/music-library/youtube/info`, { url }).then((r) => r.data),
   youtubeDownloadBatch: (configId: number, urls: string[]) =>
     api.post(`/servers/${configId}/music-library/youtube/download-batch`, { urls }, { timeout: 600000 }).then((r) => r.data),
-  scan: (configId: number): Promise<{ added: number; skipped: number }> =>
+  scan: (configId: number): Promise<{ added: number; skipped: number; healed: number }> =>
     api.post(`/servers/${configId}/music-library/scan`).then((r) => r.data),
 };
 
