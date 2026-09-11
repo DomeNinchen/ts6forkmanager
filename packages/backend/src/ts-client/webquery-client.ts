@@ -100,12 +100,12 @@ export class WebQueryClient {
   }
 
   // Test connection
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<{ success: boolean; error?: string }> {
     try {
       await this.execute(0, 'version');
-      return true;
-    } catch {
-      return false;
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Connection failed' };
     }
   }
 

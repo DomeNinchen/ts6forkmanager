@@ -36,12 +36,22 @@ export function tsUnescape(str: string): string {
   let result = "";
   for (let i = 0; i < str.length; i++) {
     if (str[i] === "\\") {
+      // Unknown/trailing escapes are passed through literally instead of
+      // throwing - an unrecognized sequence here shouldn't take down the
+      // whole music bot (matches the SSH/EventBridge side's tsUnescape in
+      // common/ts-escape.ts, which is lenient the same way).
+      if (i + 1 >= str.length) {
+        result += "\\";
+        continue;
+      }
+      const next = str[i + 1];
+      const mapped = UNESCAPE_MAP[next];
+      if (mapped === undefined) {
+        result += "\\" + next;
+      } else {
+        result += mapped;
+      }
       i++;
-      if (i >= str.length) throw new Error("Invalid escape sequence");
-      const mapped = UNESCAPE_MAP[str[i]];
-      if (mapped === undefined)
-        throw new Error(`Unknown escape: \\${str[i]}`);
-      result += mapped;
     } else {
       result += str[i];
     }

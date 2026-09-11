@@ -210,7 +210,7 @@ function ConnectionsTab() {
               </div>
               <div className="flex items-center gap-1 pt-2">
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => testServer.mutate(server.id, {
-                  onSuccess: () => toast.success('Connection successful'),
+                  onSuccess: (data: any) => data?.success ? toast.success('Connection successful') : toast.error(data?.error ? `Connection failed: ${data.error}` : 'Connection failed'),
                   onError: () => toast.error('Connection failed'),
                 })}>
                   <TestTube className="h-3 w-3 mr-1" /> Test
