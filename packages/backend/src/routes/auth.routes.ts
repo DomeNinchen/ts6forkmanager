@@ -82,15 +82,24 @@ authRoutes.post('/refresh', async (req: Request, res: Response, next) => {
       throw new AppError(401, 'Invalid refresh token');
     }
 
-    // Rotate: mark old token as replaced, create new one in same family
+    // Rotate: mark old token as replaced, create new one in same family.
+    // Two concurrent refresh requests can both read the same `stored` row
+    // above before either mutates it. Claim it with a conditional update
+    // (only succeeds if nobody has rotated it yet) instead of an
+    // unconditional one, so the losing request gets a clean "already
+    // refreshed" 401 instead of crashing on a Prisma "record not found"
+    // when it later tries to update/delete a row the winner already removed.
     const newRefreshToken = crypto.randomBytes(64).toString('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    await prisma.refreshToken.update({
-      where: { id: stored.id },
+    const claimed = await prisma.refreshToken.updateMany({
+      where: { id: stored.id, replacedBy: null },
       data: { replacedBy: newRefreshToken },
     });
+    if (claimed.count === 0) {
+      throw new AppError(401, 'Refresh token already used');
+    }
 
     await prisma.refreshToken.create({
       data: { token: newRefreshToken, userId: stored.userId, expiresAt, family: stored.family },
