@@ -15,4 +15,10 @@ export const settingsApi = {
     api.post('/settings/yt-cookies', { text }).then((r) => r.data),
 
   deleteYtCookies: () => api.delete('/settings/yt-cookies').then((r) => r.data),
+
+  getDebugFlags: (): Promise<{ voice: boolean; rankCheck: boolean }> =>
+    api.get('/settings/debug-flags').then((r) => r.data),
+
+  setDebugFlag: (name: 'voice' | 'rankCheck', enabled: boolean) =>
+    api.put(`/settings/debug-flags/${name}`, { enabled }).then((r) => r.data),
 };

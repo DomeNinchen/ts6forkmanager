@@ -11,6 +11,7 @@ import { MusicCommandHandler } from './voice/music-command-handler.js';
 import { config } from './config.js';
 import { setYtCookieFile } from './voice/audio/youtube.js';
 import { sweepStreamTempFiles } from './voice/streaming/video-download.js';
+import { loadDebugFlags } from './utils/debug-flags.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
@@ -43,6 +44,7 @@ async function main() {
 
   const adapter = new PrismaBetterSqlite3({ url: config.databaseUrl });
   const prisma = new PrismaClient({ adapter });
+  await loadDebugFlags(prisma);
   const app = createApp();
   const server = createServer(app);
 
