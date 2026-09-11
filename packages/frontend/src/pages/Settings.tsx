@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Settings() {
@@ -594,6 +594,7 @@ function YouTubeTab() {
 
 function DebugTab() {
   const qc = useQueryClient();
+  const [confirmReset, setConfirmReset] = useState<'radio' | 'bots' | null>(null);
 
   const { data: flags, isLoading } = useQuery({
     queryKey: ['debug-flags'],
@@ -605,6 +606,26 @@ function DebugTab() {
       settingsApi.setDebugFlag(name, enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['debug-flags'] }),
     onError: () => toast.error('Failed to update debug flag'),
+  });
+
+  const resetRadioIds = useMutation({
+    mutationFn: settingsApi.resetRadioStationIds,
+    onSuccess: ({ deletedCount }) => {
+      qc.invalidateQueries({ queryKey: ['radio-stations'] });
+      toast.success(`Deleted ${deletedCount} radio station(s), IDs reset`);
+      setConfirmReset(null);
+    },
+    onError: () => toast.error('Failed to reset radio station IDs'),
+  });
+
+  const resetBotIds = useMutation({
+    mutationFn: settingsApi.resetMusicBotIds,
+    onSuccess: ({ deletedCount }) => {
+      qc.invalidateQueries({ queryKey: ['music-bots'] });
+      toast.success(`Deleted ${deletedCount} music bot(s), IDs reset`);
+      setConfirmReset(null);
+    },
+    onError: () => toast.error('Failed to reset music bot IDs'),
   });
 
   if (isLoading) return <PageLoader />;
@@ -644,6 +665,57 @@ function DebugTab() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-destructive flex items-center gap-1.5">
+            <AlertTriangle className="h-4 w-4" /> Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            SQLite's id counters never go back down on their own, even after deleting everything -
+            these wipe a table entirely (across every server, not just the one selected above) so its
+            next entry starts back at #1.
+          </p>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Reset Radio Station IDs</Label>
+              <p className="text-[11px] text-muted-foreground">Deletes every radio station on every server.</p>
+            </div>
+            <Button variant="destructive" size="sm" onClick={() => setConfirmReset('radio')}>
+              Reset
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Reset Music Bot IDs</Label>
+              <p className="text-[11px] text-muted-foreground">Stops and deletes every music bot on every server.</p>
+            </div>
+            <Button variant="destructive" size="sm" onClick={() => setConfirmReset('bots')}>
+              Reset
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <ConfirmDialog
+        open={confirmReset !== null}
+        onOpenChange={(open) => !open && setConfirmReset(null)}
+        title={confirmReset === 'radio' ? 'Reset Radio Station IDs?' : 'Reset Music Bot IDs?'}
+        description={
+          confirmReset === 'radio'
+            ? 'This permanently deletes every radio station on every server. They will need to be re-added.'
+            : 'This stops and permanently deletes every music bot on every server. They will need to be re-created.'
+        }
+        onConfirm={() => {
+          if (confirmReset === 'radio') resetRadioIds.mutate();
+          else if (confirmReset === 'bots') resetBotIds.mutate();
+        }}
+        destructive
+      />
     </div>
   );
 }

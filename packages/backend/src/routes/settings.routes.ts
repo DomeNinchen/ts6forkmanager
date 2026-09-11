@@ -10,6 +10,7 @@ import path from 'path';
 import { AppError } from '../middleware/error-handler.js';
 import { setYtCookieFile, getYtCookieFile } from '../voice/audio/youtube.js';
 import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-flags.js';
+import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 
 const settingsRoutes: Router = Router();
 
@@ -99,6 +100,36 @@ settingsRoutes.put('/debug-flags/:name', requireAdmin, async (req: Request, res:
     await setDebugFlag(prisma, name, enabled);
     console.log(`[Settings] Debug flag '${name}' set to ${enabled}`);
     res.json(getDebugFlags());
+  } catch (err) { next(err); }
+});
+
+// Both reset endpoints below wipe the table across every server (not just
+// the one currently selected in the UI) and reset its id counter back to 1
+// - see clusterzx/ts6-manager#58. SQLite's autoincrement counter is per
+// table, not per-server, so there's no way to "reset" it without actually
+// emptying the whole table first; that's why the frontend disclaims this as
+// an all-servers action.
+
+// POST /api/settings/reset-radio-station-ids — Delete ALL radio stations (every server) and reset the id counter
+settingsRoutes.post('/reset-radio-station-ids', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const { count } = await prisma.radioStation.deleteMany({});
+    await prisma.$executeRawUnsafe(`DELETE FROM sqlite_sequence WHERE name = 'RadioStation'`);
+    console.log(`[Settings] Reset radio station IDs (${count} station(s) deleted)`);
+    res.json({ deletedCount: count });
+  } catch (err) { next(err); }
+});
+
+// POST /api/settings/reset-music-bot-ids — Stop + delete ALL music bots (every server) and reset the id counter
+settingsRoutes.post('/reset-music-bot-ids', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const count = await manager.removeAllBots();
+    await prisma.$executeRawUnsafe(`DELETE FROM sqlite_sequence WHERE name = 'MusicBot'`);
+    console.log(`[Settings] Reset music bot IDs (${count} bot(s) deleted)`);
+    res.json({ deletedCount: count });
   } catch (err) { next(err); }
 });
 
