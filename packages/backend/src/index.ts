@@ -12,6 +12,7 @@ import { config } from './config.js';
 import { setYtCookieFile } from './voice/audio/youtube.js';
 import { sweepStreamTempFiles } from './voice/streaming/video-download.js';
 import { loadDebugFlags } from './utils/debug-flags.js';
+import { startScheduledRestartChecker } from './utils/scheduled-restart.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -46,6 +47,7 @@ async function main() {
   const adapter = new PrismaBetterSqlite3({ url: config.databaseUrl });
   const prisma = new PrismaClient({ adapter });
   await loadDebugFlags(prisma);
+  startScheduledRestartChecker(prisma);
 
   // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared
   // with another app) without requiring a manual scan first - see

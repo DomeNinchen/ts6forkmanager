@@ -27,4 +27,17 @@ export const settingsApi = {
 
   resetMusicBotIds: (): Promise<{ deletedCount: number }> =>
     api.post('/settings/reset-music-bot-ids').then((r) => r.data),
+
+  getScheduledRestart: (): Promise<ScheduledRestartConfig> =>
+    api.get('/settings/scheduled-restart').then((r) => r.data),
+
+  setScheduledRestart: (config: ScheduledRestartConfig): Promise<ScheduledRestartConfig> =>
+    api.put('/settings/scheduled-restart', config).then((r) => r.data),
 };
+
+export interface ScheduledRestartConfig {
+  backendEnabled: boolean;
+  sidecarEnabled: boolean;
+  time: string;
+  days: number[];
+}

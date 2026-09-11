@@ -10,6 +10,7 @@ import path from 'path';
 import { AppError } from '../middleware/error-handler.js';
 import { setYtCookieFile, getYtCookieFile } from '../voice/audio/youtube.js';
 import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-flags.js';
+import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRestartConfig } from '../utils/scheduled-restart.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 
 const settingsRoutes: Router = Router();
@@ -130,6 +131,36 @@ settingsRoutes.post('/reset-music-bot-ids', requireAdmin, async (req: Request, r
     await prisma.$executeRawUnsafe(`DELETE FROM sqlite_sequence WHERE name = 'MusicBot'`);
     console.log(`[Settings] Reset music bot IDs (${count} bot(s) deleted)`);
     res.json({ deletedCount: count });
+  } catch (err) { next(err); }
+});
+
+// GET /api/settings/scheduled-restart — Current scheduled-restart config
+settingsRoutes.get('/scheduled-restart', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    res.json(await getScheduledRestartConfig(prisma));
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/scheduled-restart — Update scheduled-restart config
+settingsRoutes.put('/scheduled-restart', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { backendEnabled, sidecarEnabled, time, days } = req.body;
+    if (typeof backendEnabled !== 'boolean' || typeof sidecarEnabled !== 'boolean') {
+      throw new AppError(400, 'backendEnabled and sidecarEnabled must be booleans');
+    }
+    if (typeof time !== 'string' || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(time)) {
+      throw new AppError(400, 'time must be HH:MM (24h)');
+    }
+    if (!Array.isArray(days) || days.some((d: any) => typeof d !== 'number' || d < 0 || d > 6)) {
+      throw new AppError(400, 'days must be an array of numbers 0-6');
+    }
+
+    const config: ScheduledRestartConfig = { backendEnabled, sidecarEnabled, time, days };
+    const prisma = req.app.locals.prisma;
+    await setScheduledRestartConfig(prisma, config);
+    console.log(`[Settings] Scheduled restart config updated: ${JSON.stringify(config)}`);
+    res.json(config);
   } catch (err) { next(err); }
 });
 
