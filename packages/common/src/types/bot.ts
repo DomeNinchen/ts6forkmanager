@@ -215,6 +215,8 @@ export interface RankCheckActionData {
    *   was actually spent online.
    */
   mode?: 'accumulatedTime' | 'firstConnectionAge';
+  /** Comma-separated server group IDs to skip entirely (e.g. a "Bot" group). ServerQuery clients are always skipped regardless of this. */
+  excludeGroupIds?: string;
 }
 
 export interface TempChannelCleanupActionData {
