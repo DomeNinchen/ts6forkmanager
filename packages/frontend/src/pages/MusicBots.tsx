@@ -725,7 +725,7 @@ function LibraryTab() {
   const [libServerId, setLibServerId] = useState<number | null>(selectedConfigId);
   const configId = libServerId || selectedConfigId;
 
-  const { data: songs, isLoading } = useSongs(configId);
+  const { data: songs, isLoading, isFetching } = useSongs(configId);
   const uploadSong = useUploadSong();
   const deleteSong = useDeleteSong();
   const scanLibrary = useScanMusicLibrary();
@@ -1058,7 +1058,14 @@ function LibraryTab() {
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto] gap-2 px-3 py-2 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            <span>Title</span>
+            <span className="flex items-center gap-1.5">
+              Title
+              {isFetching && (
+                <span className="flex items-center gap-1 normal-case font-normal text-muted-foreground/80">
+                  <RefreshCw className="h-3 w-3 animate-spin" /> Refreshing...
+                </span>
+              )}
+            </span>
             <span className="w-14 text-center">Type</span>
             <span className="w-20 text-right">Duration</span>
             <span className="w-16 text-center">Source</span>
