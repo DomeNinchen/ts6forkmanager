@@ -68,4 +68,9 @@ RUN mkdir -p data /data/music && \
 
 EXPOSE 3001
 ENV SIDECAR_URL=http://ts6-sidecar:9800
-CMD ["sh", "-c", "npx prisma db push && npx prisma db seed || true && exec node dist/index.js"]
+# yt-dlp is baked in at build time (above) and would otherwise only ever get
+# newer on a rebuild - YouTube extraction breaks on its own schedule as sites
+# change, independent of when this image last got rebuilt. Check for an
+# update on every container start; non-fatal if it fails (offline, PyPI
+# unreachable, ...) so a network hiccup at boot never blocks startup.
+CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; npx prisma db push && npx prisma db seed || true && exec node dist/index.js"]
