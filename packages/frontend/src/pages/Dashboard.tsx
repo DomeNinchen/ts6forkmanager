@@ -1,4 +1,4 @@
-import { useDashboard } from '@/hooks/use-dashboard';
+import { useDashboard, useBandwidthHistory } from '@/hooks/use-dashboard';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
 import { formatBytes, formatUptime } from '@/lib/utils';
 import { Users, Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface StatsCardProps {
   icon: React.ElementType;
@@ -40,14 +40,47 @@ function StatsCard({ icon: Icon, label, value, sub, accentColor = 'text-primary'
   );
 }
 
+const formatSampleTime = (ms: number) =>
+  new Date(ms).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+// Matches the backend BandwidthSampler: 10s interval, 90 samples = 15 minutes.
+const MAX_BANDWIDTH_POINTS = 90;
+
 export default function Dashboard() {
   const { selectedConfigId, selectedSid } = useServerStore();
   const { data, isLoading, error } = useDashboard();
+  const { data: bandwidthHistoryData } = useBandwidthHistory();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const [bandwidthHistory, setBandwidthHistory] = useState<any[]>([]);
   const [showWidgets, setShowWidgets] = useState(false);
+  const seededServerRef = useRef<string | null>(null);
 
-  // Build bandwidth history from periodic data
+  // Seed the chart from the backend's rolling history buffer once per
+  // selected server, so it shows the last ~15min immediately instead of
+  // starting empty and only filling in from this point onward. React Query
+  // already keys bandwidthHistoryData by (configId, sid), so switching
+  // servers naturally clears it to undefined until the new server's history
+  // loads (or is already cached) - no separate reset effect needed, and one
+  // is actively wrong here since it would run on mount too and wipe out the
+  // seed that just happened in the same commit.
+  useEffect(() => {
+    const serverKey = `${selectedConfigId}:${selectedSid}`;
+    if (seededServerRef.current === serverKey) return;
+    if (!bandwidthHistoryData) {
+      setBandwidthHistory([]);
+      return;
+    }
+    seededServerRef.current = serverKey;
+    setBandwidthHistory(
+      bandwidthHistoryData.map((s: { timestamp: number; incoming: number; outgoing: number }) => ({
+        time: formatSampleTime(s.timestamp),
+        in: s.incoming,
+        out: s.outgoing,
+      })),
+    );
+  }, [bandwidthHistoryData, selectedConfigId, selectedSid]);
+
+  // Append the live 10s poll on top of the seeded history.
   useEffect(() => {
     if (data) {
       setBandwidthHistory((prev) => {
@@ -59,7 +92,7 @@ export default function Dashboard() {
             out: data.bandwidth.outgoing,
           },
         ];
-        return next.slice(-30); // Keep last 30 data points
+        return next.slice(-MAX_BANDWIDTH_POINTS);
       });
     }
   }, [data]);
