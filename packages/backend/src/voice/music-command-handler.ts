@@ -14,12 +14,48 @@ const MUSIC_COMMANDS = new Set([
   'stream', 'stopstream', 'viewers',
 ]);
 
+// Spotify doesn't allow playback through its API for third-party apps like
+// this one, so a track link is instead resolved to "<artist> <title>" and
+// searched on YouTube the same way a plain-text query would be - see
+// clusterzx/ts6-manager#44. Only track links (not playlists/albums).
+const SPOTIFY_TRACK_URL = /^https?:\/\/open\.spotify\.com\/(?:intl-\w+\/)?track\/[A-Za-z0-9]+/;
+
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+}
+
+/** Resolves a Spotify track URL to "<artist> <title>" via its public page's OpenGraph tags. No API key needed, but also no official support - best-effort. */
+async function resolveSpotifyTrack(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const titleMatch = html.match(/<meta property="og:title" content="([^"]*)"/);
+    if (!titleMatch) return null;
+    const title = decodeHtmlEntities(titleMatch[1]);
+    // og:description is "<artist> · <album> · Song · <year>"
+    const descMatch = html.match(/<meta property="og:description" content="([^"]*)"/);
+    const artist = descMatch ? decodeHtmlEntities(descMatch[1].split(' · ')[0]).trim() : null;
+    return artist ? `${artist} ${title}` : title;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * A bare URL is used as-is; anything else is treated as a search query via
- * yt-dlp's own "ytsearch1:" syntax, which resolves to the first result the
- * same way a real URL would - no separate search API/UI needed.
+ * A bare URL is used as-is (after resolving a Spotify track link to a search
+ * query first); anything else is treated as a search query via yt-dlp's own
+ * "ytsearch1:" syntax, which resolves to the first result the same way a
+ * real URL would - no separate search API/UI needed.
  */
-function toYtDlpSource(input: string): string {
+async function toYtDlpSource(input: string): Promise<string> {
+  if (SPOTIFY_TRACK_URL.test(input)) {
+    const query = await resolveSpotifyTrack(input);
+    if (!query) throw new Error('Could not resolve that Spotify link');
+    return `ytsearch1:${query}`;
+  }
   return input.startsWith('http://') || input.startsWith('https://') ? input : `ytsearch1:${input}`;
 }
 
@@ -205,7 +241,7 @@ export class MusicCommandHandler {
     this.reply(bot, userClid, 'Loading...');
 
     try {
-      const { filePath, info } = await downloadYouTube(toYtDlpSource(args), MUSIC_DIR);
+      const { filePath, info } = await downloadYouTube(await toYtDlpSource(args), MUSIC_DIR);
 
       const queueItem: QueueItem = {
         id: `yt_${info.id}`,
@@ -302,7 +338,7 @@ export class MusicCommandHandler {
     this.reply(bot, userClid, 'Loading...');
 
     try {
-      const { filePath, info } = await downloadYouTube(toYtDlpSource(args), MUSIC_DIR);
+      const { filePath, info } = await downloadYouTube(await toYtDlpSource(args), MUSIC_DIR);
 
       const queueItem: QueueItem = {
         id: `yt_${info.id}`,
@@ -430,7 +466,7 @@ export class MusicCommandHandler {
     const hasPreset = words.length > 1 && lastWord in STREAM_PRESETS;
     const preset = hasPreset ? lastWord : undefined;
     const query = hasPreset ? words.slice(0, -1).join(' ') : args;
-    const source = toYtDlpSource(query);
+    const source = await toYtDlpSource(query);
 
     if (bot.videoStreaming) {
       // Change source if already streaming

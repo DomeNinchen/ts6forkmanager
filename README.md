@@ -56,6 +56,7 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - [clusterzx/ts6-manager#58](https://github.com/clusterzx/ts6-manager/issues/58) (partially - bot ID display was already covered by PR #55/#66): SQLite's id counter for a table never resets on its own even after deleting every row, so a re-added radio station or music bot keeps climbing instead of starting back at 1. Settings → Debug now has a "Danger Zone" with a "Reset Radio Station IDs" / "Reset Music Bot IDs" button each, which (as disclaimed in the UI) wipes that table across every server to actually reset the counter, then the next one created starts at #1 again. Radio stations also now show their numeric id next to their name, same as music bots already did
 - [clusterzx/ts6-manager#55](https://github.com/clusterzx/ts6-manager/issues/55): a new Settings → Restart tab schedules a periodic restart of ts6-manager's own backend and/or sidecar container (independently selectable, so a setup using only one of the two isn't forced to restart the other) at a configurable time and day-of-week set. This does **not** restart the actual TeamSpeak server - only ts6-manager itself, to clear accumulated connection/bot-manager state or a stuck video-streaming process. Both containers already had a graceful SIGTERM/SIGINT shutdown handler and `restart: unless-stopped`; this just triggers that same shutdown on a schedule instead of only on a real stop/crash
 - [clusterzx/ts6-manager#31](https://github.com/clusterzx/ts6-manager/issues/31): the Permissions page's Client picker only ever listed currently-online clients, even though editing by database id already worked for anyone. Added a "Show offline clients" toggle (pulls from the existing but previously-unused-here `clientdblist` query) plus a search box, since a server's full client history can be long — online clients are shown first and marked with a dot
+- [clusterzx/ts6-manager#44](https://github.com/clusterzx/ts6-manager/issues/44): `!play`, `!queue`, and `!stream` now also accept a Spotify track link (Spotify doesn't allow third-party apps to actually play through it). The link is resolved to "\<artist> \<title>" via the track's public page — no API key needed — and searched on YouTube the same way a plain-text query already was. Playlist/album links aren't supported, just individual tracks
 
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
@@ -340,7 +341,7 @@ When a music bot is connected to a channel, users in that channel can control it
 |---------|-------------|
 | `!radio` | List available radio stations |
 | `!radio <id>` | Play a radio station |
-| `!play <url>` | Play from YouTube URL |
+| `!play <url or search terms or spotify link>` | Play from YouTube (search terms resolved via YouTube search, Spotify track links via their public page) |
 | `!play` | Resume paused playback |
 | `!stop` | Stop playback |
 | `!pause` | Toggle pause/resume |
