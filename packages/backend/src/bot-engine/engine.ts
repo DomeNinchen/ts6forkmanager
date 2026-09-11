@@ -616,9 +616,16 @@ export class BotEngine {
           if (afterCmd.length > 0 && afterCmd[0] !== ' ') continue;
 
           const args = afterCmd.trim();
+          // command_args stays the original plain string (existing flows may
+          // already display it directly, e.g. in a reply message) - the
+          // indexed form is a separate field, same nested-JSON-access
+          // mechanism resolveTemplate() already uses for event.webhook_body.*.
+          const argsList = args.length > 0 ? args.split(/\s+/) : [];
           const enrichedData = {
             ...data,
             command_args: args,
+            command_args_list: JSON.stringify(argsList),
+            command_args_length: String(argsList.length),
             command_name: cmdTrigger.commandName,
             command_channel_id: data.__cmd_listener_channel_id || cmdTrigger.channelId || data.target || '',
           };
