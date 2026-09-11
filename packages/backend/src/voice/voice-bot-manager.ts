@@ -249,6 +249,15 @@ export class VoiceBotManager extends EventEmitter {
     await this.prisma.musicBot.delete({ where: { id } });
   }
 
+  /** Stop and delete every music bot across every server - see clusterzx/ts6-manager#58. */
+  async removeAllBots(): Promise<number> {
+    const all = await this.prisma.musicBot.findMany({ select: { id: true } });
+    for (const { id } of all) {
+      await this.removeBot(id);
+    }
+    return all.length;
+  }
+
   async getBotsForServer(configId: number): Promise<Array<{ botId: number; bot: VoiceBot }>> {
     const dbBots = await this.prisma.musicBot.findMany({
       where: { serverConfigId: configId },

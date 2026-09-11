@@ -21,4 +21,10 @@ export const settingsApi = {
 
   setDebugFlag: (name: 'voice' | 'rankCheck', enabled: boolean) =>
     api.put(`/settings/debug-flags/${name}`, { enabled }).then((r) => r.data),
+
+  resetRadioStationIds: (): Promise<{ deletedCount: number }> =>
+    api.post('/settings/reset-radio-station-ids').then((r) => r.data),
+
+  resetMusicBotIds: (): Promise<{ deletedCount: number }> =>
+    api.post('/settings/reset-music-bot-ids').then((r) => r.data),
 };

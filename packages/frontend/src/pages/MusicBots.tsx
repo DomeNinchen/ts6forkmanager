@@ -1482,7 +1482,9 @@ function RadioTab() {
                   <Radio className="h-5 w-5 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{station.name}</p>
+                  <p className="text-sm font-medium truncate">
+                    {station.name} <span className="text-muted-foreground font-normal">#{station.id}</span>
+                  </p>
                   {station.genre && (
                     <Badge variant="outline" className="text-[9px] mt-0.5">{station.genre}</Badge>
                   )}
