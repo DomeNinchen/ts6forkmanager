@@ -59,4 +59,8 @@ export const permissionsApi = {
     api.get(chBase(configId, sid)).then((r) => r.data),
   clients: (configId: number, sid: number) =>
     api.get(clBase(configId, sid)).then((r) => r.data),
+  // All known clients (online or not) - see clusterzx/ts6-manager#31.
+  // duration=500 covers all but the largest servers in one request.
+  clientsDatabase: (configId: number, sid: number) =>
+    api.get(`${clBase(configId, sid)}/database`, { params: { duration: 500 } }).then((r) => r.data),
 };

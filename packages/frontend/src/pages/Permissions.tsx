@@ -82,6 +82,8 @@ export default function Permissions() {
   const [entityId, setEntityId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [showModifiedOnly, setShowModifiedOnly] = useState(false);
+  const [showOffline, setShowOffline] = useState(false);
+  const [entitySearch, setEntitySearch] = useState('');
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [changes, setChanges] = useState<Map<string, PendingChange>>(new Map());
 
@@ -112,6 +114,11 @@ export default function Permissions() {
     queryKey: ['clients-for-perms', c, s],
     queryFn: () => permissionsApi.clients(c!, s!),
     enabled: !!c && !!s && layer === 'client',
+  });
+  const { data: offlineClients } = useQuery({
+    queryKey: ['clients-db-for-perms', c, s],
+    queryFn: () => permissionsApi.clientsDatabase(c!, s!),
+    enabled: !!c && !!s && layer === 'client' && showOffline,
   });
 
   // Fetch current entity permissions
@@ -277,15 +284,28 @@ export default function Permissions() {
         return (Array.isArray(channels) ? channels : []).map((ch: any) => ({
           id: Number(ch.cid), name: ch.channel_name, type: 0,
         }));
-      case 'client':
-        return (Array.isArray(clients) ? clients : [])
+      case 'client': {
+        const online = (Array.isArray(clients) ? clients : [])
           .filter((cl: any) => String(cl.client_type) === '0')
           .map((cl: any) => ({
-            id: Number(cl.client_database_id), name: cl.client_nickname, type: 0,
+            id: Number(cl.client_database_id), name: cl.client_nickname, type: 0, online: true,
           }));
+        if (!showOffline) return online;
+        // clientdblist has no client_type - a stray ServerQuery login could
+        // theoretically show up here too, but that's a cosmetic edge case.
+        const onlineIds = new Set(online.map((o) => o.id));
+        const offline = (Array.isArray(offlineClients) ? offlineClients : [])
+          .filter((cl: any) => !onlineIds.has(Number(cl.cldbid)))
+          .map((cl: any) => ({
+            id: Number(cl.cldbid), name: cl.client_lastnickname || `Client #${cl.cldbid}`, type: 0, online: false,
+          }));
+        return [...online, ...offline].sort((a, b) =>
+          a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1);
+      }
       default: return [];
     }
-  })();
+  })().filter((ent: any) =>
+    layer !== 'client' || !entitySearch || ent.name.toLowerCase().includes(entitySearch.toLowerCase()));
 
   return (
     <div className="space-y-4">
@@ -326,10 +346,27 @@ export default function Permissions() {
       <div className="grid grid-cols-12 gap-4">
         {/* Entity Selector */}
         <Card className="col-span-3">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 space-y-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Select {LAYERS.find((l) => l.key === layer)?.label.replace(/s$/, '')}
             </CardTitle>
+            {layer === 'client' && (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={entitySearch}
+                    onChange={(e) => setEntitySearch(e.target.value)}
+                    placeholder="Search clients..."
+                    className="h-7 pl-7 text-xs"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Switch id="show-offline-clients" checked={showOffline} onCheckedChange={setShowOffline} />
+                  <Label htmlFor="show-offline-clients" className="text-xs text-muted-foreground cursor-pointer">Show offline clients</Label>
+                </div>
+              </>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[500px]">
@@ -345,7 +382,15 @@ export default function Permissions() {
                         : 'text-foreground hover:bg-muted/50',
                     )}
                   >
-                    <span className="truncate">{ent.name}</span>
+                    <span className="truncate flex items-center gap-1.5">
+                      {layer === 'client' && showOffline && (
+                        <span
+                          className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', ent.online ? 'bg-emerald-500' : 'bg-zinc-500')}
+                          title={ent.online ? 'Online' : 'Offline'}
+                        />
+                      )}
+                      {ent.name}
+                    </span>
                     <span className="text-[10px] font-mono-data text-muted-foreground ml-1">#{ent.id}</span>
                   </button>
                 ))}
