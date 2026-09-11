@@ -480,6 +480,9 @@ export class FlowRunner {
     const exemptIds = data.exemptGroupIds
       ? (await ctx.resolveTemplate(data.exemptGroupIds)).split(',').map(s => s.trim()).filter(Boolean)
       : [];
+    const exemptChannelIds = data.exemptChannelIds
+      ? (await ctx.resolveTemplate(data.exemptChannelIds)).split(',').map(s => s.trim()).filter(Boolean)
+      : [];
 
     const clients = await client.executePost(ctx.sid, 'clientlist', { '-times': '', '-groups': '' });
     if (!Array.isArray(clients)) return;
@@ -490,6 +493,8 @@ export class FlowRunner {
       if (String(cl.client_type) === '1') continue;
       // Skip clients already in the AFK channel
       if (String(cl.cid) === String(afkCid)) continue;
+      // Skip clients sitting in an exempt channel (e.g. a lobby/waiting room)
+      if (exemptChannelIds.length > 0 && exemptChannelIds.includes(String(cl.cid))) continue;
       // Check idle time
       const idleMs = parseInt(cl.client_idle_time) || 0;
       if (idleMs / 1000 < thresholdSec) continue;

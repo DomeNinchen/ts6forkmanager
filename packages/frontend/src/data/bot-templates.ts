@@ -318,6 +318,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       { key: 'afkChannelId', label: 'AFK Channel ID', type: 'number', placeholder: '10', required: true },
       { key: 'idleThresholdSeconds', label: 'Idle Threshold (seconds)', type: 'number', placeholder: '300', required: true },
       { key: 'exemptGroupIds', label: 'Exempt Group IDs (comma-separated)', type: 'text', placeholder: '6,7' },
+      { key: 'exemptChannelIds', label: 'Exempt Channel IDs (comma-separated)', type: 'text', placeholder: '12,15' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -325,7 +326,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       return {
         nodes: [
           makeNode(n1, 'trigger_cron', 'AFK Check', { cron: '* * * * *' }, 60, 80),
-          makeNode(n2, 'action_afkMover', 'Move AFK', { afkChannelId: cfg.afkChannelId, idleThresholdSeconds: cfg.idleThresholdSeconds || '300', exemptGroupIds: cfg.exemptGroupIds || '' }, 300, 80),
+          makeNode(n2, 'action_afkMover', 'Move AFK', { afkChannelId: cfg.afkChannelId, idleThresholdSeconds: cfg.idleThresholdSeconds || '300', exemptGroupIds: cfg.exemptGroupIds || '', exemptChannelIds: cfg.exemptChannelIds || '' }, 300, 80),
         ],
         edges: [makeEdge(eid(), n1, n2)],
       };
