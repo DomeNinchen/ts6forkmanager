@@ -96,7 +96,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Channel tree with drag-and-drop ordering, including ServerQuery/bot clients (visually distinguished from regular users)
 - Client list with kick, ban, move, poke actions
 - Server & channel group management, including adding/removing members via a searchable client picker
-- Permission editor (server, channel, client, group-level)
+- Permission editor (server, channel, client, group-level), including offline clients (searchable, not just who's currently connected)
 - Ban list management
 - Token / privilege key management
 - Complaint viewer
@@ -110,6 +110,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Radio station streaming with ICY metadata and live title updates
 - YouTube playback via yt-dlp (search, download, queue)
 - Media library management: upload audio or video, or scan for files already sitting in the shared music folder (e.g. a volume shared with another app), organized into `music/`/`video/` subfolders, filterable by type and sortable by title/type/duration; playlists
+- Queue tab: clear, reorder, remove individual items, click-to-play
 - Volume control, pause, skip, previous, shuffle, repeat
 - Stereo audio support with stable 20ms pacing
 - Auto-reconnect with exponential backoff on disconnect
@@ -122,6 +123,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - WebRTC-based with Go sidecar relay (Pion) for low-latency delivery
 - Quality presets (480p, 720p, 1080p)
 - In-browser preview with WebRTC playback (with a mute/unmute toggle)
+- Live viewer list with per-viewer kick, both in the WebUI and via `!viewers` in chat
 - Adaptive A/V pacing based on RTP timestamps vs. wall clock, with a clamp to prevent a single bad timestamp from stalling playback
 - Multi-threaded VP8 encoding, scaled to the host's available cores
 - Runs as a Docker sidecar container alongside the backend
@@ -158,7 +160,9 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - yt-dlp cookie file management for accessing age-restricted or member-only YouTube content
 - Upload cookies via file or paste directly in the UI
 - Admin-only settings panel
-- Debug logging toggles (voice bot, Rank Check) switchable at runtime from Settings > Debug — no env var or restart needed
+- Debug logging toggles (voice bot, Rank Check) switchable at runtime from Settings → Debug — no env var or restart needed
+- "Danger Zone" (Settings → Debug) to reset the radio station / music bot id counters, for when SQLite's ever-climbing autoincrement gets annoying after deleting everything and starting over
+- Scheduled restart (Settings → Restart) for ts6-manager's own backend and/or sidecar container, on a configurable time and day-of-week — not the TeamSpeak server itself
 
 ## Architecture
 
@@ -291,7 +295,7 @@ The Docker images run this automatically on startup.
 | `JWT_ACCESS_EXPIRY` | `15m` | Access token lifetime |
 | `JWT_REFRESH_EXPIRY` | `7d` | Refresh token lifetime |
 | `FRONTEND_URL` | `http://localhost:3000` | CORS origin |
-| `MUSIC_DIR` | `/data/music` | Directory for downloaded music files |
+| `MUSIC_DIR` | `/data/music` | Root for the media library. New uploads/downloads are organized into `music/`/`video/` subfolders underneath it; files sitting directly in the root (from before that split, or a volume shared with another app) are still picked up by scan and the stream-source picker |
 | `SIDECAR_URL` | — | Optional. Full URL of the WebRTC sidecar service (e.g. `http://ts6-sidecar:9800`). Set in Docker when sidecar runs as a separate container. |
 | `SIDECAR_BINARY_PATH` | `sidecar` | Path to the sidecar binary/command, used only in local mode (running the sidecar as a subprocess instead of a separate container). |
 | `YT_COOKIE_FILE` | — | Optional. Path to a Netscape-format cookies.txt file for yt-dlp. Can also be managed via **Settings → YouTube** in the UI. |
@@ -341,15 +345,19 @@ When a music bot is connected to a channel, users in that channel can control it
 |---------|-------------|
 | `!radio` | List available radio stations |
 | `!radio <id>` | Play a radio station |
-| `!play <url or search terms or spotify link>` | Play from YouTube (search terms resolved via YouTube search, Spotify track links via their public page) |
+| `!play <url, search terms, or Spotify track link>` | Play immediately (search terms resolved via YouTube search, Spotify links via their public page — see [Feature Requests & Fixes](#feature-requests--fixes-from-upstream)) |
 | `!play` | Resume paused playback |
-| `!stop` | Stop playback |
+| `!queue <url, search terms, or Spotify track link>` (alias `!add`) | Add to the queue without interrupting what's currently playing |
+| `!stop` | Stop playback ("Nothing was playing." if there wasn't any) |
 | `!pause` | Toggle pause/resume |
 | `!skip` / `!next` | Next track in queue |
 | `!prev` | Previous track |
 | `!vol` | Show current volume |
 | `!vol <0-100>` | Set volume |
 | `!np` | Show current track |
+| `!stream <url, search terms, or Spotify link> [preset]` | Start (or switch) a video stream; optional trailing `480p`/`720p`/`1080p` |
+| `!stopstream` | Stop the active video stream (independent of audio playback) |
+| `!viewers` | List clients currently watching the video stream |
 
 ## Requirements
 
