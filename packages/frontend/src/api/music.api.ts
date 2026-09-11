@@ -54,20 +54,17 @@ export const musicBotsApi = {
     api.post(`/music-bots/${id}/stream/webrtc/answer`, { sdp }).then((r) => r.data),
   webrtcIce: (id: number, candidate: string, sdpMid: string, sdpMLineIndex: number) =>
     api.post(`/music-bots/${id}/stream/webrtc/ice`, { candidate, sdpMid, sdpMLineIndex }).then((r) => r.data),
-
-  // Local video files already sitting in MUSIC_DIR, pickable as a stream source
-  videoLibrary: (): Promise<{ name: string; size: number }[]> =>
-    api.get('/music-bots/video-library').then((r) => r.data),
 };
 
 // === Music Library API ===
 
 export const musicLibraryApi = {
-  songs: (configId: number) => api.get(`/servers/${configId}/music-library/songs`).then((r) => r.data),
+  songs: (configId: number, mediaType?: 'audio' | 'video') =>
+    api.get(`/servers/${configId}/music-library/songs`, { params: mediaType ? { mediaType } : undefined }).then((r) => r.data),
   upload: (configId: number, formData: FormData) =>
     api.post(`/servers/${configId}/music-library/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 300000, // 5 min for large uploads
+      timeout: 300000, // 5 min for large uploads (raised limit also fits video - see media-dirs.ts)
     }).then((r) => r.data),
   deleteSong: (configId: number, songId: number) =>
     api.delete(`/servers/${configId}/music-library/songs/${songId}`).then((r) => r.data),

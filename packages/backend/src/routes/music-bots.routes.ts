@@ -4,12 +4,9 @@ import { AppError } from '../middleware/error-handler.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 import { downloadYouTube } from '../voice/audio/youtube.js';
 import { playerWidgetToken } from './widget-public.routes.js';
-import fs from 'fs';
-import path from 'path';
+import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
 
 export const musicBotRoutes: Router = Router();
-
-const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
 
 // All routes require admin role
 musicBotRoutes.use(requireRole('admin'));
@@ -44,30 +41,6 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         createdAt: b.createdAt,
       };
     }));
-  } catch (err) { next(err); }
-});
-
-const VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.flv', '.wmv', '.m4v'];
-
-// GET /video-library — List video files already sitting in MUSIC_DIR, so a
-// stream source can be picked instead of typing a filename/URL (the file
-// itself is passed straight through to startVideoStream/setVideoSource,
-// which already resolves a bare filename under MUSIC_DIR - see
-// streaming/video-download.ts). Registered before GET /:id so "video-library"
-// isn't swallowed as a bot id. See clusterzx/ts6-manager#33.
-musicBotRoutes.get('/video-library', async (_req: Request, res: Response, next) => {
-  try {
-    if (!fs.existsSync(MUSIC_DIR)) return res.json([]);
-
-    const files = fs.readdirSync(MUSIC_DIR, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && !entry.name.startsWith('.') && VIDEO_EXTENSIONS.includes(path.extname(entry.name).toLowerCase()))
-      .map((entry) => {
-        const stat = fs.statSync(path.join(MUSIC_DIR, entry.name));
-        return { name: entry.name, size: stat.size };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    res.json(files);
   } catch (err) { next(err); }
 });
 
