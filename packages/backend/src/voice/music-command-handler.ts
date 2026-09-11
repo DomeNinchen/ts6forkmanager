@@ -333,6 +333,13 @@ export class MusicCommandHandler {
   }
 
   private handleStop(bot: VoiceBot, userClid: number): void {
+    if (bot.status !== 'playing' && bot.status !== 'paused') {
+      // Avoids the misleading "Playback stopped." when nothing was actually
+      // playing - e.g. only a video stream was active (stopped separately
+      // via !stopstream, which this command intentionally doesn't touch).
+      this.reply(bot, userClid, 'Nothing was playing.');
+      return;
+    }
     bot.stopAudio();
     this.reply(bot, userClid, 'Playback stopped.');
   }
