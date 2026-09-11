@@ -5,7 +5,9 @@
  */
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { VideoPlayer } from './VideoPlayer';
+import { musicBotsApi } from '@/api/music.api';
 import {
   useVideoStreamStatus,
   useStartVideoStream,
@@ -18,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PRESETS = [
   { value: '480p', label: '480p (854x480, 1 Mbps)' },
@@ -41,6 +44,11 @@ export function VideoStreamTab({ botId, botStatus }: VideoStreamTabProps) {
   const [preset, setPreset] = useState('720p');
   const [framerate, setFramerate] = useState('30');
   const [bitrate, setBitrate] = useState('2500k');
+
+  const { data: videoLibrary } = useQuery({
+    queryKey: ['video-library'],
+    queryFn: musicBotsApi.videoLibrary,
+  });
 
   const { data: streamStatus } = useVideoStreamStatus(botId);
   const startStream = useStartVideoStream();
@@ -128,6 +136,25 @@ export function VideoStreamTab({ botId, botStatus }: VideoStreamTabProps) {
                 <p className="text-xs text-muted-foreground">
                   YouTube, direct video URLs (MP4, HLS), or local file paths
                 </p>
+                {videoLibrary && videoLibrary.length > 0 && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <Label className="text-xs text-muted-foreground shrink-0">Or pick a local file:</Label>
+                    <Select
+                      value=""
+                      onValueChange={(name) => setSourceUrl(name)}
+                      disabled={startStream.isPending}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Choose a video already in the music folder..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {videoLibrary.map((f) => (
+                          <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               {!isStreaming && (

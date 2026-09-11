@@ -54,6 +54,10 @@ export const musicBotsApi = {
     api.post(`/music-bots/${id}/stream/webrtc/answer`, { sdp }).then((r) => r.data),
   webrtcIce: (id: number, candidate: string, sdpMid: string, sdpMLineIndex: number) =>
     api.post(`/music-bots/${id}/stream/webrtc/ice`, { candidate, sdpMid, sdpMLineIndex }).then((r) => r.data),
+
+  // Local video files already sitting in MUSIC_DIR, pickable as a stream source
+  videoLibrary: (): Promise<{ name: string; size: number }[]> =>
+    api.get('/music-bots/video-library').then((r) => r.data),
 };
 
 // === Music Library API ===
@@ -75,6 +79,8 @@ export const musicLibraryApi = {
     api.post(`/servers/${configId}/music-library/youtube/info`, { url }).then((r) => r.data),
   youtubeDownloadBatch: (configId: number, urls: string[]) =>
     api.post(`/servers/${configId}/music-library/youtube/download-batch`, { urls }, { timeout: 600000 }).then((r) => r.data),
+  scan: (configId: number): Promise<{ added: number; skipped: number }> =>
+    api.post(`/servers/${configId}/music-library/scan`).then((r) => r.data),
 };
 
 // === Radio Station API ===

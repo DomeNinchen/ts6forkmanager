@@ -58,3 +58,11 @@ export function useYouTubeDownloadBatch() {
     onSuccess: (_, { configId }) => qc.invalidateQueries({ queryKey: ['songs', configId] }),
   });
 }
+
+export function useScanMusicLibrary() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (configId: number) => musicLibraryApi.scan(configId),
+    onSuccess: (_, configId) => qc.invalidateQueries({ queryKey: ['songs', configId] }),
+  });
+}

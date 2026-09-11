@@ -2,10 +2,10 @@ import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { downloadYouTube, searchYouTube, getYouTubeUrlInfo } from '../voice/audio/youtube.js';
+import { scanMusicLibrary, getAudioDuration } from '../voice/audio/music-library-scan.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { spawn } from 'child_process';
 import { randomUUID } from 'crypto';
 
 const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
@@ -52,6 +52,17 @@ musicLibraryRoutes.get('/songs', async (req: Request, res: Response, next) => {
       orderBy: { createdAt: 'desc' },
     });
     res.json(songs);
+  } catch (err) { next(err); }
+});
+
+// POST /scan — Scan MUSIC_DIR for audio files not yet in the library (e.g.
+// dropped in directly, or a volume shared with another app) and add them.
+musicLibraryRoutes.post('/scan', async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const configId = parseInt(req.params.configId as string);
+    const result = await scanMusicLibrary(prisma, configId);
+    res.json(result);
   } catch (err) { next(err); }
 });
 
@@ -217,28 +228,3 @@ musicLibraryRoutes.post('/youtube/download-batch', async (req: Request, res: Res
     res.json({ results, errors, total: urls.length, downloaded: results.length });
   } catch (err) { next(err); }
 });
-
-// Helper: get audio duration via ffprobe
-function getAudioDuration(filePath: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn('ffprobe', [
-      '-v', 'quiet',
-      '-print_format', 'json',
-      '-show_format',
-      filePath,
-    ], { shell: false });
-
-    let output = '';
-    proc.stdout.on('data', (chunk: Buffer) => { output += chunk.toString(); });
-    proc.on('close', (code) => {
-      if (code !== 0) return reject(new Error('ffprobe failed'));
-      try {
-        const parsed = JSON.parse(output);
-        resolve(parseFloat(parsed.format.duration) || 0);
-      } catch {
-        reject(new Error('Failed to parse ffprobe output'));
-      }
-    });
-    proc.on('error', reject);
-  });
-}
