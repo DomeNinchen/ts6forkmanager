@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi } from '@/api/settings.api';
+import { settingsApi, type ScheduledRestartConfig } from '@/api/settings.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Settings() {
@@ -34,6 +34,7 @@ export default function Settings() {
           {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> Users</TabsTrigger>}
           {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> YouTube</TabsTrigger>}
           {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> Restart</TabsTrigger>}
         </TabsList>
 
         {isAdmin && (
@@ -61,6 +62,12 @@ export default function Settings() {
         {isAdmin && (
           <TabsContent value="debug" className="mt-4">
             <DebugTab />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="restart" className="mt-4">
+            <RestartTab />
           </TabsContent>
         )}
       </Tabs>
@@ -716,6 +723,108 @@ function DebugTab() {
         }}
         destructive
       />
+    </div>
+  );
+}
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function RestartTab() {
+  const qc = useQueryClient();
+  const { data: config, isLoading } = useQuery({
+    queryKey: ['scheduled-restart'],
+    queryFn: settingsApi.getScheduledRestart,
+  });
+
+  const [draft, setDraft] = useState<ScheduledRestartConfig | null>(null);
+  const active = draft ?? config ?? null;
+
+  const save = useMutation({
+    mutationFn: (cfg: ScheduledRestartConfig) => settingsApi.setScheduledRestart(cfg),
+    onSuccess: (saved) => {
+      qc.setQueryData(['scheduled-restart'], saved);
+      setDraft(null);
+      toast.success('Restart schedule saved');
+    },
+    onError: () => toast.error('Failed to save restart schedule'),
+  });
+
+  if (isLoading || !active) return <PageLoader />;
+
+  const update = (patch: Partial<ScheduledRestartConfig>) => setDraft({ ...active, ...patch });
+  const toggleDay = (day: number) => {
+    const days = active.days.includes(day)
+      ? active.days.filter((d) => d !== day)
+      : [...active.days, day].sort((a, b) => a - b);
+    update({ days });
+  };
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Scheduled Restart</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Periodically restart ts6-manager's own containers to clear memory and ensure a clean
+            runtime state. This does <strong>not</strong> restart your TeamSpeak server — only
+            ts6-manager itself. Pick at least one container below to enable it.
+          </p>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Restart Backend</Label>
+              <p className="text-[11px] text-muted-foreground">Bot connections, EventBridge, WebSocket state.</p>
+            </div>
+            <Switch checked={active.backendEnabled} onCheckedChange={(v) => update({ backendEnabled: v })} />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Restart Sidecar</Label>
+              <p className="text-[11px] text-muted-foreground">The video-streaming (WebRTC/RTP) process.</p>
+            </div>
+            <Switch checked={active.sidecarEnabled} onCheckedChange={(v) => update({ sidecarEnabled: v })} />
+          </div>
+
+          <div>
+            <Label className="text-xs">Time (24h, server-local)</Label>
+            <Input
+              type="time"
+              className="h-8 mt-1 w-32 font-mono-data text-xs"
+              value={active.time}
+              onChange={(e) => update({ time: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs">Days</Label>
+            <div className="flex gap-1 mt-1">
+              {DAY_LABELS.map((label, i) => (
+                <Button
+                  key={i}
+                  type="button"
+                  variant={active.days.includes(i) ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-7 w-11 px-0 text-xs"
+                  onClick={() => toggleDay(i)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            size="sm"
+            disabled={!draft || save.isPending}
+            onClick={() => draft && save.mutate(draft)}
+          >
+            {save.isPending ? 'Saving...' : 'Save'}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1218,6 +1218,20 @@ func main() {
 		})
 	})
 
+	// POST /restart - graceful self-restart, used by the backend's scheduled
+	// container restart feature (see clusterzx/ts6-manager#55). Reuses the
+	// same SIGINT/SIGTERM path below (sidecar.Stop() + exit) rather than
+	// duplicating shutdown logic; relies on the container's `restart:
+	// unless-stopped` policy to bring it back up.
+	mux.HandleFunc("POST /restart", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("[API] Restart requested")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		go func() {
+			time.Sleep(200 * time.Millisecond) // let the response flush first
+			syscall.Kill(os.Getpid(), syscall.SIGTERM)
+		}()
+	})
+
 	go func() {
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
