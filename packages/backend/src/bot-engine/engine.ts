@@ -263,6 +263,18 @@ export class BotEngine {
     return this.eventBridge;
   }
 
+  /**
+   * Reconnect SSH (base event registration + command listeners) for a server
+   * config using its current DB credentials. connectServer()/
+   * connectCommandListener() no-op while a connection already exists, so
+   * editing SSH credentials on an already-connected server had no effect
+   * until that connection eventually died on its own - this forces it.
+   */
+  async refreshServerConnections(configId: number): Promise<void> {
+    await this.eventBridge.disconnectAllForConfig(configId);
+    this.setupSshConnections();
+  }
+
   async start(): Promise<void> {
     if (this.running) return;
 

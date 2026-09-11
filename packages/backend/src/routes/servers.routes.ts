@@ -102,6 +102,15 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const pool: ConnectionPool = req.app.locals.connectionPool;
     await pool.refreshClient(id);
 
+    // If any SSH-relevant field changed, existing EventBridge connections
+    // (event registration, command listeners) are still running on the old
+    // credentials — they don't pick up new ones on their own since connecting
+    // no-ops while already connected. Force a reconnect.
+    const sshFieldsChanged = ['host', 'sshPort', 'sshUsername', 'sshPassword'].some(f => data[f] !== undefined);
+    if (sshFieldsChanged) {
+      await req.app.locals.botEngine?.refreshServerConnections(id);
+    }
+
     res.json({ id: server.id, name: server.name });
   } catch (err) { next(err); }
 });
