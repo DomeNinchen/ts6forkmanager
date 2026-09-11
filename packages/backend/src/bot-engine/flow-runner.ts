@@ -599,6 +599,20 @@ export class FlowRunner {
         totalHours = (Date.now() / 1000 - createdUnix) / 3600;
       } else {
         // Total time actually spent connected, accumulated across sessions.
+        // connection_connected_time is NOT part of clientlist's response
+        // under any flag combination (-times only adds client_idle_time/
+        // client_created/client_lastconnected) - it's only returned by the
+        // per-client clientinfo command, hence the extra call here.
+        let connectionTime = 0;
+        try {
+          const info = await client.execute(ctx.sid, 'clientinfo', { clid: String(cl.clid) });
+          const infoObj = Array.isArray(info) ? info[0] : info;
+          connectionTime = (parseInt(infoObj?.connection_connected_time) || 0) / 1000;
+        } catch (err: any) {
+          console.warn(`[BotEngine] Rank Check: clientinfo failed for clid=${cl.clid} (cldbid=${cldbid}): ${err.message}`);
+          continue;
+        }
+
         // `connection_connected_time` is cumulative since the CURRENT
         // session started, not since the last time we checked - naively
         // adding it to the stored total on every tick would recount the
@@ -611,7 +625,6 @@ export class FlowRunner {
         const lastSessionVarName = `onlinetime_${cldbid}_lastsession`;
         const storedSeconds = parseFloat(await ctx.getVariable(varName)) || 0;
         const lastSessionSeconds = parseFloat(await ctx.getVariable(lastSessionVarName)) || 0;
-        const connectionTime = (parseInt(cl.connection_connected_time) || 0) / 1000;
         const delta = connectionTime < lastSessionSeconds ? connectionTime : connectionTime - lastSessionSeconds;
         const totalSeconds = storedSeconds + Math.max(0, delta);
         await ctx.setVariable(varName, String(totalSeconds));
