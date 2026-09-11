@@ -4,6 +4,7 @@ import { WebSocketServer } from 'ws';
 import { PrismaClient } from './generated/prisma/client.js';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { ConnectionPool } from './ts-client/connection-pool.js';
+import { BandwidthSampler } from './ts-client/bandwidth-sampler.js';
 import { BotEngine } from './bot-engine/engine.js';
 import { VoiceBotManager } from './voice/voice-bot-manager.js';
 import { MusicCommandHandler } from './voice/music-command-handler.js';
@@ -69,6 +70,7 @@ async function main() {
   // Make services available via app.locals
   app.locals.prisma = prisma;
   app.locals.connectionPool = connectionPool;
+  app.locals.bandwidthSampler = new BandwidthSampler(connectionPool);
   app.locals.wss = wss;
 
   // Initialize Bot Engine
@@ -100,6 +102,7 @@ async function main() {
     console.log('\n[TS6 WebUI] Shutting down...');
     await voiceBotManager.stopAll();
     await botEngine.destroy();
+    (app.locals.bandwidthSampler as BandwidthSampler).destroy();
     connectionPool.destroy();
     wss.close();
     server.close();

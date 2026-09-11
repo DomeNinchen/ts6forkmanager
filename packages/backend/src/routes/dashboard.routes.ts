@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
+import type { BandwidthSampler } from '../ts-client/bandwidth-sampler.js';
 
 export const dashboardRoutes: Router = Router({ mergeParams: true });
 
@@ -10,8 +11,12 @@ const getClient = (req: Request) => {
 
 dashboardRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
+    const configId = parseInt(String(req.params.configId));
     const sid = parseInt(String(req.params.sid));
     const client = getClient(req);
+
+    const sampler: BandwidthSampler = req.app.locals.bandwidthSampler;
+    sampler.ensureSampling(configId, sid);
 
     const [serverInfo, clientList, channelList, connectionInfo] = await Promise.all([
       client.execute(sid, 'serverinfo'),
@@ -43,4 +48,14 @@ dashboardRoutes.get('/', async (req: Request, res: Response, next) => {
       ping: Number(info.virtualserver_total_ping) || 0,
     });
   } catch (err) { next(err); }
+});
+
+// GET /bandwidth-history — rolling ~15min buffer sampled independently of
+// this dashboard being open, so a fresh page load has history to show
+// immediately instead of starting empty.
+dashboardRoutes.get('/bandwidth-history', (req: Request, res: Response) => {
+  const configId = parseInt(String(req.params.configId));
+  const sid = parseInt(String(req.params.sid));
+  const sampler: BandwidthSampler = req.app.locals.bandwidthSampler;
+  res.json(sampler.getHistory(configId, sid));
 });

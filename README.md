@@ -71,7 +71,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 ## Features
 
 ### Server Management
-- Dashboard with live server stats, bandwidth graph, and capacity overview
+- Dashboard with live server stats, capacity overview, and a bandwidth graph showing the last ~15 minutes immediately on load (sampled continuously in the background, not just from when the page happens to be open)
 - Virtual server list with start/stop controls
 - Channel tree with drag-and-drop ordering, including ServerQuery/bot clients (visually distinguished from regular users)
 - Client list with kick, ban, move, poke actions
