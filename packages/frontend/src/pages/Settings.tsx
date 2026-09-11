@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Settings() {
@@ -33,6 +33,7 @@ export default function Settings() {
           <TabsTrigger value="account"><Lock className="h-3.5 w-3.5 mr-1" /> Account</TabsTrigger>
           {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> Users</TabsTrigger>}
           {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> YouTube</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
         </TabsList>
 
         {isAdmin && (
@@ -54,6 +55,12 @@ export default function Settings() {
         {isAdmin && (
           <TabsContent value="youtube" className="mt-4">
             <YouTubeTab />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="debug" className="mt-4">
+            <DebugTab />
           </TabsContent>
         )}
       </Tabs>
@@ -579,6 +586,62 @@ function YouTubeTab() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function DebugTab() {
+  const qc = useQueryClient();
+
+  const { data: flags, isLoading } = useQuery({
+    queryKey: ['debug-flags'],
+    queryFn: settingsApi.getDebugFlags,
+  });
+
+  const setFlag = useMutation({
+    mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck'; enabled: boolean }) =>
+      settingsApi.setDebugFlag(name, enabled),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['debug-flags'] }),
+    onError: () => toast.error('Failed to update debug flag'),
+  });
+
+  if (isLoading) return <PageLoader />;
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Debug Logging</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Extra verbose logging for diagnosing issues. Leave these off during normal
+            operation — they can produce a lot of log output. Changes take effect immediately.
+          </p>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Voice Bot Debug</Label>
+              <p className="text-[11px] text-muted-foreground">Per-second audio streaming stats (jitter, frame timing) for music/stream bots.</p>
+            </div>
+            <Switch
+              checked={!!flags?.voice}
+              onCheckedChange={(v) => setFlag.mutate({ name: 'voice', enabled: v })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Rank Check Debug</Label>
+              <p className="text-[11px] text-muted-foreground">Per-client detail (computed hours, group membership) for the Rank Check bot-flow action.</p>
+            </div>
+            <Switch
+              checked={!!flags?.rankCheck}
+              onCheckedChange={(v) => setFlag.mutate({ name: 'rankCheck', enabled: v })}
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -8,6 +8,7 @@ import { SidecarClient } from './streaming/sidecar-client.js';
 import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.js';
 import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus } from './streaming/types.js';
 import { downloadVideoForStream, safeUnlinkStreamTemp } from './streaming/video-download.js';
+import { isDebugEnabled } from '../utils/debug-flags.js';
 
 /** Default cap on how long a pre-downloaded video may run, in seconds. */
 const DEFAULT_MAX_VIDEO_DURATION_SEC = 900;
@@ -570,7 +571,7 @@ export class VoiceBot extends EventEmitter {
     const dt = this.lastVoiceSendAt ? (now - this.lastVoiceSendAt) : 0;
     this.lastVoiceSendAt = now;
 
-    const VOICE_DEBUG = process.env.VOICE_DEBUG === '1';
+    const VOICE_DEBUG = isDebugEnabled('voice');
 
     if (VOICE_DEBUG) {
       // 1s stats

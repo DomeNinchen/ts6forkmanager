@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { AppError } from '../middleware/error-handler.js';
 import { setYtCookieFile, getYtCookieFile } from '../voice/audio/youtube.js';
+import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-flags.js';
 
 const settingsRoutes: Router = Router();
 
@@ -73,6 +74,31 @@ settingsRoutes.delete('/yt-cookies', requireAdmin, (_req: Request, res: Response
     setYtCookieFile(null);
     console.log('[yt-dlp] Cookie file removed');
     res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+const VALID_DEBUG_FLAGS: DebugFlagName[] = ['voice', 'rankCheck'];
+
+// GET /api/settings/debug-flags — Current debug-logging toggle states
+settingsRoutes.get('/debug-flags', requireAdmin, (_req: Request, res: Response) => {
+  res.json(getDebugFlags());
+});
+
+// PUT /api/settings/debug-flags/:name — Toggle one debug-logging flag
+settingsRoutes.put('/debug-flags/:name', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const name = req.params.name as DebugFlagName;
+    if (!VALID_DEBUG_FLAGS.includes(name)) {
+      throw new AppError(400, `Unknown debug flag: ${name}`);
+    }
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') {
+      throw new AppError(400, 'enabled must be a boolean');
+    }
+    const prisma = req.app.locals.prisma;
+    await setDebugFlag(prisma, name, enabled);
+    console.log(`[Settings] Debug flag '${name}' set to ${enabled}`);
+    res.json(getDebugFlags());
   } catch (err) { next(err); }
 });
 

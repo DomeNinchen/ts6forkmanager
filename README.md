@@ -138,6 +138,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - yt-dlp cookie file management for accessing age-restricted or member-only YouTube content
 - Upload cookies via file or paste directly in the UI
 - Admin-only settings panel
+- Debug logging toggles (voice bot, Rank Check) switchable at runtime from Settings > Debug — no env var or restart needed
 
 ## Architecture
 
@@ -275,8 +276,8 @@ The Docker images run this automatically on startup.
 | `SIDECAR_BINARY_PATH` | `sidecar` | Path to the sidecar binary/command, used only in local mode (running the sidecar as a subprocess instead of a separate container). |
 | `YT_COOKIE_FILE` | — | Optional. Path to a Netscape-format cookies.txt file for yt-dlp. Can also be managed via **Settings → YouTube** in the UI. |
 | `TS_ALLOW_SELF_SIGNED` | `false` | Set to `true`/`1` to accept self-signed TLS certs when connecting to the TeamSpeak WebQuery API. |
-| `VOICE_DEBUG` | unset (off) | Set to `1` to enable verbose voice-bot/audio-pipeline debug logging. |
-| `RANK_CHECK_DEBUG` | unset (off) | Set to `1` to log per-client detail (computed hours, group membership) for the Rank Check bot-flow action. Promotions, errors, and the per-run summary always log regardless. |
+| `VOICE_DEBUG` | unset (off) | Legacy. Set to `1` to enable verbose voice-bot/audio-pipeline debug logging. Only read once, on first boot, to seed the DB-backed setting if it has never been saved — once saved, **Settings → Debug** in the UI is authoritative and this variable is ignored. |
+| `RANK_CHECK_DEBUG` | unset (off) | Legacy. Same as above but for per-client Rank Check detail (computed hours, group membership). Promotions, errors, and the per-run summary always log regardless of this flag. Prefer **Settings → Debug** — toggle at runtime, no restart needed. |
 | `NODE_ENV` | `development` | Set to `production` in Docker; enables the startup guard that refuses a default `JWT_SECRET`. |
 
 </details>

@@ -16,6 +16,7 @@ import type {
 import axios from 'axios';
 import { validateUrl } from '../utils/url-validator.js';
 import { ALLOWED_WEBQUERY_COMMANDS } from './command-whitelist.js';
+import { isDebugEnabled } from '../utils/debug-flags.js';
 import crypto from 'crypto';
 
 const MAX_NODE_VISITS = 100;
@@ -560,9 +561,10 @@ export class FlowRunner {
   private async executeRankCheck(data: RankCheckActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
     // Per-client detail (computed hours, group membership, why a client was
     // or wasn't promoted) is verbose - every eligible client, every tick.
-    // Off by default; set RANK_CHECK_DEBUG=1 to see it while diagnosing.
+    // Off by default; toggle via Settings > Debug (or RANK_CHECK_DEBUG=1 on
+    // first boot, before the setting has been saved) to see it while diagnosing.
     // Promotions, errors, and the per-tick summary always log regardless.
-    const RANK_CHECK_DEBUG = process.env.RANK_CHECK_DEBUG === '1';
+    const RANK_CHECK_DEBUG = isDebugEnabled('rankCheck');
 
     // ranks is JSON: [{ "hours": 10, "groupId": "7" }, { "hours": 50, "groupId": "8" }]
     let ranks: Array<{ hours: number; groupId: string }>;
