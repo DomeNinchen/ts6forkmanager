@@ -253,7 +253,7 @@ function ConnectionsTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditId(null); resetForm(); }}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.name || !form.host || !form.apiKey}>{editId ? 'Update' : 'Add'}</Button>
+            <Button onClick={handleSave} disabled={!form.name || !form.host || (!editId && !form.apiKey)}>{editId ? 'Update' : 'Add'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
