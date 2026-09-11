@@ -619,8 +619,16 @@ export class FlowRunner {
         totalHours = totalSeconds / 3600;
       }
 
+      console.log(`[BotEngine] Rank Check: cldbid=${cldbid} at ${totalHours.toFixed(4)}h (mode=${mode}), current groups=[${clientGroups.join(',')}]`);
+
+      let matchedRank = false;
       for (const rank of ranks) {
-        if (totalHours >= rank.hours && !clientGroups.includes(rank.groupId)) {
+        if (totalHours >= rank.hours) {
+          matchedRank = true;
+          if (clientGroups.includes(rank.groupId)) {
+            console.log(`[BotEngine] Rank Check: cldbid=${cldbid} already has group ${rank.groupId}, skipping`);
+            break;
+          }
           try {
             await client.executePost(ctx.sid, 'servergroupaddclient', { sgid: rank.groupId, cldbid });
             promoted++;
@@ -630,6 +638,9 @@ export class FlowRunner {
           }
           break; // Only assign highest eligible rank
         }
+      }
+      if (!matchedRank) {
+        console.log(`[BotEngine] Rank Check: cldbid=${cldbid} doesn't meet any rank threshold yet (lowest is ${Math.min(...ranks.map(r => r.hours))}h)`);
       }
     }
     ctx.setTemp('rankPromotedCount', promoted);
