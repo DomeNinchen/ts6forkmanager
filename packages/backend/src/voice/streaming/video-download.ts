@@ -147,7 +147,13 @@ export async function downloadVideoForStream(
 ): Promise<DownloadedStream> {
   rejectYtDlpOptionUrl(url);
 
+  // yt-dlp's own search syntax (e.g. "ytsearch1:some title") - not a network
+  // URL, so it skips the SSRF host check below (there's no attacker-chosen
+  // host to validate, yt-dlp resolves it via YouTube's own search) and always
+  // goes through yt-dlp rather than the direct-stream or local-file branches.
+  const isSearchQuery = url.startsWith('ytsearch');
   const isRemote =
+    isSearchQuery ||
     url.startsWith('http://') ||
     url.startsWith('https://');
 
@@ -155,13 +161,15 @@ export async function downloadVideoForStream(
     return { path: resolvePathUnderMusicDir(url), durationSec: null };
   }
 
-  const check = await validateUrl(url, { allowedProtocols: ['http:', 'https:'] });
-  if (!check.valid) {
-    throw new Error(`Video source blocked: ${check.error}`);
-  }
+  if (!isSearchQuery) {
+    const check = await validateUrl(url, { allowedProtocols: ['http:', 'https:'] });
+    if (!check.valid) {
+      throw new Error(`Video source blocked: ${check.error}`);
+    }
 
-  if (!isYtDlpStreamHost(url)) {
-    return { path: url, durationSec: null };
+    if (!isYtDlpStreamHost(url)) {
+      return { path: url, durationSec: null };
+    }
   }
 
   const musicRoot = ensureMusicDir();

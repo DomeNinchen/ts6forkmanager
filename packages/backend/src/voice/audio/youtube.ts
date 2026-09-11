@@ -80,7 +80,10 @@ export function downloadYouTube(url: string, outputDir: string): Promise<{ fileP
         artist: parsed.uploader || parsed.channel || "Unknown",
         duration: parsed.duration || 0,
         thumbnail: parsed.thumbnail || "",
-        url,
+        // parsed.webpage_url is the real, resolved video URL - falls back to
+        // the input only if yt-dlp somehow didn't report it. Matters when
+        // `url` was a ytsearch:... query rather than an actual link.
+        url: parsed.webpage_url || url,
       };
 
       const expectedPath = path.join(outputDir, `${info.id}.opus`);

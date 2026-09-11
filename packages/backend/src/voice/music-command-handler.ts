@@ -3,6 +3,7 @@ import { VoiceBotManager } from './voice-bot-manager.js';
 import type { VoiceBot } from './voice-bot.js';
 import type { QueueItem } from './playlist/queue.js';
 import { downloadYouTube } from './audio/youtube.js';
+import { STREAM_PRESETS } from './streaming/types.js';
 
 const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
 const CMD_PREFIX = '!';
@@ -12,6 +13,15 @@ const MUSIC_COMMANDS = new Set([
   'vol', 'volume', 'np', 'nowplaying', 'queue', 'add',
   'stream', 'stopstream', 'viewers',
 ]);
+
+/**
+ * A bare URL is used as-is; anything else is treated as a search query via
+ * yt-dlp's own "ytsearch1:" syntax, which resolves to the first result the
+ * same way a real URL would - no separate search API/UI needed.
+ */
+function toYtDlpSource(input: string): string {
+  return input.startsWith('http://') || input.startsWith('https://') ? input : `ytsearch1:${input}`;
+}
 
 /**
  * Handles text-based music commands (!radio, !play, !stop, etc.)
@@ -188,19 +198,14 @@ export class MusicCommandHandler {
         this.reply(bot, userClid, 'Resumed.');
         return;
       }
-      this.reply(bot, userClid, 'Usage: !play <youtube-url>');
-      return;
-    }
-
-    if (!args.startsWith('http://') && !args.startsWith('https://')) {
-      this.reply(bot, userClid, 'Please provide a valid URL. Usage: !play <url>');
+      this.reply(bot, userClid, 'Usage: !play <youtube-url or search terms>');
       return;
     }
 
     this.reply(bot, userClid, 'Loading...');
 
     try {
-      const { filePath, info } = await downloadYouTube(args, MUSIC_DIR);
+      const { filePath, info } = await downloadYouTube(toYtDlpSource(args), MUSIC_DIR);
 
       const queueItem: QueueItem = {
         id: `yt_${info.id}`,
@@ -209,7 +214,7 @@ export class MusicCommandHandler {
         duration: info.duration,
         filePath,
         source: 'youtube',
-        sourceUrl: args,
+        sourceUrl: info.url,
       };
 
       bot.queue.add(queueItem);
@@ -293,16 +298,11 @@ export class MusicCommandHandler {
       return;
     }
 
-    // URL provided — add to queue without interrupting
-    if (!args.startsWith('http://') && !args.startsWith('https://')) {
-      this.reply(bot, userClid, 'Usage: !queue [show|play <n>|remove <n>|clear|<url>]');
-      return;
-    }
-
+    // URL or search terms provided — add to queue without interrupting
     this.reply(bot, userClid, 'Loading...');
 
     try {
-      const { filePath, info } = await downloadYouTube(args, MUSIC_DIR);
+      const { filePath, info } = await downloadYouTube(toYtDlpSource(args), MUSIC_DIR);
 
       const queueItem: QueueItem = {
         id: `yt_${info.id}`,
@@ -311,7 +311,7 @@ export class MusicCommandHandler {
         duration: info.duration,
         filePath,
         source: 'youtube',
-        sourceUrl: args,
+        sourceUrl: info.url,
       };
 
       bot.queue.add(queueItem);
@@ -410,24 +410,26 @@ export class MusicCommandHandler {
 
   private async handleStream(bot: VoiceBot, userClid: number, args: string): Promise<void> {
     if (!args) {
-      this.reply(bot, userClid, 'Usage: !stream <url> [preset]  — Presets: 480p, 720p, 1080p');
+      this.reply(bot, userClid, 'Usage: !stream <url or search terms> [preset]  — Presets: 480p, 720p, 1080p');
       return;
     }
 
-    const parts = args.split(/\s+/);
-    const url = parts[0];
-    const preset = parts[1] || undefined;
-
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      this.reply(bot, userClid, 'Please provide a valid URL.');
-      return;
-    }
+    // A URL is always one token; search terms can be several words, so only
+    // the LAST word can be an optional preset suffix - and only if it's
+    // actually a known preset, otherwise it's just part of the query (e.g.
+    // a single-word search isn't mistaken for "no query, just a preset").
+    const words = args.split(/\s+/);
+    const lastWord = words[words.length - 1];
+    const hasPreset = words.length > 1 && lastWord in STREAM_PRESETS;
+    const preset = hasPreset ? lastWord : undefined;
+    const query = hasPreset ? words.slice(0, -1).join(' ') : args;
+    const source = toYtDlpSource(query);
 
     if (bot.videoStreaming) {
       // Change source if already streaming
       try {
-        await bot.setVideoSource(url);
-        this.reply(bot, userClid, `Stream source changed to: ${url}`);
+        await bot.setVideoSource(source);
+        this.reply(bot, userClid, `Stream source changed to: ${query}`);
       } catch (err: any) {
         this.reply(bot, userClid, `Error: ${err.message}`);
       }
@@ -436,8 +438,8 @@ export class MusicCommandHandler {
 
     this.reply(bot, userClid, 'Starting video stream...');
     try {
-      await bot.startVideoStream(url, preset);
-      this.reply(bot, userClid, `Video stream started: ${url}`);
+      await bot.startVideoStream(source, preset);
+      this.reply(bot, userClid, `Video stream started: ${query}`);
     } catch (err: any) {
       this.reply(bot, userClid, `Failed to start stream: ${err.message}`);
     }
