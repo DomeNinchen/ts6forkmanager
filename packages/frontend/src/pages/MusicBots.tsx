@@ -11,7 +11,7 @@ import {
   useSetShuffle, useSetRepeat,
   usePlayFromQueue, useMoveQueueItem,
 } from '@/hooks/use-music-bots';
-import { useSongs, useUploadSong, useDeleteSong, useYouTubeSearch, useYouTubeDownload, useYouTubeInfo, useYouTubeDownloadBatch } from '@/hooks/use-music-library';
+import { useSongs, useUploadSong, useDeleteSong, useYouTubeSearch, useYouTubeDownload, useYouTubeInfo, useYouTubeDownloadBatch, useScanMusicLibrary } from '@/hooks/use-music-library';
 import { useRadioStations, useRadioPresets, useCreateRadioStation, useDeleteRadioStation, usePlayRadio } from '@/hooks/use-radio-stations';
 import { usePlaylists, usePlaylist, useCreatePlaylist, useDeletePlaylist, useAddSongToPlaylist, useRemoveSongFromPlaylist } from '@/hooks/use-playlists';
 import { useServers } from '@/hooks/use-servers';
@@ -723,6 +723,7 @@ function LibraryTab() {
   const { data: songs, isLoading } = useSongs(configId);
   const uploadSong = useUploadSong();
   const deleteSong = useDeleteSong();
+  const scanLibrary = useScanMusicLibrary();
   const ytSearch = useYouTubeSearch();
   const ytDownload = useYouTubeDownload();
 
@@ -851,6 +852,23 @@ function LibraryTab() {
         <input ref={fileInputRef} type="file" accept="audio/*" multiple hidden onChange={handleUpload} />
         <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadSong.isPending}>
           <Upload className="h-4 w-4 mr-1" /> {uploadSong.isPending ? 'Uploading...' : 'Upload'}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!configId || scanLibrary.isPending}
+          onClick={() => {
+            if (!configId) return;
+            scanLibrary.mutate(configId, {
+              onSuccess: (result) => toast.success(
+                result.added > 0 ? `Found ${result.added} new track(s)` : 'No new tracks found'
+              ),
+              onError: () => toast.error('Scan failed'),
+            });
+          }}
+          title="Scan for audio files already in the music folder (e.g. shared with another app)"
+        >
+          <RefreshCw className={`h-4 w-4 mr-1 ${scanLibrary.isPending ? 'animate-spin' : ''}`} /> {scanLibrary.isPending ? 'Scanning...' : 'Scan for New Files'}
         </Button>
       </div>
 

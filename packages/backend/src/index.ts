@@ -12,6 +12,7 @@ import { config } from './config.js';
 import { setYtCookieFile } from './voice/audio/youtube.js';
 import { sweepStreamTempFiles } from './voice/streaming/video-download.js';
 import { loadDebugFlags } from './utils/debug-flags.js';
+import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
@@ -45,6 +46,24 @@ async function main() {
   const adapter = new PrismaBetterSqlite3({ url: config.databaseUrl });
   const prisma = new PrismaClient({ adapter });
   await loadDebugFlags(prisma);
+
+  // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared
+  // with another app) without requiring a manual scan first - see
+  // clusterzx/ts6-manager#79. Best-effort: never blocks startup.
+  try {
+    const serverConfigs = await prisma.tsServerConfig.findMany({ select: { id: true } });
+    let totalAdded = 0;
+    for (const { id } of serverConfigs) {
+      const { added } = await scanMusicLibrary(prisma, id);
+      totalAdded += added;
+    }
+    if (totalAdded > 0) {
+      console.log(`[MusicLibrary] Startup scan added ${totalAdded} track(s) found in MUSIC_DIR`);
+    }
+  } catch (err: any) {
+    console.warn(`[MusicLibrary] Startup scan failed: ${err.message}`);
+  }
+
   const app = createApp();
   const server = createServer(app);
 
