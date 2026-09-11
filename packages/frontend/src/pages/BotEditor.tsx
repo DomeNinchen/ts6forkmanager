@@ -1156,6 +1156,11 @@ export default function BotEditor() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Exclude Group IDs (comma-separated)</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="e.g. Bot group ID" value={selectedNodeData.config.excludeGroupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, excludeGroupIds: e.target.value } } : n))} />
+                        <p className="text-[9px] text-muted-foreground mt-1">Clients in any of these groups are skipped entirely. ServerQuery clients are always skipped.</p>
+                      </div>
                     </div>
                   )}
 

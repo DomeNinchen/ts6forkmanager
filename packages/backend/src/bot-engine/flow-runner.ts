@@ -570,13 +570,24 @@ export class FlowRunner {
     // Sort ranks descending by hours so highest rank is checked first
     ranks.sort((a, b) => b.hours - a.hours);
 
+    const excludeIds = data.excludeGroupIds
+      ? (await ctx.resolveTemplate(data.excludeGroupIds)).split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
     const clients = await client.executePost(ctx.sid, 'clientlist', { '-times': '', '-groups': '' });
     if (!Array.isArray(clients)) return;
 
     const mode = data.mode || 'accumulatedTime';
     let promoted = 0;
+    let eligible = 0;
     for (const cl of clients) {
+      // ServerQuery connections (the bot itself, EventBridge, etc.) are never rank-checked.
       if (String(cl.client_type) === '1') continue;
+
+      const clientGroups = String(cl.client_servergroups || '').split(',');
+      if (excludeIds.length > 0 && excludeIds.some(g => clientGroups.includes(g))) continue;
+
+      eligible++;
       const cldbid = String(cl.client_database_id);
 
       let totalHours: number;
@@ -608,8 +619,6 @@ export class FlowRunner {
         totalHours = totalSeconds / 3600;
       }
 
-      const clientGroups = String(cl.client_servergroups || '').split(',');
-
       for (const rank of ranks) {
         if (totalHours >= rank.hours && !clientGroups.includes(rank.groupId)) {
           try {
@@ -624,7 +633,7 @@ export class FlowRunner {
       }
     }
     ctx.setTemp('rankPromotedCount', promoted);
-    console.log(`[BotEngine] Rank Check: checked ${clients.length} client(s), ${promoted} promoted`);
+    console.log(`[BotEngine] Rank Check: ${clients.length} connection(s) seen, ${eligible} eligible (query clients and excluded groups filtered out), ${promoted} promoted`);
   }
 
   private async executeTempChannelCleanup(data: TempChannelCleanupActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
