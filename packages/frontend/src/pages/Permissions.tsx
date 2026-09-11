@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
@@ -79,6 +81,7 @@ export default function Permissions() {
   const [layer, setLayer] = useState<PermLayer>('server-group');
   const [entityId, setEntityId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [showModifiedOnly, setShowModifiedOnly] = useState(false);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [changes, setChanges] = useState<Map<string, PendingChange>>(new Map());
 
@@ -169,9 +172,16 @@ export default function Permissions() {
   // Categorize permissions
   const categories = useMemo(() => {
     const catMap = new Map<string, PermDef[]>();
-    const filtered = search
+    let filtered = search
       ? allPerms.filter((p) => p.permsid.toLowerCase().includes(search.toLowerCase()) || p.permdesc.toLowerCase().includes(search.toLowerCase()))
       : allPerms;
+
+    if (showModifiedOnly) {
+      // "Set" (has an explicit value on this entity) OR mid-edit (a pending
+      // local change of any kind) - keeps a permission visible while it's
+      // being removed instead of yanking it out from under the user.
+      filtered = filtered.filter((p) => currentPerms.has(p.permsid) || changes.has(p.permsid));
+    }
 
     for (const perm of filtered) {
       const cat = getCategoryKey(perm.permsid);
@@ -179,7 +189,7 @@ export default function Permissions() {
       catMap.get(cat)!.push(perm);
     }
     return catMap;
-  }, [allPerms, search]);
+  }, [allPerms, search, showModifiedOnly, currentPerms, changes]);
 
   const toggleCat = useCallback((cat: string) => {
     setExpandedCats((prev) => {
@@ -355,14 +365,20 @@ export default function Permissions() {
                 {entityId ? `Permissions` : 'Select an entity'}
               </CardTitle>
               {entityId && (
-                <div className="relative w-64">
-                  <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Search permissions..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-7 h-8 text-xs"
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
+                    <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">Only show set</Label>
+                  </div>
+                  <div className="relative w-64">
+                    <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search permissions..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-7 h-8 text-xs"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -513,7 +529,9 @@ export default function Permissions() {
                   ))}
                   {categories.size === 0 && (
                     <div className="flex items-center justify-center h-[300px]">
-                      <p className="text-sm text-muted-foreground">No permissions match your search</p>
+                      <p className="text-sm text-muted-foreground">
+                        {showModifiedOnly ? 'No permissions are set on this entity' : 'No permissions match your search'}
+                      </p>
                     </div>
                   )}
                 </div>
