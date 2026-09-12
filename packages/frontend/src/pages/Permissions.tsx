@@ -297,7 +297,7 @@ export default function Permissions() {
         const offline = (Array.isArray(offlineClients) ? offlineClients : [])
           .filter((cl: any) => !onlineIds.has(Number(cl.cldbid)))
           .map((cl: any) => ({
-            id: Number(cl.cldbid), name: cl.client_lastnickname || `Client #${cl.cldbid}`, type: 0, online: false,
+            id: Number(cl.cldbid), name: cl.client_nickname || `Client #${cl.cldbid}`, type: 0, online: false,
           }));
         return [...online, ...offline].sort((a, b) =>
           a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1);
