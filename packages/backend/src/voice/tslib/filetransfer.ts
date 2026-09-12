@@ -15,6 +15,7 @@
 // version), so we match on `clientftfid` in every parsed command instead of
 // relying on a specific command name.
 import * as net from 'net';
+import * as crypto from 'crypto';
 import { buildCommand } from './commands.js';
 import type { Ts3Client } from './client.js';
 
@@ -110,15 +111,24 @@ function ftUploadBytes(host: string, port: number, ftkey: string, data: Buffer, 
   });
 }
 
-/** Upload `data` as this client's own avatar. `host` is the file-transfer host (same as the voice server host). */
+/** Upload `data` as this client's own avatar. `host` is the file-transfer host
+ * (same as the voice server host). Uploading the file alone isn't enough -
+ * other clients only know to fetch it once `client_flag_avatar` is set to
+ * the file's MD5 hash (confirmed against a real TS6 test server; this step
+ * isn't in any official ftinitupload docs, it's what the real client does). */
 export async function uploadAvatar(client: Ts3Client, host: string, data: Buffer, timeoutMs = 15000): Promise<void> {
   console.log(`[filetransfer] Uploading avatar (${data.length} bytes) to ${host}`);
   const { port, ftkey, seekpos } = await ftInitUpload(client, AVATAR_FILE_NAME, data.length, timeoutMs);
   await ftUploadBytes(host, port, ftkey, data.subarray(seekpos), timeoutMs);
-  console.log(`[filetransfer] Avatar upload to ${host}:${port} completed`);
+  const md5 = crypto.createHash('md5').update(data).digest('hex');
+  client.sendCommand(buildCommand('clientupdate', { client_flag_avatar: md5 }));
+  console.log(`[filetransfer] Avatar upload to ${host}:${port} completed, flag set (md5=${md5})`);
 }
 
-/** Remove this client's own avatar server-side (best-effort; the server may reply with an error if none is set). */
+/** Remove this client's own avatar server-side (best-effort; the server may
+ * reply with an error if none is set) and clear the flag so other clients
+ * stop showing the old one. */
 export function deleteAvatar(client: Ts3Client): void {
   client.sendCommand(buildCommand('ftdeletefile', { cid: 0, cpw: '', name: AVATAR_FILE_NAME }));
+  client.sendCommand(buildCommand('clientupdate', { client_flag_avatar: '' }));
 }
