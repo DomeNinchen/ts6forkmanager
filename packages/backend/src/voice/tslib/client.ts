@@ -55,11 +55,16 @@ const S2C_HEADER_LEN = 3; // PId(2) + PT(1)
 const MAX_PACKET_SIZE = 500;
 const MAX_OUT_CONTENT = MAX_PACKET_SIZE - MAC_LEN - C2S_HEADER_LEN;
 
-// Version sign - TS3AudioBot default (Linux 3.?.? far-future build)
+// Version sign - a real, TeamSpeak-signed Linux 5.0.0-beta.25 build (from
+// ReSpeak/tsdeclarations' public catalog of known version/platform/signature
+// triples: github.com/ReSpeak/tsdeclarations, Versions.csv). This has to be an
+// actual signed triple - arbitrary version strings won't validate. Chosen
+// over TS3AudioBot's old "3.?.? far-future build" placeholder, which showed
+// up as an obviously-fake version in TS clients' client info.
 const VERSION_SIGN = {
   platform: "Linux",
-  version: "3.?.? [Build: 5680278000]",
-  sign: "Hjd+N58Gv3ENhoKmGYy2bNRBsNNgm5kpiaQWxOj5HN2DXttG6REjymSwJtpJ8muC2gSwRuZi0R+8Laan5ts5CQ==",
+  version: "5.0.0-beta.25 [Build: 1588064367]",
+  sign: "L5rpK9OLT84Hgpg/NXSCwpHfrRc/JTtMa/kFfaD2rlF7c/YHiEnly/4+A9y0iowA70+5JEzyH6CBjkniiz4DAw==",
 };
 
 interface ResendPacket {
