@@ -72,6 +72,12 @@ export class VoiceBotManager extends EventEmitter {
         avatarImage: dbBot.avatarData
           ? { data: Buffer.from(dbBot.avatarData), mimeType: dbBot.avatarMimeType || 'image/png' }
           : undefined,
+        webQuery: {
+          host: dbBot.serverConfig.host,
+          port: dbBot.serverConfig.webqueryPort,
+          apiKey: decrypt(dbBot.serverConfig.apiKey),
+          useHttps: dbBot.serverConfig.useHttps,
+        },
       };
 
       const bot = this.createBotInstance(config);
@@ -233,6 +239,12 @@ export class VoiceBotManager extends EventEmitter {
       sidecarPort: 9800,
       streamPreset: '720p',
       descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
+      webQuery: {
+        host: serverConfig.host,
+        port: serverConfig.webqueryPort,
+        apiKey: decrypt(serverConfig.apiKey),
+        useHttps: serverConfig.useHttps,
+      },
     };
 
     const bot = this.createBotInstance(config);
