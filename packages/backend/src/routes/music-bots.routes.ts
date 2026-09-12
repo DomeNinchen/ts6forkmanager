@@ -8,12 +8,12 @@ import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
 import { DESCRIPTION_PLACEHOLDERS } from '../voice/description-template.js';
 import multer from 'multer';
 
-// TS3/TS6's own i_client_max_avatar_filesize permission defaults to just
-// 51,200 bytes (~50KB) and is server-configurable - this is a generous
-// sanity ceiling to reject obviously-oversized images client-side, not an
-// assumption about the actual configured limit (which the server enforces
-// for real, surfaced back as a warning if this file still exceeds it).
-const MAX_AVATAR_SIZE = 300 * 1024; // 300KB
+// The real limit is the TS server's own i_client_max_avatar_filesize
+// permission (server-configurable, no fixed official value) - enforced
+// there for real, surfaced back as a warning if a file exceeds it. This is
+// just a generous technical ceiling to stop absurdly large uploads, not a
+// guess at what TS servers actually allow.
+const MAX_AVATAR_SIZE = 10 * 1024 * 1024; // 10MB
 const AVATAR_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 const avatarUpload = multer({
   storage: multer.memoryStorage(),

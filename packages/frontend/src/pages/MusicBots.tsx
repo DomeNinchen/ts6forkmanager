@@ -557,7 +557,7 @@ function AvatarPicker({ botId, hasAvatar, localFile, onPick, onRemove }: {
             </Button>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground">PNG/JPEG/GIF/WebP, up to 300KB (your TS server may cap it lower - you'll see a warning if so)</p>
+        <p className="text-[11px] text-muted-foreground">PNG/JPEG/GIF/WebP (your TS server's own size limit applies - you'll see a warning if it rejects the file)</p>
       </div>
       <input
         ref={fileInputRef}
@@ -712,6 +712,14 @@ function BotsTab() {
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editBot ? 'Edit Music Bot' : 'New Music Bot'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
+              <p className="text-xs text-amber-500">
+                Avatar and description are currently broken by TS6 server bugs, not this fork — an avatar only shows to TS6 clients (not TS3), and the description update is rejected outright. Reported upstream:{' '}
+                <a href="https://github.com/teamspeak/teamspeak6-server/issues/122" target="_blank" rel="noreferrer" className="underline">avatar issue</a>
+                {', '}
+                <a href="https://github.com/teamspeak/teamspeak6-server/issues/123" target="_blank" rel="noreferrer" className="underline">description issue</a>.
+              </p>
+            </div>
             <div>
               <Label className="text-xs mb-1.5 block">Avatar</Label>
               <AvatarPicker
