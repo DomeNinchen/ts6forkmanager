@@ -557,7 +557,7 @@ function AvatarPicker({ botId, hasAvatar, localFile, onPick, onRemove }: {
             </Button>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground">PNG/JPEG/GIF/WebP, up to 2MB</p>
+        <p className="text-[11px] text-muted-foreground">PNG/JPEG/GIF/WebP, up to 300KB (your TS server may cap it lower - you'll see a warning if so)</p>
       </div>
       <input
         ref={fileInputRef}
@@ -621,7 +621,11 @@ function BotsTab() {
     }, {
       onSuccess: (result: { id: number }) => {
         toast.success('Music bot created');
-        if (avatarFile) uploadAvatar.mutate({ id: result.id, file: avatarFile });
+        if (avatarFile) {
+          uploadAvatar.mutate({ id: result.id, file: avatarFile }, {
+            onSuccess: (r: { warning?: string }) => { if (r?.warning) toast.warning(r.warning); },
+          });
+        }
         setShowCreate(false);
         resetForm();
       },
@@ -644,7 +648,11 @@ function BotsTab() {
     }}, {
       onSuccess: () => {
         toast.success('Bot updated');
-        if (avatarFile) uploadAvatar.mutate({ id: editBot.id, file: avatarFile });
+        if (avatarFile) {
+          uploadAvatar.mutate({ id: editBot.id, file: avatarFile }, {
+            onSuccess: (r: { warning?: string }) => { if (r?.warning) toast.warning(r.warning); },
+          });
+        }
         else if (avatarRemoved) deleteAvatar.mutate(editBot.id);
         setEditBot(null);
       },

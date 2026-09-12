@@ -8,7 +8,12 @@ import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
 import { DESCRIPTION_PLACEHOLDERS } from '../voice/description-template.js';
 import multer from 'multer';
 
-const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB - TS3 clients themselves cap avatars well below this
+// TS3/TS6's own i_client_max_avatar_filesize permission defaults to just
+// 51,200 bytes (~50KB) and is server-configurable - this is a generous
+// sanity ceiling to reject obviously-oversized images client-side, not an
+// assumption about the actual configured limit (which the server enforces
+// for real, surfaced back as a warning if this file still exceeds it).
+const MAX_AVATAR_SIZE = 300 * 1024; // 300KB
 const AVATAR_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -176,17 +181,21 @@ musicBotRoutes.post('/:id/avatar', avatarUpload.single('file'), async (req: Requ
     });
 
     const bot = manager.getBot(id);
+    let warning: string | undefined;
     if (bot) {
-      // Upload happens over the live TS3 connection; failures are logged
-      // server-side (see VoiceBot.start()'s connect-time upload) rather than
-      // failing this request - the image is saved regardless and will be
-      // retried on the bot's next connect.
-      bot.uploadAvatarNow(req.file.buffer, req.file.mimetype).catch((err) => {
+      // The image is saved either way and will be retried on the bot's next
+      // connect - a live-push failure (e.g. exceeds the server's configured
+      // i_client_max_avatar_filesize) doesn't undo the save, but is awaited
+      // here so the admin actually sees it instead of only the server log.
+      try {
+        await bot.uploadAvatarNow(req.file.buffer, req.file.mimetype);
+      } catch (err: any) {
         console.error(`[music-bots.routes] Avatar upload to bot ${id} failed: ${err.message}`);
-      });
+        warning = `Saved, but TeamSpeak rejected the live upload: ${err.message}`;
+      }
     }
 
-    res.json({ success: true });
+    res.json({ success: true, ...(warning && { warning }) });
   } catch (err) { next(err); }
 });
 

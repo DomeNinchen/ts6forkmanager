@@ -255,9 +255,25 @@ export class VoiceBot extends EventEmitter {
   }
 
   private pushDescription(rendered: string): void {
+    // Best-effort: TS3 error responses aren't correlated to a specific
+    // command here (unlike ftinitupload's clientftfid), so this can
+    // occasionally attribute an unrelated concurrent error to this update -
+    // still a large improvement over the previous silent catch, which
+    // swallowed every client_description failure with no trace at all.
+    const onError = (params: Record<string, string>) => {
+      const id = parseInt(params.id || '0', 10);
+      if (id !== 0) {
+        console.error(`[VoiceBot ${this.config.id}] client_description update may have been rejected: TS error ${id}: ${params.msg || 'unknown error'}`);
+      }
+    };
+    this.client.once('ts3error', onError);
+    setTimeout(() => this.client.off('ts3error', onError), 3000);
     try {
       this.client.sendCommand(buildCommand('clientupdate', { client_description: rendered }));
-    } catch { }
+    } catch (err: any) {
+      this.client.off('ts3error', onError);
+      console.error(`[VoiceBot ${this.config.id}] Failed to send client_description update: ${err.message}`);
+    }
   }
 
   /** Whether the configured template actually shows a time-based placeholder
