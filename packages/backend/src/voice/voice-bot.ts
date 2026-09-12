@@ -10,6 +10,7 @@ import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.
 import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus } from './streaming/types.js';
 import { downloadVideoForStream, safeUnlinkStreamTemp } from './streaming/video-download.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
+import { WebQueryClient } from '../ts-client/webquery-client.js';
 
 /** Default cap on how long a pre-downloaded video may run, in seconds. */
 const DEFAULT_MAX_VIDEO_DURATION_SEC = 900;
@@ -38,6 +39,13 @@ export interface VoiceBotConfig {
   streamPreset?: string;
   descriptionTemplate?: string;
   avatarImage?: { data: Buffer; mimeType: string };
+  // client_description is documented (clientedit.txt in the official TS6
+  // ServerQuery docs) as a `clientedit` parameter - i.e. set from outside via
+  // ServerQuery, not via `clientupdate` on the bot's own voice connection,
+  // which the TS6 server rejects outright (error 1538 "invalid parameter").
+  // Confirmed against a real server: clientedit succeeds and the value reads
+  // back correctly. Used for description pushes when present.
+  webQuery?: { host: string; port: number; apiKey: string; useHttps: boolean };
 }
 
 export class VoiceBot extends EventEmitter {
@@ -82,6 +90,7 @@ export class VoiceBot extends EventEmitter {
 
   // Description template refresh (keeps {remaining}/{elapsed} current while playing)
   private descriptionTimer: ReturnType<typeof setInterval> | null = null;
+  private webQueryClient: WebQueryClient | null = null;
 
   // Reconnect: distinguishes manual stop from unexpected disconnect
   private _manuallyStopped: boolean = false;
@@ -255,6 +264,24 @@ export class VoiceBot extends EventEmitter {
   }
 
   private pushDescription(rendered: string): void {
+    if (this.config.webQuery) {
+      // clientedit (ServerQuery, edit-from-outside) instead of clientupdate
+      // (self, over the voice connection) - see the comment on
+      // VoiceBotConfig.webQuery for why.
+      if (!this.webQueryClient) {
+        const wq = this.config.webQuery;
+        this.webQueryClient = new WebQueryClient(wq.host, wq.port, wq.apiKey, wq.useHttps);
+      }
+      const clid = this.client.getClientId();
+      // sid=1: music bots have no stored virtual-server id (only a voicePort),
+      // and every other part of this app that defaults one also uses 1 - fine
+      // as long as a physical server hosts a single virtual server, which is
+      // the only setup this app's music bot feature otherwise assumes anyway.
+      this.webQueryClient.execute(1, 'clientedit', { clid, client_description: rendered })
+        .catch((err: any) => console.error(`[VoiceBot ${this.config.id}] clientedit client_description failed: ${err.message}`));
+      return;
+    }
+
     // Best-effort: TS3 error responses aren't correlated to a specific
     // command here (unlike ftinitupload's clientftfid), so this can
     // occasionally attribute an unrelated concurrent error to this update -

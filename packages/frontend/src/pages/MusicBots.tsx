@@ -714,10 +714,8 @@ function BotsTab() {
           <div className="space-y-3">
             <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
               <p className="text-xs text-amber-500">
-                Avatar and description are currently broken by TS6 server bugs, not this fork — an avatar only shows to TS6 clients (not TS3), and the description update is rejected outright. Reported upstream:{' '}
-                <a href="https://github.com/teamspeak/teamspeak6-server/issues/122" target="_blank" rel="noreferrer" className="underline">avatar issue</a>
-                {', '}
-                <a href="https://github.com/teamspeak/teamspeak6-server/issues/123" target="_blank" rel="noreferrer" className="underline">description issue</a>.
+                An avatar this bot uploads currently shows correctly to TS6 clients, but not TS3 clients — a confirmed TS6 server bug, not this fork.{' '}
+                <a href="https://github.com/teamspeak/teamspeak6-server/issues/122" target="_blank" rel="noreferrer" className="underline">Reported upstream</a>.
               </p>
             </div>
             <div>
