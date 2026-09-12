@@ -59,6 +59,36 @@ export function useStopMusicBot() {
   });
 }
 
+export function useDescriptionPlaceholders() {
+  return useQuery({
+    queryKey: ['music-bot-description-placeholders'],
+    queryFn: musicBotsApi.descriptionPlaceholders,
+    staleTime: Infinity,
+  });
+}
+
+export function useUploadBotAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) => musicBotsApi.uploadAvatar(id, file),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['music-bots'] });
+      qc.invalidateQueries({ queryKey: ['music-bot', id] });
+    },
+  });
+}
+
+export function useDeleteBotAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => musicBotsApi.deleteAvatar(id),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['music-bots'] });
+      qc.invalidateQueries({ queryKey: ['music-bot', id] });
+    },
+  });
+}
+
 export function useRestartMusicBot() {
   const qc = useQueryClient();
   return useMutation({

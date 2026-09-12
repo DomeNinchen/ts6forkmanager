@@ -54,6 +54,21 @@ export const musicBotsApi = {
     api.post(`/music-bots/${id}/stream/webrtc/answer`, { sdp }).then((r) => r.data),
   webrtcIce: (id: number, candidate: string, sdpMid: string, sdpMLineIndex: number) =>
     api.post(`/music-bots/${id}/stream/webrtc/ice`, { candidate, sdpMid, sdpMLineIndex }).then((r) => r.data),
+
+  // Identity: avatar + description template
+  descriptionPlaceholders: (): Promise<Array<{ key: string; description: string }>> =>
+    api.get('/music-bots/description-placeholders').then((r) => r.data),
+  uploadAvatar: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/music-bots/${id}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data);
+  },
+  deleteAvatar: (id: number) => api.delete(`/music-bots/${id}/avatar`).then((r) => r.data),
+  // The route requires admin auth, so a plain <img src> won't carry the
+  // Authorization header - fetch as a blob and use an object URL instead.
+  avatarBlob: (id: number) => api.get(`/music-bots/${id}/avatar`, { responseType: 'blob' }).then((r) => r.data as Blob),
 };
 
 // === Music Library API ===

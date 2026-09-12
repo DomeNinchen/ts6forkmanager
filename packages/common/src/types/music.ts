@@ -14,6 +14,8 @@ export interface MusicBotSummary {
   voicePort: number;
   volume: number;
   autoStart: boolean;
+  descriptionTemplate: string | null;
+  hasAvatar: boolean;
   status: VoiceBotStatus;
   nowPlaying: QueueItemInfo | null;
   createdAt: string;
@@ -34,6 +36,7 @@ export interface CreateMusicBotRequest {
   voicePort?: number;
   volume?: number;
   autoStart?: boolean;
+  descriptionTemplate?: string;
 }
 
 export interface UpdateMusicBotRequest {
@@ -45,6 +48,7 @@ export interface UpdateMusicBotRequest {
   voicePort?: number;
   volume?: number;
   autoStart?: boolean;
+  descriptionTemplate?: string;
 }
 
 // === Song Types ===

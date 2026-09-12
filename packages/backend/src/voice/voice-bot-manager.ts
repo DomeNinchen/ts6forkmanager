@@ -68,6 +68,10 @@ export class VoiceBotManager extends EventEmitter {
         sidecarBinaryPath: process.env.SIDECAR_BINARY_PATH,
         sidecarPort: (dbBot as any).sidecarPort ?? 9800,
         streamPreset: (dbBot as any).streamPreset ?? '720p',
+        descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
+        avatarImage: dbBot.avatarData
+          ? { data: Buffer.from(dbBot.avatarData), mimeType: dbBot.avatarMimeType || 'image/png' }
+          : undefined,
       };
 
       const bot = this.createBotInstance(config);
@@ -175,6 +179,7 @@ export class VoiceBotManager extends EventEmitter {
     voicePort?: number;
     volume?: number;
     autoStart?: boolean;
+    descriptionTemplate?: string;
   }): Promise<{ id: number }> {
     // Enforce bot limit
     const limitSetting = await this.prisma.appSetting.findUnique({ where: { key: 'max_music_bots' } });
@@ -208,6 +213,7 @@ export class VoiceBotManager extends EventEmitter {
         volume: data.volume ?? 50,
         autoStart: data.autoStart ?? false,
         identityData,
+        descriptionTemplate: data.descriptionTemplate,
       },
     });
 
@@ -226,6 +232,7 @@ export class VoiceBotManager extends EventEmitter {
       sidecarBinaryPath: process.env.SIDECAR_BINARY_PATH,
       sidecarPort: 9800,
       streamPreset: '720p',
+      descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
     };
 
     const bot = this.createBotInstance(config);

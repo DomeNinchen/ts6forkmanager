@@ -10,6 +10,7 @@ import {
   useEnqueue, useLoadPlaylist, useRemoveFromQueue, useClearQueue,
   useSetShuffle, useSetRepeat,
   usePlayFromQueue, useMoveQueueItem,
+  useDescriptionPlaceholders, useUploadBotAvatar, useDeleteBotAvatar,
 } from '@/hooks/use-music-bots';
 import { useSongs, useUploadSong, useDeleteSong, useYouTubeSearch, useYouTubeDownload, useYouTubeInfo, useYouTubeDownloadBatch, useScanMusicLibrary } from '@/hooks/use-music-library';
 import { useRadioStations, useRadioPresets, useCreateRadioStation, useDeleteRadioStation, usePlayRadio } from '@/hooks/use-radio-stations';
@@ -21,6 +22,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -36,7 +38,7 @@ import {
   Volume2, VolumeX, Upload, Search, Download, ListMusic, Shuffle,
   Repeat, Repeat1, Power, PowerOff, RefreshCw, Pencil, X, Loader2,
   Film, FileAudio, Link, GripVertical, Music2, Radio, Clock,
-  Video, ArrowUp, ArrowDown, ArrowUpDown,
+  Video, ArrowUp, ArrowDown, ArrowUpDown, ImageIcon, UserRound,
 } from 'lucide-react';
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
 import { toast } from 'sonner';
@@ -504,6 +506,70 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onEnqueue, onLo
   );
 }
 
+// ─── Avatar Picker ───────────────────────────────────────────────────────────
+// Shows the bot's current avatar (fetched as an authenticated blob - the route
+// requires admin auth, so a plain <img src> can't be used), a freshly picked
+// local file before it's uploaded, or a placeholder icon.
+
+function AvatarPicker({ botId, hasAvatar, localFile, onPick, onRemove }: {
+  botId: number | null;
+  hasAvatar: boolean;
+  localFile: File | null;
+  onPick: (file: File | null) => void;
+  onRemove: () => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [remoteUrl, setRemoteUrl] = useState<string | null>(null);
+  const localUrl = localFile ? URL.createObjectURL(localFile) : null;
+
+  useEffect(() => {
+    if (localFile || !botId || !hasAvatar) { setRemoteUrl(null); return; }
+    let revoke: string | null = null;
+    musicBotsApi.avatarBlob(botId).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      revoke = url;
+      setRemoteUrl(url);
+    }).catch(() => setRemoteUrl(null));
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [botId, hasAvatar, localFile]);
+
+  useEffect(() => () => { if (localUrl) URL.revokeObjectURL(localUrl); }, [localUrl]);
+
+  const previewUrl = localUrl || remoteUrl;
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
+        {previewUrl ? (
+          <img src={previewUrl} alt="Avatar" className="h-full w-full object-cover" />
+        ) : (
+          <UserRound className="h-6 w-6 text-muted-foreground" />
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <ImageIcon className="h-3.5 w-3.5 mr-1" /> {previewUrl ? 'Change' : 'Upload'}
+          </Button>
+          {previewUrl && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => { onRemove(); onPick(null); }}>
+              <X className="h-3.5 w-3.5 mr-1" /> Remove
+            </Button>
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground">PNG/JPEG/GIF/WebP, up to 2MB</p>
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/gif,image/webp"
+        className="hidden"
+        onChange={(e) => onPick(e.target.files?.[0] ?? null)}
+      />
+    </div>
+  );
+}
+
 // ─── Bots Tab ────────────────────────────────────────────────────────────────
 
 function BotsTab() {
@@ -517,15 +583,20 @@ function BotsTab() {
   const playUrl = usePlayUrl();
   const enqueueSong = useEnqueue();
   const loadPlaylist = useLoadPlaylist();
+  const uploadAvatar = useUploadBotAvatar();
+  const deleteAvatar = useDeleteBotAvatar();
+  const { data: placeholders } = useDescriptionPlaceholders();
 
   const [showCreate, setShowCreate] = useState(false);
   const [editBot, setEditBot] = useState<MusicBotSummary | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showPlayDialog, setShowPlayDialog] = useState<number | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarRemoved, setAvatarRemoved] = useState(false);
 
   // Create form
   const [form, setForm] = useState({
-    name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false,
+    name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
   });
 
   const bots = Array.isArray(data) ? data : [];
@@ -546,8 +617,14 @@ function BotsTab() {
       voicePort: form.voicePort,
       volume: form.volume,
       autoStart: form.autoStart,
+      descriptionTemplate: form.descriptionTemplate || undefined,
     }, {
-      onSuccess: () => { toast.success('Music bot created'); setShowCreate(false); resetForm(); },
+      onSuccess: (result: { id: number }) => {
+        toast.success('Music bot created');
+        if (avatarFile) uploadAvatar.mutate({ id: result.id, file: avatarFile });
+        setShowCreate(false);
+        resetForm();
+      },
       onError: () => toast.error('Failed to create bot'),
     });
   };
@@ -563,13 +640,23 @@ function BotsTab() {
       voicePort: form.voicePort,
       volume: form.volume,
       autoStart: form.autoStart,
+      descriptionTemplate: form.descriptionTemplate || undefined,
     }}, {
-      onSuccess: () => { toast.success('Bot updated'); setEditBot(null); },
+      onSuccess: () => {
+        toast.success('Bot updated');
+        if (avatarFile) uploadAvatar.mutate({ id: editBot.id, file: avatarFile });
+        else if (avatarRemoved) deleteAvatar.mutate(editBot.id);
+        setEditBot(null);
+      },
       onError: () => toast.error('Failed to update bot'),
     });
   };
 
-  const resetForm = () => setForm({ name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false });
+  const resetForm = () => {
+    setForm({ name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '' });
+    setAvatarFile(null);
+    setAvatarRemoved(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -599,7 +686,10 @@ function BotsTab() {
                   voicePort: bot.voicePort ?? 9987,
                   volume: bot.volume,
                   autoStart: bot.autoStart,
+                  descriptionTemplate: bot.descriptionTemplate || '',
                 });
+                setAvatarFile(null);
+                setAvatarRemoved(false);
                 setEditBot(bot);
               }}
               onDelete={() => setDeleteId(bot.id)}
@@ -611,9 +701,19 @@ function BotsTab() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={showCreate || editBot !== null} onOpenChange={(open) => { if (!open) { setShowCreate(false); setEditBot(null); } }}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editBot ? 'Edit Music Bot' : 'New Music Bot'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            <div>
+              <Label className="text-xs mb-1.5 block">Avatar</Label>
+              <AvatarPicker
+                botId={editBot?.id ?? null}
+                hasAvatar={!!editBot?.hasAvatar && !avatarRemoved}
+                localFile={avatarFile}
+                onPick={(file) => { setAvatarFile(file); if (file) setAvatarRemoved(false); }}
+                onRemove={() => setAvatarRemoved(true)}
+              />
+            </div>
             <div>
               <Label className="text-xs">Name</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My Music Bot" />
@@ -658,6 +758,25 @@ function BotsTab() {
             <div className="flex items-center gap-2">
               <Switch checked={form.autoStart} onCheckedChange={(v) => setForm({ ...form, autoStart: v })} />
               <Label className="text-xs">Auto-start on server startup</Label>
+            </div>
+            <div>
+              <Label className="text-xs">Description Template</Label>
+              <Textarea
+                value={form.descriptionTemplate}
+                onChange={(e) => setForm({ ...form, descriptionTemplate: e.target.value })}
+                placeholder="e.g. Now playing: {title} ({remaining} left)"
+                rows={2}
+                className="text-sm"
+              />
+              {Array.isArray(placeholders) && placeholders.length > 0 && (
+                <div className="mt-1.5 space-y-0.5">
+                  {placeholders.map((p) => (
+                    <p key={p.key} className="text-[11px] text-muted-foreground">
+                      <code className="bg-muted px-1 rounded">{`{${p.key}}`}</code> — {p.description}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
