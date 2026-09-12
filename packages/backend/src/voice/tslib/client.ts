@@ -55,18 +55,11 @@ const S2C_HEADER_LEN = 3; // PId(2) + PT(1)
 const MAX_PACKET_SIZE = 500;
 const MAX_OUT_CONTENT = MAX_PACKET_SIZE - MAC_LEN - C2S_HEADER_LEN;
 
-// Version sign - a real, valid Linux 5.0.0-beta.25 signature (from
-// ReSpeak/tsdeclarations' public list of known-good version/signature pairs)
-// rather than the old TS3AudioBot "3.?.? far-future build" placeholder this
-// used before. Trying this to see whether the server treats an old-looking
-// vs. modern-looking client identity differently for anything client
-// version-sensitive (e.g. TS3 clients failing to display an avatar this bot
-// uploaded) - if this doesn't change the observed behavior, revert to the
-// previous value rather than leaving this as an unexplained swap.
+// Version sign - TS3AudioBot default (Linux 3.?.? far-future build)
 const VERSION_SIGN = {
   platform: "Linux",
-  version: "5.0.0-beta.25 [Build: 1588064367]",
-  sign: "L5rpK9OLT84Hgpg/NXSCwpHfrRc/JTtMa/kFfaD2rlF7c/YHiEnly/4+A9y0iowA70+5JEzyH6CBjkniiz4DAw==",
+  version: "3.?.? [Build: 5680278000]",
+  sign: "Hjd+N58Gv3ENhoKmGYy2bNRBsNNgm5kpiaQWxOj5HN2DXttG6REjymSwJtpJ8muC2gSwRuZi0R+8Laan5ts5CQ==",
 };
 
 interface ResendPacket {
