@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Ts3Client, type Ts3ClientOptions, generateIdentity, type IdentityData, buildCommand, uploadAvatar, deleteAvatar } from './tslib/index.js';
-import { renderDescriptionTemplate } from './description-template.js';
+import { renderDescriptionTemplate, renderIdleDescriptionTemplate } from './description-template.js';
 import { AudioPipeline, FRAME_MS, BYTES_PER_FRAME } from './audio/pipeline.js';
 import { PlayQueue, type QueueItem } from './playlist/queue.js';
 import { fetchIcyMetadata } from './audio/icy-metadata.js';
@@ -108,6 +108,11 @@ export class VoiceBot extends EventEmitter {
     this.client = new Ts3Client();
     this.pipeline = new AudioPipeline();
     this.queue = new PlayQueue();
+
+    // Queue length affects {queue_length} - refresh on change instead of
+    // polling for it, same "event-driven, not prophylactic" reasoning as
+    // descriptionNeedsTimer() below for the time-based placeholders.
+    this.queue.on('lengthChange', () => this.refreshDescriptionNow());
 
     this.client.on('error', (err) => {
       this._status = 'error';
@@ -249,37 +254,78 @@ export class VoiceBot extends EventEmitter {
     } catch { }
   }
 
-  /** Render and push the configured description template, if any. Starts a
-   * refresh timer so {remaining}/{elapsed} stay current while playing. */
+  private pushDescription(rendered: string): void {
+    try {
+      this.client.sendCommand(buildCommand('clientupdate', { client_description: rendered }));
+    } catch { }
+  }
+
+  /** Whether the configured template actually shows a time-based placeholder
+   * - only then is periodic polling worth it; title/artist/queue_length are
+   * already covered by the event-driven refreshes (song start, queue change,
+   * settings change), so a template without a time placeholder needs no
+   * timer at all. */
+  private descriptionNeedsTimer(): boolean {
+    return !!this.config.descriptionTemplate && /\{(remaining|remaining_min|elapsed|duration)\}/.test(this.config.descriptionTemplate);
+  }
+
+  /** Start or stop the 30s refresh timer to match whether one is currently
+   * warranted (playing + template uses a time placeholder). */
+  private syncDescriptionTimer(): void {
+    const shouldRun = this._nowPlaying !== null && this.descriptionNeedsTimer();
+    if (shouldRun && !this.descriptionTimer) {
+      this.descriptionTimer = setInterval(() => this.updateDescription(), 30000);
+    } else if (!shouldRun && this.descriptionTimer) {
+      clearInterval(this.descriptionTimer);
+      this.descriptionTimer = null;
+    }
+  }
+
+  /** Render and push the configured description template while a track is
+   * playing, and resync the refresh timer (started only if the template
+   * actually needs one - see descriptionNeedsTimer). */
   private updateDescription(): void {
     if (this._status === 'stopped' || !this.config.descriptionTemplate || !this._nowPlaying) return;
     const progress = this.playbackProgress;
-    const rendered = renderDescriptionTemplate(this.config.descriptionTemplate, {
+    this.pushDescription(renderDescriptionTemplate(this.config.descriptionTemplate, {
       title: this._nowPlaying.title,
       artist: this._nowPlaying.artist,
       position: progress?.position ?? 0,
       duration: progress?.duration ?? 0,
       queueRemaining: Math.max(0, this.queue.length - this.queue.index - 1),
-    });
-    try {
-      this.client.sendCommand(buildCommand('clientupdate', { client_description: rendered }));
-    } catch { }
-
-    if (!this.descriptionTimer) {
-      this.descriptionTimer = setInterval(() => this.updateDescription(), 30000);
-    }
+    }));
+    this.syncDescriptionTimer();
   }
 
-  /** Clear the description back to blank and stop the refresh timer. */
+  /** Stop the refresh timer and, if a template is configured, show it in its
+   * idle form (title/artist "-", time fields "0") instead of going blank -
+   * renders idle explicitly rather than relying on _nowPlaying already being
+   * cleared, since call sites clear it at varying points relative to this. */
   private resetDescription(): void {
     if (this.descriptionTimer) {
       clearInterval(this.descriptionTimer);
       this.descriptionTimer = null;
     }
+    if (this._status === 'stopped') return;
+    if (!this.config.descriptionTemplate) {
+      this.pushDescription('');
+      return;
+    }
+    this.pushDescription(renderIdleDescriptionTemplate(this.config.descriptionTemplate, this.queue.length));
+  }
+
+  /** Push the description immediately with whatever template is currently
+   * configured - e.g. right after the template was edited, instead of
+   * waiting for the next song-start or the periodic refresh timer. Reflects
+   * the currently playing track if there is one, otherwise the idle form. */
+  refreshDescriptionNow(): void {
     if (this._status === 'stopped' || !this.config.descriptionTemplate) return;
-    try {
-      this.client.sendCommand(buildCommand('clientupdate', { client_description: '' }));
-    } catch { }
+    if (this._nowPlaying) {
+      this.updateDescription(); // also resyncs the timer
+    } else {
+      this.pushDescription(renderIdleDescriptionTemplate(this.config.descriptionTemplate, this.queue.length));
+      this.syncDescriptionTimer(); // stops a stale timer - shouldRun is false while idle
+    }
   }
 
   /** Start polling ICY metadata for a radio stream. */
@@ -354,6 +400,9 @@ export class VoiceBot extends EventEmitter {
       uploadAvatar(this.client, this.config.serverHost, this.config.avatarImage.data)
         .catch((err) => console.error(`[VoiceBot ${this.config.id}] Avatar upload failed: ${err.message}`));
     }
+    // Nothing is playing yet right after connecting - show the idle form of
+    // the template (if any) instead of leaving the description blank/stale.
+    this.refreshDescriptionNow();
   }
 
   async stop(): Promise<void> {

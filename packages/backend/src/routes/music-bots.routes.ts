@@ -149,6 +149,10 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(volume != null && { volume: parseInt(volume) }),
         ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || undefined }),
       });
+      // Push the new template right away instead of waiting for the next
+      // song-start or the periodic refresh timer - a template change should
+      // apply live, the same way avatar changes already do.
+      if (descriptionTemplate !== undefined) bot.refreshDescriptionNow();
     }
 
     res.json({ success: true });

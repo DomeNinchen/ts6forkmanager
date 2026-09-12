@@ -1,3 +1,5 @@
+import { EventEmitter } from "events";
+
 export type RepeatMode = "off" | "track" | "queue";
 
 export interface QueueItem {
@@ -11,7 +13,10 @@ export interface QueueItem {
   streamUrl?: string; // If set, play as live stream (radio) instead of file
 }
 
-export class PlayQueue {
+/** Emits 'lengthChange' whenever add/remove/clear actually changes the
+ * queue's length (not on move/shuffle/repeat, which don't) - lets callers
+ * (e.g. a description-template's {queue_length}) react without polling. */
+export class PlayQueue extends EventEmitter {
   private items: QueueItem[] = [];
   private currentIndex = -1;
   private _shuffle = false;
@@ -49,7 +54,7 @@ export class PlayQueue {
     return [...this.items];
   }
 
-  add(item: QueueItem): void {
+  private addOne(item: QueueItem): void {
     this.items.push(item);
     if (this._shuffle) {
       // Insert new item at random position in shuffle order
@@ -58,10 +63,17 @@ export class PlayQueue {
     }
   }
 
+  add(item: QueueItem): void {
+    this.addOne(item);
+    this.emit('lengthChange', this.items.length);
+  }
+
   addMany(items: QueueItem[]): void {
+    if (items.length === 0) return;
     for (const item of items) {
-      this.add(item);
+      this.addOne(item);
     }
+    this.emit('lengthChange', this.items.length);
   }
 
   remove(id: string): boolean {
@@ -84,13 +96,16 @@ export class PlayQueue {
       this.currentIndex = Math.min(this.currentIndex, this.items.length - 1);
     }
 
+    this.emit('lengthChange', this.items.length);
     return true;
   }
 
   clear(): void {
+    const hadItems = this.items.length > 0;
     this.items = [];
     this.currentIndex = -1;
     this.shuffleOrder = [];
+    if (hadItems) this.emit('lengthChange', 0);
   }
 
   next(): QueueItem | null {
