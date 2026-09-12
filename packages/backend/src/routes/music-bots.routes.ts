@@ -5,6 +5,19 @@ import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 import { downloadYouTube } from '../voice/audio/youtube.js';
 import { playerWidgetToken } from './widget-public.routes.js';
 import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
+import { DESCRIPTION_PLACEHOLDERS } from '../voice/description-template.js';
+import multer from 'multer';
+
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB - TS3 clients themselves cap avatars well below this
+const AVATAR_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_AVATAR_SIZE },
+  fileFilter: (_req, file, cb) => {
+    if (AVATAR_MIME_TYPES.includes(file.mimetype)) cb(null, true);
+    else cb(new Error(`Unsupported image type: ${file.mimetype}`));
+  },
+});
 
 export const musicBotRoutes: Router = Router();
 
@@ -36,12 +49,19 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         voicePort: b.voicePort,
         volume: b.volume,
         autoStart: b.autoStart,
+        descriptionTemplate: b.descriptionTemplate,
+        hasAvatar: b.avatarData != null,
         status: runtime?.status ?? 'stopped',
         nowPlaying: runtime?.nowPlaying ?? null,
         createdAt: b.createdAt,
       };
     }));
   } catch (err) { next(err); }
+});
+
+// GET /description-placeholders — reference list for the template field's cheat-sheet
+musicBotRoutes.get('/description-placeholders', async (_req: Request, res: Response) => {
+  res.json(DESCRIPTION_PLACEHOLDERS);
 });
 
 // GET /:id — Get bot details + runtime status
@@ -60,6 +80,8 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
     res.json({
       ...dbBot,
       identityData: undefined, // don't expose identity
+      avatarData: undefined, // served separately via GET /:id/avatar
+      hasAvatar: dbBot.avatarData != null,
       status: bot?.status ?? 'stopped',
       nowPlaying: bot?.nowPlaying ?? null,
       playbackProgress: bot?.playbackProgress ?? null,
@@ -71,7 +93,7 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
 musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart } = req.body;
+    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate } = req.body;
     if (!name || !serverConfigId) throw new AppError(400, 'name and serverConfigId are required');
 
     const result = await manager.createBot({
@@ -84,6 +106,7 @@ musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
       voicePort: voicePort != null ? parseInt(voicePort) : undefined,
       volume: volume != null ? parseInt(volume) : undefined,
       autoStart: autoStart ?? false,
+      descriptionTemplate: descriptionTemplate || undefined,
     });
 
     res.status(201).json(result);
@@ -96,7 +119,7 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const id = parseInt(req.params.id as string);
-    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart } = req.body;
+    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate } = req.body;
 
     const dbBot = await prisma.musicBot.update({
       where: { id },
@@ -109,6 +132,7 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(voicePort != null && { voicePort: parseInt(voicePort) }),
         ...(volume != null && { volume: parseInt(volume) }),
         ...(autoStart != null && { autoStart }),
+        ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || null }),
       },
     });
 
@@ -123,8 +147,68 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(channelPassword !== undefined && { channelPassword: channelPassword || undefined }),
         ...(voicePort != null && { serverPort: parseInt(voicePort) }),
         ...(volume != null && { volume: parseInt(volume) }),
+        ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || undefined }),
       });
     }
+
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// POST /:id/avatar — Upload (or replace) this bot's TS3 avatar
+musicBotRoutes.post('/:id/avatar', avatarUpload.single('file'), async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const id = parseInt(req.params.id as string);
+    if (!req.file) throw new AppError(400, 'file is required');
+
+    const dbBot = await prisma.musicBot.findUnique({ where: { id } });
+    if (!dbBot) throw new AppError(404, 'Music bot not found');
+
+    await prisma.musicBot.update({
+      where: { id },
+      data: { avatarData: req.file.buffer, avatarMimeType: req.file.mimetype },
+    });
+
+    const bot = manager.getBot(id);
+    if (bot) {
+      // Upload happens over the live TS3 connection; failures are logged
+      // server-side (see VoiceBot.start()'s connect-time upload) rather than
+      // failing this request - the image is saved regardless and will be
+      // retried on the bot's next connect.
+      bot.uploadAvatarNow(req.file.buffer, req.file.mimetype).catch((err) => {
+        console.error(`[music-bots.routes] Avatar upload to bot ${id} failed: ${err.message}`);
+      });
+    }
+
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// GET /:id/avatar — Serve the stored avatar image
+musicBotRoutes.get('/:id/avatar', async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const id = parseInt(req.params.id as string);
+    const dbBot = await prisma.musicBot.findUnique({ where: { id }, select: { avatarData: true, avatarMimeType: true } });
+    if (!dbBot?.avatarData) throw new AppError(404, 'No avatar set');
+    res.setHeader('Content-Type', dbBot.avatarMimeType || 'image/png');
+    res.send(Buffer.from(dbBot.avatarData));
+  } catch (err) { next(err); }
+});
+
+// DELETE /:id/avatar — Remove this bot's TS3 avatar
+musicBotRoutes.delete('/:id/avatar', async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const id = parseInt(req.params.id as string);
+
+    await prisma.musicBot.update({ where: { id }, data: { avatarData: null, avatarMimeType: null } });
+
+    const bot = manager.getBot(id);
+    if (bot) bot.removeAvatarNow();
 
     res.json({ success: true });
   } catch (err) { next(err); }

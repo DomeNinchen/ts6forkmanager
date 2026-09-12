@@ -151,6 +151,9 @@ model MusicBot {
   autoStart       Boolean   @default(false)
   streamPreset    String    @default("720p")
   sidecarPort     Int       @default(9800)
+  descriptionTemplate String?
+  avatarData      Bytes?
+  avatarMimeType  String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

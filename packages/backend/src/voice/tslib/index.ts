@@ -9,3 +9,4 @@ export { generateIdentity, generateIdentityAsync, restoreIdentity, fromTsIdentit
 export type { IdentityData } from './identity.js';
 export { parseLicense, deriveLicenseKey, generateTemporaryKey, getSharedSecret2 } from './license.js';
 export { qlzDecompress } from './quicklz.js';
+export { uploadAvatar, deleteAvatar, AVATAR_FILE_NAME } from './filetransfer.js';

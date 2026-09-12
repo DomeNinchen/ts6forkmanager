@@ -57,6 +57,7 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - [clusterzx/ts6-manager#55](https://github.com/clusterzx/ts6-manager/issues/55): a new Settings → Restart tab schedules a periodic restart of ts6-manager's own backend and/or sidecar container (independently selectable, so a setup using only one of the two isn't forced to restart the other) at a configurable time and day-of-week set. This does **not** restart the actual TeamSpeak server - only ts6-manager itself, to clear accumulated connection/bot-manager state or a stuck video-streaming process. Both containers already had a graceful SIGTERM/SIGINT shutdown handler and `restart: unless-stopped`; this just triggers that same shutdown on a schedule instead of only on a real stop/crash
 - [clusterzx/ts6-manager#31](https://github.com/clusterzx/ts6-manager/issues/31): the Permissions page's Client picker only ever listed currently-online clients, even though editing by database id already worked for anyone. Added a "Show offline clients" toggle (pulls from the existing but previously-unused-here `clientdblist` query) plus a search box, since a server's full client history can be long — online clients are shown first and marked with a dot
 - [clusterzx/ts6-manager#44](https://github.com/clusterzx/ts6-manager/issues/44): `!play`, `!queue`, and `!stream` now also accept a Spotify track link (Spotify doesn't allow third-party apps to actually play through it). The link is resolved to "\<artist> \<title>" via the track's public page — no API key needed — and searched on YouTube the same way a plain-text query already was. Playlist/album links aren't supported, just individual tracks
+- A music bot can now be given a custom TS3 avatar and a templated description, editable from the same Create/Edit Music Bot dialog. The description supports placeholders that are re-rendered while a track plays, e.g. `Now playing: {title} ({remaining} left)` — see the Music Bots section under Features below for the full placeholder list
 
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
@@ -116,6 +117,14 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Auto-reconnect with exponential backoff on disconnect
 - In-channel text commands for hands-free control
 - Music request history tracking
+- Custom avatar (PNG/JPEG/GIF/WebP, up to 2MB) and a templated `client_description`, set from the Create/Edit Music Bot dialog. The description re-renders every ~30s while a track plays, and supports:
+  - `{title}` — title of the currently playing track
+  - `{artist}` — artist, if known (empty string otherwise)
+  - `{remaining}` — time left, auto-formatted (`"42 min"`, or `"1h 5min"` past 60 minutes); empty for live streams
+  - `{remaining_min}` — time left in plain minutes (whole number); empty for live streams
+  - `{elapsed}` — time played so far, formatted the same way as `{remaining}`
+  - `{duration}` — total track length, formatted the same way; empty for live streams
+  - `{queue_length}` — number of songs still queued after this one
 
 ### Video Streaming
 - Video streaming from YouTube, Twitch, direct URLs, or an uploaded video already in the library to TeamSpeak channels

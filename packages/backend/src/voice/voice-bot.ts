@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
-import { Ts3Client, type Ts3ClientOptions, generateIdentity, type IdentityData, buildCommand } from './tslib/index.js';
+import { Ts3Client, type Ts3ClientOptions, generateIdentity, type IdentityData, buildCommand, uploadAvatar, deleteAvatar } from './tslib/index.js';
+import { renderDescriptionTemplate } from './description-template.js';
 import { AudioPipeline, FRAME_MS, BYTES_PER_FRAME } from './audio/pipeline.js';
 import { PlayQueue, type QueueItem } from './playlist/queue.js';
 import { fetchIcyMetadata } from './audio/icy-metadata.js';
@@ -35,6 +36,8 @@ export interface VoiceBotConfig {
   sidecarBinaryPath?: string;
   sidecarPort?: number;
   streamPreset?: string;
+  descriptionTemplate?: string;
+  avatarImage?: { data: Buffer; mimeType: string };
 }
 
 export class VoiceBot extends EventEmitter {
@@ -77,6 +80,9 @@ export class VoiceBot extends EventEmitter {
   private icyPollTimer: ReturnType<typeof setInterval> | null = null;
   private lastStreamTitle: string = '';
 
+  // Description template refresh (keeps {remaining}/{elapsed} current while playing)
+  private descriptionTimer: ReturnType<typeof setInterval> | null = null;
+
   // Reconnect: distinguishes manual stop from unexpected disconnect
   private _manuallyStopped: boolean = false;
 
@@ -112,6 +118,10 @@ export class VoiceBot extends EventEmitter {
     this.client.on('disconnected', () => {
       this.stopIcyPolling();
       this.stopPlayback();
+      if (this.descriptionTimer) {
+        clearInterval(this.descriptionTimer);
+        this.descriptionTimer = null;
+      }
       this._status = 'stopped';
       this._nowPlaying = null;
       this.emit('statusChange', this._status);
@@ -201,6 +211,20 @@ export class VoiceBot extends EventEmitter {
     if (partial.nickname) this._originalNickname = partial.nickname;
   }
 
+  /** Push a new avatar immediately if connected; otherwise it uploads on the next connect. */
+  async uploadAvatarNow(data: Buffer, mimeType: string): Promise<void> {
+    this.config.avatarImage = { data, mimeType };
+    if (this._status === 'stopped') return;
+    await uploadAvatar(this.client, this.config.serverHost, data);
+  }
+
+  /** Remove the avatar server-side immediately if connected. */
+  removeAvatarNow(): void {
+    this.config.avatarImage = undefined;
+    if (this._status === 'stopped') return;
+    deleteAvatar(this.client);
+  }
+
   /** Update the TS3 nickname to show what's playing. Max 30 chars. */
   private updateNowPlayingNickname(title: string): void {
     if (this._status === 'stopped') return;
@@ -222,6 +246,39 @@ export class VoiceBot extends EventEmitter {
     if (this._status === 'stopped') return;
     try {
       this.client.sendCommand(buildCommand('clientupdate', { client_nickname: this._originalNickname }));
+    } catch { }
+  }
+
+  /** Render and push the configured description template, if any. Starts a
+   * refresh timer so {remaining}/{elapsed} stay current while playing. */
+  private updateDescription(): void {
+    if (this._status === 'stopped' || !this.config.descriptionTemplate || !this._nowPlaying) return;
+    const progress = this.playbackProgress;
+    const rendered = renderDescriptionTemplate(this.config.descriptionTemplate, {
+      title: this._nowPlaying.title,
+      artist: this._nowPlaying.artist,
+      position: progress?.position ?? 0,
+      duration: progress?.duration ?? 0,
+      queueRemaining: Math.max(0, this.queue.length - this.queue.index - 1),
+    });
+    try {
+      this.client.sendCommand(buildCommand('clientupdate', { client_description: rendered }));
+    } catch { }
+
+    if (!this.descriptionTimer) {
+      this.descriptionTimer = setInterval(() => this.updateDescription(), 30000);
+    }
+  }
+
+  /** Clear the description back to blank and stop the refresh timer. */
+  private resetDescription(): void {
+    if (this.descriptionTimer) {
+      clearInterval(this.descriptionTimer);
+      this.descriptionTimer = null;
+    }
+    if (this._status === 'stopped' || !this.config.descriptionTemplate) return;
+    try {
+      this.client.sendCommand(buildCommand('clientupdate', { client_description: '' }));
     } catch { }
   }
 
@@ -254,6 +311,7 @@ export class VoiceBot extends EventEmitter {
       }
 
       this.updateNowPlayingNickname(title);
+      this.updateDescription();
       this.emit('metadataChange', this._nowPlaying);
     } catch { }
   }
@@ -291,12 +349,18 @@ export class VoiceBot extends EventEmitter {
     this._status = 'connected';
     this.emit('statusChange', this._status);
     this.emit('connected');
+
+    if (this.config.avatarImage) {
+      uploadAvatar(this.client, this.config.serverHost, this.config.avatarImage.data)
+        .catch((err) => console.error(`[VoiceBot ${this.config.id}] Avatar upload failed: ${err.message}`));
+    }
   }
 
   async stop(): Promise<void> {
     this._manuallyStopped = true;
     this.stopIcyPolling();
     this.resetNickname();
+    this.resetDescription();
     this.stopPlayback();
     this._nowPlaying = null;
     // Stop video stream if active
@@ -335,6 +399,7 @@ export class VoiceBot extends EventEmitter {
     this.emit('statusChange', this._status);
     this.emit('nowPlaying', item);
     this.updateNowPlayingNickname(item.title);
+    this.updateDescription();
 
     try {
       const pcmData = await this.pipeline.toPcm(item.filePath);
@@ -366,6 +431,7 @@ export class VoiceBot extends EventEmitter {
     this.emit('statusChange', this._status);
     this.emit('nowPlaying', item);
     this.updateNowPlayingNickname(item.title);
+    this.updateDescription();
     this.startIcyPolling(item.streamUrl);
 
     try {
@@ -511,6 +577,7 @@ export class VoiceBot extends EventEmitter {
       this.play(next).catch((err) => this.emit('error', err));
     } else {
       this.resetNickname();
+      this.resetDescription();
     }
   }
 
@@ -526,6 +593,7 @@ export class VoiceBot extends EventEmitter {
       this.play(prev).catch((err) => this.emit('error', err));
     } else {
       this.resetNickname();
+      this.resetDescription();
     }
   }
 
@@ -535,6 +603,7 @@ export class VoiceBot extends EventEmitter {
     this.client.sendVoiceStop();
     this._nowPlaying = null;
     this.resetNickname();
+    this.resetDescription();
     if (this._status === 'playing' || this._status === 'paused') {
       this._status = 'connected';
       this.emit('statusChange', this._status);
@@ -655,7 +724,7 @@ export class VoiceBot extends EventEmitter {
 
         const next = this.queue.next();
         if (next) this.play(next).catch((err) => this.emit('error', err));
-        else this.resetNickname();
+        else { this.resetNickname(); this.resetDescription(); }
         return;
       }
 
