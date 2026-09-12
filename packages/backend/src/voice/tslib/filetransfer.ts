@@ -23,6 +23,19 @@ let ftfidCounter = 1;
 /** The special file name TS3 uses for a client's own avatar, in the cid=0 (server-wide) file repository. */
 export const AVATAR_FILE_NAME = '/avatar';
 
+/** parseCommand() takes the first whitespace-separated token as the command
+ * "name" - correct for a real named reply/notification, but if the server
+ * instead sends a bare, name-less data line (first token being the first
+ * key=value pair rather than a keyword), that pair silently isn't in
+ * `params` at all - it got consumed as `name` instead. Recover clientftfid
+ * from `name` in that shape too, so matching doesn't depend on which of the
+ * two ever turns out to be the real one. */
+function extractClientFtfid(parsed: { name: string; params: Record<string, string> }): string | undefined {
+  if (parsed.params.clientftfid !== undefined) return parsed.params.clientftfid;
+  const m = parsed.name.match(/^clientftfid=(\d+)$/);
+  return m ? m[1] : undefined;
+}
+
 async function ftInitUpload(
   client: Ts3Client,
   name: string,
@@ -32,13 +45,18 @@ async function ftInitUpload(
   const clientftfid = ftfidCounter++;
 
   return new Promise((resolve, reject) => {
+    const seen: string[] = [];
     const timer = setTimeout(() => {
       client.off('command', onCommand);
-      reject(new Error('ftinitupload timed out waiting for a server response'));
+      reject(new Error(
+        `ftinitupload (clientftfid=${clientftfid}) timed out waiting for a server response. ` +
+        `Commands seen while waiting: ${seen.length ? seen.join(' | ') : '(none)'}`
+      ));
     }, timeoutMs);
 
     const onCommand = (parsed: { name: string; params: Record<string, string> }) => {
-      if (parsed.params.clientftfid !== String(clientftfid)) return;
+      seen.push(`${parsed.name} ${JSON.stringify(parsed.params)}`.slice(0, 200));
+      if (extractClientFtfid(parsed) !== String(clientftfid)) return;
       clearTimeout(timer);
       client.off('command', onCommand);
 
@@ -55,6 +73,7 @@ async function ftInitUpload(
         reject(new Error(`ftinitupload did not return a usable port/ftkey (got: ${JSON.stringify(parsed.params)})`));
         return;
       }
+      console.log(`[filetransfer] ftinitupload resolved: port=${port} seekpos=${seekpos}`);
       resolve({ port, ftkey, seekpos });
     };
 
@@ -93,8 +112,10 @@ function ftUploadBytes(host: string, port: number, ftkey: string, data: Buffer, 
 
 /** Upload `data` as this client's own avatar. `host` is the file-transfer host (same as the voice server host). */
 export async function uploadAvatar(client: Ts3Client, host: string, data: Buffer, timeoutMs = 15000): Promise<void> {
+  console.log(`[filetransfer] Uploading avatar (${data.length} bytes) to ${host}`);
   const { port, ftkey, seekpos } = await ftInitUpload(client, AVATAR_FILE_NAME, data.length, timeoutMs);
   await ftUploadBytes(host, port, ftkey, data.subarray(seekpos), timeoutMs);
+  console.log(`[filetransfer] Avatar upload to ${host}:${port} completed`);
 }
 
 /** Remove this client's own avatar server-side (best-effort; the server may reply with an error if none is set). */

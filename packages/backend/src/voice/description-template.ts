@@ -35,6 +35,23 @@ export function renderDescriptionTemplate(template: string, ctx: DescriptionCont
   return template.replace(/\{(\w+)\}/g, (match, key) => replacements[key] ?? match);
 }
 
+/** Renders the template when nothing is currently playing, so a configured
+ * description is always shown instead of going blank between tracks -
+ * title/artist as "-", every time-based field as "0". queue_length still
+ * reflects the real (possibly non-empty) queue. */
+export function renderIdleDescriptionTemplate(template: string, queueLength: number): string {
+  const replacements: Record<string, string> = {
+    title: '-',
+    artist: '-',
+    remaining: '0',
+    remaining_min: '0',
+    elapsed: '0',
+    duration: '0',
+    queue_length: String(Math.max(0, queueLength)),
+  };
+  return template.replace(/\{(\w+)\}/g, (match, key) => replacements[key] ?? match);
+}
+
 /** Shown in the frontend as a cheat-sheet next to the template field. */
 export const DESCRIPTION_PLACEHOLDERS: Array<{ key: string; description: string }> = [
   { key: 'title', description: 'Title of the currently playing track' },
