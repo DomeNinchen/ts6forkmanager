@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/auth.store';
 import { authApi } from '@/api/auth.api';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
+import { useRecheckUpdate } from '@/hooks/use-update-check';
 
 /**
  * Landing point after a successful OIDC redirect back from the backend (see
@@ -13,6 +14,7 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 export default function AuthCallback() {
   const navigate = useNavigate();
   const ran = useRef(false);
+  const recheckUpdate = useRecheckUpdate();
 
   useEffect(() => {
     if (ran.current) return; // React 18 StrictMode double-invokes effects in dev - tokens are single-use-ish (a fresh pair), running twice would just be wasteful, not unsafe, but skip it anyway
@@ -36,6 +38,7 @@ export default function AuthCallback() {
     authApi.me()
       .then(({ user }) => {
         setAuth(accessToken, refreshToken, user);
+        recheckUpdate.mutate(); // same as the local-login path - fresh check right on login, not whatever's cached
         navigate('/dashboard', { replace: true });
       })
       .catch(() => {
