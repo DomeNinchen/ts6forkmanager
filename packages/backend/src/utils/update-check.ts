@@ -116,6 +116,17 @@ export function getCachedUpdateCheck(): UpdateCheckResult {
   return cached;
 }
 
+let inFlight: Promise<void> | null = null;
+
+/** On-demand recheck (e.g. a "Recheck now" button in Settings) - reuses an already-running check instead of firing a second one in parallel. */
+export async function forceUpdateCheck(): Promise<UpdateCheckResult> {
+  if (!inFlight) {
+    inFlight = runCheck().finally(() => { inFlight = null; });
+  }
+  await inFlight;
+  return cached;
+}
+
 export function startUpdateChecker(): void {
   runCheck().catch(() => {}); // best-effort initial check right at startup
   setInterval(() => {

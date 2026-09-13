@@ -16,8 +16,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { compareVersions } from '@ts6/common';
+import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
+import { cn } from '@/lib/utils';
 
 export default function Settings() {
   const { user } = useAuthStore();
@@ -35,6 +38,7 @@ export default function Settings() {
           {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> YouTube</TabsTrigger>}
           {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
           {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> Restart</TabsTrigger>}
+          <TabsTrigger value="update-status"><RefreshCw className="h-3.5 w-3.5 mr-1" /> Update Status</TabsTrigger>
         </TabsList>
 
         {isAdmin && (
@@ -70,6 +74,10 @@ export default function Settings() {
             <RestartTab />
           </TabsContent>
         )}
+
+        <TabsContent value="update-status" className="mt-4">
+          <UpdateStatusTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -823,6 +831,68 @@ function RestartTab() {
           >
             {save.isPending ? 'Saving...' : 'Save'}
           </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function UpdateStatusTab() {
+  const { data, isLoading } = useUpdateCheck();
+  const recheck = useRecheckUpdate();
+
+  if (isLoading || !data) return <PageLoader />;
+
+  const frontendUpdateAvailable = !!(data.frontendLatest && compareVersions(data.frontendLatest, __APP_VERSION__) > 0);
+
+  const rows = [
+    { label: 'Backend', current: data.backend.current, latest: data.backend.latest, updateAvailable: data.backend.updateAvailable },
+    { label: 'Sidecar', current: data.sidecar.current, latest: data.sidecar.latest, updateAvailable: data.sidecar.updateAvailable },
+    { label: 'Frontend', current: __APP_VERSION__ as string | null, latest: data.frontendLatest, updateAvailable: frontendUpdateAvailable },
+  ];
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm font-medium">Update Status</CardTitle>
+          <Button size="sm" variant="outline" disabled={recheck.isPending} onClick={() => recheck.mutate()}>
+            <RefreshCw className={cn('h-3.5 w-3.5 mr-1', recheck.isPending && 'animate-spin')} />
+            Recheck Now
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <p className="text-xs text-muted-foreground mb-3">
+            Compares this deployment against GitHub's <code className="font-mono-data">main</code> branch. Notify-only — nothing here runs an update automatically.
+          </p>
+
+          {rows.map((row) => {
+            const known = row.current !== null && row.latest !== null;
+            return (
+              <div key={row.label} className="flex items-center justify-between gap-3 py-2 border-b border-border last:border-0">
+                <span className="text-xs font-medium w-16 shrink-0">{row.label}</span>
+                <div className="flex items-center gap-1.5 font-mono-data text-xs flex-1">
+                  <span>{row.current ?? '—'}</span>
+                  {known && row.updateAvailable && (
+                    <>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="text-primary">{row.latest}</span>
+                    </>
+                  )}
+                </div>
+                <Badge
+                  variant={!known ? 'secondary' : row.updateAvailable ? 'default' : 'outline'}
+                  className="text-[10px] shrink-0"
+                >
+                  {!known ? 'unknown' : row.updateAvailable ? 'update available' : 'up to date'}
+                </Badge>
+              </div>
+            );
+          })}
+
+          <p className="text-[11px] text-muted-foreground pt-3">
+            {data.checkedAt ? `Last checked: ${new Date(data.checkedAt).toLocaleString()}` : 'Not checked yet'}
+          </p>
         </CardContent>
       </Card>
     </div>

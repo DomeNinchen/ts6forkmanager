@@ -178,6 +178,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Debug logging toggles (voice bot, Rank Check) switchable at runtime from Settings → Debug — no env var or restart needed
 - "Danger Zone" (Settings → Debug) to reset the radio station / music bot id counters, for when SQLite's ever-climbing autoincrement gets annoying after deleting everything and starting over
 - Scheduled restart (Settings → Restart) for ts6-manager's own backend and/or sidecar container, on a configurable time and day-of-week — not the TeamSpeak server itself
+- Settings → Update Status: current vs. latest version for backend, sidecar, and frontend, when they were last checked, and a "Recheck Now" button — the same data the update banner uses, viewable any time even when nothing is outdated
 
 ## Known Issues (Upstream TS6 Server Bug)
 
