@@ -3,8 +3,8 @@ FROM golang:1.26-bookworm AS build
 WORKDIR /src
 COPY packages/sidecar/go.mod packages/sidecar/go.sum ./
 RUN go mod download
-COPY packages/sidecar/main.go .
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /sidecar main.go
+COPY packages/sidecar/*.go .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /sidecar .
 
 FROM debian:bookworm-slim
 RUN apt-get update && \
