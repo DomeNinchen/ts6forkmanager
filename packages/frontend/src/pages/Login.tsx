@@ -1,18 +1,31 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useLogin } from '@/hooks/use-auth';
 import { useAuthStore } from '@/stores/auth.store';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { authApi } from '@/api/auth.api';
+import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
+
+const SSO_ERROR_MESSAGES: Record<string, string> = {
+  sso_not_configured: 'SSO is not configured.',
+  sso_failed: 'SSO login failed. Please try again.',
+  sso_invalid_state: 'SSO login expired or was tampered with. Please try again.',
+  sso_no_subject: 'The SSO provider did not return a valid identity.',
+  account_disabled: 'This account has been disabled.',
+};
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const login = useLogin();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const { data: oidc } = useQuery({ queryKey: ['oidc-status'], queryFn: authApi.oidcStatus, staleTime: 5 * 60 * 1000 });
+  const ssoError = new URLSearchParams(window.location.search).get('error');
 
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
@@ -72,6 +85,13 @@ export default function Login() {
                 </div>
               )}
 
+              {ssoError && (
+                <div className="flex items-center gap-2 text-destructive text-xs bg-destructive/10 rounded-md px-3 py-2">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>{SSO_ERROR_MESSAGES[ssoError] || 'SSO login failed.'}</span>
+                </div>
+              )}
+
               <Button type="submit" className="w-full" disabled={login.isPending || !username || !password}>
                 {login.isPending ? (
                   <>
@@ -83,6 +103,25 @@ export default function Login() {
                 )}
               </Button>
             </form>
+
+            {oidc?.enabled && (
+              <>
+                <div className="flex items-center gap-3 my-4">
+                  <Separator className="flex-1" />
+                  <span className="text-[10px] text-muted-foreground uppercase">or</span>
+                  <Separator className="flex-1" />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => { window.location.href = '/api/auth/oidc/login'; }}
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  {oidc.buttonLabel}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 

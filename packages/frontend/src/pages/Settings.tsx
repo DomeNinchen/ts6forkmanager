@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi, type ScheduledRestartConfig } from '@/api/settings.api';
+import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput } from '@/api/settings.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
@@ -38,6 +38,7 @@ export default function Settings() {
           {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> YouTube</TabsTrigger>}
           {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
           {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> Restart</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="sso"><ShieldCheck className="h-3.5 w-3.5 mr-1" /> SSO</TabsTrigger>}
           <TabsTrigger value="update-status"><RefreshCw className="h-3.5 w-3.5 mr-1" /> Update Status</TabsTrigger>
         </TabsList>
 
@@ -72,6 +73,12 @@ export default function Settings() {
         {isAdmin && (
           <TabsContent value="restart" className="mt-4">
             <RestartTab />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="sso" className="mt-4">
+            <SsoTab />
           </TabsContent>
         )}
 
@@ -360,7 +367,12 @@ function UsersTab() {
               const isProtected = u.username === 'admin';
               return (
                 <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-3 py-2.5 font-mono-data text-xs">{u.username}</td>
+                  <td className="px-3 py-2.5 font-mono-data text-xs">
+                    <div className="flex items-center gap-1.5">
+                      {u.username}
+                      {u.authProvider === 'oidc' && <Badge variant="outline" className="text-[9px]">SSO</Badge>}
+                    </div>
+                  </td>
                   <td className="px-3 py-2.5">{u.displayName}</td>
                   <td className="px-3 py-2.5">
                     {isProtected ? (
@@ -900,6 +912,91 @@ function RestartTab() {
             disabled={!draft || save.isPending}
             onClick={() => draft && save.mutate(draft)}
           >
+            {save.isPending ? 'Saving...' : 'Save'}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function SsoTab() {
+  const qc = useQueryClient();
+  const { data: oidc, isLoading } = useQuery({ queryKey: ['oidc-settings'], queryFn: settingsApi.getOidc });
+  const [draft, setDraft] = useState<OidcSettingsInput | null>(null);
+
+  const save = useMutation({
+    mutationFn: (cfg: OidcSettingsInput) => settingsApi.setOidc(cfg),
+    onSuccess: (saved) => {
+      qc.setQueryData(['oidc-settings'], saved);
+      setDraft(null);
+      toast.success('SSO settings saved');
+    },
+    onError: () => toast.error('Failed to save SSO settings'),
+  });
+
+  if (isLoading || !oidc) return <PageLoader />;
+
+  const active: OidcSettingsInput = draft ?? { ...oidc, clientSecret: '' };
+  const update = (patch: Partial<OidcSettingsInput>) => setDraft({ ...active, ...patch });
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Single Sign-On (OIDC)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Let users log in via an external OpenID Connect provider (Authentik, Keycloak, Authelia, Zitadel, ...). A brand-new user is created as a <strong>viewer</strong> on their first SSO login — promote them to admin afterward from the Users tab if needed. Local username/password login stays available alongside this.
+          </p>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Enabled</Label>
+              <p className="text-[11px] text-muted-foreground">Shows a "Sign in with SSO" button on the login page.</p>
+            </div>
+            <Switch checked={active.enabled} onCheckedChange={(v) => update({ enabled: v })} />
+          </div>
+
+          <div>
+            <Label className="text-xs">Issuer URL</Label>
+            <Input
+              className="h-8 mt-1 font-mono-data text-xs"
+              placeholder="https://auth.example.com/application/o/ts6-manager/"
+              value={active.issuer}
+              onChange={(e) => update({ issuer: e.target.value })}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">The provider's OIDC discovery document must be reachable at <code>{'{issuer}'}/.well-known/openid-configuration</code>.</p>
+          </div>
+
+          <div>
+            <Label className="text-xs">Client ID</Label>
+            <Input className="h-8 mt-1 font-mono-data text-xs" value={active.clientId} onChange={(e) => update({ clientId: e.target.value })} />
+          </div>
+
+          <div>
+            <Label className="text-xs">Client Secret</Label>
+            <Input
+              type="password"
+              className="h-8 mt-1 font-mono-data text-xs"
+              placeholder={oidc.hasClientSecret ? 'Leave blank to keep the existing secret' : 'Client secret'}
+              value={active.clientSecret}
+              onChange={(e) => update({ clientSecret: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs">Button Label</Label>
+            <Input className="h-8 mt-1 text-xs" value={active.buttonLabel} onChange={(e) => update({ buttonLabel: e.target.value })} />
+          </div>
+
+          <div className="rounded-md border border-border bg-muted/30 p-2.5">
+            <p className="text-[11px] text-muted-foreground">Redirect URI to register at your provider:</p>
+            <p className="text-[11px] font-mono-data mt-0.5 break-all">{window.location.origin}/api/auth/oidc/callback</p>
+          </div>
+
+          <Button size="sm" disabled={!draft || save.isPending} onClick={() => draft && save.mutate(draft)}>
             {save.isPending ? 'Saving...' : 'Save'}
           </Button>
         </CardContent>

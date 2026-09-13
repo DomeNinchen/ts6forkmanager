@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
+import { issueTokensForUser } from '../utils/issue-tokens.js';
 
 export const authRoutes: Router = Router();
 
@@ -18,27 +19,14 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const user = await prisma.user.findUnique({ where: { username } });
 
-    if (!user || !user.enabled) throw new AppError(401, 'Invalid credentials');
+    // SSO-only accounts (authProvider 'oidc') have no passwordHash at all -
+    // there's nothing to compare against, so they simply can't use this route.
+    if (!user || !user.enabled || !user.passwordHash) throw new AppError(401, 'Invalid credentials');
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new AppError(401, 'Invalid credentials');
 
-    const payload = { id: user.id, username: user.username, role: user.role };
-    const accessToken = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtAccessExpiry } as jwt.SignOptions);
-    const refreshToken = crypto.randomBytes(64).toString('hex');
-    const family = nanoid();
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await prisma.refreshToken.create({
-      data: { token: refreshToken, userId: user.id, expiresAt, family },
-    });
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
+    const { accessToken, refreshToken } = await issueTokensForUser(prisma, user);
 
     res.json({
       accessToken,

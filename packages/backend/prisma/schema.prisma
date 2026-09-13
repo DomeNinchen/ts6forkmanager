@@ -11,7 +11,16 @@ datasource db {
 model User {
   id           Int       @id @default(autoincrement())
   username     String    @unique
-  passwordHash String
+  // Nullable: an SSO-only account (authProvider "oidc") never has a local
+  // password, so there's nothing to bcrypt-compare against at /login - such
+  // an account can only authenticate via the OIDC flow.
+  passwordHash String?
+  email        String?   @unique
+  // The OIDC provider's "sub" claim - the stable identifier that survives an
+  // email change at the IdP, so this (not email) is the real join key for
+  // "is this the same person logging in again".
+  externalId   String?   @unique
+  authProvider String    @default("local") // "local" | "oidc"
   displayName  String
   role         String    @default("viewer")
   enabled      Boolean   @default(true)

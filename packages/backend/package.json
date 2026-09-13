@@ -1,6 +1,6 @@
 {
   "name": "@ts6/backend",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -28,6 +28,7 @@
     "multer": "^2.3.0",
     "nanoid": "^6.0.1",
     "node-cron": "^4.6.0",
+    "openid-client": "6.8.8",
     "opusscript": "^0.1.1",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3",

@@ -45,6 +45,7 @@ const Settings = lazy(() => import('@/pages/Settings'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const WidgetPage = lazy(() => import('@/pages/WidgetPage'));
 const SetupPage = lazy(() => import('@/pages/SetupPage'));
+const AuthCallback = lazy(() => import('@/pages/AuthCallback'));
 
 export function App() {
   return (
@@ -54,6 +55,7 @@ export function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/setup" element={<SetupPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/widget/:token" element={<WidgetPage />} />
 
             <Route element={<AppLayout />}>

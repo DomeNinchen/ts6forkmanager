@@ -11,6 +11,7 @@ import { AppError } from '../middleware/error-handler.js';
 import { setYtCookieFile, getYtCookieFile } from '../voice/audio/youtube.js';
 import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-flags.js';
 import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRestartConfig } from '../utils/scheduled-restart.js';
+import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-config.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 
 const settingsRoutes: Router = Router();
@@ -161,6 +162,52 @@ settingsRoutes.put('/scheduled-restart', requireAdmin, async (req: Request, res:
     await setScheduledRestartConfig(prisma, config);
     console.log(`[Settings] Scheduled restart config updated: ${JSON.stringify(config)}`);
     res.json(config);
+  } catch (err) { next(err); }
+});
+
+// GET /api/settings/oidc — current SSO config (never returns the actual client secret, just whether one is set)
+settingsRoutes.get('/oidc', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const oidc = await getOidcConfig(prisma);
+    res.json({
+      enabled: oidc.enabled,
+      issuer: oidc.issuer,
+      clientId: oidc.clientId,
+      buttonLabel: oidc.buttonLabel,
+      hasClientSecret: !!oidc.clientSecret,
+    });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/oidc — update SSO config. clientSecret: '' means "keep the existing one" (same convention as server connections' apiKey/sshPassword)
+settingsRoutes.put('/oidc', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { enabled, issuer, clientId, clientSecret, buttonLabel } = req.body;
+    if (typeof enabled !== 'boolean') throw new AppError(400, 'enabled must be a boolean');
+    if (typeof issuer !== 'string' || typeof clientId !== 'string') throw new AppError(400, 'issuer and clientId must be strings');
+    if (enabled) {
+      try { new URL(issuer); } catch { throw new AppError(400, 'issuer must be a valid URL'); }
+      if (!clientId) throw new AppError(400, 'clientId is required to enable SSO');
+    }
+
+    const prisma = req.app.locals.prisma;
+    const existing = await getOidcConfig(prisma);
+    const next_: OidcConfig = {
+      enabled,
+      issuer,
+      clientId,
+      clientSecret: clientSecret === '' ? existing.clientSecret : String(clientSecret ?? ''),
+      buttonLabel: buttonLabel || existing.buttonLabel,
+    };
+    await setOidcConfig(prisma, next_);
+    res.json({
+      enabled: next_.enabled,
+      issuer: next_.issuer,
+      clientId: next_.clientId,
+      buttonLabel: next_.buttonLabel,
+      hasClientSecret: !!next_.clientSecret,
+    });
   } catch (err) { next(err); }
 });
 
