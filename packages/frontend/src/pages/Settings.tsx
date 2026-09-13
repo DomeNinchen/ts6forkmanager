@@ -871,14 +871,15 @@ function UpdateStatusTab() {
             return (
               <div key={row.label} className="flex items-center justify-between gap-3 py-2 border-b border-border last:border-0">
                 <span className="text-xs font-medium w-16 shrink-0">{row.label}</span>
-                <div className="flex items-center gap-1.5 font-mono-data text-xs flex-1">
-                  <span>{row.current ?? '—'}</span>
-                  {known && row.updateAvailable && (
-                    <>
-                      <span className="text-muted-foreground">→</span>
-                      <span className="text-primary">{row.latest}</span>
-                    </>
-                  )}
+                <div className="flex items-center gap-4 flex-1">
+                  <div>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Installed</p>
+                    <p className="font-mono-data text-xs">{row.current ?? 'unreachable'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Latest (main)</p>
+                    <p className={cn('font-mono-data text-xs', row.updateAvailable && 'text-primary')}>{row.latest ?? 'unknown'}</p>
+                  </div>
                 </div>
                 <Badge
                   variant={!known ? 'secondary' : row.updateAvailable ? 'default' : 'outline'}
