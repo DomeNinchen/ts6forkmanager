@@ -36,7 +36,7 @@ import crypto from 'crypto';
  *   action_message:  { targetMode, message } → { actionType:'message', targetMode: modeMap, message }
  *   condition:       { expression } → { nodeType:'condition', expression }
  *   delay:           { delay } → { nodeType:'delay', delayMs: delay }
- *   variable:        { operation, name, value } → { nodeType:'variable', operation, variableName: name, value }
+ *   variable:        { operation, name, value } → { nodeType:'variable', operation, variableName: name, value } (also accepts legacy varName/varValue keys)
  *   log:             { level, message } → { nodeType:'log', level, message }
  *   loop:            { arrayVariable, itemVariable, maxIterations } → { nodeType:'loop', arrayVariable, itemVariable, maxIterations }
  */
@@ -183,7 +183,7 @@ function normalizeFlowData(raw: any): FlowDefinition {
       data = { nodeType: 'delay', label, delayMs: config.delay || config.delayMs || 1000 };
     } else if (nodeType === 'variable') {
       type = 'variable';
-      data = { nodeType: 'variable', label, operation: config.operation || 'set', variableName: config.name || '', value: config.value || '' };
+      data = { nodeType: 'variable', label, operation: config.operation || 'set', variableName: config.name || config.varName || '', value: config.value || config.varValue || '' };
     } else if (nodeType === 'action_generateCode') { 
       type = 'action'; 
       data = { actionType: 'generateCode', label, length: parseInt(config.length, 10) || 5, storeAs: config.storeAs || 'code', numericOnly: config.numericOnly !== false, };
