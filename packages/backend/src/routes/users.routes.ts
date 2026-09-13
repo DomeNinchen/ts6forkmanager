@@ -14,7 +14,7 @@ userRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const users = await prisma.user.findMany({
-      select: { id: true, username: true, displayName: true, role: true, enabled: true, createdAt: true, lastLoginAt: true },
+      select: { id: true, username: true, email: true, authProvider: true, displayName: true, role: true, enabled: true, createdAt: true, lastLoginAt: true },
       orderBy: { id: 'asc' },
     });
     res.json(users);

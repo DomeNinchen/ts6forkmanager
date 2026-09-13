@@ -33,7 +33,30 @@ export const settingsApi = {
 
   setScheduledRestart: (config: ScheduledRestartConfig): Promise<ScheduledRestartConfig> =>
     api.put('/settings/scheduled-restart', config).then((r) => r.data),
+
+  getOidc: (): Promise<OidcSettings> =>
+    api.get('/settings/oidc').then((r) => r.data),
+
+  setOidc: (config: OidcSettingsInput): Promise<OidcSettings> =>
+    api.put('/settings/oidc', config).then((r) => r.data),
 };
+
+export interface OidcSettings {
+  enabled: boolean;
+  issuer: string;
+  clientId: string;
+  buttonLabel: string;
+  hasClientSecret: boolean;
+}
+
+export interface OidcSettingsInput {
+  enabled: boolean;
+  issuer: string;
+  clientId: string;
+  /** Empty string means "keep the existing secret unchanged". */
+  clientSecret: string;
+  buttonLabel: string;
+}
 
 export interface ScheduledRestartConfig {
   backendEnabled: boolean;

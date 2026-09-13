@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { authMiddleware } from './middleware/auth.js';
 import { authRoutes } from './routes/auth.routes.js';
+import { oidcAuthRoutes } from './routes/oidc-auth.routes.js';
 import { serverRoutes } from './routes/servers.routes.js';
 import { virtualServerRoutes } from './routes/virtual-servers.routes.js';
 import { channelRoutes } from './routes/channels.routes.js';
@@ -64,6 +65,7 @@ export function createApp(): Express {
   // Public routes
   app.use('/api/setup', setupRoutes);
   app.use('/api/auth', authRoutes);
+  app.use('/api/auth/oidc', oidcAuthRoutes);
 
   // Bot webhook route (unauthenticated — called by external systems)
   app.all('/api/bots/webhook/*path', (req, res) => {
