@@ -13,6 +13,7 @@ import { setYtCookieFile } from './voice/audio/youtube.js';
 import { sweepStreamTempFiles } from './voice/streaming/video-download.js';
 import { loadDebugFlags } from './utils/debug-flags.js';
 import { startScheduledRestartChecker } from './utils/scheduled-restart.js';
+import { startUpdateChecker } from './utils/update-check.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -48,6 +49,7 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
   await loadDebugFlags(prisma);
   startScheduledRestartChecker(prisma);
+  startUpdateChecker();
 
   // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared
   // with another app) without requiring a manual scan first - see
