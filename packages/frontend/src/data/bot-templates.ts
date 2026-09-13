@@ -84,7 +84,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
         nodes: [
           makeNode(n1, 'trigger_cron', 'Every Minute', { cron: '* * * * *' }, 60, 80),
           makeNode(n2, 'action_webquery', 'Get Server Info', { command: 'serverinfo', storeAs: 'server' }, 300, 80),
-          makeNode(n3, 'action_channelEdit', 'Update Counter', { channelId: cfg.channelId, channel_name: '[cspacer]Online: {{temp.server.virtualserver_clientsonline}}/{{temp.server.virtualserver_maxclients}}' }, 540, 80),
+          makeNode(n3, 'action_channelEdit', 'Update Counter', { channelId: cfg.channelId, channel_name: '[cspacer]Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}' }, 540, 80),
         ],
         edges: [makeEdge(eid(), n1, n2), makeEdge(eid(), n2, n3)],
       };
@@ -108,9 +108,9 @@ export const BOT_TEMPLATES: BotTemplate[] = [
         nodes: [
           makeNode(n1, 'trigger_cron', 'Every 5 Min', { cron: '*/5 * * * *' }, 60, 150),
           makeNode(n2, 'action_webquery', 'Get Server Info', { command: 'serverinfo', storeAs: 'server' }, 300, 150),
-          makeNode(n3, 'action_channelEdit', 'Uptime', { channelId: cfg.uptimeChannelId, channel_name: '[cspacer]Uptime: {{temp.server.virtualserver_uptime|uptime}}' }, 540, 60),
-          makeNode(n4, 'action_channelEdit', 'Clients', { channelId: cfg.clientsChannelId, channel_name: '[cspacer]Clients: {{temp.server.virtualserver_clientsonline}}/{{temp.server.virtualserver_maxclients}}' }, 540, 150),
-          makeNode(n5, 'action_channelEdit', 'Channels', { channelId: cfg.channelCountChannelId, channel_name: '[cspacer]Channels: {{temp.server.virtualserver_channelsonline}}' }, 540, 240),
+          makeNode(n3, 'action_channelEdit', 'Uptime', { channelId: cfg.uptimeChannelId, channel_name: '[cspacer]Uptime: {{temp.server.0.virtualserver_uptime|uptime}}' }, 540, 60),
+          makeNode(n4, 'action_channelEdit', 'Clients', { channelId: cfg.clientsChannelId, channel_name: '[cspacer]Clients: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}' }, 540, 150),
+          makeNode(n5, 'action_channelEdit', 'Channels', { channelId: cfg.channelCountChannelId, channel_name: '[cspacer]Channels: {{temp.server.0.virtualserver_channelsonline}}' }, 540, 240),
         ],
         edges: [
           makeEdge(eid(), n1, n2),
@@ -216,7 +216,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
           makeNode(n1, 'trigger_event', 'Client Moved', { eventName: 'notifyclientmoved' }, 60, 80),
           makeNode(n2, 'condition', 'Joined Support?', { expression: `event.ctid == ${cfg.supportChannelId}` }, 300, 80),
           makeNode(n3, 'action_webquery', 'Get Client Info', { command: 'clientinfo clid={{event.clid}}', storeAs: 'client' }, 540, 40),
-          makeNode(n4, 'action_pokeGroup', 'Notify Admins', { groupId: cfg.adminGroupId, message: cfg.message || 'Support needed by {{temp.client.client_nickname}}!' }, 780, 40),
+          makeNode(n4, 'action_pokeGroup', 'Notify Admins', { groupId: cfg.adminGroupId, message: cfg.message || 'Support needed by {{temp.client.0.client_nickname}}!' }, 780, 40),
         ],
         edges: [
           makeEdge(eid(), n1, n2),
@@ -246,7 +246,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
           makeNode(n1, 'trigger_event', 'Client Moved', { eventName: 'notifyclientmoved' }, 60, 80),
           makeNode(n2, 'condition', 'Joined Lobby?', { expression: `event.ctid == ${cfg.lobbyChannelId}` }, 300, 80),
           makeNode(n3, 'action_webquery', 'Get Client Info', { command: 'clientinfo clid={{event.clid}}', storeAs: 'client' }, 540, 80),
-          makeNode(n4, 'action_channelCreate', 'Create Channel', { channel_name: "{{temp.client.client_nickname}}'s Channel", cpid: cfg.parentChannelId, channel_flag_semi_permanent: '1' }, 780, 80),
+          makeNode(n4, 'action_channelCreate', 'Create Channel', { channel_name: "{{temp.client.0.client_nickname}}'s Channel", cpid: cfg.parentChannelId, channel_flag_semi_permanent: '1' }, 780, 80),
           makeNode(n5, 'action_move', 'Move to Channel', { cid: '{{temp.lastCreatedChannelId}}' }, 1020, 80),
           // Cron cleanup: delete empty channels under parent every minute
           makeNode(n6, 'trigger_cron', 'Cleanup Timer', { cron: '* * * * *' }, 60, 220),
@@ -464,7 +464,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
         nodes: [
           makeNode(n1, 'trigger_webhook', 'Verification Webhook', { path: cfg.path || 'verify-user', method: 'POST', secret: cfg.secret || '' }, 60, 80),
           makeNode(n2, 'action_webquery', 'Add to Group', { command: 'servergroupaddclient', params: { sgid: cfg.groupId, cldbid: '{{event.webhook_body.cldbid}}' } }, 340, 80),
-          makeNode(n3, 'log', 'Log Result', { level: 'info', message: 'Assigned group {{groupId}} to cldbid {{event.webhook_body.cldbid}}' }, 600, 80),
+          makeNode(n3, 'log', 'Log Result', { level: 'info', message: `Assigned group ${cfg.groupId} to cldbid {{event.webhook_body.cldbid}}` }, 600, 80),
         ],
         edges: [makeEdge(eid(), n1, n2), makeEdge(eid(), n2, n3)],
       };
@@ -517,7 +517,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
           makeNode(n1, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 60, 80),
           makeNode(n2, 'condition', 'Is Human?', { expression: 'event.client_type == 0' }, 300, 80),
           makeNode(n3, 'action_httpRequest', 'Check VPN API', { url, method: 'GET', storeAs: 'vpn' }, 540, 40),
-          makeNode(n4, 'condition', 'Is VPN?', { expression: "temp.vpn.security.vpn == 1 or temp.vpn.security.proxy == 1" }, 540, 120),
+          makeNode(n4, 'condition', 'Is VPN?', { expression: "temp.vpn.security.vpn == true or temp.vpn.security.proxy == true" }, 540, 120),
           actionNode,
         ],
         edges: [
