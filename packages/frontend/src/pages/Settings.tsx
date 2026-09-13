@@ -296,9 +296,12 @@ function UsersTab() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [resetPwUserId, setResetPwUserId] = useState<number | null>(null);
   const [resetPwValue, setResetPwValue] = useState('');
+  const [accessUserId, setAccessUserId] = useState<number | null>(null);
   const [form, setForm] = useState({ username: '', password: '', displayName: '', role: 'viewer' });
 
   const userList = useMemo(() => (Array.isArray(users) ? users : []), [users]);
+  const { data: servers } = useQuery({ queryKey: ['servers'], queryFn: serversApi.list });
+  const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
 
   if (isLoading) return <PageLoader />;
 
@@ -388,6 +391,11 @@ function UsersTab() {
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="inline-flex items-center gap-0.5">
+                      {u.role === 'viewer' && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Server Access" onClick={() => setAccessUserId(u.id)}>
+                          <Server className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-7 w-7" title="Reset Password" onClick={() => { setResetPwUserId(u.id); setResetPwValue(''); }}>
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
@@ -461,7 +469,70 @@ function UsersTab() {
         onConfirm={() => { if (deleteId) deleteUser.mutate(deleteId, { onSuccess: () => { toast.success('User deleted'); setDeleteId(null); } }); }}
         destructive
       />
+
+      {accessUserId !== null && (
+        <ServerAccessDialog
+          userId={accessUserId}
+          username={userList.find((u: any) => u.id === accessUserId)?.username ?? ''}
+          servers={serverList}
+          onClose={() => setAccessUserId(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function ServerAccessDialog({ userId, username, servers, onClose }: { userId: number; username: string; servers: any[]; onClose: () => void }) {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ['user-server-access', userId], queryFn: () => usersApi.getServerAccess(userId) });
+  const [selected, setSelected] = useState<Set<number> | null>(null);
+  const save = useMutation({
+    mutationFn: (serverConfigIds: number[]) => usersApi.setServerAccess(userId, serverConfigIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user-server-access', userId] });
+      toast.success('Server access updated');
+      onClose();
+    },
+    onError: () => toast.error('Failed to update server access'),
+  });
+
+  const active = selected ?? new Set(data?.serverConfigIds ?? []);
+  const toggle = (id: number) => {
+    const next = new Set(active);
+    next.has(id) ? next.delete(id) : next.add(id);
+    setSelected(next);
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Server Access — {username}</DialogTitle>
+        </DialogHeader>
+        {isLoading ? (
+          <PageLoader />
+        ) : (
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {servers.length === 0 && <p className="text-xs text-muted-foreground">No server connections configured yet.</p>}
+            {servers.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-4 py-1.5">
+                <div>
+                  <p className="text-xs font-medium">{s.name}</p>
+                  <p className="text-[11px] text-muted-foreground font-mono-data">{s.host}</p>
+                </div>
+                <Switch checked={active.has(s.id)} onCheckedChange={() => toggle(s.id)} />
+              </div>
+            ))}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button disabled={save.isPending} onClick={() => save.mutate(Array.from(active))}>
+            {save.isPending ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
