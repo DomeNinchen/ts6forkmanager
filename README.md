@@ -122,7 +122,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
   - `{title}` — title of the currently playing track
   - `{artist}` — artist, if known (empty string otherwise)
   - `{remaining}` — time left in the current track, auto-formatted (`"42 min"`, or `"1h 5min"` past 60 minutes); empty for live streams
-  - `{remaining_min}` — time left across the whole queue (this track plus everything still queued after it), in plain minutes (whole number); empty while the current track's own duration is unknown (e.g. a live stream)
+  - `{remaining_min}` — time left across the whole queue (this track plus everything still queued after it) as a plain minute count, e.g. `"10 min"` (no hour rollover, unlike `{remaining}`); empty while the current track's own duration is unknown (e.g. a live stream)
   - `{elapsed}` — time played so far, formatted the same way as `{remaining}`
   - `{duration}` — total track length, formatted the same way; empty for live streams
   - `{queue_length}` — number of songs still queued after this one
