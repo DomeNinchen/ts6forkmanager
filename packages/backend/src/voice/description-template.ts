@@ -8,6 +8,7 @@ export interface DescriptionContext {
   position: number; // seconds elapsed
   duration: number; // seconds total, 0 = unknown/live (e.g. radio stream)
   queueRemaining: number; // songs still queued after the current one
+  queueRemainingSeconds: number; // seconds left across the rest of the queue (current track's remaining time + upcoming tracks' known durations); meaningless while the current track's own duration is unknown, so callers should pass 0 in that case
 }
 
 function formatDuration(totalSeconds: number): string {
@@ -26,7 +27,7 @@ export function renderDescriptionTemplate(template: string, ctx: DescriptionCont
     title: ctx.title,
     artist: ctx.artist || '',
     remaining: known ? formatDuration(remainingSec) : '',
-    remaining_min: known ? String(Math.max(0, Math.round(remainingSec / 60))) : '',
+    remaining_min: known ? String(Math.max(0, Math.round(ctx.queueRemainingSeconds / 60))) : '',
     elapsed: formatDuration(ctx.position),
     duration: known ? formatDuration(ctx.duration) : '',
     queue_length: String(Math.max(0, ctx.queueRemaining)),
@@ -39,12 +40,12 @@ export function renderDescriptionTemplate(template: string, ctx: DescriptionCont
  * description is always shown instead of going blank between tracks -
  * title/artist as "-", every time-based field as "0". queue_length still
  * reflects the real (possibly non-empty) queue. */
-export function renderIdleDescriptionTemplate(template: string, queueLength: number): string {
+export function renderIdleDescriptionTemplate(template: string, queueLength: number, queueRemainingSeconds: number): string {
   const replacements: Record<string, string> = {
     title: '-',
     artist: '-',
     remaining: '0',
-    remaining_min: '0',
+    remaining_min: String(Math.max(0, Math.round(queueRemainingSeconds / 60))),
     elapsed: '0',
     duration: '0',
     queue_length: String(Math.max(0, queueLength)),
@@ -57,7 +58,7 @@ export const DESCRIPTION_PLACEHOLDERS: Array<{ key: string; description: string 
   { key: 'title', description: 'Title of the currently playing track' },
   { key: 'artist', description: 'Artist, if known (empty string otherwise)' },
   { key: 'remaining', description: 'Time left, auto-formatted ("42 min" or "1h 5min" past 60 min); empty for live streams' },
-  { key: 'remaining_min', description: 'Time left in plain minutes (whole number); empty for live streams' },
+  { key: 'remaining_min', description: 'Time left across the whole queue (this track plus everything still queued after it), in plain minutes; empty while the current track\'s own duration is unknown (e.g. a live stream)' },
   { key: 'elapsed', description: 'Time played so far, formatted the same way as {remaining}' },
   { key: 'duration', description: 'Total track length, formatted the same way; empty for live streams' },
   { key: 'queue_length', description: 'Number of songs still queued after this one' },
