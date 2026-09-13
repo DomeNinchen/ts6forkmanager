@@ -74,3 +74,37 @@ userRoutes.delete('/:userId', async (req: Request, res: Response, next) => {
     res.status(204).send();
   } catch (err) { next(err); }
 });
+
+// GET /:userId/server-access - which TS server connections this user (if 'viewer') can see.
+// Meaningless for 'admin' users, who bypass this check entirely (see middleware/server-access.ts) -
+// still readable/settable either way so switching a user's role back to 'viewer' later doesn't
+// silently strand them with no access at all.
+userRoutes.get('/:userId/server-access', async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const id = parseInt(String(req.params.userId));
+    const rows = await prisma.userServerAccess.findMany({ where: { userId: id }, select: { serverConfigId: true } });
+    res.json({ serverConfigIds: rows.map((r: { serverConfigId: number }) => r.serverConfigId) });
+  } catch (err) { next(err); }
+});
+
+// PUT /:userId/server-access - replace the full set of servers this user can access (body: { serverConfigIds: number[] })
+userRoutes.put('/:userId/server-access', async (req: Request, res: Response, next) => {
+  try {
+    const id = parseInt(String(req.params.userId));
+    const serverConfigIds = req.body.serverConfigIds;
+    if (!Array.isArray(serverConfigIds) || !serverConfigIds.every((n) => Number.isInteger(n))) {
+      throw new AppError(400, 'serverConfigIds must be an array of integers');
+    }
+
+    const prisma = req.app.locals.prisma;
+    await prisma.$transaction([
+      prisma.userServerAccess.deleteMany({ where: { userId: id } }),
+      ...serverConfigIds.map((serverConfigId: number) =>
+        prisma.userServerAccess.create({ data: { userId: id, serverConfigId } })
+      ),
+    ]);
+
+    res.status(204).send();
+  } catch (err) { next(err); }
+});
