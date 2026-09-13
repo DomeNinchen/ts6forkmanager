@@ -60,6 +60,7 @@ This fork exists because upstream had a persistent video/audio streaming stutter
 - A music bot can now be given a custom TS3 avatar and a templated description, editable from the same Create/Edit Music Bot dialog and applied live (no reconnect needed). The description supports placeholders, e.g. `Now playing: {title} ({remaining} left)` — see the Music Bots section under Features below for the full placeholder list. It updates on actual changes (song start/change, queue size, editing the template) rather than polling; a template with a time placeholder like `{remaining}` additionally refreshes every 30s while playing so it keeps counting down, and shows a "-"/"0" idle form when nothing is playing instead of going blank. **⚠️ The avatar is currently broken by a TS6 server bug, not by this fork** — see [Known Issues](#known-issues-upstream-ts6-server-bug) below. The description template works correctly
 - Music bots now identify as a real, TeamSpeak-signed client version (`5.0.0-beta.25`) instead of TS3AudioBot's old placeholder, which showed up as an obviously-fake, far-future build in any client's client-info panel
 - Fixed the Bot Flow Engine's Set Variable node: the editor saved the variable's name and value under different config keys (`varName`/`varValue`) than the engine read (`name`/`value`), so every Set Variable node ever built through the UI silently operated on a variable named `""` instead of the name you actually typed, and the value expression was lost the same way. The engine now also accepts the old keys, so flows created before this fix start working immediately without needing to be re-opened and re-saved
+- [clusterzx/ts6-manager#48](https://github.com/clusterzx/ts6-manager/issues/48): the Bot Flow engine can now loop. A new Loop node reads an existing list (e.g. a WebQuery node's "Store As" result, such as `clientlist`) and runs its "Body" output once per item, then its "After" output once when done - see the Bot Flow Engine section under Features below. **⚠️ Alongside this, WebQuery's "Store As" now stores the FULL result list, not just the first row** - a flow built before this change that reads a single-row command's result (e.g. `serverinfo`/`clientinfo`) via `{{temp.name.field}}` needs one `.0.` added: `{{temp.name.0.field}}`
 
 ### Kept Up to Date
 Worked through every outdated dependency, easiest to hardest, verifying each with a real container run — not just a successful build — before it shipped:
@@ -143,7 +144,8 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Visual flow editor with drag-and-drop node canvas
 - Triggers: TS3 events, cron schedules, webhooks (with mandatory secrets), chat commands (global or channel-specific)
 - Actions: kick, ban, move, message, poke, channel create/edit/delete, HTTP requests, WebQuery commands
-- Conditions, variables, delays, loops, logging
+- Conditions, variables, delays, logging
+- Loop node: iterates a list stored in a temp variable (e.g. a WebQuery's "Store As" result), running its "Body" output once per item (`{{temp.item}}` for the current item, `{{temp.item_index}}` for its position) and its "After" output once when done. Default cap 50 items, hard ceiling 500
 - Animated channel names (rotating text on a timer)
 - Placeholder system with filters and expressions
 - Pre-built templates for common automation tasks

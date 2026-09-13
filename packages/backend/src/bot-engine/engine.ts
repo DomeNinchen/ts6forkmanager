@@ -38,6 +38,7 @@ import crypto from 'crypto';
  *   delay:           { delay } → { nodeType:'delay', delayMs: delay }
  *   variable:        { operation, name, value } → { nodeType:'variable', operation, variableName: name, value } (also accepts legacy varName/varValue keys)
  *   log:             { level, message } → { nodeType:'log', level, message }
+ *   loop:            { arrayVariable, itemVariable, maxIterations } → { nodeType:'loop', arrayVariable, itemVariable, maxIterations }
  */
 function normalizeFlowData(raw: any): FlowDefinition {
   const targetModeMap: Record<string, number> = { client: 1, channel: 2, server: 3 };
@@ -189,6 +190,10 @@ function normalizeFlowData(raw: any): FlowDefinition {
     } else if (nodeType === 'log') {
       type = 'log';
       data = { nodeType: 'log', label, level: config.level || 'info', message: config.message || '' };
+    } else if (nodeType === 'loop') {
+      type = 'loop';
+      const maxIterations = config.maxIterations ? parseInt(config.maxIterations, 10) : undefined;
+      data = { nodeType: 'loop', label, arrayVariable: config.arrayVariable || '', itemVariable: config.itemVariable || 'item', maxIterations: maxIterations && maxIterations > 0 ? maxIterations : undefined };
     } else {
       // Pass through unknown types
       type = nodeType;
