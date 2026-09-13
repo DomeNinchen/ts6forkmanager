@@ -1218,6 +1218,14 @@ func main() {
 		})
 	})
 
+	// GET /version - polled by the backend's update-check (see
+	// packages/backend/src/utils/update-check.ts) to compare the sidecar's
+	// actually-running version against main, independent of whether backend
+	// or frontend were rebuilt at the same time.
+	mux.HandleFunc("GET /version", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{"version": Version})
+	})
+
 	// POST /restart - graceful self-restart, used by the backend's scheduled
 	// container restart feature (see clusterzx/ts6-manager#55). Reuses the
 	// same SIGINT/SIGTERM path below (sidecar.Stop() + exit) rather than
