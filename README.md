@@ -118,11 +118,11 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Auto-reconnect with exponential backoff on disconnect
 - In-channel text commands for hands-free control
 - Music request history tracking
-- Custom avatar (PNG/JPEG/GIF/WebP; size limit is whatever your TS server's own `i_client_max_avatar_filesize` permission allows) and a templated `client_description`, set from the Create/Edit Music Bot dialog and applied live. The description updates whenever something actually changes (song start/change, queue size, editing the template) - plus every ~30s while playing, but only if the template contains a time placeholder like `{remaining}`, so it isn't polled needlessly otherwise. Shows a "-"/"0" idle form when nothing is playing instead of going blank. **⚠️ Currently broken by TS6 server-side bugs (not this fork's code) — see [Known Issues](#known-issues-upstream-ts6-server-bugs)**. Supports:
+- Custom avatar (PNG/JPEG/GIF/WebP; size limit is whatever your TS server's own `i_client_max_avatar_filesize` permission allows) and a templated `client_description`, set from the Create/Edit Music Bot dialog and applied live. The description updates whenever something actually changes (song start/change, queue size, editing the template) - plus every ~30s while playing, but only if the template contains a time placeholder like `{remaining}`, so it isn't polled needlessly otherwise. Shows a "-"/"0" idle form when nothing is playing instead of going blank. **⚠️ The avatar is currently broken by a TS6 server bug, not this fork's code — see [Known Issues](#known-issues-upstream-ts6-server-bug)**. The description template works correctly. Supports:
   - `{title}` — title of the currently playing track
   - `{artist}` — artist, if known (empty string otherwise)
-  - `{remaining}` — time left, auto-formatted (`"42 min"`, or `"1h 5min"` past 60 minutes); empty for live streams
-  - `{remaining_min}` — time left in plain minutes (whole number); empty for live streams
+  - `{remaining}` — time left in the current track, auto-formatted (`"42 min"`, or `"1h 5min"` past 60 minutes); empty for live streams
+  - `{remaining_min}` — time left across the whole queue (this track plus everything still queued after it), in plain minutes (whole number); empty while the current track's own duration is unknown (e.g. a live stream)
   - `{elapsed}` — time played so far, formatted the same way as `{remaining}`
   - `{duration}` — total track length, formatted the same way; empty for live streams
   - `{queue_length}` — number of songs still queued after this one

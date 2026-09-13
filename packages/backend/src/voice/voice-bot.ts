@@ -330,14 +330,30 @@ export class VoiceBot extends EventEmitter {
   private updateDescription(): void {
     if (this._status === 'stopped' || !this.config.descriptionTemplate || !this._nowPlaying) return;
     const progress = this.playbackProgress;
+    const currentDuration = progress?.duration ?? 0;
+    // Total time left is only meaningful if the current track's own duration
+    // is known - a live stream (radio) has no defined end, so the "rest of
+    // the queue" has no defined total either, however long it is.
+    const currentRemaining = currentDuration > 0 ? Math.max(0, currentDuration - (progress?.position ?? 0)) : 0;
+    const queueRemainingSeconds = currentDuration > 0
+      ? currentRemaining + this.queueDurationFrom(this.queue.index + 1)
+      : 0;
     this.pushDescription(renderDescriptionTemplate(this.config.descriptionTemplate, {
       title: this._nowPlaying.title,
       artist: this._nowPlaying.artist,
       position: progress?.position ?? 0,
-      duration: progress?.duration ?? 0,
+      duration: currentDuration,
       queueRemaining: Math.max(0, this.queue.length - this.queue.index - 1),
+      queueRemainingSeconds,
     }));
     this.syncDescriptionTimer();
+  }
+
+  /** Sum of known durations for queue items from `fromIndex` onward (an item
+   * with no known duration - e.g. a local file scan never probed - counts as
+   * 0 rather than making the whole total unknown). */
+  private queueDurationFrom(fromIndex: number): number {
+    return this.queue.getAll().slice(Math.max(0, fromIndex)).reduce((sum, item) => sum + (item.duration || 0), 0);
   }
 
   /** Stop the refresh timer and, if a template is configured, show it in its
@@ -354,7 +370,7 @@ export class VoiceBot extends EventEmitter {
       this.pushDescription('');
       return;
     }
-    this.pushDescription(renderIdleDescriptionTemplate(this.config.descriptionTemplate, this.queue.length));
+    this.pushDescription(renderIdleDescriptionTemplate(this.config.descriptionTemplate, this.queue.length, this.queueDurationFrom(0)));
   }
 
   /** Push the description immediately with whatever template is currently
@@ -366,7 +382,7 @@ export class VoiceBot extends EventEmitter {
     if (this._nowPlaying) {
       this.updateDescription(); // also resyncs the timer
     } else {
-      this.pushDescription(renderIdleDescriptionTemplate(this.config.descriptionTemplate, this.queue.length));
+      this.pushDescription(renderIdleDescriptionTemplate(this.config.descriptionTemplate, this.queue.length, this.queueDurationFrom(0)));
       this.syncDescriptionTimer(); // stops a stale timer - shouldRun is false while idle
     }
   }
