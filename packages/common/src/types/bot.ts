@@ -20,9 +20,9 @@ export interface FlowEdge {
   label?: string;
 }
 
-export type NodeType = 'trigger' | 'action' | 'condition' | 'delay' | 'variable' | 'log';
+export type NodeType = 'trigger' | 'action' | 'condition' | 'delay' | 'variable' | 'log' | 'loop';
 
-export type NodeData = TriggerNodeData | ActionNodeData | ConditionNodeData | DelayNodeData | VariableNodeData | LogNodeData;
+export type NodeData = TriggerNodeData | ActionNodeData | ConditionNodeData | DelayNodeData | VariableNodeData | LogNodeData | LoopNodeData;
 
 // --- Trigger Types ---
 export type TriggerNodeData =
@@ -258,6 +258,18 @@ export interface VariableNodeData {
   operation: 'set' | 'increment' | 'append';
   variableName: string;
   value: string;
+}
+
+// --- Loop ---
+export interface LoopNodeData {
+  nodeType: 'loop';
+  label: string;
+  /** Name of an existing temp variable holding an array (e.g. a WebQuery node's "Store As" result) - not wrapped in {{temp. }}. */
+  arrayVariable: string;
+  /** Name to expose the current item under on each iteration (as `{{temp.<itemVariable>}}`), and its position as `{{temp.<itemVariable>_index}}`. Restored to whatever it was before the loop once all iterations finish. */
+  itemVariable: string;
+  /** Optional cap on how many items to process, below the server-enforced hard ceiling. */
+  maxIterations?: number;
 }
 
 // --- Generate Code ---

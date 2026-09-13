@@ -166,11 +166,19 @@ export function PlaceholderReference({ open, onOpenChange }: Props) {
 
               <SectionHeader>Custom via "Store As"</SectionHeader>
               <p className="text-xs text-muted-foreground mb-1">
-                WebQuery and HTTP Request actions have a "Store As" field. The result is saved as a temp variable.
+                WebQuery and HTTP Request actions have a "Store As" field. The FULL result list is saved as a temp variable — even a single-row command like clientinfo or serverinfo, so access it with an explicit <code className="text-emerald-400">.0.</code> for "the first (only) row".
               </p>
-              <P code={'{{temp.server.virtualserver_clientsonline}}'} desc='Online users (after serverinfo stored as "server")' example='Online: {{temp.server.virtualserver_clientsonline}}/{{temp.server.virtualserver_maxclients}}' />
-              <P code={'{{temp.server.virtualserver_uptime}}'} desc='Server uptime in seconds' example='Uptime: {{temp.server.virtualserver_uptime|uptime}}' />
-              <P code={'{{temp.client.client_nickname}}'} desc='Client name (after clientinfo stored as "client")' />
+              <P code={'{{temp.server.0.virtualserver_clientsonline}}'} desc='Online users (after serverinfo stored as "server")' example='Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}' />
+              <P code={'{{temp.server.0.virtualserver_uptime}}'} desc='Server uptime in seconds' example='Uptime: {{temp.server.0.virtualserver_uptime|uptime}}' />
+              <P code={'{{temp.client.0.client_nickname}}'} desc='Client name (after clientinfo stored as "client")' />
+
+              <SectionHeader>Loop Node</SectionHeader>
+              <p className="text-xs text-muted-foreground mb-1">
+                A Loop node reads an existing list (e.g. a "Store As" result from a clientlist WebQuery) and runs its "Body" output once per item, then its "After" output once when done.
+              </p>
+              <P code={'{{temp.client}}'} desc="Current item (whatever name the Loop node's Item Variable Name is set to), inside its Body branch only" />
+              <P code={'{{temp.client.client_nickname}}'} desc='A field of the current item - item variable name + "." + field (no .0 here, unlike Store As above - a single object per iteration, not a list)' />
+              <P code={'{{temp.client_index}}'} desc='Position of the current item in the list, starting at 0' />
             </TabsContent>
 
             {/* ========== EXEC ========== */}

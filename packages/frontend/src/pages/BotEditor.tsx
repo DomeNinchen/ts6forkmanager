@@ -14,7 +14,7 @@ import {
   Clock, GitBranch, Variable, FileText, Webhook, Terminal, Plus, Trash2,
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield,
-  Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles,
+  Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -81,6 +81,7 @@ const SMART_ACTION_NODES: NodeTypeDef[] = [
 
 const LOGIC_NODES: NodeTypeDef[] = [
   { type: 'condition', label: 'Condition', icon: GitBranch, color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', handles: { inputs: ['in'], outputs: ['true', 'false'] } },
+  { type: 'loop', label: 'Loop', icon: Repeat, color: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', handles: { inputs: ['in'], outputs: ['body', 'after'] } },
   { type: 'delay', label: 'Delay', icon: Clock, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
   { type: 'variable', label: 'Set Variable', icon: Variable, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
   { type: 'log', label: 'Log', icon: FileText, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
@@ -1371,6 +1372,47 @@ export default function BotEditor() {
                         onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, expression: e.target.value } } : n))}
                       />
                       <p className="text-[9px] text-muted-foreground mt-1">True → green output, False → red output</p>
+                    </div>
+                  )}
+
+                  {selectedNodeData.type === 'loop' && (
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Array Variable</Label>
+                        <Input
+                          className="h-7 text-xs mt-1 font-mono-data"
+                          placeholder="clients"
+                          value={selectedNodeData.config.arrayVariable || ''}
+                          onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, arrayVariable: e.target.value } } : n))}
+                        />
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">
+                          Name of an existing temp variable holding a list, e.g. a WebQuery node's "Store As" result — without {'{{temp.'}...{'}}'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Item Variable Name</Label>
+                        <Input
+                          className="h-7 text-xs mt-1 font-mono-data"
+                          placeholder="client"
+                          value={selectedNodeData.config.itemVariable || ''}
+                          onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, itemVariable: e.target.value } } : n))}
+                        />
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">
+                          In the loop body: {'{{temp.'}{(selectedNodeData.config.itemVariable || 'client')}{'}}'}, index: {'{{temp.'}{(selectedNodeData.config.itemVariable || 'client')}_index{'}}'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Max Iterations (optional)</Label>
+                        <Input
+                          type="number"
+                          className="h-7 text-xs mt-1 font-mono-data"
+                          placeholder="50"
+                          value={selectedNodeData.config.maxIterations ?? ''}
+                          onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, maxIterations: e.target.value } } : n))}
+                        />
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">Default 50, hard ceiling 500 regardless of this value</p>
+                      </div>
+                      <p className="text-[9px] text-muted-foreground mt-1">Body → runs once per item. After → runs once when the loop finishes.</p>
                     </div>
                   )}
 

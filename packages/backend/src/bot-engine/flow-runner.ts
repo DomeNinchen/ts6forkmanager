@@ -11,7 +11,7 @@ import type {
   GroupAddClientActionData, GroupRemoveClientActionData,
   WebQueryActionData, WebhookActionData, HttpRequestActionData,
   AfkMoverActionData, IdleKickerActionData, PokeGroupActionData, RankCheckActionData, TempChannelCleanupActionData,
-  ConditionNodeData, DelayNodeData, VariableNodeData, LogNodeData,
+  ConditionNodeData, DelayNodeData, VariableNodeData, LogNodeData, LoopNodeData,
 } from '@ts6/common';
 import axios from 'axios';
 import { validateUrl } from '../utils/url-validator.js';
@@ -19,8 +19,15 @@ import { ALLOWED_WEBQUERY_COMMANDS } from './command-whitelist.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import crypto from 'crypto';
 
-const MAX_NODE_VISITS = 100;
+// Raised from 100 to give Loop nodes real headroom - a loop at its default
+// iteration cap with even a small body (see MAX_LOOP_ITERATIONS_DEFAULT
+// below) would otherwise trip this on its own, on a flow that isn't actually
+// stuck in infinite recursion. Still bounded, so a genuinely cyclic graph is
+// caught, just a bit later.
+const MAX_NODE_VISITS = 500;
 const MAX_DELAY_MS = 300000; // 5 minutes
+const MAX_LOOP_ITERATIONS_DEFAULT = 50;
+const MAX_LOOP_ITERATIONS_HARD_CAP = 500; // absolute ceiling regardless of node config
 
 interface FlowInfo {
   id: number;
@@ -221,6 +228,50 @@ export class FlowRunner {
         }
         break;
       }
+
+      case 'loop': {
+        const loopData = node.data as LoopNodeData;
+        const arrayValue = ctx.getTemp(loopData.arrayVariable);
+        const items = Array.isArray(arrayValue) ? arrayValue : [];
+        if (!Array.isArray(arrayValue)) {
+          await this.log(ctx, node, 'warn', `Loop: temp variable '${loopData.arrayVariable}' is not an array (got ${arrayValue === undefined ? 'undefined' : typeof arrayValue}) — skipping loop body`);
+        }
+
+        const requestedMax = loopData.maxIterations && loopData.maxIterations > 0 ? loopData.maxIterations : MAX_LOOP_ITERATIONS_DEFAULT;
+        const effectiveMax = Math.min(requestedMax, MAX_LOOP_ITERATIONS_HARD_CAP);
+        const toProcess = items.slice(0, effectiveMax);
+        if (items.length > toProcess.length) {
+          await this.log(ctx, node, 'warn', `Loop: '${loopData.arrayVariable}' has ${items.length} items, only processing the first ${toProcess.length} (max iterations)`);
+        }
+
+        // Save/restore around the loop so re-entering it later in the same
+        // flow (or nesting a loop that happens to reuse the same item
+        // variable name) doesn't leave a stale item behind once this loop
+        // is done.
+        const previousItem = ctx.getTemp(loopData.itemVariable);
+        const previousIndex = ctx.getTemp(`${loopData.itemVariable}_index`);
+
+        const bodyEdges = this.getOutgoingEdges(node.id, flowDef, 'body');
+        for (let i = 0; i < toProcess.length; i++) {
+          ctx.setTemp(loopData.itemVariable, toProcess[i]);
+          ctx.setTemp(`${loopData.itemVariable}_index`, i);
+          await this.log(ctx, node, 'debug', `Loop: iteration ${i + 1}/${toProcess.length}`);
+          for (const edge of bodyEdges) {
+            const target = this.findNode(edge.target, flowDef);
+            if (target) await visitNode(target);
+          }
+        }
+
+        ctx.setTemp(loopData.itemVariable, previousItem);
+        ctx.setTemp(`${loopData.itemVariable}_index`, previousIndex);
+
+        const afterEdges = this.getOutgoingEdges(node.id, flowDef, 'after');
+        for (const edge of afterEdges) {
+          const target = this.findNode(edge.target, flowDef);
+          if (target) await visitNode(target);
+        }
+        break;
+      }
     }
   }
 
@@ -389,8 +440,14 @@ export class FlowRunner {
 
     const result = await client.executePost(ctx.sid, command, resolved);
     ctx.setTemp('lastResult', JSON.stringify(result));
-    if (data.storeAs && result?.[0]) {
-      ctx.setTemp(data.storeAs, result[0]);
+    // Stores the FULL result array (e.g. every row of a `clientlist`), not
+    // just the first element - needed so a Loop node can iterate over it.
+    // Single-row commands (clientinfo, serverinfo, ...) still work via
+    // {{temp.name.0.field}} - previously {{temp.name.field}} - the `.0.`
+    // (documented in PlaceholderReference) is the one-time migration a flow
+    // built before this change needs for those.
+    if (data.storeAs) {
+      ctx.setTemp(data.storeAs, result);
     }
   }
 
