@@ -4,13 +4,18 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { getCachedUpdateCheck } from '../utils/update-check.js';
+import { getCachedUpdateCheck, forceUpdateCheck } from '../utils/update-check.js';
 
 const updateCheckRoutes: Router = Router();
 
 // GET /api/update-check — cached result of the periodic GitHub check
 updateCheckRoutes.get('/', (_req: Request, res: Response) => {
   res.json(getCachedUpdateCheck());
+});
+
+// POST /api/update-check/recheck — on-demand refresh (e.g. Settings → Update Status)
+updateCheckRoutes.post('/recheck', async (_req: Request, res: Response) => {
+  res.json(await forceUpdateCheck());
 });
 
 export { updateCheckRoutes };
