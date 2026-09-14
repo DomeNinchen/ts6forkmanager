@@ -111,12 +111,15 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - JWT access + refresh token rotation with reuse detection
 - Role-based access control: Admin (full access), Viewer (read-only on assigned servers), Bot Operator (viewer + full Bot Flows and Music Bots control on assigned servers), Music Operator (viewer + Music Bots only)
 - Per-server access control for multi-tenant setups, manageable per user from Settings → Users
+- An admin can't remove their own admin role, disable, or delete their own account, and the last remaining active admin can't be demoted, disabled, or deleted by anyone else either — enforced server-side, not just hidden in the UI
+- Per-user session management in Settings → Users: see every logged-in device/browser (by login time) and revoke one or all of them to force a re-login
 - Single Sign-On via any standard OpenID Connect provider (Authentik, Keycloak, Authelia, Zitadel, ...), alongside local login — see Settings → SSO
 - WebQuery command whitelist in bot flows (blocks destructive commands)
 - Authenticated WebSocket connections
 - Password complexity requirements
 
 ### Settings & Administration
+- Settings → Users: search/filter the user list, edit a user's username or display name after creation, and see each user's last login time
 - yt-dlp cookie file management for accessing age-restricted or member-only YouTube content
 - Upload cookies via file or paste directly in the UI
 - Cookies are actually validated against YouTube (not just checked for a file's presence) — on upload, on a 6h schedule, and on demand via a "Recheck" button; a dismissible banner appears app-wide when they stop working (cookies rotate over time, so a once-working file can quietly go stale)
