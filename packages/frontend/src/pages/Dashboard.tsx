@@ -1,4 +1,5 @@
 import { useDashboard, useBandwidthHistory } from '@/hooks/use-dashboard';
+import { useVirtualServers } from '@/hooks/use-servers';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +9,7 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
 import { formatBytes, formatUptime } from '@/lib/utils';
-import { Users, Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid } from 'lucide-react';
+import { Users, Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid, Lock } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef } from 'react';
 
@@ -50,6 +51,12 @@ export default function Dashboard() {
   const { selectedConfigId, selectedSid } = useServerStore();
   const { data, isLoading, error } = useDashboard();
   const { data: bandwidthHistoryData } = useBandwidthHistory();
+  // Only consulted for its error - ServerSelector already fetches this same
+  // query (same key, shared cache) to drive the header dropdown. If it 403s,
+  // selectedSid silently never gets set there, and without checking this
+  // here too the "no access" case would be indistinguishable from a viewer
+  // genuinely just not having picked a server yet.
+  const { error: virtualServersError } = useVirtualServers();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const [bandwidthHistory, setBandwidthHistory] = useState<any[]>([]);
   const [showWidgets, setShowWidgets] = useState(false);
@@ -98,7 +105,14 @@ export default function Dashboard() {
   }, [data]);
 
   if (!selectedConfigId || !selectedSid) {
-    return (
+    const isForbidden = (virtualServersError as any)?.response?.status === 403;
+    return isForbidden ? (
+      <EmptyState
+        icon={Lock}
+        title="No access to this server"
+        description="Your account isn't granted access to this server connection. Ask an admin to grant it in Settings → Users."
+      />
+    ) : (
       <EmptyState
         icon={Server}
         title="No server selected"
@@ -109,7 +123,14 @@ export default function Dashboard() {
 
   if (isLoading) return <PageLoader />;
   if (error || !data) {
-    return (
+    const isForbidden = (error as any)?.response?.status === 403;
+    return isForbidden ? (
+      <EmptyState
+        icon={Lock}
+        title="No access to this server"
+        description="Your account isn't granted access to this server connection. Ask an admin to grant it in Settings → Users."
+      />
+    ) : (
       <EmptyState
         icon={Wifi}
         title="Connection failed"
