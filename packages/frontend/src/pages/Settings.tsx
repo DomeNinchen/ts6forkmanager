@@ -151,7 +151,138 @@ function AccountTab() {
           </Button>
         </CardContent>
       </Card>
+
+      <TwoFactorCard />
     </div>
+  );
+}
+
+function TwoFactorCard() {
+  const { user, updateUser } = useAuthStore();
+  const [step, setStep] = useState<'idle' | 'setup' | 'codes'>('idle');
+  const [qrData, setQrData] = useState<{ secret: string; qrCodeDataUrl: string } | null>(null);
+  const [confirmCode, setConfirmCode] = useState('');
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const [showDisable, setShowDisable] = useState(false);
+  const [disablePassword, setDisablePassword] = useState('');
+
+  const setup = useMutation({
+    mutationFn: authApi.totpSetup,
+    onSuccess: (data) => { setQrData(data); setStep('setup'); },
+    onError: () => toast.error('Failed to start 2FA setup'),
+  });
+
+  const verifySetup = useMutation({
+    mutationFn: () => authApi.totpVerifySetup(confirmCode),
+    onSuccess: (data) => {
+      updateUser({ totpEnabled: true });
+      setRecoveryCodes(data.recoveryCodes);
+      setStep('codes');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Invalid code'),
+  });
+
+  const disable = useMutation({
+    mutationFn: () => authApi.totpDisable(disablePassword),
+    onSuccess: () => {
+      updateUser({ totpEnabled: false });
+      toast.success('2FA disabled');
+      setShowDisable(false);
+      setDisablePassword('');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to disable 2FA'),
+  });
+
+  const closeSetup = () => {
+    setStep('idle');
+    setQrData(null);
+    setConfirmCode('');
+    setRecoveryCodes(null);
+  };
+
+  return (
+    <>
+      <Card className="mt-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm font-medium">Two-Factor Authentication</CardTitle>
+          <Badge variant={user?.totpEnabled ? 'default' : 'secondary'} className="text-[10px]">
+            {user?.totpEnabled ? 'Enabled' : 'Disabled'}
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Adds a one-time code from an authenticator app (Google Authenticator, Authy, ...) on top of your password.
+          </p>
+          {user?.totpEnabled ? (
+            <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setShowDisable(true)}>
+              Disable 2FA
+            </Button>
+          ) : (
+            <Button onClick={() => setup.mutate()} disabled={setup.isPending}>
+              {setup.isPending ? 'Starting...' : 'Enable 2FA'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={step !== 'idle'} onOpenChange={(v) => { if (!v) closeSetup(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="text-sm">Set Up Two-Factor Authentication</DialogTitle></DialogHeader>
+
+          {step === 'setup' && qrData && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Scan this with your authenticator app, then enter the 6-digit code it shows to confirm.
+              </p>
+              <img src={qrData.qrCodeDataUrl} alt="2FA QR code" className="mx-auto rounded-md border border-border bg-white p-2" />
+              <p className="text-[11px] text-muted-foreground text-center break-all">
+                Can't scan? Enter manually: <span className="font-mono-data">{qrData.secret}</span>
+              </p>
+              <div>
+                <Label className="text-xs">Confirmation Code</Label>
+                <Input value={confirmCode} onChange={(e) => setConfirmCode(e.target.value)} placeholder="123456" autoFocus />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={closeSetup}>Cancel</Button>
+                <Button onClick={() => verifySetup.mutate()} disabled={!confirmCode || verifySetup.isPending}>
+                  {verifySetup.isPending ? 'Verifying...' : 'Verify & Enable'}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+
+          {step === 'codes' && recoveryCodes && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Save these recovery codes somewhere safe. Each one can be used once to log in if you lose access to your authenticator app - they won't be shown again.
+              </p>
+              <div className="grid grid-cols-2 gap-2 rounded-md border border-border bg-muted/30 p-3 font-mono-data text-xs">
+                {recoveryCodes.map((c) => <span key={c}>{c}</span>)}
+              </div>
+              <DialogFooter>
+                <Button onClick={() => { toast.success('2FA enabled'); closeSetup(); }}>I've saved these codes</Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDisable} onOpenChange={setShowDisable}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="text-sm">Disable Two-Factor Authentication</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Enter your current password to confirm.</p>
+            <Input type="password" value={disablePassword} onChange={(e) => setDisablePassword(e.target.value)} placeholder="Current password" autoFocus />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDisable(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => disable.mutate()} disabled={!disablePassword || disable.isPending}>
+              {disable.isPending ? 'Disabling...' : 'Disable'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
