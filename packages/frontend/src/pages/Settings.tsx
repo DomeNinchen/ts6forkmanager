@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
@@ -295,42 +295,53 @@ function ConnectionsTab() {
 
 function UsersTab() {
   const qc = useQueryClient();
+  const currentUser = useAuthStore((s) => s.user);
   const { data: users, isLoading } = useQuery({ queryKey: ['users'], queryFn: usersApi.list });
   const createUser = useMutation({ mutationFn: (data: any) => usersApi.create(data), onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }) });
   const updateUser = useMutation({ mutationFn: ({ id, data }: { id: number; data: any }) => usersApi.update(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }) });
   const deleteUser = useMutation({ mutationFn: (id: number) => usersApi.delete(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }) });
 
+  const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [resetPwUserId, setResetPwUserId] = useState<number | null>(null);
   const [resetPwValue, setResetPwValue] = useState('');
   const [accessUserId, setAccessUserId] = useState<number | null>(null);
+  const [sessionsUserId, setSessionsUserId] = useState<number | null>(null);
+  const [editUser, setEditUser] = useState<{ id: number; username: string; displayName: string } | null>(null);
   const [form, setForm] = useState({ username: '', password: '', displayName: '', role: 'viewer' });
 
   const userList = useMemo(() => (Array.isArray(users) ? users : []), [users]);
+  const filteredList = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return userList;
+    return userList.filter((u: any) => u.username.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q));
+  }, [userList, search]);
   const { data: servers } = useQuery({ queryKey: ['servers'], queryFn: serversApi.list });
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
 
   if (isLoading) return <PageLoader />;
 
+  const apiErrorMessage = (err: any, fallback: string) => err?.response?.data?.error || fallback;
+
   const handleCreate = () => {
     createUser.mutate(form, {
       onSuccess: () => { toast.success('User created'); setShowAdd(false); setForm({ username: '', password: '', displayName: '', role: 'viewer' }); },
-      onError: () => toast.error('Failed to create user'),
+      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to create user')),
     });
   };
 
   const handleRoleChange = (userId: number, role: string) => {
     updateUser.mutate({ id: userId, data: { role } }, {
       onSuccess: () => toast.success('Role updated'),
-      onError: () => toast.error('Failed to update role'),
+      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to update role')),
     });
   };
 
   const handleToggleEnabled = (userId: number, enabled: boolean) => {
     updateUser.mutate({ id: userId, data: { enabled } }, {
       onSuccess: () => toast.success(enabled ? 'User enabled' : 'User disabled'),
-      onError: () => toast.error('Failed to update status'),
+      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to update status')),
     });
   };
 
@@ -341,15 +352,29 @@ function UsersTab() {
     }
     updateUser.mutate({ id: resetPwUserId, data: { password: resetPwValue } }, {
       onSuccess: () => { toast.success('Password reset successfully'); setResetPwUserId(null); setResetPwValue(''); },
-      onError: () => toast.error('Failed to reset password'),
+      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to reset password')),
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editUser) return;
+    updateUser.mutate({ id: editUser.id, data: { username: editUser.username, displayName: editUser.displayName } }, {
+      onSuccess: () => { toast.success('User updated'); setEditUser(null); },
+      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to update user')),
     });
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Manage webapp users and roles</p>
-        <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add User</Button>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground shrink-0">Manage webapp users and roles</p>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." className="h-8 w-48 pl-7 text-xs" />
+          </div>
+          <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add User</Button>
+        </div>
       </div>
 
       <div className="rounded-md border border-border overflow-hidden">
@@ -360,12 +385,16 @@ function UsersTab() {
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">Display Name</th>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">Role</th>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">Status</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Last Login</th>
               <th className="h-10 px-3 text-right font-medium text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {userList.map((u: any) => {
-              const isProtected = u.username === 'admin';
+            {filteredList.length === 0 && (
+              <tr><td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">No users match "{search}"</td></tr>
+            )}
+            {filteredList.map((u: any) => {
+              const isSelf = u.id === currentUser?.id;
               return (
                 <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="px-3 py-2.5 font-mono-data text-xs">
@@ -376,45 +405,46 @@ function UsersTab() {
                   </td>
                   <td className="px-3 py-2.5">{u.displayName}</td>
                   <td className="px-3 py-2.5">
-                    {isProtected ? (
-                      <Badge variant="default" className="text-[10px] capitalize">{u.role}</Badge>
-                    ) : (
-                      <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v)}>
-                        <SelectTrigger className="h-7 w-[130px] text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="viewer">Viewer</SelectItem>
-                          <SelectItem value="bot-operator">Bot Operator</SelectItem>
-                          <SelectItem value="music-operator">Music Operator</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v)} disabled={isSelf}>
+                      <SelectTrigger className="h-7 w-[130px] text-xs" title={isSelf ? "You can't change your own role" : undefined}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                        <SelectItem value="bot-operator">Bot Operator</SelectItem>
+                        <SelectItem value="music-operator">Music Operator</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="px-3 py-2.5">
-                    {isProtected ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-400">
-                        <Check className="h-3 w-3" /> Active
-                      </span>
-                    ) : (
-                      <Switch
-                        checked={u.enabled}
-                        onCheckedChange={(v) => handleToggleEnabled(u.id, v)}
-                      />
-                    )}
+                    <Switch
+                      checked={u.enabled}
+                      onCheckedChange={(v) => handleToggleEnabled(u.id, v)}
+                      disabled={isSelf}
+                      title={isSelf ? "You can't disable your own account" : undefined}
+                    />
+                  </td>
+                  <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                    {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="inline-flex items-center gap-0.5">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Edit" onClick={() => setEditUser({ id: u.id, username: u.username, displayName: u.displayName })}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
                       {u.role !== 'admin' && (
                         <Button variant="ghost" size="icon" className="h-7 w-7" title="Server Access" onClick={() => setAccessUserId(u.id)}>
                           <Server className="h-3.5 w-3.5" />
                         </Button>
                       )}
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Sessions" onClick={() => setSessionsUserId(u.id)}>
+                        <Monitor className="h-3.5 w-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" title="Reset Password" onClick={() => { setResetPwUserId(u.id); setResetPwValue(''); }}>
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(u.id)} disabled={isProtected}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(u.id)} disabled={isSelf} title={isSelf ? "You can't delete your own account" : undefined}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -483,9 +513,34 @@ function UsersTab() {
         onOpenChange={() => setDeleteId(null)}
         title="Delete User?"
         description="This user will be permanently deleted."
-        onConfirm={() => { if (deleteId) deleteUser.mutate(deleteId, { onSuccess: () => { toast.success('User deleted'); setDeleteId(null); } }); }}
+        onConfirm={() => {
+          if (!deleteId) return;
+          deleteUser.mutate(deleteId, {
+            onSuccess: () => { toast.success('User deleted'); setDeleteId(null); },
+            onError: (err) => { toast.error(apiErrorMessage(err, 'Failed to delete user')); setDeleteId(null); },
+          });
+        }}
         destructive
       />
+
+      {/* Edit User Dialog */}
+      <Dialog open={editUser !== null} onOpenChange={(v) => { if (!v) setEditUser(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="text-sm">Edit User</DialogTitle></DialogHeader>
+          {editUser && (
+            <div className="space-y-3">
+              <div><Label className="text-xs">Username</Label><Input value={editUser.username} onChange={(e) => setEditUser({ ...editUser, username: e.target.value })} /></div>
+              <div><Label className="text-xs">Display Name</Label><Input value={editUser.displayName} onChange={(e) => setEditUser({ ...editUser, displayName: e.target.value })} /></div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={!editUser?.username || !editUser?.displayName || updateUser.isPending}>
+              {updateUser.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {accessUserId !== null && (
         <ServerAccessDialog
@@ -493,6 +548,15 @@ function UsersTab() {
           username={userList.find((u: any) => u.id === accessUserId)?.username ?? ''}
           servers={serverList}
           onClose={() => setAccessUserId(null)}
+        />
+      )}
+
+      {sessionsUserId !== null && (
+        <SessionsDialog
+          userId={sessionsUserId}
+          username={userList.find((u: any) => u.id === sessionsUserId)?.username ?? ''}
+          isSelf={sessionsUserId === currentUser?.id}
+          onClose={() => setSessionsUserId(null)}
         />
       )}
     </div>
@@ -547,6 +611,70 @@ function ServerAccessDialog({ userId, username, servers, onClose }: { userId: nu
           <Button disabled={save.isPending} onClick={() => save.mutate(Array.from(active))}>
             {save.isPending ? 'Saving...' : 'Save'}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SessionsDialog({ userId, username, isSelf, onClose }: { userId: number; username: string; isSelf: boolean; onClose: () => void }) {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ['user-sessions', userId], queryFn: () => usersApi.getSessions(userId) });
+  const sessions = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+
+  const revokeOne = useMutation({
+    mutationFn: (sessionId: number) => usersApi.revokeSession(userId, sessionId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user-sessions', userId] }); toast.success('Session revoked'); },
+    onError: () => toast.error('Failed to revoke session'),
+  });
+
+  const revokeAll = useMutation({
+    mutationFn: () => usersApi.revokeAllSessions(userId),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ['user-sessions', userId] });
+      toast.success(`Revoked ${result.revoked} session(s)`);
+    },
+    onError: () => toast.error('Failed to revoke sessions'),
+  });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Sessions — {username}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground -mt-2">
+          One entry per logged-in device/browser. Revoking a session forces that device to log in again.
+          {isSelf && ' Revoking your own current session will log you out too.'}
+        </p>
+        {isLoading ? (
+          <PageLoader />
+        ) : (
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {sessions.length === 0 && <p className="text-xs text-muted-foreground">No active sessions.</p>}
+            {sessions.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-4 py-1.5 border-b border-border last:border-0">
+                <div>
+                  <p className="text-xs">Signed in {new Date(s.createdAt).toLocaleString()}</p>
+                  <p className="text-[11px] text-muted-foreground">Expires {new Date(s.expiresAt).toLocaleString()}</p>
+                </div>
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" disabled={revokeOne.isPending} onClick={() => revokeOne.mutate(s.id)}>
+                  Revoke
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <DialogFooter className="sm:justify-between">
+          <Button
+            variant="outline"
+            className="text-destructive hover:text-destructive"
+            disabled={sessions.length === 0 || revokeAll.isPending}
+            onClick={() => revokeAll.mutate()}
+          >
+            {revokeAll.isPending ? 'Revoking...' : 'Revoke All'}
+          </Button>
+          <Button onClick={onClose}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
