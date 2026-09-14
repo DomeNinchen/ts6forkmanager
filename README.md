@@ -95,6 +95,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Animated channel names (rotating text on a timer)
 - Placeholder system with filters and expressions
 - Pre-built templates for common automation tasks
+- Optional dedicated "bot identity" per server connection (Settings → Connections → Bot Identity): a real, separate ServerQuery account so bot-flow actions show up under their own name in TeamSpeak's own logs and notifications (e.g. "Hausmeister edited channel X"), instead of the same identity your own manual actions in this app already use. Nothing changes until you create one
 
 ### Server Widgets
 - Embeddable server status banner for websites and forums

@@ -87,7 +87,7 @@ export class FlowRunner {
     const startTime = Date.now();
 
     try {
-      const client = this.connectionPool.getClient(flow.serverConfigId);
+      const client = this.connectionPool.getBotClient(flow.serverConfigId);
       const triggerNode = flow.flowData.nodes.find(n => n.id === triggerNodeId);
 
       if (!triggerNode) {

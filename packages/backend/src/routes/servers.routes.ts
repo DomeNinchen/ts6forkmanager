@@ -24,6 +24,7 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
         id: true, name: true, host: true, webqueryPort: true,
         useHttps: true, sshPort: true, enabled: true,
         createdAt: true, sshUsername: true,
+        botQueryName: true, botApiKey: true,
       },
       orderBy: { id: 'asc' },
     });
@@ -32,6 +33,8 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
       ...s,
       hasSshCredentials: !!s.sshUsername,
       sshUsername: undefined,
+      hasBotIdentity: !!s.botApiKey,
+      botApiKey: undefined,
     })));
   } catch (err) { next(err); }
 });
@@ -79,6 +82,7 @@ serverRoutes.get('/:configId', async (req: Request, res: Response, next) => {
       webqueryPort: server.webqueryPort, useHttps: server.useHttps,
       sshPort: server.sshPort, hasSshCredentials: !!server.sshUsername,
       enabled: server.enabled, createdAt: server.createdAt,
+      botQueryName: server.botQueryName, hasBotIdentity: !!server.botApiKey,
     });
   } catch (err) { next(err); }
 });
@@ -90,7 +94,7 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const id = parseInt(String(req.params.configId));
     const data: any = {};
 
-    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled'];
+    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName'];
     for (const field of fields) {
       if (req.body[field] !== undefined) {
         // Don't overwrite API key or SSH password with empty strings
@@ -109,6 +113,8 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     // Refresh connection pool
     const pool: ConnectionPool = req.app.locals.connectionPool;
     await pool.refreshClient(id);
+    // Re-applies the nickname too if botQueryName changed - a no-op if no bot identity is provisioned yet
+    await pool.refreshBotClient(id);
 
     // If any SSH-relevant field changed, existing EventBridge connections
     // (event registration, command listeners) are still running on the old
@@ -151,5 +157,60 @@ serverRoutes.post('/:configId/test', requireRole('admin'), async (req: Request, 
     client.destroy(); // Close the temporary TCP connection immediately
 
     res.json(result);
+  } catch (err) { next(err); }
+});
+
+// Provision a separate, dedicated ServerQuery identity used only for bot-flow
+// actions, so they're attributed to their own name in TS's own logs/notifications
+// instead of the same "admin" identity every manual WebUI action already uses.
+// Entirely optional - bot flows work exactly as before (via the main connection)
+// on any server this is never run for.
+serverRoutes.post('/:configId/bot-identity', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { name } = req.body;
+    if (!name) throw new AppError(400, 'A display name is required');
+
+    const id = parseInt(String(req.params.configId));
+    const prisma = req.app.locals.prisma;
+    const server = await prisma.tsServerConfig.findUnique({ where: { id } });
+    if (!server) throw new AppError(404, 'Server config not found');
+
+    const pool: ConnectionPool = req.app.locals.connectionPool;
+    const adminClient = pool.getClient(id);
+
+    // A fresh query login starts in whatever default group new ServerQuery
+    // clients get (usually little to no permissions) - without this, every
+    // bot-flow action would fail with "insufficient client permissions".
+    // Mirror whatever server group(s) the admin identity itself is in, so the
+    // new identity can do everything a bot flow could already do before.
+    const whoami = await adminClient.execute(1, 'whoami');
+    const adminCldbid = whoami?.[0]?.client_database_id;
+    const adminGroups = adminCldbid ? await adminClient.execute(1, 'servergroupsbyclientid', { cldbid: adminCldbid }) : [];
+
+    const loginResult = await adminClient.executePost(0, 'queryloginadd', { client_login_name: name });
+    const cldbid = loginResult?.[0]?.cldbid;
+    if (!cldbid) throw new AppError(502, 'TeamSpeak did not return a client database ID for the new query login');
+
+    for (const group of adminGroups ?? []) {
+      if (!group.sgid) continue;
+      try {
+        await adminClient.executePost(1, 'servergroupaddclient', { sgid: group.sgid, cldbid });
+      } catch (err: any) {
+        console.warn(`[servers.routes] Failed to add new bot identity (cldbid=${cldbid}) to server group ${group.sgid}: ${err.message}`);
+      }
+    }
+
+    const keyResult = await adminClient.executePost(0, 'apikeyadd', { scope: 'write', lifetime: 0, cldbid });
+    const apikey = keyResult?.[0]?.apikey;
+    if (!apikey) throw new AppError(502, 'TeamSpeak did not return an API key for the new query login');
+
+    await prisma.tsServerConfig.update({
+      where: { id },
+      data: { botQueryName: name, botApiKey: encrypt(apikey) },
+    });
+
+    await pool.refreshBotClient(id);
+
+    res.status(201).json({ name });
   } catch (err) { next(err); }
 });

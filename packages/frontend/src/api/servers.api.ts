@@ -7,6 +7,7 @@ export const serversApi = {
   update: (id: number, data: any) => api.put(`/servers/${id}`, data).then((r) => r.data),
   delete: (id: number) => api.delete(`/servers/${id}`),
   test: (id: number) => api.post(`/servers/${id}/test`).then((r) => r.data),
+  createBotIdentity: (id: number, name: string) => api.post(`/servers/${id}/bot-identity`, { name }).then((r) => r.data),
 
   // Virtual servers
   listVirtual: (configId: number) =>

@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
@@ -297,6 +297,7 @@ function ConnectionsTab() {
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [botIdentityServerId, setBotIdentityServerId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '' });
 
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
@@ -372,6 +373,9 @@ function ConnectionsTab() {
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(server)}>
                   <Pencil className="h-3 w-3 mr-1" /> Edit
                 </Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setBotIdentityServerId(server.id)}>
+                  <Bot className="h-3 w-3 mr-1" /> {server.hasBotIdentity ? server.botQueryName : 'Bot Identity'}
+                </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(server.id)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -420,7 +424,72 @@ function ConnectionsTab() {
         onConfirm={() => { if (deleteId) deleteServer.mutate(deleteId, { onSuccess: () => { toast.success('Connection deleted'); setDeleteId(null); } }); }}
         destructive
       />
+
+      {botIdentityServerId !== null && (
+        <BotIdentityDialog
+          server={serverList.find((s: any) => s.id === botIdentityServerId)}
+          onClose={() => setBotIdentityServerId(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [name, setName] = useState(server?.botQueryName || '');
+
+  const create = useMutation({
+    mutationFn: () => serversApi.createBotIdentity(server.id, name),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['servers'] });
+      toast.success('Bot identity created');
+      onClose();
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to create bot identity'),
+  });
+
+  const rename = useMutation({
+    mutationFn: () => serversApi.update(server.id, { botQueryName: name }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['servers'] });
+      toast.success('Bot identity renamed');
+      onClose();
+    },
+    onError: () => toast.error('Failed to rename bot identity'),
+  });
+
+  const pending = create.isPending || rename.isPending;
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle className="text-sm">Bot Identity — {server?.name}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {server?.hasBotIdentity
+              ? "Bot flow actions on this server are attributed to this name in TeamSpeak's own logs and notifications, instead of the same identity your own manual actions in this app use."
+              : "Optional: give bot flows their own separate ServerQuery identity, so their actions (e.g. renaming a channel) show up under this name in TeamSpeak's own logs instead of blurring together with your own manual actions in this app. Nothing changes for bot flows until you create one."}
+          </p>
+          <div>
+            <Label className="text-xs">Display Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Hausmeister" autoFocus />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          {server?.hasBotIdentity ? (
+            <Button onClick={() => rename.mutate()} disabled={!name || pending}>
+              {pending ? 'Saving...' : 'Save'}
+            </Button>
+          ) : (
+            <Button onClick={() => create.mutate()} disabled={!name || pending}>
+              {pending ? 'Creating...' : 'Create Bot Identity'}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
