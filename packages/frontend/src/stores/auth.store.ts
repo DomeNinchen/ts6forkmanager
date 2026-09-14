@@ -5,7 +5,7 @@ interface UserInfo {
   id: number;
   username: string;
   displayName: string;
-  role: 'admin' | 'viewer';
+  role: 'admin' | 'viewer' | 'bot-operator' | 'music-operator';
 }
 
 interface AuthStore {
@@ -18,6 +18,10 @@ interface AuthStore {
   isAuthenticated: () => boolean;
   isAdmin: () => boolean;
   canWrite: () => boolean;
+  /** admin or bot-operator - full Bot Flow access on their assigned servers */
+  canManageBotFlows: () => boolean;
+  /** admin, bot-operator, or music-operator - Music Bot access on their assigned servers */
+  canManageMusicBots: () => boolean;
 }
 
 // M9: Tokens stored in localStorage. This is an accepted tradeoff — no XSS vectors
@@ -38,6 +42,8 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: () => !!get().accessToken,
       isAdmin: () => get().user?.role === 'admin',
       canWrite: () => get().user?.role === 'admin',
+      canManageBotFlows: () => ['admin', 'bot-operator'].includes(get().user?.role ?? ''),
+      canManageMusicBots: () => ['admin', 'bot-operator', 'music-operator'].includes(get().user?.role ?? ''),
     }),
     { name: 'ts6-auth' },
   ),

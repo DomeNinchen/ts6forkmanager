@@ -4,15 +4,42 @@ import { AppError } from '../middleware/error-handler.js';
 
 export const playlistRoutes: Router = Router();
 
-playlistRoutes.use(requireRole('admin'));
+playlistRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
+
+/**
+ * Playlists aren't mounted per-server (musicBotId is optional - a playlist
+ * with none is a shared/unassigned one, not tied to any server), so unlike
+ * music-library/radio-stations there's no requireServerAccess upstream of
+ * this router. For a non-admin: an unassigned playlist is always visible
+ * (nothing server-specific to gate), an assigned one only if they have
+ * access to that bot's server.
+ */
+async function assertPlaylistAccess(req: Request, prisma: any, playlist: { musicBotId: number | null }): Promise<void> {
+  if (req.user!.role === 'admin' || playlist.musicBotId == null) return;
+  const bot = await prisma.musicBot.findUnique({ where: { id: playlist.musicBotId }, select: { serverConfigId: true } });
+  if (!bot) return; // dangling reference, nothing to gate against
+  const access = await prisma.userServerAccess.findUnique({
+    where: { userId_serverConfigId: { userId: req.user!.id, serverConfigId: bot.serverConfigId } },
+  });
+  if (!access) throw new AppError(403, 'No access to this server');
+}
 
 // GET / — List playlists
 playlistRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const musicBotId = req.query.musicBotId ? parseInt(String(req.query.musicBotId)) : undefined;
+    if (musicBotId !== undefined) await assertPlaylistAccess(req, prisma, { musicBotId });
     const playlists = await prisma.playlist.findMany({
-      where: musicBotId ? { musicBotId } : undefined,
+      where: {
+        ...(musicBotId ? { musicBotId } : {}),
+        ...(req.user!.role === 'admin' ? {} : {
+          OR: [
+            { musicBotId: null },
+            { musicBot: { serverConfig: { userAccess: { some: { userId: req.user!.id } } } } },
+          ],
+        }),
+      },
       include: { _count: { select: { songs: true } } },
       orderBy: { createdAt: 'desc' },
     });
@@ -23,6 +50,21 @@ playlistRoutes.get('/', async (req: Request, res: Response, next) => {
       songCount: p._count.songs,
       createdAt: p.createdAt,
     })));
+  } catch (err) { next(err); }
+});
+
+// Centralizes the same access check for every /:id/... route below (there
+// are several) instead of repeating it in each handler.
+playlistRoutes.param('id', async (req: Request, res: Response, next, idParam) => {
+  try {
+    if (req.user!.role === 'admin') return next();
+    const id = parseInt(idParam);
+    if (isNaN(id)) return next(new AppError(400, 'Invalid playlist id'));
+    const prisma = req.app.locals.prisma;
+    const playlist = await prisma.playlist.findUnique({ where: { id }, select: { musicBotId: true } });
+    if (!playlist) return next(new AppError(404, 'Playlist not found'));
+    await assertPlaylistAccess(req, prisma, playlist);
+    next();
   } catch (err) { next(err); }
 });
 
@@ -69,11 +111,13 @@ playlistRoutes.post('/', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const { name, musicBotId } = req.body;
     if (!name) throw new AppError(400, 'name is required');
+    const parsedMusicBotId = musicBotId ? parseInt(musicBotId) : null;
+    if (parsedMusicBotId != null) await assertPlaylistAccess(req, prisma, { musicBotId: parsedMusicBotId });
 
     const playlist = await prisma.playlist.create({
       data: {
         name,
-        musicBotId: musicBotId ? parseInt(musicBotId) : null,
+        musicBotId: parsedMusicBotId,
       },
     });
 
@@ -87,12 +131,14 @@ playlistRoutes.put('/:id', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const id = parseInt(req.params.id as string);
     const { name, musicBotId } = req.body;
+    const parsedMusicBotId = musicBotId !== undefined ? (musicBotId ? parseInt(musicBotId) : null) : undefined;
+    if (parsedMusicBotId != null) await assertPlaylistAccess(req, prisma, { musicBotId: parsedMusicBotId }); // reassigning to a bot they also need access to
 
     await prisma.playlist.update({
       where: { id },
       data: {
         ...(name != null && { name }),
-        ...(musicBotId !== undefined && { musicBotId: musicBotId ? parseInt(musicBotId) : null }),
+        ...(parsedMusicBotId !== undefined && { musicBotId: parsedMusicBotId }),
       },
     });
 

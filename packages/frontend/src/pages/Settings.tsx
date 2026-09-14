@@ -40,7 +40,7 @@ export default function Settings() {
           {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
           {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> Restart</TabsTrigger>}
           {isAdmin && <TabsTrigger value="sso"><ShieldCheck className="h-3.5 w-3.5 mr-1" /> SSO</TabsTrigger>}
-          <TabsTrigger value="update-status"><RefreshCw className="h-3.5 w-3.5 mr-1" /> Update Status</TabsTrigger>
+          {isAdmin && <TabsTrigger value="update-status"><RefreshCw className="h-3.5 w-3.5 mr-1" /> Update Status</TabsTrigger>}
         </TabsList>
 
         {isAdmin && (
@@ -380,12 +380,14 @@ function UsersTab() {
                       <Badge variant="default" className="text-[10px] capitalize">{u.role}</Badge>
                     ) : (
                       <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v)}>
-                        <SelectTrigger className="h-7 w-[110px] text-xs">
+                        <SelectTrigger className="h-7 w-[130px] text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="viewer">Viewer</SelectItem>
+                          <SelectItem value="bot-operator">Bot Operator</SelectItem>
+                          <SelectItem value="music-operator">Music Operator</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -404,7 +406,7 @@ function UsersTab() {
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="inline-flex items-center gap-0.5">
-                      {u.role === 'viewer' && (
+                      {u.role !== 'admin' && (
                         <Button variant="ghost" size="icon" className="h-7 w-7" title="Server Access" onClick={() => setAccessUserId(u.id)}>
                           <Server className="h-3.5 w-3.5" />
                         </Button>
@@ -439,6 +441,8 @@ function UsersTab() {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="viewer">Viewer</SelectItem>
+                  <SelectItem value="bot-operator">Bot Operator</SelectItem>
+                  <SelectItem value="music-operator">Music Operator</SelectItem>
                 </SelectContent>
               </Select>
             </div>

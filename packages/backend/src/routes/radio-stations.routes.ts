@@ -6,7 +6,10 @@ import type { RadioPreset } from '@ts6/common';
 
 export const radioStationRoutes: Router = Router({ mergeParams: true });
 
-radioStationRoutes.use(requireRole('admin'));
+// Already scoped to the right server by the requireServerAccess middleware
+// this router is mounted behind (see app.ts) - just need to widen who's
+// allowed through at all.
+radioStationRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
 
 // Built-in radio station presets
 const RADIO_PRESETS: RadioPreset[] = [

@@ -11,6 +11,15 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** Same idea as AdminRoute, but for the two routes bot-operator/music-operator also need in. */
+function RoleRoute({ check, children }: { check: 'botFlows' | 'musicBots'; children: React.ReactNode }) {
+  const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
+  const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
+  const allowed = check === 'botFlows' ? canManageBotFlows : canManageMusicBots;
+  if (!allowed) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -75,9 +84,9 @@ export function App() {
               <Route path="/logs" element={<AdminRoute><ServerLogs /></AdminRoute>} />
               <Route path="/instance" element={<AdminRoute><Instance /></AdminRoute>} />
               <Route path="/music-requests" element={<AdminRoute><MusicRequests /></AdminRoute>} />
-              <Route path="/bots" element={<AdminRoute><BotList /></AdminRoute>} />
-              <Route path="/bots/:botId" element={<AdminRoute><BotEditor /></AdminRoute>} />
-              <Route path="/music-bots" element={<AdminRoute><MusicBots /></AdminRoute>} />
+              <Route path="/bots" element={<RoleRoute check="botFlows"><BotList /></RoleRoute>} />
+              <Route path="/bots/:botId" element={<RoleRoute check="botFlows"><BotEditor /></RoleRoute>} />
+              <Route path="/music-bots" element={<RoleRoute check="musicBots"><MusicBots /></RoleRoute>} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Route>

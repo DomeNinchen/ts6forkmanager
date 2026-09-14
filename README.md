@@ -109,7 +109,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - SSRF protection on all outbound HTTP requests and FFmpeg URLs
 - Rate limiting on authentication endpoints
 - JWT access + refresh token rotation with reuse detection
-- Role-based access control (admin / viewer)
+- Role-based access control: Admin (full access), Viewer (read-only on assigned servers), Bot Operator (viewer + full Bot Flows and Music Bots control on assigned servers), Music Operator (viewer + Music Bots only)
 - Per-server access control for multi-tenant setups, manageable per user from Settings → Users
 - Single Sign-On via any standard OpenID Connect provider (Authentik, Keycloak, Authelia, Zitadel, ...), alongside local login — see Settings → SSO
 - WebQuery command whitelist in bot flows (blocks destructive commands)

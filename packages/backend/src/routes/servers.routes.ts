@@ -7,11 +7,19 @@ import { encrypt, decrypt } from '../utils/crypto.js';
 
 export const serverRoutes: Router = Router();
 
-// List all configured TS server connections
+// List all configured TS server connections. Admins see everything; every
+// other role only sees servers they've actually been granted access to
+// (see UserServerAccess) - previously this returned every server to every
+// authenticated user regardless of role, which is what let a fresh viewer
+// with zero grants still see (and pick) a server in the header dropdown,
+// only to hit "no access" once they tried to use it.
 serverRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const servers = await prisma.tsServerConfig.findMany({
+      where: req.user!.role === 'admin' ? undefined : {
+        userAccess: { some: { userId: req.user!.id } },
+      },
       select: {
         id: true, name: true, host: true, webqueryPort: true,
         useHttps: true, sshPort: true, enabled: true,
