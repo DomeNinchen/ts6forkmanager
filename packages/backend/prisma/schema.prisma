@@ -98,6 +98,15 @@ model TsServerConfig {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Optional, separate ServerQuery identity used only for bot-flow actions
+  // (created via queryloginadd + apikeyadd), so bot flows are attributed to
+  // their own name in TS's own logs/notifications instead of blurring
+  // together with this connection's own "admin" identity, which every
+  // manual action taken through the WebUI also uses. botApiKey is null
+  // until provisioned - bot flows fall back to the main connection until then.
+  botQueryName String?
+  botApiKey    String?
+
   userAccess    UserServerAccess[]
   botFlows      BotFlow[]
   botLogs       BotExecutionLog[]
