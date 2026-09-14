@@ -124,6 +124,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - "Danger Zone" (Settings → Debug) to reset the radio station / music bot id counters, for when SQLite's ever-climbing autoincrement gets annoying after deleting everything and starting over
 - Scheduled restart (Settings → Restart) for ts6-manager's own backend and/or sidecar container, on a configurable time and day-of-week — not the TeamSpeak server itself
 - Settings → Update Status: current vs. latest version for backend, sidecar, and frontend, when they were last checked, and a "Recheck Now" button — the same data the update banner uses, viewable any time even when nothing is outdated. Also rechecked automatically on every login (local or SSO), not just every 6h in the background, so what you see right after logging in reflects a fresh check rather than whatever the background timer happened to have cached
+- Settings → YouTube → "Keep played songs" toggle: controls whether songs downloaded via chat commands (`!play`/`!queue`/`!stream`) are kept in the music library indefinitely (default) or automatically deleted about an hour after playing to save disk space. Only affects these ad-hoc chat downloads — songs added deliberately via the Library tab are always kept
 
 ## Known Issues (Upstream TS6 Server Bug)
 
