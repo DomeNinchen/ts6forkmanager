@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router';
+import { Link, NavLink, useLocation } from 'react-router';
 import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, MessageSquareWarning, Mail,
@@ -106,7 +106,7 @@ export function Sidebar() {
         {/* Logo area */}
         <div className={cn('flex items-center h-14 px-4 border-b border-sidebar-border', sidebarCollapsed && 'justify-center px-0')}>
           {!sidebarCollapsed ? (
-            <div className="flex items-center gap-2.5">
+            <Link to="/dashboard" className="flex items-center gap-2.5">
               <div className="h-7 w-7 rounded-md bg-primary/20 flex items-center justify-center">
                 <span className="text-primary font-bold text-xs font-mono-data">TS</span>
               </div>
@@ -114,11 +114,11 @@ export function Sidebar() {
                 <span className="text-sm font-semibold text-sidebar-accent-foreground">TS6</span>
                 <span className="text-sm text-sidebar-foreground ml-1">Manager</span>
               </div>
-            </div>
+            </Link>
           ) : (
-            <div className="h-7 w-7 rounded-md bg-primary/20 flex items-center justify-center">
+            <Link to="/dashboard" className="h-7 w-7 rounded-md bg-primary/20 flex items-center justify-center">
               <span className="text-primary font-bold text-xs font-mono-data">TS</span>
-            </div>
+            </Link>
           )}
         </div>
 
