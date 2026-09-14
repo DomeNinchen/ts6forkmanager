@@ -1093,7 +1093,23 @@ function UpdateStatusTab() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Update Status</CardTitle>
-          <Button size="sm" variant="outline" disabled={recheck.isPending} onClick={() => recheck.mutate()}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={recheck.isPending}
+            onClick={() => {
+              toast.promise(recheck.mutateAsync(), {
+                loading: 'Checking for updates...',
+                success: (result) => {
+                  const frontendBehind = !!(result.frontendLatest && compareVersions(result.frontendLatest, __APP_VERSION__) > 0);
+                  return result.backend.updateAvailable || result.sidecar.updateAvailable || frontendBehind
+                    ? 'Update available'
+                    : 'All up to date';
+                },
+                error: 'Failed to check for updates',
+              });
+            }}
+          >
             <RefreshCw className={cn('h-3.5 w-3.5 mr-1', recheck.isPending && 'animate-spin')} />
             Recheck Now
           </Button>
