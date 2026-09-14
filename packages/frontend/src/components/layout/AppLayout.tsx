@@ -2,6 +2,7 @@ import { Outlet, Navigate } from 'react-router';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { UpdateBanner } from './UpdateBanner';
+import { YtCookieBanner } from './YtCookieBanner';
 import { useAuthStore } from '@/stores/auth.store';
 import { Toaster } from 'sonner';
 
@@ -17,6 +18,7 @@ export function AppLayout() {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <UpdateBanner />
+        <YtCookieBanner />
         <Header />
         <main className="flex-1 overflow-auto grid-bg">
           <div className="p-5 fade-in">

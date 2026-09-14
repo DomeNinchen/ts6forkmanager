@@ -13,6 +13,7 @@ import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-
 import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRestartConfig } from '../utils/scheduled-restart.js';
 import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-config.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
+import { forceCookieCheck } from '../utils/yt-cookie-check.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 
 const settingsRoutes: Router = Router();
@@ -47,7 +48,7 @@ settingsRoutes.get('/yt-cookies', requireAdmin, (_req: Request, res: Response) =
 });
 
 // POST /api/settings/yt-cookies — Upload cookie file
-settingsRoutes.post('/yt-cookies', requireAdmin, upload.single('cookies'), (req: Request, res: Response, next) => {
+settingsRoutes.post('/yt-cookies', requireAdmin, upload.single('cookies'), async (req: Request, res: Response, next) => {
   try {
     if (!req.file) {
       // Check if raw text was sent in body
@@ -65,18 +66,22 @@ settingsRoutes.post('/yt-cookies', requireAdmin, upload.single('cookies'), (req:
     setYtCookieFile(COOKIE_PATH);
     const size = fs.statSync(COOKIE_PATH).size;
     console.log(`[yt-dlp] Cookie file uploaded (${size} bytes)`);
-    res.json({ success: true, size });
+    // Validate right away rather than waiting for the next periodic check, so
+    // the admin gets immediate feedback on whether the upload actually works.
+    const check = await forceCookieCheck();
+    res.json({ success: true, size, ...check });
   } catch (err) { next(err); }
 });
 
 // DELETE /api/settings/yt-cookies — Remove cookie file
-settingsRoutes.delete('/yt-cookies', requireAdmin, (_req: Request, res: Response, next) => {
+settingsRoutes.delete('/yt-cookies', requireAdmin, async (_req: Request, res: Response, next) => {
   try {
     if (fs.existsSync(COOKIE_PATH)) {
       fs.unlinkSync(COOKIE_PATH);
     }
     setYtCookieFile(null);
     console.log('[yt-dlp] Cookie file removed');
+    await forceCookieCheck();
     res.json({ success: true });
   } catch (err) { next(err); }
 });

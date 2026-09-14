@@ -16,6 +16,7 @@ import { startScheduledRestartChecker } from './utils/scheduled-restart.js';
 import { startUpdateChecker } from './utils/update-check.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
+import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
@@ -52,6 +53,7 @@ async function main() {
   startScheduledRestartChecker(prisma);
   startUpdateChecker();
   startPlayedSongCleanup(prisma);
+  startYtCookieChecker();
 
   // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared
   // with another app) without requiring a manual scan first - see

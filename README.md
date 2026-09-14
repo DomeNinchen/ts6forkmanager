@@ -119,6 +119,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 ### Settings & Administration
 - yt-dlp cookie file management for accessing age-restricted or member-only YouTube content
 - Upload cookies via file or paste directly in the UI
+- Cookies are actually validated against YouTube (not just checked for a file's presence) — on upload, on a 6h schedule, and on demand via a "Recheck" button; a dismissible banner appears app-wide when they stop working (cookies rotate over time, so a once-working file can quietly go stale)
 - Admin-only settings panel
 - Debug logging toggles (voice bot, Rank Check) switchable at runtime from Settings → Debug — no env var or restart needed
 - "Danger Zone" (Settings → Debug) to reset the radio station / music bot id counters, for when SQLite's ever-climbing autoincrement gets annoying after deleting everything and starting over
