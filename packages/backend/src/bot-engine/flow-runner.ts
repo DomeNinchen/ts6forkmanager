@@ -17,6 +17,7 @@ import axios from 'axios';
 import { validateUrl } from '../utils/url-validator.js';
 import { ALLOWED_WEBQUERY_COMMANDS } from './command-whitelist.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
+import { TSApiError } from '../middleware/error-handler.js';
 import crypto from 'crypto';
 
 // Raised from 100 to give Loop nodes real headroom - a loop at its default
@@ -365,11 +366,15 @@ export class FlowRunner {
       const myClid = whoami?.[0]?.client_id;
       const myCid = whoami?.[0]?.client_channel_id;
       if (myClid) {
-        await client.executePost(ctx.sid, 'clientmove', { clid: myClid, cid: target });
+        const alreadyInTarget = myCid !== undefined && String(myCid) === String(target);
+        // Flow executions aren't serialized, so a concurrent flow can move the shared
+        // query client between our whoami read and this clientmove - tolerate the
+        // resulting TS error 770 "already member of channel" instead of failing the flow.
+        if (!alreadyInTarget) await this.clientMoveTolerating770(client, ctx.sid, myClid, target);
         await client.executePost(ctx.sid, 'sendtextmessage', { targetmode: 2, msg });
         // Move back to original channel
-        if (myCid && String(myCid) !== String(target)) {
-          await client.executePost(ctx.sid, 'clientmove', { clid: myClid, cid: myCid });
+        if (!alreadyInTarget && myCid) {
+          await this.clientMoveTolerating770(client, ctx.sid, myClid, myCid);
         }
         return;
       }
@@ -380,6 +385,14 @@ export class FlowRunner {
       target,
       msg,
     });
+  }
+
+  private async clientMoveTolerating770(client: WebQueryClient, sid: number, clid: string, cid: string): Promise<void> {
+    try {
+      await client.executePost(sid, 'clientmove', { clid, cid });
+    } catch (err) {
+      if (!(err instanceof TSApiError && err.code === 770)) throw err;
+    }
   }
 
   private async executePoke(data: PokeActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
