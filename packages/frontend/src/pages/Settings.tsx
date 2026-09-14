@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput } from '@/api/settings.api';
+import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings } from '@/api/settings.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -558,6 +558,20 @@ function YouTubeTab() {
     queryFn: settingsApi.getYtCookieStatus,
   });
 
+  const { data: cacheSettings, isLoading: cacheLoading } = useQuery({
+    queryKey: ['music-cache-settings'],
+    queryFn: settingsApi.getMusicCacheSettings,
+  });
+
+  const setCacheSettings = useMutation({
+    mutationFn: (config: MusicCacheSettings) => settingsApi.setMusicCacheSettings(config),
+    onSuccess: (saved) => {
+      qc.setQueryData(['music-cache-settings'], saved);
+      toast.success('Setting saved');
+    },
+    onError: () => toast.error('Failed to save setting'),
+  });
+
   const uploadFile = useMutation({
     mutationFn: (file: File) => settingsApi.uploadYtCookieFile(file),
     onSuccess: () => {
@@ -684,6 +698,33 @@ function YouTubeTab() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Played Song Storage</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Controls what happens to songs downloaded via chat commands (<code>!play</code>/<code>!queue</code>/<code>!stream</code>).
+            This does not affect songs added deliberately through the Library tab (upload or "download by URL") — those are always kept.
+          </p>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">Keep played songs</Label>
+              <p className="text-[11px] text-muted-foreground">
+                {cacheSettings?.keepPlayedSongs !== false
+                  ? 'On: chat-played songs can be picked up into the library by "Scan for New Files" and kept indefinitely (default).'
+                  : 'Off: chat-played songs are never added to the library and are deleted automatically about an hour after playing, to save disk space.'}
+              </p>
+            </div>
+            <Switch
+              checked={cacheSettings?.keepPlayedSongs ?? true}
+              disabled={cacheLoading || setCacheSettings.isPending}
+              onCheckedChange={(v) => setCacheSettings.mutate({ keepPlayedSongs: v })}
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

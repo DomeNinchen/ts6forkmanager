@@ -12,6 +12,7 @@ import { setYtCookieFile, getYtCookieFile } from '../voice/audio/youtube.js';
 import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-flags.js';
 import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRestartConfig } from '../utils/scheduled-restart.js';
 import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-config.js';
+import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 
 const settingsRoutes: Router = Router();
@@ -208,6 +209,25 @@ settingsRoutes.put('/oidc', requireAdmin, async (req: Request, res: Response, ne
       buttonLabel: next_.buttonLabel,
       hasClientSecret: !!next_.clientSecret,
     });
+  } catch (err) { next(err); }
+});
+
+// GET /api/settings/music-cache — whether chat-played (!play/!queue/!stream) songs are kept in the library or cleaned up after an hour
+settingsRoutes.get('/music-cache', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    res.json({ keepPlayedSongs: await getKeepPlayedSongs(prisma) });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/music-cache
+settingsRoutes.put('/music-cache', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { keepPlayedSongs } = req.body;
+    if (typeof keepPlayedSongs !== 'boolean') throw new AppError(400, 'keepPlayedSongs must be a boolean');
+    const prisma = req.app.locals.prisma;
+    await setKeepPlayedSongs(prisma, keepPlayedSongs);
+    res.json({ keepPlayedSongs });
   } catch (err) { next(err); }
 });
 

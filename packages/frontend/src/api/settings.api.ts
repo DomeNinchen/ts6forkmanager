@@ -39,6 +39,12 @@ export const settingsApi = {
 
   setOidc: (config: OidcSettingsInput): Promise<OidcSettings> =>
     api.put('/settings/oidc', config).then((r) => r.data),
+
+  getMusicCacheSettings: (): Promise<MusicCacheSettings> =>
+    api.get('/settings/music-cache').then((r) => r.data),
+
+  setMusicCacheSettings: (config: MusicCacheSettings): Promise<MusicCacheSettings> =>
+    api.put('/settings/music-cache', config).then((r) => r.data),
 };
 
 export interface OidcSettings {
@@ -56,6 +62,10 @@ export interface OidcSettingsInput {
   /** Empty string means "keep the existing secret unchanged". */
   clientSecret: string;
   buttonLabel: string;
+}
+
+export interface MusicCacheSettings {
+  keepPlayedSongs: boolean;
 }
 
 export interface ScheduledRestartConfig {

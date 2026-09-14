@@ -15,6 +15,7 @@ import { loadDebugFlags } from './utils/debug-flags.js';
 import { startScheduledRestartChecker } from './utils/scheduled-restart.js';
 import { startUpdateChecker } from './utils/update-check.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
+import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
@@ -50,6 +51,7 @@ async function main() {
   await loadDebugFlags(prisma);
   startScheduledRestartChecker(prisma);
   startUpdateChecker();
+  startPlayedSongCleanup(prisma);
 
   // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared
   // with another app) without requiring a manual scan first - see

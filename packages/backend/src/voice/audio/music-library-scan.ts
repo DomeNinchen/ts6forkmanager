@@ -4,13 +4,15 @@ import { spawn } from 'child_process';
 import type { PrismaClient } from '../../generated/prisma/client.js';
 import { MUSIC_DIR, AUDIO_DIR, VIDEO_DIR, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS } from './media-dirs.js';
 import { getYouTubeUrlInfo } from './youtube.js';
+import { getKeepPlayedSongs } from '../../utils/storage-settings.js';
 
 // `!play`/`!queue`/`!stream` download straight to a bare `<video-id>.<ext>`
 // (see youtube.ts's downloadYouTube) as a playback cache, never registering
 // a Song row - so scan is the first thing to ever see these files, with
 // nothing but the id-as-filename to go on. Recognize the shape so we can
 // look the real title up instead of cataloguing the id as if it were one.
-const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+// Also used by played-song-cleanup.ts to find these same files for deletion.
+export const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
 export function getAudioDuration(filePath: string): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -70,6 +72,7 @@ async function scanDir(
   mediaType: 'audio' | 'video',
   knownPaths: Set<string>,
   recoverYouTubeTitles: boolean,
+  keepPlayedSongs: boolean,
 ): Promise<{ added: number; skipped: number }> {
   if (!fs.existsSync(dir)) return { added: 0, skipped: 0 };
 
@@ -96,6 +99,13 @@ async function scanDir(
     let title = baseName;
     let artist: string | null = null;
     if (idLike) {
+      if (!keepPlayedSongs) {
+        // "Keep played songs" is off - this is exactly the kind of file
+        // played-song-cleanup.ts removes after an hour, so never catalogue
+        // it into the library in the first place (would otherwise show up
+        // then vanish out from under the user).
+        continue;
+      }
       if (!recoverYouTubeTitles) {
         // Cataloguing this now would only ever get it a raw-id title (see
         // module comment) - wait for an on-demand scan to do it properly.
@@ -186,6 +196,7 @@ export async function scanMusicLibrary(
   options: ScanOptions = {},
 ): Promise<{ added: number; skipped: number; healed: number }> {
   const recoverYouTubeTitles = options.recoverYouTubeTitles ?? false;
+  const keepPlayedSongs = await getKeepPlayedSongs(prisma);
 
   const existing = await prisma.song.findMany({
     where: { serverConfigId },
@@ -206,7 +217,7 @@ export async function scanMusicLibrary(
   ];
 
   for (const pass of passes) {
-    const result = await scanDir(prisma, serverConfigId, pass.dir, pass.extensions, pass.mediaType, knownPaths, recoverYouTubeTitles);
+    const result = await scanDir(prisma, serverConfigId, pass.dir, pass.extensions, pass.mediaType, knownPaths, recoverYouTubeTitles, keepPlayedSongs);
     added += result.added;
     skipped += result.skipped;
   }
