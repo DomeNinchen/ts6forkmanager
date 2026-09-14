@@ -28,8 +28,16 @@ model User {
   updatedAt    DateTime  @updatedAt
   lastLoginAt  DateTime?
 
-  serverAccess  UserServerAccess[]
-  refreshTokens RefreshToken[]
+  // TOTP secret, encrypted at rest via utils/crypto.ts (same helper used for
+  // TS server credentials). Set as soon as setup starts, but totpEnabled only
+  // flips true once the user proves they can actually generate a valid code.
+  totpSecret  String?
+  totpEnabled Boolean @default(false)
+
+  serverAccess   UserServerAccess[]
+  refreshTokens  RefreshToken[]
+  recoveryCodes  RecoveryCode[]
+  trustedDevices TrustedDevice[]
 }
 
 model RefreshToken {
@@ -41,6 +49,29 @@ model RefreshToken {
   createdAt  DateTime @default(now())
   family     String?
   replacedBy String?
+}
+
+// One-time-use 2FA recovery codes, issued as a batch when TOTP setup completes.
+// Stored bcrypt-hashed like a password - never recoverable once shown to the user.
+model RecoveryCode {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// "Remember this device" for 2FA - a device holding a valid, unexpired token here
+// skips the TOTP challenge on login. Stored the same way RefreshToken.token is
+// (unique, high-entropy, looked up by exact match) - not a password, so not bcrypt-hashed.
+model TrustedDevice {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model UserServerAccess {

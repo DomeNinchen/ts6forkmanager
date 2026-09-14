@@ -6,6 +6,8 @@ interface UserInfo {
   username: string;
   displayName: string;
   role: 'admin' | 'viewer' | 'bot-operator' | 'music-operator';
+  authProvider?: 'local' | 'oidc';
+  totpEnabled?: boolean;
 }
 
 interface AuthStore {
@@ -14,6 +16,7 @@ interface AuthStore {
   user: UserInfo | null;
   setAuth: (accessToken: string, refreshToken: string, user: UserInfo) => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
+  updateUser: (patch: Partial<UserInfo>) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
   isAdmin: () => boolean;
@@ -37,6 +40,8 @@ export const useAuthStore = create<AuthStore>()(
         set({ accessToken, refreshToken, user }),
       setTokens: (accessToken, refreshToken) =>
         set({ accessToken, refreshToken }),
+      updateUser: (patch) =>
+        set((s) => ({ user: s.user ? { ...s.user, ...patch } : s.user })),
       logout: () =>
         set({ accessToken: null, refreshToken: null, user: null }),
       isAuthenticated: () => !!get().accessToken,
