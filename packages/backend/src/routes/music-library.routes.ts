@@ -38,7 +38,10 @@ const upload = multer({
 
 export const musicLibraryRoutes: Router = Router({ mergeParams: true });
 
-musicLibraryRoutes.use(requireRole('admin'));
+// Already scoped to the right server by the requireServerAccess middleware
+// this router is mounted behind (see app.ts) - just need to widen who's
+// allowed through at all.
+musicLibraryRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
 
 // GET /songs — List songs for this server, optionally filtered to one media type
 musicLibraryRoutes.get('/songs', async (req: Request, res: Response, next) => {

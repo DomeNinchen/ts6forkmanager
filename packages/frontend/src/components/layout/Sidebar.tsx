@@ -7,60 +7,75 @@ import {
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useServers } from '@/hooks/use-servers';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+interface NavContext {
+  isAdmin: boolean;
+  canManageBotFlows: boolean;
+  canManageMusicBots: boolean;
+  /** True for admin (who always has "access"), or a non-admin with at least one assigned server. */
+  hasAnyServerAccess: boolean;
+}
+
+const adminOnly = (ctx: NavContext) => ctx.isAdmin;
 
 const navSections = [
   {
     label: 'Overview',
     items: [
       { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/servers', icon: Server, label: 'Virtual Servers', adminOnly: true },
+      { to: '/servers', icon: Server, label: 'Virtual Servers', visible: adminOnly },
     ],
   },
   {
     label: 'Management',
+    // Channels/Clients are only meaningful once a server is actually
+    // reachable - for a non-admin with zero UserServerAccess grants,
+    // showing this section just leads to a guaranteed "no access" page.
+    visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
     items: [
       { to: '/channels', icon: Hash, label: 'Channels' },
       { to: '/clients', icon: Users, label: 'Clients' },
-      { to: '/server-groups', icon: Shield, label: 'Server Groups', adminOnly: true },
-      { to: '/channel-groups', icon: ShieldCheck, label: 'Channel Groups', adminOnly: true },
-      { to: '/permissions', icon: Lock, label: 'Permissions', adminOnly: true },
+      { to: '/server-groups', icon: Shield, label: 'Server Groups', visible: adminOnly },
+      { to: '/channel-groups', icon: ShieldCheck, label: 'Channel Groups', visible: adminOnly },
+      { to: '/permissions', icon: Lock, label: 'Permissions', visible: adminOnly },
     ],
   },
   {
     label: 'Security',
-    adminOnly: true,
+    visible: adminOnly,
     items: [
-      { to: '/bans', icon: Ban, label: 'Bans', adminOnly: true },
-      { to: '/tokens', icon: KeyRound, label: 'Tokens', adminOnly: true },
+      { to: '/bans', icon: Ban, label: 'Bans', visible: adminOnly },
+      { to: '/tokens', icon: KeyRound, label: 'Tokens', visible: adminOnly },
     ],
   },
   {
     label: 'Content',
-    adminOnly: true,
+    visible: adminOnly,
     items: [
-      { to: '/files', icon: FolderOpen, label: 'Files', adminOnly: true },
-      { to: '/complaints', icon: MessageSquareWarning, label: 'Complaints', adminOnly: true },
-      { to: '/messages', icon: Mail, label: 'Messages', adminOnly: true },
+      { to: '/files', icon: FolderOpen, label: 'Files', visible: adminOnly },
+      { to: '/complaints', icon: MessageSquareWarning, label: 'Complaints', visible: adminOnly },
+      { to: '/messages', icon: Mail, label: 'Messages', visible: adminOnly },
     ],
   },
   {
     label: 'System',
-    adminOnly: true,
+    visible: adminOnly,
     items: [
-      { to: '/logs', icon: ScrollText, label: 'Server Logs', adminOnly: true },
-      { to: '/instance', icon: Cpu, label: 'Instance', adminOnly: true },
-      { to: '/music-requests', icon: ListMusic, label: 'Music Request History', adminOnly: true },
+      { to: '/logs', icon: ScrollText, label: 'Server Logs', visible: adminOnly },
+      { to: '/instance', icon: Cpu, label: 'Instance', visible: adminOnly },
+      { to: '/music-requests', icon: ListMusic, label: 'Music Request History', visible: adminOnly },
     ],
   },
   {
     label: 'Automation',
-    adminOnly: true,
+    visible: (ctx: NavContext) => ctx.canManageBotFlows || ctx.canManageMusicBots,
     items: [
-      { to: '/bots', icon: Bot, label: 'Bot Flows', adminOnly: true },
-      { to: '/music-bots', icon: Music, label: 'Music Bots', adminOnly: true },
+      { to: '/bots', icon: Bot, label: 'Bot Flows', visible: (ctx: NavContext) => ctx.canManageBotFlows },
+      { to: '/music-bots', icon: Music, label: 'Music Bots', visible: (ctx: NavContext) => ctx.canManageMusicBots },
     ],
   },
 ];
@@ -68,7 +83,17 @@ const navSections = [
 export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
   const isAdmin = useAuthStore((s) => s.isAdmin());
+  const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
+  const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
+  const { data: servers } = useServers();
   const location = useLocation();
+
+  const navCtx: NavContext = {
+    isAdmin,
+    canManageBotFlows,
+    canManageMusicBots,
+    hasAnyServerAccess: isAdmin || (servers?.length ?? 0) > 0,
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -101,9 +126,9 @@ export function Sidebar() {
         <ScrollArea className="flex-1 py-2">
           <nav className="space-y-1 px-2">
             {navSections
-              .filter((section) => !(section as any).adminOnly || isAdmin)
+              .filter((section) => !(section as any).visible || (section as any).visible(navCtx))
               .map((section, si) => {
-                const visibleItems = section.items.filter((item) => !(item as any).adminOnly || isAdmin);
+                const visibleItems = section.items.filter((item) => !(item as any).visible || (item as any).visible(navCtx));
                 if (visibleItems.length === 0) return null;
                 return (
                   <div key={section.label}>

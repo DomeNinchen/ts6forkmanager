@@ -26,8 +26,27 @@ const avatarUpload = multer({
 
 export const musicBotRoutes: Router = Router();
 
-// All routes require admin role
-musicBotRoutes.use(requireRole('admin'));
+// admin: unrestricted. bot-operator/music-operator: restricted to bots on
+// servers they've been granted access to, enforced below via the ':id'
+// param handler so every /:id/... route in this file (there are ~40) gets
+// the check automatically instead of needing it copy-pasted into each one.
+musicBotRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
+
+musicBotRoutes.param('id', async (req: Request, res: Response, next, idParam) => {
+  try {
+    if (req.user!.role === 'admin') return next();
+    const id = parseInt(idParam);
+    if (isNaN(id)) return next(new AppError(400, 'Invalid bot id'));
+    const prisma = req.app.locals.prisma;
+    const bot = await prisma.musicBot.findUnique({ where: { id }, select: { serverConfigId: true } });
+    if (!bot) return next(new AppError(404, 'Music bot not found'));
+    const access = await prisma.userServerAccess.findUnique({
+      where: { userId_serverConfigId: { userId: req.user!.id, serverConfigId: bot.serverConfigId } },
+    });
+    if (!access) return next(new AppError(403, 'No access to this server'));
+    next();
+  } catch (err) { next(err); }
+});
 
 // GET / — List all music bots
 musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
@@ -35,6 +54,9 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const dbBots = await prisma.musicBot.findMany({
+      where: req.user!.role === 'admin' ? undefined : {
+        serverConfig: { userAccess: { some: { userId: req.user!.id } } },
+      },
       include: { serverConfig: { select: { id: true, name: true, host: true } } },
       orderBy: { id: 'asc' },
     });
