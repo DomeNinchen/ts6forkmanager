@@ -39,6 +39,36 @@ export function getCookieArgs(): string[] {
 }
 
 /**
+ * Whether the configured cookie file is still actually accepted by YouTube,
+ * not just present on disk. Google/YouTube auth cookies rotate over time;
+ * yt-dlp tries to write rotated values back to the same file, but that only
+ * keeps working if this file stays the one live session touching it - a
+ * snapshot re-exported once and never revisited can quietly go stale while
+ * still sitting there as a normal-looking file. Tests by requesting the
+ * account's own "Watch Later" playlist (`list=WL`), which only resolves at
+ * all when logged in as that account - confirmed for real (no cookies at
+ * all): yt-dlp fails with "YouTube said: The playlist does not exist.",
+ * distinct from any other kind of failure.
+ */
+export function checkCookiesValid(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!ytCookieFile) return resolve(false);
+
+    const proc = spawn("yt-dlp", [
+      ...getCookieArgs(),
+      "--flat-playlist",
+      "--dump-single-json",
+      "--no-warnings",
+      "--playlist-items", "1",
+      "https://www.youtube.com/playlist?list=WL",
+    ], { shell: false });
+
+    proc.on("close", (code) => resolve(code === 0));
+    proc.on("error", () => resolve(false));
+  });
+}
+
+/**
  * Download audio from a YouTube URL using yt-dlp
  */
 export function downloadYouTube(url: string, outputDir: string): Promise<{ filePath: string; info: YouTubeInfo }> {

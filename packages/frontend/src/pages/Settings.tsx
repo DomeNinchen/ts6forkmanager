@@ -20,6 +20,7 @@ import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
+import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { cn } from '@/lib/utils';
 
 export default function Settings() {
@@ -558,6 +559,9 @@ function YouTubeTab() {
     queryFn: settingsApi.getYtCookieStatus,
   });
 
+  const { data: cookieCheck } = useYtCookieCheck();
+  const recheckCookies = useRecheckYtCookies();
+
   const { data: cacheSettings, isLoading: cacheLoading } = useQuery({
     queryKey: ['music-cache-settings'],
     queryFn: settingsApi.getMusicCacheSettings,
@@ -574,20 +578,26 @@ function YouTubeTab() {
 
   const uploadFile = useMutation({
     mutationFn: (file: File) => settingsApi.uploadYtCookieFile(file),
-    onSuccess: () => {
-      toast.success('Cookie file uploaded');
+    onSuccess: (result) => {
+      toast[result.valid === false ? 'error' : 'success'](
+        result.valid === false ? 'Uploaded, but YouTube rejected these cookies' : 'Cookie file uploaded',
+      );
       qc.invalidateQueries({ queryKey: ['yt-cookie-status'] });
+      qc.invalidateQueries({ queryKey: ['yt-cookie-check'] });
     },
     onError: () => toast.error('Failed to upload cookie file'),
   });
 
   const uploadText = useMutation({
     mutationFn: (text: string) => settingsApi.uploadYtCookieText(text),
-    onSuccess: () => {
-      toast.success('Cookies saved');
+    onSuccess: (result) => {
+      toast[result.valid === false ? 'error' : 'success'](
+        result.valid === false ? 'Saved, but YouTube rejected these cookies' : 'Cookies saved',
+      );
       setCookieText('');
       setPasteMode(false);
       qc.invalidateQueries({ queryKey: ['yt-cookie-status'] });
+      qc.invalidateQueries({ queryKey: ['yt-cookie-check'] });
     },
     onError: () => toast.error('Failed to save cookies'),
   });
@@ -597,6 +607,7 @@ function YouTubeTab() {
     onSuccess: () => {
       toast.success('Cookie file removed');
       qc.invalidateQueries({ queryKey: ['yt-cookie-status'] });
+      qc.invalidateQueries({ queryKey: ['yt-cookie-check'] });
     },
     onError: () => toast.error('Failed to remove cookies'),
   });
@@ -627,12 +638,25 @@ function YouTubeTab() {
 
           {/* Status */}
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${status?.active ? 'bg-green-500' : 'bg-zinc-500'}`} />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                !status?.active ? 'bg-zinc-500' : cookieCheck?.valid === false ? 'bg-destructive' : cookieCheck?.valid === true ? 'bg-green-500' : 'bg-zinc-500'
+              }`}
+            />
             <span className="text-sm">
-              {isLoading ? 'Loading...' : status?.active
-                ? `Cookies active (${formatSize(status.size)})`
-                : 'No cookies configured'}
+              {isLoading ? 'Loading...' : !status?.active
+                ? 'No cookies configured'
+                : cookieCheck?.valid === false
+                  ? `YouTube rejected these cookies (${formatSize(status.size)}) — re-export and re-upload`
+                  : cookieCheck?.valid === true
+                    ? `Cookies active and working (${formatSize(status.size)})`
+                    : `Cookies active (${formatSize(status.size)}) — not yet checked`}
             </span>
+            {status?.active && (
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => recheckCookies.mutate()} disabled={recheckCookies.isPending}>
+                {recheckCookies.isPending ? 'Checking...' : 'Recheck'}
+              </Button>
+            )}
           </div>
 
           {/* Actions */}
