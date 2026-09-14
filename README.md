@@ -114,7 +114,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - An admin can't remove their own admin role, disable, or delete their own account, and the last remaining active admin can't be demoted, disabled, or deleted by anyone else either — enforced server-side, not just hidden in the UI
 - Per-user session management in Settings → Users: see every logged-in device/browser (by login time) and revoke one or all of them to force a re-login
 - Single Sign-On via any standard OpenID Connect provider (Authentik, Keycloak, Authelia, Zitadel, ...), alongside local login — see Settings → SSO
-- Two-factor authentication (TOTP, any standard authenticator app) with one-time recovery codes, manageable from Settings → Account. **Mandatory for local admin accounts** — an admin without it set up is walked through setup immediately and can't use the rest of the app until it's done — optional for every other role. SSO-authenticated admins are exempt, since their login security is delegated to the IdP. A trusted device can be remembered for 15 days to skip the code on every login
+- Two-factor authentication (TOTP, any standard authenticator app) with one-time recovery codes, manageable from Settings → Account — optional, for any account regardless of role. A trusted device can be remembered for 15 days to skip the code on every login
 - WebQuery command whitelist in bot flows (blocks destructive commands)
 - Authenticated WebSocket connections
 - Password complexity requirements
