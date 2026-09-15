@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BOT_TEMPLATES, TEMPLATE_CATEGORIES, type BotTemplate } from '@/data/bot-templates';
+import { BOT_TEMPLATES, TEMPLATE_CATEGORIES, type BotTemplate, type TemplateConfigField } from '@/data/bot-templates';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,8 +50,17 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
     handleClose(false);
   };
 
+  const isFieldVisible = (field: TemplateConfigField): boolean => {
+    if (!field.conditions || field.conditions.length === 0) return true;
+    return field.conditions.every((c) => {
+      const controllingField = selected?.configFields.find((f) => f.key === c.field);
+      const effectiveValue = config[c.field] ?? controllingField?.defaultValue ?? '';
+      return effectiveValue === c.value;
+    });
+  };
+
   const isValid = selected
-    ? selected.configFields.filter(f => f.required).every(f => config[f.key]?.trim())
+    ? selected.configFields.filter(f => f.required && isFieldVisible(f)).every(f => config[f.key]?.trim())
     : false;
 
   return (
@@ -138,8 +147,8 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
                   <p className="text-xs text-muted-foreground/60">No configuration needed — ready to create.</p>
                 ) : (
                   <div className="space-y-3">
-                    {selected.configFields.map((field) => (
-                      <div key={field.key}>
+                    {selected.configFields.filter(isFieldVisible).map((field) => (
+                      <div key={field.key} style={field.indent ? { marginLeft: field.indent * 16 } : undefined}>
                         <Label className="text-[10px] text-muted-foreground">
                           {field.label} {field.required && <span className="text-destructive">*</span>}
                         </Label>

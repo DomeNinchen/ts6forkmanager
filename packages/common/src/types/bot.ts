@@ -276,9 +276,12 @@ export interface DelayNodeData {
 export interface VariableNodeData {
   nodeType: 'variable';
   label: string;
-  operation: 'set' | 'increment' | 'append';
+  operation: 'set' | 'increment' | 'append' | 'get';
   variableName: string;
-  value: string;
+  /** Not used when operation is 'get'. */
+  value?: string;
+  /** Only used when operation is 'get' - which temp.* slot to store the read value in. */
+  storeAs?: string;
 }
 
 // --- Loop ---

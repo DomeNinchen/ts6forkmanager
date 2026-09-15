@@ -178,7 +178,25 @@ export class FlowRunner {
       }
 
       case 'action': {
-        await this.executeAction(node, ctx, client);
+        try {
+          await this.executeAction(node, ctx, client);
+        } catch (err: any) {
+          // Only take the graceful path if an 'error' edge is actually
+          // wired - an action node with none keeps the original, simpler
+          // all-or-nothing behavior (throw aborts the whole execution),
+          // so every flow built before this existed keeps working exactly
+          // as it did.
+          const errorEdges = this.getOutgoingEdges(node.id, flowDef, 'error');
+          if (errorEdges.length === 0) throw err;
+
+          ctx.setTemp('lastError', err.message);
+          await this.log(ctx, node, 'warn', `Action '${(node.data as any).actionType}' failed, following its error branch: ${err.message}`);
+          for (const edge of errorEdges) {
+            const target = this.findNode(edge.target, flowDef);
+            if (target) await visitNode(target);
+          }
+          break;
+        }
         const edges = this.getOutgoingEdges(node.id, flowDef);
         for (const edge of edges) {
           const target = this.findNode(edge.target, flowDef);
@@ -203,15 +221,21 @@ export class FlowRunner {
       case 'variable': {
         const varData = node.data as VariableNodeData;
         const name = await ctx.resolveTemplate(varData.variableName);
-        const value = await ctx.resolveTemplate(varData.value);
 
-        switch (varData.operation) {
-          case 'set': await ctx.setVariable(name, value); break;
-          case 'increment': await ctx.incrementVariable(name, value); break;
-          case 'append': await ctx.appendVariable(name, value); break;
+        if (varData.operation === 'get') {
+          const current = await ctx.getVariable(name);
+          const storeAs = varData.storeAs || 'variableValue';
+          ctx.setTemp(storeAs, current);
+          await this.log(ctx, node, 'info', `Variable '${name}' read into temp.${storeAs} = '${current}'`);
+        } else {
+          const value = await ctx.resolveTemplate(varData.value || '');
+          switch (varData.operation) {
+            case 'set': await ctx.setVariable(name, value); break;
+            case 'increment': await ctx.incrementVariable(name, value); break;
+            case 'append': await ctx.appendVariable(name, value); break;
+          }
+          await this.log(ctx, node, 'info', `Variable '${name}' ${varData.operation} = '${value}'`);
         }
-
-        await this.log(ctx, node, 'info', `Variable '${name}' ${varData.operation} = '${value}'`);
         const edges = this.getOutgoingEdges(node.id, flowDef);
         for (const edge of edges) {
           const target = this.findNode(edge.target, flowDef);
@@ -938,7 +962,12 @@ export class FlowRunner {
       if (handle !== undefined) {
         return e.sourceHandle === handle;
       }
-      return true;
+      // The "give me the normal/success edges" call (no handle argument) must
+      // never also pick up an 'error' edge - those only fire from the
+      // explicit catch branch in the 'action' case, on failure. Every other
+      // named handle (true/false/body/after) is always requested by its
+      // exact name already, so this exclusion only ever affects 'error'.
+      return e.sourceHandle !== 'error';
     });
   }
 
@@ -1016,14 +1045,20 @@ export class FlowRunner {
     const clients = await client.executePost(ctx.sid, 'clientlist', { '-groups': '' });
     const list = Array.isArray(clients) ? clients : [];
 
+    // An empty groupIds means "every real user, regardless of group" - e.g.
+    // the Welcome Message template's online-user count, which needs the
+    // client_type!=1 filter below but no group restriction. TeamSpeak's own
+    // virtualserver_clientsonline (from `serverinfo`) counts ServerQuery
+    // connections too (the bot's own identity, the admin WebUI's connection,
+    // SSH) - inflating the number - so it's not used for this.
     let count = 0;
     for (const cl of list) {
       if (String(cl.client_type) === '1') continue; // skip ServerQuery clients
-      if (commaListsIntersect(String(cl.client_servergroups || ''), groupIds)) count++;
+      if (!groupIds || commaListsIntersect(String(cl.client_servergroups || ''), groupIds)) count++;
     }
 
     ctx.setTemp(storeAs, count);
-    await this.log(ctx, null, 'info', `Counted ${count} online client(s) in group(s) '${groupIds}', stored as temp.${storeAs}`);
+    await this.log(ctx, null, 'info', `Counted ${count} online client(s)${groupIds ? ` in group(s) '${groupIds}'` : ' (all real users)'}, stored as temp.${storeAs}`);
   }
 
   // Backs a persistent, JSON-array-shaped BotVariable (e.g. an "ignore list" clients

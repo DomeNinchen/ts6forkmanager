@@ -8,6 +8,10 @@ export interface TemplateConfigField {
   defaultValue?: string;
   options?: { label: string; value: string }[];
   required?: boolean;
+  /** Visual nesting depth (16px per level) - purely cosmetic, to show which fields belong together. */
+  indent?: number;
+  /** Field is only shown (and only enforced if required) when every one of these matches the current config. */
+  conditions?: { field: string; value: string }[];
 }
 
 export interface BotTemplate {
@@ -36,7 +40,7 @@ function makeEdge(id: string, source: string, target: string, sourcePort = 'out'
   return { id, source, sourcePort, target, targetPort };
 }
 
-const DEFAULT_WELCOME_MESSAGE = 'Welcome {{event.client_nickname}}!\nOnline: {{temp.srvInfo.0.virtualserver_clientsonline}} | Team online: {{temp.teamOnline}}\nThis is your {{temp.dbInfo.0.client_totalconnections}}. visit.';
+const DEFAULT_WELCOME_MESSAGE = 'Welcome {{event.client_nickname}}!\nOnline: {{temp.onlineCount}} | Team online: {{temp.teamOnline}}\nThis is your {{temp.dbInfo.0.client_totalconnections}}. visit.';
 
 export const BOT_TEMPLATES: BotTemplate[] = [
   // ===== INFO CHANNELS =====
@@ -180,7 +184,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
     icon: MessageSquare,
     variablesHint: [
       '{{event.client_nickname}} - joining client\'s name',
-      '{{temp.srvInfo.0.virtualserver_clientsonline}} - clients online right now',
+      '{{temp.onlineCount}} - real users online right now (query/bot connections not counted)',
       '{{temp.dbInfo.0.client_totalconnections}} - this client\'s lifetime connection count',
       '{{temp.teamOnline}} - team members online right now (only resolves if Team Groups is set below)',
     ],
@@ -224,10 +228,13 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       edges.push(makeEdge(eid(), lastId, nNotOptedOut, 'true', 'in'));
       lastId = nNotOptedOut;
 
-      const nServerInfo = nid();
-      nodes.push(makeNode(nServerInfo, 'action_webquery', 'Get Online Count', { command: 'serverinfo', params: {}, storeAs: 'srvInfo' }, 1000, 200));
-      edges.push(makeEdge(eid(), lastId, nServerInfo, 'true', 'in'));
-      lastId = nServerInfo;
+      // Real users only - virtualserver_clientsonline (from serverinfo) counts
+      // ServerQuery connections too (this bot's own identity, the admin WebUI's
+      // own connection, SSH), inflating the number a joining user is shown.
+      const nOnlineCount = nid();
+      nodes.push(makeNode(nOnlineCount, 'action_countOnlineInGroups', 'Get Online Count', { groupIds: '', storeAs: 'onlineCount' }, 1000, 200));
+      edges.push(makeEdge(eid(), lastId, nOnlineCount, 'true', 'in'));
+      lastId = nOnlineCount;
 
       const nDbInfo = nid();
       nodes.push(makeNode(nDbInfo, 'action_webquery', 'Get Total Connections', { command: 'clientdbinfo', params: { cldbid: '{{event.client_database_id}}' }, storeAs: 'dbInfo' }, 1240, 200));
@@ -310,39 +317,180 @@ export const BOT_TEMPLATES: BotTemplate[] = [
     },
   },
   {
-    id: 'temp-channel-creator',
-    name: 'Temp Channel Creator',
-    description: 'Creates a temporary channel when a client joins a lobby channel, then moves them in. Channel is auto-deleted when empty.',
+    // Rebuilt from the ground up, inspired by (and adapted for this app's own
+    // engine from) the "Private Channel Manager" plugin for SinusBot by
+    // Smorrebrod / Cedrik Paetz <cedrik.paetz@gmail.com> - credit to the
+    // original design this template's shape and field set is based on.
+    id: 'private-channel-creator',
+    name: 'Private Channel Creator',
+    description: 'Creates a persistent private channel for a client on first joining a lobby, and moves them back to it every time after - with them set as its channel owner.',
     category: 'automation',
     icon: FolderPlus,
+    variablesHint: [
+      '{{temp.joinerInfo.0.client_nickname}} - joining client\'s name (for the channel name/description template)',
+    ],
     configFields: [
       { key: 'lobbyChannelId', label: 'Lobby Channel ID', type: 'number', placeholder: '20', required: true },
-      { key: 'parentChannelId', label: 'Parent Channel ID', type: 'number', placeholder: '19', required: true },
+      { key: 'parentChannelId', label: 'Parent Channel ID (optional - overrides where channels are created)', type: 'number', placeholder: 'e.g. 19' },
+      { key: 'channelPlacement', label: 'Channel Placement', type: 'select', defaultValue: 'sibling', options: [{ label: 'Standard Channel (next to Lobby)', value: 'sibling' }, { label: 'Subchannel of Lobby', value: 'sub' }] },
+      { key: 'channelAdminGroupId', label: 'Channel Admin Group ID (assigned as owner)', type: 'number', placeholder: '5', required: true },
+      { key: 'channelNameTemplate', label: 'Channel Name Template', type: 'text', defaultValue: "{{temp.joinerInfo.0.client_nickname}}'s Private Channel" },
+      { key: 'channelDescriptionTemplate', label: 'Channel Description Template (optional)', type: 'textarea', placeholder: 'e.g. Private channel of {{temp.joinerInfo.0.client_nickname}}, created {{time.date}}' },
+      { key: 'privateChannelType', label: 'Private Channel Type', type: 'select', defaultValue: 'semipermanent', options: [{ label: 'Permanent', value: 'permanent' }, { label: 'Semi-Permanent', value: 'semipermanent' }, { label: 'Temporary (TeamSpeak deletes it once empty)', value: 'temporary' }] },
+      { key: 'autoGeneratePassword', label: 'Password Protection', type: 'select', defaultValue: 'no', options: [{ label: 'None', value: 'no' }, { label: 'Auto-generate', value: 'yes' }] },
+      { key: 'spamProtectionEnabled', label: 'Spam Protection (ban clients who repeatedly rejoin the lobby)', type: 'select', defaultValue: 'no', options: [{ label: 'No', value: 'no' }, { label: 'Yes', value: 'yes' }] },
+      { key: 'spamProtectionMaxStrikes', label: 'Max Strikes Before Ban', type: 'number', defaultValue: '10', indent: 1, conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
+      { key: 'spamProtectionBanSeconds', label: 'Ban Duration (seconds)', type: 'number', defaultValue: '600', indent: 1, conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
+      { key: 'channelCreateMessage', label: 'Channel Create Message', type: 'text', defaultValue: 'Your private channel has been created!' },
+      { key: 'channelMoveMessage', label: 'Channel Move Message', type: 'text', defaultValue: 'You have been moved to your private channel.' },
+      { key: 'channelErrorMessage', label: 'Channel Error Message', type: 'text', defaultValue: 'Your channel could not be created. Please try again, or contact an admin if this keeps happening.' },
+      { key: 'channelPasswordMessage', label: 'Channel Password Message', type: 'text', defaultValue: 'Your channel was created with a password. The password is:', conditions: [{ field: 'autoGeneratePassword', value: 'yes' }] },
+      { key: 'spamProtectionBanMessage', label: 'Spam Protection Ban Message', type: 'text', defaultValue: 'You have been banned for spamming the lobby.', conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
-      const n1 = nid(), n2 = nid(), n3 = nid(), n4 = nid(), n5 = nid();
-      const n6 = nid(), n7 = nid();
-      return {
-        nodes: [
-          // Create channel when user joins lobby
-          makeNode(n1, 'trigger_event', 'Client Moved', { eventName: 'notifyclientmoved' }, 60, 80),
-          makeNode(n2, 'condition', 'Joined Lobby?', { expression: `event.ctid == ${cfg.lobbyChannelId}` }, 300, 80),
-          makeNode(n3, 'action_webquery', 'Get Client Info', { command: 'clientinfo clid={{event.clid}}', storeAs: 'client' }, 540, 80),
-          makeNode(n4, 'action_channelCreate', 'Create Channel', { channel_name: "{{temp.client.0.client_nickname}}'s Channel", cpid: cfg.parentChannelId, channel_flag_semi_permanent: '1' }, 780, 80),
-          makeNode(n5, 'action_move', 'Move to Channel', { cid: '{{temp.lastCreatedChannelId}}' }, 1020, 80),
-          // Cron cleanup: delete empty channels under parent every minute
-          makeNode(n6, 'trigger_cron', 'Cleanup Timer', { cron: '* * * * *' }, 60, 220),
-          makeNode(n7, 'action_tempChannelCleanup', 'Delete Empty Channels', { parentChannelId: cfg.parentChannelId, protectedChannelIds: cfg.lobbyChannelId }, 300, 220),
-        ],
-        edges: [
-          makeEdge(eid(), n1, n2),
-          makeEdge(eid(), n2, n3, 'true', 'in'),
-          makeEdge(eid(), n3, n4),
-          makeEdge(eid(), n4, n5),
-          makeEdge(eid(), n6, n7),
-        ],
+      const spamEnabled = cfg.spamProtectionEnabled === 'yes';
+      const wantsPassword = cfg.autoGeneratePassword === 'yes';
+      const isSubchannel = cfg.channelPlacement === 'sub';
+      const effectiveLobbyId = cfg.parentChannelId || cfg.lobbyChannelId;
+      // notifyclientmoved carries clid but not client_database_id/
+      // client_unique_identifier/client_nickname - a clientinfo lookup right
+      // after the trigger is the only way to get those (same gap this app
+      // already worked around for chat-command triggers in Welcome Message).
+      const strikeVar = `pcc_strikes_{{temp.joinerInfo.0.client_unique_identifier}}`;
+
+      const nodes: any[] = [];
+      const edges: any[] = [];
+      let y = 80;
+      const rowY = () => { const cur = y; y += 140; return cur; };
+
+      const nTrigger = nid();
+      nodes.push(makeNode(nTrigger, 'trigger_event', 'Client Moved', { eventName: 'notifyclientmoved' }, 40, 300));
+      const nJoinedLobby = nid();
+      nodes.push(makeNode(nJoinedLobby, 'condition', 'Joined Lobby?', { expression: `event.ctid == ${cfg.lobbyChannelId}` }, 280, 300));
+      edges.push(makeEdge(eid(), nTrigger, nJoinedLobby));
+      const nJoinerInfo = nid();
+      nodes.push(makeNode(nJoinerInfo, 'action_webquery', 'Get Joiner Info', { command: 'clientinfo', params: { clid: '{{event.clid}}' }, storeAs: 'joinerInfo' }, 520, 300));
+      edges.push(makeEdge(eid(), nJoinedLobby, nJoinerInfo, 'true', 'in'));
+      let lastId = nJoinerInfo;
+      let lastPort: string | undefined = undefined;
+      let x = 760;
+
+      if (spamEnabled) {
+        const nIncrement = nid();
+        nodes.push(makeNode(nIncrement, 'variable', 'Increment Strikes', { operation: 'increment', name: strikeVar, value: '1' }, x, 300));
+        edges.push(makeEdge(eid(), lastId, nIncrement, lastPort, 'in'));
+        x += 240;
+
+        const nReadStrikes = nid();
+        nodes.push(makeNode(nReadStrikes, 'variable', 'Read Strikes', { operation: 'get', name: strikeVar, storeAs: 'strikes' }, x, 300));
+        edges.push(makeEdge(eid(), nIncrement, nReadStrikes));
+        x += 240;
+
+        const nExceeded = nid();
+        nodes.push(makeNode(nExceeded, 'condition', 'Exceeded Max Strikes?', { expression: `temp.strikes > ${cfg.spamProtectionMaxStrikes || 10}` }, x, 300));
+        edges.push(makeEdge(eid(), nReadStrikes, nExceeded));
+        x += 240;
+
+        const nBan = nid();
+        nodes.push(makeNode(nBan, 'action_ban', 'Ban Spammer', { reason: cfg.spamProtectionBanMessage || 'You have been banned for spamming the lobby.', time: cfg.spamProtectionBanSeconds || 600 }, x, rowY()));
+        edges.push(makeEdge(eid(), nExceeded, nBan, 'true', 'in'));
+
+        lastId = nExceeded;
+        lastPort = 'false';
+      }
+
+      const nCheckOwnership = nid();
+      nodes.push(makeNode(nCheckOwnership, 'action_webquery', 'Check Ownership', { command: 'channelgroupclientlist', params: { cldbid: '{{temp.joinerInfo.0.client_database_id}}', cgid: cfg.channelAdminGroupId }, storeAs: 'ownership' }, x, 300));
+      edges.push(makeEdge(eid(), lastId, nCheckOwnership, lastPort, 'in'));
+      x += 240;
+
+      const nAlreadyOwns = nid();
+      nodes.push(makeNode(nAlreadyOwns, 'condition', 'Already Owns Channel?', { expression: 'count(temp.ownership) > 0' }, x, 300));
+      edges.push(makeEdge(eid(), nCheckOwnership, nAlreadyOwns));
+      x += 240;
+
+      // --- Branch: already owns one - just move them back in ---
+      const nMoveExisting = nid();
+      nodes.push(makeNode(nMoveExisting, 'action_move', 'Move to Existing Channel', { channelId: '{{temp.ownership.0.cid}}' }, x, 220));
+      edges.push(makeEdge(eid(), nAlreadyOwns, nMoveExisting, 'true', 'in'));
+      const nMoveExistingMsg = nid();
+      nodes.push(makeNode(nMoveExistingMsg, 'action_message', 'Send Move Message', { message: cfg.channelMoveMessage || 'You have been moved to your private channel.' }, x + 240, 220));
+      edges.push(makeEdge(eid(), nMoveExisting, nMoveExistingMsg));
+
+      // --- Branch: doesn't own one yet - create it ---
+      let createX = x;
+      let createLast = nAlreadyOwns;
+      let createPort: string | undefined = 'false';
+
+      let cpidExpr: string;
+      if (isSubchannel) {
+        cpidExpr = String(effectiveLobbyId);
+      } else {
+        const nLobbyInfo = nid();
+        nodes.push(makeNode(nLobbyInfo, 'action_webquery', 'Get Lobby Parent', { command: 'channelinfo', params: { cid: effectiveLobbyId }, storeAs: 'lobbyInfo' }, createX, 400));
+        edges.push(makeEdge(eid(), createLast, nLobbyInfo, createPort, 'in'));
+        createLast = nLobbyInfo;
+        createPort = undefined;
+        createX += 240;
+        cpidExpr = '{{temp.lobbyInfo.0.pid}}';
+      }
+
+      if (wantsPassword) {
+        const nGenPassword = nid();
+        nodes.push(makeNode(nGenPassword, 'action_generateCode', 'Generate Password', { length: 6, numericOnly: false, storeAs: 'channelPassword' }, createX, 400));
+        edges.push(makeEdge(eid(), createLast, nGenPassword, createPort, 'in'));
+        createLast = nGenPassword;
+        createPort = undefined;
+        createX += 240;
+      }
+
+      const channelParams: Record<string, any> = {
+        channel_name: cfg.channelNameTemplate || "{{temp.joinerInfo.0.client_nickname}}'s Private Channel",
+        cpid: cpidExpr,
+        channel_codec: '4',
+        channel_codec_quality: '6',
+        channel_flag_maxclients_unlimited: '1',
+        channel_codec_is_unencrypted: '1',
       };
+      if (cfg.privateChannelType === 'permanent') channelParams.channel_flag_permanent = '1';
+      else if (cfg.privateChannelType === 'temporary') channelParams.channel_flag_temporary = '1';
+      else channelParams.channel_flag_semi_permanent = '1';
+      if (cfg.channelDescriptionTemplate) channelParams.channel_description = cfg.channelDescriptionTemplate;
+      if (wantsPassword) channelParams.channel_password = '{{temp.channelPassword}}';
+
+      const nCreateChannel = nid();
+      nodes.push(makeNode(nCreateChannel, 'action_channelCreate', 'Create Private Channel', { params: channelParams }, createX, 400));
+      edges.push(makeEdge(eid(), createLast, nCreateChannel, createPort, 'in'));
+      createX += 240;
+
+      const nSetOwner = nid();
+      nodes.push(makeNode(nSetOwner, 'action_webquery', 'Set Owner', { command: 'setclientchannelgroup', params: { cgid: cfg.channelAdminGroupId, cid: '{{temp.lastCreatedChannelId}}', cldbid: '{{temp.joinerInfo.0.client_database_id}}' } }, createX, 400));
+      edges.push(makeEdge(eid(), nCreateChannel, nSetOwner));
+      createX += 240;
+
+      const nMoveNew = nid();
+      nodes.push(makeNode(nMoveNew, 'action_move', 'Move to New Channel', { channelId: '{{temp.lastCreatedChannelId}}' }, createX, 400));
+      edges.push(makeEdge(eid(), nSetOwner, nMoveNew));
+      createX += 240;
+
+      const nCreateMsg = nid();
+      nodes.push(makeNode(nCreateMsg, 'action_message', 'Send Create Message', { message: cfg.channelCreateMessage || 'Your private channel has been created!' }, createX, 400));
+      edges.push(makeEdge(eid(), nMoveNew, nCreateMsg));
+      createX += 240;
+
+      if (wantsPassword) {
+        const nPasswordMsg = nid();
+        nodes.push(makeNode(nPasswordMsg, 'action_message', 'Send Password Message', { message: `${cfg.channelPasswordMessage || 'Your channel was created with a password. The password is:'} {{temp.channelPassword}}` }, createX, 400));
+        edges.push(makeEdge(eid(), nCreateMsg, nPasswordMsg));
+      }
+
+      // Error branch: channel creation itself failed (e.g. bad parent/params)
+      const nCreateError = nid();
+      nodes.push(makeNode(nCreateError, 'action_message', 'Send Error Message', { message: cfg.channelErrorMessage || 'Your channel could not be created. Please try again, or contact an admin if this keeps happening.' }, createX, 560));
+      edges.push(makeEdge(eid(), nCreateChannel, nCreateError, 'error', 'in'));
+
+      return { nodes, edges };
     },
   },
   {
