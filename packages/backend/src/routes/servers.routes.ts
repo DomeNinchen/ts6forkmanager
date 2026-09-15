@@ -23,7 +23,7 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
       select: {
         id: true, name: true, host: true, webqueryPort: true,
         useHttps: true, sshPort: true, enabled: true,
-        createdAt: true, sshUsername: true,
+        createdAt: true, sshUsername: true, pingHost: true,
         botQueryName: true, botApiKey: true,
       },
       orderBy: { id: 'asc' },
@@ -83,6 +83,7 @@ serverRoutes.get('/:configId', async (req: Request, res: Response, next) => {
       sshPort: server.sshPort, hasSshCredentials: !!server.sshUsername,
       enabled: server.enabled, createdAt: server.createdAt,
       botQueryName: server.botQueryName, hasBotIdentity: !!server.botApiKey,
+      pingHost: server.pingHost,
     });
   } catch (err) { next(err); }
 });
@@ -94,7 +95,7 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const id = parseInt(String(req.params.configId));
     const data: any = {};
 
-    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName'];
+    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost'];
     for (const field of fields) {
       if (req.body[field] !== undefined) {
         // Don't overwrite API key or SSH password with empty strings

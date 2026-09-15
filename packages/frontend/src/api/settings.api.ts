@@ -53,7 +53,7 @@ export const settingsApi = {
     api.put('/settings/webgui-theme', { preset }).then((r) => r.data),
 };
 
-export type AccentPreset = 'teal' | 'red' | 'blue' | 'yellow' | 'green';
+export type AccentPreset = 'violet' | 'teal' | 'red' | 'blue' | 'yellow' | 'green';
 
 export interface OidcSettings {
   enabled: boolean;

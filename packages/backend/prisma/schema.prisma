@@ -94,6 +94,12 @@ model TsServerConfig {
   sshPort      Int      @default(10022)
   sshUsername  String?
   sshPassword  String?
+  // Dashboard's "real reachability" ping target - deliberately separate from
+  // `host` above (which bot flows and every WebQuery/SSH call keep using
+  // regardless of this field). host is often an internal/Docker-network
+  // address; the public domain a ping test should actually reach can be
+  // different. Falls back to `host` when left unset.
+  pingHost     String?
   enabled      Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -294,6 +294,7 @@ function TwoFactorCard() {
 }
 
 const ACCENT_PRESETS: { value: AccentPreset; label: string; swatch: string }[] = [
+  { value: 'violet', label: 'Violet', swatch: 'hsl(252 100% 68%)' },
   { value: 'teal', label: 'Teal', swatch: 'hsl(186 72% 42%)' },
   { value: 'red', label: 'Red', swatch: 'hsl(355 75% 50%)' },
   { value: 'blue', label: 'Blue', swatch: 'hsl(217 75% 52%)' },
@@ -393,13 +394,13 @@ function ConnectionsTab() {
   const [editId, setEditId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [botIdentityServerId, setBotIdentityServerId] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '' });
+  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '' });
 
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
 
   if (isLoading) return <PageLoader />;
 
-  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '' });
+  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '' });
 
   const handleSave = () => {
     const payload = { ...form, webqueryPort: parseInt(form.webqueryPort), sshPort: parseInt(form.sshPort) };
@@ -426,6 +427,7 @@ function ConnectionsTab() {
       sshPort: String(server.sshPort || 10022),
       sshUsername: server.sshUsername || '',
       sshPassword: server.sshPassword || '',
+      pingHost: server.pingHost || '',
     });
     setEditId(server.id);
     setShowAdd(true);
@@ -497,6 +499,13 @@ function ConnectionsTab() {
             <div className="flex items-center gap-2">
               <Switch checked={form.useHttps} onCheckedChange={(v) => setForm({ ...form, useHttps: v })} />
               <Label className="text-xs">Use HTTPS</Label>
+            </div>
+            <div>
+              <Label className="text-xs">Dashboard Ping Target (optional)</Label>
+              <Input value={form.pingHost} onChange={(e) => setForm({ ...form, pingHost: e.target.value })} placeholder={`Defaults to Host above (${form.host || '...'})`} />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Only affects the Dashboard's Ping reading - useful if Host above is an internal address but the public domain is what should actually be tested. Bot flows always use Host, never this.
+              </p>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div><Label className="text-xs">SSH Port</Label><Input type="number" value={form.sshPort} onChange={(e) => setForm({ ...form, sshPort: e.target.value })} /></div>

@@ -108,9 +108,9 @@ export function Sidebar() {
           {!sidebarCollapsed ? (
             <Link to="/dashboard" className="flex items-center gap-2.5">
               <img src="/logo-256.png" alt="" className="h-7 w-7 object-contain" />
-              <div>
-                <span className="text-sm font-semibold text-sidebar-accent-foreground">TS6</span>
-                <span className="text-sm text-sidebar-foreground ml-1">Manager</span>
+              <div className="font-display">
+                <span className="text-sm font-bold tracking-wide text-sidebar-accent-foreground">TS6</span>
+                <span className="text-sm font-semibold tracking-wide text-sidebar-foreground ml-1">Manager</span>
               </div>
             </Link>
           ) : (
@@ -132,7 +132,7 @@ export function Sidebar() {
                   <div key={section.label}>
                     {si > 0 && <Separator className="my-2 bg-sidebar-border" />}
                     {!sidebarCollapsed && (
-                      <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+                      <p className="font-display px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
                         {section.label}
                       </p>
                     )}
@@ -143,11 +143,11 @@ export function Sidebar() {
                           key={item.to}
                           to={item.to}
                           className={cn(
-                            'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-all duration-150',
-                            sidebarCollapsed && 'justify-center px-0 py-2',
+                            'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-all duration-150 border-l-2',
+                            sidebarCollapsed && 'justify-center px-0 py-2 border-l-0',
                             isActive
-                              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
+                              ? 'bg-sidebar-accent text-sidebar-accent-foreground border-primary'
+                              : 'text-sidebar-foreground border-transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
                           )}
                         >
                           <item.icon className={cn('h-4 w-4 shrink-0', isActive && 'text-primary')} />
@@ -178,9 +178,9 @@ export function Sidebar() {
           <NavLink
             to="/settings"
             className={cn(
-              'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors',
-              sidebarCollapsed && 'justify-center px-0 py-2',
-              location.pathname.startsWith('/settings') && 'bg-sidebar-accent text-sidebar-accent-foreground',
+              'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground border-l-2 border-transparent hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors',
+              sidebarCollapsed && 'justify-center px-0 py-2 border-l-0',
+              location.pathname.startsWith('/settings') && 'bg-sidebar-accent text-sidebar-accent-foreground border-primary',
             )}
           >
             <Settings className="h-4 w-4" />

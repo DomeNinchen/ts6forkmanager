@@ -18,11 +18,13 @@ dashboardRoutes.get('/', async (req: Request, res: Response, next) => {
     const sampler: BandwidthSampler = req.app.locals.bandwidthSampler;
     sampler.ensureSampling(configId, sid);
 
-    const [serverInfo, clientList, channelList, connectionInfo] = await Promise.all([
+    const prisma = req.app.locals.prisma;
+    const [serverInfo, clientList, channelList, connectionInfo, serverConfig] = await Promise.all([
       client.execute(sid, 'serverinfo'),
       client.execute(sid, 'clientlist'),
       client.execute(sid, 'channellist'),
       client.execute(sid, 'serverrequestconnectioninfo'),
+      prisma.tsServerConfig.findUnique({ where: { id: configId } }),
     ]);
 
     const info = Array.isArray(serverInfo) ? serverInfo[0] : serverInfo;
@@ -31,6 +33,14 @@ dashboardRoutes.get('/', async (req: Request, res: Response, next) => {
     const channels = Array.isArray(channelList) ? channelList : [];
 
     const onlineClients = clients.filter((c: any) => String(c.client_type) === '0');
+    // Ping is real network reachability of this server's own host (timed TCP
+    // connect, see BandwidthSampler.tcpPing) - not TeamSpeak's own
+    // virtualserver_total_ping, which averages currently connected clients
+    // and reads as a meaningless 0 whenever nobody's online. Reuses the
+    // sampler's own rolling buffer instead of timing a second, redundant
+    // connect here, so the headline number always matches the history chart.
+    const pingHistory = sampler.getHistory(configId, sid);
+    const latestPing = pingHistory.length > 0 ? pingHistory[pingHistory.length - 1].ping : -1;
 
     res.json({
       serverName: info.virtualserver_name,
@@ -44,8 +54,8 @@ dashboardRoutes.get('/', async (req: Request, res: Response, next) => {
         incoming: Number(connInfo.connection_bandwidth_received_last_second_total) || 0,
         outgoing: Number(connInfo.connection_bandwidth_sent_last_second_total) || 0,
       },
-      packetloss: Number(info.virtualserver_total_packetloss_total) || 0,
-      ping: Number(info.virtualserver_total_ping) || 0,
+      ping: latestPing,
+      pingTarget: (serverConfig?.pingHost || serverConfig?.host) ?? null,
     });
   } catch (err) { next(err); }
 });
