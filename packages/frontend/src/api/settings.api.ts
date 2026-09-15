@@ -51,9 +51,17 @@ export const settingsApi = {
 
   setWebguiTheme: (preset: AccentPreset): Promise<{ preset: AccentPreset }> =>
     api.put('/settings/webgui-theme', { preset }).then((r) => r.data),
+
+  getWebguiBaseTheme: (): Promise<{ theme: BaseTheme }> =>
+    api.get('/settings/webgui-base-theme').then((r) => r.data),
+
+  setWebguiBaseTheme: (theme: BaseTheme): Promise<{ theme: BaseTheme }> =>
+    api.put('/settings/webgui-base-theme', { theme }).then((r) => r.data),
 };
 
 export type AccentPreset = 'violet' | 'teal' | 'red' | 'blue' | 'yellow' | 'green';
+/** The structural background/surface palette - independent of (and combinable with) the accent preset above. */
+export type BaseTheme = 'command-deck' | 'oled';
 
 export interface OidcSettings {
   enabled: boolean;

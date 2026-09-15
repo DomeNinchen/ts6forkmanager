@@ -4,12 +4,13 @@ import { Header } from './Header';
 import { UpdateBanner } from './UpdateBanner';
 import { YtCookieBanner } from './YtCookieBanner';
 import { useAuthStore } from '@/stores/auth.store';
-import { useWebguiThemeSync } from '@/hooks/use-webgui-theme';
+import { useWebguiThemeSync, useWebguiBaseThemeSync } from '@/hooks/use-webgui-theme';
 import { Toaster } from 'sonner';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
   useWebguiThemeSync();
+  useWebguiBaseThemeSync();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
