@@ -423,6 +423,12 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       let createLast = nAlreadyOwns;
       let createPort: string | undefined = 'false';
 
+      // Declared now, wired to below - every WebQuery step in this branch that
+      // can realistically fail from a config mistake (a bad Parent Channel ID
+      // override, a channel group the current identity can't actually assign)
+      // reports it here instead of aborting the whole flow silently.
+      const nCreateError = nid();
+
       let cpidExpr: string;
       if (isSubchannel) {
         cpidExpr = String(effectiveLobbyId);
@@ -430,6 +436,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
         const nLobbyInfo = nid();
         nodes.push(makeNode(nLobbyInfo, 'action_webquery', 'Get Lobby Parent', { command: 'channelinfo', params: { cid: effectiveLobbyId }, storeAs: 'lobbyInfo' }, createX, 400));
         edges.push(makeEdge(eid(), createLast, nLobbyInfo, createPort, 'in'));
+        edges.push(makeEdge(eid(), nLobbyInfo, nCreateError, 'error', 'in'));
         createLast = nLobbyInfo;
         createPort = undefined;
         createX += 240;
@@ -462,11 +469,13 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       const nCreateChannel = nid();
       nodes.push(makeNode(nCreateChannel, 'action_channelCreate', 'Create Private Channel', { params: channelParams }, createX, 400));
       edges.push(makeEdge(eid(), createLast, nCreateChannel, createPort, 'in'));
+      edges.push(makeEdge(eid(), nCreateChannel, nCreateError, 'error', 'in'));
       createX += 240;
 
       const nSetOwner = nid();
       nodes.push(makeNode(nSetOwner, 'action_webquery', 'Set Owner', { command: 'setclientchannelgroup', params: { cgid: cfg.channelAdminGroupId, cid: '{{temp.lastCreatedChannelId}}', cldbid: '{{temp.joinerInfo.0.client_database_id}}' } }, createX, 400));
       edges.push(makeEdge(eid(), nCreateChannel, nSetOwner));
+      edges.push(makeEdge(eid(), nSetOwner, nCreateError, 'error', 'in'));
       createX += 240;
 
       const nMoveNew = nid();
@@ -485,10 +494,9 @@ export const BOT_TEMPLATES: BotTemplate[] = [
         edges.push(makeEdge(eid(), nCreateMsg, nPasswordMsg));
       }
 
-      // Error branch: channel creation itself failed (e.g. bad parent/params)
-      const nCreateError = nid();
+      // Error branch node - see the three error edges wired above (Get Lobby
+      // Parent, Create Private Channel, Set Owner all point here on failure).
       nodes.push(makeNode(nCreateError, 'action_message', 'Send Error Message', { message: cfg.channelErrorMessage || 'Your channel could not be created. Please try again, or contact an admin if this keeps happening.' }, createX, 560));
-      edges.push(makeEdge(eid(), nCreateChannel, nCreateError, 'error', 'in'));
 
       return { nodes, edges };
     },
