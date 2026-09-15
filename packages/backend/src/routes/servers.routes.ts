@@ -84,7 +84,7 @@ serverRoutes.get('/:configId', async (req: Request, res: Response, next) => {
       enabled: server.enabled, createdAt: server.createdAt,
       botQueryName: server.botQueryName, hasBotIdentity: !!server.botApiKey,
       pingHost: server.pingHost,
-      queryNickname: server.queryNickname, queryHomeChannelId: server.queryHomeChannelId,
+      queryNickname: server.queryNickname,
     });
   } catch (err) { next(err); }
 });
@@ -96,7 +96,7 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const id = parseInt(String(req.params.configId));
     const data: any = {};
 
-    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname', 'queryHomeChannelId'];
+    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname'];
     for (const field of fields) {
       if (req.body[field] !== undefined) {
         // Don't overwrite API key or SSH password with empty strings
@@ -122,7 +122,7 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     // (event registration, command listeners) are still running on the old
     // credentials — they don't pick up new ones on their own since connecting
     // no-ops while already connected. Force a reconnect.
-    const sshFieldsChanged = ['host', 'sshPort', 'sshUsername', 'sshPassword', 'queryHomeChannelId'].some(f => data[f] !== undefined);
+    const sshFieldsChanged = ['host', 'sshPort', 'sshUsername', 'sshPassword'].some(f => data[f] !== undefined);
     if (sshFieldsChanged) {
       await req.app.locals.botEngine?.refreshServerConnections(id);
     }
