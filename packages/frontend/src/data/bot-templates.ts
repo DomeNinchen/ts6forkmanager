@@ -27,10 +27,14 @@ export interface BotTemplate {
 }
 
 let _id = 0;
+let _eid = 0;
 const nid = () => `tpl_${++_id}`;
-const eid = () => `tpl_e${_id}`;
+// Own counter, independent of nid() - a node with two outgoing edges (e.g. an
+// out/error pair) calls this twice in a row with no nid() call in between, so
+// piggybacking on _id (as this used to) handed out the same id to both edges.
+const eid = () => `tpl_e${++_eid}`;
 
-function resetIds() { _id = 0; }
+function resetIds() { _id = 0; _eid = 0; }
 
 // Helper to build a simple linear flow
 function makeNode(id: string, type: string, label: string, config: Record<string, any>, x: number, y: number) {
