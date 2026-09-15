@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router';
 import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, MessageSquareWarning, Mail,
-  ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, Music, ListMusic,
+  ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,7 +83,7 @@ const navSections = [
 ];
 
 export function Sidebar() {
-  const { sidebarCollapsed, toggleSidebar } = useUiStore();
+  const { sidebarCollapsed, toggleSidebar, collapsedSections, toggleSection } = useUiStore();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
   const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
@@ -130,15 +130,20 @@ export function Sidebar() {
               .map((section, si) => {
                 const visibleItems = section.items.filter((item) => !(item as any).visible || (item as any).visible(navCtx));
                 if (visibleItems.length === 0) return null;
+                const isCollapsed = !sidebarCollapsed && collapsedSections[section.label];
                 return (
                   <div key={section.label}>
                     {si > 0 && <Separator className="my-2 bg-sidebar-border" />}
                     {!sidebarCollapsed && (
-                      <p className="font-display px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-                        {section.label}
-                      </p>
+                      <button
+                        onClick={() => toggleSection(section.label)}
+                        className="flex items-center justify-between w-full px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 hover:text-sidebar-foreground/70 transition-colors"
+                      >
+                        <span className="font-display">{section.label}</span>
+                        <ChevronDown className={cn('h-3 w-3 transition-transform', isCollapsed && '-rotate-90')} />
+                      </button>
                     )}
-                    {visibleItems.map((item) => {
+                    {!isCollapsed && visibleItems.map((item) => {
                       const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
                       const link = (
                         <NavLink
