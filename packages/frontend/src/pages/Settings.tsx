@@ -1097,7 +1097,7 @@ function DebugTab() {
   });
 
   const setFlag = useMutation({
-    mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck'; enabled: boolean }) =>
+    mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck' | 'query'; enabled: boolean }) =>
       settingsApi.setDebugFlag(name, enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['debug-flags'] }),
     onError: () => toast.error('Failed to update debug flag'),
@@ -1156,6 +1156,17 @@ function DebugTab() {
             <Switch
               checked={!!flags?.rankCheck}
               onCheckedChange={(v) => setFlag.mutate({ name: 'rankCheck', enabled: v })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">ServerQuery Debug</Label>
+              <p className="text-[11px] text-muted-foreground">Every WebQuery/SSH command sent to a TeamSpeak server and its raw response, including errors (e.g. insufficient permissions) - useful when a bot flow action silently doesn't do what's expected.</p>
+            </div>
+            <Switch
+              checked={!!flags?.query}
+              onCheckedChange={(v) => setFlag.mutate({ name: 'query', enabled: v })}
             />
           </div>
         </CardContent>

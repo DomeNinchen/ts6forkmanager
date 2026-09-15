@@ -36,6 +36,8 @@ function makeEdge(id: string, source: string, target: string, sourcePort = 'out'
   return { id, source, sourcePort, target, targetPort };
 }
 
+const DEFAULT_WELCOME_MESSAGE = 'Welcome {{event.client_nickname}}!\nOnline: {{temp.srvInfo.0.virtualserver_clientsonline}} | Team online: {{temp.teamOnline}}\nThis is your {{temp.dbInfo.0.client_totalconnections}}. visit.';
+
 export const BOT_TEMPLATES: BotTemplate[] = [
   // ===== INFO CHANNELS =====
   {
@@ -183,7 +185,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       '{{temp.teamOnline}} - team members online right now (only resolves if Team Groups is set below)',
     ],
     configFields: [
-      { key: 'message', label: 'Welcome Message', type: 'textarea', placeholder: 'Welcome {{event.client_nickname}}!\nOnline: {{temp.srvInfo.0.virtualserver_clientsonline}} | Team online: {{temp.teamOnline}}\nThis is your {{temp.dbInfo.0.client_totalconnections}}. visit.', required: true },
+      { key: 'message', label: 'Welcome Message', type: 'textarea', placeholder: DEFAULT_WELCOME_MESSAGE },
       { key: 'usePokeInstead', label: 'Delivery Method', type: 'select', defaultValue: 'message', options: [{ label: 'Private Message', value: 'message' }, { label: 'Poke', value: 'poke' }] },
       { key: 'ignoreGroupIds', label: 'Ignore Groups (comma-separated, optional)', type: 'text', placeholder: 'e.g. Music Bot / Team server group IDs - these clients never get a welcome message' },
       { key: 'teamGroupIds', label: 'Team Groups for {{temp.teamOnline}} (comma-separated, optional)', type: 'text', placeholder: 'e.g. 6,7' },
@@ -193,7 +195,7 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       const usePoke = cfg.usePokeInstead === 'poke';
       const ignoreGroupIds = (cfg.ignoreGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
       const teamGroupIds = (cfg.teamGroupIds || '').trim();
-      const message = cfg.message || 'Welcome {{event.client_nickname}}!';
+      const message = cfg.message || DEFAULT_WELCOME_MESSAGE;
 
       const nodes: any[] = [];
       const edges: any[] = [];
