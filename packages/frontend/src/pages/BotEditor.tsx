@@ -15,10 +15,11 @@ import {
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
+  BookOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { PlaceholderReference } from '@/components/bots/PlaceholderReference';
+import { PlaceholderReference, PlaceholderReferenceContent } from '@/components/bots/PlaceholderReference';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -164,6 +165,7 @@ function ExpandableTextarea({
   dialogTitle: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showReference, setShowReference] = useState(false);
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -186,18 +188,37 @@ function ExpandableTextarea({
       />
       {hint && <p className="text-[9px] text-muted-foreground/60 mt-0.5">{hint}</p>}
       <Dialog open={expanded} onOpenChange={setExpanded}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogContent className={cn('max-h-[85vh] flex flex-col transition-[max-width]', showReference ? 'max-w-4xl' : 'max-w-2xl')}>
           <DialogHeader>
-            <DialogTitle>{dialogTitle}</DialogTitle>
+            <div className="flex items-center justify-between gap-2">
+              <DialogTitle>{dialogTitle}</DialogTitle>
+              <Button
+                variant={showReference ? 'secondary' : 'outline'}
+                size="sm"
+                className="h-7 text-xs mr-6"
+                onClick={() => setShowReference((v) => !v)}
+              >
+                <BookOpen className="h-3.5 w-3.5 mr-1" /> {showReference ? 'Hide' : 'Show'} Placeholders
+              </Button>
+            </div>
           </DialogHeader>
-          <Textarea
-            className="flex-1 min-h-[400px] text-sm font-mono-data resize-none"
-            placeholder={placeholder}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            autoFocus
-          />
-          {hint && <p className="text-[10px] text-muted-foreground/60">{hint}</p>}
+          <div className={cn('flex-1 min-h-0 flex gap-4', showReference ? 'flex-row' : 'flex-col')}>
+            <div className="flex-1 min-h-0 flex flex-col">
+              <Textarea
+                className="flex-1 min-h-[400px] text-sm font-mono-data resize-none"
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                autoFocus
+              />
+              {hint && <p className="text-[10px] text-muted-foreground/60 mt-1">{hint}</p>}
+            </div>
+            {showReference && (
+              <div className="w-[360px] shrink-0 border-l border-border pl-4">
+                <PlaceholderReferenceContent tabs={['event', 'time', 'var', 'temp', 'exec', 'templates']} />
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
