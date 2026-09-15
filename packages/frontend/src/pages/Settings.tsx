@@ -691,7 +691,7 @@ function UsersTab() {
         </div>
       </div>
 
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="card-hero rounded-md border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">

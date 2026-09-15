@@ -328,7 +328,7 @@ export default function Channels() {
         )}
       </div>
 
-      <Card>
+      <Card className="card-hero">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Volume2 className="h-4 w-4 text-primary" />

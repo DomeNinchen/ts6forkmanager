@@ -146,7 +146,7 @@ export default function Files() {
 
       <div className="grid grid-cols-12 gap-4">
         {/* Channel Selector */}
-        <Card className="col-span-3">
+        <Card className="card-hero col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <Hash className="h-3.5 w-3.5" /> Channels
@@ -178,7 +178,7 @@ export default function Files() {
         </Card>
 
         {/* File List */}
-        <Card className="col-span-9">
+        <Card className="card-hero col-span-9">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

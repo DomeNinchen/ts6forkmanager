@@ -59,7 +59,7 @@ export default function Login() {
             <p className="text-sm text-muted-foreground mt-1">Enter the code from your authenticator app</p>
           </div>
 
-          <Card className="border-border/50 backdrop-blur-xs">
+          <Card className="card-hero border-border/50 backdrop-blur-xs">
             <CardContent className="pt-6">
               <form onSubmit={handleVerifyTotp} className="space-y-4">
                 <div className="space-y-2">
@@ -122,7 +122,7 @@ export default function Login() {
           <p className="text-sm text-muted-foreground mt-1">Server Administration Panel</p>
         </div>
 
-        <Card className="border-border/50 backdrop-blur-xs">
+        <Card className="card-hero border-border/50 backdrop-blur-xs">
           <CardHeader className="pb-4">
             <h2 className="text-sm font-medium text-center text-muted-foreground">Sign in to continue</h2>
           </CardHeader>

@@ -69,7 +69,7 @@ export default function SetupPage() {
           <p className="text-sm text-muted-foreground mt-1">Create your administrator account</p>
         </div>
 
-        <Card className="border-border/50 backdrop-blur-xs">
+        <Card className="card-hero border-border/50 backdrop-blur-xs">
           <CardHeader className="pb-4">
             <h2 className="text-sm font-medium text-center text-muted-foreground">
               This is the first time setup. Create an admin account to get started.

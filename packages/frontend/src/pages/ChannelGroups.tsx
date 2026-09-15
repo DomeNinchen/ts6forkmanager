@@ -19,7 +19,7 @@ export default function ChannelGroups() {
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-semibold">Channel Groups</h1>
-      <Card>
+      <Card className="card-hero">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Groups ({groups.length})</CardTitle>
         </CardHeader>

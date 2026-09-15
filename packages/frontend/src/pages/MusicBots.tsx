@@ -1179,7 +1179,7 @@ function LibraryTab() {
 
       {/* YouTube Results */}
       {showYt && ytResults.length > 0 && (
-        <Card>
+        <Card className="card-hero">
           <CardHeader className="py-2 px-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs">YouTube Results ({ytResults.length})</CardTitle>
@@ -1368,7 +1368,7 @@ function PlaylistsTab() {
 
         {/* Playlist detail */}
         {selectedId && detail ? (
-          <Card>
+          <Card className="card-hero">
             <CardHeader className="py-3 px-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">{detail.name}</CardTitle>
@@ -1831,7 +1831,7 @@ function QueueTab() {
       ) : queue.length === 0 ? (
         <EmptyState icon={ListMusic} title="Queue is empty" />
       ) : (
-        <Card>
+        <Card className="card-hero">
           <CardContent className="p-0">
             {/* Header */}
             <div className="grid grid-cols-[2rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-2 px-3 py-2 text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border/50">
