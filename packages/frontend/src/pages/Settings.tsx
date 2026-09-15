@@ -132,7 +132,7 @@ function AccountTab() {
 
   return (
     <div className="max-w-md">
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Change Password</CardTitle>
         </CardHeader>
@@ -209,7 +209,7 @@ function TwoFactorCard() {
 
   return (
     <>
-      <Card className="mt-4">
+      <Card className="card-hero mt-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Two-Factor Authentication</CardTitle>
           <Badge variant={user?.totpEnabled ? 'default' : 'secondary'} className="text-[10px]">
@@ -338,7 +338,7 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="max-w-lg space-y-4">
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">My Preference</CardTitle>
         </CardHeader>
@@ -359,7 +359,7 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
       </Card>
 
       {isAdmin && (
-        <Card>
+        <Card className="card-hero">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Installation Default</CardTitle>
           </CardHeader>
@@ -442,7 +442,7 @@ function ConnectionsTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {serverList.map((server: any) => (
-          <Card key={server.id}>
+          <Card key={server.id} className="card-hero">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">{server.name}</CardTitle>
@@ -1071,7 +1071,7 @@ function YouTubeTab() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">YouTube Cookies</CardTitle>
         </CardHeader>
@@ -1171,7 +1171,7 @@ function YouTubeTab() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Played Song Storage</CardTitle>
         </CardHeader>
@@ -1241,7 +1241,7 @@ function DebugTab() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Debug Logging</CardTitle>
         </CardHeader>
@@ -1286,7 +1286,7 @@ function DebugTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/50">
+      <Card className="card-hero border-destructive/50">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-destructive flex items-center gap-1.5">
             <AlertTriangle className="h-4 w-4" /> Danger Zone
@@ -1374,7 +1374,7 @@ function RestartTab() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Scheduled Restart</CardTitle>
         </CardHeader>
@@ -1464,7 +1464,7 @@ function SsoTab() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Single Sign-On (OIDC)</CardTitle>
         </CardHeader>
@@ -1543,7 +1543,7 @@ function UpdateStatusTab() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <Card>
+      <Card className="card-hero">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Update Status</CardTitle>
           <Button
