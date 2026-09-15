@@ -46,7 +46,7 @@ export default function VirtualServers() {
 
       <div className="grid gap-3">
         {servers.map((vs: any) => (
-          <Card key={vs.virtualserver_id} className="hover:border-primary/30 transition-colors">
+          <Card key={vs.virtualserver_id} className="card-hero hover:border-primary/30 transition-colors">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
