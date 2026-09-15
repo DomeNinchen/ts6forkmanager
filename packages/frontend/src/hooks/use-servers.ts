@@ -27,6 +27,16 @@ export function useVirtualServerInfo() {
   });
 }
 
+export function useHostInfo() {
+  const { selectedConfigId } = useServerStore();
+  return useQuery({
+    queryKey: ['host-info-stats', selectedConfigId],
+    queryFn: () => serversApi.hostInfo(selectedConfigId!),
+    enabled: !!selectedConfigId,
+    refetchInterval: 10_000,
+  });
+}
+
 export function useConnectionInfo() {
   const { selectedConfigId, selectedSid } = useServerStore();
   return useQuery({
