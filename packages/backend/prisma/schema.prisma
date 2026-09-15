@@ -108,16 +108,6 @@ model TsServerConfig {
   // WebQueryClient is a new query client as far as TS is concerned. Null
   // means "whatever TS assigns by default" (usually "serveradmin").
   queryNickname String?
-  // Which channel the base SSH event connection (EventBridge.connectServer,
-  // used for client-join/leave/move-triggered flows) moves itself into on
-  // connect - purely cosmetic/technical (which channel this identity appears
-  // to "sit in"), no functional effect either way. Null leaves it wherever a
-  // fresh ServerQuery login lands by default (usually the server's channel
-  // 1). Deliberately does NOT affect the separate per-channel SSH command
-  // listeners (EventBridge.connectCommandListener) - those must stay in
-  // whichever channel their own Chat Command trigger is actually configured
-  // for, to receive its text messages.
-  queryHomeChannelId Int?
   enabled      Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -192,9 +192,8 @@ export class SshQueryClient extends EventEmitter {
     });
   }
 
-  /** Shared by registerEvents (optional home channel) and registerCommandListener (required -
-   * a chat command trigger's channel) - looks up this connection's own clid via whoami and
-   * moves it into the given channel. */
+  /** Used by registerCommandListener to enter its chat command trigger's channel -
+   * looks up this connection's own clid via whoami and moves it into the given channel. */
   private async moveSelfToChannel(channelId: number): Promise<void> {
     try {
       const who = await this.executeCommand('whoami');
@@ -220,9 +219,7 @@ export class SshQueryClient extends EventEmitter {
     }
   }
 
-  /** homeChannelId is purely cosmetic (which channel this identity appears to "sit in") -
-   * unset leaves it wherever a fresh ServerQuery login lands by default. */
-  async registerEvents(sid: number, homeChannelId?: number): Promise<void> {
+  async registerEvents(sid: number): Promise<void> {
     if (this.destroyed) return;
     console.log(`[SshQueryClient] Registering events for sid=${sid} on ${this.options.host}`);
     await this.executeCommand(`use sid=${sid}`);
@@ -231,10 +228,6 @@ export class SshQueryClient extends EventEmitter {
     try {
       await this.executeCommand(`clientupdate client_nickname=TS6-WebUI-Bot-${sid}-${this.nickSuffix}`);
     } catch { }
-
-    if (homeChannelId) {
-      await this.moveSelfToChannel(homeChannelId);
-    }
 
     for (const eventType of TS_EVENT_TYPES) {
       const cmd = eventType === 'channel'
