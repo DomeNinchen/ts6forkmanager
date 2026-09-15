@@ -90,6 +90,11 @@ export class ExecutionContext {
     // is fine for names/text but wrong for numeric IDs in a comma-separated list).
     this.exprParser.functions.hasGroup = (clientGroupsCsv: string, groupId: string) =>
       commaListHasExact(clientGroupsCsv, groupId) ? 1 : 0;
+    // Array-aware count, for checking whether a stored WebQuery result (e.g.
+    // via `storeAs`) found anything - length() above is string-only and
+    // would wrongly stringify an array of objects instead of counting rows.
+    this.exprParser.functions.count = (value: unknown) =>
+      Array.isArray(value) ? value.length : String(value ?? '').length;
   }
 
   private applyFilter(value: string, filter: string): string {

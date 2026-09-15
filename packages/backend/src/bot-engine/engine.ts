@@ -36,7 +36,7 @@ import crypto from 'crypto';
  *   action_message:  { targetMode, message } → { actionType:'message', targetMode: modeMap, message }
  *   condition:       { expression } → { nodeType:'condition', expression }
  *   delay:           { delay } → { nodeType:'delay', delayMs: delay }
- *   variable:        { operation, name, value } → { nodeType:'variable', operation, variableName: name, value } (also accepts legacy varName/varValue keys)
+ *   variable:        { operation, name, value, storeAs } → { nodeType:'variable', operation, variableName: name, value, storeAs } (also accepts legacy varName/varValue keys; storeAs only used when operation is 'get', to name the temp.* slot the read value lands in)
  *   log:             { level, message } → { nodeType:'log', level, message }
  *   loop:            { arrayVariable, itemVariable, maxIterations } → { nodeType:'loop', arrayVariable, itemVariable, maxIterations }
  */
@@ -183,7 +183,7 @@ function normalizeFlowData(raw: any): FlowDefinition {
       data = { nodeType: 'delay', label, delayMs: config.delay || config.delayMs || 1000 };
     } else if (nodeType === 'variable') {
       type = 'variable';
-      data = { nodeType: 'variable', label, operation: config.operation || 'set', variableName: config.name || config.varName || '', value: config.value || config.varValue || '' };
+      data = { nodeType: 'variable', label, operation: config.operation || 'set', variableName: config.name || config.varName || '', value: config.value || config.varValue || '', storeAs: config.storeAs || 'variableValue' };
     } else if (nodeType === 'action_generateCode') {
       type = 'action';
       data = { actionType: 'generateCode', label, length: parseInt(config.length, 10) || 5, storeAs: config.storeAs || 'code', numericOnly: config.numericOnly !== false, };

@@ -101,7 +101,18 @@ const NODE_CATEGORIES = [
 ];
 
 function getNodeMeta(type: string): NodeTypeDef | undefined {
-  return ALL_NODE_TYPES.find((n) => n.type === type);
+  const meta = ALL_NODE_TYPES.find((n) => n.type === type);
+  if (!meta) return meta;
+  // Every action node the backend dispatches through its generic 'action'
+  // case can optionally have an 'error' edge wired - followed instead of
+  // aborting the whole flow when the action throws. Added here centrally
+  // (not on ~30 individual definitions above) so it applies uniformly;
+  // excludes action_animatedChannel, whose lifecycle isn't per-execution
+  // (empty outputs already).
+  if (type.startsWith('action_') && meta.handles.outputs.length > 0 && !meta.handles.outputs.includes('error')) {
+    return { ...meta, handles: { ...meta.handles, outputs: [...meta.handles.outputs, 'error'] } };
+  }
+  return meta;
 }
 
 // --- Constants ---
@@ -453,13 +464,15 @@ export default function BotEditor() {
               const dx = Math.abs(tgt.x - src.x) * 0.5;
               const isConditionTrue = edge.sourcePort === 'true';
               const isConditionFalse = edge.sourcePort === 'false';
+              const isErrorEdge = edge.sourcePort === 'error';
+              const edgeColor = isConditionTrue ? '#22c55e' : isConditionFalse ? '#ef4444' : isErrorEdge ? '#f97316' : 'hsl(var(--primary))';
 
               return (
                 <g key={edge.id} className="pointer-events-auto cursor-pointer" onClick={(ev) => { ev.stopPropagation(); deleteEdge(edge.id); }}>
                   <path
                     d={`M ${src.x} ${src.y} C ${src.x + dx} ${src.y}, ${tgt.x - dx} ${tgt.y}, ${tgt.x} ${tgt.y}`}
                     fill="none"
-                    stroke={isConditionTrue ? '#22c55e' : isConditionFalse ? '#ef4444' : 'hsl(var(--primary))'}
+                    stroke={edgeColor}
                     strokeWidth={2}
                     strokeOpacity={0.5}
                   />
@@ -472,7 +485,7 @@ export default function BotEditor() {
                   />
                   {/* Arrow at target */}
                   <circle cx={tgt.x} cy={tgt.y} r={3}
-                    fill={isConditionTrue ? '#22c55e' : isConditionFalse ? '#ef4444' : 'hsl(var(--primary))'}
+                    fill={edgeColor}
                     fillOpacity={0.8}
                   />
                 </g>
@@ -561,6 +574,7 @@ export default function BotEditor() {
                   const pos = getOutputHandlePos(node, i, outputs.length);
                   const isTrue = port === 'true';
                   const isFalse = port === 'false';
+                  const isError = port === 'error';
                   return (
                     <div
                       key={`out-${port}`}
@@ -575,6 +589,7 @@ export default function BotEditor() {
                           'rounded-full border-2 border-card cursor-crosshair transition-colors',
                           isTrue ? 'bg-green-500 hover:bg-green-400' :
                           isFalse ? 'bg-red-500 hover:bg-red-400' :
+                          isError ? 'bg-orange-500 hover:bg-orange-400' :
                           'bg-primary/60 hover:bg-primary',
                         )}
                         style={{ width: HANDLE_R * 2, height: HANDLE_R * 2 }}
@@ -584,7 +599,7 @@ export default function BotEditor() {
                       {outputs.length > 1 && (
                         <span className={cn(
                           'text-[8px] font-mono-data ml-1 select-none pointer-events-none',
-                          isTrue ? 'text-green-400' : isFalse ? 'text-red-400' : 'text-muted-foreground',
+                          isTrue ? 'text-green-400' : isFalse ? 'text-red-400' : isError ? 'text-orange-400' : 'text-muted-foreground',
                         )}>
                           {port}
                         </span>
@@ -1428,13 +1443,32 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'variable' && (
                     <div className="space-y-2">
                       <div>
+                        <Label className="text-[10px] text-muted-foreground">Operation</Label>
+                        <Select value={selectedNodeData.config.operation || 'set'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, operation: v } } : n))}>
+                          <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="set">Set</SelectItem>
+                            <SelectItem value="increment">Increment</SelectItem>
+                            <SelectItem value="append">Append</SelectItem>
+                            <SelectItem value="get">Get (read into temp.*)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
                         <Label className="text-[10px] text-muted-foreground">Variable Name</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="myVar" value={selectedNodeData.config.name || selectedNodeData.config.varName || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, name: e.target.value } } : n))} />
                       </div>
-                      <div>
-                        <Label className="text-[10px] text-muted-foreground">Value (Expression)</Label>
-                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="event.clid" value={selectedNodeData.config.value || selectedNodeData.config.varValue || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, value: e.target.value } } : n))} />
-                      </div>
+                      {selectedNodeData.config.operation === 'get' ? (
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground">Store As</Label>
+                          <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="variableValue" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
+                        </div>
+                      ) : (
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground">Value (Expression)</Label>
+                          <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="event.clid" value={selectedNodeData.config.value || selectedNodeData.config.varValue || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, value: e.target.value } } : n))} />
+                        </div>
+                      )}
                     </div>
                   )}
 

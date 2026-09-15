@@ -216,6 +216,7 @@ export function PlaceholderReference({ open, onOpenChange }: Props) {
               <P code="length(str)" desc="String length" example="length(event.msg) > 100" />
               <P code="split(str, sep, idx)" desc="Split string and get element at index" example="split(event.command_args, ' ', 0)" />
               <P code="hasGroup(csv, id)" desc="Exact match against a comma-separated ID list - use this for server group IDs, not contains(), which would wrongly match group '1' against '10' or '21' too" example="hasGroup(event.client_servergroups, '6')" />
+              <P code="count(value)" desc="Row count of a stored WebQuery result (array), or string length otherwise - use to check whether a lookup found anything" example="count(temp.ownership) > 0" />
 
               <SectionHeader>Condition Examples</SectionHeader>
               <div className="text-xs text-muted-foreground space-y-1 mt-1">

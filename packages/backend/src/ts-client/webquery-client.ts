@@ -52,6 +52,14 @@ export class WebQueryClient {
       const data = response.data;
 
       if (data.status && data.status.code !== 0) {
+        // 1281 = ERROR_database_empty_result - TeamSpeak's own WebQuery docs
+        // say this "can happen if there are no entries in a database, but for
+        // client purposes you may wish to treat this as OK" - e.g. a list
+        // command genuinely finding zero matching rows is not a failure.
+        if (data.status.code === 1281) {
+          if (debug) console.log(`[WebQuery ${this.target}] ← ok (empty result set)`);
+          return [];
+        }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${data.status.code} msg=${data.status.message}`);
         throw new TSApiError(data.status.code, data.status.message);
       }
@@ -84,6 +92,10 @@ export class WebQueryClient {
 
       const data = response.data;
       if (data.status && data.status.code !== 0) {
+        if (data.status.code === 1281) {
+          if (debug) console.log(`[WebQuery ${this.target}] ← ok (empty result set)`);
+          return [];
+        }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${data.status.code} msg=${data.status.message}`);
         throw new TSApiError(data.status.code, data.status.message);
       }
@@ -93,6 +105,10 @@ export class WebQueryClient {
     } catch (error: any) {
       if (error instanceof TSApiError) throw error;
       if (error.response?.data?.status) {
+        if (error.response.data.status.code === 1281) {
+          if (debug) console.log(`[WebQuery ${this.target}] ← ok (empty result set)`);
+          return [];
+        }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${error.response.data.status.code} msg=${error.response.data.status.message}`);
         throw new TSApiError(
           error.response.data.status.code,
