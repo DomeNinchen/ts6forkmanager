@@ -294,6 +294,7 @@ function TwoFactorCard() {
 }
 
 const ACCENT_PRESETS: { value: AccentPreset; label: string; swatch: string }[] = [
+  { value: 'violet', label: 'Violet', swatch: 'hsl(252 100% 68%)' },
   { value: 'teal', label: 'Teal', swatch: 'hsl(186 72% 42%)' },
   { value: 'red', label: 'Red', swatch: 'hsl(355 75% 50%)' },
   { value: 'blue', label: 'Blue', swatch: 'hsl(217 75% 52%)' },

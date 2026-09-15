@@ -217,7 +217,7 @@ settingsRoutes.put('/oidc', requireAdmin, async (req: Request, res: Response, ne
   } catch (err) { next(err); }
 });
 
-const VALID_ACCENT_PRESETS = ['teal', 'red', 'blue', 'yellow', 'green'] as const;
+const VALID_ACCENT_PRESETS = ['violet', 'teal', 'red', 'blue', 'yellow', 'green'] as const;
 type AccentPreset = (typeof VALID_ACCENT_PRESETS)[number];
 
 // GET /api/settings/webgui-theme — the installation-wide default accent preset (any logged-in
@@ -226,7 +226,7 @@ settingsRoutes.get('/webgui-theme', async (req: Request, res: Response, next) =>
   try {
     const prisma = req.app.locals.prisma;
     const row = await prisma.appSetting.findUnique({ where: { key: 'webgui_accent_preset' } });
-    const preset = (row?.value && (VALID_ACCENT_PRESETS as readonly string[]).includes(row.value)) ? row.value : 'teal';
+    const preset = (row?.value && (VALID_ACCENT_PRESETS as readonly string[]).includes(row.value)) ? row.value : 'violet';
     res.json({ preset });
   } catch (err) { next(err); }
 });

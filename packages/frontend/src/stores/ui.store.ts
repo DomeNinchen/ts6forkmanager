@@ -35,7 +35,7 @@ export const useUiStore = create<UiStore>()(
       sidebarCollapsed: false,
       theme: 'dark',
       accentOverride: null,
-      installDefaultAccent: 'teal',
+      installDefaultAccent: 'violet',
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       toggleTheme: () => {
@@ -69,7 +69,7 @@ export const useUiStore = create<UiStore>()(
         if (state?.theme) {
           applyTheme(state.theme);
         }
-        applyAccent(state?.accentOverride ?? 'teal');
+        applyAccent(state?.accentOverride ?? 'violet');
       },
     },
   ),

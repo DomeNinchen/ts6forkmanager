@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap')
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap')
 layer(base);
 
 @import 'tailwindcss';
@@ -64,6 +64,18 @@ layer(base);
 
 @utility font-mono-data {
   font-family: 'JetBrains Mono', monospace;
+}
+
+@utility font-display {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* Command Deck's angular signature treatment - reserved for a page's few
+   "hero" surfaces (see Dashboard), never for dense/tabular pages, which stay
+   on the plain Card look for legibility (see the WebGui redesign directions
+   artifact + the density decision that came out of it). */
+@utility card-hero {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
 }
 
 @utility grid-bg {
@@ -134,7 +146,7 @@ layer(base);
     --border: 214 20% 88%;
     --input: 214 20% 88%;
     --ring: 186 72% 42%;
-    --radius: 0.5rem;
+    --radius: 0.25rem;
     --sidebar: 214 20% 95%;
     --sidebar-foreground: 215 25% 30%;
     --sidebar-accent: 214 20% 90%;
@@ -148,35 +160,47 @@ layer(base);
   }
 
   .dark {
-    --background: 220 25% 6%;
-    --foreground: 213 20% 85%;
-    --card: 218 25% 8%;
-    --card-foreground: 213 20% 85%;
-    --popover: 218 28% 10%;
-    --popover-foreground: 213 20% 85%;
-    --primary: 186 72% 42%;
-    --primary-foreground: 220 25% 4%;
-    --secondary: 215 25% 14%;
-    --secondary-foreground: 213 20% 75%;
-    --muted: 215 25% 12%;
-    --muted-foreground: 215 16% 50%;
-    --accent: 215 25% 14%;
-    --accent-foreground: 213 20% 85%;
+    /* Command Deck base palette - deep ink navy, violet/cyan brand accent (see the WebGui redesign directions artifact) */
+    --background: 225 38% 6%;
+    --foreground: 228 45% 94%;
+    --card: 227 39% 12%;
+    --card-foreground: 228 45% 94%;
+    --popover: 227 39% 12%;
+    --popover-foreground: 228 45% 94%;
+    --primary: 252 100% 68%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 226 37% 16%;
+    --secondary-foreground: 228 30% 88%;
+    --muted: 226 37% 16%;
+    --muted-foreground: 227 22% 58%;
+    --accent: 226 37% 16%;
+    --accent-foreground: 228 45% 94%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 215 22% 14%;
-    --input: 215 22% 16%;
-    --ring: 186 72% 42%;
-    --sidebar: 220 30% 5%;
-    --sidebar-foreground: 213 18% 55%;
-    --sidebar-accent: 215 25% 10%;
-    --sidebar-accent-foreground: 186 72% 55%;
-    --sidebar-border: 215 22% 12%;
-    --chart-1: 186 72% 50%;
+    --border: 226 33% 25%;
+    --input: 226 33% 25%;
+    --ring: 252 100% 68%;
+    --sidebar: 227 39% 12%;
+    --sidebar-foreground: 227 22% 58%;
+    --sidebar-accent: 226 37% 16%;
+    --sidebar-accent-foreground: 252 100% 76%;
+    --sidebar-border: 226 30% 20%;
+    --chart-1: 252 100% 74%;
     --chart-2: 160 60% 50%;
     --chart-3: 280 55% 60%;
     --chart-4: 40 80% 60%;
     --chart-5: 0 65% 60%;
+  }
+
+  /* WebGui accent presets layer on top of the Command Deck base above - 'violet' IS that base (no
+     override needed), the rest of this block only ever touches brand/interactive tokens, never
+     the structural neutrals (background/card/border/muted) set above. */
+  .dark[data-accent='teal'] {
+    --primary: 186 72% 42%;
+    --primary-foreground: 220 25% 4%;
+    --ring: 186 72% 42%;
+    --sidebar-accent-foreground: 186 72% 55%;
+    --chart-1: 186 72% 50%;
   }
 
   /*
@@ -221,7 +245,12 @@ layer(base);
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Outfit', system-ui, sans-serif;
+    font-family: 'Manrope', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.01em;
   }
 
   /* Fix Radix ScrollArea display:table bug preventing scrolling */
