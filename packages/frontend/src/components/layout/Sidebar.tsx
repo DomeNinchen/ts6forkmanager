@@ -107,17 +107,15 @@ export function Sidebar() {
         <div className={cn('flex items-center h-14 px-4 border-b border-sidebar-border', sidebarCollapsed && 'justify-center px-0')}>
           {!sidebarCollapsed ? (
             <Link to="/dashboard" className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-md bg-primary/20 flex items-center justify-center">
-                <span className="text-primary font-bold text-xs font-mono-data">TS</span>
-              </div>
+              <img src="/logo-256.png" alt="" className="h-7 w-7 object-contain" />
               <div>
                 <span className="text-sm font-semibold text-sidebar-accent-foreground">TS6</span>
                 <span className="text-sm text-sidebar-foreground ml-1">Manager</span>
               </div>
             </Link>
           ) : (
-            <Link to="/dashboard" className="h-7 w-7 rounded-md bg-primary/20 flex items-center justify-center">
-              <span className="text-primary font-bold text-xs font-mono-data">TS</span>
+            <Link to="/dashboard" className="flex items-center justify-center">
+              <img src="/logo-256.png" alt="TS6 Manager" className="h-7 w-7 object-contain" />
             </Link>
           )}
         </div>
