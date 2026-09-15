@@ -13,13 +13,14 @@ import {
   ArrowLeft, Save, HelpCircle, Zap, MessageSquare, Ban, UserX, ArrowRightLeft,
   Clock, GitBranch, Variable, FileText, Webhook, Terminal, Plus, Trash2,
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
-  Moon, Timer, Megaphone, Award, Shield,
+  Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PlaceholderReference } from '@/components/bots/PlaceholderReference';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // --- Node type definitions ---
 type HandleConfig = {
@@ -147,6 +148,60 @@ interface FlowEdge {
   sourcePort: string;
   target: string;
   targetPort: string;
+}
+
+// Textarea with an "expand" button that opens a large modal editor —
+// the side panel is a fixed 256px, too narrow for comfortable long-text editing.
+function ExpandableTextarea({
+  label, value, onChange, placeholder, hint, className, dialogTitle,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  hint?: string;
+  className?: string;
+  dialogTitle: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <Label className="text-[10px] text-muted-foreground">{label}</Label>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 -mr-1 text-muted-foreground hover:text-foreground"
+          onClick={() => setExpanded(true)}
+          title="Groß bearbeiten"
+        >
+          <Maximize2 className="h-3 w-3" />
+        </Button>
+      </div>
+      <Textarea
+        className={cn('text-xs mt-1 resize-y font-mono-data', className)}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {hint && <p className="text-[9px] text-muted-foreground/60 mt-0.5">{hint}</p>}
+      <Dialog open={expanded} onOpenChange={setExpanded}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            className="flex-1 min-h-[400px] text-sm font-mono-data resize-none"
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            autoFocus
+          />
+          {hint && <p className="text-[10px] text-muted-foreground/60">{hint}</p>}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
 
 export default function BotEditor() {
@@ -829,26 +884,23 @@ export default function BotEditor() {
                           />
                         </div>
                       )}
-                      <div>
-                        <Label className="text-[10px] text-muted-foreground">Message</Label>
-                        <Textarea
-                          className="min-h-[120px] text-xs mt-1 resize-y font-mono-data"
-                          placeholder={"Dies ist die HelpList:\n\n!create - erstellt einen Channel\n!delete - löscht deinen Channel\n!help - zeigt diese Liste"}
-                          value={selectedNodeData.config.message || ''}
-                          onChange={(e) =>
-                            setNodes((prev) =>
-                              prev.map((n) =>
-                                n.id === selectedNode
-                                  ? { ...n, config: { ...n.config, message: e.target.value } }
-                                  : n
-                              )
+                      <ExpandableTextarea
+                        label="Message"
+                        dialogTitle="Nachricht bearbeiten"
+                        className="min-h-[120px]"
+                        placeholder={"Dies ist die HelpList:\n\n!create - erstellt einen Channel\n!delete - löscht deinen Channel\n!help - zeigt diese Liste"}
+                        value={selectedNodeData.config.message || ''}
+                        onChange={(value) =>
+                          setNodes((prev) =>
+                            prev.map((n) =>
+                              n.id === selectedNode
+                                ? { ...n, config: { ...n.config, message: value } }
+                                : n
                             )
-                          }
-                        />
-                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          Tipp: Zeilenumbrüche werden übernommen.
-                        </p>
-                      </div>
+                          )
+                        }
+                        hint="Tipp: Zeilenumbrüche werden übernommen."
+                      />
                     </div>
                   )}
 
@@ -971,10 +1023,14 @@ export default function BotEditor() {
                         <Label className="text-[10px] text-muted-foreground">Channel Topic</Label>
                         <Input className="h-7 text-xs mt-1" placeholder="Optional" value={selectedNodeData.config.channel_topic || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_topic: e.target.value } } : n))} />
                       </div>
-                      <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel Description</Label>
-                        <Textarea className="text-xs mt-1 min-h-[60px] font-mono-data" placeholder="{{temp.apiResult}}" value={selectedNodeData.config.channel_description || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_description: e.target.value } } : n))} />
-                      </div>
+                      <ExpandableTextarea
+                        label="Channel Description"
+                        dialogTitle="Channel-Beschreibung bearbeiten"
+                        className="min-h-[60px]"
+                        placeholder="{{temp.apiResult}}"
+                        value={selectedNodeData.config.channel_description || ''}
+                        onChange={(value) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_description: value } } : n))}
+                      />
                       <div>
                         <Label className="text-[10px] text-muted-foreground">Channel Password (optional)</Label>
                         <Input

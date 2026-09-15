@@ -87,7 +87,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Runs as a Docker sidecar container alongside the backend
 
 ### Bot Flow Engine
-- Visual flow editor with drag-and-drop node canvas
+- Visual flow editor with drag-and-drop node canvas; a node's Message/Channel Description field can be expanded into a larger popup editor for comfortable editing of longer, multi-line text
 - Triggers: TS3 events, cron schedules, webhooks (with mandatory secrets), chat commands (global or channel-specific)
 - Actions: kick, ban, move, message, poke, channel create/edit/delete, HTTP requests, WebQuery commands, counting online clients (optionally restricted to specific server groups), adding/removing an entry from a persistent list. Action nodes can optionally have an "error" output - followed instead of aborting the whole flow when the action fails
 - Conditions, variables (set/increment/append/get - "get" reads a variable into a temp value for use elsewhere), delays, logging
