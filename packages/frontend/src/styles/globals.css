@@ -192,6 +192,34 @@ layer(base);
     --chart-5: 0 65% 60%;
   }
 
+  /* OLED-Black base theme (Settings → WebGui → Base Theme) - an alternate structural
+     palette to the Command Deck navy above: a true #000 page background (real OLED power
+     savings) with surfaces lifted just enough to stay legible against it, fully neutral
+     (no hue) rather than navy-tinted. Deliberately independent of the accent system below -
+     never touches --primary/--ring/--sidebar-accent-foreground/--chart-1, so any accent
+     preset still combines with either base theme. 'command-deck' needs no block - it's the
+     .dark defaults above. */
+  .dark[data-base-theme='oled'] {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 95%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 95%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --sidebar: 0 0% 4%;
+    --sidebar-foreground: 0 0% 60%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-border: 0 0% 15%;
+  }
+
   /* WebGui accent presets layer on top of the Command Deck base above - 'violet' IS that base (no
      override needed), the rest of this block only ever touches brand/interactive tokens, never
      the structural neutrals (background/card/border/muted) set above. */

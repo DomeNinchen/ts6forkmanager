@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AccentPreset } from '@/api/settings.api';
+import type { AccentPreset, BaseTheme } from '@/api/settings.api';
 
 function applyTheme(theme: 'dark' | 'light') {
   if (theme === 'dark') {
@@ -14,6 +14,10 @@ function applyAccent(preset: AccentPreset) {
   document.documentElement.dataset.accent = preset;
 }
 
+function applyBaseTheme(theme: BaseTheme) {
+  document.documentElement.dataset.baseTheme = theme;
+}
+
 interface UiStore {
   sidebarCollapsed: boolean;
   /** Which sidebar nav section labels (e.g. "Management") are collapsed - independent of the whole-sidebar collapse above. */
@@ -23,6 +27,9 @@ interface UiStore {
   accentOverride: AccentPreset | null;
   /** The admin-set installation-wide default (Settings → WebGui) - fetched fresh on load, never persisted locally. */
   installDefaultAccent: AccentPreset;
+  /** Same personal-override-vs-installation-default pattern as the accent above, but for the structural background/surface palette (e.g. OLED-Black) rather than the brand color. */
+  baseThemeOverride: BaseTheme | null;
+  installDefaultBaseTheme: BaseTheme;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSection: (label: string) => void;
@@ -30,6 +37,8 @@ interface UiStore {
   setTheme: (theme: 'dark' | 'light') => void;
   setAccentOverride: (preset: AccentPreset | null) => void;
   setInstallDefaultAccent: (preset: AccentPreset) => void;
+  setBaseThemeOverride: (theme: BaseTheme | null) => void;
+  setInstallDefaultBaseTheme: (theme: BaseTheme) => void;
 }
 
 export const useUiStore = create<UiStore>()(
@@ -40,6 +49,8 @@ export const useUiStore = create<UiStore>()(
       theme: 'dark',
       accentOverride: null,
       installDefaultAccent: 'violet',
+      baseThemeOverride: null,
+      installDefaultBaseTheme: 'command-deck',
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       toggleSection: (label) =>
@@ -61,22 +72,32 @@ export const useUiStore = create<UiStore>()(
         set({ installDefaultAccent: preset });
         applyAccent(get().accentOverride ?? preset);
       },
+      setBaseThemeOverride: (theme) => {
+        set({ baseThemeOverride: theme });
+        applyBaseTheme(theme ?? get().installDefaultBaseTheme);
+      },
+      setInstallDefaultBaseTheme: (theme) => {
+        set({ installDefaultBaseTheme: theme });
+        applyBaseTheme(get().baseThemeOverride ?? theme);
+      },
     }),
     {
       name: 'ts6-ui',
-      // installDefaultAccent always comes fresh from the server (see useWebguiThemeSync) -
-      // persisting a stale copy would let a browser miss an admin's later change to it.
+      // installDefaultAccent/installDefaultBaseTheme always come fresh from the server (see
+      // useWebguiThemeSync) - persisting a stale copy would let a browser miss an admin's later change to it.
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         collapsedSections: state.collapsedSections,
         theme: state.theme,
         accentOverride: state.accentOverride,
+        baseThemeOverride: state.baseThemeOverride,
       }),
       onRehydrateStorage: () => (state) => {
         if (state?.theme) {
           applyTheme(state.theme);
         }
         applyAccent(state?.accentOverride ?? 'violet');
+        applyBaseTheme(state?.baseThemeOverride ?? 'command-deck');
       },
     },
   ),

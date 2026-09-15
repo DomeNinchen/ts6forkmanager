@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type AccentPreset } from '@/api/settings.api';
+import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type AccentPreset, type BaseTheme } from '@/api/settings.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
-import { useSetWebguiTheme } from '@/hooks/use-webgui-theme';
+import { useSetWebguiTheme, useSetWebguiBaseTheme } from '@/hooks/use-webgui-theme';
 import { useUiStore } from '@/stores/ui.store';
 import { cn } from '@/lib/utils';
 
@@ -325,16 +325,52 @@ function AccentSwatchPicker({ value, onChange, disabled }: { value: AccentPreset
   );
 }
 
+const BASE_THEME_PRESETS: { value: BaseTheme; label: string; description: string; preview: string }[] = [
+  { value: 'command-deck', label: 'Command Deck', description: 'Deep navy - the default look.', preview: 'hsl(225 38% 6%)' },
+  { value: 'oled', label: 'OLED-Black', description: 'True black background - saves power on OLED screens.', preview: 'hsl(0 0% 0%)' },
+];
+
+function BaseThemeSwatchPicker({ value, onChange, disabled }: { value: BaseTheme | null; onChange: (theme: BaseTheme) => void; disabled?: boolean }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {BASE_THEME_PRESETS.map((t) => (
+        <button
+          key={t.value}
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange(t.value)}
+          title={t.description}
+          className={cn(
+            'flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors',
+            value === t.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          <span className="h-3 w-3 rounded-full border border-border/50" style={{ background: t.preview }} />
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
   const { data: installTheme, isLoading } = useQuery({
     queryKey: ['webgui-theme'],
     queryFn: settingsApi.getWebguiTheme,
   });
+  const { data: installBaseTheme, isLoading: isLoadingBaseTheme } = useQuery({
+    queryKey: ['webgui-base-theme'],
+    queryFn: settingsApi.getWebguiBaseTheme,
+  });
   const setInstallTheme = useSetWebguiTheme();
+  const setInstallBaseTheme = useSetWebguiBaseTheme();
   const accentOverride = useUiStore((s) => s.accentOverride);
   const setAccentOverride = useUiStore((s) => s.setAccentOverride);
+  const baseThemeOverride = useUiStore((s) => s.baseThemeOverride);
+  const setBaseThemeOverride = useUiStore((s) => s.setBaseThemeOverride);
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading || isLoadingBaseTheme) return <PageLoader />;
 
   return (
     <div className="max-w-lg space-y-4">
@@ -374,6 +410,47 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
                 onError: () => toast.error('Failed to update installation accent'),
               })}
               disabled={setInstallTheme.isPending}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">My Base Theme</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            The background/surface look, independent of the accent color above. Overrides the installation default below, just for you.
+          </p>
+          <BaseThemeSwatchPicker
+            value={baseThemeOverride ?? installBaseTheme?.theme ?? 'command-deck'}
+            onChange={(theme) => setBaseThemeOverride(theme === installBaseTheme?.theme ? null : theme)}
+          />
+          {baseThemeOverride && (
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setBaseThemeOverride(null)}>
+              Reset to installation default
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {isAdmin && (
+        <Card className="card-hero">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Installation Default Base Theme</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Applies to every user who hasn't set their own base theme preference above.
+            </p>
+            <BaseThemeSwatchPicker
+              value={installBaseTheme?.theme ?? 'command-deck'}
+              onChange={(theme) => setInstallBaseTheme.mutate(theme, {
+                onSuccess: () => toast.success(`Installation base theme set to ${BASE_THEME_PRESETS.find((t) => t.value === theme)?.label}`),
+                onError: () => toast.error('Failed to update installation base theme'),
+              })}
+              disabled={setInstallBaseTheme.isPending}
             />
           </CardContent>
         </Card>

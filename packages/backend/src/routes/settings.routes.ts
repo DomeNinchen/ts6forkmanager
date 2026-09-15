@@ -250,6 +250,40 @@ settingsRoutes.put('/webgui-theme', requireAdmin, async (req: Request, res: Resp
   } catch (err) { next(err); }
 });
 
+const VALID_BASE_THEMES = ['command-deck', 'oled'] as const;
+type BaseTheme = (typeof VALID_BASE_THEMES)[number];
+
+// GET /api/settings/webgui-base-theme — the installation-wide default base theme (background/
+// surface palette), independent of the accent preset above - any logged-in user needs to read
+// this so it can be applied for everyone on load.
+settingsRoutes.get('/webgui-base-theme', async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const row = await prisma.appSetting.findUnique({ where: { key: 'webgui_base_theme' } });
+    const theme = (row?.value && (VALID_BASE_THEMES as readonly string[]).includes(row.value)) ? row.value : 'command-deck';
+    res.json({ theme });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/webgui-base-theme — admin sets the installation-wide default (individual
+// users can still locally override it for themselves; that override never touches this setting)
+settingsRoutes.put('/webgui-base-theme', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { theme } = req.body;
+    if (!VALID_BASE_THEMES.includes(theme)) {
+      throw new AppError(400, `Unknown base theme: ${theme}`);
+    }
+    const prisma = req.app.locals.prisma;
+    await prisma.appSetting.upsert({
+      where: { key: 'webgui_base_theme' },
+      create: { key: 'webgui_base_theme', value: theme },
+      update: { value: theme },
+    });
+    console.log(`[Settings] WebGui base theme set to '${theme}'`);
+    res.json({ theme: theme as BaseTheme });
+  } catch (err) { next(err); }
+});
+
 // GET /api/settings/music-cache — whether chat-played (!play/!queue/!stream) songs are kept in the library or cleaned up after an hour
 settingsRoutes.get('/music-cache', requireAdmin, async (req: Request, res: Response, next) => {
   try {
