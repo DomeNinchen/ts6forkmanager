@@ -23,9 +23,11 @@ interface SatelliteStatProps {
   accentColor?: string;
 }
 
-function SatelliteStat({ icon: Icon, label, value, sub, accentColor = 'text-foreground' }: SatelliteStatProps) {
+/** One compact stat inside the unified hero card below - no border/background of its own, just
+    padding; separation between cells comes from the parent's divide-x/y lines. */
+function StatCell({ icon: Icon, label, value, sub, accentColor = 'text-foreground' }: SatelliteStatProps) {
   return (
-    <div className="card-hero flex items-center justify-between gap-3 border border-border bg-card px-4 py-3">
+    <div className="flex items-center justify-between gap-3 p-5">
       <div>
         <p className="font-display text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
         <p className={`text-lg font-bold font-mono-data leading-tight ${accentColor}`}>{value}</p>
@@ -216,31 +218,35 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Hero + satellite cluster - Online Users is the one number this whole page exists to
-          show at a glance, so it gets the dominant arc readout; everything else orbits it. */}
-      <div className="flex flex-col lg:flex-row gap-4 items-stretch">
-        <Card className="card-hero lg:w-72 shrink-0">
-          <CardContent className="p-6 flex flex-col items-center text-center h-full justify-center">
-            <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">Online Users</p>
-            <ArcGauge percent={data.maxClients ? data.onlineUsers / data.maxClients : 0} />
-            <p className="text-3xl font-bold font-mono-data text-primary -mt-3">
-              {data.onlineUsers}<span className="text-base font-medium text-muted-foreground">/{data.maxClients}</span>
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">of {data.maxClients} slots</p>
-          </CardContent>
-        </Card>
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 flex-1">
-          <SatelliteStat icon={Hash} label="Channels" value={data.channelCount} accentColor="text-violet-400" />
-          <SatelliteStat icon={Clock} label="Uptime" value={formatUptime(data.uptime)} accentColor="text-emerald-400" />
-          <SatelliteStat
-            icon={Activity}
-            label="Ping"
-            value={`${parseFloat(String(data.ping || 0)).toFixed(1)}ms`}
-            sub={`Loss: ${(parseFloat(String(data.packetloss || 0)) * 100).toFixed(2)}%`}
-            accentColor="text-amber-400"
-          />
-        </div>
-      </div>
+      {/* Hero + satellite cluster, all one field per the user's own preference (matching the
+          mockup more closely than the first pass, which had split this into 4 separate boxes):
+          Online Users is the one number this whole page exists to show at a glance, so it gets
+          the dominant arc readout; everything else sits alongside it in the same card. */}
+      <Card className="card-hero">
+        <CardContent className="p-0">
+          <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-border">
+            <div className="p-6 flex flex-col items-center text-center lg:w-64 shrink-0">
+              <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">Online Users</p>
+              <ArcGauge percent={data.maxClients ? data.onlineUsers / data.maxClients : 0} />
+              <p className="text-3xl font-bold font-mono-data text-primary -mt-3">
+                {data.onlineUsers}<span className="text-base font-medium text-muted-foreground">/{data.maxClients}</span>
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">of {data.maxClients} slots</p>
+            </div>
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+              <StatCell icon={Hash} label="Channels" value={data.channelCount} accentColor="text-violet-400" />
+              <StatCell icon={Clock} label="Uptime" value={formatUptime(data.uptime)} accentColor="text-emerald-400" />
+              <StatCell
+                icon={Activity}
+                label="Ping"
+                value={`${parseFloat(String(data.ping || 0)).toFixed(1)}ms`}
+                sub={`Loss: ${(parseFloat(String(data.packetloss || 0)) * 100).toFixed(2)}%`}
+                accentColor="text-amber-400"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Bandwidth + Detail panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
