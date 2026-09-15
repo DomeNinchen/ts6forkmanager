@@ -178,35 +178,60 @@ serverRoutes.post('/:configId/bot-identity', requireRole('admin'), async (req: R
     const pool: ConnectionPool = req.app.locals.connectionPool;
     const adminClient = pool.getClient(id);
 
-    // A fresh query login starts in whatever default group new ServerQuery
-    // clients get (usually little to no permissions) - without this, every
-    // bot-flow action would fail with "insufficient client permissions".
-    // Mirror whatever server group(s) the admin identity itself is in, so the
-    // new identity can do everything a bot flow could already do before.
-    const whoami = await adminClient.execute(1, 'whoami');
-    const adminCldbid = whoami?.[0]?.client_database_id;
-    const adminGroups = adminCldbid ? await adminClient.execute(1, 'servergroupsbyclientid', { cldbid: adminCldbid }) : [];
+    // WebQuery always returns numeric fields as strings - kept as-is here
+    // since it's only ever fed back into other WebQuery calls, until the
+    // final Prisma write below, which needs a real Int.
+    let cldbid: number | string | undefined = server.botCldbid ?? undefined;
 
-    const loginResult = await adminClient.executePost(0, 'queryloginadd', { client_login_name: name });
-    const cldbid = loginResult?.[0]?.cldbid;
-    if (!cldbid) throw new AppError(502, 'TeamSpeak did not return a client database ID for the new query login');
+    if (cldbid) {
+      // Already provisioned (this call is a reissue, e.g. to pick up a scope
+      // fix) - the underlying ServerQuery login already exists and is
+      // already in the right server groups, so skip straight to minting a
+      // fresh key for it.
+    } else if (server.botApiKey && server.botQueryName) {
+      // Provisioned before botCldbid existed - look up the same login by the
+      // name it was actually created with rather than creating a duplicate.
+      const existing = await adminClient.executePost(0, 'queryloginlist', { pattern: server.botQueryName });
+      cldbid = existing?.[0]?.cldbid;
+      if (!cldbid) throw new AppError(502, 'Could not find the existing bot identity to reissue its key');
+    } else {
+      // First-time provisioning. A fresh query login starts in whatever
+      // default group new ServerQuery clients get (usually little to no
+      // permissions) - without this, every bot-flow action would fail with
+      // "insufficient client permissions". Mirror whatever server group(s)
+      // the admin identity itself is in, so the new identity can do
+      // everything a bot flow could already do before.
+      const whoami = await adminClient.execute(1, 'whoami');
+      const adminCldbid = whoami?.[0]?.client_database_id;
+      const adminGroups = adminCldbid ? await adminClient.execute(1, 'servergroupsbyclientid', { cldbid: adminCldbid }) : [];
 
-    for (const group of adminGroups ?? []) {
-      if (!group.sgid) continue;
-      try {
-        await adminClient.executePost(1, 'servergroupaddclient', { sgid: group.sgid, cldbid });
-      } catch (err: any) {
-        console.warn(`[servers.routes] Failed to add new bot identity (cldbid=${cldbid}) to server group ${group.sgid}: ${err.message}`);
+      const loginResult = await adminClient.executePost(0, 'queryloginadd', { client_login_name: name });
+      cldbid = loginResult?.[0]?.cldbid;
+      if (!cldbid) throw new AppError(502, 'TeamSpeak did not return a client database ID for the new query login');
+
+      for (const group of adminGroups ?? []) {
+        if (!group.sgid) continue;
+        try {
+          await adminClient.executePost(1, 'servergroupaddclient', { sgid: group.sgid, cldbid });
+        } catch (err: any) {
+          console.warn(`[servers.routes] Failed to add new bot identity (cldbid=${cldbid}) to server group ${group.sgid}: ${err.message}`);
+        }
       }
     }
 
-    const keyResult = await adminClient.executePost(0, 'apikeyadd', { scope: 'write', lifetime: 0, cldbid });
+    // scope=manage, not just write - write turned out to be too narrow for
+    // plenty of ordinary bot-flow actions (e.g. plain info reads like
+    // `serverinfo` failed with "out of scope"), so it didn't actually have
+    // "the same permissions as the main connection" as intended. The
+    // official TeamSpeak quickstart's own example API key uses scope=manage
+    // for exactly this kind of general-purpose use.
+    const keyResult = await adminClient.executePost(0, 'apikeyadd', { scope: 'manage', lifetime: 0, cldbid });
     const apikey = keyResult?.[0]?.apikey;
     if (!apikey) throw new AppError(502, 'TeamSpeak did not return an API key for the new query login');
 
     await prisma.tsServerConfig.update({
       where: { id },
-      data: { botQueryName: name, botApiKey: encrypt(apikey) },
+      data: { botQueryName: name, botApiKey: encrypt(apikey), botCldbid: Number(cldbid) },
     });
 
     await pool.refreshBotClient(id);

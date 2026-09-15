@@ -443,7 +443,7 @@ function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => vo
     mutationFn: () => serversApi.createBotIdentity(server.id, name),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['servers'] });
-      toast.success('Bot identity created');
+      toast.success(server?.hasBotIdentity ? 'API key reissued' : 'Bot identity created');
       onClose();
     },
     onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to create bot identity'),
@@ -471,6 +471,11 @@ function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => vo
               ? "Bot flow actions on this server are attributed to this name in TeamSpeak's own logs and notifications, instead of the same identity your own manual actions in this app use."
               : "Optional: give bot flows their own separate ServerQuery identity, so their actions (e.g. renaming a channel) show up under this name in TeamSpeak's own logs instead of blurring together with your own manual actions in this app. Nothing changes for bot flows until you create one."}
           </p>
+          {server?.hasBotIdentity && (
+            <p className="text-xs text-muted-foreground">
+              Bot flow actions failing with a permission or "out of scope" error? This identity may have been created before a scope fix - use "Fix Permissions" below to reissue its key without changing anything else.
+            </p>
+          )}
           <div>
             <Label className="text-xs">Display Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Hausmeister" autoFocus />
@@ -479,9 +484,14 @@ function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => vo
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           {server?.hasBotIdentity ? (
-            <Button onClick={() => rename.mutate()} disabled={!name || pending}>
-              {pending ? 'Saving...' : 'Save'}
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => create.mutate()} disabled={!name || pending}>
+                {create.isPending ? 'Fixing...' : 'Fix Permissions'}
+              </Button>
+              <Button onClick={() => rename.mutate()} disabled={!name || pending}>
+                {rename.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </>
           ) : (
             <Button onClick={() => create.mutate()} disabled={!name || pending}>
               {pending ? 'Creating...' : 'Create Bot Identity'}
