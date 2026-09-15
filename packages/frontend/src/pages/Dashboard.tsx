@@ -233,7 +233,7 @@ export default function Dashboard() {
               </p>
               <p className="text-[11px] text-muted-foreground mt-1">of {data.maxClients} slots</p>
             </div>
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+            <div className="flex-1 flex flex-col divide-y divide-border">
               <StatCell icon={Hash} label="Channels" value={data.channelCount} accentColor="text-violet-400" />
               <StatCell icon={Clock} label="Uptime" value={formatUptime(data.uptime)} accentColor="text-emerald-400" />
               <StatCell
