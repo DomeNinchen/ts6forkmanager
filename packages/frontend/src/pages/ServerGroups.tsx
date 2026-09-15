@@ -65,7 +65,7 @@ export default function ServerGroups() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Group List */}
-        <Card className="lg:col-span-1">
+        <Card className="card-hero lg:col-span-1">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Groups ({groups.length})</CardTitle>
           </CardHeader>
@@ -97,7 +97,7 @@ export default function ServerGroups() {
         </Card>
 
         {/* Members */}
-        <Card className="lg:col-span-2">
+        <Card className="card-hero lg:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

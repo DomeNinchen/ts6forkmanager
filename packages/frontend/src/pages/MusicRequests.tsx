@@ -21,8 +21,8 @@ export default function MusicRequests() {
     if (isLoading) return <PageLoader />;
 
     return (
-        <div className="space-y-4 h-full flex flex-col max-w-5xl mx-auto">
-            <div className="flex items-center justify-between shrink-0">
+        <div className="space-y-4 max-w-5xl mx-auto">
+            <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-semibold flex items-center gap-2">
                         <Music className="w-5 h-5 text-primary" /> Music Request History
@@ -33,7 +33,7 @@ export default function MusicRequests() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden flex flex-col border border-border rounded-lg bg-card shadow-xs relative">
+            <div className="card-hero h-[600px] overflow-hidden border border-border rounded-lg bg-card shadow-xs relative">
                 {requests.length === 0 ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                         <EmptyState
@@ -43,7 +43,7 @@ export default function MusicRequests() {
                         />
                     </div>
                 ) : (
-                    <ScrollArea className="flex-1">
+                    <ScrollArea className="h-full">
                         <div className="p-4 grid gap-3">
                             {requests.map((req) => (
                                 <a

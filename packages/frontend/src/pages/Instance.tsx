@@ -72,7 +72,7 @@ export default function Instance() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Version Card */}
-        <Card>
+        <Card className="card-hero">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2"><Server className="h-4 w-4 text-primary" /> Version</CardTitle>
           </CardHeader>
@@ -84,7 +84,7 @@ export default function Instance() {
         </Card>
 
         {/* Host Info Card */}
-        <Card>
+        <Card className="card-hero">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> Host</CardTitle>
           </CardHeader>
@@ -97,7 +97,7 @@ export default function Instance() {
         </Card>
 
         {/* Database Info Card */}
-        <Card>
+        <Card className="card-hero">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2"><Cpu className="h-4 w-4 text-primary" /> Database</CardTitle>
           </CardHeader>
@@ -110,7 +110,7 @@ export default function Instance() {
       </div>
 
       {/* Editable Settings */}
-      <Card>
+      <Card className="card-hero">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium">Instance Settings</CardTitle>

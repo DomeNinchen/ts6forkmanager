@@ -80,7 +80,7 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="card-hero rounded-md border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map((hg) => (

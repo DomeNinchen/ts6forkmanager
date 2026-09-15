@@ -345,7 +345,7 @@ export default function Permissions() {
 
       <div className="grid grid-cols-12 gap-4">
         {/* Entity Selector */}
-        <Card className="col-span-3">
+        <Card className="card-hero col-span-3">
           <CardHeader className="pb-2 space-y-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Select {LAYERS.find((l) => l.key === layer)?.label.replace(/s$/, '')}
@@ -403,7 +403,7 @@ export default function Permissions() {
         </Card>
 
         {/* Permission Editor */}
-        <Card className="col-span-9">
+        <Card className="card-hero col-span-9">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
