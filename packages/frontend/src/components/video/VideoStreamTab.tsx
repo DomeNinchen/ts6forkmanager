@@ -95,7 +95,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
   return (
     <div className="space-y-4">
       {/* Stream Controls */}
-      <Card>
+      <Card className="card-hero">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Video Stream</CardTitle>
@@ -240,7 +240,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
 
       {/* Live Preview */}
       {isBotConnected && (
-        <Card>
+        <Card className="card-hero">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Live Preview</CardTitle>
           </CardHeader>
@@ -269,7 +269,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
 
       {/* Viewers */}
       {isStreaming && streamStatus && (
-        <Card>
+        <Card className="card-hero">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">

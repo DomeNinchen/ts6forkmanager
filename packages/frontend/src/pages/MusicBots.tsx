@@ -111,7 +111,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   const isStreaming = state?.isStreaming ?? false;
 
   return (
-    <Card className="group hover:border-primary/30 transition-colors">
+    <Card className="card-hero group hover:border-primary/30 transition-colors">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1061,7 +1061,7 @@ function LibraryTab() {
       </div>
 
       {/* YouTube URL / Playlist Paste */}
-      <Card className="border-dashed">
+      <Card className="card-hero border-dashed">
         <CardContent className="p-3 space-y-3">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -1609,7 +1609,7 @@ function RadioTab() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {stationList.map((station) => (
-            <Card key={station.id} className="group hover:border-primary/30 transition-colors">
+            <Card key={station.id} className="card-hero group hover:border-primary/30 transition-colors">
               <CardContent className="p-3 flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Radio className="h-5 w-5 text-primary" />
