@@ -178,6 +178,41 @@ layer(base);
     --chart-4: 40 80% 60%;
     --chart-5: 0 65% 60%;
   }
+
+  /*
+    WebGui accent presets (Settings → WebGui) - only override the brand/interactive
+    color tokens, never the structural neutrals (background/card/border/muted). An
+    admin sets the installation default; any user can locally override it for
+    themselves. 'teal' needs no block - it's the .dark defaults above.
+  */
+  .dark[data-accent='red'] {
+    --primary: 355 75% 50%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 355 75% 50%;
+    --sidebar-accent-foreground: 355 75% 64%;
+    --chart-1: 355 75% 55%;
+  }
+  .dark[data-accent='blue'] {
+    --primary: 217 75% 52%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 217 75% 52%;
+    --sidebar-accent-foreground: 217 75% 66%;
+    --chart-1: 217 75% 58%;
+  }
+  .dark[data-accent='yellow'] {
+    --primary: 42 88% 50%;
+    --primary-foreground: 220 25% 6%;
+    --ring: 42 88% 50%;
+    --sidebar-accent-foreground: 42 88% 62%;
+    --chart-1: 42 88% 56%;
+  }
+  .dark[data-accent='green'] {
+    --primary: 142 65% 40%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 142 65% 40%;
+    --sidebar-accent-foreground: 142 65% 55%;
+    --chart-1: 142 65% 48%;
+  }
 }
 
 @layer base {

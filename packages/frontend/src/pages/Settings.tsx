@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings } from '@/api/settings.api';
+import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type AccentPreset } from '@/api/settings.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -16,11 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
+import { useSetWebguiTheme } from '@/hooks/use-webgui-theme';
+import { useUiStore } from '@/stores/ui.store';
 import { cn } from '@/lib/utils';
 
 export default function Settings() {
@@ -35,6 +37,7 @@ export default function Settings() {
         <TabsList>
           {isAdmin && <TabsTrigger value="connections"><Server className="h-3.5 w-3.5 mr-1" /> Connections</TabsTrigger>}
           <TabsTrigger value="account"><Lock className="h-3.5 w-3.5 mr-1" /> Account</TabsTrigger>
+          <TabsTrigger value="webgui"><Palette className="h-3.5 w-3.5 mr-1" /> WebGui</TabsTrigger>
           {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> Users</TabsTrigger>}
           {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> YouTube</TabsTrigger>}
           {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
@@ -51,6 +54,10 @@ export default function Settings() {
 
         <TabsContent value="account" className="mt-4">
           <AccountTab />
+        </TabsContent>
+
+        <TabsContent value="webgui" className="mt-4">
+          <WebGuiTab isAdmin={isAdmin} />
         </TabsContent>
 
         {isAdmin && (
@@ -283,6 +290,94 @@ function TwoFactorCard() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+const ACCENT_PRESETS: { value: AccentPreset; label: string; swatch: string }[] = [
+  { value: 'teal', label: 'Teal', swatch: 'hsl(186 72% 42%)' },
+  { value: 'red', label: 'Red', swatch: 'hsl(355 75% 50%)' },
+  { value: 'blue', label: 'Blue', swatch: 'hsl(217 75% 52%)' },
+  { value: 'yellow', label: 'Yellow', swatch: 'hsl(42 88% 50%)' },
+  { value: 'green', label: 'Green', swatch: 'hsl(142 65% 40%)' },
+];
+
+function AccentSwatchPicker({ value, onChange, disabled }: { value: AccentPreset | null; onChange: (preset: AccentPreset) => void; disabled?: boolean }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {ACCENT_PRESETS.map((p) => (
+        <button
+          key={p.value}
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange(p.value)}
+          className={cn(
+            'flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors',
+            value === p.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          <span className="h-3 w-3 rounded-full border border-border/50" style={{ background: p.swatch }} />
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
+  const { data: installTheme, isLoading } = useQuery({
+    queryKey: ['webgui-theme'],
+    queryFn: settingsApi.getWebguiTheme,
+  });
+  const setInstallTheme = useSetWebguiTheme();
+  const accentOverride = useUiStore((s) => s.accentOverride);
+  const setAccentOverride = useUiStore((s) => s.setAccentOverride);
+
+  if (isLoading) return <PageLoader />;
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">My Preference</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Overrides the installation default below, just for you - stored in this browser only.
+          </p>
+          <AccentSwatchPicker
+            value={accentOverride ?? installTheme?.preset ?? 'teal'}
+            onChange={(preset) => setAccentOverride(preset === installTheme?.preset ? null : preset)}
+          />
+          {accentOverride && (
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setAccentOverride(null)}>
+              Reset to installation default
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Installation Default</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Applies to every user who hasn't set their own preference above.
+            </p>
+            <AccentSwatchPicker
+              value={installTheme?.preset ?? 'teal'}
+              onChange={(preset) => setInstallTheme.mutate(preset, {
+                onSuccess: () => toast.success(`Installation accent set to ${ACCENT_PRESETS.find((p) => p.value === preset)?.label}`),
+                onError: () => toast.error('Failed to update installation accent'),
+              })}
+              disabled={setInstallTheme.isPending}
+            />
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 

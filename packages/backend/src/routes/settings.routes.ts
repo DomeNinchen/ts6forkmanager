@@ -217,6 +217,39 @@ settingsRoutes.put('/oidc', requireAdmin, async (req: Request, res: Response, ne
   } catch (err) { next(err); }
 });
 
+const VALID_ACCENT_PRESETS = ['teal', 'red', 'blue', 'yellow', 'green'] as const;
+type AccentPreset = (typeof VALID_ACCENT_PRESETS)[number];
+
+// GET /api/settings/webgui-theme — the installation-wide default accent preset (any logged-in
+// user needs to read this, not just admins, so it can be applied for everyone on load)
+settingsRoutes.get('/webgui-theme', async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const row = await prisma.appSetting.findUnique({ where: { key: 'webgui_accent_preset' } });
+    const preset = (row?.value && (VALID_ACCENT_PRESETS as readonly string[]).includes(row.value)) ? row.value : 'teal';
+    res.json({ preset });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/webgui-theme — admin sets the installation-wide default (individual users
+// can still locally override it for themselves; that override never touches this setting)
+settingsRoutes.put('/webgui-theme', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { preset } = req.body;
+    if (!VALID_ACCENT_PRESETS.includes(preset)) {
+      throw new AppError(400, `Unknown accent preset: ${preset}`);
+    }
+    const prisma = req.app.locals.prisma;
+    await prisma.appSetting.upsert({
+      where: { key: 'webgui_accent_preset' },
+      create: { key: 'webgui_accent_preset', value: preset },
+      update: { value: preset },
+    });
+    console.log(`[Settings] WebGui accent preset set to '${preset}'`);
+    res.json({ preset: preset as AccentPreset });
+  } catch (err) { next(err); }
+});
+
 // GET /api/settings/music-cache — whether chat-played (!play/!queue/!stream) songs are kept in the library or cleaned up after an hour
 settingsRoutes.get('/music-cache', requireAdmin, async (req: Request, res: Response, next) => {
   try {

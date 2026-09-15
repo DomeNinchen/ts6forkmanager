@@ -45,7 +45,15 @@ export const settingsApi = {
 
   setMusicCacheSettings: (config: MusicCacheSettings): Promise<MusicCacheSettings> =>
     api.put('/settings/music-cache', config).then((r) => r.data),
+
+  getWebguiTheme: (): Promise<{ preset: AccentPreset }> =>
+    api.get('/settings/webgui-theme').then((r) => r.data),
+
+  setWebguiTheme: (preset: AccentPreset): Promise<{ preset: AccentPreset }> =>
+    api.put('/settings/webgui-theme', { preset }).then((r) => r.data),
 };
+
+export type AccentPreset = 'teal' | 'red' | 'blue' | 'yellow' | 'green';
 
 export interface OidcSettings {
   enabled: boolean;
