@@ -27,11 +27,30 @@ export function useVirtualServerInfo() {
   });
 }
 
+export function useConnectionInfo() {
+  const { selectedConfigId, selectedSid } = useServerStore();
+  return useQuery({
+    queryKey: ['connection-info', selectedConfigId, selectedSid],
+    queryFn: () => serversApi.getConnectionInfo(selectedConfigId!, selectedSid!),
+    enabled: !!selectedConfigId && !!selectedSid,
+    refetchInterval: 10_000,
+  });
+}
+
 export function useCreateServer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => serversApi.create(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['servers'] }),
+  });
+}
+
+export function useCreateVirtualServer() {
+  const qc = useQueryClient();
+  const { selectedConfigId } = useServerStore();
+  return useMutation({
+    mutationFn: (data: any) => serversApi.createVirtual(selectedConfigId!, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['virtual-servers', selectedConfigId] }),
   });
 }
 

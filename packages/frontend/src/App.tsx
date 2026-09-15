@@ -34,6 +34,7 @@ const queryClient = new QueryClient({
 const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const VirtualServers = lazy(() => import('@/pages/VirtualServers'));
+const ServerStats = lazy(() => import('@/pages/ServerStats'));
 const Channels = lazy(() => import('@/pages/Channels'));
 const Clients = lazy(() => import('@/pages/Clients'));
 const ServerGroups = lazy(() => import('@/pages/ServerGroups'));
@@ -71,6 +72,7 @@ export function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/servers" element={<AdminRoute><VirtualServers /></AdminRoute>} />
+              <Route path="/server-stats" element={<AdminRoute><ServerStats /></AdminRoute>} />
               <Route path="/channels" element={<Channels />} />
               <Route path="/clients" element={<Clients />} />
               <Route path="/server-groups" element={<AdminRoute><ServerGroups /></AdminRoute>} />

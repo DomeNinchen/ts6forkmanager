@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, Music, ListMusic,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
@@ -28,6 +29,7 @@ const navSections = [
     items: [
       { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { to: '/servers', icon: Server, label: 'Virtual Servers', visible: adminOnly },
+      { to: '/server-stats', icon: BarChart3, label: 'Statistics', visible: adminOnly },
     ],
   },
   {
