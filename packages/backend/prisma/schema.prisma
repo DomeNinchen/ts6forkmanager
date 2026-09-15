@@ -106,6 +106,13 @@ model TsServerConfig {
   // until provisioned - bot flows fall back to the main connection until then.
   botQueryName String?
   botApiKey    String?
+  // Set alongside botApiKey from PR #119 onward - lets a later re-provision
+  // (e.g. to reissue the API key with a corrected scope) find the exact same
+  // underlying ServerQuery login by id instead of by name, since botQueryName
+  // can drift from the original client_login_name after a rename (renaming
+  // only changes the in-game nickname; TS has no command to rename a query
+  // login itself). Null for any identity created before this field existed.
+  botCldbid    Int?
 
   userAccess    UserServerAccess[]
   botFlows      BotFlow[]
