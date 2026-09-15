@@ -16,6 +16,8 @@ function applyAccent(preset: AccentPreset) {
 
 interface UiStore {
   sidebarCollapsed: boolean;
+  /** Which sidebar nav section labels (e.g. "Management") are collapsed - independent of the whole-sidebar collapse above. */
+  collapsedSections: Record<string, boolean>;
   theme: 'dark' | 'light';
   /** This user's personal choice, overriding the installation default below. null = follow the installation default. */
   accentOverride: AccentPreset | null;
@@ -23,6 +25,7 @@ interface UiStore {
   installDefaultAccent: AccentPreset;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSection: (label: string) => void;
   toggleTheme: () => void;
   setTheme: (theme: 'dark' | 'light') => void;
   setAccentOverride: (preset: AccentPreset | null) => void;
@@ -33,11 +36,14 @@ export const useUiStore = create<UiStore>()(
   persist(
     (set, get) => ({
       sidebarCollapsed: false,
+      collapsedSections: {},
       theme: 'dark',
       accentOverride: null,
       installDefaultAccent: 'violet',
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      toggleSection: (label) =>
+        set({ collapsedSections: { ...get().collapsedSections, [label]: !get().collapsedSections[label] } }),
       toggleTheme: () => {
         const next = get().theme === 'dark' ? 'light' : 'dark';
         set({ theme: next });
@@ -62,6 +68,7 @@ export const useUiStore = create<UiStore>()(
       // persisting a stale copy would let a browser miss an admin's later change to it.
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
+        collapsedSections: state.collapsedSections,
         theme: state.theme,
         accentOverride: state.accentOverride,
       }),
