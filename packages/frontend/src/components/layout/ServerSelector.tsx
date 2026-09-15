@@ -16,7 +16,9 @@ export function ServerSelector() {
     }
   }, [servers, selectedConfigId, setServer]);
 
-  // Auto-select first virtual server
+  // Auto-select first virtual server - every other page requires a real
+  // selection to function at all, so this always wins even right after an
+  // explicit deselect (see VirtualServers.tsx's Select/Deselect toggle).
   useEffect(() => {
     if (selectedConfigId && !selectedSid && virtualServers?.length > 0) {
       setSid(virtualServers[0].virtualserver_id);

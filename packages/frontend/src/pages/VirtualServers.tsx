@@ -10,8 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { formatUptime } from '@/lib/utils';
-import { Server, Play, Square, Users, Clock, Plus, Power, Layers } from 'lucide-react';
+import { formatUptime, cn } from '@/lib/utils';
+import { Server, Play, Square, Users, Clock, Plus, Power, Layers, Check } from 'lucide-react';
 import { serversApi } from '@/api/servers.api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -31,7 +31,7 @@ function CounterTile({ icon: Icon, label, value, sub }: { icon: React.ElementTyp
 }
 
 export default function VirtualServers() {
-  const { selectedConfigId } = useServerStore();
+  const { selectedConfigId, selectedSid, setSid } = useServerStore();
   const { data, isLoading } = useVirtualServers();
   const createVirtual = useCreateVirtualServer();
   const qc = useQueryClient();
@@ -120,48 +120,67 @@ export default function VirtualServers() {
       </Card>
 
       <div className="grid gap-3">
-        {servers.map((vs: any) => (
-          <Card key={vs.virtualserver_id} className="card-hero hover:border-primary/30 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                    <Server className="h-5 w-5 text-muted-foreground" />
+        {servers.map((vs: any) => {
+          const isSelected = String(selectedSid) === String(vs.virtualserver_id);
+          return (
+            <Card
+              key={vs.virtualserver_id}
+              className={cn(
+                'card-hero transition-colors',
+                isSelected ? 'border-primary' : 'hover:border-primary/30',
+              )}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                      <Server className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{vs.virtualserver_name}</span>
+                        <Badge variant={vs.virtualserver_status === 'online' ? 'success' : 'secondary'} className="text-[10px]">
+                          {vs.virtualserver_status?.toUpperCase()}
+                        </Badge>
+                        {isSelected && <Badge variant="outline" className="text-[10px] border-primary text-primary">SELECTED</Badge>}
+                      </div>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                        <span className="font-mono-data">SID: {vs.virtualserver_id}</span>
+                        <span className="font-mono-data">Port: {vs.virtualserver_port}</span>
+                        {vs.virtualserver_status === 'online' && (
+                          <>
+                            <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {vs.virtualserver_clientsonline - (vs.virtualserver_queryclientsonline || 0)}/{vs.virtualserver_maxclients}</span>
+                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatUptime(vs.virtualserver_uptime || 0)}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{vs.virtualserver_name}</span>
-                      <Badge variant={vs.virtualserver_status === 'online' ? 'success' : 'secondary'} className="text-[10px]">
-                        {vs.virtualserver_status?.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                      <span className="font-mono-data">SID: {vs.virtualserver_id}</span>
-                      <span className="font-mono-data">Port: {vs.virtualserver_port}</span>
-                      {vs.virtualserver_status === 'online' && (
-                        <>
-                          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {vs.virtualserver_clientsonline - (vs.virtualserver_queryclientsonline || 0)}/{vs.virtualserver_maxclients}</span>
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatUptime(vs.virtualserver_uptime || 0)}</span>
-                        </>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    {isSelected ? (
+                      <Button variant="outline" size="sm" onClick={() => setSid(null)}>
+                        Deselect
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => setSid(vs.virtualserver_id)}>
+                        <Check className="h-3 w-3 mr-1" /> Select
+                      </Button>
+                    )}
+                    {vs.virtualserver_status === 'online' ? (
+                      <Button variant="outline" size="sm" onClick={() => handleStop(vs.virtualserver_id)}>
+                        <Square className="h-3 w-3 mr-1" /> Stop
+                      </Button>
+                    ) : (
+                      <Button size="sm" onClick={() => handleStart(vs.virtualserver_id)}>
+                        <Play className="h-3 w-3 mr-1" /> Start
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {vs.virtualserver_status === 'online' ? (
-                    <Button variant="outline" size="sm" onClick={() => handleStop(vs.virtualserver_id)}>
-                      <Square className="h-3 w-3 mr-1" /> Stop
-                    </Button>
-                  ) : (
-                    <Button size="sm" onClick={() => handleStart(vs.virtualserver_id)}>
-                      <Play className="h-3 w-3 mr-1" /> Start
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Create Server Dialog */}
