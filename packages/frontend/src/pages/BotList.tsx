@@ -64,7 +64,7 @@ export default function BotList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {bots.map((bot: any) => (
-            <Card key={bot.id} className="group hover:border-primary/30 transition-colors">
+            <Card key={bot.id} className="card-hero group hover:border-primary/30 transition-colors">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium truncate">{bot.name}</CardTitle>
@@ -82,7 +82,7 @@ export default function BotList() {
                 <p className="text-xs text-muted-foreground line-clamp-2">{bot.description || 'No description'}</p>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant={bot.enabled ? 'default' : 'secondary'} className="text-[10px]">
+                  <Badge variant={bot.enabled ? 'success' : 'secondary'} className="text-[10px]">
                     {bot.enabled ? 'Active' : 'Inactive'}
                   </Badge>
                   {bot.serverConfigId && (

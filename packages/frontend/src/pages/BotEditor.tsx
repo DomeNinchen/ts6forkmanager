@@ -459,14 +459,14 @@ export default function BotEditor() {
         </div>
       </div>
 
-      <div className="flex flex-1 gap-0 overflow-hidden rounded-lg border border-border">
+      <div className="card-hero flex flex-1 gap-0 overflow-hidden border border-border">
         {/* Node Palette */}
         <div className="w-52 border-r border-border bg-card/50 shrink-0">
           <ScrollArea className="h-full">
             <div className="p-3 space-y-4">
               {NODE_CATEGORIES.map((cat) => (
                 <div key={cat.label}>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{cat.label}</p>
+                  <p className="font-display text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{cat.label}</p>
                   <div className="space-y-1">
                     {cat.nodes.map((node) => (
                       <button
@@ -680,7 +680,7 @@ export default function BotEditor() {
             <ScrollArea className="h-full">
               <div className="p-3 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold">Node Properties</p>
+                  <p className="font-display text-xs font-semibold tracking-wide">Node Properties</p>
                   <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteNode(selectedNodeData.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
