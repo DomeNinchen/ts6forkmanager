@@ -116,7 +116,7 @@ export default function Login() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 mb-4">
-            <span className="text-primary font-bold text-xl font-mono-data text-glow">TS</span>
+            <img src="/logo-256.png" alt="TS6 Manager" className="h-10 w-10 object-contain" />
           </div>
           <h1 className="text-xl font-semibold text-foreground">TeamSpeak 6 Manager</h1>
           <p className="text-sm text-muted-foreground mt-1">Server Administration Panel</p>
