@@ -83,7 +83,9 @@ export type ActionNodeData =
   | RankCheckActionData
   | TempChannelCleanupActionData
   | AnimatedChannelActionData
-  | GenerateCodeActionData;
+  | GenerateCodeActionData
+  | CountOnlineInGroupsActionData
+  | ListMembershipActionData;
 
 export interface KickActionData {
   actionType: 'kick';
@@ -235,6 +237,25 @@ export interface AnimatedChannelActionData {
   style: 'scroll' | 'typewriter' | 'bounce' | 'blink' | 'wave' | 'alternateCase';
   intervalSeconds: string;
   prefix: string;
+}
+
+export interface CountOnlineInGroupsActionData {
+  actionType: 'countOnlineInGroups';
+  label: string;
+  /** Comma-separated server group IDs - counts online clients belonging to any of them. */
+  groupIds: string;
+  /** Temp variable name to store the resulting count under (as a number, referenced via {{temp.<storeAs>}}). */
+  storeAs: string;
+}
+
+export interface ListMembershipActionData {
+  actionType: 'listMembership';
+  label: string;
+  operation: 'add' | 'remove';
+  /** Name of a persistent flow variable holding a JSON array - created automatically on first use. */
+  listName: string;
+  /** Value to add/remove - goes through template resolution (e.g. {{event.client_unique_identifier}}). */
+  value: string;
 }
 
 // --- Condition ---

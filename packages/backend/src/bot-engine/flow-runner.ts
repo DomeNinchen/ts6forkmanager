@@ -11,6 +11,7 @@ import type {
   GroupAddClientActionData, GroupRemoveClientActionData,
   WebQueryActionData, WebhookActionData, HttpRequestActionData,
   AfkMoverActionData, IdleKickerActionData, PokeGroupActionData, RankCheckActionData, TempChannelCleanupActionData,
+  CountOnlineInGroupsActionData, ListMembershipActionData,
   ConditionNodeData, DelayNodeData, VariableNodeData, LogNodeData, LoopNodeData,
 } from '@ts6/common';
 import axios from 'axios';
@@ -18,6 +19,7 @@ import { validateUrl } from '../utils/url-validator.js';
 import { ALLOWED_WEBQUERY_COMMANDS } from './command-whitelist.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import { TSApiError } from '../middleware/error-handler.js';
+import { commaListsIntersect } from '../utils/group-match.js';
 import crypto from 'crypto';
 
 // Raised from 100 to give Loop nodes real headroom - a loop at its default
@@ -315,6 +317,8 @@ export class FlowRunner {
         case 'voiceSkip': await this.executeVoiceSkip(data, ctx); break;
         case 'voiceSeek': await this.executeVoiceSeek(data, ctx); break;
         case 'generateCode': await this.executeGenerateCode(data, ctx); break;
+        case 'countOnlineInGroups': await this.executeCountOnlineInGroups(data as CountOnlineInGroupsActionData, ctx, client); break;
+        case 'listMembership': await this.executeListMembership(data as ListMembershipActionData, ctx); break;
         case 'voiceTts': await this.executeVoiceTts(data, ctx); break;
         case 'animatedChannel':
           // Animation lifecycle managed by BotEngine (not per-execution)
@@ -999,6 +1003,53 @@ export class FlowRunner {
 
     ctx.setTemp(storeAs, value);
     await this.log(ctx, null, 'info', `Generated code stored as temp.${storeAs}`);
+  }
+
+  // Counts online clients in one step (not a Loop node) specifically so this stays
+  // cheap regardless of how many people are online - a Loop-based equivalent would
+  // cost 1-2 of the engine's MAX_NODE_VISITS per online client, which on a busy
+  // server could exhaust that shared per-execution budget and fail the whole flow.
+  private async executeCountOnlineInGroups(data: CountOnlineInGroupsActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+    const groupIds = await ctx.resolveTemplate(data.groupIds);
+    const storeAs = data.storeAs || 'onlineCount';
+
+    const clients = await client.executePost(ctx.sid, 'clientlist', { '-groups': '' });
+    const list = Array.isArray(clients) ? clients : [];
+
+    let count = 0;
+    for (const cl of list) {
+      if (String(cl.client_type) === '1') continue; // skip ServerQuery clients
+      if (commaListsIntersect(String(cl.client_servergroups || ''), groupIds)) count++;
+    }
+
+    ctx.setTemp(storeAs, count);
+    await this.log(ctx, null, 'info', `Counted ${count} online client(s) in group(s) '${groupIds}', stored as temp.${storeAs}`);
+  }
+
+  // Backs a persistent, JSON-array-shaped BotVariable (e.g. an "ignore list" clients
+  // opt into/out of via a chat command) - a plain Set Variable node only supports
+  // set/increment/append on a single string, not adding/removing one entry from a list.
+  private async executeListMembership(data: ListMembershipActionData, ctx: ExecutionContext): Promise<void> {
+    if (!data.listName) throw new Error('List Membership: a list name is required');
+    const value = await ctx.resolveTemplate(data.value);
+
+    const raw = await ctx.getVariable(data.listName);
+    let items: string[];
+    try {
+      const parsed = raw ? JSON.parse(raw) : [];
+      items = Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      items = [];
+    }
+
+    if (data.operation === 'add') {
+      if (!items.includes(value)) items.push(value);
+    } else {
+      items = items.filter((v) => v !== value);
+    }
+
+    await ctx.setVariable(data.listName, JSON.stringify(items));
+    await this.log(ctx, null, 'info', `${data.operation === 'add' ? 'Added to' : 'Removed from'} list '${data.listName}': ${value}`);
   }
 
 }

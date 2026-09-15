@@ -184,9 +184,15 @@ function normalizeFlowData(raw: any): FlowDefinition {
     } else if (nodeType === 'variable') {
       type = 'variable';
       data = { nodeType: 'variable', label, operation: config.operation || 'set', variableName: config.name || config.varName || '', value: config.value || config.varValue || '' };
-    } else if (nodeType === 'action_generateCode') { 
-      type = 'action'; 
+    } else if (nodeType === 'action_generateCode') {
+      type = 'action';
       data = { actionType: 'generateCode', label, length: parseInt(config.length, 10) || 5, storeAs: config.storeAs || 'code', numericOnly: config.numericOnly !== false, };
+    } else if (nodeType === 'action_countOnlineInGroups') {
+      type = 'action';
+      data = { actionType: 'countOnlineInGroups', label, groupIds: config.groupIds || '', storeAs: config.storeAs || 'onlineCount' };
+    } else if (nodeType === 'action_listMembership') {
+      type = 'action';
+      data = { actionType: 'listMembership', label, listName: config.listName || '', operation: config.operation || 'add', value: config.value || '' };
     } else if (nodeType === 'log') {
       type = 'log';
       data = { nodeType: 'log', label, level: config.level || 'info', message: config.message || '' };

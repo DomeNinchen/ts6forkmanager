@@ -1,5 +1,6 @@
 import { Parser } from 'expr-eval';
 import type { PrismaClient } from '../generated/prisma/client.js';
+import { commaListHasExact } from '../utils/group-match.js';
 
 function resolveDotPath(obj: any, path: string): any {
   const parts = path.split('.');
@@ -84,6 +85,11 @@ export class ExecutionContext {
       const parts = String(str).split(String(sep));
       return parts[index] ?? '';
     };
+    // Exact comma-list membership - unlike contains(), doesn't false-match group
+    // "1" against "10"/"21"/etc. (contains() does raw substring matching, which
+    // is fine for names/text but wrong for numeric IDs in a comma-separated list).
+    this.exprParser.functions.hasGroup = (clientGroupsCsv: string, groupId: string) =>
+      commaListHasExact(clientGroupsCsv, groupId) ? 1 : 0;
   }
 
   private applyFilter(value: string, filter: string): string {

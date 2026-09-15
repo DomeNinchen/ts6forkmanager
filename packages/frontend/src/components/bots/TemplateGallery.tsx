@@ -3,6 +3,7 @@ import { BOT_TEMPLATES, TEMPLATE_CATEGORIES, type BotTemplate } from '@/data/bot
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -122,6 +123,17 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
               <div className="space-y-4 pb-2">
                 <p className="text-xs text-muted-foreground">{selected.description}</p>
 
+                {selected.variablesHint && selected.variablesHint.length > 0 && (
+                  <div className="rounded-md border border-border bg-muted/30 p-2.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">Available Variables</p>
+                    <ul className="space-y-0.5">
+                      {selected.variablesHint.map((v) => (
+                        <li key={v} className="text-[10px] font-mono-data text-muted-foreground">{v}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {selected.configFields.length === 0 ? (
                   <p className="text-xs text-muted-foreground/60">No configuration needed — ready to create.</p>
                 ) : (
@@ -143,6 +155,13 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
                               ))}
                             </SelectContent>
                           </Select>
+                        ) : field.type === 'textarea' ? (
+                          <Textarea
+                            className="text-xs mt-1 font-mono-data min-h-[80px]"
+                            placeholder={field.placeholder}
+                            value={config[field.key] || ''}
+                            onChange={(e) => setConfig(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          />
                         ) : (
                           <Input
                             type={field.type === 'number' ? 'number' : 'text'}
