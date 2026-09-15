@@ -192,7 +192,37 @@ export class SshQueryClient extends EventEmitter {
     });
   }
 
-  async registerEvents(sid: number): Promise<void> {
+  /** Shared by registerEvents (optional home channel) and registerCommandListener (required -
+   * a chat command trigger's channel) - looks up this connection's own clid via whoami and
+   * moves it into the given channel. */
+  private async moveSelfToChannel(channelId: number): Promise<void> {
+    try {
+      const who = await this.executeCommand('whoami');
+      const first = (who.split('\n')[0] || '').trim();
+      const me = parseQueryResponse(first)[0] || {};
+      const clid =
+        me.clid ??
+        me.client_id ??
+        me.clientid ??
+        me.clientId ??
+        (() => {
+          const m = first.match(/(?:clid|client_id)=(\d+)/);
+          return m?.[1];
+        })();
+
+      if (clid) {
+        await this.executeCommand(`clientmove clid=${clid} cid=${channelId}`);
+      } else {
+        console.warn('[SshQueryClient] whoami did not return clid; cannot clientmove');
+      }
+    } catch (err: any) {
+      console.warn(`[SshQueryClient] Failed to move query client to channel ${channelId}: ${err.message}`);
+    }
+  }
+
+  /** homeChannelId is purely cosmetic (which channel this identity appears to "sit in") -
+   * unset leaves it wherever a fresh ServerQuery login lands by default. */
+  async registerEvents(sid: number, homeChannelId?: number): Promise<void> {
     if (this.destroyed) return;
     console.log(`[SshQueryClient] Registering events for sid=${sid} on ${this.options.host}`);
     await this.executeCommand(`use sid=${sid}`);
@@ -201,6 +231,10 @@ export class SshQueryClient extends EventEmitter {
     try {
       await this.executeCommand(`clientupdate client_nickname=TS6-WebUI-Bot-${sid}-${this.nickSuffix}`);
     } catch { }
+
+    if (homeChannelId) {
+      await this.moveSelfToChannel(homeChannelId);
+    }
 
     for (const eventType of TS_EVENT_TYPES) {
       const cmd = eventType === 'channel'
@@ -225,7 +259,7 @@ export class SshQueryClient extends EventEmitter {
 
     await this.executeCommand(`use sid=${sid}`);
 
-   
+
     try {
       await this.executeCommand(`clientupdate client_nickname=TS6-WebUI-Cmd-${channelId}-${this.nickSuffix}`);
     } catch (err: any) {
@@ -238,28 +272,7 @@ export class SshQueryClient extends EventEmitter {
     }
 
     // Move query client into the channel (required for channel chat notifications)
-    try {
-      const who = await this.executeCommand('whoami');
-      const first = (who.split('\n')[0] || '').trim();
-      const me = parseQueryResponse(first)[0] || {};
-      const clid =
-        me.clid ??
-        me.client_id ??
-        me.clientid ??
-        me.clientId ??
-        (() => {
-          const m = first.match(/(?:clid|client_id)=(\d+)/);
-          return m?.[1];
-        })();
-
-      if (clid) {
-        await this.executeCommand(`clientmove clid=${clid} cid=${channelId}`);
-      } else {
-        console.warn('[SshQueryClient] whoami did not return clid; cannot clientmove');
-      }
-    } catch (err: any) {
-      console.warn(`[SshQueryClient] Failed to move query client to channel ${channelId}: ${err.message}`);
-    }
+    await this.moveSelfToChannel(channelId);
 
     // Register ONLY textchannel for this channel
     try {

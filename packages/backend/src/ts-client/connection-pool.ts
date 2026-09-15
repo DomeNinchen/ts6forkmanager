@@ -31,7 +31,10 @@ export class ConnectionPool {
     this.clients.set(id, client);
     if (nickname) {
       try {
-        await client.execute(0, 'clientupdate', { client_nickname: nickname });
+        // clientupdate fails with "invalid serverID" without a real virtual
+        // server context - sid=0 (no vserver selected) doesn't count, even
+        // though this is a self-referential, vserver-independent property.
+        await client.execute(1, 'clientupdate', { client_nickname: nickname });
       } catch (err: any) {
         console.warn(`[ConnectionPool] Failed to set query identity nickname for server ${id}: ${err.message}`);
       }
@@ -78,7 +81,8 @@ export class ConnectionPool {
     this.botClients.set(id, client);
     if (nickname) {
       try {
-        await client.execute(0, 'clientupdate', { client_nickname: nickname });
+        // Same sid=0-doesn't-work quirk as the main identity above.
+        await client.execute(1, 'clientupdate', { client_nickname: nickname });
       } catch (err: any) {
         console.warn(`[ConnectionPool] Failed to set bot identity nickname for server ${id}: ${err.message}`);
       }
