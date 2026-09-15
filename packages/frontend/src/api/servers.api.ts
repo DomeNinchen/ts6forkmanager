@@ -26,6 +26,8 @@ export const serversApi = {
     api.delete(`/servers/${configId}/virtual-servers/${sid}`),
   createSnapshot: (configId: number, sid: number) =>
     api.post(`/servers/${configId}/virtual-servers/${sid}/snapshot`).then((r) => r.data),
+  getConnectionInfo: (configId: number, sid: number) =>
+    api.get(`/servers/${configId}/virtual-servers/${sid}/connection-info`).then((r) => r.data),
 
   // Instance
   instanceInfo: (configId: number) =>
