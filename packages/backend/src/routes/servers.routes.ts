@@ -95,7 +95,7 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const id = parseInt(String(req.params.configId));
     const data: any = {};
 
-    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost'];
+    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname'];
     for (const field of fields) {
       if (req.body[field] !== undefined) {
         // Don't overwrite API key or SSH password with empty strings
@@ -141,6 +141,59 @@ serverRoutes.delete('/:configId', requireRole('admin'), async (req: Request, res
     pool.removeClient(id);
 
     res.status(204).send();
+  } catch (err) { next(err); }
+});
+
+// Current query identity (whoami) - lets the UI show the actual live nickname
+// rather than assuming it matches whatever's stored, since a fresh connection
+// could still be running under TS's own default until the next reconnect.
+serverRoutes.get('/:configId/identity', async (req: Request, res: Response, next) => {
+  try {
+    const pool: ConnectionPool = req.app.locals.connectionPool;
+    const client = pool.getClient(parseInt(String(req.params.configId)));
+    // whoami at sid=0 (no virtual server context) comes back mostly blank -
+    // client_nickname included - so this needs a real virtual server context
+    // the same way the Bot Identity provisioning flow already does.
+    const sid = req.query.sid ? parseInt(String(req.query.sid)) : 1;
+    const result = await client.execute(sid, 'whoami');
+    res.json(Array.isArray(result) ? result[0] : result);
+  } catch (err) { next(err); }
+});
+
+// Rename this connection's own (shared/admin) query identity - distinct from
+// the optional bot identity above, which only covers bot-flow actions. This
+// is what a manual WebUI action (e.g. renaming a channel) shows as the actor
+// in TS's own logs.
+serverRoutes.put('/:configId/identity', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { nickname, sid } = req.body;
+    if (!nickname) throw new AppError(400, 'A nickname is required');
+
+    const id = parseInt(String(req.params.configId));
+    const pool: ConnectionPool = req.app.locals.connectionPool;
+    // clientupdate at sid=0 (no virtual server context) fails with "invalid
+    // serverID" - needs a real virtual server context, same as whoami above.
+    await pool.getClient(id).execute(sid ?? 1, 'clientupdate', { client_nickname: nickname });
+
+    const prisma = req.app.locals.prisma;
+    await prisma.tsServerConfig.update({ where: { id }, data: { queryNickname: nickname } });
+
+    res.json({ nickname });
+  } catch (err) { next(err); }
+});
+
+// Sends an anonymous ("server") text message to every virtual server on this
+// TeamSpeak instance at once - an instance-level broadcast, not scoped to any
+// one virtual server.
+serverRoutes.post('/:configId/global-message', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { msg } = req.body;
+    if (!msg) throw new AppError(400, 'A message is required');
+
+    const pool: ConnectionPool = req.app.locals.connectionPool;
+    const client = pool.getClient(parseInt(String(req.params.configId)));
+    const result = await client.execute(0, 'gm', { msg });
+    res.json(result);
   } catch (err) { next(err); }
 });
 

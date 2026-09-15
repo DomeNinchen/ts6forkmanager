@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/rbac.js';
+import { AppError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const virtualServerRoutes: Router = Router({ mergeParams: true });
@@ -104,6 +105,30 @@ virtualServerRoutes.get('/:sid/connection-info', async (req: Request, res: Respo
   try {
     const sid = parseInt(String(req.params.sid));
     const result = await getClient(req).execute(sid, 'serverrequestconnectioninfo');
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+// Sends a text message to every client on this ONE virtual server, under the
+// connection's own current query nickname - unlike `gm` (instance-wide,
+// always shown anonymously as "server"), this is not anonymous.
+virtualServerRoutes.post('/:sid/message', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const sid = parseInt(String(req.params.sid));
+    const { msg } = req.body;
+    if (!msg) throw new AppError(400, 'A message is required');
+    const result = await getClient(req).execute(sid, 'sendtextmessage', { targetmode: 3, msg });
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+// Wipes every group/client/channel permission on this server and recreates
+// the default template groups - genuinely destructive, matches this app's
+// existing Danger Zone confirmation pattern on the frontend.
+virtualServerRoutes.post('/:sid/permission-reset', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const sid = parseInt(String(req.params.sid));
+    const result = await getClient(req).execute(sid, 'permreset');
     res.json(result);
   } catch (err) { next(err); }
 });
