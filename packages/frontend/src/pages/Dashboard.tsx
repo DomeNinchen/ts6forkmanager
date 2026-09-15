@@ -224,7 +224,7 @@ export default function Dashboard() {
           the dominant arc readout; everything else sits alongside it in the same card. */}
       <Card className="card-hero">
         <CardContent className="p-0">
-          <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-border">
+          <div className="flex flex-col lg:flex-row">
             <div className="p-6 flex flex-col items-center text-center lg:w-64 shrink-0">
               <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">Online Users</p>
               <ArcGauge percent={data.maxClients ? data.onlineUsers / data.maxClients : 0} />
@@ -233,7 +233,7 @@ export default function Dashboard() {
               </p>
               <p className="text-[11px] text-muted-foreground mt-1">of {data.maxClients} slots</p>
             </div>
-            <div className="flex-1 flex flex-col divide-y divide-border">
+            <div className="flex-1 flex flex-col">
               <StatCell icon={Hash} label="Channels" value={data.channelCount} accentColor="text-violet-400" />
               <StatCell icon={Clock} label="Uptime" value={formatUptime(data.uptime)} accentColor="text-emerald-400" />
               <StatCell
