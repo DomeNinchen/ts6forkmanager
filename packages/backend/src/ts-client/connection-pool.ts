@@ -17,7 +17,7 @@ export class ConnectionPool {
 
     for (const server of servers) {
       // H8: Decrypt API key before use
-      this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps);
+      await this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps, server.queryNickname);
       if (server.botApiKey) {
         await this.addBotClient(server.id, server.host, server.webqueryPort, decrypt(server.botApiKey), server.useHttps, server.botQueryName);
       }
@@ -26,9 +26,16 @@ export class ConnectionPool {
     console.log(`[ConnectionPool] Initialized ${this.clients.size} server connection(s), ${this.botClients.size} bot identit${this.botClients.size === 1 ? 'y' : 'ies'}`);
   }
 
-  addClient(id: number, host: string, port: number, apiKey: string, useHttps: boolean): void {
+  async addClient(id: number, host: string, port: number, apiKey: string, useHttps: boolean, nickname?: string | null): Promise<void> {
     const client = new WebQueryClient(host, port, apiKey, useHttps);
     this.clients.set(id, client);
+    if (nickname) {
+      try {
+        await client.execute(0, 'clientupdate', { client_nickname: nickname });
+      } catch (err: any) {
+        console.warn(`[ConnectionPool] Failed to set query identity nickname for server ${id}: ${err.message}`);
+      }
+    }
   }
 
   removeClient(id: number): void {
@@ -57,7 +64,7 @@ export class ConnectionPool {
       where: { id: configId },
     });
     if (server && server.enabled) {
-      this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps);
+      await this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps, server.queryNickname);
     } else {
       this.removeClient(configId);
     }

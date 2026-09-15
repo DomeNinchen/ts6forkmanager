@@ -8,6 +8,9 @@ export const serversApi = {
   delete: (id: number) => api.delete(`/servers/${id}`),
   test: (id: number) => api.post(`/servers/${id}/test`).then((r) => r.data),
   createBotIdentity: (id: number, name: string) => api.post(`/servers/${id}/bot-identity`, { name }).then((r) => r.data),
+  getIdentity: (id: number, sid?: number | null) => api.get(`/servers/${id}/identity`, { params: sid ? { sid } : {} }).then((r) => r.data),
+  setIdentity: (id: number, nickname: string, sid?: number | null) => api.put(`/servers/${id}/identity`, { nickname, sid }).then((r) => r.data),
+  sendGlobalMessage: (id: number, msg: string) => api.post(`/servers/${id}/global-message`, { msg }).then((r) => r.data),
 
   // Virtual servers
   listVirtual: (configId: number) =>
@@ -26,8 +29,14 @@ export const serversApi = {
     api.delete(`/servers/${configId}/virtual-servers/${sid}`),
   createSnapshot: (configId: number, sid: number) =>
     api.post(`/servers/${configId}/virtual-servers/${sid}/snapshot`).then((r) => r.data),
+  deploySnapshot: (configId: number, sid: number, data: any) =>
+    api.post(`/servers/${configId}/virtual-servers/${sid}/snapshot/deploy`, data).then((r) => r.data),
   getConnectionInfo: (configId: number, sid: number) =>
     api.get(`/servers/${configId}/virtual-servers/${sid}/connection-info`).then((r) => r.data),
+  sendServerMessage: (configId: number, sid: number, msg: string) =>
+    api.post(`/servers/${configId}/virtual-servers/${sid}/message`, { msg }).then((r) => r.data),
+  resetPermissions: (configId: number, sid: number) =>
+    api.post(`/servers/${configId}/virtual-servers/${sid}/permission-reset`).then((r) => r.data),
 
   // Instance
   instanceInfo: (configId: number) =>

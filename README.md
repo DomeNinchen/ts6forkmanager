@@ -57,6 +57,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Server log viewer with filtering
 - Channel file browser with upload/download
 - Instance-level settings
+- Miscellaneous tools: instance-wide or per-server broadcast messages, a renameable query identity for your own manual actions, per-server settings/permissions snapshots (create, download, restore), and a permission-reset to defaults
 
 ### Music Bots
 - Multiple bots per server, each with independent queue and playback
