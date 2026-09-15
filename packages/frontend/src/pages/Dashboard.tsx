@@ -1,5 +1,6 @@
 import { useDashboard, useBandwidthHistory } from '@/hooks/use-dashboard';
 import { useVirtualServers } from '@/hooks/use-servers';
+import { useBots } from '@/hooks/use-bots';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,10 +9,11 @@ import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
-import { formatBytes, formatUptime } from '@/lib/utils';
-import { Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid, Lock } from 'lucide-react';
+import { formatBytes, formatUptime, cn } from '@/lib/utils';
+import { Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid, Lock, Bot } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router';
 
 interface SatelliteStatProps {
   icon: React.ElementType;
@@ -23,7 +25,7 @@ interface SatelliteStatProps {
 
 function SatelliteStat({ icon: Icon, label, value, sub, accentColor = 'text-foreground' }: SatelliteStatProps) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3">
+    <div className="card-hero flex items-center justify-between gap-3 border border-border bg-card px-4 py-3">
       <div>
         <p className="font-display text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
         <p className={`text-lg font-bold font-mono-data leading-tight ${accentColor}`}>{value}</p>
@@ -55,6 +57,35 @@ function ArcGauge({ percent }: { percent: number }) {
   );
 }
 
+interface DashboardBotFlow {
+  id: number;
+  name: string;
+  enabled: boolean;
+}
+
+/** Visible to everyone (view-only awareness of what's automated on this server); only clickable
+    through to the editor for a user who actually has bot-flow permissions - the editor route
+    itself redirects anyone else straight back here, which would otherwise look like a dead click. */
+function BotFlowRow({ flow, canEdit }: { flow: DashboardBotFlow; canEdit: boolean }) {
+  const inner = (
+    <div
+      className={cn(
+        'flex items-center justify-between gap-3 px-1 py-2 border-b border-border last:border-b-0',
+        canEdit && 'hover:bg-muted/50 -mx-1 px-2 rounded-sm transition-colors',
+      )}
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        <Bot className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="text-sm truncate">{flow.name}</span>
+      </div>
+      <Badge variant={flow.enabled ? 'success' : 'secondary'} className="text-[10px] shrink-0">
+        {flow.enabled ? 'Active' : 'Inactive'}
+      </Badge>
+    </div>
+  );
+  return canEdit ? <Link to={`/bots/${flow.id}`}>{inner}</Link> : inner;
+}
+
 const formatSampleTime = (ms: number) =>
   new Date(ms).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -72,6 +103,11 @@ export default function Dashboard() {
   // genuinely just not having picked a server yet.
   const { error: virtualServersError } = useVirtualServers();
   const isAdmin = useAuthStore((s) => s.isAdmin());
+  const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
+  const { data: allBots } = useBots();
+  const serverBotFlows = (allBots ?? []).filter(
+    (b: any) => b.serverConfigId === selectedConfigId && String(b.virtualServerId) === String(selectedSid),
+  );
   const [bandwidthHistory, setBandwidthHistory] = useState<any[]>([]);
   const [showWidgets, setShowWidgets] = useState(false);
   const seededServerRef = useRef<string | null>(null);
@@ -306,6 +342,23 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {serverBotFlows.length > 0 && (
+        <Card className="card-hero">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Bot className="h-4 w-4 text-primary" />
+              Bot Flows
+              <span className="font-mono-data text-[11px] text-muted-foreground/70 font-normal">({serverBotFlows.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {serverBotFlows.map((flow: DashboardBotFlow) => (
+              <BotFlowRow key={flow.id} flow={flow} canEdit={canManageBotFlows} />
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <WidgetManagerModal open={showWidgets} onOpenChange={setShowWidgets} />
     </div>
