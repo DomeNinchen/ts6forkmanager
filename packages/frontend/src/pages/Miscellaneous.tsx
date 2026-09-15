@@ -43,6 +43,21 @@ export default function Miscellaneous() {
     onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to update identity'),
   });
 
+  const { data: serverConfig } = useQuery({
+    queryKey: ['server-config', selectedConfigId],
+    queryFn: () => serversApi.get(selectedConfigId!),
+    enabled: !!selectedConfigId,
+  });
+  const [homeChannelId, setHomeChannelId] = useState('');
+  const setHomeChannel = useMutation({
+    mutationFn: (cid: string) => serversApi.update(selectedConfigId!, { queryHomeChannelId: cid.trim() ? parseInt(cid, 10) : null }),
+    onSuccess: () => {
+      toast.success('Home channel updated - applies on the next reconnect');
+      qc.invalidateQueries({ queryKey: ['server-config', selectedConfigId] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to update home channel'),
+  });
+
   // Snapshots
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createSnapshot = useMutation({
@@ -172,6 +187,25 @@ export default function Miscellaneous() {
               <div className="flex gap-2 mt-1">
                 <Input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder={identity?.client_nickname || 'New nickname'} className="h-8 text-sm" />
                 <Button size="sm" onClick={() => setIdentity.mutate(nickname, { onSuccess: () => setNickname('') })} disabled={!nickname.trim() || setIdentity.isPending}>
+                  Save
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-1 border-t border-border/50">
+              <p className="text-[11px] text-muted-foreground mb-2">
+                Which channel this identity appears to "sit in" - purely cosmetic/technical, no functional effect. Leave empty to use whatever TeamSpeak assigns by default.
+              </p>
+              <Label className="text-xs">Home Channel ID {serverConfig?.queryHomeChannelId != null && `(current: ${serverConfig.queryHomeChannelId})`}</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  type="number"
+                  value={homeChannelId}
+                  onChange={(e) => setHomeChannelId(e.target.value)}
+                  placeholder={serverConfig?.queryHomeChannelId != null ? String(serverConfig.queryHomeChannelId) : 'Default'}
+                  className="h-8 text-sm"
+                />
+                <Button size="sm" onClick={() => setHomeChannel.mutate(homeChannelId, { onSuccess: () => setHomeChannelId('') })} disabled={setHomeChannel.isPending}>
                   Save
                 </Button>
               </div>

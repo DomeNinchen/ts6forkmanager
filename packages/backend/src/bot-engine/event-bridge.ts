@@ -53,7 +53,7 @@ export class EventBridge extends EventEmitter {
     client.on('ready', async () => {
       console.log(`[EventBridge] SSH connected to ${serverConfig.host}:${serverConfig.sshPort} for sid=${sid}`);
       try {
-        await client.registerEvents(sid);
+        await client.registerEvents(sid, serverConfig.queryHomeChannelId ?? undefined);
         this.emit('sshConnected', configId, sid);
       } catch (err: any) {
         console.error(`[EventBridge] Failed to register events for ${key}: ${err.message}`);
