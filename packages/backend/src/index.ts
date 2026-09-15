@@ -99,7 +99,7 @@ async function main() {
   // Make services available via app.locals
   app.locals.prisma = prisma;
   app.locals.connectionPool = connectionPool;
-  app.locals.bandwidthSampler = new BandwidthSampler(connectionPool);
+  app.locals.bandwidthSampler = new BandwidthSampler(connectionPool, prisma);
   app.locals.wss = wss;
 
   // Initialize Bot Engine

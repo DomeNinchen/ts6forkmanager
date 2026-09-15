@@ -21,36 +21,58 @@ interface SatelliteStatProps {
   value: string | number;
   sub?: string;
   accentColor?: string;
+  compact?: boolean;
+  /** Small inline history sparkline, e.g. the last ~10min of ping - see Sparkline below. */
+  chart?: React.ReactNode;
 }
 
-/** One compact stat inside the unified hero card below - no border/background of its own, just
-    padding; separation between cells comes from the parent's divide-x/y lines. */
-function StatCell({ icon: Icon, label, value, sub, accentColor = 'text-foreground' }: SatelliteStatProps) {
+/** One stat inside the unified hero card below - no border/background of its own, just padding;
+    the surrounding card supplies the one shared border for the whole section. */
+function StatCell({ icon: Icon, label, value, sub, accentColor = 'text-foreground', compact, chart }: SatelliteStatProps) {
   return (
-    <div className="flex items-center justify-between gap-3 p-5">
-      <div>
+    <div className={cn('flex items-center justify-between gap-3', compact ? 'p-3' : 'p-5')}>
+      <div className="min-w-0 flex-1">
         <p className="font-display text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
         <p className={`text-lg font-bold font-mono-data leading-tight ${accentColor}`}>{value}</p>
         {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+        {chart && <div className="mt-1.5">{chart}</div>}
       </div>
       <Icon className={`h-4 w-4 shrink-0 ${accentColor}`} />
     </div>
   );
 }
 
+/** Minimal inline history line - no axes/labels, just the shape of the last N samples. */
+function Sparkline({ values, className }: { values: number[]; className?: string }) {
+  if (values.length < 2) return null;
+  const w = 100, h = 28;
+  const max = Math.max(...values, 0.001);
+  const min = Math.min(...values, 0);
+  const range = max - min || 1;
+  const points = values
+    .map((v, i) => `${(i / (values.length - 1)) * w},${h - ((v - min) / range) * h}`)
+    .join(' ');
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className={cn('w-full h-7', className)} preserveAspectRatio="none">
+      <polyline points={points} fill="none" style={{ stroke: 'hsl(var(--chart-4))' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** The dashboard's one hero readout - an arc gauge driven by the real online/max ratio, not decorative. */
 function ArcGauge({ percent }: { percent: number }) {
-  const radius = 56;
+  const radius = 78;
   const arcLength = Math.PI * radius;
   const clamped = Math.max(0, Math.min(1, Number.isFinite(percent) ? percent : 0));
+  const d = `M22 107 A${radius} ${radius} 0 0 1 178 107`;
   return (
-    <svg width="140" height="80" viewBox="0 0 140 80" className="overflow-visible">
-      <path d="M14 74 A56 56 0 0 1 126 74" fill="none" style={{ stroke: 'hsl(var(--secondary))' }} strokeWidth="10" strokeLinecap="round" />
+    <svg width="200" height="115" viewBox="0 0 200 115" className="overflow-visible">
+      <path d={d} fill="none" style={{ stroke: 'hsl(var(--secondary))' }} strokeWidth="14" strokeLinecap="round" />
       <path
-        d="M14 74 A56 56 0 0 1 126 74"
+        d={d}
         fill="none"
         style={{ stroke: 'hsl(var(--primary))' }}
-        strokeWidth="10"
+        strokeWidth="14"
         strokeLinecap="round"
         strokeDasharray={arcLength}
         strokeDashoffset={arcLength * (1 - clamped)}
@@ -131,10 +153,11 @@ export default function Dashboard() {
     }
     seededServerRef.current = serverKey;
     setBandwidthHistory(
-      bandwidthHistoryData.map((s: { timestamp: number; incoming: number; outgoing: number }) => ({
+      bandwidthHistoryData.map((s: { timestamp: number; incoming: number; outgoing: number; ping?: number }) => ({
         time: formatSampleTime(s.timestamp),
         in: s.incoming,
         out: s.outgoing,
+        ping: s.ping ?? -1,
       })),
     );
   }, [bandwidthHistoryData, selectedConfigId, selectedSid]);
@@ -149,12 +172,17 @@ export default function Dashboard() {
             time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
             in: data.bandwidth.incoming,
             out: data.bandwidth.outgoing,
+            ping: data.ping,
           },
         ];
         return next.slice(-MAX_BANDWIDTH_POINTS);
       });
     }
   }, [data]);
+
+  // Last ~10min at the sampler's 10s cadence, clamping unreachable (-1) samples to 0 so one bad
+  // tick doesn't spike the sparkline - the headline value above still shows "timeout" for those.
+  const pingSparklineValues = bandwidthHistory.slice(-60).map((s) => Math.max(0, s.ping ?? 0));
 
   if (!selectedConfigId || !selectedSid) {
     const isForbidden = (virtualServersError as any)?.response?.status === 403;
@@ -225,23 +253,25 @@ export default function Dashboard() {
       <Card className="card-hero">
         <CardContent className="p-0">
           <div className="flex flex-col lg:flex-row">
-            <div className="p-6 flex flex-col items-center text-center lg:w-64 shrink-0">
+            <div className="p-6 flex flex-col items-center justify-center text-center lg:w-80 shrink-0">
               <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">Online Users</p>
               <ArcGauge percent={data.maxClients ? data.onlineUsers / data.maxClients : 0} />
-              <p className="text-3xl font-bold font-mono-data text-primary -mt-3">
-                {data.onlineUsers}<span className="text-base font-medium text-muted-foreground">/{data.maxClients}</span>
+              <p className="text-4xl font-bold font-mono-data text-primary -mt-4">
+                {data.onlineUsers}<span className="text-lg font-medium text-muted-foreground">/{data.maxClients}</span>
               </p>
               <p className="text-[11px] text-muted-foreground mt-1">of {data.maxClients} slots</p>
             </div>
-            <div className="flex-1 flex flex-col">
-              <StatCell icon={Hash} label="Channels" value={data.channelCount} accentColor="text-violet-400" />
-              <StatCell icon={Clock} label="Uptime" value={formatUptime(data.uptime)} accentColor="text-emerald-400" />
+            <div className="flex-1 flex flex-col justify-center">
+              <StatCell icon={Hash} label="Channels" value={data.channelCount} accentColor="text-violet-400" compact />
+              <StatCell icon={Clock} label="Uptime" value={formatUptime(data.uptime)} accentColor="text-emerald-400" compact />
               <StatCell
                 icon={Activity}
                 label="Ping"
-                value={`${parseFloat(String(data.ping || 0)).toFixed(1)}ms`}
-                sub={`Loss: ${(parseFloat(String(data.packetloss || 0)) * 100).toFixed(2)}%`}
-                accentColor="text-amber-400"
+                value={data.ping < 0 ? 'timeout' : `${data.ping}ms`}
+                sub={data.pingTarget ? `→ ${data.pingTarget}` : undefined}
+                accentColor={data.ping < 0 ? 'text-destructive' : 'text-amber-400'}
+                compact
+                chart={<Sparkline values={pingSparklineValues} />}
               />
             </div>
           </div>
