@@ -3,7 +3,7 @@ import { Clock, Users, Shield, Globe, Zap, MessageSquare, Moon, Timer, Megaphone
 export interface TemplateConfigField {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'select';
+  type: 'text' | 'number' | 'select' | 'textarea';
   placeholder?: string;
   defaultValue?: string;
   options?: { label: string; value: string }[];
@@ -18,6 +18,8 @@ export interface BotTemplate {
   icon: React.ElementType;
   configFields: TemplateConfigField[];
   flowDataFactory: (config: Record<string, string>) => { nodes: any[]; edges: any[] };
+  /** Placeholders this template's message field(s) resolve automatically - shown to the user while customizing. */
+  variablesHint?: string[];
 }
 
 let _id = 0;
@@ -171,30 +173,109 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   {
     id: 'welcome-message',
     name: 'Welcome Message',
-    description: 'Sends a welcome message or poke when a client joins the server.',
+    description: 'Sends a welcome message or poke when a client joins the server, with an opt-out command and server-group exclusions.',
     category: 'automation',
     icon: MessageSquare,
+    variablesHint: [
+      '{{event.client_nickname}} - joining client\'s name',
+      '{{temp.srvInfo.0.virtualserver_clientsonline}} - clients online right now',
+      '{{temp.dbInfo.0.client_totalconnections}} - this client\'s lifetime connection count',
+      '{{temp.teamOnline}} - team members online right now (only resolves if Team Groups is set below)',
+    ],
     configFields: [
-      { key: 'message', label: 'Welcome Message', type: 'text', placeholder: 'Welcome {{event.client_nickname}}!', required: true },
+      { key: 'message', label: 'Welcome Message', type: 'textarea', placeholder: 'Welcome {{event.client_nickname}}!\nOnline: {{temp.srvInfo.0.virtualserver_clientsonline}} | Team online: {{temp.teamOnline}}\nThis is your {{temp.dbInfo.0.client_totalconnections}}. visit.', required: true },
       { key: 'usePokeInstead', label: 'Delivery Method', type: 'select', defaultValue: 'message', options: [{ label: 'Private Message', value: 'message' }, { label: 'Poke', value: 'poke' }] },
+      { key: 'ignoreGroupIds', label: 'Ignore Groups (comma-separated, optional)', type: 'text', placeholder: 'e.g. Music Bot / Team server group IDs - these clients never get a welcome message' },
+      { key: 'teamGroupIds', label: 'Team Groups for {{temp.teamOnline}} (comma-separated, optional)', type: 'text', placeholder: 'e.g. 6,7' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
-      const n1 = nid(), n2 = nid(), n3 = nid();
       const usePoke = cfg.usePokeInstead === 'poke';
-      return {
-        nodes: [
-          makeNode(n1, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 60, 80),
-          makeNode(n2, 'condition', 'Is Human?', { expression: 'event.client_type == 0' }, 300, 80),
-          usePoke
-            ? makeNode(n3, 'action_poke', 'Welcome Poke', { message: cfg.message || 'Welcome!' }, 540, 40)
-            : makeNode(n3, 'action_message', 'Welcome Msg', { targetMode: 'client', message: cfg.message || 'Welcome!' }, 540, 40),
-        ],
-        edges: [
-          makeEdge(eid(), n1, n2),
-          makeEdge(eid(), n2, n3, 'true', 'in'),
-        ],
-      };
+      const ignoreGroupIds = (cfg.ignoreGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
+      const teamGroupIds = (cfg.teamGroupIds || '').trim();
+      const message = cfg.message || 'Welcome {{event.client_nickname}}!';
+
+      const nodes: any[] = [];
+      const edges: any[] = [];
+      let lastId: string;
+
+      // --- Main chain: client joins. Deliberately linear (no node has more than one
+      // incoming edge) - this engine walks edges depth-first with no "wait for all
+      // branches" join, so a node reachable via two paths would run twice. ---
+      const nTrigger = nid();
+      nodes.push(makeNode(nTrigger, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 40, 200));
+      const nHuman = nid();
+      nodes.push(makeNode(nHuman, 'condition', 'Is Human?', { expression: 'event.client_type == 0' }, 280, 200));
+      edges.push(makeEdge(eid(), nTrigger, nHuman));
+      lastId = nHuman;
+
+      if (ignoreGroupIds.length > 0) {
+        const expr = ignoreGroupIds.map((g) => `hasGroup(event.client_servergroups,'${g}') == 0`).join(' and ');
+        const nIgnoreGroups = nid();
+        nodes.push(makeNode(nIgnoreGroups, 'condition', 'Not Ignored Group?', { expression: expr }, 520, 200));
+        edges.push(makeEdge(eid(), lastId, nIgnoreGroups, 'true', 'in'));
+        lastId = nIgnoreGroups;
+      }
+
+      const nNotOptedOut = nid();
+      nodes.push(makeNode(nNotOptedOut, 'condition', 'Not Opted Out?', { expression: "contains(var.wmpIgnoredClients, event.client_unique_identifier) == 0" }, 760, 200));
+      edges.push(makeEdge(eid(), lastId, nNotOptedOut, 'true', 'in'));
+      lastId = nNotOptedOut;
+
+      const nServerInfo = nid();
+      nodes.push(makeNode(nServerInfo, 'action_webquery', 'Get Online Count', { command: 'serverinfo', params: {}, storeAs: 'srvInfo' }, 1000, 200));
+      edges.push(makeEdge(eid(), lastId, nServerInfo, 'true', 'in'));
+      lastId = nServerInfo;
+
+      const nDbInfo = nid();
+      nodes.push(makeNode(nDbInfo, 'action_webquery', 'Get Total Connections', { command: 'clientdbinfo', params: { cldbid: '{{event.client_database_id}}' }, storeAs: 'dbInfo' }, 1240, 200));
+      edges.push(makeEdge(eid(), lastId, nDbInfo));
+      lastId = nDbInfo;
+
+      if (teamGroupIds) {
+        const nTeamCount = nid();
+        nodes.push(makeNode(nTeamCount, 'action_countOnlineInGroups', 'Count Team Online', { groupIds: teamGroupIds, storeAs: 'teamOnline' }, 1480, 200));
+        edges.push(makeEdge(eid(), lastId, nTeamCount));
+        lastId = nTeamCount;
+      }
+
+      const nSend = nid();
+      nodes.push(
+        usePoke
+          ? makeNode(nSend, 'action_poke', 'Welcome Poke', { message }, 1720, 200)
+          : makeNode(nSend, 'action_message', 'Welcome Msg', { targetMode: 'client', message }, 1720, 200)
+      );
+      edges.push(makeEdge(eid(), lastId, nSend));
+
+      // --- Opt-out chain: !wmp ignore / !wmp unignore ---
+      const y = 420;
+      const nCmdTrigger = nid();
+      nodes.push(makeNode(nCmdTrigger, 'trigger_command', '!wmp', { command: '!wmp' }, 40, y));
+      const nSenderInfo = nid();
+      nodes.push(makeNode(nSenderInfo, 'action_webquery', 'Get Sender UID', { command: 'clientinfo', params: { clid: '{{event.clid}}' }, storeAs: 'senderInfo' }, 280, y));
+      edges.push(makeEdge(eid(), nCmdTrigger, nSenderInfo));
+
+      const nIsIgnoreCmd = nid();
+      nodes.push(makeNode(nIsIgnoreCmd, 'condition', 'Is "ignore"?', { expression: "event.command_args == 'ignore'" }, 520, y - 60));
+      edges.push(makeEdge(eid(), nSenderInfo, nIsIgnoreCmd));
+      const nAddIgnore = nid();
+      nodes.push(makeNode(nAddIgnore, 'action_listMembership', 'Add to Ignore List', { listName: 'wmpIgnoredClients', operation: 'add', value: '{{temp.senderInfo.0.client_unique_identifier}}' }, 760, y - 60));
+      edges.push(makeEdge(eid(), nIsIgnoreCmd, nAddIgnore, 'true', 'in'));
+      const nConfirmIgnore = nid();
+      nodes.push(makeNode(nConfirmIgnore, 'action_message', 'Confirm Ignore', { targetMode: 'client', message: "You won't receive welcome messages anymore. Use !wmp unignore to re-enable them." }, 1000, y - 60));
+      edges.push(makeEdge(eid(), nAddIgnore, nConfirmIgnore));
+
+      const nIsUnignoreCmd = nid();
+      nodes.push(makeNode(nIsUnignoreCmd, 'condition', 'Is "unignore"?', { expression: "event.command_args == 'unignore'" }, 520, y + 60));
+      edges.push(makeEdge(eid(), nSenderInfo, nIsUnignoreCmd));
+      const nRemoveIgnore = nid();
+      nodes.push(makeNode(nRemoveIgnore, 'action_listMembership', 'Remove from Ignore List', { listName: 'wmpIgnoredClients', operation: 'remove', value: '{{temp.senderInfo.0.client_unique_identifier}}' }, 760, y + 60));
+      edges.push(makeEdge(eid(), nIsUnignoreCmd, nRemoveIgnore, 'true', 'in'));
+      const nConfirmUnignore = nid();
+      nodes.push(makeNode(nConfirmUnignore, 'action_message', 'Confirm Unignore', { targetMode: 'client', message: "You'll receive welcome messages again." }, 1000, y + 60));
+      edges.push(makeEdge(eid(), nRemoveIgnore, nConfirmUnignore));
+
+      return { nodes, edges };
     },
   },
   {

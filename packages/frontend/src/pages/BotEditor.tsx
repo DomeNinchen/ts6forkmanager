@@ -14,7 +14,7 @@ import {
   Clock, GitBranch, Variable, FileText, Webhook, Terminal, Plus, Trash2,
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield,
-  Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat,
+  Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -86,6 +86,8 @@ const LOGIC_NODES: NodeTypeDef[] = [
   { type: 'variable', label: 'Set Variable', icon: Variable, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
   { type: 'log', label: 'Log', icon: FileText, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
   { type: 'action_generateCode', label: 'Generate Code', icon: Sparkles, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  { type: 'action_countOnlineInGroups', label: 'Count Online in Groups', icon: Users, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  { type: 'action_listMembership', label: 'List Add/Remove', icon: ListChecks, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
 ];
 
 const ALL_NODE_TYPES: NodeTypeDef[] = [...TRIGGER_NODES, ...ACTION_NODES, ...VOICE_ACTION_NODES, ...SMART_ACTION_NODES, ...LOGIC_NODES];
@@ -1503,7 +1505,52 @@ export default function BotEditor() {
                       </div>
                     </div>
                   )}
-                  
+
+                  {selectedNodeData.type === 'action_countOnlineInGroups' && (
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Server Group IDs (comma-separated)</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="6,7" value={selectedNodeData.config.groupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, groupIds: e.target.value } } : n))} />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Store As</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="teamOnline" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">
+                          Use as: {'{{temp.'}{(selectedNodeData.config.storeAs || 'teamOnline')}{'}}'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedNodeData.type === 'action_listMembership' && (
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">List Name</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="ignoredClients" value={selectedNodeData.config.listName || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, listName: e.target.value } } : n))} />
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">
+                          Persists across restarts. Check membership elsewhere with: contains(var.{(selectedNodeData.config.listName || 'ignoredClients')}, ...)
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Operation</Label>
+                        <Select
+                          value={selectedNodeData.config.operation || 'add'}
+                          onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, operation: v } } : n))}
+                        >
+                          <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="add">Add</SelectItem>
+                            <SelectItem value="remove">Remove</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Value</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="{{event.client_unique_identifier}}" value={selectedNodeData.config.value || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, value: e.target.value } } : n))} />
+                      </div>
+                    </div>
+                  )}
+
                   {selectedNodeData.type === 'log' && (
                     <div className="space-y-2">
                       <div>

@@ -89,12 +89,12 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 ### Bot Flow Engine
 - Visual flow editor with drag-and-drop node canvas
 - Triggers: TS3 events, cron schedules, webhooks (with mandatory secrets), chat commands (global or channel-specific)
-- Actions: kick, ban, move, message, poke, channel create/edit/delete, HTTP requests, WebQuery commands
+- Actions: kick, ban, move, message, poke, channel create/edit/delete, HTTP requests, WebQuery commands, counting online clients across server groups, adding/removing an entry from a persistent list
 - Conditions, variables, delays, logging
 - Loop node: iterates a list stored in a temp variable (e.g. a WebQuery's "Store As" result), running its "Body" output once per item (`{{temp.item}}` for the current item, `{{temp.item_index}}` for its position) and its "After" output once when done. Default cap 50 items, hard ceiling 500
 - Animated channel names (rotating text on a timer)
-- Placeholder system with filters and expressions
-- Pre-built templates for common automation tasks
+- Placeholder system with filters and expressions, plus a `hasGroup(csv, id)` condition function for exact server-group-ID matching (unlike `contains()`, doesn't false-match ID "1" against "10" or "21")
+- Pre-built templates for common automation tasks, including a Welcome Message template with a multi-line message, an online/team-online/total-connections placeholder set, server-group exclusions, and a `!wmp ignore`/`!wmp unignore` opt-out command
 - Optional dedicated "bot identity" per server connection (Settings → Connections → Bot Identity): a real, separate ServerQuery account so bot-flow actions show up under their own name in TeamSpeak's own logs and notifications (e.g. "Hausmeister edited channel X"), instead of the same identity your own manual actions in this app already use. Nothing changes until you create one
 
 ### Server Widgets
