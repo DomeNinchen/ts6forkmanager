@@ -121,6 +121,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Password complexity requirements
 
 ### Settings & Administration
+- Settings → WebGui: pick an accent color for the whole interface from a small preset list (Teal, Red, Blue, Yellow, Green). Admins set the installation-wide default; any user can override it just for themselves, stored locally in their own browser
 - Settings → Users: search/filter the user list, edit a user's username or display name after creation, and see each user's last login time
 - yt-dlp cookie file management for accessing age-restricted or member-only YouTube content
 - Upload cookies via file or paste directly in the UI
