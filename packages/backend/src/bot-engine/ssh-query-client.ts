@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { parseQueryResponse } from '@ts6/common';
 import { TS_EVENT_TYPES } from '@ts6/common';
 import crypto from 'crypto';
+import { isDebugEnabled } from '../utils/debug-flags.js';
 
 export interface SshQueryClientOptions {
   host: string;
@@ -427,8 +428,14 @@ export class SshQueryClient extends EventEmitter {
 
     if (errorId === 0) {
       // Success
+      if (isDebugEnabled('query')) {
+        console.log(`[SSH Query ${this.options.host}:${this.options.port}] ← ok ${cmd.responseLines.join(' | ') || '(empty)'}`);
+      }
       cmd.resolve(cmd.responseLines.join('\n'));
     } else {
+      if (isDebugEnabled('query')) {
+        console.log(`[SSH Query ${this.options.host}:${this.options.port}] ← error id=${errorId} msg=${parsed.msg || 'Unknown error'}`);
+      }
       cmd.reject(new Error(`TS error ${errorId}: ${parsed.msg || 'Unknown error'}`));
     }
 
@@ -441,6 +448,9 @@ export class SshQueryClient extends EventEmitter {
 
     this.currentCommand = this.commandQueue.shift()!;
     this.currentCommand.responseLines = [];
+    if (isDebugEnabled('query')) {
+      console.log(`[SSH Query ${this.options.host}:${this.options.port}] → ${this.currentCommand.command}`);
+    }
     this.shell.write(this.currentCommand.command + '\n');
   }
 

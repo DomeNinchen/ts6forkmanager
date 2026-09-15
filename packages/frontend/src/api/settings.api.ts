@@ -16,10 +16,10 @@ export const settingsApi = {
 
   deleteYtCookies: () => api.delete('/settings/yt-cookies').then((r) => r.data),
 
-  getDebugFlags: (): Promise<{ voice: boolean; rankCheck: boolean }> =>
+  getDebugFlags: (): Promise<{ voice: boolean; rankCheck: boolean; query: boolean }> =>
     api.get('/settings/debug-flags').then((r) => r.data),
 
-  setDebugFlag: (name: 'voice' | 'rankCheck', enabled: boolean) =>
+  setDebugFlag: (name: 'voice' | 'rankCheck' | 'query', enabled: boolean) =>
     api.put(`/settings/debug-flags/${name}`, { enabled }).then((r) => r.data),
 
   resetRadioStationIds: (): Promise<{ deletedCount: number }> =>
