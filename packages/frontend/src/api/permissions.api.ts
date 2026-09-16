@@ -22,6 +22,12 @@ export const permissionsApi = {
   find: (configId: number, sid: number, permsid: string) =>
     api.get(`${base(configId, sid)}/find`, { params: { permsid } }).then((r) => r.data),
 
+  // Every permission that applies to one client in one channel, one row per
+  // contributing tier (so the same permission can appear several times).
+  // Unlike find, these rows do carry the value (v/n/s).
+  overview: (configId: number, sid: number, cldbid: number, cid: number) =>
+    api.get(`${base(configId, sid)}/overview/${cldbid}`, { params: { cid } }).then((r) => r.data),
+
   // Server Group permissions
   serverGroupPerms: (configId: number, sid: number, sgid: number) =>
     api.get(`${sgBase(configId, sid)}/${sgid}/permissions`).then((r) => r.data),

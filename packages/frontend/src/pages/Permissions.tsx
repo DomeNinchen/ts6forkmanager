@@ -18,7 +18,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import {
   Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, UserCog, Save,
-  X, Check, Minus, Plus, Columns3, Upload, FileText,
+  X, Check, Minus, Plus, Columns3, Upload, FileText, Layers,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -78,6 +78,30 @@ const LAYERS: { key: PermLayer; label: string; icon: React.ElementType }[] = [
   { key: 'client', label: 'Client', icon: User },
   { key: 'channel-client', label: 'Client in Channel', icon: UserCog },
 ];
+
+// How permoverview labels each row's source. The id fields differ per tier:
+// channel groups report the CHANNEL in id1 and the group in id2, and
+// channel-client reports channel then client. That was read off a real
+// server's responses rather than assumed - permfind, by contrast, reports
+// channel groups with id1=0, so the two commands genuinely disagree there.
+//
+// `rank` is the override order, higher wins, taken from TeamSpeak 6's own
+// documentation (advanced/permissions): client-specific permissions rank
+// highest, then channel groups, then channel-specific client permissions,
+// then server groups. Plain channel permissions aren't in that list at all -
+// they describe the channel itself rather than a grant to the client - so
+// they sit lowest here. Worth knowing: widely-cited TS3-era third-party
+// documentation states a different order, with channel-client highest and
+// plain client permissions below channel groups. Neither could be verified
+// against this server, because permget only reports an effective value for
+// the caller's own connection, so the official TS6 order is what's used.
+const OVERVIEW_TIER_OF: Record<number, { rank: number; key: PermLayer; label: string }> = {
+  0: { rank: 2, key: 'server-group', label: 'Server Group' },
+  1: { rank: 5, key: 'client', label: 'Client' },
+  2: { rank: 1, key: 'channel', label: 'Channel' },
+  3: { rank: 4, key: 'channel-group', label: 'Channel Group' },
+  4: { rank: 3, key: 'channel-client', label: 'Client in Channel' },
+};
 
 // Entity keys are strings everywhere on this page. For the 4 "flat list"
 // layers it's just the numeric id as a string; for channel-client (no
@@ -166,9 +190,19 @@ export default function Permissions() {
   // Find Permission: a reverse lookup (pick a permission, see everywhere it's
   // assigned across all 5 tiers). Sits alongside the tier tabs rather than
   // being one of them - it replaces the whole select/edit layout while active.
-  const [findMode, setFindMode] = useState(false);
+  // The tier tabs edit permissions; Find and Overview replace that whole
+  // layout with their own, so they're modes rather than a sixth/seventh tier.
+  const [mode, setMode] = useState<'edit' | 'find' | 'overview'>('edit');
+  const findMode = mode === 'find';
+  const overviewMode = mode === 'overview';
+  const setFindMode = (on: boolean) => setMode(on ? 'find' : 'edit');
   const [findPermsid, setFindPermsid] = useState('');
   const [findSearch, setFindSearch] = useState('');
+  // Permission Overview: one client, in one channel, with every tier that
+  // contributes to each of their permissions.
+  const [ovClient, setOvClient] = useState<string>('');
+  const [ovChannel, setOvChannel] = useState<string>('');
+  const [ovSearch, setOvSearch] = useState('');
   // Set only immediately before a layer change that a result click triggers,
   // so the layer-reset effect below can select the jumped-to entity instead of
   // clearing the selection it just made.
@@ -196,28 +230,29 @@ export default function Permissions() {
   const { data: serverGroups } = useQuery({
     queryKey: ['server-groups', c, s],
     queryFn: () => permissionsApi.serverGroups(c!, s!),
-    enabled: !!c && !!s && (layer === 'server-group' || findMode),
+    enabled: !!c && !!s && (layer === 'server-group' || findMode || overviewMode),
   });
   const { data: channelGroups } = useQuery({
     queryKey: ['channel-groups', c, s],
     queryFn: () => permissionsApi.channelGroups(c!, s!),
-    enabled: !!c && !!s && (layer === 'channel-group' || findMode),
+    enabled: !!c && !!s && (layer === 'channel-group' || findMode || overviewMode),
   });
   const { data: channels } = useQuery({
     queryKey: ['channels-for-perms', c, s],
     queryFn: () => permissionsApi.channels(c!, s!),
-    enabled: !!c && !!s && (layer === 'channel' || layer === 'channel-client' || findMode),
+    enabled: !!c && !!s && (layer === 'channel' || layer === 'channel-client' || findMode || overviewMode),
   });
   const { data: clients } = useQuery({
     queryKey: ['clients-for-perms', c, s],
     queryFn: () => permissionsApi.clients(c!, s!),
-    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client' || findMode),
+    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client' || findMode || overviewMode),
   });
   const { data: offlineClients } = useQuery({
     queryKey: ['clients-db-for-perms', c, s],
     queryFn: () => permissionsApi.clientsDatabase(c!, s!),
-    // Always in find mode - a permission can sit on a client who isn't online.
-    enabled: !!c && !!s && (((layer === 'client' || layer === 'channel-client') && showOffline) || findMode),
+    // Always in find/overview mode - a permission can sit on a client who
+    // isn't online, and an overview is just as valid for an offline client.
+    enabled: !!c && !!s && (((layer === 'client' || layer === 'channel-client') && showOffline) || findMode || overviewMode),
   });
 
   // Fetch current entity permissions
@@ -346,6 +381,62 @@ export default function Permissions() {
         }))
       : [],
   });
+
+  // Permission Overview: every tier that contributes to this client's
+  // permissions in this channel. Rows carry the value (v/n/s), and the same
+  // permission appears once per contributing tier - confirmed live by setting
+  // a permission a server group already granted directly on the client too
+  // and watching the overview return both rows.
+  const { data: overviewRaw, isFetching: overviewFetching } = useQuery({
+    queryKey: ['perm-overview', c, s, ovClient, ovChannel],
+    queryFn: () => permissionsApi.overview(c!, s!, Number(ovClient), Number(ovChannel)),
+    enabled: !!c && !!s && !!ovClient && !!ovChannel && overviewMode,
+  });
+
+  const overviewRows = useMemo(() => {
+    if (!Array.isArray(overviewRaw)) return [];
+    return (overviewRaw as any[]).map((r) => ({
+      tier: OVERVIEW_TIER_OF[Number(r.t)] ?? null,
+      id1: String(Number(r.id1)),
+      id2: String(Number(r.id2)),
+      permsid: permIdToName.get(Number(r.p)) ?? `permid_${r.p}`,
+      permvalue: Number(r.v) || 0,
+      permnegated: Number(r.n) || 0,
+      permskip: Number(r.s) || 0,
+    })).filter((r) => r.tier !== null);
+  }, [overviewRaw, permIdToName]);
+
+  // Group by permission, then work out which source actually applies: the
+  // highest-ranked tier wins (see OVERVIEW_TIER_OF), and within one tier - a
+  // client in several server groups, say - the highest value wins, except
+  // that a negated entry takes precedence with the LOWEST value, which is how
+  // a restrictive group is meant to claw a permission back.
+  //
+  // The skip flag is deliberately shown but not acted on: TeamSpeak 6's own
+  // documentation doesn't describe it at all, so silently letting it change
+  // the computed winner would be inventing behaviour. Every source stays
+  // visible in the UI so this calculation can always be checked by eye.
+  const overviewResolved = useMemo(() => {
+    const byPerm = new Map<string, typeof overviewRows>();
+    for (const r of overviewRows) {
+      if (!byPerm.has(r.permsid)) byPerm.set(r.permsid, []);
+      byPerm.get(r.permsid)!.push(r);
+    }
+    const pickWithinTier = (list: typeof overviewRows) => {
+      const negated = list.filter((r) => r.permnegated);
+      const pool = negated.length ? negated : list;
+      return pool.reduce((best, r) =>
+        negated.length ? (r.permvalue < best.permvalue ? r : best) : (r.permvalue > best.permvalue ? r : best));
+    };
+    return [...byPerm.entries()].map(([permsid, sources]) => {
+      const perTier = new Map<number, typeof overviewRows[number]>();
+      for (const rank of new Set(sources.map((r) => r.tier!.rank))) {
+        perTier.set(rank, pickWithinTier(sources.filter((r) => r.tier!.rank === rank)));
+      }
+      const winner = perTier.get(Math.max(...perTier.keys()))!;
+      return { permsid, sources, winner };
+    }).sort((a, b) => a.permsid.localeCompare(b.permsid));
+  }, [overviewRows]);
 
   // Compare mode: each selected entity's permissions as its own map
   const compareData = useMemo(() => {
@@ -707,6 +798,21 @@ export default function Permissions() {
   })().filter((ent: any) =>
     (layer !== 'client' && layer !== 'channel-client') || !entitySearch || ent.name.toLowerCase().includes(entitySearch.toLowerCase()));
 
+  // Overview picks its own client list rather than reusing `entities`, which
+  // is scoped to whichever tier tab is active behind the overlay.
+  const overviewClients = (() => {
+    const online = (Array.isArray(clients) ? clients : [])
+      .filter((cl: any) => String(cl.client_type) === '0')
+      .map((cl: any) => ({ id: String(cl.client_database_id), name: cl.client_nickname, online: true }));
+    const onlineIds = new Set(online.map((o) => o.id));
+    const offline = (Array.isArray(offlineClients) ? offlineClients : [])
+      .filter((cl: any) => !onlineIds.has(String(cl.cldbid)))
+      .map((cl: any) => ({ id: String(cl.cldbid), name: cl.client_nickname || `Client #${cl.cldbid}`, online: false }));
+    return [...online, ...offline]
+      .sort((a, b) => (a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1))
+      .filter((cl) => !entitySearch || cl.name.toLowerCase().includes(entitySearch.toLowerCase()));
+  })();
+
   const entityName = (key: string): string => {
     if (layer === 'channel-client') {
       const info = ccNames.get(key);
@@ -738,6 +844,25 @@ export default function Permissions() {
         const [cid, cldbid] = hit.key.split(':');
         return `${clientNameOf(cldbid)} @ ${channelNameOf(cid)}`;
       }
+    }
+  };
+
+  const overviewSourceName = (row: { tier: { key: PermLayer } | null; id1: string; id2: string }): string => {
+    switch (row.tier?.key) {
+      case 'server-group':
+        return (Array.isArray(serverGroups) ? serverGroups : []).find((g: any) => String(g.sgid) === row.id1)?.name || `#${row.id1}`;
+      case 'channel-group': {
+        const name = (Array.isArray(channelGroups) ? channelGroups : []).find((g: any) => String(g.cgid) === row.id2)?.name || `#${row.id2}`;
+        return `${name} in ${channelNameOf(row.id1)}`;
+      }
+      case 'channel':
+        return channelNameOf(row.id1);
+      case 'client':
+        return clientNameOf(row.id1);
+      case 'channel-client':
+        return `${clientNameOf(row.id2)} @ ${channelNameOf(row.id1)}`;
+      default:
+        return `#${row.id1}`;
     }
   };
 
@@ -855,7 +980,7 @@ export default function Permissions() {
         ))}
         <div className="w-px bg-border/50 my-1 mx-1" />
         <button
-          onClick={() => setFindMode(true)}
+          onClick={() => setMode('find')}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
             findMode
@@ -866,9 +991,175 @@ export default function Permissions() {
           <Search className="h-3.5 w-3.5" />
           Find Permission
         </button>
+        <button
+          onClick={() => setMode('overview')}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+            overviewMode
+              ? 'bg-background text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Layers className="h-3.5 w-3.5" />
+          Permission Overview
+        </button>
       </div>
 
-      {findMode ? (
+      {overviewMode ? (
+        <div className="grid grid-cols-12 gap-4">
+          {/* Client picker */}
+          <Card className="card-hero col-span-3">
+            <CardHeader className="pb-2 space-y-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Select Client
+              </CardTitle>
+              <div className="relative">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={entitySearch}
+                  onChange={(e) => setEntitySearch(e.target.value)}
+                  placeholder="Search clients..."
+                  className="h-7 pl-7 text-xs"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[500px]">
+                <div className="p-2 space-y-0.5">
+                  {overviewClients.map((cl) => (
+                    <button
+                      key={cl.id}
+                      onClick={() => setOvClient(cl.id)}
+                      className={cn(
+                        'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2',
+                        ovClient === cl.id ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted/50',
+                      )}
+                    >
+                      <span
+                        className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', cl.online ? 'bg-emerald-500' : 'bg-zinc-500')}
+                        title={cl.online ? 'Online' : 'Offline'}
+                      />
+                      <span className="truncate flex-1">{cl.name}</span>
+                      <span className="text-[10px] font-mono-data text-muted-foreground">#{cl.id}</span>
+                    </button>
+                  ))}
+                  {overviewClients.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">No clients found</p>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Resolved permissions */}
+          <Card className="card-hero col-span-9">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Permission Overview
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Select value={ovChannel} onValueChange={setOvChannel}>
+                    <SelectTrigger className="h-8 text-xs w-56"><SelectValue placeholder="Choose a channel..." /></SelectTrigger>
+                    <SelectContent>
+                      {(Array.isArray(channels) ? channels : []).map((ch: any) => (
+                        <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.channel_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="relative w-56">
+                    <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={ovSearch}
+                      onChange={(e) => setOvSearch(e.target.value)}
+                      placeholder="Search permissions..."
+                      className="pl-7 h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Every permission this client actually has in the chosen channel, and which layer each one comes from. Where
+                several layers grant the same permission, the winning one is highlighted, following TeamSpeak 6's documented
+                order (client &gt; channel group &gt; client-in-channel &gt; server group). The other sources stay listed so the
+                result can always be checked by eye - and note the Skip flag is shown but not applied, since TeamSpeak's own
+                documentation doesn't describe what it does.
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[500px]">
+                {!ovClient || !ovChannel ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-sm text-muted-foreground">
+                      {!ovClient ? 'Select a client from the left panel' : 'Choose a channel to see their permissions in it'}
+                    </p>
+                  </div>
+                ) : overviewFetching ? (
+                  <div className="flex items-center justify-center h-[400px]"><PageLoader /></div>
+                ) : overviewResolved.length === 0 ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-sm text-muted-foreground">No permissions apply to this client in this channel</p>
+                  </div>
+                ) : (
+                  <div className="px-3 pb-3">
+                    <div className="grid grid-cols-12 gap-2 px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
+                      <div className="col-span-6">Permission</div>
+                      <div className="col-span-4">Comes From</div>
+                      <div className="col-span-2 text-center">Value</div>
+                    </div>
+                    {overviewResolved
+                      .filter((row) => {
+                        if (!ovSearch) return true;
+                        const q = ovSearch.toLowerCase();
+                        const def = allPerms.find((p) => p.permsid === row.permsid);
+                        return row.permsid.toLowerCase().includes(q) || (def?.permdesc.toLowerCase().includes(q) ?? false);
+                      })
+                      .map((row) => {
+                        const def = allPerms.find((p) => p.permsid === row.permsid)
+                          ?? { permsid: row.permsid, permdesc: '', permid: 0 };
+                        const isBoolean = row.permsid.startsWith('b_');
+                        const contested = row.sources.length > 1;
+                        return (
+                          <div key={row.permsid} className="grid grid-cols-12 gap-2 px-2 py-1.5 rounded-sm text-xs items-start border-t border-border/30">
+                            <div className="col-span-6 truncate" title={permTooltip(def)}>
+                              <span className={cn('text-[11px]', permLabelMode === 'advanced' && 'font-mono-data')}>
+                                {permLabel(def)}
+                              </span>
+                            </div>
+                            <div className="col-span-4 space-y-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <Badge variant="secondary" className="text-[9px] h-4 px-1.5">{row.winner.tier!.label}</Badge>
+                                <span className="truncate text-muted-foreground">{overviewSourceName(row.winner)}</span>
+                              </div>
+                              {contested && row.sources.filter((sc) => sc !== row.winner).map((sc, i) => (
+                                <div key={i} className="flex items-center gap-1.5 opacity-50 line-through">
+                                  <span className="text-[9px] text-muted-foreground">{sc.tier!.label}</span>
+                                  <span className="truncate text-muted-foreground text-[10px]">{overviewSourceName(sc)}</span>
+                                  <span className="font-mono-data text-[10px] text-muted-foreground">{sc.permvalue}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="col-span-2 flex items-center justify-center gap-1">
+                              {isBoolean && row.winner.permvalue === 1 ? (
+                                <Check className={cn('h-3.5 w-3.5', row.winner.permnegated ? 'text-destructive' : 'text-primary')} />
+                              ) : (
+                                <span className={cn('font-mono-data', row.winner.permnegated && 'text-destructive')}>
+                                  {row.winner.permvalue}
+                                </span>
+                              )}
+                              {row.winner.permnegated ? <sup className="text-destructive text-[9px]">N</sup> : null}
+                              {row.winner.permskip ? <sup className="text-amber-400 text-[9px]">S</sup> : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      ) : findMode ? (
         <div className="grid grid-cols-12 gap-4">
           {/* Permission picker */}
           <Card className="card-hero col-span-3">
