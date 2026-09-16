@@ -87,10 +87,10 @@ const LAYERS: { key: PermLayer; label: string; icon: React.ElementType }[] = [
 //
 // `rank` is the tier number from TeamSpeak's own permission documentation,
 // the copy shipped alongside the server itself (doc/server/permissiondoc.txt),
-// which is the authority here: a higher tier overwrites a lower one. Note the
-// permissions page on TeamSpeak's current online documentation site states a
-// different, incompatible order (client highest, channel-client third) - that
-// one is wrong, or at least badly oversimplified, and must not be used.
+// which is the authority here: a higher tier overwrites a lower one. Be aware
+// that documentation found online sometimes states a different, incompatible
+// order (client highest, channel-client third) - that order is wrong, and an
+// earlier version of this file shipped it before the bundled docs settled it.
 const OVERVIEW_TIER_OF: Record<number, { rank: number; key: PermLayer; label: string }> = {
   0: { rank: 1, key: 'server-group', label: 'Server Group' },
   1: { rank: 2, key: 'client', label: 'Client' },
