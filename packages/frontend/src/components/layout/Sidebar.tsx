@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench,
+  BarChart3, Wrench, SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
@@ -70,6 +70,7 @@ const navSections = [
       { to: '/logs', icon: ScrollText, label: 'Server Logs', visible: adminOnly },
       { to: '/instance', icon: Cpu, label: 'Instance', visible: adminOnly },
       { to: '/miscellaneous', icon: Wrench, label: 'Miscellaneous', visible: adminOnly },
+      { to: '/advanced-settings', icon: SlidersHorizontal, label: 'Advanced Settings', visible: adminOnly },
       { to: '/music-requests', icon: ListMusic, label: 'Music Request History', visible: adminOnly },
     ],
   },

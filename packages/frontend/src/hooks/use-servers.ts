@@ -27,6 +27,15 @@ export function useVirtualServerInfo() {
   });
 }
 
+export function useEditVirtualServer() {
+  const qc = useQueryClient();
+  const { selectedConfigId, selectedSid } = useServerStore();
+  return useMutation({
+    mutationFn: (data: any) => serversApi.editVirtual(selectedConfigId!, selectedSid!, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['virtual-server-info', selectedConfigId, selectedSid] }),
+  });
+}
+
 export function useHostInfo() {
   const { selectedConfigId } = useServerStore();
   return useQuery({
