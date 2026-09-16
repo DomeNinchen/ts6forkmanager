@@ -73,4 +73,19 @@ ENV SIDECAR_URL=http://ts6-sidecar:9800
 # change, independent of when this image last got rebuilt. Check for an
 # update on every container start; non-fatal if it fails (offline, PyPI
 # unreachable, ...) so a network hiccup at boot never blocks startup.
-CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; npx prisma db push && npx prisma db seed || true && exec node dist/index.js"]
+#
+# `prisma db push --accept-data-loss`: this project has no formal migrations -
+# db push IS the schema-sync step, applied on every start, and every schema
+# change is already reviewed as a PR before it ships, so the interactive
+# data-loss confirmation prisma would otherwise demand can never actually be
+# answered here anyway. --accept-data-loss unblocks that stuck prompt.
+# Without it, db push exits non-zero on a column removal - and the `&&`/`||`
+# chaining below it MUST leave that failure fatal (stop the container),
+# not fall through to starting the backend against an unmigrated schema: a
+# real production deploy hit exactly this - db push failed, got silently
+# swallowed by `... || true && exec node ...` (the `|| true` was only meant
+# to tolerate `db seed` failing, e.g. on a re-run where seed rows already
+# exist, but its scope leaked to the whole left-hand chain including db push
+# itself) - and the backend booted anyway with a stale schema. The explicit
+# `(... || true)` grouping below scopes that tolerance to db seed only.
+CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; npx prisma db push --accept-data-loss && (npx prisma db seed || true) && exec node dist/index.js"]
