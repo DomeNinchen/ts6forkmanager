@@ -48,6 +48,7 @@ const Messages = lazy(() => import('@/pages/Messages'));
 const ServerLogs = lazy(() => import('@/pages/ServerLogs'));
 const Instance = lazy(() => import('@/pages/Instance'));
 const Miscellaneous = lazy(() => import('@/pages/Miscellaneous'));
+const AdvancedServerSettings = lazy(() => import('@/pages/AdvancedServerSettings'));
 const BotList = lazy(() => import('@/pages/BotList'));
 const BotEditor = lazy(() => import('@/pages/BotEditor'));
 const MusicBots = lazy(() => import('@/pages/MusicBots'));
@@ -87,6 +88,7 @@ export function App() {
               <Route path="/logs" element={<AdminRoute><ServerLogs /></AdminRoute>} />
               <Route path="/instance" element={<AdminRoute><Instance /></AdminRoute>} />
               <Route path="/miscellaneous" element={<AdminRoute><Miscellaneous /></AdminRoute>} />
+              <Route path="/advanced-settings" element={<AdminRoute><AdvancedServerSettings /></AdminRoute>} />
               <Route path="/music-requests" element={<AdminRoute><MusicRequests /></AdminRoute>} />
               <Route path="/bots" element={<RoleRoute check="botFlows"><BotList /></RoleRoute>} />
               <Route path="/bots/:botId" element={<RoleRoute check="botFlows"><BotEditor /></RoleRoute>} />

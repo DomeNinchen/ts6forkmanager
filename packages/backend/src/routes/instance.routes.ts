@@ -43,3 +43,15 @@ instanceRoutes.get('/host', async (req: Request, res: Response, next) => {
 instanceRoutes.get('/version', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(0, 'version')); } catch (err) { next(err); }
 });
+
+// IP addresses the instance listens on, per subsystem - instance-wide, not tied to any one virtual server.
+instanceRoutes.get('/bindings', async (req: Request, res: Response, next) => {
+  try {
+    const [voice, query, filetransfer] = await Promise.all([
+      getClient(req).execute(0, 'bindinglist', { subsystem: 'voice' }),
+      getClient(req).execute(0, 'bindinglist', { subsystem: 'query' }),
+      getClient(req).execute(0, 'bindinglist', { subsystem: 'filetransfer' }),
+    ]);
+    res.json({ voice, query, filetransfer });
+  } catch (err) { next(err); }
+});

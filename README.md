@@ -56,8 +56,9 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Offline message system
 - Server log viewer with filtering
 - Channel file browser with upload/download
-- Instance-level settings
+- Instance-level settings, including IP bindings per subsystem (voice/query/file transfer)
 - Miscellaneous tools: instance-wide or per-server broadcast messages, a renameable query identity for your own manual actions, per-server settings/permissions snapshots (create, download, restore), and a permission-reset to defaults
+- Advanced Settings per server: welcome/host message and host banner/button, default server/channel/channel-admin groups, access & security (password, identity security level, codec encryption, weblist visibility, reserved slots), complaints, forced silence & priority speaker, anti-flood, per-category event logging, and file-transfer quotas/bandwidth
 
 ### Music Bots
 - Multiple bots per server, each with independent queue and playback

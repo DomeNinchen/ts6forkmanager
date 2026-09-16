@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Cpu, Save, Server, Globe } from 'lucide-react';
+import { Cpu, Save, Server, Globe, Network } from 'lucide-react';
 import { formatBytes, formatUptime } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -31,6 +31,11 @@ export default function Instance() {
   const { data: version } = useQuery({
     queryKey: ['version', c],
     queryFn: () => serversApi.version(c!),
+    enabled: !!c,
+  });
+  const { data: bindings } = useQuery({
+    queryKey: ['instance-bindings', c],
+    queryFn: () => serversApi.bindings(c!),
     enabled: !!c,
   });
 
@@ -132,6 +137,30 @@ export default function Instance() {
                     defaultValue={current ?? ''}
                     onChange={(e) => setEditFields((prev) => ({ ...prev, [field.key]: e.target.value }))}
                   />
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* IP Bindings */}
+      <Card className="card-hero">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2"><Network className="h-4 w-4 text-primary" /> IP Bindings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(['voice', 'query', 'filetransfer'] as const).map((subsystem) => {
+              const list = Array.isArray(bindings?.[subsystem]) ? bindings[subsystem] : bindings?.[subsystem] ? [bindings[subsystem]] : [];
+              return (
+                <div key={subsystem}>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{subsystem === 'filetransfer' ? 'File Transfer' : subsystem}</p>
+                  <div className="space-y-1">
+                    {list.length > 0
+                      ? list.map((b: any, i: number) => <p key={i} className="text-xs font-mono-data">{b.ip}</p>)
+                      : <p className="text-xs text-muted-foreground">-</p>}
+                  </div>
                 </div>
               );
             })}

@@ -37,9 +37,14 @@ const ALLOWED_SERVER_EDIT_PARAMS = new Set([
   'virtualserver_icon_id', 'virtualserver_codec_encryption_mode',
   'virtualserver_needed_identity_security_level', 'virtualserver_min_client_version',
   'virtualserver_antiflood_points_tick_reduce', 'virtualserver_antiflood_points_needed_command_block',
-  'virtualserver_antiflood_points_needed_ip_block',
+  'virtualserver_antiflood_points_needed_ip_block', 'virtualserver_antiflood_points_needed_plugin_block',
   'virtualserver_log_client', 'virtualserver_log_query', 'virtualserver_log_channel',
   'virtualserver_log_permissions', 'virtualserver_log_server', 'virtualserver_log_filetransfer',
+  'virtualserver_reserved_slots', 'virtualserver_weblist_enabled',
+  'virtualserver_complain_autoban_count', 'virtualserver_complain_autoban_time', 'virtualserver_complain_remove_time',
+  'virtualserver_min_clients_in_channel_before_forced_silence', 'virtualserver_priority_speaker_dimm_modificator',
+  'virtualserver_download_quota', 'virtualserver_upload_quota',
+  'virtualserver_max_download_total_bandwidth', 'virtualserver_max_upload_total_bandwidth',
 ]);
 
 virtualServerRoutes.put('/:sid', requireRole('admin'), async (req: Request, res: Response, next) => {

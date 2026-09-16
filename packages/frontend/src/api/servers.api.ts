@@ -47,4 +47,6 @@ export const serversApi = {
     api.get(`/servers/${configId}/instance/host`).then((r) => r.data),
   version: (configId: number) =>
     api.get(`/servers/${configId}/instance/version`).then((r) => r.data),
+  bindings: (configId: number) =>
+    api.get(`/servers/${configId}/instance/bindings`).then((r) => r.data),
 };
