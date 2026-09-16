@@ -64,11 +64,3 @@ export const filesApi = {
     api.get(`/servers/${configId}/vs/${sid}/files/${cid}`, { params: { path } }).then((r) => r.data),
 };
 
-export const permissionsApi = {
-  list: (configId: number, sid: number) =>
-    api.get(`/servers/${configId}/vs/${sid}/permissions`).then((r) => r.data),
-  find: (configId: number, sid: number, permsid: string) =>
-    api.get(`/servers/${configId}/vs/${sid}/permissions/find`, { params: { permsid } }).then((r) => r.data),
-  overview: (configId: number, sid: number, cldbid: number) =>
-    api.get(`/servers/${configId}/vs/${sid}/permissions/overview/${cldbid}`).then((r) => r.data),
-};

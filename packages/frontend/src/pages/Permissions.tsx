@@ -163,6 +163,17 @@ export default function Permissions() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [colorPivot, setColorPivot] = useState<{ colKey: string; permsid: string } | null>(null);
 
+  // Find Permission: a reverse lookup (pick a permission, see everywhere it's
+  // assigned across all 5 tiers). Sits alongside the tier tabs rather than
+  // being one of them - it replaces the whole select/edit layout while active.
+  const [findMode, setFindMode] = useState(false);
+  const [findPermsid, setFindPermsid] = useState('');
+  const [findSearch, setFindSearch] = useState('');
+  // Set only immediately before a layer change that a result click triggers,
+  // so the layer-reset effect below can select the jumped-to entity instead of
+  // clearing the selection it just made.
+  const jumpRef = useRef<{ layer: PermLayer; key: string; ccName?: { channelName: string; clientName: string } } | null>(null);
+
   const toggleEntitySelect = useCallback((key: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -180,31 +191,33 @@ export default function Permissions() {
     enabled: !!c && !!s,
   });
 
-  // Fetch entity lists for selectors
+  // Fetch entity lists for selectors. Find mode needs all of them at once, to
+  // turn the bare ids permfind returns back into real names.
   const { data: serverGroups } = useQuery({
     queryKey: ['server-groups', c, s],
     queryFn: () => permissionsApi.serverGroups(c!, s!),
-    enabled: !!c && !!s && layer === 'server-group',
+    enabled: !!c && !!s && (layer === 'server-group' || findMode),
   });
   const { data: channelGroups } = useQuery({
     queryKey: ['channel-groups', c, s],
     queryFn: () => permissionsApi.channelGroups(c!, s!),
-    enabled: !!c && !!s && layer === 'channel-group',
+    enabled: !!c && !!s && (layer === 'channel-group' || findMode),
   });
   const { data: channels } = useQuery({
     queryKey: ['channels-for-perms', c, s],
     queryFn: () => permissionsApi.channels(c!, s!),
-    enabled: !!c && !!s && (layer === 'channel' || layer === 'channel-client'),
+    enabled: !!c && !!s && (layer === 'channel' || layer === 'channel-client' || findMode),
   });
   const { data: clients } = useQuery({
     queryKey: ['clients-for-perms', c, s],
     queryFn: () => permissionsApi.clients(c!, s!),
-    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client'),
+    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client' || findMode),
   });
   const { data: offlineClients } = useQuery({
     queryKey: ['clients-db-for-perms', c, s],
     queryFn: () => permissionsApi.clientsDatabase(c!, s!),
-    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client') && showOffline,
+    // Always in find mode - a permission can sit on a client who isn't online.
+    enabled: !!c && !!s && (((layer === 'client' || layer === 'channel-client') && showOffline) || findMode),
   });
 
   // Fetch current entity permissions
@@ -214,17 +227,25 @@ export default function Permissions() {
     enabled: !!c && !!s && !!entityKey,
   });
 
-  // Reset entity when layer changes
+  // Reset entity when layer changes - unless the change came from clicking a
+  // Find Permission result, in which case select what was clicked instead.
   useEffect(() => {
-    setSelectedIds(new Set());
+    const jump = jumpRef.current;
+    jumpRef.current = null;
     setChanges(new Map());
     setCompareChanges(new Map());
     setCompareMode(false);
     setCcChannel('');
-    setCcNames(new Map());
     setComparePermIds(null);
     setFileTargets([]);
     setColorPivot(null);
+    if (jump && jump.layer === layer) {
+      setSelectedIds(new Set([jump.key]));
+      setCcNames(jump.ccName ? new Map([[jump.key, jump.ccName]]) : new Map());
+    } else {
+      setSelectedIds(new Set());
+      setCcNames(new Map());
+    }
   }, [layer]);
   // Compare only makes sense with 2+ selected - drop out of it otherwise
   useEffect(() => { if (!bulkMode) setCompareMode(false); }, [bulkMode]);
@@ -280,6 +301,51 @@ export default function Permissions() {
     }
     return map;
   }, [allPerms]);
+
+  // Find Permission: permfind only reports WHERE a permission is assigned
+  // ({t, id1, id2, p}) and never its value, so each hit's value is fetched
+  // separately below - reusing the exact query keys the editor itself uses, so
+  // a hit you then open is already cached. The t → tier mapping below was
+  // confirmed live against a real server rather than assumed from symmetry:
+  // channel groups carry their id in id2, with id1 always 0, unlike every
+  // other tier.
+  const { data: findRaw, isFetching: findFetching } = useQuery({
+    queryKey: ['perm-find', c, s, findPermsid],
+    queryFn: () => permissionsApi.find(c!, s!, findPermsid),
+    enabled: !!c && !!s && !!findPermsid && findMode,
+  });
+
+  const findHits = useMemo(() => {
+    if (!Array.isArray(findRaw)) return [] as { layer: PermLayer; key: string }[];
+    const hits = findRaw
+      .map((r: any) => {
+        const id1 = String(Number(r.id1));
+        const id2 = String(Number(r.id2));
+        switch (Number(r.t)) {
+          case 0: return { layer: 'server-group' as PermLayer, key: id1 };
+          case 1: return { layer: 'client' as PermLayer, key: id1 };
+          case 2: return { layer: 'channel' as PermLayer, key: id1 };
+          case 3: return { layer: 'channel-group' as PermLayer, key: id2 };
+          case 4: return { layer: 'channel-client' as PermLayer, key: `${id1}:${id2}` };
+          default: return null;
+        }
+      })
+      .filter((h): h is { layer: PermLayer; key: string } => h !== null);
+    const order = LAYERS.map((l) => l.key);
+    return hits.sort(
+      (a, b) => order.indexOf(a.layer) - order.indexOf(b.layer) || Number(a.key.split(':')[0]) - Number(b.key.split(':')[0]),
+    );
+  }, [findRaw]);
+
+  const findValueQueries = useQueries({
+    queries: findMode
+      ? findHits.map((h) => ({
+          queryKey: ['entity-perms', c, s, h.layer, h.key],
+          queryFn: () => fetchPerms(h.layer, c!, s!, h.key),
+          enabled: !!c && !!s,
+        }))
+      : [],
+  });
 
   // Compare mode: each selected entity's permissions as its own map
   const compareData = useMemo(() => {
@@ -649,6 +715,72 @@ export default function Permissions() {
     return entities.find((e: any) => e.id === key)?.name || key;
   };
 
+  // Find Permission needs names for every tier at once, not just the current
+  // one, so it can't reuse entityName above (which is scoped to `layer`).
+  const channelNameOf = (cid: string) =>
+    (Array.isArray(channels) ? channels : []).find((ch: any) => String(ch.cid) === cid)?.channel_name || `Channel #${cid}`;
+  const clientNameOf = (cldbid: string) =>
+    (Array.isArray(clients) ? clients : []).find((cl: any) => String(cl.client_database_id) === cldbid)?.client_nickname
+    || (Array.isArray(offlineClients) ? offlineClients : []).find((cl: any) => String(cl.cldbid) === cldbid)?.client_nickname
+    || `Client #${cldbid}`;
+
+  const findHitName = (hit: { layer: PermLayer; key: string }): string => {
+    switch (hit.layer) {
+      case 'server-group':
+        return (Array.isArray(serverGroups) ? serverGroups : []).find((g: any) => String(g.sgid) === hit.key)?.name || `Server Group #${hit.key}`;
+      case 'channel-group':
+        return (Array.isArray(channelGroups) ? channelGroups : []).find((g: any) => String(g.cgid) === hit.key)?.name || `Channel Group #${hit.key}`;
+      case 'channel':
+        return channelNameOf(hit.key);
+      case 'client':
+        return clientNameOf(hit.key);
+      case 'channel-client': {
+        const [cid, cldbid] = hit.key.split(':');
+        return `${clientNameOf(cldbid)} @ ${channelNameOf(cid)}`;
+      }
+    }
+  };
+
+  const findValueAt = (i: number): PermValue | null => {
+    const raw = findValueQueries[i]?.data;
+    if (!Array.isArray(raw)) return null;
+    for (const p of raw as any[]) {
+      const name = p.permsid || p.permname || permIdToName.get(Number(p.permid));
+      if (name === findPermsid) {
+        return {
+          permsid: findPermsid,
+          permvalue: Number(p.permvalue) || 0,
+          permnegated: Number(p.permnegated) || 0,
+          permskip: Number(p.permskip) || 0,
+        };
+      }
+    }
+    return null;
+  };
+
+  // Open a result in the editor. Setting the layer normally wipes the
+  // selection via the reset effect, so hand the target over through jumpRef
+  // for it to apply instead - except when the layer isn't changing at all, in
+  // which case that effect never runs and the selection is set directly.
+  const jumpToHit = (hit: { layer: PermLayer; key: string }) => {
+    const ccName = hit.layer === 'channel-client'
+      ? (() => {
+          const [cid, cldbid] = hit.key.split(':');
+          return { channelName: channelNameOf(cid), clientName: clientNameOf(cldbid) };
+        })()
+      : undefined;
+    setFindMode(false);
+    if (hit.layer !== layer) {
+      jumpRef.current = { layer: hit.layer, key: hit.key, ccName };
+      setLayer(hit.layer);
+    } else {
+      setSelectedIds(new Set([hit.key]));
+      if (ccName) setCcNames((prev) => new Map(prev).set(hit.key, ccName));
+      setChanges(new Map());
+      setCompareChanges(new Map());
+    }
+  };
+
   const addChannelClientPair = (clientId: string, clientName: string) => {
     if (!ccChannel) return;
     const key = `${ccChannel}:${clientId}`;
@@ -709,10 +841,10 @@ export default function Permissions() {
         {LAYERS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
-            onClick={() => setLayer(key)}
+            onClick={() => { setLayer(key); setFindMode(false); }}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-              layer === key
+              layer === key && !findMode
                 ? 'bg-background text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
             )}
@@ -721,8 +853,147 @@ export default function Permissions() {
             {label}
           </button>
         ))}
+        <div className="w-px bg-border/50 my-1 mx-1" />
+        <button
+          onClick={() => setFindMode(true)}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+            findMode
+              ? 'bg-background text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Search className="h-3.5 w-3.5" />
+          Find Permission
+        </button>
       </div>
 
+      {findMode ? (
+        <div className="grid grid-cols-12 gap-4">
+          {/* Permission picker */}
+          <Card className="card-hero col-span-3">
+            <CardHeader className="pb-2 space-y-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Select Permission
+              </CardTitle>
+              <div className="relative">
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={findSearch}
+                  onChange={(e) => setFindSearch(e.target.value)}
+                  placeholder="Search permissions..."
+                  className="h-7 pl-7 text-xs"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[500px]">
+                <div className="p-2 space-y-0.5">
+                  {allPerms
+                    .filter((p) => {
+                      if (!findSearch) return true;
+                      const q = findSearch.toLowerCase();
+                      return p.permsid.toLowerCase().includes(q) || p.permdesc.toLowerCase().includes(q);
+                    })
+                    .slice(0, 300)
+                    .map((p) => (
+                      <button
+                        key={p.permsid}
+                        onClick={() => setFindPermsid(p.permsid)}
+                        title={permTooltip(p)}
+                        className={cn(
+                          'w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-colors truncate',
+                          findPermsid === p.permsid ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted/50',
+                          permLabelMode === 'advanced' && 'font-mono-data',
+                        )}
+                      >
+                        {permLabel(p)}
+                      </button>
+                    ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Results */}
+          <Card className="card-hero col-span-9">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {findPermsid
+                  ? `Assignments of ${permLabel(allPerms.find((p) => p.permsid === findPermsid) ?? { permsid: findPermsid, permdesc: '' })}`
+                  : 'Find Permission'}
+              </CardTitle>
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Pick a permission on the left to see every place it's actually assigned, across all five tiers. Click a
+                result to open it in the editor. TeamSpeak's own lookup only reports where a permission is set, not to
+                what - each value below is read back per entity afterwards.
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[500px]">
+                {!findPermsid ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-sm text-muted-foreground">Select a permission from the left panel</p>
+                  </div>
+                ) : findFetching ? (
+                  <div className="flex items-center justify-center h-[400px]"><PageLoader /></div>
+                ) : findHits.length === 0 ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-sm text-muted-foreground">This permission isn't assigned anywhere on this server</p>
+                  </div>
+                ) : (
+                  <div className="px-3 pb-3">
+                    <div className="grid grid-cols-12 gap-2 px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
+                      <div className="col-span-3">Tier</div>
+                      <div className="col-span-6">Assigned To</div>
+                      <div className="col-span-3 text-center">Value</div>
+                    </div>
+                    {findHits.map((hit, i) => {
+                      const tier = LAYERS.find((l) => l.key === hit.layer)!;
+                      const TierIcon = tier.icon;
+                      const val = findValueAt(i);
+                      const loading = findValueQueries[i]?.isLoading;
+                      const isBoolean = findPermsid.startsWith('b_');
+                      return (
+                        <button
+                          key={`${hit.layer}:${hit.key}`}
+                          onClick={() => jumpToHit(hit)}
+                          className="grid grid-cols-12 gap-2 px-2 py-1.5 rounded-sm text-xs items-center w-full text-left hover:bg-muted/50 transition-colors group"
+                          title="Open in editor"
+                        >
+                          <div className="col-span-3 flex items-center gap-1.5 text-muted-foreground">
+                            <TierIcon className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{tier.label}</span>
+                          </div>
+                          <div className="col-span-6 flex items-center gap-1.5 truncate">
+                            <span className="truncate">{findHitName(hit)}</span>
+                            <span className="text-[10px] font-mono-data text-muted-foreground shrink-0">#{hit.key}</span>
+                          </div>
+                          <div className="col-span-3 flex items-center justify-center gap-1">
+                            {loading ? (
+                              <span className="text-muted-foreground">…</span>
+                            ) : !val ? (
+                              <span className="text-muted-foreground">–</span>
+                            ) : isBoolean ? (
+                              <Check className={cn('h-3.5 w-3.5', val.permnegated ? 'text-destructive' : 'text-primary')} />
+                            ) : (
+                              <span className={cn('font-mono-data', val.permnegated && 'text-destructive')}>
+                                {val.permvalue}
+                                {val.permskip ? <sup className="text-amber-400 ml-0.5">S</sup> : null}
+                              </span>
+                            )}
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
       <div className="grid grid-cols-12 gap-4">
         {/* Entity Selector */}
         <Card className="card-hero col-span-3">
@@ -1292,6 +1563,7 @@ export default function Permissions() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       <Dialog open={showAddPerm} onOpenChange={setShowAddPerm}>
         <DialogContent className="sm:max-w-2xl">

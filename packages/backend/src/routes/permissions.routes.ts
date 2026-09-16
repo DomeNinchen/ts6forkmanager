@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
+import { TSApiError } from '../middleware/error-handler.js';
 
 export const permissionRoutes: Router = Router({ mergeParams: true });
 
@@ -19,7 +20,16 @@ permissionRoutes.get('/find', async (req: Request, res: Response, next) => {
     if (req.query.permid) params.permid = req.query.permid;
     if (req.query.permsid) params.permsid = req.query.permsid;
     res.json(await getClient(req).execute(getSid(req), 'permfind', params));
-  } catch (err) { next(err); }
+  } catch (err) {
+    // permfind reports "invalid permission ID" (2562) both for a name that
+    // doesn't exist and for a perfectly valid permission that simply isn't
+    // assigned anywhere - confirmed live by removing a permission's last
+    // assignment and watching this command start erroring. For a lookup
+    // endpoint both mean the same thing, and returning the error instead
+    // would leave the caller showing stale results from the previous search.
+    if (err instanceof TSApiError && err.code === 2562) { res.json([]); return; }
+    next(err);
+  }
 });
 
 permissionRoutes.get('/overview/:cldbid', async (req: Request, res: Response, next) => {
