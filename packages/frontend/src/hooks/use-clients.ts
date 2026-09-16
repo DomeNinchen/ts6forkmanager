@@ -51,6 +51,46 @@ export function useMoveClient() {
   });
 }
 
+export function useBulkMoveClients() {
+  const qc = useQueryClient();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  return useMutation({
+    mutationFn: ({ clids, cid }: { clids: number[]; cid: number }) =>
+      clientsApi.bulkMove(c!, s!, clids, cid),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
+  });
+}
+
+export function useBulkKickClients() {
+  const qc = useQueryClient();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  return useMutation({
+    mutationFn: ({ clids, reasonid, reasonmsg }: { clids: number[]; reasonid: number; reasonmsg?: string }) =>
+      clientsApi.bulkKick(c!, s!, clids, reasonid, reasonmsg),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
+  });
+}
+
+export function useBulkBanClients() {
+  const qc = useQueryClient();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  return useMutation({
+    mutationFn: ({ clids, time, banreason }: { clids: number[]; time?: number; banreason?: string }) =>
+      clientsApi.bulkBan(c!, s!, clids, time, banreason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
+  });
+}
+
+export function useBulkDescribeClients() {
+  const qc = useQueryClient();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  return useMutation({
+    mutationFn: ({ clids, description }: { clids: number[]; description: string }) =>
+      clientsApi.bulkDescribe(c!, s!, clids, description),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
+  });
+}
+
 export function usePokeClient() {
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   return useMutation({

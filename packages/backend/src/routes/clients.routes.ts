@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
-import { TSApiError } from '../middleware/error-handler.js';
+import { TSApiError, AppError } from '../middleware/error-handler.js';
 
 export const clientRoutes: Router = Router({ mergeParams: true });
 
@@ -38,6 +38,50 @@ clientRoutes.get('/database/:cldbid', async (req: Request, res: Response, next) 
   try {
     const result = await getClient(req).execute(getSid(req), 'clientdbinfo', { cldbid: String(req.params.cldbid) });
     res.json(result);
+  } catch (err) { next(err); }
+});
+
+// Bulk routes - registered before the generic /:clid routes below, since
+// Express would otherwise match e.g. "/bulk/move" as "/:clid/move" with
+// clid="bulk" (the same ordering gotcha as elsewhere in this codebase).
+clientRoutes.post('/bulk/move', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { clids, cid, cpw } = req.body as { clids: number[]; cid: number; cpw?: string };
+    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
+    const result = await getClient(req).executeJsonBody(getSid(req), 'clientmove', { clid: clids, cid, cpw });
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+clientRoutes.post('/bulk/kick', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { clids, reasonid, reasonmsg } = req.body as { clids: number[]; reasonid?: number; reasonmsg?: string };
+    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
+    const result = await getClient(req).executeJsonBody(getSid(req), 'clientkick', { clid: clids, reasonid: reasonid || 5, reasonmsg });
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+clientRoutes.post('/bulk/ban', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { clids, time, banreason } = req.body as { clids: number[]; time?: number; banreason?: string };
+    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
+    const result = await getClient(req).executeJsonBody(getSid(req), 'banclient', { clid: clids, time: time || 0, banreason });
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+// clientedit (unlike move/kick/ban) has no documented multi-clid form, so this
+// applies the same description to each selected client with its own call.
+clientRoutes.post('/bulk/describe', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { clids, description } = req.body as { clids: number[]; description: string };
+    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
+    const results = await Promise.allSettled(
+      clids.map((clid) => getClient(req).execute(getSid(req), 'clientedit', { clid, client_description: description })),
+    );
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    res.json({ succeeded: clids.length - failed, failed });
   } catch (err) { next(err); }
 });
 
