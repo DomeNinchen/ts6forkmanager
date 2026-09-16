@@ -51,11 +51,11 @@ Upstream had a persistent video/audio streaming stutter that was never resolved,
 
 - **Docker** with the Compose plugin — that's all. ffmpeg, yt-dlp and everything else the backend needs is already baked into the images
 
-**On your TeamSpeak server:**
+**On your TeamSpeak server** — which does not have to be the same machine:
 
-- **WebQuery HTTP enabled** (not raw/telnet). It is off by default on TeamSpeak 6 — start the server with `TSSERVER_QUERY_HTTP_ENABLED=1` and publish its port
+- **WebQuery HTTP enabled** (not raw/telnet). It is off by default on TeamSpeak 6, and how you enable it depends on how your server runs: `query_protocols` has to include `http`, set either in `tsserver.yaml`, as a command-line flag, or — for the official Docker image — via `TSSERVER_QUERY_HTTP_ENABLED=1`. If you rent your server, your host may have to enable it for you
 - **A WebQuery API key.** Your server prints a `serveradmin` key once, on its first-ever startup; otherwise generate one with `apikeyadd`
-- The query port must be reachable **from the backend container**, and your server's `query_ip_allowlist.txt` must permit it — see [Getting Started](https://github.com/DomeNinchen/ts6forkmanager/wiki/Getting-Started)
+- **Network access to the query port** (`query_http_port`, default `10080`) from wherever this manager runs, and the server's query IP allowlist has to include the address it connects from. TeamSpeak's own documentation explicitly recommends adding a web administration interface's IP there. If the two run on separate machines that means the manager's outbound address — and you should restrict who can reach that port rather than exposing it openly. See [Getting Started](https://github.com/DomeNinchen/ts6forkmanager/wiki/Getting-Started)
 
 **Only if you want the matching feature:**
 
