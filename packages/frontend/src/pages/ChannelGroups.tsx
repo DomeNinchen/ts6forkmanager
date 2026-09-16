@@ -1,32 +1,62 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useChannelGroups } from '@/hooks/use-groups';
+import { useChannelGroups, useCreateChannelGroup, useDeleteChannelGroup } from '@/hooks/use-groups';
 import { groupsApi } from '@/api/groups.api';
 import { clientsApi } from '@/api/clients.api';
 import { channelsApi } from '@/api/channels.api';
 import { useServerStore } from '@/stores/server.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { ShieldCheck, Search, User } from 'lucide-react';
+import { ShieldCheck, Search, User, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ChannelGroups() {
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const qc = useQueryClient();
   const { data, isLoading } = useChannelGroups();
+  const createGroup = useCreateChannelGroup();
+  const deleteGroup = useDeleteChannelGroup();
 
   const [tab, setTab] = useState<'groups' | 'by-client'>('groups');
   const [selectedClient, setSelectedClient] = useState<{ cldbid: number; name: string } | null>(null);
   const [clientSearch, setClientSearch] = useState('');
   const [showOffline, setShowOffline] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleChecked = (cgid: number) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      next.has(cgid) ? next.delete(cgid) : next.add(cgid);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    const results = await Promise.allSettled([...checkedIds].map((cgid) => deleteGroup.mutateAsync(cgid)));
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    setBulkDeleting(false);
+    setShowBulkDelete(false);
+    if (failed > 0) toast.error(`Deleted ${results.length - failed}, failed ${failed}`);
+    else toast.success(`${results.length} group(s) deleted`);
+    setCheckedIds(new Set());
+  };
 
   const { data: onlineClients } = useQuery({
     queryKey: ['clients-for-cg', c, s],
@@ -85,7 +115,24 @@ export default function ChannelGroups() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Channel Groups</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Channel Groups</h1>
+        {tab === 'groups' && (
+          <div className="flex items-center gap-2">
+            {checkedIds.size > 0 && (
+              <>
+                <Badge variant="secondary" className="font-mono-data">{checkedIds.size} selected</Badge>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowBulkDelete(true)}>
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Selected
+                </Button>
+              </>
+            )}
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Create Group
+            </Button>
+          </div>
+        )}
+      </div>
 
       <div className="flex gap-1 p-1 bg-muted/30 rounded-lg w-fit">
         <button
@@ -113,6 +160,11 @@ export default function ChannelGroups() {
                 {groups.map((g: any) => (
                   <div key={g.cgid} className="flex items-center justify-between rounded-md px-3 py-2.5 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={checkedIds.has(g.cgid)}
+                        onCheckedChange={() => toggleChecked(g.cgid)}
+                        aria-label="Select for bulk delete"
+                      />
                       <ShieldCheck className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium">{g.name}</span>
                     </div>
@@ -215,6 +267,36 @@ export default function ChannelGroups() {
           </Card>
         </div>
       )}
+
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Channel Group</DialogTitle></DialogHeader>
+          <div>
+            <Label className="text-xs">Group Name</Label>
+            <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New Group" autoFocus />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button
+              onClick={() => createGroup.mutate(newName, { onSuccess: () => { toast.success('Group created'); setShowCreate(false); setNewName(''); } })}
+              disabled={!newName.trim() || createGroup.isPending}
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={showBulkDelete}
+        onOpenChange={setShowBulkDelete}
+        title="Delete Channel Groups"
+        description={`Delete ${checkedIds.size} selected group(s)? This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleBulkDelete}
+        loading={bulkDeleting}
+      />
     </div>
   );
 }
