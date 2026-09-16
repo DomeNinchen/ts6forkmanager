@@ -33,4 +33,8 @@ export const groupsApi = {
     api.delete(`${cgBase(configId, sid)}/${cgid}`),
   channelGroupPerms: (configId: number, sid: number, cgid: number) =>
     api.get(`${cgBase(configId, sid)}/${cgid}/permissions`).then((r) => r.data),
+  channelGroupsByClient: (configId: number, sid: number, cldbid: number) =>
+    api.get(`${cgBase(configId, sid)}/by-client/${cldbid}`).then((r) => r.data),
+  assignChannelGroup: (configId: number, sid: number, cgid: number, cid: number, cldbid: number) =>
+    api.post(`${cgBase(configId, sid)}/${cgid}/assign`, { cid, cldbid }).then((r) => r.data),
 };

@@ -21,3 +21,26 @@ tokenRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, 
 tokenRoutes.delete('/:token', requireRole('admin'), async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'privilegekeydelete', { token: String(req.params.token) })); } catch (err) { next(err); }
 });
+
+// Temporary server passwords - separate from privilege keys, not saved to
+// disk (lost on server restart), just a time-limited password to connect.
+tokenRoutes.get('/temp-passwords', async (req: Request, res: Response, next) => {
+  try { res.json(await getClient(req).execute(getSid(req), 'servertemppasswordlist')); } catch (err) { next(err); }
+});
+
+tokenRoutes.post('/temp-passwords', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { pw, desc, duration, tcid, tcpw } = req.body;
+    const result = await getClient(req).execute(getSid(req), 'servertemppasswordadd', {
+      pw, desc: desc || '', duration, tcid: tcid || 0, tcpw: tcpw || '',
+    });
+    res.status(201).json(result);
+  } catch (err) { next(err); }
+});
+
+tokenRoutes.delete('/temp-passwords/:pw', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const result = await getClient(req).execute(getSid(req), 'servertemppassworddel', { pw: String(req.params.pw) });
+    res.json(result);
+  } catch (err) { next(err); }
+});
