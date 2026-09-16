@@ -20,6 +20,24 @@ export function useChannelGroups() {
   });
 }
 
+export function useCreateChannelGroup() {
+  const qc = useQueryClient();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  return useMutation({
+    mutationFn: (name: string) => groupsApi.createChannelGroup(c!, s!, name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['channel-groups'] }),
+  });
+}
+
+export function useDeleteChannelGroup() {
+  const qc = useQueryClient();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  return useMutation({
+    mutationFn: (cgid: number) => groupsApi.deleteChannelGroup(c!, s!, cgid),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['channel-groups'] }),
+  });
+}
+
 export function useServerGroupMembers(sgid: number | null) {
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   return useQuery({

@@ -15,6 +15,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Shield, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,6 +35,29 @@ export default function ServerGroups() {
   const [showAddMember, setShowAddMember] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const { data: dbClients } = useClientDatabase();
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleChecked = (sgid: number) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      next.has(sgid) ? next.delete(sgid) : next.add(sgid);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    const results = await Promise.allSettled([...checkedIds].map((sgid) => deleteGroup.mutateAsync(sgid)));
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    setBulkDeleting(false);
+    setShowBulkDelete(false);
+    if (failed > 0) toast.error(`Deleted ${results.length - failed}, failed ${failed}`);
+    else toast.success(`${results.length} group(s) deleted`);
+    if (checkedIds.has(selectedGroup!)) setSelectedGroup(null);
+    setCheckedIds(new Set());
+  };
 
   const memberCldbids = useMemo(
     () => new Set((Array.isArray(members) ? members : []).map((m: any) => String(m.cldbid))),
@@ -58,9 +82,19 @@ export default function ServerGroups() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Server Groups</h1>
-        <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Create Group
-        </Button>
+        <div className="flex items-center gap-2">
+          {checkedIds.size > 0 && (
+            <>
+              <Badge variant="secondary" className="font-mono-data">{checkedIds.size} selected</Badge>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowBulkDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Selected
+              </Button>
+            </>
+          )}
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Create Group
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -73,23 +107,29 @@ export default function ServerGroups() {
             <ScrollArea className="h-[500px]">
               <div className="p-2 space-y-0.5">
                 {groups.map((g: any) => (
-                  <button
+                  <div
                     key={g.sgid}
                     onClick={() => setSelectedGroup(g.sgid)}
                     className={cn(
-                      'flex items-center justify-between w-full rounded-md px-3 py-2 text-sm transition-colors text-left',
+                      'flex items-center justify-between w-full rounded-md px-3 py-2 text-sm transition-colors text-left cursor-pointer',
                       selectedGroup === g.sgid ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-3.5 w-3.5" />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Checkbox
+                        checked={checkedIds.has(g.sgid)}
+                        onCheckedChange={() => toggleChecked(g.sgid)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Select for bulk delete"
+                      />
+                      <Shield className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{g.name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Badge variant="secondary" className="text-[10px] font-mono-data">{g.sgid}</Badge>
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </ScrollArea>
@@ -227,6 +267,17 @@ export default function ServerGroups() {
       </Dialog>
 
       <ConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="Delete Server Group" description={`Delete "${deleteTarget?.name}"?`} confirmLabel="Delete" destructive onConfirm={() => { if (deleteTarget) deleteGroup.mutate(deleteTarget.sgid, { onSuccess: () => { toast.success('Group deleted'); setDeleteTarget(null); setSelectedGroup(null); } }); }} />
+
+      <ConfirmDialog
+        open={showBulkDelete}
+        onOpenChange={setShowBulkDelete}
+        title="Delete Server Groups"
+        description={`Delete ${checkedIds.size} selected group(s)? This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleBulkDelete}
+        loading={bulkDeleting}
+      />
     </div>
   );
 }
