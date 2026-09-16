@@ -16,6 +16,12 @@ export const permissionsApi = {
   list: (configId: number, sid: number) =>
     api.get(base(configId, sid)).then((r) => r.data),
 
+  // Reverse lookup: every place one permission is assigned, across all 5
+  // tiers. Returns {t, id1, id2, p} rows - no value, that needs a per-entity
+  // lookup on top (see FIND_TIER_OF in Permissions.tsx for the t mapping).
+  find: (configId: number, sid: number, permsid: string) =>
+    api.get(`${base(configId, sid)}/find`, { params: { permsid } }).then((r) => r.data),
+
   // Server Group permissions
   serverGroupPerms: (configId: number, sid: number, sgid: number) =>
     api.get(`${sgBase(configId, sid)}/${sgid}/permissions`).then((r) => r.data),
