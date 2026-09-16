@@ -85,22 +85,18 @@ const LAYERS: { key: PermLayer; label: string; icon: React.ElementType }[] = [
 // server's responses rather than assumed - permfind, by contrast, reports
 // channel groups with id1=0, so the two commands genuinely disagree there.
 //
-// `rank` is the override order, higher wins, taken from TeamSpeak 6's own
-// documentation (advanced/permissions): client-specific permissions rank
-// highest, then channel groups, then channel-specific client permissions,
-// then server groups. Plain channel permissions aren't in that list at all -
-// they describe the channel itself rather than a grant to the client - so
-// they sit lowest here. Worth knowing: widely-cited TS3-era third-party
-// documentation states a different order, with channel-client highest and
-// plain client permissions below channel groups. Neither could be verified
-// against this server, because permget only reports an effective value for
-// the caller's own connection, so the official TS6 order is what's used.
+// `rank` is the tier number from TeamSpeak's own permission documentation,
+// the copy shipped alongside the server itself (doc/server/permissiondoc.txt),
+// which is the authority here: a higher tier overwrites a lower one. Note the
+// permissions page on TeamSpeak's current online documentation site states a
+// different, incompatible order (client highest, channel-client third) - that
+// one is wrong, or at least badly oversimplified, and must not be used.
 const OVERVIEW_TIER_OF: Record<number, { rank: number; key: PermLayer; label: string }> = {
-  0: { rank: 2, key: 'server-group', label: 'Server Group' },
-  1: { rank: 5, key: 'client', label: 'Client' },
-  2: { rank: 1, key: 'channel', label: 'Channel' },
+  0: { rank: 1, key: 'server-group', label: 'Server Group' },
+  1: { rank: 2, key: 'client', label: 'Client' },
+  2: { rank: 3, key: 'channel', label: 'Channel' },
   3: { rank: 4, key: 'channel-group', label: 'Channel Group' },
-  4: { rank: 3, key: 'channel-client', label: 'Client in Channel' },
+  4: { rank: 5, key: 'channel-client', label: 'Client in Channel' },
 };
 
 // Entity keys are strings everywhere on this page. For the 4 "flat list"
@@ -406,16 +402,18 @@ export default function Permissions() {
     })).filter((r) => r.tier !== null);
   }, [overviewRaw, permIdToName]);
 
-  // Group by permission, then work out which source actually applies: the
-  // highest-ranked tier wins (see OVERVIEW_TIER_OF), and within one tier - a
-  // client in several server groups, say - the highest value wins, except
-  // that a negated entry takes precedence with the LOWEST value, which is how
-  // a restrictive group is meant to claw a permission back.
-  //
-  // The skip flag is deliberately shown but not acted on: TeamSpeak 6's own
-  // documentation doesn't describe it at all, so silently letting it change
-  // the computed winner would be inventing behaviour. Every source stays
-  // visible in the UI so this calculation can always be checked by eye.
+  // Group by permission, then work out which source actually applies, per
+  // doc/server/permissiondoc.txt shipped with the server:
+  //  - within one tier (a client in several server groups, say) the highest
+  //    value wins, except that negated entries take over and the LOWEST of
+  //    those wins - that's how a restrictive "Sticky"-style group claws a
+  //    permission back from a group that grants it;
+  //  - across tiers the highest tier wins;
+  //  - except that a skip flag on a server group (1) or client (2) entry
+  //    shields it from being altered by the channel (3) and channel group (4)
+  //    layers. Tier 5 still overrides it - the docs only name 3 and 4.
+  // Every source stays visible in the UI regardless, so the result can be
+  // checked by eye rather than taken on trust.
   const overviewResolved = useMemo(() => {
     const byPerm = new Map<string, typeof overviewRows>();
     for (const r of overviewRows) {
@@ -433,8 +431,10 @@ export default function Permissions() {
       for (const rank of new Set(sources.map((r) => r.tier!.rank))) {
         perTier.set(rank, pickWithinTier(sources.filter((r) => r.tier!.rank === rank)));
       }
-      const winner = perTier.get(Math.max(...perTier.keys()))!;
-      return { permsid, sources, winner };
+      const shielded = [1, 2].some((t) => perTier.get(t)?.permskip);
+      const ranks = [...perTier.keys()].filter((t) => !(shielded && (t === 3 || t === 4)));
+      const winner = perTier.get(Math.max(...ranks))!;
+      return { permsid, sources, winner, shielded };
     }).sort((a, b) => a.permsid.localeCompare(b.permsid));
   }, [overviewRows]);
 
@@ -1080,10 +1080,10 @@ export default function Permissions() {
               </div>
               <p className="text-[11px] text-muted-foreground pt-1">
                 Every permission this client actually has in the chosen channel, and which layer each one comes from. Where
-                several layers grant the same permission, the winning one is highlighted, following TeamSpeak 6's documented
-                order (client &gt; channel group &gt; client-in-channel &gt; server group). The other sources stay listed so the
-                result can always be checked by eye - and note the Skip flag is shown but not applied, since TeamSpeak's own
-                documentation doesn't describe what it does.
+                several layers grant the same permission, the winning one is highlighted, following the tier order in
+                TeamSpeak's own permission documentation: client-in-channel beats channel group, beats channel, beats
+                client, beats server group - with a Skip flag on a server group or client entry shielding it from the
+                channel and channel group layers. The other sources stay listed so the result can always be checked by eye.
               </p>
             </CardHeader>
             <CardContent className="p-0">
