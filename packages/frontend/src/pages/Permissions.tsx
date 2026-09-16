@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
@@ -156,6 +157,7 @@ export default function Permissions() {
   const [comparePermIds, setComparePermIds] = useState<Set<string> | null>(null);
   const [showAddPerm, setShowAddPerm] = useState(false);
   const [addPermSearch, setAddPermSearch] = useState('');
+  const [addPermCat, setAddPermCat] = useState('all');
   const [fileTargets, setFileTargets] = useState<{ id: string; name: string; permissions: Map<string, PermValue> }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [colorPivot, setColorPivot] = useState<{ colKey: string; permsid: string } | null>(null);
@@ -257,13 +259,12 @@ export default function Permissions() {
     }));
   }, [permDefs]);
 
-  // Entering Compare starts the curated "power permissions" row set fresh
-  // each time, and clears any pinned color reference from a prior visit.
+  // Entering Compare starts with every permission shown (narrow down via
+  // Add/Remove Perm), and clears any pinned color reference from a prior visit.
   useEffect(() => {
     if (compareMode) {
-      setComparePermIds(new Set(allPerms.filter((p) => getCategoryKey(p.permsid) === 'i_needed').map((p) => p.permsid)));
+      setComparePermIds(new Set(allPerms.map((p) => p.permsid)));
       setColorPivot(null);
-      setExpandedCats((prev) => new Set(prev).add('i_needed'));
     } else {
       setFileTargets([]);
     }
@@ -353,6 +354,29 @@ export default function Permissions() {
     return 'bg-lime-500/10';
   }, [colorPivot, getCellValue]);
 
+  // With 3 or fewer entities compared, every row auto-colors by rank
+  // instead of needing a click: highest = red, lowest = green, tied or
+  // in-between = yellow, unset = pink. Replaces the pivot scheme entirely
+  // while active (manual pivot-clicking still updates colorPivot, it's
+  // just not read) - with more than 3 entities there's no clean single
+  // "highest/lowest" per row across that many columns, so the manual
+  // pivot-relative scheme takes over instead.
+  const autoRankMode = compareMode && selectedIds.size <= 3;
+  const autoRankColorClass = useCallback((colKey: string, permsid: string): string => {
+    const v = getCellValue(colKey, permsid);
+    if (!v) return 'bg-pink-500/10';
+    const values = allCompareCols
+      .map((k) => getCellValue(k, permsid)?.permvalue)
+      .filter((n): n is number => n !== undefined && n !== null);
+    if (values.length < 2) return '';
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    if (max === min) return 'bg-yellow-500/10';
+    if (v.permvalue === max) return 'bg-red-500/10';
+    if (v.permvalue === min) return 'bg-green-500/10';
+    return 'bg-yellow-500/10';
+  }, [allCompareCols, getCellValue]);
+
   const toggleComparePerm = useCallback((permsid: string) => {
     setComparePermIds((prev) => {
       const next = new Set(prev ?? []);
@@ -360,6 +384,32 @@ export default function Permissions() {
       return next;
     });
   }, []);
+
+  // Add/Remove Perm dialog: category tabs + search narrow down which perms
+  // are offered, "Select all" acts on exactly that narrowed-down set.
+  const addPermCatKeys = useMemo(() => {
+    const present = new Set(allPerms.map((p) => getCategoryKey(p.permsid)));
+    return Object.keys(PERM_CATEGORIES).filter((k) => present.has(k));
+  }, [allPerms]);
+  const addPermVisible = useMemo(() => {
+    let list = allPerms;
+    if (addPermCat !== 'all') list = list.filter((p) => getCategoryKey(p.permsid) === addPermCat);
+    if (addPermSearch) {
+      const q = addPermSearch.toLowerCase();
+      list = list.filter((p) => p.permsid.toLowerCase().includes(q) || p.permdesc.toLowerCase().includes(q));
+    }
+    return list;
+  }, [allPerms, addPermCat, addPermSearch]);
+  const allVisibleSelected = addPermVisible.length > 0 && addPermVisible.every((p) => comparePermIds?.has(p.permsid));
+  const toggleSelectAllVisible = useCallback(() => {
+    setComparePermIds((prev) => {
+      const next = new Set(prev ?? []);
+      const allSelected = addPermVisible.length > 0 && addPermVisible.every((p) => next.has(p.permsid));
+      if (allSelected) addPermVisible.forEach((p) => next.delete(p.permsid));
+      else addPermVisible.forEach((p) => next.add(p.permsid));
+      return next;
+    });
+  }, [addPermVisible]);
 
   const handleLoadFileTarget = useCallback(async (file: File) => {
     try {
@@ -853,7 +903,7 @@ export default function Permissions() {
                   {compareMode && (
                     <>
                       <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddPerm(true)}>
-                        <Plus className="h-3.5 w-3.5 mr-1" /> Add Perm
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Add/Remove Perm
                       </Button>
                       <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()}>
                         <Upload className="h-3.5 w-3.5 mr-1" /> Add Target
@@ -886,7 +936,10 @@ export default function Permissions() {
             )}
             {compareMode && (
               <p className="text-[11px] text-muted-foreground pt-1">
-                Shows a curated set of permissions side by side ("Add Perm" for more, the × on a row to drop it) - edit a cell to change just that one entity. Click a cell to pin it as the reference; the rest of that row colors relative to it (teal = lower, lime = same, red = higher, pink = unset). "Add Target" loads a previously-exported group file as a read-only extra column. Use Bulk Apply instead to push the same value to all selected entities at once.
+                {autoRankMode
+                  ? 'All permissions are shown by default ("Add/Remove Perm" to narrow down, the × on a row to drop it) - edit a cell to change just that one entity. With 3 or fewer entities, each row colors by rank automatically: red = highest, yellow = tied/middle, green = lowest, pink = unset.'
+                  : 'All permissions are shown by default ("Add/Remove Perm" to narrow down, the × on a row to drop it) - edit a cell to change just that one entity. Click a cell to pin it as the reference; the rest of that row colors relative to it (teal = lower, lime = same, red = higher, pink = unset).'}
+                {' '}"Add Target" loads a previously-exported group file as a read-only extra column. Use Bulk Apply instead to push the same value to all selected entities at once.
               </p>
             )}
           </CardHeader>
@@ -964,7 +1017,7 @@ export default function Permissions() {
                                       const effective = getCompareEffectiveValue(key, perm.permsid);
                                       const isSet = effective !== null;
                                       const isChanged = !isFile && (compareChanges.get(key)?.has(perm.permsid) ?? false);
-                                      const pivotCls = cellColorClass(key, perm.permsid);
+                                      const pivotCls = autoRankMode ? autoRankColorClass(key, perm.permsid) : cellColorClass(key, perm.permsid);
                                       const setPivotHere = () => setColorPivot({ colKey: key, permsid: perm.permsid });
                                       return (
                                         <td
@@ -1206,8 +1259,8 @@ export default function Permissions() {
       </div>
 
       <Dialog open={showAddPerm} onOpenChange={setShowAddPerm}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add Permission to Compare</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle>Add/Remove Perm</DialogTitle></DialogHeader>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -1218,28 +1271,45 @@ export default function Permissions() {
               autoFocus
             />
           </div>
-          <ScrollArea className="h-[360px]">
+          <Tabs value={addPermCat} onValueChange={setAddPermCat}>
+            <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
+              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-muted">All</TabsTrigger>
+              {addPermCatKeys.map((cat) => (
+                <TabsTrigger key={cat} value={cat} className="text-xs data-[state=active]:bg-muted">
+                  {PERM_CATEGORIES[cat] || cat}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <div className="flex items-center justify-between px-0.5">
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <Checkbox checked={allVisibleSelected} onCheckedChange={toggleSelectAllVisible} />
+              Select all ({addPermVisible.length})
+            </label>
+            <span className="text-[11px] text-muted-foreground font-mono-data">{comparePermIds?.size ?? 0} shown in comparison</span>
+          </div>
+          <ScrollArea className="h-[340px]">
             <div className="space-y-0.5 pr-2">
-              {allPerms
-                .filter((p) => !addPermSearch || p.permsid.toLowerCase().includes(addPermSearch.toLowerCase()) || p.permdesc.toLowerCase().includes(addPermSearch.toLowerCase()))
-                .slice(0, 200)
-                .map((p) => {
-                  const added = comparePermIds?.has(p.permsid) ?? false;
-                  return (
-                    <div
-                      key={p.permsid}
-                      onClick={() => toggleComparePerm(p.permsid)}
-                      className={cn(
-                        'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors',
-                        added ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
-                      )}
-                      title={p.permdesc}
-                    >
-                      <Checkbox checked={added} onCheckedChange={() => toggleComparePerm(p.permsid)} onClick={(e) => e.stopPropagation()} />
-                      <span className="font-mono-data truncate">{p.permsid}</span>
-                    </div>
-                  );
-                })}
+              {addPermVisible.map((p) => {
+                const added = comparePermIds?.has(p.permsid) ?? false;
+                return (
+                  <div
+                    key={p.permsid}
+                    onClick={() => toggleComparePerm(p.permsid)}
+                    className={cn(
+                      'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors',
+                      added ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
+                    )}
+                    title={p.permdesc}
+                  >
+                    <Checkbox checked={added} onCheckedChange={() => toggleComparePerm(p.permsid)} onClick={(e) => e.stopPropagation()} />
+                    <span className="font-mono-data truncate">{p.permsid}</span>
+                  </div>
+                );
+              })}
+              {addPermVisible.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4">No permissions match your search</p>
+              )}
             </div>
           </ScrollArea>
           <DialogFooter>
