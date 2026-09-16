@@ -13,9 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn, formatBytes } from '@/lib/utils';
 import {
-  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle,
+  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,6 +36,8 @@ export default function Files() {
   const [showMkdir, setShowMkdir] = useState(false);
   const [newDirName, setNewDirName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<FileEntry | null>(null);
+  const [moveTarget, setMoveTarget] = useState<FileEntry | null>(null);
+  const [moveTargetCid, setMoveTargetCid] = useState('');
 
   // Fetch channel list for selector
   const { data: channelData } = useQuery({
@@ -94,6 +97,17 @@ export default function Files() {
     onError: () => toast.error('Failed to delete file'),
   });
 
+  const moveMutation = useMutation({
+    mutationFn: ({ name, targetCid }: { name: string; targetCid: number }) => filesApi.move(c!, s!, selectedCid!, name, targetCid),
+    onSuccess: () => {
+      toast.success('File moved');
+      setMoveTarget(null);
+      setMoveTargetCid('');
+      qc.invalidateQueries({ queryKey: ['files', c, s, selectedCid, currentPath] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to move file'),
+  });
+
   const navigateTo = (entry: FileEntry) => {
     if (entry.type === 1) {
       const newPath = currentPath === '/' ? `/${entry.name}` : `${currentPath}/${entry.name}`;
@@ -118,6 +132,12 @@ export default function Files() {
     if (!deleteTarget) return;
     const fullPath = currentPath === '/' ? `/${deleteTarget.name}` : `${currentPath}/${deleteTarget.name}`;
     deleteMutation.mutate(fullPath);
+  };
+
+  const handleMove = () => {
+    if (!moveTarget || !moveTargetCid) return;
+    const fullPath = currentPath === '/' ? `/${moveTarget.name}` : `${currentPath}/${moveTarget.name}`;
+    moveMutation.mutate({ name: fullPath, targetCid: Number(moveTargetCid) });
   };
 
   const formatDate = (ts: number) => {
@@ -273,7 +293,16 @@ export default function Files() {
                         <div className="col-span-3 text-xs text-muted-foreground font-mono-data">
                           {formatDate(file.datetime)}
                         </div>
-                        <div className="col-span-1 flex justify-end">
+                        <div className="col-span-1 flex justify-end gap-0.5">
+                          {file.type === 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setMoveTarget(file); setMoveTargetCid(''); }}
+                              className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                              title="Move to another channel"
+                            >
+                              <FolderInput className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeleteTarget(file); }}
                             className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
@@ -307,6 +336,31 @@ export default function Files() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowMkdir(false)}>Cancel</Button>
             <Button onClick={handleMkdir} disabled={mkdirMutation.isPending || !newDirName.trim()}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Move File Dialog */}
+      <Dialog open={!!moveTarget} onOpenChange={(v) => !v && setMoveTarget(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Move "{moveTarget?.name}"</DialogTitle></DialogHeader>
+          <p className="text-[11px] text-muted-foreground">Moved entirely on the server - the file's bytes never pass through this app.</p>
+          <div>
+            <Label className="text-xs">Target Channel</Label>
+            <Select value={moveTargetCid} onValueChange={setMoveTargetCid}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Choose a channel..." /></SelectTrigger>
+              <SelectContent>
+                {channels.filter((ch) => ch.cid !== selectedCid).map((ch) => (
+                  <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMoveTarget(null)}>Cancel</Button>
+            <Button onClick={handleMove} disabled={!moveTargetCid || moveMutation.isPending}>
+              <FolderInput className="h-4 w-4 mr-1" /> Move
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

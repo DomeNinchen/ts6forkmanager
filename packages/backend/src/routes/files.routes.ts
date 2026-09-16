@@ -92,3 +92,19 @@ fileRoutes.delete('/:cid/file', requireRole('admin'), async (req: Request, res: 
     res.json(result);
   } catch (err) { next(err); }
 });
+
+// Move a file to another channel's file repository - ftrenamefile does this
+// entirely server-side (no byte transfer through us) when tcid is given.
+fileRoutes.post('/:cid/move', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const result = await sshExecute(req, 'ftrenamefile', {
+      cid: String(req.params.cid),
+      cpw: '',
+      tcid: String(req.body.targetCid),
+      tcpw: '',
+      oldname: req.body.name,
+      newname: req.body.name,
+    });
+    res.json(result);
+  } catch (err) { next(err); }
+});
