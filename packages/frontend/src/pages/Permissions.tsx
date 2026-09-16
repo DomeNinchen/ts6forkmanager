@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import {
   Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, Save,
-  X, Check, Minus,
+  X, Check, Minus, Columns3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -83,6 +83,8 @@ export default function Permissions() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const entityId = selectedIds.size === 1 ? [...selectedIds][0] : null;
   const bulkMode = selectedIds.size > 1;
+  const [compareMode, setCompareMode] = useState(false);
+  const [showDifferingOnly, setShowDifferingOnly] = useState(false);
   const [search, setSearch] = useState('');
   const [showModifiedOnly, setShowModifiedOnly] = useState(false);
   const [showOffline, setShowOffline] = useState(false);
@@ -149,7 +151,30 @@ export default function Permissions() {
   });
 
   // Reset entity when layer changes
-  useEffect(() => { setSelectedIds(new Set()); setChanges(new Map()); }, [layer]);
+  useEffect(() => { setSelectedIds(new Set()); setChanges(new Map()); setCompareMode(false); }, [layer]);
+  // Compare only makes sense with 2+ selected - drop out of it otherwise
+  useEffect(() => { if (!bulkMode) setCompareMode(false); }, [bulkMode]);
+
+  // Fetch each selected entity's permissions in Compare mode (shares its
+  // query key with the single-entity fetch above, so switching between
+  // Compare and a single selection reuses the cache instead of refetching)
+  const compareQueries = useQueries({
+    queries: compareMode
+      ? [...selectedIds].map((id) => ({
+          queryKey: ['entity-perms', c, s, layer, id],
+          queryFn: () => {
+            switch (layer) {
+              case 'server-group': return permissionsApi.serverGroupPerms(c!, s!, id);
+              case 'channel-group': return permissionsApi.channelGroupPerms(c!, s!, id);
+              case 'channel': return permissionsApi.channelPerms(c!, s!, id);
+              case 'client': return permissionsApi.clientPerms(c!, s!, id);
+            }
+          },
+          enabled: !!c && !!s,
+        }))
+      : [],
+  });
+  const compareLoading = compareMode && compareQueries.some((q) => q.isLoading);
 
   // Parse permission definitions into categorized structure
   // TS WebQuery returns { permid, permname, permdesc } — NOT permsid
@@ -170,6 +195,43 @@ export default function Permissions() {
     }
     return map;
   }, [allPerms]);
+
+  // Compare mode: each selected entity's permissions as its own map
+  const compareData = useMemo(() => {
+    const map = new Map<number, Map<string, PermValue>>();
+    if (!compareMode) return map;
+    [...selectedIds].forEach((id, i) => {
+      const raw = compareQueries[i]?.data;
+      const inner = new Map<string, PermValue>();
+      if (Array.isArray(raw)) {
+        for (const p of raw as any[]) {
+          const name = p.permsid || p.permname || permIdToName.get(Number(p.permid)) || `permid_${p.permid}`;
+          inner.set(name, {
+            permsid: name,
+            permvalue: Number(p.permvalue) || 0,
+            permnegated: Number(p.permnegated) || 0,
+            permskip: Number(p.permskip) || 0,
+          });
+        }
+      }
+      map.set(id, inner);
+    });
+    return map;
+  }, [compareMode, selectedIds, compareQueries, permIdToName]);
+
+  const permSignature = useCallback((permsid: string, entId: number): string => {
+    const v = compareData.get(entId)?.get(permsid);
+    return v ? `${v.permvalue}:${v.permnegated}:${v.permskip}` : 'unset';
+  }, [compareData]);
+
+  const permDiffers = useCallback((permsid: string): boolean => {
+    const sigs = [...selectedIds].map((id) => permSignature(permsid, id));
+    return new Set(sigs).size > 1;
+  }, [selectedIds, permSignature]);
+
+  const isSetForAny = useCallback((permsid: string): boolean => {
+    return [...compareData.values()].some((m) => m.has(permsid));
+  }, [compareData]);
 
   // Current perm values as map (keyed by permname/permsid)
   const currentPerms = useMemo(() => {
@@ -195,7 +257,10 @@ export default function Permissions() {
       ? allPerms.filter((p) => p.permsid.toLowerCase().includes(search.toLowerCase()) || p.permdesc.toLowerCase().includes(search.toLowerCase()))
       : allPerms;
 
-    if (showModifiedOnly) {
+    if (compareMode) {
+      if (showModifiedOnly) filtered = filtered.filter((p) => isSetForAny(p.permsid));
+      if (showDifferingOnly) filtered = filtered.filter((p) => permDiffers(p.permsid));
+    } else if (showModifiedOnly) {
       // "Set" (has an explicit value on this entity) OR mid-edit (a pending
       // local change of any kind) - keeps a permission visible while it's
       // being removed instead of yanking it out from under the user.
@@ -208,7 +273,7 @@ export default function Permissions() {
       catMap.get(cat)!.push(perm);
     }
     return catMap;
-  }, [allPerms, search, showModifiedOnly, currentPerms, changes]);
+  }, [allPerms, search, showModifiedOnly, showDifferingOnly, compareMode, currentPerms, changes, isSetForAny, permDiffers]);
 
   const toggleCat = useCallback((cat: string) => {
     setExpandedCats((prev) => {
@@ -432,14 +497,41 @@ export default function Permissions() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {bulkMode ? 'Bulk Apply' : entityId ? `Permissions` : 'Select an entity'}
+                {bulkMode ? (
+                  <div className="flex items-center gap-1 p-0.5 bg-muted/30 rounded-md w-fit normal-case">
+                    <button
+                      onClick={() => setCompareMode(false)}
+                      className={cn(
+                        'px-2 py-1 rounded-sm text-xs font-medium transition-colors',
+                        !compareMode ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      Bulk Apply
+                    </button>
+                    <button
+                      onClick={() => { setCompareMode(true); setChanges(new Map()); }}
+                      className={cn(
+                        'flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-medium transition-colors',
+                        compareMode ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      <Columns3 className="h-3 w-3" /> Compare
+                    </button>
+                  </div>
+                ) : entityId ? 'Permissions' : 'Select an entity'}
               </CardTitle>
               {(entityId || bulkMode) && (
                 <div className="flex items-center gap-3">
-                  {!bulkMode && (
+                  {(!bulkMode || compareMode) && (
                     <div className="flex items-center gap-1.5">
                       <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
                       <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">Only show set</Label>
+                    </div>
+                  )}
+                  {compareMode && (
+                    <div className="flex items-center gap-1.5">
+                      <Switch id="show-differing-only" checked={showDifferingOnly} onCheckedChange={setShowDifferingOnly} />
+                      <Label htmlFor="show-differing-only" className="text-xs text-muted-foreground cursor-pointer">Only show differing</Label>
                     </div>
                   )}
                   <div className="relative w-64">
@@ -454,9 +546,14 @@ export default function Permissions() {
                 </div>
               )}
             </div>
-            {bulkMode && (
+            {bulkMode && !compareMode && (
               <p className="text-[11px] text-muted-foreground pt-1">
                 Set values here to apply them to all {selectedIds.size} selected entities - current per-entity values aren't shown while multiple are selected.
+              </p>
+            )}
+            {compareMode && (
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Read-only - shows each selected entity's current permission values side by side. Switch to Bulk Apply to change values for all of them at once.
               </p>
             )}
           </CardHeader>
@@ -466,7 +563,7 @@ export default function Permissions() {
                 <div className="flex items-center justify-center h-[400px]">
                   <p className="text-sm text-muted-foreground">Select an entity from the left panel</p>
                 </div>
-              ) : loadingPerms ? (
+              ) : (compareMode ? compareLoading : loadingPerms) ? (
                 <div className="flex items-center justify-center h-[400px]">
                   <PageLoader />
                 </div>
@@ -482,7 +579,56 @@ export default function Permissions() {
                         {PERM_CATEGORIES[catKey] || catKey}
                         <Badge variant="secondary" className="text-[9px] h-4 ml-1">{perms.length}</Badge>
                       </button>
-                      {expandedCats.has(catKey) && (
+                      {expandedCats.has(catKey) && compareMode ? (
+                        <div className="ml-4 border-l border-border/50 pl-2 overflow-x-auto">
+                          <table className="w-full text-xs border-collapse">
+                            <thead>
+                              <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                <th className="text-left px-2 py-1 sticky left-0 bg-card font-normal">Permission</th>
+                                {[...selectedIds].map((id) => (
+                                  <th
+                                    key={id}
+                                    className="px-2 py-1 text-center font-normal truncate max-w-[100px]"
+                                    title={entities.find((e: any) => e.id === id)?.name || `#${id}`}
+                                  >
+                                    {entities.find((e: any) => e.id === id)?.name || `#${id}`}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {perms.map((perm) => {
+                                const isBoolean = perm.permsid.startsWith('b_');
+                                const differs = permDiffers(perm.permsid);
+                                return (
+                                  <tr key={perm.permsid} className={cn('border-t border-border/30', differs && 'bg-amber-500/5')}>
+                                    <td className="px-2 py-1 sticky left-0 bg-card truncate" title={perm.permdesc || perm.permsid}>
+                                      <span className="font-mono-data text-[11px]">{perm.permsid}</span>
+                                    </td>
+                                    {[...selectedIds].map((id) => {
+                                      const v = compareData.get(id)?.get(perm.permsid);
+                                      return (
+                                        <td key={id} className="px-2 py-1 text-center">
+                                          {!v ? (
+                                            <span className="text-muted-foreground">–</span>
+                                          ) : isBoolean ? (
+                                            <Check className={cn('h-3 w-3 inline', v.permnegated ? 'text-destructive' : 'text-primary')} />
+                                          ) : (
+                                            <span className={cn('font-mono-data', v.permnegated && 'text-destructive')}>
+                                              {v.permvalue}
+                                              {v.permskip ? <sup className="text-amber-400 ml-0.5">S</sup> : null}
+                                            </span>
+                                          )}
+                                        </td>
+                                      );
+                                    })}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : expandedCats.has(catKey) && (
                         <div className="ml-4 border-l border-border/50 pl-2">
                           {/* Header */}
                           <div className="grid grid-cols-12 gap-2 px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
@@ -607,7 +753,15 @@ export default function Permissions() {
                   {categories.size === 0 && (
                     <div className="flex items-center justify-center h-[300px]">
                       <p className="text-sm text-muted-foreground">
-                        {showModifiedOnly ? 'No permissions are set on this entity' : 'No permissions match your search'}
+                        {compareMode
+                          ? showDifferingOnly
+                            ? 'No permissions differ across the selected entities'
+                            : showModifiedOnly
+                              ? 'No permissions are set on any selected entity'
+                              : 'No permissions match your search'
+                          : showModifiedOnly
+                            ? 'No permissions are set on this entity'
+                            : 'No permissions match your search'}
                       </p>
                     </div>
                   )}
