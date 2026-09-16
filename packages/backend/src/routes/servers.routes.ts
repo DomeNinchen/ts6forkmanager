@@ -99,8 +99,13 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname'];
     for (const field of fields) {
       if (req.body[field] !== undefined) {
-        // Don't overwrite API key or SSH password with empty strings
-        if ((field === 'apiKey' || field === 'sshPassword') && req.body[field] === '') continue;
+        // Don't overwrite API key, SSH username, or SSH password with empty
+        // strings - the frontend never receives these back after saving them
+        // (GET strips them to a hasSshCredentials/hasBotIdentity-style flag,
+        // never the raw value), so its edit form always starts these fields
+        // blank. Without this guard, saving any other field (e.g. rotating
+        // the API key) silently wiped sshUsername/sshPassword on every save.
+        if ((field === 'apiKey' || field === 'sshPassword' || field === 'sshUsername') && req.body[field] === '') continue;
         // H8: Encrypt sensitive fields
         if (field === 'apiKey' || field === 'sshPassword') {
           data[field] = encrypt(req.body[field]);
