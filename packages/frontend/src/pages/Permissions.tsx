@@ -10,12 +10,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import {
-  Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, Save,
-  X, Check, Minus, Columns3,
+  Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, UserCog, Save,
+  X, Check, Minus, Plus, Columns3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -45,7 +46,7 @@ function getCategoryKey(permsid: string): string {
   return 'other';
 }
 
-type PermLayer = 'server-group' | 'channel-group' | 'channel' | 'client';
+type PermLayer = 'server-group' | 'channel-group' | 'channel' | 'client' | 'channel-client';
 
 interface PermDef {
   permid: number;
@@ -73,18 +74,69 @@ const LAYERS: { key: PermLayer; label: string; icon: React.ElementType }[] = [
   { key: 'channel-group', label: 'Channel Groups', icon: Users },
   { key: 'channel', label: 'Channel', icon: Hash },
   { key: 'client', label: 'Client', icon: User },
+  { key: 'channel-client', label: 'Client in Channel', icon: UserCog },
 ];
+
+// Entity keys are strings everywhere on this page. For the 4 "flat list"
+// layers it's just the numeric id as a string; for channel-client (no
+// server-wide list command exists - you must already know the pair) it's
+// "{cid}:{cldbid}".
+function fetchPerms(layer: PermLayer, c: number, s: number, key: string) {
+  if (layer === 'channel-client') {
+    const [cid, cldbid] = key.split(':').map(Number);
+    return permissionsApi.channelClientPerms(c, s, cid, cldbid);
+  }
+  const id = Number(key);
+  switch (layer) {
+    case 'server-group': return permissionsApi.serverGroupPerms(c, s, id);
+    case 'channel-group': return permissionsApi.channelGroupPerms(c, s, id);
+    case 'channel': return permissionsApi.channelPerms(c, s, id);
+    case 'client': return permissionsApi.clientPerms(c, s, id);
+  }
+}
+
+function applyPermSet(layer: PermLayer, c: number, s: number, key: string, ch: PendingChange) {
+  if (layer === 'channel-client') {
+    const [cid, cldbid] = key.split(':').map(Number);
+    // channelclientaddperm only takes permsid/permvalue - no negate/skip
+    return permissionsApi.addChannelClientPerm(c, s, cid, cldbid, { permsid: ch.permsid, permvalue: ch.permvalue });
+  }
+  const id = Number(key);
+  const data = { permsid: ch.permsid, permvalue: ch.permvalue, permnegated: ch.permnegated, permskip: ch.permskip };
+  switch (layer) {
+    case 'server-group': return permissionsApi.addServerGroupPerm(c, s, id, data);
+    case 'channel-group': return permissionsApi.addChannelGroupPerm(c, s, id, data);
+    case 'channel': return permissionsApi.addChannelPerm(c, s, id, data);
+    case 'client': return permissionsApi.addClientPerm(c, s, id, data);
+  }
+}
+
+function applyPermRemove(layer: PermLayer, c: number, s: number, key: string, permsid: string) {
+  if (layer === 'channel-client') {
+    const [cid, cldbid] = key.split(':').map(Number);
+    return permissionsApi.delChannelClientPerm(c, s, cid, cldbid, { permsid });
+  }
+  const id = Number(key);
+  switch (layer) {
+    case 'server-group': return permissionsApi.delServerGroupPerm(c, s, id, { permsid });
+    case 'channel-group': return permissionsApi.delChannelGroupPerm(c, s, id, { permsid });
+    case 'channel': return permissionsApi.delChannelPerm(c, s, id, { permsid });
+    case 'client': return permissionsApi.delClientPerm(c, s, id, { permsid });
+  }
+}
 
 export default function Permissions() {
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const qc = useQueryClient();
 
   const [layer, setLayer] = useState<PermLayer>('server-group');
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const entityId = selectedIds.size === 1 ? [...selectedIds][0] : null;
+  const supportsNegateSkip = layer !== 'channel-client';
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const entityKey = selectedIds.size === 1 ? [...selectedIds][0] : null;
   const bulkMode = selectedIds.size > 1;
   const [compareMode, setCompareMode] = useState(false);
   const [showDifferingOnly, setShowDifferingOnly] = useState(false);
+  const [compareChanges, setCompareChanges] = useState<Map<string, Map<string, PendingChange>>>(new Map());
   const [search, setSearch] = useState('');
   const [showModifiedOnly, setShowModifiedOnly] = useState(false);
   const [showOffline, setShowOffline] = useState(false);
@@ -92,13 +144,19 @@ export default function Permissions() {
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [changes, setChanges] = useState<Map<string, PendingChange>>(new Map());
 
-  const toggleEntitySelect = useCallback((id: number) => {
+  // channel-client only: which channel is currently picked in the "add a
+  // pair" form, and display names for pairs already added to selectedIds
+  const [ccChannel, setCcChannel] = useState('');
+  const [ccNames, setCcNames] = useState<Map<string, { channelName: string; clientName: string }>>(new Map());
+
+  const toggleEntitySelect = useCallback((key: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
     setChanges(new Map());
+    setCompareChanges(new Map());
   }, []);
 
   // Fetch all permission definitions
@@ -122,36 +180,35 @@ export default function Permissions() {
   const { data: channels } = useQuery({
     queryKey: ['channels-for-perms', c, s],
     queryFn: () => permissionsApi.channels(c!, s!),
-    enabled: !!c && !!s && layer === 'channel',
+    enabled: !!c && !!s && (layer === 'channel' || layer === 'channel-client'),
   });
   const { data: clients } = useQuery({
     queryKey: ['clients-for-perms', c, s],
     queryFn: () => permissionsApi.clients(c!, s!),
-    enabled: !!c && !!s && layer === 'client',
+    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client'),
   });
   const { data: offlineClients } = useQuery({
     queryKey: ['clients-db-for-perms', c, s],
     queryFn: () => permissionsApi.clientsDatabase(c!, s!),
-    enabled: !!c && !!s && layer === 'client' && showOffline,
+    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client') && showOffline,
   });
 
   // Fetch current entity permissions
   const { data: entityPerms, isLoading: loadingPerms } = useQuery({
-    queryKey: ['entity-perms', c, s, layer, entityId],
-    queryFn: () => {
-      if (!c || !s || !entityId) return [];
-      switch (layer) {
-        case 'server-group': return permissionsApi.serverGroupPerms(c, s, entityId);
-        case 'channel-group': return permissionsApi.channelGroupPerms(c, s, entityId);
-        case 'channel': return permissionsApi.channelPerms(c, s, entityId);
-        case 'client': return permissionsApi.clientPerms(c, s, entityId);
-      }
-    },
-    enabled: !!c && !!s && !!entityId,
+    queryKey: ['entity-perms', c, s, layer, entityKey],
+    queryFn: () => (c && s && entityKey ? fetchPerms(layer, c, s, entityKey) : []),
+    enabled: !!c && !!s && !!entityKey,
   });
 
   // Reset entity when layer changes
-  useEffect(() => { setSelectedIds(new Set()); setChanges(new Map()); setCompareMode(false); }, [layer]);
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setChanges(new Map());
+    setCompareChanges(new Map());
+    setCompareMode(false);
+    setCcChannel('');
+    setCcNames(new Map());
+  }, [layer]);
   // Compare only makes sense with 2+ selected - drop out of it otherwise
   useEffect(() => { if (!bulkMode) setCompareMode(false); }, [bulkMode]);
 
@@ -160,16 +217,9 @@ export default function Permissions() {
   // Compare and a single selection reuses the cache instead of refetching)
   const compareQueries = useQueries({
     queries: compareMode
-      ? [...selectedIds].map((id) => ({
-          queryKey: ['entity-perms', c, s, layer, id],
-          queryFn: () => {
-            switch (layer) {
-              case 'server-group': return permissionsApi.serverGroupPerms(c!, s!, id);
-              case 'channel-group': return permissionsApi.channelGroupPerms(c!, s!, id);
-              case 'channel': return permissionsApi.channelPerms(c!, s!, id);
-              case 'client': return permissionsApi.clientPerms(c!, s!, id);
-            }
-          },
+      ? [...selectedIds].map((key) => ({
+          queryKey: ['entity-perms', c, s, layer, key],
+          queryFn: () => fetchPerms(layer, c!, s!, key),
           enabled: !!c && !!s,
         }))
       : [],
@@ -198,9 +248,9 @@ export default function Permissions() {
 
   // Compare mode: each selected entity's permissions as its own map
   const compareData = useMemo(() => {
-    const map = new Map<number, Map<string, PermValue>>();
+    const map = new Map<string, Map<string, PermValue>>();
     if (!compareMode) return map;
-    [...selectedIds].forEach((id, i) => {
+    [...selectedIds].forEach((key, i) => {
       const raw = compareQueries[i]?.data;
       const inner = new Map<string, PermValue>();
       if (Array.isArray(raw)) {
@@ -214,23 +264,63 @@ export default function Permissions() {
           });
         }
       }
-      map.set(id, inner);
+      map.set(key, inner);
     });
     return map;
   }, [compareMode, selectedIds, compareQueries, permIdToName]);
 
-  const permSignature = useCallback((permsid: string, entId: number): string => {
-    const v = compareData.get(entId)?.get(permsid);
+  // Compare signatures fold in any not-yet-saved edit too, so "differs" and
+  // "only show set" react live while you're editing, not just to the server.
+  const permSignature = useCallback((permsid: string, key: string): string => {
+    const pending = compareChanges.get(key)?.get(permsid);
+    if (pending) return pending.action === 'remove' ? 'unset' : `${pending.permvalue}:${pending.permnegated}:${pending.permskip}`;
+    const v = compareData.get(key)?.get(permsid);
     return v ? `${v.permvalue}:${v.permnegated}:${v.permskip}` : 'unset';
-  }, [compareData]);
+  }, [compareData, compareChanges]);
 
   const permDiffers = useCallback((permsid: string): boolean => {
-    const sigs = [...selectedIds].map((id) => permSignature(permsid, id));
+    const sigs = [...selectedIds].map((key) => permSignature(permsid, key));
     return new Set(sigs).size > 1;
   }, [selectedIds, permSignature]);
 
   const isSetForAny = useCallback((permsid: string): boolean => {
-    return [...compareData.values()].some((m) => m.has(permsid));
+    return [...selectedIds].some((key) => {
+      const pending = compareChanges.get(key)?.get(permsid);
+      if (pending) return pending.action !== 'remove';
+      return compareData.get(key)?.has(permsid) ?? false;
+    });
+  }, [selectedIds, compareData, compareChanges]);
+
+  const getCompareEffectiveValue = useCallback((key: string, permsid: string): PendingChange | null => {
+    const pending = compareChanges.get(key)?.get(permsid);
+    if (pending) return pending;
+    const current = compareData.get(key)?.get(permsid);
+    if (current) return { ...current, action: 'set' };
+    return null;
+  }, [compareChanges, compareData]);
+
+  const setComparePermValue = useCallback((key: string, permsid: string, value: number, negated: number, skip: number) => {
+    setCompareChanges((prev) => {
+      const next = new Map(prev);
+      const inner = new Map(next.get(key) ?? new Map());
+      inner.set(permsid, { permsid, permvalue: value, permnegated: negated, permskip: skip, action: 'set' });
+      next.set(key, inner);
+      return next;
+    });
+  }, []);
+
+  const removeComparePerm = useCallback((key: string, permsid: string) => {
+    setCompareChanges((prev) => {
+      const next = new Map(prev);
+      const inner = new Map(next.get(key) ?? new Map());
+      if (compareData.get(key)?.has(permsid)) {
+        inner.set(permsid, { permsid, permvalue: 0, permnegated: 0, permskip: 0, action: 'remove' });
+      } else {
+        inner.delete(permsid);
+      }
+      if (inner.size === 0) next.delete(key); else next.set(key, inner);
+      return next;
+    });
   }, [compareData]);
 
   // Current perm values as map (keyed by permname/permsid)
@@ -317,30 +407,34 @@ export default function Permissions() {
       const toSet = [...changes.values()].filter((ch) => ch.action === 'set');
       const toRemove = [...changes.values()].filter((ch) => ch.action === 'remove');
 
-      for (const id of selectedIds) {
-        for (const perm of toSet) {
-          const data = { permsid: perm.permsid, permvalue: perm.permvalue, permnegated: perm.permnegated, permskip: perm.permskip };
-          switch (layer) {
-            case 'server-group': await permissionsApi.addServerGroupPerm(c, s, id, data); break;
-            case 'channel-group': await permissionsApi.addChannelGroupPerm(c, s, id, data); break;
-            case 'channel': await permissionsApi.addChannelPerm(c, s, id, data); break;
-            case 'client': await permissionsApi.addClientPerm(c, s, id, data); break;
-          }
-        }
-        for (const perm of toRemove) {
-          const data = { permsid: perm.permsid };
-          switch (layer) {
-            case 'server-group': await permissionsApi.delServerGroupPerm(c, s, id, data); break;
-            case 'channel-group': await permissionsApi.delChannelGroupPerm(c, s, id, data); break;
-            case 'channel': await permissionsApi.delChannelPerm(c, s, id, data); break;
-            case 'client': await permissionsApi.delClientPerm(c, s, id, data); break;
-          }
-        }
+      for (const key of selectedIds) {
+        for (const ch of toSet) await applyPermSet(layer, c, s, key, ch);
+        for (const ch of toRemove) await applyPermRemove(layer, c, s, key, ch.permsid);
       }
     },
     onSuccess: () => {
       toast.success(bulkMode ? `Permissions applied to ${selectedIds.size} entities` : 'Permissions saved');
       setChanges(new Map());
+      qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer] });
+    },
+    onError: () => toast.error('Failed to save permissions'),
+  });
+
+  const compareSaveMutation = useMutation({
+    mutationFn: async () => {
+      if (!c || !s) return;
+      for (const [key, entChanges] of compareChanges) {
+        for (const ch of entChanges.values()) {
+          if (ch.action === 'set') await applyPermSet(layer, c, s, key, ch);
+          else await applyPermRemove(layer, c, s, key, ch.permsid);
+        }
+      }
+    },
+    onSuccess: () => {
+      const n = [...compareChanges.values()].reduce((sum, m) => sum + m.size, 0);
+      const entCount = compareChanges.size;
+      toast.success(`${n} change(s) saved across ${entCount} entit${entCount === 1 ? 'y' : 'ies'}`);
+      setCompareChanges(new Map());
       qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer] });
     },
     onError: () => toast.error('Failed to save permissions'),
@@ -353,30 +447,31 @@ export default function Permissions() {
     switch (layer) {
       case 'server-group':
         return (Array.isArray(serverGroups) ? serverGroups : []).map((g: any) => ({
-          id: Number(g.sgid), name: g.name, type: Number(g.type),
+          id: String(g.sgid), name: g.name, type: Number(g.type),
         }));
       case 'channel-group':
         return (Array.isArray(channelGroups) ? channelGroups : []).map((g: any) => ({
-          id: Number(g.cgid), name: g.name, type: Number(g.type),
+          id: String(g.cgid), name: g.name, type: Number(g.type),
         }));
       case 'channel':
         return (Array.isArray(channels) ? channels : []).map((ch: any) => ({
-          id: Number(ch.cid), name: ch.channel_name, type: 0,
+          id: String(ch.cid), name: ch.channel_name, type: 0,
         }));
-      case 'client': {
+      case 'client':
+      case 'channel-client': {
         const online = (Array.isArray(clients) ? clients : [])
           .filter((cl: any) => String(cl.client_type) === '0')
           .map((cl: any) => ({
-            id: Number(cl.client_database_id), name: cl.client_nickname, type: 0, online: true,
+            id: String(cl.client_database_id), name: cl.client_nickname, type: 0, online: true,
           }));
         if (!showOffline) return online;
         // clientdblist has no client_type - a stray ServerQuery login could
         // theoretically show up here too, but that's a cosmetic edge case.
         const onlineIds = new Set(online.map((o) => o.id));
         const offline = (Array.isArray(offlineClients) ? offlineClients : [])
-          .filter((cl: any) => !onlineIds.has(Number(cl.cldbid)))
+          .filter((cl: any) => !onlineIds.has(String(cl.cldbid)))
           .map((cl: any) => ({
-            id: Number(cl.cldbid), name: cl.client_nickname || `Client #${cl.cldbid}`, type: 0, online: false,
+            id: String(cl.cldbid), name: cl.client_nickname || `Client #${cl.cldbid}`, type: 0, online: false,
           }));
         return [...online, ...offline].sort((a, b) =>
           a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1);
@@ -384,7 +479,44 @@ export default function Permissions() {
       default: return [];
     }
   })().filter((ent: any) =>
-    layer !== 'client' || !entitySearch || ent.name.toLowerCase().includes(entitySearch.toLowerCase()));
+    (layer !== 'client' && layer !== 'channel-client') || !entitySearch || ent.name.toLowerCase().includes(entitySearch.toLowerCase()));
+
+  const entityName = (key: string): string => {
+    if (layer === 'channel-client') {
+      const info = ccNames.get(key);
+      return info ? `${info.clientName} @ ${info.channelName}` : key;
+    }
+    return entities.find((e: any) => e.id === key)?.name || key;
+  };
+
+  const addChannelClientPair = (clientId: string, clientName: string) => {
+    if (!ccChannel) return;
+    const key = `${ccChannel}:${clientId}`;
+    const channelName = (Array.isArray(channels) ? channels : []).find((ch: any) => String(ch.cid) === ccChannel)?.channel_name || ccChannel;
+    setSelectedIds((prev) => new Set(prev).add(key));
+    setCcNames((prev) => new Map(prev).set(key, { channelName, clientName }));
+    setChanges(new Map());
+    setCompareChanges(new Map());
+  };
+
+  const removeChannelClientPair = (key: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    setCcNames((prev) => {
+      const next = new Map(prev);
+      next.delete(key);
+      return next;
+    });
+    setChanges(new Map());
+    setCompareChanges(new Map());
+  };
+
+  const activeChangeCount = compareMode
+    ? [...compareChanges.values()].reduce((sum, m) => sum + m.size, 0)
+    : changes.size;
 
   return (
     <div className="space-y-4">
@@ -394,14 +526,18 @@ export default function Permissions() {
           {bulkMode && (
             <Badge variant="secondary" className="font-mono-data">{selectedIds.size} entities selected</Badge>
           )}
-          {changes.size > 0 && (
+          {activeChangeCount > 0 && (
             <>
-              <Badge variant="secondary" className="font-mono-data">{changes.size} change(s)</Badge>
-              <Button variant="outline" size="sm" onClick={() => setChanges(new Map())}>
+              <Badge variant="secondary" className="font-mono-data">{activeChangeCount} change(s)</Badge>
+              <Button variant="outline" size="sm" onClick={() => (compareMode ? setCompareChanges(new Map()) : setChanges(new Map()))}>
                 <X className="h-3.5 w-3.5 mr-1" /> Discard
               </Button>
-              <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-                <Save className="h-3.5 w-3.5 mr-1" /> {bulkMode ? `Apply to ${selectedIds.size}` : 'Save'}
+              <Button
+                size="sm"
+                onClick={() => (compareMode ? compareSaveMutation.mutate() : saveMutation.mutate())}
+                disabled={compareMode ? compareSaveMutation.isPending : saveMutation.isPending}
+              >
+                <Save className="h-3.5 w-3.5 mr-1" /> {compareMode ? 'Save' : bulkMode ? `Apply to ${selectedIds.size}` : 'Save'}
               </Button>
             </>
           )}
@@ -430,12 +566,23 @@ export default function Permissions() {
       <div className="grid grid-cols-12 gap-4">
         {/* Entity Selector */}
         <Card className="card-hero col-span-3">
-          <CardHeader className="pb-2 space-y-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Select {LAYERS.find((l) => l.key === layer)?.label.replace(/s$/, '')}
-            </CardTitle>
-            {layer === 'client' && (
-              <>
+          {layer === 'channel-client' ? (
+            <>
+              <CardHeader className="pb-2 space-y-2">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Add Client in Channel
+                </CardTitle>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Channel</Label>
+                  <Select value={ccChannel} onValueChange={setCcChannel}>
+                    <SelectTrigger className="h-7 text-xs mt-0.5"><SelectValue placeholder="Choose a channel..." /></SelectTrigger>
+                    <SelectContent>
+                      {(Array.isArray(channels) ? channels : []).map((ch: any) => (
+                        <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.channel_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="relative">
                   <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
@@ -446,50 +593,124 @@ export default function Permissions() {
                   />
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Switch id="show-offline-clients" checked={showOffline} onCheckedChange={setShowOffline} />
-                  <Label htmlFor="show-offline-clients" className="text-xs text-muted-foreground cursor-pointer">Show offline clients</Label>
+                  <Switch id="show-offline-clients-cc" checked={showOffline} onCheckedChange={setShowOffline} />
+                  <Label htmlFor="show-offline-clients-cc" className="text-xs text-muted-foreground cursor-pointer">Show offline clients</Label>
                 </div>
-              </>
-            )}
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[500px]">
-              <div className="p-2 space-y-0.5">
-                {entities.map((ent: any) => (
-                  <div
-                    key={ent.id}
-                    className={cn(
-                      'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 cursor-pointer',
-                      selectedIds.has(ent.id)
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-foreground hover:bg-muted/50',
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[260px]">
+                  <div className="p-2 space-y-0.5">
+                    {entities.map((ent: any) => (
+                      <button
+                        key={ent.id}
+                        disabled={!ccChannel}
+                        onClick={() => addChannelClientPair(ent.id, ent.name)}
+                        className="w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={!ccChannel ? 'Choose a channel first' : `Add ${ent.name}`}
+                      >
+                        {showOffline && (
+                          <span
+                            className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', ent.online ? 'bg-emerald-500' : 'bg-zinc-500')}
+                            title={ent.online ? 'Online' : 'Offline'}
+                          />
+                        )}
+                        <span className="truncate flex-1">{ent.name}</span>
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      </button>
+                    ))}
+                    {entities.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">No clients found</p>
                     )}
-                    onClick={() => { setSelectedIds(new Set([ent.id])); setChanges(new Map()); }}
-                  >
-                    <Checkbox
-                      checked={selectedIds.has(ent.id)}
-                      onCheckedChange={() => toggleEntitySelect(ent.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label="Select for bulk edit"
-                    />
-                    <span className="truncate flex items-center gap-1.5 flex-1">
-                      {layer === 'client' && showOffline && (
-                        <span
-                          className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', ent.online ? 'bg-emerald-500' : 'bg-zinc-500')}
-                          title={ent.online ? 'Online' : 'Offline'}
-                        />
-                      )}
-                      {ent.name}
-                    </span>
-                    <span className="text-[10px] font-mono-data text-muted-foreground ml-1">#{ent.id}</span>
                   </div>
-                ))}
-                {entities.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-4">No entities found</p>
+                </ScrollArea>
+                <div className="border-t border-border/50 p-2">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-0.5 mb-1">
+                    Added ({selectedIds.size})
+                  </p>
+                  <ScrollArea className="h-[150px]">
+                    <div className="space-y-0.5">
+                      {[...selectedIds].map((key) => (
+                        <div key={key} className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs bg-muted/30">
+                          <span className="truncate flex-1">{entityName(key)}</span>
+                          <button onClick={() => removeChannelClientPair(key)}>
+                            <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </div>
+                      ))}
+                      {selectedIds.size === 0 && (
+                        <p className="text-[11px] text-muted-foreground text-center py-2">
+                          Pick a channel, then click a client to add it.
+                        </p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </CardContent>
+            </>
+          ) : (
+            <>
+              <CardHeader className="pb-2 space-y-2">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Select {LAYERS.find((l) => l.key === layer)?.label.replace(/s$/, '')}
+                </CardTitle>
+                {layer === 'client' && (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        value={entitySearch}
+                        onChange={(e) => setEntitySearch(e.target.value)}
+                        placeholder="Search clients..."
+                        className="h-7 pl-7 text-xs"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Switch id="show-offline-clients" checked={showOffline} onCheckedChange={setShowOffline} />
+                      <Label htmlFor="show-offline-clients" className="text-xs text-muted-foreground cursor-pointer">Show offline clients</Label>
+                    </div>
+                  </>
                 )}
-              </div>
-            </ScrollArea>
-          </CardContent>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[500px]">
+                  <div className="p-2 space-y-0.5">
+                    {entities.map((ent: any) => (
+                      <div
+                        key={ent.id}
+                        className={cn(
+                          'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 cursor-pointer',
+                          selectedIds.has(ent.id)
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-foreground hover:bg-muted/50',
+                        )}
+                        onClick={() => { setSelectedIds(new Set([ent.id])); setChanges(new Map()); setCompareChanges(new Map()); }}
+                      >
+                        <Checkbox
+                          checked={selectedIds.has(ent.id)}
+                          onCheckedChange={() => toggleEntitySelect(ent.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Select for bulk edit"
+                        />
+                        <span className="truncate flex items-center gap-1.5 flex-1">
+                          {layer === 'client' && showOffline && (
+                            <span
+                              className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', ent.online ? 'bg-emerald-500' : 'bg-zinc-500')}
+                              title={ent.online ? 'Online' : 'Offline'}
+                            />
+                          )}
+                          {ent.name}
+                        </span>
+                        <span className="text-[10px] font-mono-data text-muted-foreground ml-1">#{ent.id}</span>
+                      </div>
+                    ))}
+                    {entities.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">No entities found</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </>
+          )}
         </Card>
 
         {/* Permission Editor */}
@@ -518,9 +739,9 @@ export default function Permissions() {
                       <Columns3 className="h-3 w-3" /> Compare
                     </button>
                   </div>
-                ) : entityId ? 'Permissions' : 'Select an entity'}
+                ) : entityKey ? 'Permissions' : 'Select an entity'}
               </CardTitle>
-              {(entityId || bulkMode) && (
+              {(entityKey || bulkMode) && (
                 <div className="flex items-center gap-3">
                   {(!bulkMode || compareMode) && (
                     <div className="flex items-center gap-1.5">
@@ -553,13 +774,13 @@ export default function Permissions() {
             )}
             {compareMode && (
               <p className="text-[11px] text-muted-foreground pt-1">
-                Read-only - shows each selected entity's current permission values side by side. Switch to Bulk Apply to change values for all of them at once.
+                Shows each selected entity's current permission values side by side - edit a cell to change just that one entity, independent of the others. Use Bulk Apply instead to push the same value to all of them at once.
               </p>
             )}
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[500px]">
-              {!entityId && !bulkMode ? (
+              {!entityKey && !bulkMode ? (
                 <div className="flex items-center justify-center h-[400px]">
                   <p className="text-sm text-muted-foreground">Select an entity from the left panel</p>
                 </div>
@@ -585,13 +806,13 @@ export default function Permissions() {
                             <thead>
                               <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                                 <th className="text-left px-2 py-1 sticky left-0 bg-card font-normal">Permission</th>
-                                {[...selectedIds].map((id) => (
+                                {[...selectedIds].map((key) => (
                                   <th
-                                    key={id}
-                                    className="px-2 py-1 text-center font-normal truncate max-w-[100px]"
-                                    title={entities.find((e: any) => e.id === id)?.name || `#${id}`}
+                                    key={key}
+                                    className="px-2 py-1 text-center font-normal truncate max-w-[120px]"
+                                    title={entityName(key)}
                                   >
-                                    {entities.find((e: any) => e.id === id)?.name || `#${id}`}
+                                    {entityName(key)}
                                   </th>
                                 ))}
                               </tr>
@@ -605,19 +826,72 @@ export default function Permissions() {
                                     <td className="px-2 py-1 sticky left-0 bg-card truncate" title={perm.permdesc || perm.permsid}>
                                       <span className="font-mono-data text-[11px]">{perm.permsid}</span>
                                     </td>
-                                    {[...selectedIds].map((id) => {
-                                      const v = compareData.get(id)?.get(perm.permsid);
+                                    {[...selectedIds].map((key) => {
+                                      const effective = getCompareEffectiveValue(key, perm.permsid);
+                                      const isSet = effective !== null && effective.action !== 'remove';
+                                      const isChanged = compareChanges.get(key)?.has(perm.permsid) ?? false;
                                       return (
-                                        <td key={id} className="px-2 py-1 text-center">
-                                          {!v ? (
-                                            <span className="text-muted-foreground">–</span>
-                                          ) : isBoolean ? (
-                                            <Check className={cn('h-3 w-3 inline', v.permnegated ? 'text-destructive' : 'text-primary')} />
+                                        <td key={key} className={cn('px-1 py-1 text-center', isChanged && 'bg-primary/5')}>
+                                          {isBoolean ? (
+                                            <button
+                                              onClick={() => {
+                                                if (isSet) removeComparePerm(key, perm.permsid);
+                                                else setComparePermValue(key, perm.permsid, 1, 0, 0);
+                                              }}
+                                              className={cn(
+                                                'h-5 w-5 rounded-sm border inline-flex items-center justify-center transition-colors',
+                                                isSet
+                                                  ? 'bg-primary border-primary text-primary-foreground'
+                                                  : 'border-border hover:border-primary/50',
+                                              )}
+                                            >
+                                              {isSet && <Check className="h-3 w-3" />}
+                                            </button>
                                           ) : (
-                                            <span className={cn('font-mono-data', v.permnegated && 'text-destructive')}>
-                                              {v.permvalue}
-                                              {v.permskip ? <sup className="text-amber-400 ml-0.5">S</sup> : null}
-                                            </span>
+                                            <div className="inline-flex items-center gap-0.5">
+                                              <Input
+                                                type="number"
+                                                className="h-6 w-16 text-xs text-center font-mono-data px-1"
+                                                value={effective?.permvalue ?? ''}
+                                                placeholder="—"
+                                                onChange={(e) => {
+                                                  const val = parseInt(e.target.value);
+                                                  if (!isNaN(val)) {
+                                                    setComparePermValue(key, perm.permsid, val, effective?.permnegated || 0, effective?.permskip || 0);
+                                                  } else if (e.target.value === '') {
+                                                    removeComparePerm(key, perm.permsid);
+                                                  }
+                                                }}
+                                              />
+                                              {supportsNegateSkip && (
+                                                <>
+                                                  <button
+                                                    onClick={() => {
+                                                      if (!isSet) return;
+                                                      const newSkip = (effective?.permskip || 0) ? 0 : 1;
+                                                      setComparePermValue(key, perm.permsid, effective?.permvalue || 0, effective?.permnegated || 0, newSkip);
+                                                    }}
+                                                    className={cn(
+                                                      'h-4 w-4 rounded-sm border flex items-center justify-center text-[9px]',
+                                                      isSet && effective?.permskip ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'border-border/50',
+                                                    )}
+                                                    title="Skip"
+                                                  >{isSet && effective?.permskip ? 'S' : ''}</button>
+                                                  <button
+                                                    onClick={() => {
+                                                      if (!isSet) return;
+                                                      const newNeg = (effective?.permnegated || 0) ? 0 : 1;
+                                                      setComparePermValue(key, perm.permsid, effective?.permvalue || 0, newNeg, effective?.permskip || 0);
+                                                    }}
+                                                    className={cn(
+                                                      'h-4 w-4 rounded-sm border flex items-center justify-center text-[9px]',
+                                                      isSet && effective?.permnegated ? 'bg-destructive/20 border-destructive text-destructive' : 'border-border/50',
+                                                    )}
+                                                    title="Negate"
+                                                  >{isSet && effective?.permnegated ? 'N' : ''}</button>
+                                                </>
+                                              )}
+                                            </div>
                                           )}
                                         </td>
                                       );
@@ -690,7 +964,7 @@ export default function Permissions() {
                                   )}
                                 </div>
                                 <div className="col-span-1 flex justify-center">
-                                  {!isBoolean && (
+                                  {!isBoolean && supportsNegateSkip && (
                                     <button
                                       onClick={() => {
                                         if (!isSet) return;
@@ -710,7 +984,7 @@ export default function Permissions() {
                                   )}
                                 </div>
                                 <div className="col-span-1 flex justify-center">
-                                  {!isBoolean && (
+                                  {!isBoolean && supportsNegateSkip && (
                                     <button
                                       onClick={() => {
                                         if (!isSet) return;
