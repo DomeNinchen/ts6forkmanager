@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   type ColumnDef,
   columnFilteringFeature,
@@ -7,6 +7,7 @@ import {
   createSortedRowModel,
   globalFilteringFeature,
   rowPaginationFeature,
+  rowSelectionFeature,
   rowSortingFeature,
   sortFn_alphanumeric,
   sortFn_datetime,
@@ -14,11 +15,13 @@ import {
   tableFeatures,
   useTable,
   type RowData,
+  type RowSelectionState,
   type SortingState,
 } from '@tanstack/react-table';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 // Shared across every DataTable instance so all page column defs can be
@@ -38,6 +41,7 @@ const dataTableFeatures = tableFeatures({
   filteredRowModel: createFilteredRowModel(),
   rowPaginationFeature,
   paginatedRowModel: createPaginatedRowModel(),
+  rowSelectionFeature,
 });
 
 export type DataTableFeatures = typeof dataTableFeatures;
@@ -48,23 +52,62 @@ interface DataTableProps<TData extends RowData> {
   searchKey?: string;
   searchPlaceholder?: string;
   pageSize?: number;
+  /** Adds a checkbox column and reports the currently-selected rows' data as they change. */
+  enableRowSelection?: boolean;
+  /** Required when enableRowSelection is true, so selection survives sorting/filtering/paging. */
+  getRowId?: (row: TData) => string;
+  onSelectionChange?: (selected: TData[]) => void;
 }
 
 export function DataTable<TData extends RowData>({
   columns, data, searchKey, searchPlaceholder = 'Search...', pageSize = 20,
+  enableRowSelection = false, getRowId, onSelectionChange,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  const tableColumns = enableRowSelection
+    ? [
+        {
+          id: '__select',
+          header: ({ table }) => (
+            <Checkbox
+              checked={table.getIsAllPageRowsSelected()}
+              onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
+              aria-label="Select all"
+            />
+          ),
+          cell: ({ row }) => (
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(v) => row.toggleSelected(!!v)}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Select row"
+            />
+          ),
+        } as ColumnDef<DataTableFeatures, TData>,
+        ...columns,
+      ]
+    : columns;
 
   const table = useTable({
     features: dataTableFeatures,
     data,
-    columns,
+    columns: tableColumns,
+    getRowId: getRowId as ((row: TData) => string) | undefined,
+    enableRowSelection,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
-    state: { sorting, globalFilter },
+    onRowSelectionChange: setRowSelection,
+    state: { sorting, globalFilter, rowSelection },
     initialState: { pagination: { pageIndex: 0, pageSize } },
   });
+
+  useEffect(() => {
+    if (enableRowSelection) onSelectionChange?.(table.getSelectedRowModel().rows.map((r) => r.original));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowSelection]);
 
   return (
     <div className="space-y-3">

@@ -20,4 +20,14 @@ export const clientsApi = {
     api.post(`${base(configId, sid)}/${clid}/poke`, { msg }).then((r) => r.data),
   message: (configId: number, sid: number, clid: number, msg: string) =>
     api.post(`${base(configId, sid)}/${clid}/message`, { msg }).then((r) => r.data),
+
+  // Bulk actions on multiple selected clients at once
+  bulkMove: (configId: number, sid: number, clids: number[], cid: number) =>
+    api.post(`${base(configId, sid)}/bulk/move`, { clids, cid }).then((r) => r.data),
+  bulkKick: (configId: number, sid: number, clids: number[], reasonid: number, reasonmsg?: string) =>
+    api.post(`${base(configId, sid)}/bulk/kick`, { clids, reasonid, reasonmsg }).then((r) => r.data),
+  bulkBan: (configId: number, sid: number, clids: number[], time?: number, banreason?: string) =>
+    api.post(`${base(configId, sid)}/bulk/ban`, { clids, time, banreason }).then((r) => r.data),
+  bulkDescribe: (configId: number, sid: number, clids: number[], description: string) =>
+    api.post(`${base(configId, sid)}/bulk/describe`, { clids, description }).then((r) => r.data),
 };

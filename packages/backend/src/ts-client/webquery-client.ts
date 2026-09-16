@@ -120,6 +120,51 @@ export class WebQueryClient {
     }
   }
 
+  // Like executePost, but sends `body` as a real JSON request body instead of query
+  // params - needed for commands that take an array for one parameter (e.g. clientmove's
+  // `clid`, to move several clients in one call: { cid: 3, clid: [1, 4] }). WebQuery's own
+  // docs show this exact array-in-JSON-body form; query-string params can't express an
+  // array unambiguously the same way. Confirmed working live against a real TS6 server
+  // (clientmove with a 2-element clid array moved both clients in one call).
+  async executeJsonBody(sid: number, command: string, body: Record<string, any>): Promise<any> {
+    const debug = isDebugEnabled('query');
+    if (debug) {
+      console.log(`[WebQuery ${this.target}] → POST(json) sid=${sid} ${command} ${JSON.stringify(body)}`);
+    }
+    try {
+      const path = sid > 0 ? `/${sid}/${command}` : `/${command}`;
+      const response = await this.http.post(path, body);
+
+      const data = response.data;
+      if (data.status && data.status.code !== 0) {
+        if (data.status.code === 1281) {
+          if (debug) console.log(`[WebQuery ${this.target}] ← ok (empty result set)`);
+          return [];
+        }
+        if (debug) console.log(`[WebQuery ${this.target}] ← error id=${data.status.code} msg=${data.status.message}`);
+        throw new TSApiError(data.status.code, data.status.message);
+      }
+
+      if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(data.body ?? data)}`);
+      return data.body || data;
+    } catch (error: any) {
+      if (error instanceof TSApiError) throw error;
+      if (error.response?.data?.status) {
+        if (error.response.data.status.code === 1281) {
+          if (debug) console.log(`[WebQuery ${this.target}] ← ok (empty result set)`);
+          return [];
+        }
+        if (debug) console.log(`[WebQuery ${this.target}] ← error id=${error.response.data.status.code} msg=${error.response.data.status.message}`);
+        throw new TSApiError(
+          error.response.data.status.code,
+          error.response.data.status.message,
+        );
+      }
+      if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
+      throw new TSApiError(-1, error.message || 'Connection failed');
+    }
+  }
+
   // Remove undefined/null values from params
   private cleanParams(params?: Record<string, any>): Record<string, any> | undefined {
     if (!params) return undefined;

@@ -47,7 +47,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 - Virtual server list with start/stop/create controls and a summary of total/autostarting servers and slots
 - Per-server statistics page (general info, connection counts, network/traffic stats)
 - Channel tree with drag-and-drop ordering, including ServerQuery/bot clients (visually distinguished from regular users)
-- Client list with kick, ban, move, poke actions
+- Client list with kick, ban, move, poke actions, plus multi-select bulk kick/ban/move/describe
 - Server & channel group management, including adding/removing members via a searchable client picker
 - Permission editor (server, channel, client, group-level), including offline clients (searchable, not just who's currently connected)
 - Ban list management
