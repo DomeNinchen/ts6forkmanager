@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useChannelGroups, useCreateChannelGroup, useDeleteChannelGroup } from '@/hooks/use-groups';
 import { groupsApi } from '@/api/groups.api';
+import { permissionsApi } from '@/api/permissions.api';
 import { clientsApi } from '@/api/clients.api';
 import { channelsApi } from '@/api/channels.api';
 import { useServerStore } from '@/stores/server.store';
@@ -19,7 +20,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { ShieldCheck, Search, User, Plus, Trash2 } from 'lucide-react';
+import { ShieldCheck, Search, User, Plus, Trash2, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ChannelGroups() {
@@ -56,6 +57,69 @@ export default function ChannelGroups() {
     if (failed > 0) toast.error(`Deleted ${results.length - failed}, failed ${failed}`);
     else toast.success(`${results.length} group(s) deleted`);
     setCheckedIds(new Set());
+  };
+
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async () => {
+    if (!c || !s) return;
+    setExporting(true);
+    try {
+      const targets = (Array.isArray(data) ? data : []).filter((g: any) => checkedIds.has(g.cgid));
+      const exported = await Promise.all(targets.map(async (g: any) => {
+        const perms = await permissionsApi.channelGroupPerms(c, s, g.cgid);
+        return {
+          name: g.name,
+          type: Number(g.type),
+          permissions: (Array.isArray(perms) ? perms : []).map((p: any) => ({
+            permsid: p.permsid, permvalue: Number(p.permvalue) || 0,
+            permnegated: Number(p.permnegated) || 0, permskip: Number(p.permskip) || 0,
+          })),
+        };
+      }));
+      const payload = { format: 'ts6manager-group-export', version: 1, groupType: 'channel', exportedAt: new Date().toISOString(), groups: exported };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `channel-groups-export-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${exported.length} group(s)`);
+    } catch {
+      toast.error('Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    if (!c || !s) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if (payload.format !== 'ts6manager-group-export' || payload.groupType !== 'channel' || !Array.isArray(payload.groups)) {
+        toast.error('Not a valid channel group export file');
+        return;
+      }
+      let permCount = 0;
+      for (const g of payload.groups) {
+        const created = await createGroup.mutateAsync(g.name);
+        const cgid = Number(created?.[0]?.cgid ?? created?.cgid);
+        for (const p of g.permissions || []) {
+          await permissionsApi.addChannelGroupPerm(c, s, cgid, p);
+          permCount++;
+        }
+      }
+      toast.success(`Imported ${payload.groups.length} group(s), ${permCount} permission(s)`);
+    } catch {
+      toast.error('Import failed - check the file is a valid export');
+    } finally {
+      setImporting(false);
+    }
   };
 
   const { data: onlineClients } = useQuery({
@@ -122,11 +186,24 @@ export default function ChannelGroups() {
             {checkedIds.size > 0 && (
               <>
                 <Badge variant="secondary" className="font-mono-data">{checkedIds.size} selected</Badge>
+                <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+                  <Download className="h-3.5 w-3.5 mr-1" /> Export Selected
+                </Button>
                 <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowBulkDelete(true)}>
                   <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Selected
                 </Button>
               </>
             )}
+            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+              <Upload className="h-3.5 w-3.5 mr-1" /> Import
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
+            />
             <Button size="sm" onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4 mr-1" /> Create Group
             </Button>

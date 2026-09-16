@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   useServerGroups, useServerGroupMembers, useCreateServerGroup, useDeleteServerGroup,
   useAddServerGroupMember, useRemoveServerGroupMember,
 } from '@/hooks/use-groups';
 import { useClientDatabase } from '@/hooks/use-clients';
+import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { Shield, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search } from 'lucide-react';
+import { Shield, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ServerGroups() {
@@ -59,6 +60,69 @@ export default function ServerGroups() {
     setCheckedIds(new Set());
   };
 
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async () => {
+    if (!selectedConfigId || !selectedSid) return;
+    setExporting(true);
+    try {
+      const targets = groups.filter((g: any) => checkedIds.has(g.sgid));
+      const exported = await Promise.all(targets.map(async (g: any) => {
+        const perms = await permissionsApi.serverGroupPerms(selectedConfigId, selectedSid, g.sgid);
+        return {
+          name: g.name,
+          type: Number(g.type),
+          permissions: (Array.isArray(perms) ? perms : []).map((p: any) => ({
+            permsid: p.permsid, permvalue: Number(p.permvalue) || 0,
+            permnegated: Number(p.permnegated) || 0, permskip: Number(p.permskip) || 0,
+          })),
+        };
+      }));
+      const payload = { format: 'ts6manager-group-export', version: 1, groupType: 'server', exportedAt: new Date().toISOString(), groups: exported };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `server-groups-export-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${exported.length} group(s)`);
+    } catch {
+      toast.error('Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    if (!selectedConfigId || !selectedSid) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if (payload.format !== 'ts6manager-group-export' || payload.groupType !== 'server' || !Array.isArray(payload.groups)) {
+        toast.error('Not a valid server group export file');
+        return;
+      }
+      let permCount = 0;
+      for (const g of payload.groups) {
+        const created = await createGroup.mutateAsync(g.name);
+        const sgid = Number(created?.[0]?.sgid ?? created?.sgid);
+        for (const p of g.permissions || []) {
+          await permissionsApi.addServerGroupPerm(selectedConfigId, selectedSid, sgid, p);
+          permCount++;
+        }
+      }
+      toast.success(`Imported ${payload.groups.length} group(s), ${permCount} permission(s)`);
+    } catch {
+      toast.error('Import failed - check the file is a valid export');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const memberCldbids = useMemo(
     () => new Set((Array.isArray(members) ? members : []).map((m: any) => String(m.cldbid))),
     [members],
@@ -86,11 +150,24 @@ export default function ServerGroups() {
           {checkedIds.size > 0 && (
             <>
               <Badge variant="secondary" className="font-mono-data">{checkedIds.size} selected</Badge>
+              <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+                <Download className="h-3.5 w-3.5 mr-1" /> Export Selected
+              </Button>
               <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowBulkDelete(true)}>
                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Selected
               </Button>
             </>
           )}
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+            <Upload className="h-3.5 w-3.5 mr-1" /> Import
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
+          />
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4 mr-1" /> Create Group
           </Button>
