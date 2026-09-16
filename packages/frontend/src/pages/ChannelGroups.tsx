@@ -37,6 +37,10 @@ export default function ChannelGroups() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  // By Client tab: which of the selected client's channels are ticked for a
+  // bulk group change, and the group to move them all to.
+  const [checkedChannels, setCheckedChannels] = useState<Set<number>>(new Set());
+  const [bulkCgid, setBulkCgid] = useState('');
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
@@ -152,6 +156,23 @@ export default function ChannelGroups() {
     onError: () => toast.error('Failed to update channel group'),
   });
 
+  // Bulk-assign: put several of this client's channels on the same group at
+  // once. Scoped to channels they already have an assignment in, since that's
+  // all TeamSpeak reports here (it only tracks genuine non-default overrides).
+  const bulkAssignMutation = useMutation({
+    mutationFn: async ({ cgid, cids }: { cgid: number; cids: number[] }) => {
+      for (const cid of cids) await groupsApi.assignChannelGroup(c!, s!, cgid, cid, selectedClient!.cldbid);
+      return cids.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`Channel group updated for ${n} channel(s)`);
+      setCheckedChannels(new Set());
+      setBulkCgid('');
+      qc.invalidateQueries({ queryKey: ['channel-groups-by-client'] });
+    },
+    onError: () => toast.error('Failed to update channel groups'),
+  });
+
   const clientCandidates = useMemo(() => {
     const online = (Array.isArray(onlineClients) ? onlineClients : [])
       .filter((cl: any) => String(cl.client_type) === '0')
@@ -173,6 +194,10 @@ export default function ChannelGroups() {
 
   const groups = Array.isArray(data) ? data : [];
   const assignments = Array.isArray(clientGroups) ? clientGroups : [];
+  // Only regular groups (type 1) can actually be assigned to a client -
+  // TeamSpeak rejects its own built-in template groups with "invalid group
+  // ID" (2560), confirmed live - so they have no business being offered here.
+  const assignableGroups = groups.filter((g: any) => Number(g.type) === 1);
 
   if (!c || !s) return <EmptyState icon={ShieldCheck} title="No server selected" />;
   if (isLoading) return <PageLoader />;
@@ -275,7 +300,7 @@ export default function ChannelGroups() {
                   {clientCandidates.map((cl) => (
                     <button
                       key={cl.cldbid}
-                      onClick={() => setSelectedClient({ cldbid: cl.cldbid, name: cl.name })}
+                      onClick={() => { setSelectedClient({ cldbid: cl.cldbid, name: cl.name }); setCheckedChannels(new Set()); setBulkCgid(''); }}
                       className={cn(
                         'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2',
                         selectedClient?.cldbid === cl.cldbid ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted/50',
@@ -312,8 +337,43 @@ export default function ChannelGroups() {
                 </div>
               ) : (
                 <div className="px-3 pb-3">
-                  <div className="grid grid-cols-12 gap-2 px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider">
-                    <div className="col-span-6">Channel</div>
+                  {checkedChannels.size > 0 && (
+                    <div className="flex items-center gap-2 px-2 py-2 mb-1 rounded-md bg-muted/30">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {checkedChannels.size} channel(s) selected
+                      </span>
+                      <Select value={bulkCgid} onValueChange={setBulkCgid}>
+                        <SelectTrigger className="h-8 text-xs w-56"><SelectValue placeholder="Move all to..." /></SelectTrigger>
+                        <SelectContent>
+                          {assignableGroups.map((g: any) => (
+                            <SelectItem key={g.cgid} value={String(g.cgid)}>{g.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs"
+                        disabled={!bulkCgid || bulkAssignMutation.isPending}
+                        onClick={() => bulkAssignMutation.mutate({ cgid: Number(bulkCgid), cids: [...checkedChannels] })}
+                      >
+                        Apply to {checkedChannels.size}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setCheckedChannels(new Set())}>
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-12 gap-2 px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider items-center">
+                    <div className="col-span-1">
+                      <Checkbox
+                        checked={assignments.length > 0 && checkedChannels.size === assignments.length}
+                        onCheckedChange={(v) =>
+                          setCheckedChannels(v ? new Set(assignments.map((a: any) => Number(a.cid))) : new Set())
+                        }
+                        aria-label="Select all channels"
+                      />
+                    </div>
+                    <div className="col-span-5">Channel</div>
                     <div className="col-span-6">Channel Group</div>
                   </div>
                   {assignments.map((a: any) => {
@@ -321,7 +381,20 @@ export default function ChannelGroups() {
                     const currentCgid = String(Number(a.cgid));
                     return (
                       <div key={cid} className="grid grid-cols-12 gap-2 px-2 py-1.5 rounded-sm text-sm items-center hover:bg-muted/20">
-                        <div className="col-span-6 truncate">{channels.find((ch) => ch.cid === cid)?.name || `#${cid}`}</div>
+                        <div className="col-span-1">
+                          <Checkbox
+                            checked={checkedChannels.has(cid)}
+                            onCheckedChange={() =>
+                              setCheckedChannels((prev) => {
+                                const next = new Set(prev);
+                                next.has(cid) ? next.delete(cid) : next.add(cid);
+                                return next;
+                              })
+                            }
+                            aria-label="Select channel for bulk change"
+                          />
+                        </div>
+                        <div className="col-span-5 truncate">{channels.find((ch) => ch.cid === cid)?.name || `#${cid}`}</div>
                         <div className="col-span-6">
                           <Select
                             value={currentCgid}
@@ -329,7 +402,7 @@ export default function ChannelGroups() {
                           >
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {groups.map((g: any) => (
+                              {assignableGroups.map((g: any) => (
                                 <SelectItem key={g.cgid} value={String(g.cgid)}>{g.name}</SelectItem>
                               ))}
                             </SelectContent>
