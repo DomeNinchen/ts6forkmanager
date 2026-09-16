@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useChannels, useCreateChannel, useDeleteChannel, useEditChannel, useMoveChannel } from '@/hooks/use-channels';
 import { useClients } from '@/hooks/use-clients';
+import { channelsApi } from '@/api/channels.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +9,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Hash, Plus, Trash2, Pencil, ChevronRight, ChevronDown, Users, Lock, Volume2, Terminal } from 'lucide-react';
+import { Hash, Plus, Trash2, Pencil, ChevronRight, ChevronDown, Users, Lock, Volume2, Terminal, Copy, X, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ChannelNode {
@@ -91,12 +96,15 @@ interface TreeNodeProps {
   clientsByChannel: Map<number, ClientInfo[]>;
   onDelete: (cid: number, name: string) => void;
   onEdit: (node: ChannelNode) => void;
+  onDuplicate: (node: ChannelNode) => void;
   onDrop: (draggedCid: number, targetCid: number) => void;
   draggedCid: number | null;
   setDraggedCid: (cid: number | null) => void;
+  selected: Set<number>;
+  onToggleSelect: (cid: number) => void;
 }
 
-function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete, onEdit, onDrop, draggedCid, setDraggedCid }: TreeNodeProps) {
+function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete, onEdit, onDuplicate, onDrop, draggedCid, setDraggedCid, selected, onToggleSelect }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(true);
   const [dropOver, setDropOver] = useState(false);
   const hasChildren = node.children.length > 0;
@@ -158,6 +166,15 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
         onDrop={handleDrop}
         onDragEnd={handleDragEnd}
       >
+        {isAdmin && (
+          <Checkbox
+            checked={selected.has(node.cid)}
+            onCheckedChange={() => onToggleSelect(node.cid)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Select channel"
+          />
+        )}
+
         {hasContent ? (
           <button onClick={() => setExpanded(!expanded)} className="p-0.5 hover:bg-muted rounded-xs">
             {expanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
@@ -174,6 +191,13 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
 
         {isAdmin && (
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => onDuplicate(node)}
+              title="Use as template"
+              className="p-1 rounded-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Copy className="h-3 w-3" />
+            </button>
             <button
               onClick={() => onEdit(node)}
               className="p-1 rounded-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -214,9 +238,12 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
               clientsByChannel={clientsByChannel}
               onDelete={onDelete}
               onEdit={onEdit}
+              onDuplicate={onDuplicate}
               onDrop={onDrop}
               draggedCid={draggedCid}
               setDraggedCid={setDraggedCid}
+              selected={selected}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         </>
@@ -239,8 +266,28 @@ export default function Channels() {
   const [deleteTarget, setDeleteTarget] = useState<{ cid: number; name: string } | null>(null);
   const [editTarget, setEditTarget] = useState<ChannelNode | null>(null);
   const [editForm, setEditForm] = useState({ channel_name: '', channel_topic: '', channel_password: '' });
-  const [newName, setNewName] = useState('');
+  const [newNames, setNewNames] = useState('');
   const [draggedCid, setDraggedCid] = useState<number | null>(null);
+
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const toggleSelect = (cid: number) => setSelected((prev) => {
+    const next = new Set(prev);
+    next.has(cid) ? next.delete(cid) : next.add(cid);
+    return next;
+  });
+
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [bulkEdit, setBulkEdit] = useState({
+    codec: { apply: false, value: '4' },
+    codecQuality: { apply: false, value: '7' },
+    talkPower: { apply: false, value: '0' },
+    permanent: { apply: false, value: true },
+  });
+  const [bulkEditPending, setBulkEditPending] = useState(false);
+
+  const [duplicateSource, setDuplicateSource] = useState<ChannelNode | null>(null);
+  const [duplicateName, setDuplicateName] = useState('');
+  const [duplicatePending, setDuplicatePending] = useState(false);
 
   const tree = useMemo(() => {
     if (!channelData || !Array.isArray(channelData)) return [];
@@ -269,12 +316,70 @@ export default function Channels() {
   if (!selectedConfigId || !selectedSid) return <EmptyState icon={Hash} title="No server selected" />;
   if (channelsLoading) return <PageLoader />;
 
-  const handleCreate = () => {
-    if (!newName.trim()) return;
-    createChannel.mutate({ channel_name: newName, channel_flag_permanent: 1 }, {
-      onSuccess: () => { toast.success('Channel created'); setShowCreate(false); setNewName(''); },
-      onError: () => toast.error('Failed to create channel'),
-    });
+  const handleCreate = async () => {
+    const names = newNames.split('\n').map((n) => n.trim()).filter(Boolean);
+    if (names.length === 0) return;
+    const results = await Promise.allSettled(
+      names.map((channel_name) => createChannel.mutateAsync({ channel_name, channel_flag_permanent: 1 })),
+    );
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed === 0) {
+      toast.success(names.length === 1 ? 'Channel created' : `${names.length} channels created`);
+    } else {
+      toast.error(`${names.length - failed}/${names.length} created, ${failed} failed`);
+    }
+    setShowCreate(false);
+    setNewNames('');
+  };
+
+  const handleBulkEditSave = async () => {
+    const data: any = {};
+    if (bulkEdit.codec.apply) data.channel_codec = Number(bulkEdit.codec.value);
+    if (bulkEdit.codecQuality.apply) data.channel_codec_quality = Number(bulkEdit.codecQuality.value);
+    if (bulkEdit.talkPower.apply) data.channel_needed_talk_power = Number(bulkEdit.talkPower.value);
+    if (bulkEdit.permanent.apply) data.channel_flag_permanent = bulkEdit.permanent.value ? 1 : 0;
+    if (Object.keys(data).length === 0) { setShowBulkEdit(false); return; }
+
+    setBulkEditPending(true);
+    const results = await Promise.allSettled(
+      Array.from(selected).map((cid) => editChannel.mutateAsync({ cid, data })),
+    );
+    setBulkEditPending(false);
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed === 0) toast.success(`Updated ${selected.size} channel(s)`);
+    else toast.error(`${selected.size - failed}/${selected.size} updated, ${failed} failed`);
+    setShowBulkEdit(false);
+    setSelected(new Set());
+  };
+
+  const handleDuplicate = async () => {
+    if (!duplicateSource || !duplicateName.trim() || !selectedConfigId || !selectedSid) return;
+    setDuplicatePending(true);
+    try {
+      const info = await channelsApi.get(selectedConfigId, selectedSid, duplicateSource.cid);
+      const source = Array.isArray(info) ? info[0] : info;
+      const data: any = {
+        channel_name: duplicateName.trim(),
+        channel_topic: source?.channel_topic,
+        channel_description: source?.channel_description,
+        channel_codec: source?.channel_codec,
+        channel_codec_quality: source?.channel_codec_quality,
+        channel_maxclients: source?.channel_maxclients,
+        channel_maxfamilyclients: source?.channel_maxfamilyclients,
+        channel_flag_permanent: source?.channel_flag_permanent,
+        channel_flag_semi_permanent: source?.channel_flag_semi_permanent,
+        channel_needed_talk_power: source?.channel_needed_talk_power,
+        cpid: source?.pid,
+      };
+      await createChannel.mutateAsync(data);
+      toast.success(`Created "${duplicateName.trim()}" from "${duplicateSource.channel_name}"`);
+      setDuplicateSource(null);
+      setDuplicateName('');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to duplicate channel');
+    } finally {
+      setDuplicatePending(false);
+    }
   };
 
   const handleDelete = () => {
@@ -328,6 +433,19 @@ export default function Channels() {
         )}
       </div>
 
+      {isAdmin && selected.size > 0 && (
+        <div className="card-hero flex items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-2.5">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <div className="flex-1" />
+          <Button size="sm" variant="outline" onClick={() => setShowBulkEdit(true)}>
+            <ListChecks className="h-3.5 w-3.5 mr-1.5" /> Edit Selected
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            <X className="h-3.5 w-3.5 mr-1.5" /> Clear
+          </Button>
+        </div>
+      )}
+
       <Card className="card-hero">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -346,9 +464,12 @@ export default function Channels() {
                   clientsByChannel={clientsByChannel}
                   onDelete={(cid, name) => setDeleteTarget({ cid, name })}
                   onEdit={handleEditOpen}
+                  onDuplicate={(node) => { setDuplicateSource(node); setDuplicateName(''); }}
                   onDrop={handleDrop}
                   draggedCid={draggedCid}
                   setDraggedCid={setDraggedCid}
+                  selected={selected}
+                  onToggleSelect={toggleSelect}
                 />
               ))}
             </div>
@@ -364,13 +485,88 @@ export default function Channels() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Channel Name</Label>
-              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New Channel" autoFocus />
+              <Label className="text-xs">Channel Name(s)</Label>
+              <Textarea
+                value={newNames}
+                onChange={(e) => setNewNames(e.target.value)}
+                placeholder={'New Channel\nOne name per line to create multiple at once'}
+                rows={3}
+                autoFocus
+              />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createChannel.isPending}>Create</Button>
+            <Button onClick={handleCreate} disabled={!newNames.trim() || createChannel.isPending}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Edit Dialog */}
+      <Dialog open={showBulkEdit} onOpenChange={(v) => !v && setShowBulkEdit(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit {selected.size} channel(s)</DialogTitle>
+          </DialogHeader>
+          <p className="text-[11px] text-muted-foreground">Only checked fields are applied - the rest are left untouched on each selected channel.</p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Checkbox checked={bulkEdit.codec.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, codec: { ...bulkEdit.codec, apply: !!v } })} />
+              <Label className="text-xs w-28">Codec</Label>
+              <Select value={bulkEdit.codec.value} onValueChange={(v) => setBulkEdit({ ...bulkEdit, codec: { ...bulkEdit.codec, value: v } })} disabled={!bulkEdit.codec.apply}>
+                <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="4">Opus Voice</SelectItem>
+                  <SelectItem value="5">Opus Music</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox checked={bulkEdit.codecQuality.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, codecQuality: { ...bulkEdit.codecQuality, apply: !!v } })} />
+              <Label className="text-xs w-28">Codec Quality</Label>
+              <Input type="number" min={0} max={10} className="h-8 text-xs flex-1" disabled={!bulkEdit.codecQuality.apply}
+                value={bulkEdit.codecQuality.value} onChange={(e) => setBulkEdit({ ...bulkEdit, codecQuality: { ...bulkEdit.codecQuality, value: e.target.value } })} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox checked={bulkEdit.talkPower.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, talkPower: { ...bulkEdit.talkPower, apply: !!v } })} />
+              <Label className="text-xs w-28">Needed Talk Power</Label>
+              <Input type="number" min={0} className="h-8 text-xs flex-1" disabled={!bulkEdit.talkPower.apply}
+                value={bulkEdit.talkPower.value} onChange={(e) => setBulkEdit({ ...bulkEdit, talkPower: { ...bulkEdit.talkPower, value: e.target.value } })} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox checked={bulkEdit.permanent.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, permanent: { ...bulkEdit.permanent, apply: !!v } })} />
+              <Label className="text-xs w-28">Permanent</Label>
+              <Switch checked={bulkEdit.permanent.value} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, permanent: { ...bulkEdit.permanent, value: v } })} disabled={!bulkEdit.permanent.apply} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkEdit(false)}>Cancel</Button>
+            <Button
+              onClick={handleBulkEditSave}
+              disabled={bulkEditPending || !(bulkEdit.codec.apply || bulkEdit.codecQuality.apply || bulkEdit.talkPower.apply || bulkEdit.permanent.apply)}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate (use as template) Dialog */}
+      <Dialog open={!!duplicateSource} onOpenChange={(v) => !v && setDuplicateSource(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate "{duplicateSource?.channel_name}"</DialogTitle>
+          </DialogHeader>
+          <p className="text-[11px] text-muted-foreground">Creates a new channel with the same settings (topic, codec, limits, talk power) as this one.</p>
+          <div>
+            <Label className="text-xs">New Channel Name</Label>
+            <Input value={duplicateName} onChange={(e) => setDuplicateName(e.target.value)} placeholder={`${duplicateSource?.channel_name || ''} Copy`} autoFocus />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateSource(null)}>Cancel</Button>
+            <Button onClick={handleDuplicate} disabled={!duplicateName.trim() || duplicatePending}>
+              <Copy className="h-4 w-4 mr-1" /> Duplicate
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
