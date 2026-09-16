@@ -42,8 +42,12 @@ export const messagesApi = {
 };
 
 export const logsApi = {
-  get: (configId: number, sid: number, lines = 100) =>
-    api.get(`/servers/${configId}/vs/${sid}/logs`, { params: { lines, reverse: 1 } }).then((r) => r.data),
+  get: (configId: number, sid: number, opts: { lines?: number; beginPos?: number; instance?: boolean } = {}) =>
+    api.get(`/servers/${configId}/vs/${sid}/logs`, {
+      params: { lines: opts.lines ?? 100, reverse: 1, begin_pos: opts.beginPos, instance: opts.instance ? 1 : 0 },
+    }).then((r) => r.data),
+  add: (configId: number, sid: number, loglevel: number, logmsg: string) =>
+    api.post(`/servers/${configId}/vs/${sid}/logs`, { loglevel, logmsg }).then((r) => r.data),
 };
 
 export const filesApi = {
