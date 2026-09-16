@@ -10,4 +10,6 @@ export const filesApi = {
     api.post(`${base(configId, sid)}/${cid}/mkdir`, { dirname }).then((r) => r.data),
   delete: (configId: number, sid: number, cid: number, name: string) =>
     api.delete(`${base(configId, sid)}/${cid}/file`, { data: { name } }).then((r) => r.data),
+  move: (configId: number, sid: number, cid: number, name: string, targetCid: number) =>
+    api.post(`${base(configId, sid)}/${cid}/move`, { name, targetCid }).then((r) => r.data),
 };
