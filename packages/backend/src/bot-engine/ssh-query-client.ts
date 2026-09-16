@@ -295,8 +295,17 @@ export class SshQueryClient extends EventEmitter {
    * see this query client as connected for a while after we've moved on,
    * which is what caused the "nickname already in use" / "already member of
    * channel" errors on a fast container restart.
+   *
+   * Sends a ServerQuery `quit` before closing the shell channel, rather than
+   * just tearing down the transport - a plain `ssh.end()`/`shell.close()`
+   * (what this used to do) drops the connection out from under the server,
+   * which it logs as `reason 'connection lost'` instead of a clean
+   * `disconnecting`. Reported upstream (teamspeak/teamspeak6-server#124) as
+   * the trigger for a real heap-corruption crash on this exact server
+   * version when a ServerQuery connection disconnects this abruptly - this
+   * doesn't fix that server-side bug, but avoids tripping it from our side.
    */
-  destroy(): Promise<void> {
+  async destroy(): Promise<void> {
     this.destroyed = true;
     this.stopKeepalive();
     if (this.reconnectTimer) {
@@ -305,6 +314,13 @@ export class SshQueryClient extends EventEmitter {
     }
     this.rejectAllPending('Client destroyed');
     if (this.shell) {
+      try {
+        this.shell.write('quit\n');
+        // Give the write a moment to actually reach the socket and the
+        // server a moment to process it, before we sever the channel below -
+        // otherwise this is no better than not sending `quit` at all.
+        await new Promise((r) => setTimeout(r, 150));
+      } catch { }
       this.shell.close();
       this.shell = null;
     }
