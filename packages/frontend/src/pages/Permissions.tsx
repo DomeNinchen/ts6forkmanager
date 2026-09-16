@@ -211,6 +211,12 @@ export default function Permissions() {
   }, [layer]);
   // Compare only makes sense with 2+ selected - drop out of it otherwise
   useEffect(() => { if (!bulkMode) setCompareMode(false); }, [bulkMode]);
+  // "Only show set" has no toggle in plain Bulk Apply (currentPerms is
+  // always empty there, so its filter would silently blank the whole list
+  // with no visible control to undo it) - reset it whenever that mode is
+  // entered, so a stale checked state from Compare or single-entity view
+  // can't carry over invisibly.
+  useEffect(() => { if (bulkMode && !compareMode) setShowModifiedOnly(false); }, [bulkMode, compareMode]);
 
   // Fetch each selected entity's permissions in Compare mode (shares its
   // query key with the single-entity fetch above, so switching between
