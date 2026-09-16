@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
@@ -79,13 +80,24 @@ export default function Permissions() {
   const qc = useQueryClient();
 
   const [layer, setLayer] = useState<PermLayer>('server-group');
-  const [entityId, setEntityId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const entityId = selectedIds.size === 1 ? [...selectedIds][0] : null;
+  const bulkMode = selectedIds.size > 1;
   const [search, setSearch] = useState('');
   const [showModifiedOnly, setShowModifiedOnly] = useState(false);
   const [showOffline, setShowOffline] = useState(false);
   const [entitySearch, setEntitySearch] = useState('');
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [changes, setChanges] = useState<Map<string, PendingChange>>(new Map());
+
+  const toggleEntitySelect = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+    setChanges(new Map());
+  }, []);
 
   // Fetch all permission definitions
   const { data: permDefs, isLoading: loadingDefs } = useQuery({
@@ -137,7 +149,7 @@ export default function Permissions() {
   });
 
   // Reset entity when layer changes
-  useEffect(() => { setEntityId(null); setChanges(new Map()); }, [layer]);
+  useEffect(() => { setSelectedIds(new Set()); setChanges(new Map()); }, [layer]);
 
   // Parse permission definitions into categorized structure
   // TS WebQuery returns { permid, permname, permdesc } — NOT permsid
@@ -236,33 +248,35 @@ export default function Permissions() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!c || !s || !entityId) return;
+      if (!c || !s || selectedIds.size === 0) return;
       const toSet = [...changes.values()].filter((ch) => ch.action === 'set');
       const toRemove = [...changes.values()].filter((ch) => ch.action === 'remove');
 
-      for (const perm of toSet) {
-        const data = { permsid: perm.permsid, permvalue: perm.permvalue, permnegated: perm.permnegated, permskip: perm.permskip };
-        switch (layer) {
-          case 'server-group': await permissionsApi.addServerGroupPerm(c, s, entityId, data); break;
-          case 'channel-group': await permissionsApi.addChannelGroupPerm(c, s, entityId, data); break;
-          case 'channel': await permissionsApi.addChannelPerm(c, s, entityId, data); break;
-          case 'client': await permissionsApi.addClientPerm(c, s, entityId, data); break;
+      for (const id of selectedIds) {
+        for (const perm of toSet) {
+          const data = { permsid: perm.permsid, permvalue: perm.permvalue, permnegated: perm.permnegated, permskip: perm.permskip };
+          switch (layer) {
+            case 'server-group': await permissionsApi.addServerGroupPerm(c, s, id, data); break;
+            case 'channel-group': await permissionsApi.addChannelGroupPerm(c, s, id, data); break;
+            case 'channel': await permissionsApi.addChannelPerm(c, s, id, data); break;
+            case 'client': await permissionsApi.addClientPerm(c, s, id, data); break;
+          }
         }
-      }
-      for (const perm of toRemove) {
-        const data = { permsid: perm.permsid };
-        switch (layer) {
-          case 'server-group': await permissionsApi.delServerGroupPerm(c, s, entityId, data); break;
-          case 'channel-group': await permissionsApi.delChannelGroupPerm(c, s, entityId, data); break;
-          case 'channel': await permissionsApi.delChannelPerm(c, s, entityId, data); break;
-          case 'client': await permissionsApi.delClientPerm(c, s, entityId, data); break;
+        for (const perm of toRemove) {
+          const data = { permsid: perm.permsid };
+          switch (layer) {
+            case 'server-group': await permissionsApi.delServerGroupPerm(c, s, id, data); break;
+            case 'channel-group': await permissionsApi.delChannelGroupPerm(c, s, id, data); break;
+            case 'channel': await permissionsApi.delChannelPerm(c, s, id, data); break;
+            case 'client': await permissionsApi.delClientPerm(c, s, id, data); break;
+          }
         }
       }
     },
     onSuccess: () => {
-      toast.success('Permissions saved');
+      toast.success(bulkMode ? `Permissions applied to ${selectedIds.size} entities` : 'Permissions saved');
       setChanges(new Map());
-      qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer, entityId] });
+      qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer] });
     },
     onError: () => toast.error('Failed to save permissions'),
   });
@@ -311,17 +325,22 @@ export default function Permissions() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Permissions</h1>
-        {changes.size > 0 && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="font-mono-data">{changes.size} change(s)</Badge>
-            <Button variant="outline" size="sm" onClick={() => setChanges(new Map())}>
-              <X className="h-3.5 w-3.5 mr-1" /> Discard
-            </Button>
-            <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-              <Save className="h-3.5 w-3.5 mr-1" /> Save
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {bulkMode && (
+            <Badge variant="secondary" className="font-mono-data">{selectedIds.size} entities selected</Badge>
+          )}
+          {changes.size > 0 && (
+            <>
+              <Badge variant="secondary" className="font-mono-data">{changes.size} change(s)</Badge>
+              <Button variant="outline" size="sm" onClick={() => setChanges(new Map())}>
+                <X className="h-3.5 w-3.5 mr-1" /> Discard
+              </Button>
+              <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                <Save className="h-3.5 w-3.5 mr-1" /> {bulkMode ? `Apply to ${selectedIds.size}` : 'Save'}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Layer Tabs */}
@@ -372,17 +391,23 @@ export default function Permissions() {
             <ScrollArea className="h-[500px]">
               <div className="p-2 space-y-0.5">
                 {entities.map((ent: any) => (
-                  <button
+                  <div
                     key={ent.id}
-                    onClick={() => { setEntityId(ent.id); setChanges(new Map()); }}
                     className={cn(
-                      'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center justify-between',
-                      entityId === ent.id
+                      'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 cursor-pointer',
+                      selectedIds.has(ent.id)
                         ? 'bg-primary/10 text-primary'
                         : 'text-foreground hover:bg-muted/50',
                     )}
+                    onClick={() => { setSelectedIds(new Set([ent.id])); setChanges(new Map()); }}
                   >
-                    <span className="truncate flex items-center gap-1.5">
+                    <Checkbox
+                      checked={selectedIds.has(ent.id)}
+                      onCheckedChange={() => toggleEntitySelect(ent.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Select for bulk edit"
+                    />
+                    <span className="truncate flex items-center gap-1.5 flex-1">
                       {layer === 'client' && showOffline && (
                         <span
                           className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', ent.online ? 'bg-emerald-500' : 'bg-zinc-500')}
@@ -392,7 +417,7 @@ export default function Permissions() {
                       {ent.name}
                     </span>
                     <span className="text-[10px] font-mono-data text-muted-foreground ml-1">#{ent.id}</span>
-                  </button>
+                  </div>
                 ))}
                 {entities.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-4">No entities found</p>
@@ -407,14 +432,16 @@ export default function Permissions() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {entityId ? `Permissions` : 'Select an entity'}
+                {bulkMode ? 'Bulk Apply' : entityId ? `Permissions` : 'Select an entity'}
               </CardTitle>
-              {entityId && (
+              {(entityId || bulkMode) && (
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
-                    <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">Only show set</Label>
-                  </div>
+                  {!bulkMode && (
+                    <div className="flex items-center gap-1.5">
+                      <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
+                      <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">Only show set</Label>
+                    </div>
+                  )}
                   <div className="relative w-64">
                     <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
@@ -427,10 +454,15 @@ export default function Permissions() {
                 </div>
               )}
             </div>
+            {bulkMode && (
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Set values here to apply them to all {selectedIds.size} selected entities - current per-entity values aren't shown while multiple are selected.
+              </p>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[500px]">
-              {!entityId ? (
+              {!entityId && !bulkMode ? (
                 <div className="flex items-center justify-center h-[400px]">
                   <p className="text-sm text-muted-foreground">Select an entity from the left panel</p>
                 </div>
