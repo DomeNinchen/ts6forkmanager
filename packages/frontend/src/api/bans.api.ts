@@ -23,6 +23,15 @@ export const tokensApi = {
     api.delete(`/servers/${configId}/vs/${sid}/tokens/${encodeURIComponent(token)}`),
 };
 
+export const tempPasswordsApi = {
+  list: (configId: number, sid: number) =>
+    api.get(`/servers/${configId}/vs/${sid}/tokens/temp-passwords`).then((r) => r.data),
+  add: (configId: number, sid: number, data: any) =>
+    api.post(`/servers/${configId}/vs/${sid}/tokens/temp-passwords`, data).then((r) => r.data),
+  delete: (configId: number, sid: number, pw: string) =>
+    api.delete(`/servers/${configId}/vs/${sid}/tokens/temp-passwords/${encodeURIComponent(pw)}`),
+};
+
 export const complaintsApi = {
   list: (configId: number, sid: number) =>
     api.get(`/servers/${configId}/vs/${sid}/complaints`).then((r) => r.data),

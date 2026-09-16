@@ -36,6 +36,14 @@ channelGroupRoutes.get('/:cgid/clients', async (req: Request, res: Response, nex
   } catch (err) { next(err); }
 });
 
+// Reverse lookup: every channel-group assignment a given client has, across
+// all channels (channelgroupclientlist's cid/cgid params are both optional).
+channelGroupRoutes.get('/by-client/:cldbid', async (req: Request, res: Response, next) => {
+  try {
+    res.json(await getClient(req).execute(getSid(req), 'channelgroupclientlist', { cldbid: String(req.params.cldbid) }));
+  } catch (err) { next(err); }
+});
+
 channelGroupRoutes.post('/:cgid/assign', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'setclientchannelgroup', { cgid: String(req.params.cgid), ...req.body }));
