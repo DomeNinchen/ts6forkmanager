@@ -84,3 +84,36 @@ channelRoutes.delete('/:cid/permissions', requireRole('admin'), async (req: Requ
     res.json(result);
   } catch (err) { next(err); }
 });
+
+// Channel-client permissions: an override for one specific client within one
+// specific channel - the 5th permission tier alongside server group/channel
+// group/channel/client. Unlike those, TS3 has no command to list every such
+// override server-wide; you must already know the (cid, cldbid) pair.
+channelRoutes.get('/:cid/clients/:cldbid/permissions', async (req: Request, res: Response, next) => {
+  try {
+    const result = await getClient(req).execute(getSid(req), 'channelclientpermlist', {
+      cid: String(req.params.cid), cldbid: String(req.params.cldbid), '-permsid': '',
+    });
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+channelRoutes.put('/:cid/clients/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    // channelclientaddperm only takes permsid/permvalue - no permnegated/permskip
+    const { permsid, permvalue } = req.body;
+    const result = await getClient(req).execute(getSid(req), 'channelclientaddperm', {
+      cid: String(req.params.cid), cldbid: String(req.params.cldbid), permsid, permvalue,
+    });
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+channelRoutes.delete('/:cid/clients/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const result = await getClient(req).execute(getSid(req), 'channelclientdelperm', {
+      cid: String(req.params.cid), cldbid: String(req.params.cldbid), ...req.body,
+    });
+    res.json(result);
+  } catch (err) { next(err); }
+});

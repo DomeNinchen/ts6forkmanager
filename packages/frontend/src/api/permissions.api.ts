@@ -48,6 +48,14 @@ export const permissionsApi = {
   delClientPerm: (configId: number, sid: number, cldbid: number, data: any) =>
     api.delete(`${clBase(configId, sid)}/${cldbid}/permissions`, { data }).then((r) => r.data),
 
+  // Channel-Client permissions (5th tier: one client's override within one channel)
+  channelClientPerms: (configId: number, sid: number, cid: number, cldbid: number) =>
+    api.get(`${chBase(configId, sid)}/${cid}/clients/${cldbid}/permissions`).then((r) => r.data),
+  addChannelClientPerm: (configId: number, sid: number, cid: number, cldbid: number, data: any) =>
+    api.put(`${chBase(configId, sid)}/${cid}/clients/${cldbid}/permissions`, data).then((r) => r.data),
+  delChannelClientPerm: (configId: number, sid: number, cid: number, cldbid: number, data: any) =>
+    api.delete(`${chBase(configId, sid)}/${cid}/clients/${cldbid}/permissions`, { data }).then((r) => r.data),
+
   // Server groups & channel groups list
   serverGroups: (configId: number, sid: number) =>
     api.get(sgBase(configId, sid)).then((r) => r.data),
