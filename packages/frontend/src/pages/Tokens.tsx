@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tokensApi, tempPasswordsApi } from '@/api/bans.api';
 import { channelsApi } from '@/api/channels.api';
+import { groupsApi } from '@/api/groups.api';
 import { useServerStore } from '@/stores/server.store';
 import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +47,41 @@ export default function Tokens() {
     enabled: !!c && !!s,
   });
 
+  const [showCreateToken, setShowCreateToken] = useState(false);
+  const [tokenType, setTokenType] = useState('0');
+  const [tokenGroupId, setTokenGroupId] = useState('');
+  const [tokenChannelId, setTokenChannelId] = useState('');
+  const [tokenDesc, setTokenDesc] = useState('');
+
+  const { data: serverGroupData } = useQuery({
+    queryKey: ['server-groups', c, s],
+    queryFn: () => groupsApi.serverGroups(c!, s!),
+    enabled: !!c && !!s && showCreateToken,
+  });
+  const { data: channelGroupData } = useQuery({
+    queryKey: ['channel-groups', c, s],
+    queryFn: () => groupsApi.channelGroups(c!, s!),
+    enabled: !!c && !!s && showCreateToken,
+  });
+
+  const createToken = useMutation({
+    mutationFn: () => tokensApi.add(c!, s!, {
+      tokentype: Number(tokenType),
+      tokenid1: Number(tokenGroupId),
+      tokenid2: tokenType === '1' ? Number(tokenChannelId) : 0,
+      tokendescription: tokenDesc,
+    }),
+    onSuccess: (res: any) => {
+      const token = Array.isArray(res) ? res[0]?.token : res?.token;
+      if (token) navigator.clipboard.writeText(token);
+      toast.success(token ? 'Token created and copied to clipboard' : 'Token created');
+      qc.invalidateQueries({ queryKey: ['tokens'] });
+      setShowCreateToken(false);
+      setTokenGroupId(''); setTokenChannelId(''); setTokenDesc('');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to create token'),
+  });
+
   const [showCreate, setShowCreate] = useState(false);
   const [pw, setPw] = useState('');
   const [desc, setDesc] = useState('');
@@ -80,6 +116,16 @@ export default function Tokens() {
     return channelData.map((ch: any) => ({ cid: Number(ch.cid), name: ch.channel_name }));
   }, [channelData]);
   const channelName = (cid: number) => (cid === 0 ? 'Default Channel' : channels.find((ch) => ch.cid === cid)?.name || `#${cid}`);
+  // Only regular groups (type 1) can be targeted by a token - confirmed live:
+  // template groups (type 0) fail with "invalid group ID", and server query
+  // groups (type 2) fail with "invalid parameter". Channel groups have no
+  // query type, so this filter is a no-op there beyond excluding templates.
+  const serverGroupList = useMemo(() => (Array.isArray(serverGroupData) ? serverGroupData : [])
+    .filter((g: any) => Number(g.type) === 1)
+    .map((g: any) => ({ id: Number(g.sgid), name: g.name })), [serverGroupData]);
+  const channelGroupList = useMemo(() => (Array.isArray(channelGroupData) ? channelGroupData : [])
+    .filter((g: any) => Number(g.type) === 1)
+    .map((g: any) => ({ id: Number(g.cgid), name: g.name })), [channelGroupData]);
 
   const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => [
     { accessorKey: 'token', header: 'Token', cell: ({ getValue }) => (
@@ -128,7 +174,12 @@ export default function Tokens() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Privilege Keys</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Privilege Keys</h1>
+        <Button size="sm" onClick={() => setShowCreateToken(true)}>
+          <Plus className="h-3.5 w-3.5 mr-1" /> Create Token
+        </Button>
+      </div>
       <DataTable columns={columns} data={tokens} searchKey="token_description" searchPlaceholder="Search tokens..." />
 
       <Card className="card-hero">
@@ -148,6 +199,61 @@ export default function Tokens() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={showCreateToken} onOpenChange={setShowCreateToken}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Token</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Group Type</Label>
+              <Select value={tokenType} onValueChange={(v) => { setTokenType(v); setTokenGroupId(''); }}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Server Group</SelectItem>
+                  <SelectItem value="1">Channel Group</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Group</Label>
+              <Select value={tokenGroupId} onValueChange={setTokenGroupId}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Choose a group..." /></SelectTrigger>
+                <SelectContent>
+                  {(tokenType === '0' ? serverGroupList : channelGroupList).map((g) => (
+                    <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {tokenType === '1' && (
+              <div>
+                <Label className="text-xs">Channel</Label>
+                <Select value={tokenChannelId} onValueChange={setTokenChannelId}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Choose a channel..." /></SelectTrigger>
+                  <SelectContent>
+                    {channels.map((ch) => (
+                      <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div>
+              <Label className="text-xs">Description</Label>
+              <Input className="mt-1" value={tokenDesc} onChange={(e) => setTokenDesc(e.target.value)} placeholder="Optional" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateToken(false)}>Cancel</Button>
+            <Button
+              onClick={() => createToken.mutate()}
+              disabled={!tokenGroupId || (tokenType === '1' && !tokenChannelId) || createToken.isPending}
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
