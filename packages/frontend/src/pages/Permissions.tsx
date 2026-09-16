@@ -879,10 +879,12 @@ export default function Permissions() {
                                                     }}
                                                     className={cn(
                                                       'h-4 w-4 rounded-sm border flex items-center justify-center text-[9px]',
-                                                      isSet && effective?.permskip ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'border-border/50',
+                                                      isSet && effective?.permskip
+                                                        ? 'bg-amber-500/20 border-amber-500 text-amber-400'
+                                                        : 'border-border/50 text-muted-foreground/40',
                                                     )}
                                                     title="Skip"
-                                                  >{isSet && effective?.permskip ? 'S' : ''}</button>
+                                                  >S</button>
                                                   <button
                                                     onClick={() => {
                                                       if (!isSet) return;
@@ -891,10 +893,12 @@ export default function Permissions() {
                                                     }}
                                                     className={cn(
                                                       'h-4 w-4 rounded-sm border flex items-center justify-center text-[9px]',
-                                                      isSet && effective?.permnegated ? 'bg-destructive/20 border-destructive text-destructive' : 'border-border/50',
+                                                      isSet && effective?.permnegated
+                                                        ? 'bg-destructive/20 border-destructive text-destructive'
+                                                        : 'border-border/50 text-muted-foreground/40',
                                                     )}
                                                     title="Negate"
-                                                  >{isSet && effective?.permnegated ? 'N' : ''}</button>
+                                                  >N</button>
                                                 </>
                                               )}
                                             </div>
