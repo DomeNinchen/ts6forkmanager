@@ -1,6 +1,6 @@
 {
   "name": "@ts6/backend",
-  "version": "2.21.0",
+  "version": "2.22.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

@@ -474,6 +474,7 @@ function ConnectionsTab() {
   const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '' });
 
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
+  const editingServer = editId ? serverList.find((s: any) => s.id === editId) : null;
 
   if (isLoading) return <PageLoader />;
 
@@ -586,8 +587,8 @@ function ConnectionsTab() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div><Label className="text-xs">SSH Port</Label><Input type="number" value={form.sshPort} onChange={(e) => setForm({ ...form, sshPort: e.target.value })} /></div>
-              <div><Label className="text-xs">SSH User</Label><Input value={form.sshUsername} onChange={(e) => setForm({ ...form, sshUsername: e.target.value })} placeholder="serveradmin" /></div>
-              <div><Label className="text-xs">SSH Password</Label><Input type="password" value={form.sshPassword} onChange={(e) => setForm({ ...form, sshPassword: e.target.value })} /></div>
+              <div><Label className="text-xs">SSH User</Label><Input value={form.sshUsername} onChange={(e) => setForm({ ...form, sshUsername: e.target.value })} placeholder={editingServer?.hasSshCredentials ? '(unchanged)' : 'serveradmin'} /></div>
+              <div><Label className="text-xs">SSH Password</Label><Input type="password" value={form.sshPassword} onChange={(e) => setForm({ ...form, sshPassword: e.target.value })} placeholder={editingServer?.hasSshCredentials ? '(unchanged)' : ''} /></div>
             </div>
           </div>
           <DialogFooter>
