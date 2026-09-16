@@ -154,6 +154,7 @@ export default function Permissions() {
   // Compare mode: curated row set (starts at "power" permissions, grown via
   // Add Perm), file-loaded read-only comparison columns (Add Target), and
   // the currently-pinned reference cell for the relative color scheme.
+  const [permLabelMode, setPermLabelMode] = useState<'simple' | 'advanced'>('advanced');
   const [comparePermIds, setComparePermIds] = useState<Set<string> | null>(null);
   const [showAddPerm, setShowAddPerm] = useState(false);
   const [addPermSearch, setAddPermSearch] = useState('');
@@ -509,6 +510,20 @@ export default function Permissions() {
     }
     return catMap;
   }, [allPerms, search, showModifiedOnly, showDifferingOnly, compareMode, comparePermIds, currentPerms, changes, isSetForAny, permDiffers]);
+
+  // Advanced shows the raw technical permsid (e.g. b_virtualserver_create);
+  // Simple shows TeamSpeak's own human-readable permdesc instead where one
+  // exists - the mechanical "Needed Powers" permissions have none, so those
+  // fall back to the permsid either way. The tooltip always surfaces
+  // whichever of the two isn't the current main label.
+  const permLabel = useCallback((p: { permsid: string; permdesc: string }): string => {
+    if (permLabelMode === 'simple' && p.permdesc) return p.permdesc;
+    return p.permsid;
+  }, [permLabelMode]);
+  const permTooltip = useCallback((p: { permsid: string; permdesc: string }): string => {
+    if (permLabelMode === 'simple' && p.permdesc) return p.permsid;
+    return p.permdesc || p.permsid;
+  }, [permLabelMode]);
 
   const toggleCat = useCallback((cat: string) => {
     setExpandedCats((prev) => {
@@ -888,6 +903,26 @@ export default function Permissions() {
               </CardTitle>
               {(entityKey || bulkMode) && (
                 <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 p-0.5 bg-muted/30 rounded-md w-fit" title="Advanced shows the raw permission name, Simple shows TeamSpeak's own plain-language description">
+                    <button
+                      onClick={() => setPermLabelMode('advanced')}
+                      className={cn(
+                        'px-2 py-1 rounded-sm text-xs font-medium transition-colors',
+                        permLabelMode === 'advanced' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      Advanced
+                    </button>
+                    <button
+                      onClick={() => setPermLabelMode('simple')}
+                      className={cn(
+                        'px-2 py-1 rounded-sm text-xs font-medium transition-colors',
+                        permLabelMode === 'simple' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      Simple
+                    </button>
+                  </div>
                   {(!bulkMode || compareMode) && (
                     <div className="flex items-center gap-1.5">
                       <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
@@ -1000,9 +1035,9 @@ export default function Permissions() {
                                 const differs = permDiffers(perm.permsid);
                                 return (
                                   <tr key={perm.permsid} className={cn('border-t border-border/30 group', differs && 'bg-amber-500/5')}>
-                                    <td className="px-2 py-1 sticky left-0 bg-card truncate" title={perm.permdesc || perm.permsid}>
+                                    <td className="px-2 py-1 sticky left-0 bg-card truncate" title={permTooltip(perm)}>
                                       <span className="inline-flex items-center gap-1">
-                                        <span className="font-mono-data text-[11px]">{perm.permsid}</span>
+                                        <span className={cn('text-[11px]', permLabelMode === 'advanced' && 'font-mono-data')}>{permLabel(perm)}</span>
                                         <button
                                           onClick={() => toggleComparePerm(perm.permsid)}
                                           className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1139,8 +1174,8 @@ export default function Permissions() {
                                   isSet ? 'text-foreground' : 'text-muted-foreground',
                                 )}
                               >
-                                <div className="col-span-5 truncate" title={perm.permdesc || perm.permsid}>
-                                  <span className="font-mono-data text-[11px]">{perm.permsid}</span>
+                                <div className="col-span-5 truncate" title={permTooltip(perm)}>
+                                  <span className={cn('text-[11px]', permLabelMode === 'advanced' && 'font-mono-data')}>{permLabel(perm)}</span>
                                 </div>
                                 <div className="col-span-2 flex justify-center">
                                   {isBoolean ? (
@@ -1300,10 +1335,10 @@ export default function Permissions() {
                       'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors',
                       added ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
                     )}
-                    title={p.permdesc}
+                    title={permTooltip(p)}
                   >
                     <Checkbox checked={added} onCheckedChange={() => toggleComparePerm(p.permsid)} onClick={(e) => e.stopPropagation()} />
-                    <span className="font-mono-data truncate">{p.permsid}</span>
+                    <span className={cn('truncate', permLabelMode === 'advanced' && 'font-mono-data')}>{permLabel(p)}</span>
                   </div>
                 );
               })}
