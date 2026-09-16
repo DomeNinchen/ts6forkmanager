@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
@@ -11,12 +11,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import {
   Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, UserCog, Save,
-  X, Check, Minus, Plus, Columns3,
+  X, Check, Minus, Plus, Columns3, Upload, FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -149,6 +150,16 @@ export default function Permissions() {
   const [ccChannel, setCcChannel] = useState('');
   const [ccNames, setCcNames] = useState<Map<string, { channelName: string; clientName: string }>>(new Map());
 
+  // Compare mode: curated row set (starts at "power" permissions, grown via
+  // Add Perm), file-loaded read-only comparison columns (Add Target), and
+  // the currently-pinned reference cell for the relative color scheme.
+  const [comparePermIds, setComparePermIds] = useState<Set<string> | null>(null);
+  const [showAddPerm, setShowAddPerm] = useState(false);
+  const [addPermSearch, setAddPermSearch] = useState('');
+  const [fileTargets, setFileTargets] = useState<{ id: string; name: string; permissions: Map<string, PermValue> }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [colorPivot, setColorPivot] = useState<{ colKey: string; permsid: string } | null>(null);
+
   const toggleEntitySelect = useCallback((key: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -208,6 +219,9 @@ export default function Permissions() {
     setCompareMode(false);
     setCcChannel('');
     setCcNames(new Map());
+    setComparePermIds(null);
+    setFileTargets([]);
+    setColorPivot(null);
   }, [layer]);
   // Compare only makes sense with 2+ selected - drop out of it otherwise
   useEffect(() => { if (!bulkMode) setCompareMode(false); }, [bulkMode]);
@@ -243,6 +257,19 @@ export default function Permissions() {
     }));
   }, [permDefs]);
 
+  // Entering Compare starts the curated "power permissions" row set fresh
+  // each time, and clears any pinned color reference from a prior visit.
+  useEffect(() => {
+    if (compareMode) {
+      setComparePermIds(new Set(allPerms.filter((p) => getCategoryKey(p.permsid) === 'i_needed').map((p) => p.permsid)));
+      setColorPivot(null);
+      setExpandedCats((prev) => new Set(prev).add('i_needed'));
+    } else {
+      setFileTargets([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compareMode]);
+
   // Build permid → permname lookup (entity perms only return numeric permid)
   const permIdToName = useMemo(() => {
     const map = new Map<number, string>();
@@ -277,33 +304,91 @@ export default function Permissions() {
 
   // Compare signatures fold in any not-yet-saved edit too, so "differs" and
   // "only show set" react live while you're editing, not just to the server.
+  // Every comparison column, live entities plus file-loaded read-only ones
+  const allCompareCols = useMemo(() => [...selectedIds, ...fileTargets.map((t) => t.id)], [selectedIds, fileTargets]);
+  const isFileTargetCol = useCallback((colKey: string) => fileTargets.some((t) => t.id === colKey), [fileTargets]);
+
+  // Single source of truth for "what value does this cell currently show" -
+  // a pending edit, then live server data, then a file target's own data.
+  // A pending removal resolves to null, same as never having been set.
+  const getCellValue = useCallback((colKey: string, permsid: string): PermValue | null => {
+    const fileTarget = fileTargets.find((t) => t.id === colKey);
+    if (fileTarget) return fileTarget.permissions.get(permsid) ?? null;
+    const pending = compareChanges.get(colKey)?.get(permsid);
+    if (pending) return pending.action === 'remove' ? null : pending;
+    return compareData.get(colKey)?.get(permsid) ?? null;
+  }, [fileTargets, compareChanges, compareData]);
+
   const permSignature = useCallback((permsid: string, key: string): string => {
-    const pending = compareChanges.get(key)?.get(permsid);
-    if (pending) return pending.action === 'remove' ? 'unset' : `${pending.permvalue}:${pending.permnegated}:${pending.permskip}`;
-    const v = compareData.get(key)?.get(permsid);
+    const v = getCellValue(key, permsid);
     return v ? `${v.permvalue}:${v.permnegated}:${v.permskip}` : 'unset';
-  }, [compareData, compareChanges]);
+  }, [getCellValue]);
 
   const permDiffers = useCallback((permsid: string): boolean => {
-    const sigs = [...selectedIds].map((key) => permSignature(permsid, key));
+    const sigs = allCompareCols.map((key) => permSignature(permsid, key));
     return new Set(sigs).size > 1;
-  }, [selectedIds, permSignature]);
+  }, [allCompareCols, permSignature]);
 
   const isSetForAny = useCallback((permsid: string): boolean => {
-    return [...selectedIds].some((key) => {
-      const pending = compareChanges.get(key)?.get(permsid);
-      if (pending) return pending.action !== 'remove';
-      return compareData.get(key)?.has(permsid) ?? false;
-    });
-  }, [selectedIds, compareData, compareChanges]);
+    return allCompareCols.some((key) => getCellValue(key, permsid) !== null);
+  }, [allCompareCols, getCellValue]);
 
   const getCompareEffectiveValue = useCallback((key: string, permsid: string): PendingChange | null => {
-    const pending = compareChanges.get(key)?.get(permsid);
-    if (pending) return pending;
-    const current = compareData.get(key)?.get(permsid);
-    if (current) return { ...current, action: 'set' };
-    return null;
-  }, [compareChanges, compareData]);
+    const v = getCellValue(key, permsid);
+    return v ? { ...v, action: 'set' } : null;
+  }, [getCellValue]);
+
+  // Click a cell to pin it as the reference; every other cell in that same
+  // permission row then colors relative to it (blue = pivot itself,
+  // teal = lower, lime = same, red = higher, pink = no value).
+  const cellColorClass = useCallback((colKey: string, permsid: string): string => {
+    if (!colorPivot || colorPivot.permsid !== permsid) return '';
+    if (colorPivot.colKey === colKey) return 'bg-blue-500/15 ring-1 ring-inset ring-blue-500';
+    const v = getCellValue(colKey, permsid);
+    if (!v) return 'bg-pink-500/10';
+    const pivotV = getCellValue(colorPivot.colKey, permsid);
+    if (!pivotV) return '';
+    if (v.permvalue < pivotV.permvalue) return 'bg-teal-500/10';
+    if (v.permvalue > pivotV.permvalue) return 'bg-red-500/10';
+    return 'bg-lime-500/10';
+  }, [colorPivot, getCellValue]);
+
+  const toggleComparePerm = useCallback((permsid: string) => {
+    setComparePermIds((prev) => {
+      const next = new Set(prev ?? []);
+      next.has(permsid) ? next.delete(permsid) : next.add(permsid);
+      return next;
+    });
+  }, []);
+
+  const handleLoadFileTarget = useCallback(async (file: File) => {
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if (payload.format !== 'ts6manager-group-export' || !Array.isArray(payload.groups)) {
+        toast.error('Not a valid group export file');
+        return;
+      }
+      const loaded = payload.groups.map((g: any, i: number) => ({
+        id: `file:${file.name}:${i}:${Date.now()}`,
+        name: g.name,
+        permissions: new Map<string, PermValue>(
+          (g.permissions || []).map((p: any) => [p.permsid, {
+            permsid: p.permsid, permvalue: Number(p.permvalue) || 0,
+            permnegated: Number(p.permnegated) || 0, permskip: Number(p.permskip) || 0,
+          }]),
+        ),
+      }));
+      setFileTargets((prev) => [...prev, ...loaded]);
+      toast.success(`Loaded ${loaded.length} group(s) from file`);
+    } catch {
+      toast.error('Failed to read file - check it is a valid export');
+    }
+  }, []);
+
+  const removeFileTarget = useCallback((id: string) => {
+    setFileTargets((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const setComparePermValue = useCallback((key: string, permsid: string, value: number, negated: number, skip: number) => {
     setCompareChanges((prev) => {
@@ -354,6 +439,10 @@ export default function Permissions() {
       : allPerms;
 
     if (compareMode) {
+      // Curated row set (started from "power" permissions, grown via Add
+      // Perm) rather than the full list - matches how the reference tool's
+      // own Compare view works, instead of "everything, filter it down".
+      if (comparePermIds) filtered = filtered.filter((p) => comparePermIds.has(p.permsid));
       if (showModifiedOnly) filtered = filtered.filter((p) => isSetForAny(p.permsid));
       if (showDifferingOnly) filtered = filtered.filter((p) => permDiffers(p.permsid));
     } else if (showModifiedOnly) {
@@ -369,7 +458,7 @@ export default function Permissions() {
       catMap.get(cat)!.push(perm);
     }
     return catMap;
-  }, [allPerms, search, showModifiedOnly, showDifferingOnly, compareMode, currentPerms, changes, isSetForAny, permDiffers]);
+  }, [allPerms, search, showModifiedOnly, showDifferingOnly, compareMode, comparePermIds, currentPerms, changes, isSetForAny, permDiffers]);
 
   const toggleCat = useCallback((cat: string) => {
     setExpandedCats((prev) => {
@@ -761,6 +850,23 @@ export default function Permissions() {
                       <Label htmlFor="show-differing-only" className="text-xs text-muted-foreground cursor-pointer">Only show differing</Label>
                     </div>
                   )}
+                  {compareMode && (
+                    <>
+                      <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddPerm(true)}>
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Add Perm
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="h-3.5 w-3.5 mr-1" /> Add Target
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/json"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLoadFileTarget(f); e.target.value = ''; }}
+                      />
+                    </>
+                  )}
                   <div className="relative w-64">
                     <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
@@ -780,7 +886,7 @@ export default function Permissions() {
             )}
             {compareMode && (
               <p className="text-[11px] text-muted-foreground pt-1">
-                Shows each selected entity's current permission values side by side - edit a cell to change just that one entity, independent of the others. Use Bulk Apply instead to push the same value to all of them at once.
+                Shows a curated set of permissions side by side ("Add Perm" for more, the × on a row to drop it) - edit a cell to change just that one entity. Click a cell to pin it as the reference; the rest of that row colors relative to it (teal = lower, lime = same, red = higher, pink = unset). "Add Target" loads a previously-exported group file as a read-only extra column. Use Bulk Apply instead to push the same value to all selected entities at once.
               </p>
             )}
           </CardHeader>
@@ -812,15 +918,27 @@ export default function Permissions() {
                             <thead>
                               <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                                 <th className="text-left px-2 py-1 sticky left-0 bg-card font-normal">Permission</th>
-                                {[...selectedIds].map((key) => (
-                                  <th
-                                    key={key}
-                                    className="px-2 py-1 text-center font-normal truncate max-w-[120px]"
-                                    title={entityName(key)}
-                                  >
-                                    {entityName(key)}
-                                  </th>
-                                ))}
+                                {allCompareCols.map((key) => {
+                                  const isFile = isFileTargetCol(key);
+                                  const name = isFile ? (fileTargets.find((t) => t.id === key)?.name ?? key) : entityName(key);
+                                  return (
+                                    <th
+                                      key={key}
+                                      className="px-2 py-1 text-center font-normal truncate max-w-[120px]"
+                                      title={name}
+                                    >
+                                      <span className="inline-flex items-center gap-1">
+                                        {isFile && <FileText className="h-3 w-3 text-muted-foreground shrink-0" />}
+                                        {name}
+                                        {isFile && (
+                                          <button onClick={() => removeFileTarget(key)} title="Remove this file target">
+                                            <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                                          </button>
+                                        )}
+                                      </span>
+                                    </th>
+                                  );
+                                })}
                               </tr>
                             </thead>
                             <tbody>
@@ -828,19 +946,47 @@ export default function Permissions() {
                                 const isBoolean = perm.permsid.startsWith('b_');
                                 const differs = permDiffers(perm.permsid);
                                 return (
-                                  <tr key={perm.permsid} className={cn('border-t border-border/30', differs && 'bg-amber-500/5')}>
+                                  <tr key={perm.permsid} className={cn('border-t border-border/30 group', differs && 'bg-amber-500/5')}>
                                     <td className="px-2 py-1 sticky left-0 bg-card truncate" title={perm.permdesc || perm.permsid}>
-                                      <span className="font-mono-data text-[11px]">{perm.permsid}</span>
+                                      <span className="inline-flex items-center gap-1">
+                                        <span className="font-mono-data text-[11px]">{perm.permsid}</span>
+                                        <button
+                                          onClick={() => toggleComparePerm(perm.permsid)}
+                                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                          title="Remove from comparison"
+                                        >
+                                          <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                                        </button>
+                                      </span>
                                     </td>
-                                    {[...selectedIds].map((key) => {
+                                    {allCompareCols.map((key) => {
+                                      const isFile = isFileTargetCol(key);
                                       const effective = getCompareEffectiveValue(key, perm.permsid);
-                                      const isSet = effective !== null && effective.action !== 'remove';
-                                      const isChanged = compareChanges.get(key)?.has(perm.permsid) ?? false;
+                                      const isSet = effective !== null;
+                                      const isChanged = !isFile && (compareChanges.get(key)?.has(perm.permsid) ?? false);
+                                      const pivotCls = cellColorClass(key, perm.permsid);
+                                      const setPivotHere = () => setColorPivot({ colKey: key, permsid: perm.permsid });
                                       return (
-                                        <td key={key} className={cn('px-1 py-1 text-center', isChanged && 'bg-primary/5')}>
-                                          {isBoolean ? (
+                                        <td
+                                          key={key}
+                                          onClick={isFile ? () => setColorPivot(isSet ? { colKey: key, permsid: perm.permsid } : null) : undefined}
+                                          className={cn('px-1 py-1 text-center', isFile && 'cursor-pointer', isChanged && 'bg-primary/5', pivotCls)}
+                                        >
+                                          {isFile ? (
+                                            !effective ? (
+                                              <span className="text-muted-foreground">–</span>
+                                            ) : isBoolean ? (
+                                              <Check className={cn('h-3 w-3 inline', effective.permnegated ? 'text-destructive' : 'text-primary')} />
+                                            ) : (
+                                              <span className={cn('font-mono-data', effective.permnegated && 'text-destructive')}>
+                                                {effective.permvalue}
+                                                {effective.permskip ? <sup className="text-amber-400 ml-0.5">S</sup> : null}
+                                              </span>
+                                            )
+                                          ) : isBoolean ? (
                                             <button
                                               onClick={() => {
+                                                setPivotHere();
                                                 if (isSet) removeComparePerm(key, perm.permsid);
                                                 else setComparePermValue(key, perm.permsid, 1, 0, 0);
                                               }}
@@ -860,6 +1006,7 @@ export default function Permissions() {
                                                 className="h-6 w-16 text-xs text-center font-mono-data px-1"
                                                 value={effective?.permvalue ?? ''}
                                                 placeholder="—"
+                                                onFocus={setPivotHere}
                                                 onChange={(e) => {
                                                   const val = parseInt(e.target.value);
                                                   if (!isNaN(val)) {
@@ -873,6 +1020,7 @@ export default function Permissions() {
                                                 <>
                                                   <button
                                                     onClick={() => {
+                                                      setPivotHere();
                                                       if (!isSet) return;
                                                       const newSkip = (effective?.permskip || 0) ? 0 : 1;
                                                       setComparePermValue(key, perm.permsid, effective?.permvalue || 0, effective?.permnegated || 0, newSkip);
@@ -887,6 +1035,7 @@ export default function Permissions() {
                                                   >S</button>
                                                   <button
                                                     onClick={() => {
+                                                      setPivotHere();
                                                       if (!isSet) return;
                                                       const newNeg = (effective?.permnegated || 0) ? 0 : 1;
                                                       setComparePermValue(key, perm.permsid, effective?.permvalue || 0, newNeg, effective?.permskip || 0);
@@ -1055,6 +1204,49 @@ export default function Permissions() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={showAddPerm} onOpenChange={setShowAddPerm}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Permission to Compare</DialogTitle></DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={addPermSearch}
+              onChange={(e) => setAddPermSearch(e.target.value)}
+              placeholder="Search permissions..."
+              className="pl-8 h-9"
+              autoFocus
+            />
+          </div>
+          <ScrollArea className="h-[360px]">
+            <div className="space-y-0.5 pr-2">
+              {allPerms
+                .filter((p) => !addPermSearch || p.permsid.toLowerCase().includes(addPermSearch.toLowerCase()) || p.permdesc.toLowerCase().includes(addPermSearch.toLowerCase()))
+                .slice(0, 200)
+                .map((p) => {
+                  const added = comparePermIds?.has(p.permsid) ?? false;
+                  return (
+                    <div
+                      key={p.permsid}
+                      onClick={() => toggleComparePerm(p.permsid)}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors',
+                        added ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
+                      )}
+                      title={p.permdesc}
+                    >
+                      <Checkbox checked={added} onCheckedChange={() => toggleComparePerm(p.permsid)} onClick={(e) => e.stopPropagation()} />
+                      <span className="font-mono-data truncate">{p.permsid}</span>
+                    </div>
+                  );
+                })}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button onClick={() => setShowAddPerm(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
