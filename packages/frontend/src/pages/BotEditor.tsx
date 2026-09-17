@@ -213,47 +213,162 @@ function hopInto(from: Point, to: Point): Point[] {
   return [{ x: from.x, y: to.y }];
 }
 
+/** A node's box, grown by the clearance a line should keep from it. */
+type Rect = { x: number; y: number; w: number; h: number };
+
+/** How far a line stays clear of a box it is routed around. */
+const EDGE_CLEARANCE = 14;
+
+function nodeRect(n: FlowNode): Rect {
+  return {
+    x: n.x - EDGE_CLEARANCE,
+    y: n.y - EDGE_CLEARANCE,
+    w: NODE_W + EDGE_CLEARANCE * 2,
+    h: NODE_H + EDGE_CLEARANCE * 2,
+  };
+}
+
+/** Axis-aligned segment against a box. Touching the edge does not count. */
+function segmentHitsRect(a: Point, b: Point, r: Rect): boolean {
+  return (
+    Math.max(a.x, b.x) > r.x &&
+    Math.min(a.x, b.x) < r.x + r.w &&
+    Math.max(a.y, b.y) > r.y &&
+    Math.min(a.y, b.y) < r.y + r.h
+  );
+}
+
+function crossings(pts: Point[], obstacles: Rect[]): number {
+  let n = 0;
+  for (let i = 1; i < pts.length; i++) {
+    for (const r of obstacles) {
+      if (segmentHitsRect(pts[i - 1], pts[i], r)) n++;
+    }
+  }
+  return n;
+}
+
+/** The plain left-to-right shape: out, across at `midX`, in. */
+function stepRoute(src: Point, tgt: Point, stubOut: Point, stubIn: Point, midX: number): Point[] {
+  const pts = [src, stubOut];
+  if (Math.abs(src.y - tgt.y) >= 0.5) {
+    pts.push({ x: midX, y: src.y }, { x: midX, y: tgt.y });
+  }
+  pts.push(stubIn, tgt);
+  return corners(pts);
+}
+
+/** The go-around shape: out, up or down to `y`, across, back in. */
+function detourRoute(src: Point, tgt: Point, stubOut: Point, stubIn: Point, y: number): Point[] {
+  return corners([src, stubOut, { x: stubOut.x, y }, { x: stubIn.x, y }, stubIn, tgt]);
+}
+
+/**
+ * Candidate positions for the vertical leg, or for the height a detour runs at:
+ * the default first, then just clear of every obstacle edge. Sorted by distance
+ * from the default so an equally good route stays close to the obvious one
+ * instead of wandering off somewhere surprising.
+ */
+function candidates(preferred: number, edges: number[], lo: number, hi: number): number[] {
+  const all = [preferred, ...edges].filter((v) => v >= lo && v <= hi);
+  const seen = new Set<number>();
+  const out: number[] = [];
+  for (const v of all.sort((a, b) => Math.abs(a - preferred) - Math.abs(b - preferred))) {
+    const key = Math.round(v);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}
+
 /**
  * Every point a connection passes through, source and target included.
  *
- * Left to right it steps across at the halfway mark. A connection whose target
- * sits to the LEFT of its source cannot do that without doubling back over
- * itself, so it leaves to the right, passes below both ends and comes back in
- * from the left. Bend points replace the automatic middle entirely: the line
- * then runs source -> each bend point in turn -> target, at right angles.
+ * Left to right it steps across between the two nodes; one whose target sits to
+ * the LEFT of its source cannot do that without doubling back over itself, so
+ * it leaves to the right, passes clear of both ends and comes back in.
+ *
+ * Where it steps across, and how far out a detour runs, are the only real
+ * choices in that shape - so rather than search for arbitrary paths, this tries
+ * the positions that clear the node boxes and keeps the best one. That is cheap
+ * enough to redo on every mouse move while a node is being dragged, and it is
+ * predictable: an equally good route stays near the obvious one. In a layout
+ * with no gap left, nothing scores zero and the plain route is used rather than
+ * some contorted way around - a line crossing a box beats a line nobody can
+ * follow.
+ *
+ * Bend points placed by hand replace the automatic middle entirely. Those are
+ * an instruction, so no avoidance is applied over the top of them.
  */
-function edgePoints(src: Point, tgt: Point, waypoints?: Point[]): Point[] {
-  const stubOut = { x: src.x + EDGE_LEAD, y: src.y };
-  const stubIn = { x: tgt.x - EDGE_LEAD, y: tgt.y };
-  const pts: Point[] = [src, stubOut];
+function edgePoints(src: Point, tgt: Point, waypoints?: Point[], obstacles: Rect[] = []): Point[] {
+  let stubOut = { x: src.x + EDGE_LEAD, y: src.y };
+  let stubIn = { x: tgt.x - EDGE_LEAD, y: tgt.y };
+  // Two nodes closer together than both stubs put the leaving stub to the
+  // right of the arriving one, and the line jinks backwards between them. Meet
+  // in the middle instead. Backwards connections are left alone: their stubs
+  // are meant to be on the far side of each other, that is the detour.
+  if (tgt.x > src.x && stubOut.x > stubIn.x) {
+    const mid = (src.x + tgt.x) / 2;
+    stubOut = { x: mid, y: src.y };
+    stubIn = { x: mid, y: tgt.y };
+  }
 
   if (waypoints && waypoints.length > 0) {
+    const pts: Point[] = [src, stubOut];
     let prev = stubOut;
     for (const w of waypoints) {
       pts.push(...hopTo(prev, w), w);
       prev = w;
     }
-    pts.push(...hopInto(prev, stubIn));
-  } else if (tgt.x > src.x) {
-    // Step across halfway - but never left of where the line leaves the source
-    // or right of where it has to meet the target. Without that clamp a short
-    // hop puts its vertical leg behind its own start and draws a spike.
-    const midX = Math.max(stubOut.x, Math.min(stubIn.x, (src.x + tgt.x) / 2));
-    if (Math.abs(src.y - tgt.y) >= 0.5) {
-      pts.push({ x: midX, y: src.y }, { x: midX, y: tgt.y });
-    }
-  } else {
-    const detour = Math.max(src.y, tgt.y) + EDGE_DETOUR;
-    pts.push({ x: stubOut.x, y: detour }, { x: stubIn.x, y: detour });
+    pts.push(...hopInto(prev, stubIn), stubIn, tgt);
+    return corners(pts);
   }
 
-  pts.push(stubIn, tgt);
+  const routes: Point[][] = [];
 
-  return corners(pts);
+  if (tgt.x > src.x) {
+    // Never left of where the line leaves the source or right of where it has
+    // to meet the target: outside that range the vertical leg lands behind its
+    // own start and draws a spike.
+    const lo = Math.min(stubOut.x, stubIn.x);
+    const hi = Math.max(stubOut.x, stubIn.x);
+    const preferred = Math.max(lo, Math.min(hi, (src.x + tgt.x) / 2));
+    const xs = obstacles.flatMap((r) => [r.x, r.x + r.w]);
+    for (const x of candidates(preferred, xs, lo, hi)) {
+      routes.push(stepRoute(src, tgt, stubOut, stubIn, x));
+    }
+  }
+
+  // Available to both directions: backwards connections have no other shape,
+  // and a forward one hemmed in on every crossing point can still get out by
+  // going around.
+  const preferredY = Math.max(src.y, tgt.y) + EDGE_DETOUR;
+  const ys = obstacles.flatMap((r) => [r.y - EDGE_CLEARANCE, r.y + r.h + EDGE_CLEARANCE]);
+  // A detour running level with either end is not a detour: it doubles back
+  // over its own stub instead of going around anything.
+  const clearOfEnds = (y: number) =>
+    Math.abs(y - src.y) > NODE_H / 2 + EDGE_CLEARANCE && Math.abs(y - tgt.y) > NODE_H / 2 + EDGE_CLEARANCE;
+  for (const y of candidates(preferredY, ys, 0, Number.MAX_SAFE_INTEGER)) {
+    if (!clearOfEnds(y)) continue;
+    routes.push(detourRoute(src, tgt, stubOut, stubIn, y));
+  }
+
+  let best = routes[0];
+  let bestScore = Infinity;
+  for (const route of routes) {
+    // Crossings dominate; among equals, the simpler shape wins.
+    const score = crossings(route, obstacles) * 100 + route.length;
+    if (score < bestScore) {
+      bestScore = score;
+      best = route;
+    }
+  }
+  return best;
 }
 
-function edgePath(src: Point, tgt: Point, waypoints?: Point[]): string {
-  return roundedPath(edgePoints(src, tgt, waypoints));
+function edgePath(src: Point, tgt: Point, waypoints?: Point[], obstacles: Rect[] = []): string {
+  return roundedPath(edgePoints(src, tgt, waypoints, obstacles));
 }
 
 /**
@@ -271,8 +386,8 @@ function edgePath(src: Point, tgt: Point, waypoints?: Point[]): string {
  * every bend that was already there draggable, which is what someone reaching
  * for a line wanted in the first place.
  */
-function edgeGhostSpot(src: Point, tgt: Point): { point: Point; seed: Point[] } {
-  const pts = edgePoints(src, tgt);
+function edgeGhostSpot(src: Point, tgt: Point, obstacles: Rect[] = []): { point: Point; seed: Point[] } {
+  const pts = edgePoints(src, tgt, undefined, obstacles);
   let end = 1;
   let bestLen = -1;
   for (let i = 1; i < pts.length; i++) {
@@ -790,6 +905,13 @@ export default function BotEditor() {
   // "Private Channel Creator" reaches x=2620, so its last two nodes sat there
   // unconnected and the three orange error edges stopped in mid-air. So the
   // layer is sized to the content instead.
+  // Boxes the connections route around. Each edge drops its own two nodes from
+  // this: a line has to reach its own source and target.
+  const nodeBoxes = useMemo(
+    () => nodes.map((n) => ({ id: n.id, rect: nodeRect(n) })),
+    [nodes],
+  );
+
   const canvasSize = useMemo(() => {
     let w = CANVAS_MIN_W;
     let h = CANVAS_MIN_H;
@@ -895,8 +1017,11 @@ export default function BotEditor() {
               const tgt = getInputHandlePos(tgtNode, tgtPortIdx, tgtMeta.handles.inputs.length);
 
               const waypoints = edge.waypoints ?? [];
-              const path = edgePath(src, tgt, waypoints);
-              const ghost = waypoints.length === 0 ? edgeGhostSpot(src, tgt) : null;
+              const obstacles = nodeBoxes
+                .filter((b) => b.id !== srcNode.id && b.id !== tgtNode.id)
+                .map((b) => b.rect);
+              const path = edgePath(src, tgt, waypoints, obstacles);
+              const ghost = waypoints.length === 0 ? edgeGhostSpot(src, tgt, obstacles) : null;
               const hovered = hoverEdge === edge.id;
               const isConditionTrue = edge.sourcePort === 'true';
               const isConditionFalse = edge.sourcePort === 'false';
