@@ -128,6 +128,65 @@ const CANVAS_MIN_H = 1200;
 // somewhere to drag a node to instead of hitting the end of the canvas.
 const CANVAS_PAD = 320;
 
+// How far a connection leaves a node before it starts bending, how much bow a
+// long one is allowed, and how far below both ends a backwards one detours.
+const EDGE_LEAD = 70;
+const EDGE_MAX_BOW = 160;
+const EDGE_DETOUR = 110;
+
+type Point = { x: number; y: number };
+
+/** A cubic bezier at t = 0.5, which is where the drag handle sits. */
+function cubicMidpoint(p0: Point, p1: Point, p2: Point, p3: Point): Point {
+  return {
+    x: (p0.x + 3 * p1.x + 3 * p2.x + p3.x) / 8,
+    y: (p0.y + 3 * p1.y + 3 * p2.y + p3.y) / 8,
+  };
+}
+
+/**
+ * The two control points a connection is drawn with.
+ *
+ * A forward connection gets the usual horizontal S-bend, with the bow capped
+ * so a long one straightens out in the middle instead of ballooning. One whose
+ * target sits to the LEFT of its source used to take half the distance as its
+ * bow, which sent it sweeping far out past both ends and straight back across
+ * everything in between - the "Private Channel Creator" template was unreadable
+ * for exactly that reason. Those now dip below both ends and come back, which
+ * is what "this loops backwards" is expected to look like.
+ */
+function edgeControlPoints(src: Point, tgt: Point): [Point, Point] {
+  if (tgt.x >= src.x) {
+    const dx = Math.min(Math.abs(tgt.x - src.x) * 0.5, EDGE_MAX_BOW);
+    return [{ x: src.x + dx, y: src.y }, { x: tgt.x - dx, y: tgt.y }];
+  }
+  const detour = Math.max(src.y, tgt.y) + EDGE_DETOUR;
+  return [{ x: src.x + EDGE_LEAD, y: detour }, { x: tgt.x - EDGE_LEAD, y: detour }];
+}
+
+/**
+ * The path for one connection. A dragged waypoint overrides the automatic
+ * routing: the quadratic's control point is placed so the curve passes exactly
+ * through the dragged point, which keeps the handle sitting on its own line
+ * rather than floating beside it.
+ */
+function edgePath(src: Point, tgt: Point, waypoint?: Point): string {
+  if (waypoint) {
+    const cx = 2 * waypoint.x - (src.x + tgt.x) / 2;
+    const cy = 2 * waypoint.y - (src.y + tgt.y) / 2;
+    return `M ${src.x} ${src.y} Q ${cx} ${cy}, ${tgt.x} ${tgt.y}`;
+  }
+  const [c1, c2] = edgeControlPoints(src, tgt);
+  return `M ${src.x} ${src.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${tgt.x} ${tgt.y}`;
+}
+
+/** Where to put this connection's drag handle. */
+function edgeHandlePos(src: Point, tgt: Point, waypoint?: Point): Point {
+  if (waypoint) return waypoint;
+  const [c1, c2] = edgeControlPoints(src, tgt);
+  return cubicMidpoint(src, c1, c2, tgt);
+}
+
 // Calculate handle positions (absolute coords on canvas)
 function getOutputHandlePos(node: FlowNode, portIndex: number, portCount: number) {
   const spacing = NODE_H / (portCount + 1);
@@ -155,6 +214,12 @@ interface FlowEdge {
   sourcePort: string;
   target: string;
   targetPort: string;
+  /**
+   * Where the reader dragged this connection, in canvas coordinates. Absent
+   * means it is routed automatically. The engine only ever reads source,
+   * target and sourcePort off an edge, so carrying this along is free.
+   */
+  waypoint?: { x: number; y: number };
 }
 
 // Textarea with an "expand" button that opens a large modal editor —
@@ -245,6 +310,7 @@ export default function BotEditor() {
 
   // Drag state
   const [dragging, setDragging] = useState<string | null>(null);
+  const [draggingEdge, setDraggingEdge] = useState<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const didDragRef = useRef(false);
 
@@ -300,6 +366,11 @@ export default function BotEditor() {
     setEdges((prev) => prev.filter((e) => e.id !== id));
   };
 
+  /** Hand a connection back to the automatic routing. */
+  const resetEdgeWaypoint = (id: string) => {
+    setEdges((prev) => prev.map((e) => (e.id === id ? { ...e, waypoint: undefined } : e)));
+  };
+
   // --- Canvas mouse handlers ---
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -318,10 +389,17 @@ export default function BotEditor() {
           : n
       ));
     }
-  }, [dragging, connectFrom]);
+
+    if (draggingEdge) {
+      setEdges((prev) => prev.map((ed) =>
+        ed.id === draggingEdge ? { ...ed, waypoint: { x: Math.max(0, x), y: Math.max(0, y) } } : ed
+      ));
+    }
+  }, [dragging, draggingEdge, connectFrom]);
 
   const handleCanvasMouseUp = useCallback((e: React.MouseEvent) => {
     setDragging(null);
+    setDraggingEdge(null);
 
     // If connecting: check if we released on a valid target
     if (connectFrom) {
@@ -565,33 +643,56 @@ export default function BotEditor() {
               const src = getOutputHandlePos(srcNode, srcPortIdx, srcMeta.handles.outputs.length);
               const tgt = getInputHandlePos(tgtNode, tgtPortIdx, tgtMeta.handles.inputs.length);
 
-              const dx = Math.abs(tgt.x - src.x) * 0.5;
+              const path = edgePath(src, tgt, edge.waypoint);
+              const handle = edgeHandlePos(src, tgt, edge.waypoint);
               const isConditionTrue = edge.sourcePort === 'true';
               const isConditionFalse = edge.sourcePort === 'false';
               const isErrorEdge = edge.sourcePort === 'error';
               const edgeColor = isConditionTrue ? '#22c55e' : isConditionFalse ? '#ef4444' : isErrorEdge ? '#f97316' : 'hsl(var(--primary))';
 
               return (
-                <g key={edge.id} className="pointer-events-auto cursor-pointer" onClick={(ev) => { ev.stopPropagation(); deleteEdge(edge.id); }}>
-                  <path
-                    d={`M ${src.x} ${src.y} C ${src.x + dx} ${src.y}, ${tgt.x - dx} ${tgt.y}, ${tgt.x} ${tgt.y}`}
-                    fill="none"
+                <g key={edge.id} className="pointer-events-auto">
+                  <g className="cursor-pointer" onClick={(ev) => { ev.stopPropagation(); deleteEdge(edge.id); }}>
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke={edgeColor}
+                      strokeWidth={2}
+                      strokeOpacity={0.5}
+                    />
+                    {/* Invisible wider path for easier click */}
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke="transparent"
+                      strokeWidth={12}
+                    />
+                    {/* Arrow at target */}
+                    <circle cx={tgt.x} cy={tgt.y} r={3}
+                      fill={edgeColor}
+                      fillOpacity={0.8}
+                    />
+                  </g>
+                  {/* Drag handle: pulls the connection wherever you want it.
+                      Its own mousedown stops the click reaching the path above,
+                      which deletes the connection. Double-click hands it back
+                      to the automatic routing. */}
+                  <circle
+                    cx={handle.x}
+                    cy={handle.y}
+                    r={draggingEdge === edge.id ? 6 : 4.5}
+                    className={draggingEdge === edge.id ? 'cursor-grabbing' : 'cursor-grab'}
+                    fill={edge.waypoint ? edgeColor : 'transparent'}
+                    fillOpacity={edge.waypoint ? 0.85 : 1}
                     stroke={edgeColor}
-                    strokeWidth={2}
-                    strokeOpacity={0.5}
-                  />
-                  {/* Invisible wider path for easier click */}
-                  <path
-                    d={`M ${src.x} ${src.y} C ${src.x + dx} ${src.y}, ${tgt.x - dx} ${tgt.y}, ${tgt.x} ${tgt.y}`}
-                    fill="none"
-                    stroke="transparent"
-                    strokeWidth={12}
-                  />
-                  {/* Arrow at target */}
-                  <circle cx={tgt.x} cy={tgt.y} r={3}
-                    fill={edgeColor}
-                    fillOpacity={0.8}
-                  />
+                    strokeWidth={1.5}
+                    strokeOpacity={edge.waypoint ? 0.9 : 0.4}
+                    onMouseDown={(ev) => { ev.stopPropagation(); setDraggingEdge(edge.id); }}
+                    onClick={(ev) => ev.stopPropagation()}
+                    onDoubleClick={(ev) => { ev.stopPropagation(); resetEdgeWaypoint(edge.id); }}
+                  >
+                    <title>{edge.waypoint ? 'Drag to reshape — double-click to straighten' : 'Drag to reshape this connection'}</title>
+                  </circle>
                 </g>
               );
             })}
