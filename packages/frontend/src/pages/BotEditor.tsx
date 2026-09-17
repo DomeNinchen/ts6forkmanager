@@ -259,8 +259,20 @@ function stepRoute(src: Point, tgt: Point, stubOut: Point, stubIn: Point, midX: 
 }
 
 /** The go-around shape: out, up or down to `y`, across, back in. */
-function detourRoute(src: Point, tgt: Point, stubOut: Point, stubIn: Point, y: number): Point[] {
-  return corners([src, stubOut, { x: stubOut.x, y }, { x: stubIn.x, y }, stubIn, tgt]);
+function detourRoute(src: Point, tgt: Point, outX: number, inX: number, y: number): Point[] {
+  return corners([
+    src,
+    { x: outX, y: src.y },
+    { x: outX, y },
+    { x: inX, y },
+    { x: inX, y: tgt.y },
+    tgt,
+  ]);
+}
+
+/** Up to `limit` values, nearest the default first. */
+function nearest(values: number[], preferred: number, limit: number): number[] {
+  return values.sort((a, b) => Math.abs(a - preferred) - Math.abs(b - preferred)).slice(0, limit);
 }
 
 /**
@@ -349,22 +361,63 @@ function edgePoints(src: Point, tgt: Point, waypoints?: Point[], obstacles: Rect
   // over its own stub instead of going around anything.
   const clearOfEnds = (y: number) =>
     Math.abs(y - src.y) > NODE_H / 2 + EDGE_CLEARANCE && Math.abs(y - tgt.y) > NODE_H / 2 + EDGE_CLEARANCE;
-  for (const y of candidates(preferredY, ys, 0, Number.MAX_SAFE_INTEGER)) {
-    if (!clearOfEnds(y)) continue;
-    routes.push(detourRoute(src, tgt, stubOut, stubIn, y));
+  const detourYs = candidates(preferredY, ys, 0, Number.MAX_SAFE_INTEGER).filter(clearOfEnds);
+  for (const y of detourYs) {
+    routes.push(detourRoute(src, tgt, stubOut.x, stubIn.x, y));
   }
 
-  let best = routes[0];
+  // Crossings dominate; among equals, the simpler shape wins.
+  const score = (route: Point[]) => crossings(route, obstacles) * 100 + route.length;
+
+  // Candidates come nearest-the-obvious-one first, so the first clear route is
+  // also the least surprising one - no reason to price the rest.
+  let best: Point[] | null = null;
   let bestScore = Infinity;
-  for (const route of routes) {
-    // Crossings dominate; among equals, the simpler shape wins.
-    const score = crossings(route, obstacles) * 100 + route.length;
-    if (score < bestScore) {
-      bestScore = score;
+  const consider = (route: Point[]): boolean => {
+    const value = score(route);
+    if (value < bestScore) {
+      bestScore = value;
       best = route;
     }
+    return value < 100;
+  };
+
+  for (const route of routes) {
+    if (consider(route)) return route;
   }
-  return best;
+
+  // Nothing clean yet. A detour's two vertical legs have been pinned to the
+  // stubs so far, so a node standing on either one blocks every height at once
+  // - which is precisely the case that leaves a connection with nowhere to go.
+  // Let the legs move as well, but only now: this is several times the work of
+  // the first pass, and the first pass answers almost every connection.
+  //
+  // Deliberately not skipped while a node is being dragged. That was tried, on
+  // the assumption this pass was what made dragging expensive; measured on a
+  // 13-node flow it changed nothing (about 21ms a frame either way, which is
+  // React re-rendering the nodes and connections, not the search). Keeping it
+  // on means the picture never changes shape on release.
+  const outXs = nearest(
+    [stubOut.x, ...obstacles.flatMap((r) => [r.x - EDGE_CLEARANCE, r.x + r.w + EDGE_CLEARANCE])]
+      .filter((x) => x >= src.x + EDGE_LEAD),
+    stubOut.x,
+    6,
+  );
+  const inXs = nearest(
+    [stubIn.x, ...obstacles.flatMap((r) => [r.x - EDGE_CLEARANCE, r.x + r.w + EDGE_CLEARANCE])]
+      .filter((x) => x <= tgt.x - EDGE_LEAD),
+    stubIn.x,
+    6,
+  );
+  for (const outX of outXs) {
+    for (const inX of inXs) {
+      for (const y of detourYs.slice(0, 8)) {
+        const route = detourRoute(src, tgt, outX, inX, y);
+        if (consider(route)) return route;
+      }
+    }
+  }
+  return best!;
 }
 
 function edgePath(src: Point, tgt: Point, waypoints?: Point[], obstacles: Rect[] = []): string {
