@@ -332,12 +332,19 @@ musicBotRoutes.post('/:id/play', async (req: Request, res: Response, next) => {
 });
 
 // POST /:id/play-url — Play a directly provided URL (e.g. from Music Requests History)
+//
+// `mode` decides what happens when something is already running: 'now' (the
+// default, and what this endpoint always did) interrupts it, 'queue' lines the
+// track up behind it. Until this existed the web interface could only ever
+// interrupt, while `!play <url>` in chat quietly queued - the same action
+// behaving differently depending on where it was triggered from.
 musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const id = parseInt(req.params.id as string);
-    const { url } = req.body;
+    const { url, mode = 'now' } = req.body;
     if (!url) throw new AppError(400, 'url is required');
+    if (mode !== 'now' && mode !== 'queue') throw new AppError(400, "mode must be 'now' or 'queue'");
 
     const bot = manager.getBot(id);
     if (!bot) throw new AppError(404, 'Music bot not found');
@@ -358,8 +365,15 @@ musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) =
     };
 
     bot.queue.add(queueItem);
-    bot.queue.playAt(bot.queue.length - 1);
-    await bot.play(queueItem);
+
+    // Queueing into silence still starts playback, exactly as !play does -
+    // otherwise the bot would sit idle with a track waiting in its queue.
+    const busy = bot.status === 'playing' || bot.status === 'paused';
+    const queued = mode === 'queue' && busy;
+    if (!queued) {
+      bot.queue.playAt(bot.queue.length - 1);
+      await bot.play(queueItem);
+    }
 
     // Save to MusicRequest History
     try {
@@ -388,9 +402,11 @@ musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) =
       console.error('[music-bots.routes] Failed to save music request history:', saveErr);
     }
 
-    res.json({ success: true, queueItem });
+    res.json({ success: true, queueItem, queued, position: bot.queue.length });
   } catch (err: any) {
-    next(new AppError(500, `Failed to play URL: ${err.message}`));
+    // A deliberate 4xx (bad url, bad mode, bot not connected) has to survive:
+    // wrapping everything turned "you sent a bad value" into "the server broke".
+    next(err instanceof AppError ? err : new AppError(500, `Failed to play URL: ${err.message}`));
   }
 });
 

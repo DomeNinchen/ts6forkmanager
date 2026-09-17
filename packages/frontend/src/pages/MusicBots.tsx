@@ -352,11 +352,12 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
 
 // ─── Play Song Dialog ─────────────────────────────────────────────────────────
 
-function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onEnqueue, onLoadPlaylist }: {
+function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onEnqueue, onLoadPlaylist }: {
   botId: number | null;
   onClose: () => void;
   onPlaySong: (songId: number) => void;
   onPlayUrl: (url: string) => void;
+  onQueueUrl: (url: string) => void;
   onEnqueue: (songId: number) => void;
   onLoadPlaylist: (playlistId: number) => void;
 }) {
@@ -489,8 +490,15 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onEnqueue, onLo
                 <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button variant="default" size="sm" className="h-6 text-[10px] px-2"
                     onClick={() => onPlayUrl(req.url)}
+                    title="Play this now, interrupting whatever is running"
                   >
                     <Play className="h-3 w-3 mr-0.5" /> Play
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-6 text-[10px] px-2"
+                    onClick={() => onQueueUrl(req.url)}
+                    title="Play this after whatever is running"
+                  >
+                    <Plus className="h-3 w-3 mr-0.5" /> Queue
                   </Button>
                 </div>
               </div>
@@ -828,9 +836,21 @@ function BotsTab() {
         }}
         onPlayUrl={(url) => {
           if (showPlayDialog) {
-            playUrl.mutate({ botId: showPlayDialog, url }, {
+            playUrl.mutate({ botId: showPlayDialog, url, mode: 'now' }, {
               onSuccess: () => { toast.success('Playing URL'); setShowPlayDialog(null); },
               onError: () => toast.error('Failed to play URL'),
+            });
+          }
+        }}
+        onQueueUrl={(url) => {
+          if (showPlayDialog) {
+            playUrl.mutate({ botId: showPlayDialog, url, mode: 'queue' }, {
+              // Queueing into silence starts playback instead, so say which
+              // of the two actually happened rather than always claiming one.
+              onSuccess: (res) => toast.success(
+                res?.queued ? `Added to queue (position #${res.position})` : 'Playing URL',
+              ),
+              onError: () => toast.error('Failed to queue URL'),
             });
           }
         }}

@@ -118,9 +118,12 @@ export function usePlaySong() {
 export function usePlayUrl() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ botId, url }: { botId: number; url: string }) =>
-      musicBotsApi.playUrl(botId, url),
-    onSuccess: (_, { botId }) => qc.invalidateQueries({ queryKey: ['music-bot-state', botId] }),
+    mutationFn: ({ botId, url, mode }: { botId: number; url: string; mode?: 'now' | 'queue' }) =>
+      musicBotsApi.playUrl(botId, url, mode),
+    onSuccess: (_, { botId }) => {
+      qc.invalidateQueries({ queryKey: ['music-bot-state', botId] });
+      qc.invalidateQueries({ queryKey: ['music-bot-queue', botId] });
+    },
   });
 }
 
