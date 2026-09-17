@@ -219,6 +219,9 @@ model MusicBot {
   volume          Int       @default(50)
   identityData    String?
   autoStart       Boolean   @default(false)
+  // Superseded by the global "stream defaults" app settings (see
+  // utils/stream-defaults.ts). Kept so no existing deployment loses a
+  // column on the next `prisma db push`, but nothing reads it any more.
   streamPreset    String    @default("720p")
   sidecarPort     Int       @default(9800)
   descriptionTemplate String?

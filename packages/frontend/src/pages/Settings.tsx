@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type AccentPreset, type BaseTheme } from '@/api/settings.api';
+import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type StreamDefaults, type StreamPreset, type AccentPreset, type BaseTheme } from '@/api/settings.api';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot, Palette } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot, Palette, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
@@ -40,6 +40,7 @@ export default function Settings() {
           <TabsTrigger value="webgui"><Palette className="h-3.5 w-3.5 mr-1" /> WebGui</TabsTrigger>
           {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> Users</TabsTrigger>}
           {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> YouTube</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="streaming"><Video className="h-3.5 w-3.5 mr-1" /> Streaming</TabsTrigger>}
           {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
           {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> Restart</TabsTrigger>}
           {isAdmin && <TabsTrigger value="sso"><ShieldCheck className="h-3.5 w-3.5 mr-1" /> SSO</TabsTrigger>}
@@ -69,6 +70,12 @@ export default function Settings() {
         {isAdmin && (
           <TabsContent value="youtube" className="mt-4">
             <YouTubeTab />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="streaming" className="mt-4">
+            <StreamingTab />
           </TabsContent>
         )}
 
@@ -1272,6 +1279,124 @@ function YouTubeTab() {
               disabled={cacheLoading || setCacheSettings.isPending}
               onCheckedChange={(v) => setCacheSettings.mutate({ keepPlayedSongs: v })}
             />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StreamingTab() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['stream-defaults'],
+    queryFn: settingsApi.getStreamDefaults,
+  });
+
+  const [draft, setDraft] = useState<StreamDefaults | null>(null);
+  const active: StreamDefaults | null =
+    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate } : null);
+
+  const save = useMutation({
+    mutationFn: (cfg: StreamDefaults) => settingsApi.setStreamDefaults(cfg),
+    onSuccess: (saved) => {
+      qc.setQueryData(['stream-defaults'], saved);
+      setDraft(null);
+      toast.success('Stream defaults saved');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to save stream defaults'),
+  });
+
+  if (isLoading || !data || !active) return <PageLoader />;
+
+  // Picking a preset carries its frame rate and bitrate along, because the
+  // three belong together - a 1080p picture at a 480p bitrate is nobody's
+  // intention. Both fields stay editable afterwards.
+  const pickPreset = (p: StreamPreset) =>
+    setDraft({ preset: p.name, framerate: p.framerate, bitrate: p.bitrate });
+
+  const selected = data.presets.find((p) => p.name === active.preset);
+  const matchesBuiltIn =
+    active.preset === data.builtIn.preset &&
+    active.framerate === data.builtIn.framerate &&
+    active.bitrate === data.builtIn.bitrate;
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Stream Defaults</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            What <code className="text-[11px]">!stream &lt;url&gt;</code> uses when nobody names a
+            quality. Naming one in the chat ({data.presets.map((p) => p.name).join(', ')}) still wins
+            for that stream. Higher values need more upload bandwidth and more CPU on this machine,
+            so if viewers report stuttering, come back here and lower them.
+          </p>
+
+          <div className="space-y-2">
+            <Label className="text-xs">Resolution</Label>
+            <div className="flex gap-2">
+              {data.presets.map((p) => (
+                <Button
+                  key={p.name}
+                  variant={active.preset === p.name ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => pickPreset(p)}
+                >
+                  {p.name}
+                </Button>
+              ))}
+            </div>
+            {selected && (
+              <p className="text-[11px] text-muted-foreground">
+                {selected.width}x{selected.height} pixels
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs" htmlFor="stream-framerate">Frame Rate</Label>
+              <Input
+                id="stream-framerate"
+                type="number"
+                min={1}
+                max={120}
+                value={active.framerate}
+                onChange={(e) => setDraft({ ...active, framerate: Number(e.target.value) })}
+              />
+              <p className="text-[11px] text-muted-foreground">Frames per second, 1-120.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs" htmlFor="stream-bitrate">Bitrate</Label>
+              <Input
+                id="stream-bitrate"
+                value={active.bitrate}
+                onChange={(e) => setDraft({ ...active, bitrate: e.target.value })}
+                placeholder={data.builtIn.bitrate}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                As ffmpeg writes it, e.g. <code className="text-[11px]">6000k</code>.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => save.mutate(active)} disabled={save.isPending || !draft}>
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDraft({ ...data.builtIn })}
+              disabled={matchesBuiltIn}
+            >
+              Restore shipped values
+            </Button>
+            {draft && <span className="text-[11px] text-muted-foreground">Unsaved changes</span>}
           </div>
         </CardContent>
       </Card>

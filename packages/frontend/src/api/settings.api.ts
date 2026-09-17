@@ -46,6 +46,12 @@ export const settingsApi = {
   setMusicCacheSettings: (config: MusicCacheSettings): Promise<MusicCacheSettings> =>
     api.put('/settings/music-cache', config).then((r) => r.data),
 
+  getStreamDefaults: (): Promise<StreamDefaultsResponse> =>
+    api.get('/settings/stream-defaults').then((r) => r.data),
+
+  setStreamDefaults: (config: StreamDefaults): Promise<StreamDefaultsResponse> =>
+    api.put('/settings/stream-defaults', config).then((r) => r.data),
+
   getWebguiTheme: (): Promise<{ preset: AccentPreset }> =>
     api.get('/settings/webgui-theme').then((r) => r.data),
 
@@ -82,6 +88,29 @@ export interface OidcSettingsInput {
 
 export interface MusicCacheSettings {
   keepPlayedSongs: boolean;
+}
+
+/** What `!stream <url>` falls back to when nobody names a preset. */
+export interface StreamDefaults {
+  preset: string;
+  framerate: number;
+  bitrate: string;
+}
+
+export interface StreamPreset {
+  /** The name !stream accepts, e.g. `720p`. */
+  name: string;
+  label: string;
+  width: number;
+  height: number;
+  bitrate: string;
+  framerate: number;
+}
+
+export interface StreamDefaultsResponse extends StreamDefaults {
+  /** What the app ships with, so the form can offer a way back. */
+  builtIn: StreamDefaults;
+  presets: StreamPreset[];
 }
 
 export interface ScheduledRestartConfig {
