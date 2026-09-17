@@ -15,7 +15,7 @@ Built on the **WebQuery HTTP API** (the ServerQuery replacement in modern TeamSp
 ## Screenshots
 
 <details>
-<summary><b>Dashboard, music bots, the visual bot flow editor, and ready-made flow templates</b> — click to expand</summary>
+<summary><b>Dashboard, music bots, video streaming, the visual bot flow editor, ready-made flow templates, and the permission editor</b> — click to expand</summary>
 
 ### Dashboard
 Live overview of your server: online users, channel count, uptime, ping, bandwidth graph, and server capacity at a glance.
@@ -27,6 +27,11 @@ Run multiple music bots per server. Each bot has its own queue, volume control, 
 
 ![Music Bots](docs/musicbots.png)
 
+### Video Streaming
+Stream YouTube, Twitch, a direct URL or a video from your library into a TeamSpeak channel over WebRTC. Queue what plays next, watch a live preview in the browser, and see who is currently watching. Quality and volume default to values you set once under Settings → Streaming.
+
+![Video Streaming](docs/video-streaming.png)
+
 ### Bot Flow Engine
 Visual node-based editor for building automated server workflows. Drag triggers, conditions, and actions onto the canvas, connect them, and deploy. Supports TS3 events, cron schedules, webhooks, and chat commands as triggers.
 
@@ -36,6 +41,11 @@ Visual node-based editor for building automated server workflows. Drag triggers,
 Get started quickly with pre-built flow templates. Covers common use cases like temporary channel creation, AFK movers, idle kickers, online counters, and group protection. One click to import, then customize to your needs.
 
 ![Flow Templates](docs/flow-templates.png)
+
+### Permissions
+Edit permissions across all five layers, for online and offline clients alike. Compare several entities side by side with the differences highlighted automatically, look up where a permission is set anywhere on the server, and see every permission that applies to one client in one channel together with the layer it comes from.
+
+![Permissions](docs/permissions-compare.png)
 
 </details>
 
