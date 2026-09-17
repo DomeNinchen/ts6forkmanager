@@ -15,7 +15,7 @@ import {
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
-  BookOpen,
+  BookOpen, Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -128,63 +128,150 @@ const CANVAS_MIN_H = 1200;
 // somewhere to drag a node to instead of hitting the end of the canvas.
 const CANVAS_PAD = 320;
 
-// How far a connection leaves a node before it starts bending, how much bow a
-// long one is allowed, and how far below both ends a backwards one detours.
-const EDGE_LEAD = 70;
-const EDGE_MAX_BOW = 160;
-const EDGE_DETOUR = 110;
+// Connections run only horizontally and vertically, the way Node-RED and n8n
+// draw them. Curves looked tidy on a two-node flow and turned into a thicket on
+// a real one: overlapping bows are impossible to tell apart, and a bow whose
+// target sat to the left swept across everything in between. Right angles with
+// rounded corners let the eye follow a single line across a busy canvas.
+const EDGE_LEAD = 24;    // straight stub leaving a node before the first turn
+const EDGE_DETOUR = 90;  // how far below both ends a backwards run passes
+const EDGE_RADIUS = 10;  // corner rounding
 
 type Point = { x: number; y: number };
 
-/** A cubic bezier at t = 0.5, which is where the drag handle sits. */
-function cubicMidpoint(p0: Point, p1: Point, p2: Point, p3: Point): Point {
-  return {
-    x: (p0.x + 3 * p1.x + 3 * p2.x + p3.x) / 8,
-    y: (p0.y + 3 * p1.y + 3 * p2.y + p3.y) / 8,
-  };
+const dist = (a: Point, b: Point) => Math.hypot(b.x - a.x, b.y - a.y);
+const samePoint = (a: Point, b: Point) => Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5;
+
+/** A point `r` along the way from `from` towards `to`. */
+function towards(from: Point, to: Point, r: number): Point {
+  const d = dist(from, to);
+  if (d === 0) return { ...from };
+  return { x: from.x + ((to.x - from.x) / d) * r, y: from.y + ((to.y - from.y) / d) * r };
 }
 
 /**
- * The two control points a connection is drawn with.
+ * Turn a polyline into a path with rounded corners. The radius is trimmed per
+ * corner to half the shorter of its two segments, so a short segment rounds off
+ * neatly instead of two corners overshooting into each other.
+ */
+function roundedPath(pts: Point[], radius = EDGE_RADIUS): string {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = pts[i - 1];
+    const corner = pts[i];
+    const next = pts[i + 1];
+    const r = Math.min(radius, dist(prev, corner) / 2, dist(corner, next) / 2);
+    if (r < 0.5) {
+      d += ` L ${corner.x} ${corner.y}`;
+      continue;
+    }
+    const a = towards(corner, prev, r);
+    const b = towards(corner, next, r);
+    d += ` L ${a.x} ${a.y} Q ${corner.x} ${corner.y}, ${b.x} ${b.y}`;
+  }
+  const last = pts[pts.length - 1];
+  return `${d} L ${last.x} ${last.y}`;
+}
+
+/**
+ * Drop points that are not corners: repeats, and anything the line passes
+ * straight through. Rounding those would put a little wobble in the middle of
+ * a straight run, because the rounding has no idea they are not real turns.
+ */
+function corners(pts: Point[]): Point[] {
+  const out: Point[] = [];
+  for (const p of pts) {
+    if (out.length === 0 || !samePoint(p, out[out.length - 1])) out.push(p);
+  }
+  const res: Point[] = [];
+  for (let i = 0; i < out.length; i++) {
+    if (i === 0 || i === out.length - 1) {
+      res.push(out[i]);
+      continue;
+    }
+    const a = res[res.length - 1];
+    const b = out[i];
+    const c = out[i + 1];
+    const cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    if (Math.abs(cross) < 0.5) continue;
+    res.push(b);
+  }
+  return res;
+}
+
+/** Corner for a hop that leaves horizontally and arrives vertically. */
+function hopTo(from: Point, to: Point): Point[] {
+  if (Math.abs(from.y - to.y) < 0.5 || Math.abs(from.x - to.x) < 0.5) return [];
+  return [{ x: to.x, y: from.y }];
+}
+
+/** Corner for a hop that leaves vertically and arrives horizontally - which is
+ *  how every connection has to meet an input port. */
+function hopInto(from: Point, to: Point): Point[] {
+  if (Math.abs(from.y - to.y) < 0.5 || Math.abs(from.x - to.x) < 0.5) return [];
+  return [{ x: from.x, y: to.y }];
+}
+
+/**
+ * Every point a connection passes through, source and target included.
  *
- * A forward connection gets the usual horizontal S-bend, with the bow capped
- * so a long one straightens out in the middle instead of ballooning. One whose
- * target sits to the LEFT of its source used to take half the distance as its
- * bow, which sent it sweeping far out past both ends and straight back across
- * everything in between - the "Private Channel Creator" template was unreadable
- * for exactly that reason. Those now dip below both ends and come back, which
- * is what "this loops backwards" is expected to look like.
+ * Left to right it steps across at the halfway mark. A connection whose target
+ * sits to the LEFT of its source cannot do that without doubling back over
+ * itself, so it leaves to the right, passes below both ends and comes back in
+ * from the left. Bend points replace the automatic middle entirely: the line
+ * then runs source -> each bend point in turn -> target, at right angles.
  */
-function edgeControlPoints(src: Point, tgt: Point): [Point, Point] {
-  if (tgt.x >= src.x) {
-    const dx = Math.min(Math.abs(tgt.x - src.x) * 0.5, EDGE_MAX_BOW);
-    return [{ x: src.x + dx, y: src.y }, { x: tgt.x - dx, y: tgt.y }];
+function edgePoints(src: Point, tgt: Point, waypoints?: Point[]): Point[] {
+  const stubOut = { x: src.x + EDGE_LEAD, y: src.y };
+  const stubIn = { x: tgt.x - EDGE_LEAD, y: tgt.y };
+  const pts: Point[] = [src, stubOut];
+
+  if (waypoints && waypoints.length > 0) {
+    let prev = stubOut;
+    for (const w of waypoints) {
+      pts.push(...hopTo(prev, w), w);
+      prev = w;
+    }
+    pts.push(...hopInto(prev, stubIn));
+  } else if (tgt.x > src.x) {
+    // Step across halfway - but never left of where the line leaves the source
+    // or right of where it has to meet the target. Without that clamp a short
+    // hop puts its vertical leg behind its own start and draws a spike.
+    const midX = Math.max(stubOut.x, Math.min(stubIn.x, (src.x + tgt.x) / 2));
+    if (Math.abs(src.y - tgt.y) >= 0.5) {
+      pts.push({ x: midX, y: src.y }, { x: midX, y: tgt.y });
+    }
+  } else {
+    const detour = Math.max(src.y, tgt.y) + EDGE_DETOUR;
+    pts.push({ x: stubOut.x, y: detour }, { x: stubIn.x, y: detour });
   }
-  const detour = Math.max(src.y, tgt.y) + EDGE_DETOUR;
-  return [{ x: src.x + EDGE_LEAD, y: detour }, { x: tgt.x - EDGE_LEAD, y: detour }];
+
+  pts.push(stubIn, tgt);
+
+  return corners(pts);
+}
+
+function edgePath(src: Point, tgt: Point, waypoints?: Point[]): string {
+  return roundedPath(edgePoints(src, tgt, waypoints));
 }
 
 /**
- * The path for one connection. A dragged waypoint overrides the automatic
- * routing: the quadratic's control point is placed so the curve passes exactly
- * through the dragged point, which keeps the handle sitting on its own line
- * rather than floating beside it.
+ * Where the "add a bend here" handle sits on a connection that has none: the
+ * middle of its longest straight run, which is the roomiest place to grab.
  */
-function edgePath(src: Point, tgt: Point, waypoint?: Point): string {
-  if (waypoint) {
-    const cx = 2 * waypoint.x - (src.x + tgt.x) / 2;
-    const cy = 2 * waypoint.y - (src.y + tgt.y) / 2;
-    return `M ${src.x} ${src.y} Q ${cx} ${cy}, ${tgt.x} ${tgt.y}`;
+function edgeGhostPos(src: Point, tgt: Point, waypoints?: Point[]): Point {
+  const pts = edgePoints(src, tgt, waypoints);
+  let best = pts[0];
+  let bestLen = -1;
+  for (let i = 1; i < pts.length; i++) {
+    const len = dist(pts[i - 1], pts[i]);
+    if (len > bestLen) {
+      bestLen = len;
+      best = { x: (pts[i - 1].x + pts[i].x) / 2, y: (pts[i - 1].y + pts[i].y) / 2 };
+    }
   }
-  const [c1, c2] = edgeControlPoints(src, tgt);
-  return `M ${src.x} ${src.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${tgt.x} ${tgt.y}`;
-}
-
-/** Where to put this connection's drag handle. */
-function edgeHandlePos(src: Point, tgt: Point, waypoint?: Point): Point {
-  if (waypoint) return waypoint;
-  const [c1, c2] = edgeControlPoints(src, tgt);
-  return cubicMidpoint(src, c1, c2, tgt);
+  return best;
 }
 
 // Calculate handle positions (absolute coords on canvas)
@@ -215,11 +302,12 @@ interface FlowEdge {
   target: string;
   targetPort: string;
   /**
-   * Where the reader dragged this connection, in canvas coordinates. Absent
-   * means it is routed automatically. The engine only ever reads source,
-   * target and sourcePort off an edge, so carrying this along is free.
+   * Bend points this connection is dragged through, in canvas coordinates and
+   * in the order the line visits them. Absent or empty means it is routed
+   * automatically. The engine only ever reads source, target and sourcePort
+   * off an edge, so carrying these along is free.
    */
-  waypoint?: { x: number; y: number };
+  waypoints?: Point[];
 }
 
 // Textarea with an "expand" button that opens a large modal editor —
@@ -296,6 +384,92 @@ function ExpandableTextarea({
   );
 }
 
+/** Remembers that the usage dialog has been dismissed, so it greets each
+ *  person once rather than every time they open a flow. */
+const EDITOR_HELP_SEEN_KEY = 'ts6-flow-editor-help-seen';
+
+function hasSeenEditorHelp(): boolean {
+  try {
+    return localStorage.getItem(EDITOR_HELP_SEEN_KEY) === '1';
+  } catch {
+    // Private windows and blocked site data throw here; showing the dialog is
+    // the harmless outcome.
+    return false;
+  }
+}
+
+const EDITOR_GESTURES: { what: string; how: string }[] = [
+  { what: 'Add a step', how: 'Click one in the list on the left' },
+  { what: 'Move a step', how: 'Drag it' },
+  { what: 'Configure a step', how: 'Click it — the settings open on the right' },
+  { what: 'Connect two steps', how: 'Drag from an output dot onto an input dot' },
+  { what: 'Delete a connection', how: 'Click the line' },
+  { what: 'Bend a connection', how: 'Hover it, then click the ring that appears' },
+  { what: 'Add another bend', how: 'Click a bend point — the next one appears after it' },
+  { what: 'Move a bend', how: 'Drag the point' },
+  { what: 'Remove a bend', how: 'Right-click the point' },
+  { what: 'Keep your changes', how: 'Press Save — nothing is stored until you do' },
+];
+
+function EditorHelpDialog({
+  open,
+  onOpenChange,
+  showDismiss,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  showDismiss: boolean;
+}) {
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  const close = () => {
+    if (dontShowAgain) {
+      try { localStorage.setItem(EDITOR_HELP_SEEN_KEY, '1'); } catch { /* not worth failing over */ }
+    }
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Using the flow editor</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-1.5">
+          {EDITOR_GESTURES.map((g) => (
+            <div key={g.what} className="flex items-baseline gap-3 text-sm">
+              <span className="w-44 shrink-0 text-muted-foreground">{g.what}</span>
+              <span>{g.how}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Connections route themselves at right angles, passing below both ends when
+          they have to run backwards. Bend points are only for the cases where you
+          want a line somewhere specific — a flow works exactly the same without them.
+        </p>
+
+        <div className="flex items-center justify-between gap-4 pt-1">
+          {showDismiss ? (
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                id="flow-help-dismiss"
+                checked={dontShowAgain}
+                onChange={(e) => setDontShowAgain(e.target.checked)}
+              />
+              Don't show this when opening a flow
+            </label>
+          ) : <span />}
+          <Button size="sm" onClick={close}>Got it</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function BotEditor() {
   const { botId } = useParams();
   const navigate = useNavigate();
@@ -307,12 +481,20 @@ export default function BotEditor() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [botName, setBotName] = useState('');
   const [showHelp, setShowHelp] = useState(false);
+  // Greets each person once when they open a flow; the button in the
+  // toolbar brings it back afterwards.
+  const [showEditorHelp, setShowEditorHelp] = useState(() => !hasSeenEditorHelp());
+  const [helpWasRequested, setHelpWasRequested] = useState(false);
 
   // Drag state
   const [dragging, setDragging] = useState<string | null>(null);
-  const [draggingEdge, setDraggingEdge] = useState<string | null>(null);
+  const [draggingWaypoint, setDraggingWaypoint] = useState<{ edgeId: string; index: number } | null>(null);
+  const [hoverEdge, setHoverEdge] = useState<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const didDragRef = useRef(false);
+  // A drag ends with a click on the same handle; without this the release
+  // would immediately add another bend point where one was just moved.
+  const didDragWaypointRef = useRef(false);
 
   // Connection state
   const [connectFrom, setConnectFrom] = useState<{ nodeId: string; port: string } | null>(null);
@@ -325,11 +507,22 @@ export default function BotEditor() {
       try {
         const flow = typeof bot.flowData === 'string' ? JSON.parse(bot.flowData) : bot.flowData;
         const loadedNodes: FlowNode[] = flow?.nodes || [];
-        const loadedEdges: FlowEdge[] = (flow?.edges || []).map((e: any) => ({
-          ...e,
-          sourcePort: e.sourcePort || 'out',
-          targetPort: e.targetPort || 'in',
-        }));
+        const loadedEdges: FlowEdge[] = (flow?.edges || []).map((e: any) => {
+          // 3.37.0 stored a single bend point as `waypoint`; carry those over
+          // rather than silently dropping a flow someone already shaped.
+          const waypoints = Array.isArray(e.waypoints)
+            ? e.waypoints
+            : e.waypoint
+              ? [e.waypoint]
+              : undefined;
+          const { waypoint: _legacy, ...rest } = e;
+          return {
+            ...rest,
+            sourcePort: e.sourcePort || 'out',
+            targetPort: e.targetPort || 'in',
+            ...(waypoints ? { waypoints } : {}),
+          };
+        });
         setNodes(loadedNodes);
         setEdges(loadedEdges);
       } catch {
@@ -366,9 +559,27 @@ export default function BotEditor() {
     setEdges((prev) => prev.filter((e) => e.id !== id));
   };
 
-  /** Hand a connection back to the automatic routing. */
-  const resetEdgeWaypoint = (id: string) => {
-    setEdges((prev) => prev.map((e) => (e.id === id ? { ...e, waypoint: undefined } : e)));
+  /**
+   * Add a bend point. Clicking the ghost handle on an untouched connection
+   * gives it its first one; clicking an existing point adds another just after
+   * it, so a line is shaped by clicking along it rather than by learning a
+   * separate tool.
+   */
+  const addWaypoint = (edgeId: string, afterIndex: number, at: Point) => {
+    setEdges((prev) => prev.map((e) => {
+      if (e.id !== edgeId) return e;
+      const next = [...(e.waypoints ?? [])];
+      next.splice(afterIndex + 1, 0, at);
+      return { ...e, waypoints: next };
+    }));
+  };
+
+  const removeWaypoint = (edgeId: string, index: number) => {
+    setEdges((prev) => prev.map((e) => {
+      if (e.id !== edgeId) return e;
+      const next = (e.waypoints ?? []).filter((_, i) => i !== index);
+      return { ...e, waypoints: next.length ? next : undefined };
+    }));
   };
 
   // --- Canvas mouse handlers ---
@@ -390,16 +601,24 @@ export default function BotEditor() {
       ));
     }
 
-    if (draggingEdge) {
+    if (draggingWaypoint) {
+      didDragWaypointRef.current = true;
       setEdges((prev) => prev.map((ed) =>
-        ed.id === draggingEdge ? { ...ed, waypoint: { x: Math.max(0, x), y: Math.max(0, y) } } : ed
+        ed.id === draggingWaypoint.edgeId
+          ? {
+              ...ed,
+              waypoints: (ed.waypoints ?? []).map((w, i) =>
+                i === draggingWaypoint.index ? { x: Math.max(0, x), y: Math.max(0, y) } : w
+              ),
+            }
+          : ed
       ));
     }
-  }, [dragging, draggingEdge, connectFrom]);
+  }, [dragging, draggingWaypoint, connectFrom]);
 
   const handleCanvasMouseUp = useCallback((e: React.MouseEvent) => {
     setDragging(null);
-    setDraggingEdge(null);
+    setDraggingWaypoint(null);
 
     // If connecting: check if we released on a valid target
     if (connectFrom) {
@@ -574,6 +793,15 @@ export default function BotEditor() {
           <Badge variant="outline" className="text-[10px]">{edges.length} edges</Badge>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => { setHelpWasRequested(true); setShowEditorHelp(true); }}
+            title="Using the flow editor"
+          >
+            <Info className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)} title="Placeholder Reference">
             <HelpCircle className="h-4 w-4" />
           </Button>
@@ -611,8 +839,9 @@ export default function BotEditor() {
         </div>
 
         {/* Canvas */}
+        <div className="flex-1 relative min-w-0">
         <div
-          className="flex-1 relative bg-zinc-950/30 overflow-auto flow-canvas"
+          className="absolute inset-0 bg-zinc-950/30 overflow-auto flow-canvas"
           style={{
             cursor: connectFrom ? 'crosshair' : 'default',
             backgroundImage: 'radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)',
@@ -643,29 +872,36 @@ export default function BotEditor() {
               const src = getOutputHandlePos(srcNode, srcPortIdx, srcMeta.handles.outputs.length);
               const tgt = getInputHandlePos(tgtNode, tgtPortIdx, tgtMeta.handles.inputs.length);
 
-              const path = edgePath(src, tgt, edge.waypoint);
-              const handle = edgeHandlePos(src, tgt, edge.waypoint);
+              const waypoints = edge.waypoints ?? [];
+              const path = edgePath(src, tgt, waypoints);
+              const ghost = edgeGhostPos(src, tgt, waypoints);
+              const hovered = hoverEdge === edge.id;
               const isConditionTrue = edge.sourcePort === 'true';
               const isConditionFalse = edge.sourcePort === 'false';
               const isErrorEdge = edge.sourcePort === 'error';
               const edgeColor = isConditionTrue ? '#22c55e' : isConditionFalse ? '#ef4444' : isErrorEdge ? '#f97316' : 'hsl(var(--primary))';
 
               return (
-                <g key={edge.id} className="pointer-events-auto">
+                <g
+                  key={edge.id}
+                  className="pointer-events-auto"
+                  onMouseEnter={() => setHoverEdge(edge.id)}
+                  onMouseLeave={() => setHoverEdge((cur) => (cur === edge.id ? null : cur))}
+                >
                   <g className="cursor-pointer" onClick={(ev) => { ev.stopPropagation(); deleteEdge(edge.id); }}>
                     <path
                       d={path}
                       fill="none"
                       stroke={edgeColor}
                       strokeWidth={2}
-                      strokeOpacity={0.5}
+                      strokeOpacity={hovered ? 0.9 : 0.5}
                     />
                     {/* Invisible wider path for easier click */}
                     <path
                       d={path}
                       fill="none"
                       stroke="transparent"
-                      strokeWidth={12}
+                      strokeWidth={14}
                     />
                     {/* Arrow at target */}
                     <circle cx={tgt.x} cy={tgt.y} r={3}
@@ -673,26 +909,57 @@ export default function BotEditor() {
                       fillOpacity={0.8}
                     />
                   </g>
-                  {/* Drag handle: pulls the connection wherever you want it.
-                      Its own mousedown stops the click reaching the path above,
-                      which deletes the connection. Double-click hands it back
-                      to the automatic routing. */}
-                  <circle
-                    cx={handle.x}
-                    cy={handle.y}
-                    r={draggingEdge === edge.id ? 6 : 4.5}
-                    className={draggingEdge === edge.id ? 'cursor-grabbing' : 'cursor-grab'}
-                    fill={edge.waypoint ? edgeColor : 'transparent'}
-                    fillOpacity={edge.waypoint ? 0.85 : 1}
-                    stroke={edgeColor}
-                    strokeWidth={1.5}
-                    strokeOpacity={edge.waypoint ? 0.9 : 0.4}
-                    onMouseDown={(ev) => { ev.stopPropagation(); setDraggingEdge(edge.id); }}
-                    onClick={(ev) => ev.stopPropagation()}
-                    onDoubleClick={(ev) => { ev.stopPropagation(); resetEdgeWaypoint(edge.id); }}
-                  >
-                    <title>{edge.waypoint ? 'Drag to reshape — double-click to straighten' : 'Drag to reshape this connection'}</title>
-                  </circle>
+
+                  {/* Only offered while the pointer is on this connection - a
+                      handle on every one of them at once is exactly the clutter
+                      this change is meant to remove. */}
+                  {hovered && waypoints.length === 0 && (
+                    <circle
+                      cx={ghost.x}
+                      cy={ghost.y}
+                      r={5}
+                      className="cursor-pointer"
+                      fill="transparent"
+                      stroke={edgeColor}
+                      strokeWidth={1.5}
+                      strokeOpacity={0.8}
+                      onMouseDown={(ev) => ev.stopPropagation()}
+                      onClick={(ev) => { ev.stopPropagation(); addWaypoint(edge.id, -1, ghost); }}
+                    >
+                      <title>Click to bend this connection here</title>
+                    </circle>
+                  )}
+
+                  {waypoints.map((w, i) => {
+                    const active = draggingWaypoint?.edgeId === edge.id && draggingWaypoint.index === i;
+                    const after = waypoints[i + 1] ?? tgt;
+                    return (
+                      <circle
+                        key={`wp-${i}`}
+                        cx={w.x}
+                        cy={w.y}
+                        r={active ? 6.5 : 5}
+                        className={active ? 'cursor-grabbing' : 'cursor-grab'}
+                        fill={edgeColor}
+                        fillOpacity={0.9}
+                        stroke="hsl(var(--background))"
+                        strokeWidth={1.5}
+                        onMouseDown={(ev) => {
+                          ev.stopPropagation();
+                          didDragWaypointRef.current = false;
+                          setDraggingWaypoint({ edgeId: edge.id, index: i });
+                        }}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          if (didDragWaypointRef.current) return;
+                          addWaypoint(edge.id, i, { x: (w.x + after.x) / 2, y: (w.y + after.y) / 2 });
+                        }}
+                        onContextMenu={(ev) => { ev.preventDefault(); ev.stopPropagation(); removeWaypoint(edge.id, i); }}
+                      >
+                        <title>Drag to move, click to add another point, right-click to remove</title>
+                      </circle>
+                    );
+                  })}
                 </g>
               );
             })}
@@ -822,6 +1089,15 @@ export default function BotEditor() {
               Click an input port or node to connect — ESC to cancel
             </div>
           )}
+        </div>
+
+        {/* Sits on the canvas rather than in it, so it stays put while the
+            flow is scrolled. Click-through, so it never swallows a drag. */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-40 flex justify-center pb-2">
+          <span className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[10px] text-muted-foreground backdrop-blur-xs">
+            Drag from an output dot to connect · click a line to delete it · hover a line and click the ring to bend it
+          </span>
+        </div>
         </div>
 
         {/* Properties Panel */}
@@ -1860,6 +2136,11 @@ export default function BotEditor() {
       </div>
 
       <PlaceholderReference open={showHelp} onOpenChange={setShowHelp} />
+      <EditorHelpDialog
+        open={showEditorHelp}
+        onOpenChange={setShowEditorHelp}
+        showDismiss={!helpWasRequested}
+      />
     </div>
   );
 }
