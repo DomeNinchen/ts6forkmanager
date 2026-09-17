@@ -106,6 +106,9 @@ export class VoiceBot extends EventEmitter {
   private _videoPreset: string = DEFAULT_PRESET;
   private _videoFramerate: number = STREAM_PRESETS[DEFAULT_PRESET]?.framerate ?? 30;
   private _videoBitrate: string = STREAM_PRESETS[DEFAULT_PRESET]?.bitrate ?? '2500k';
+  // 100 is "leave the source alone"; the real value comes from the caller,
+  // which reads it from the stream defaults in Settings.
+  private _videoVolume: number = 100;
   private _videoStartedAt: number | null = null;
   private _videoTempFile: string | null = null;
   private _videoEndTimer: ReturnType<typeof setTimeout> | null = null;
@@ -895,6 +898,7 @@ export class VoiceBot extends EventEmitter {
       preset: this._videoPreset,
       framerate: this._videoFramerate,
       bitrate: this._videoBitrate,
+      volume: this._videoVolume,
       startedAt: this._videoStartedAt,
       viewerCount: this._viewers.size,
       viewers: Array.from(this._viewers.values()),
@@ -911,7 +915,7 @@ export class VoiceBot extends EventEmitter {
    * defaults to the source itself, which is right for a plain URL and wrong
    * only in that a search's original wording is nicer to read.
    */
-  async startVideoStream(source: string, preset?: string, framerate?: number, bitrate?: string, title?: string): Promise<void> {
+  async startVideoStream(source: string, preset?: string, framerate?: number, bitrate?: string, title?: string, volume?: number): Promise<void> {
     if (this._status !== 'connected' && this._status !== 'playing' && this._status !== 'paused') {
       throw new Error('Bot is not connected');
     }
@@ -932,6 +936,10 @@ export class VoiceBot extends EventEmitter {
 
     this._videoFramerate = effectiveFramerate;
     this._videoBitrate = effectiveBitrate;
+    // Unlike frame rate and bitrate this is not part of a preset: how loud a
+    // stream should be relative to people talking is a property of the
+    // server, not of the picture quality.
+    this._videoVolume = volume ?? 100;
 
     // Check if sidecar URL is set (Docker mode — sidecar runs as separate container)
     const sidecarUrl = process.env.SIDECAR_URL;
@@ -1026,6 +1034,7 @@ export class VoiceBot extends EventEmitter {
         effectiveFramerate,
         effectiveBitrate,
         resolved.loop,
+        this._videoVolume,
       );
     } catch (err) {
       await this.stopVideoStream().catch(() => { /* report the original failure */ });
@@ -1245,6 +1254,7 @@ export class VoiceBot extends EventEmitter {
       this._videoFramerate,
       this._videoBitrate,
       resolved.loop,
+      this._videoVolume,
     );
     console.log(`[VoiceBot ${this.config.id}] Video source changed: ${source}`);
     this.emit('videoSourceChanged', source);

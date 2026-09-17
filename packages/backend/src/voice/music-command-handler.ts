@@ -511,6 +511,7 @@ export class MusicCommandHandler {
         preset ? undefined : defaults.framerate,
         preset ? undefined : defaults.bitrate,
         query,
+        defaults.volume,
       );
       this.reply(bot, userClid, `Video stream started: ${query}`);
     } catch (err: any) {

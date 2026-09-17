@@ -95,6 +95,8 @@ export interface StreamDefaults {
   preset: string;
   framerate: number;
   bitrate: string;
+  /** Percent the source's own audio is scaled by; 100 leaves it alone. */
+  volume: number;
 }
 
 export interface StreamPreset {

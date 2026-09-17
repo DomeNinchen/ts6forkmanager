@@ -6,6 +6,7 @@ import { downloadYouTube } from '../voice/audio/youtube.js';
 import { playerWidgetToken } from './widget-public.routes.js';
 import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
 import { DESCRIPTION_PLACEHOLDERS } from '../voice/description-template.js';
+import { getStreamDefaults } from '../utils/stream-defaults.js';
 import multer from 'multer';
 
 // The real limit is the TS server's own i_client_max_avatar_filesize
@@ -701,9 +702,12 @@ musicBotRoutes.post('/:id/stream/start', async (req: Request, res: Response, nex
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const bot = manager.getBot(parseInt(req.params.id as string));
     if (!bot) throw new AppError(404, 'Music bot not found');
-    const { source, preset, framerate, bitrate } = req.body;
+    const { source, preset, framerate, bitrate, volume } = req.body;
     if (!source) throw new AppError(400, 'source is required');
-    await bot.startVideoStream(source, preset, framerate, bitrate);
+    // Volume has no control in the interface: it comes from the stream
+    // defaults unless an API caller states one outright.
+    const defaults = await getStreamDefaults(req.app.locals.prisma);
+    await bot.startVideoStream(source, preset, framerate, bitrate, undefined, volume ?? defaults.volume);
     res.json({ success: true, status: bot.videoStreamStatus });
   } catch (err) { next(err); }
 });

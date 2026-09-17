@@ -320,7 +320,7 @@ settingsRoutes.get('/stream-defaults', requireAdmin, async (req: Request, res: R
 // PUT /api/settings/stream-defaults
 settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: Response, next) => {
   try {
-    const { preset, framerate, bitrate } = req.body ?? {};
+    const { preset, framerate, bitrate, volume } = req.body ?? {};
 
     if (typeof preset !== 'string' || !(preset in STREAM_PRESETS)) {
       throw new AppError(400, `preset must be one of: ${Object.keys(STREAM_PRESETS).join(', ')}`);
@@ -335,9 +335,13 @@ settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: R
       throw new AppError(400, 'bitrate must look like 6000k or 2M');
     }
 
+    if (!Number.isInteger(volume) || volume < 0 || volume > 100) {
+      throw new AppError(400, 'volume must be a whole number between 0 and 100');
+    }
+
     const prisma = req.app.locals.prisma;
-    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim() });
-    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}`);
+    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume });
+    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%`);
     res.json({
       ...saved,
       builtIn: builtInStreamDefaults(),

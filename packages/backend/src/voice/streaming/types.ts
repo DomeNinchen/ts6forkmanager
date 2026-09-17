@@ -48,6 +48,8 @@ export interface VideoStreamStatus {
   preset: string;
   framerate: number;
   bitrate: string;
+  /** Percent the source's audio is scaled by on the way out. */
+  volume: number;
   startedAt: number | null;
   viewerCount: number;
   viewers: VideoViewerInfo[];

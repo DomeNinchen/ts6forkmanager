@@ -36,7 +36,7 @@ const FALLBACK_PRESETS: StreamPreset[] = [
   { name: '1080p', label: '1080p', width: 1920, height: 1080, framerate: 60, bitrate: '6000k' },
 ];
 
-const FALLBACK_DEFAULTS: StreamDefaults = { preset: '1080p', framerate: 60, bitrate: '6000k' };
+const FALLBACK_DEFAULTS: StreamDefaults = { preset: '1080p', framerate: 60, bitrate: '6000k', volume: 10 };
 
 const FPS_OPTIONS = [24, 30, 60];
 
@@ -66,12 +66,12 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
   const presets = configured?.presets ?? FALLBACK_PRESETS;
   const [quality, setQuality] = useState<StreamDefaults | null>(null);
   const active: StreamDefaults = quality ?? (configured
-    ? { preset: configured.preset, framerate: configured.framerate, bitrate: configured.bitrate }
+    ? { preset: configured.preset, framerate: configured.framerate, bitrate: configured.bitrate, volume: configured.volume }
     : FALLBACK_DEFAULTS);
 
   // A preset carries its frame rate and bitrate with it; both stay editable.
   const pickPreset = (p: StreamPreset) =>
-    setQuality({ preset: p.name, framerate: p.framerate, bitrate: p.bitrate });
+    setQuality({ ...active, preset: p.name, framerate: p.framerate, bitrate: p.bitrate });
 
   const { data: videoLibrary } = useSongs(serverConfigId, 'video');
 
@@ -361,6 +361,9 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                 <span>Preset: <strong>{streamStatus.preset}</strong></span>
                 <span>FPS: <strong>{streamStatus.framerate}</strong></span>
                 <span>Bitrate: <strong>{streamStatus.bitrate}</strong></span>
+                <span title="Set under Settings -> Streaming; viewers can still turn their own player up">
+                  Volume: <strong>{streamStatus.volume}%</strong>
+                </span>
                 {streamStatus.source && (
                   <span className="truncate max-w-xs">
                     Source: <strong>{streamStatus.source}</strong>

@@ -1295,7 +1295,7 @@ function StreamingTab() {
 
   const [draft, setDraft] = useState<StreamDefaults | null>(null);
   const active: StreamDefaults | null =
-    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate } : null);
+    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume } : null);
 
   const save = useMutation({
     mutationFn: (cfg: StreamDefaults) => settingsApi.setStreamDefaults(cfg),
@@ -1313,13 +1313,14 @@ function StreamingTab() {
   // three belong together - a 1080p picture at a 480p bitrate is nobody's
   // intention. Both fields stay editable afterwards.
   const pickPreset = (p: StreamPreset) =>
-    setDraft({ preset: p.name, framerate: p.framerate, bitrate: p.bitrate });
+    setDraft({ ...active, preset: p.name, framerate: p.framerate, bitrate: p.bitrate });
 
   const selected = data.presets.find((p) => p.name === active.preset);
   const matchesBuiltIn =
     active.preset === data.builtIn.preset &&
     active.framerate === data.builtIn.framerate &&
-    active.bitrate === data.builtIn.bitrate;
+    active.bitrate === data.builtIn.bitrate &&
+    active.volume === data.builtIn.volume;
 
   return (
     <div className="max-w-lg space-y-4">
@@ -1382,6 +1383,25 @@ function StreamingTab() {
                 As ffmpeg writes it, e.g. <code className="text-[11px]">6000k</code>.
               </p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs" htmlFor="stream-volume">Volume</Label>
+            <Input
+              id="stream-volume"
+              type="number"
+              min={0}
+              max={100}
+              className="max-w-[8rem]"
+              value={active.volume}
+              onChange={(e) => setDraft({ ...active, volume: Number(e.target.value) })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Percent of the video's own loudness, 0-100. Videos are mastered far
+              louder than people speak, so a stream at its own level arrives as a
+              shout — hence the low default. Viewers can still turn their own
+              player up. Takes effect on the next stream, not the running one.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
