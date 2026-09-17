@@ -200,12 +200,14 @@ func maxDuration(a, b time.Duration) time.Duration {
 // sent. Deliberately uint32/uint16 arithmetic: the wraparound is exactly the
 // behaviour RTP wants.
 type rtpRewriter struct {
-	seq        uint16
-	tsOffset   uint32
-	lastOutTS  uint32
-	advance    uint32 // gap inserted between two sources, in clock units
-	started    bool
-	newSegment bool
+	seq       uint16
+	tsOffset  uint32
+	lastOutTS uint32
+	lastInTS  uint32
+	advance   uint32 // gap inserted between two sources, in clock units
+	maxJump   uint32 // an incoming step larger than this means a new source
+	started   bool
+	armed     bool // a switch was signalled; re-anchor at the next real break
 }
 
 func (r *rtpRewriter) apply(pkt *rtp.Packet) {
@@ -214,27 +216,42 @@ func (r *rtpRewriter) apply(pkt *rtp.Packet) {
 		r.started = true
 		r.tsOffset = 0
 		r.seq = pkt.SequenceNumber
-	case r.newSegment:
+	case r.armed && r.isNewSource(pkt.Timestamp):
 		// Resume one step after the last timestamp the viewer saw, so the
 		// timeline moves forward across the cut instead of jumping.
 		r.tsOffset = r.lastOutTS + r.advance - pkt.Timestamp
+		r.armed = false
 	}
-	r.newSegment = false
 
+	r.lastInTS = pkt.Timestamp
 	r.lastOutTS = pkt.Timestamp + r.tsOffset
 	pkt.Timestamp = r.lastOutTS
 	pkt.SequenceNumber = r.seq
 	r.seq++
 }
 
+// isNewSource reports whether this packet breaks the incoming timeline.
+//
+// Killing ffmpeg does not stop its last packets arriving: they sit in the
+// socket buffer and are read after the queues have been drained. Anchoring the
+// new offset to whichever packet happens to come first would therefore anchor
+// it to one of those stragglers, and the genuinely new source would then land
+// at the wrong offset - which is exactly the black screen this all started
+// with. Stragglers continue the old timeline in small steps, so waiting for a
+// real break tells the two apart. Unsigned arithmetic on purpose: a backwards
+// jump shows up as a very large forward delta.
+func (r *rtpRewriter) isNewSource(ts uint32) bool {
+	return ts-r.lastInTS > r.maxJump
+}
+
 func (r *rtpRewriter) markNewSegment() {
 	if r.started {
-		r.newSegment = true
+		r.armed = true
 	}
 }
 
-// markNewRTPSegment tells both rewriters that the next packets come from a
-// different source, so they recompute their timestamp offset.
+// markNewRTPSegment tells both rewriters that a source switch just happened,
+// so they re-anchor their timestamp offset at the next break in the timeline.
 func (s *Sidecar) markNewRTPSegment() {
 	s.rewriteMu.Lock()
 	defer s.rewriteMu.Unlock()
@@ -443,11 +460,13 @@ func NewSidecar() *Sidecar {
 	return &Sidecar{
 		peers:    make(map[string]*Peer),
 		creating: make(map[string]*createInFlight),
-		// One frame at 30fps on the 90kHz video clock, one 20ms Opus frame on
-		// the 48kHz audio clock - just enough to keep the timeline moving
-		// forward across a source switch.
-		videoRewrite:  rtpRewriter{advance: 3000},
-		audioRewrite:  rtpRewriter{advance: 960},
+		// advance: one frame at 30fps on the 90kHz video clock, one 20ms Opus
+		// frame on the 48kHz audio clock - just enough to keep the timeline
+		// moving forward across a source switch.
+		// maxJump: ten seconds on either clock. One source never steps that
+		// far at once, a freshly started ffmpeg almost always does.
+		videoRewrite:  rtpRewriter{advance: 3000, maxJump: 900_000},
+		audioRewrite:  rtpRewriter{advance: 960, maxJump: 480_000},
 		syncBuffer:    time.Duration(envIntOrDefault("SYNC_PLAYOUT_BUFFER_MS", 50)) * time.Millisecond,
 		videoBias:     time.Duration(envIntOrDefault("SYNC_VIDEO_BIAS_MS", 0)) * time.Millisecond,
 		maxTrackDelay: time.Duration(envIntOrDefault("SYNC_MAX_DELAY_MS", 500)) * time.Millisecond,
@@ -1000,8 +1019,9 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 	s.resetSyncTiming()
 	s.drainRTPQueues()
 	s.resetPeerStreamState()
-	// Queues are drained, so the next packet through really is the new
-	// source's first - that's when the rewriters recompute their offset.
+	// Arm the rewriters. They don't recompute their offset on the next packet
+	// through - the old ffmpeg's last packets can still be sitting in the
+	// socket buffer - but on the next one that actually breaks the timeline.
 	s.markNewRTPSegment()
 
 	s.source = source
