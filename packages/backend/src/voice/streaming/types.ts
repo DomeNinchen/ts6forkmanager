@@ -18,6 +18,23 @@ export const STREAM_PRESETS: Record<string, VideoStreamPreset> = {
 
 export const DEFAULT_PRESET = '1080p';
 
+/**
+ * One entry in a bot's video stream queue.
+ *
+ * The source is kept as a URL and only downloaded when its turn comes, so
+ * queueing ten videos doesn't fetch ten files up front - and so a link that
+ * has gone stale fails at the point where it can simply be skipped.
+ */
+export interface VideoQueueItem {
+  id: string;
+  /** What ffmpeg gets pointed at: a URL, or a local file. */
+  source: string;
+  /** What people see - the URL or the search terms as they were typed. */
+  title: string;
+  /** Who asked for it; absent when it was queued from the web interface. */
+  requestedBy?: string;
+}
+
 export interface VideoViewerInfo {
   clid: number;
   joinedAt: number;
@@ -34,5 +51,7 @@ export interface VideoStreamStatus {
   startedAt: number | null;
   viewerCount: number;
   viewers: VideoViewerInfo[];
+  nowPlaying: VideoQueueItem | null;
+  queue: VideoQueueItem[];
   sidecar: { videoPort: number; audioPort: number } | null;
 }

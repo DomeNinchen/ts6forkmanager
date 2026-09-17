@@ -12,7 +12,11 @@ const CMD_PREFIX = '!';
 const MUSIC_COMMANDS = new Set([
   'radio', 'play', 'stop', 'pause', 'skip', 'next', 'prev',
   'vol', 'volume', 'np', 'nowplaying', 'queue', 'add',
-  'stream', 'stopstream', 'viewers',
+  'stream', 'stopstream', 'viewers', 'streamqueue', 'streamskip',
+  // 'streamnow' is implemented below but deliberately left out: !stream's new
+  // queueing behaviour should settle in practice before a second way to
+  // switch the source lands in chat. Adding it to this set enables it; the
+  // web interface already offers the same thing.
 ]);
 
 // Spotify doesn't allow playback through its API for third-party apps like
@@ -152,7 +156,16 @@ export class MusicCommandHandler {
           await this.handleQueue(bot, userClid, args);
           break;
         case 'stream':
-          await this.handleStream(bot, userClid, args);
+          await this.handleStream(bot, userClid, args, data.invokername);
+          break;
+        case 'streamnow':
+          await this.handleStreamNow(bot, userClid, args);
+          break;
+        case 'streamqueue':
+          this.handleStreamQueue(bot, userClid);
+          break;
+        case 'streamskip':
+          await this.handleStreamSkip(bot, userClid);
           break;
         case 'stopstream':
           await this.handleStopStream(bot, userClid);
@@ -452,10 +465,16 @@ export class MusicCommandHandler {
 
   // ─── Video Streaming Commands ─────────────────────────────
 
-  private async handleStream(bot: VoiceBot, userClid: number, args: string): Promise<void> {
+  private async handleStream(bot: VoiceBot, userClid: number, args: string, requestedBy?: string): Promise<void> {
     if (!args) {
       const presets = Object.keys(STREAM_PRESETS).join(', ');
-      this.reply(bot, userClid, `Usage: !stream <url or search terms> [preset]  — Presets: ${presets}`);
+      this.reply(
+        bot,
+        userClid,
+        `Usage: !stream <url or search terms> [preset]  — Presets: ${presets}. `
+        + 'Starts a stream, or queues behind one that is already running. '
+        + 'See !streamqueue and !streamskip.',
+      );
       return;
     }
 
@@ -470,14 +489,13 @@ export class MusicCommandHandler {
     const query = hasPreset ? words.slice(0, -1).join(' ') : args;
     const source = await toYtDlpSource(query);
 
+    // Mirrors !play: if something is already running, !stream lines the new
+    // video up behind it instead of cutting the current one off for everyone
+    // watching. Switching immediately is the web interface's job (and
+    // !streamnow's, once that is enabled).
     if (bot.videoStreaming) {
-      // Change source if already streaming
-      try {
-        await bot.setVideoSource(source);
-        this.reply(bot, userClid, `Stream source changed to: ${query}`);
-      } catch (err: any) {
-        this.reply(bot, userClid, `Error: ${err.message}`);
-      }
+      const queued = bot.enqueueVideo(source, query, requestedBy);
+      this.reply(bot, userClid, `Added to the stream queue (#${queued.position}): ${query}`);
       return;
     }
 
@@ -492,11 +510,64 @@ export class MusicCommandHandler {
         preset ?? defaults.preset,
         preset ? undefined : defaults.framerate,
         preset ? undefined : defaults.bitrate,
+        query,
       );
       this.reply(bot, userClid, `Video stream started: ${query}`);
     } catch (err: any) {
       this.reply(bot, userClid, `Failed to start stream: ${err.message}`);
     }
+  }
+
+  /**
+   * Switch the running stream over right now, skipping the queue.
+   *
+   * Reachable only once 'streamnow' is added to MUSIC_COMMANDS above - see the
+   * note there. The web interface exposes the same action already.
+   */
+  private async handleStreamNow(bot: VoiceBot, userClid: number, args: string): Promise<void> {
+    if (!args) {
+      this.reply(bot, userClid, 'Usage: !streamnow <url or search terms>  — switches the running stream immediately');
+      return;
+    }
+    if (!bot.videoStreaming) {
+      this.reply(bot, userClid, 'No active video stream. Use !stream to start one.');
+      return;
+    }
+    const source = await toYtDlpSource(args);
+    await bot.setVideoSource(source);
+    this.reply(bot, userClid, `Stream source changed to: ${args}`);
+  }
+
+  private handleStreamQueue(bot: VoiceBot, userClid: number): void {
+    if (!bot.videoStreaming) {
+      this.reply(bot, userClid, 'No active video stream.');
+      return;
+    }
+    const nowPlaying = bot.videoNowPlaying;
+    const queue = bot.videoQueue;
+    const lines = [`Now: ${nowPlaying?.title ?? 'unknown'}`];
+    if (queue.length === 0) {
+      lines.push('  Nothing queued behind it.');
+    } else {
+      queue.forEach((item, i) => {
+        const who = item.requestedBy ? ` (${item.requestedBy})` : '';
+        lines.push(`  ${i + 2}. ${item.title}${who}`);
+      });
+    }
+    this.reply(bot, userClid, lines.join('\n'));
+  }
+
+  private async handleStreamSkip(bot: VoiceBot, userClid: number): Promise<void> {
+    if (!bot.videoStreaming) {
+      this.reply(bot, userClid, 'No active video stream.');
+      return;
+    }
+    const next = await bot.skipVideo();
+    this.reply(
+      bot,
+      userClid,
+      next ? `Skipped. Now: ${next.title}` : 'Skipped. Nothing was queued, so the stream stopped.',
+    );
   }
 
   private async handleStopStream(bot: VoiceBot, userClid: number): Promise<void> {

@@ -732,6 +732,55 @@ musicBotRoutes.post('/:id/stream/source', async (req: Request, res: Response, ne
   } catch (err) { next(err); }
 });
 
+// GET /:id/stream/queue — What is lined up behind the current video
+musicBotRoutes.get('/:id/stream/queue', async (req: Request, res: Response, next) => {
+  try {
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const bot = manager.getBot(parseInt(req.params.id as string));
+    if (!bot) throw new AppError(404, 'Music bot not found');
+    res.json({ nowPlaying: bot.videoNowPlaying, queue: bot.videoQueue });
+  } catch (err) { next(err); }
+});
+
+// POST /:id/stream/queue — Line a video up behind the current one
+musicBotRoutes.post('/:id/stream/queue', async (req: Request, res: Response, next) => {
+  try {
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const bot = manager.getBot(parseInt(req.params.id as string));
+    if (!bot) throw new AppError(404, 'Music bot not found');
+    if (!bot.videoStreaming) throw new AppError(409, 'No active video stream to queue behind');
+    const { source, title } = req.body;
+    if (!source) throw new AppError(400, 'source is required');
+    const queued = bot.enqueueVideo(source, title || source, req.body.requestedBy);
+    res.json({ success: true, item: queued, queue: bot.videoQueue });
+  } catch (err) { next(err); }
+});
+
+// DELETE /:id/stream/queue/:itemId — Drop one entry from the queue
+musicBotRoutes.delete('/:id/stream/queue/:itemId', async (req: Request, res: Response, next) => {
+  try {
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const bot = manager.getBot(parseInt(req.params.id as string));
+    if (!bot) throw new AppError(404, 'Music bot not found');
+    if (!bot.removeFromVideoQueue(req.params.itemId as string)) {
+      throw new AppError(404, 'Queue entry not found');
+    }
+    res.json({ success: true, queue: bot.videoQueue });
+  } catch (err) { next(err); }
+});
+
+// POST /:id/stream/skip — Cut the current video short and move on
+musicBotRoutes.post('/:id/stream/skip', async (req: Request, res: Response, next) => {
+  try {
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const bot = manager.getBot(parseInt(req.params.id as string));
+    if (!bot) throw new AppError(404, 'Music bot not found');
+    if (!bot.videoStreaming) throw new AppError(409, 'No active video stream');
+    const next_ = await bot.skipVideo();
+    res.json({ success: true, nowPlaying: next_, queue: bot.videoQueue });
+  } catch (err) { next(err); }
+});
+
 // GET /:id/stream/status — Get video stream status
 musicBotRoutes.get('/:id/stream/status', async (req: Request, res: Response, next) => {
   try {

@@ -305,6 +305,35 @@ export function useSetStreamSource() {
   });
 }
 
+export function useQueueVideo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ botId, source, title }: { botId: number; source: string; title?: string }) =>
+      musicBotsApi.queueStreamVideo(botId, source, title),
+    onSuccess: (_, { botId }) => qc.invalidateQueries({ queryKey: ['video-stream-status', botId] }),
+  });
+}
+
+export function useDequeueVideo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ botId, itemId }: { botId: number; itemId: string }) =>
+      musicBotsApi.dequeueStreamVideo(botId, itemId),
+    onSuccess: (_, { botId }) => qc.invalidateQueries({ queryKey: ['video-stream-status', botId] }),
+  });
+}
+
+export function useSkipVideo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (botId: number) => musicBotsApi.skipStreamVideo(botId),
+    onSuccess: (_, botId) => {
+      qc.invalidateQueries({ queryKey: ['video-stream-status', botId] });
+      qc.invalidateQueries({ queryKey: ['music-bot-state', botId] });
+    },
+  });
+}
+
 export function useKickVideoViewer() {
   const qc = useQueryClient();
   return useMutation({

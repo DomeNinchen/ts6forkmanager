@@ -103,7 +103,7 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Music bots** — multiple bots per server with independent queues, radio streaming, YouTube via yt-dlp, a media library with playlists, and in-channel text commands. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots)
 
-**Video streaming** — WebRTC streaming from YouTube, Twitch, direct URLs or your library into a TeamSpeak channel, with quality presets, an in-browser preview and a live viewer list.
+**Video streaming** — WebRTC streaming from YouTube, Twitch, direct URLs or your library into a TeamSpeak channel, with a queue, configurable quality defaults, an in-browser preview and a live viewer list.
 
 **Bot flows** — a visual editor for automation. Triggers from TeamSpeak events, cron schedules, webhooks and chat commands; actions covering kick/ban/move/message, channel management, HTTP requests and WebQuery commands; plus conditions, variables, loops and a placeholder system. Ships with ready-made templates. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Bot-Flows)
 

@@ -7,7 +7,7 @@ import { fetchIcyMetadata } from './audio/icy-metadata.js';
 import { StreamSignaling, type ActiveStream, type SignalingMessage } from './streaming/stream-signaling.js';
 import { SidecarClient } from './streaming/sidecar-client.js';
 import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.js';
-import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus } from './streaming/types.js';
+import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus, type VideoQueueItem } from './streaming/types.js';
 import { downloadVideoForStream, safeUnlinkStreamTemp } from './streaming/video-download.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import { WebQueryClient } from '../ts-client/webquery-client.js';
@@ -101,6 +101,8 @@ export class VoiceBot extends EventEmitter {
   private _videoStreaming: boolean = false;
   private _activeStreamId: string | null = null;
   private _videoSource: string | null = null;
+  private _videoQueue: VideoQueueItem[] = [];
+  private _videoNowPlaying: VideoQueueItem | null = null;
   private _videoPreset: string = DEFAULT_PRESET;
   private _videoFramerate: number = STREAM_PRESETS[DEFAULT_PRESET]?.framerate ?? 30;
   private _videoBitrate: string = STREAM_PRESETS[DEFAULT_PRESET]?.bitrate ?? '2500k';
@@ -896,12 +898,20 @@ export class VoiceBot extends EventEmitter {
       startedAt: this._videoStartedAt,
       viewerCount: this._viewers.size,
       viewers: Array.from(this._viewers.values()),
+      nowPlaying: this._videoNowPlaying,
+      queue: [...this._videoQueue],
       sidecar: null,
     };
   }
 
-  /** Start video streaming to TS6 via WebRTC */
-  async startVideoStream(source: string, preset?: string, framerate?: number, bitrate?: string): Promise<void> {
+  /**
+   * Start video streaming to TS6 via WebRTC.
+   *
+   * `title` is only what people are shown for it in the queue listing; it
+   * defaults to the source itself, which is right for a plain URL and wrong
+   * only in that a search's original wording is nicer to read.
+   */
+  async startVideoStream(source: string, preset?: string, framerate?: number, bitrate?: string, title?: string): Promise<void> {
     if (this._status !== 'connected' && this._status !== 'playing' && this._status !== 'paused') {
       throw new Error('Bot is not connected');
     }
@@ -1001,17 +1011,33 @@ export class VoiceBot extends EventEmitter {
     // Pre-download YouTube/streaming URLs via yt-dlp, then start ffmpeg on the
     // local file (see streaming/video-download.ts for why: real HD quality +
     // no live googlevideo CDN flakiness during playback).
-    const resolved = await this.resolveStreamSource(source, presetConfig.height);
-    await this.sidecarHttp.setSource(
-      resolved.path,
-      presetConfig.width,
-      presetConfig.height,
-      effectiveFramerate,
-      effectiveBitrate,
-      resolved.loop,
-    );
+    //
+    // The TS6 stream and the sidecar are already running by this point, so a
+    // source that turns out to be unplayable has to be cleaned up rather than
+    // left behind: otherwise the bot keeps reporting an active stream with
+    // nothing in it, and every later attempt is refused with "Video stream
+    // already active" until someone thinks to send !stopstream.
+    try {
+      const resolved = await this.resolveStreamSource(source, presetConfig.height);
+      await this.sidecarHttp.setSource(
+        resolved.path,
+        presetConfig.width,
+        presetConfig.height,
+        effectiveFramerate,
+        effectiveBitrate,
+        resolved.loop,
+      );
+    } catch (err) {
+      await this.stopVideoStream().catch(() => { /* report the original failure */ });
+      throw err;
+    }
 
     console.log(`[VoiceBot ${this.config.id}] Video stream started: ${stream.id}, source: ${source}`);
+    this._videoNowPlaying = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      source,
+      title: title ?? source,
+    };
     this.emit('videoStreamStarted', { streamId: stream.id, source, preset: this._videoPreset });
     this.emit('statusChange', this._status);
   }
@@ -1033,16 +1059,96 @@ export class VoiceBot extends EventEmitter {
    * A downloaded clip isn't looped (see resolveStreamSource), so once ffmpeg
    * plays through it there's nothing left to show -- but the sidecar has no
    * way to tell the backend it reached the end. Since we already know the
-   * file's real duration from ffprobe, just stop the stream ourselves once
-   * that much time (plus a couple seconds of slack) has passed.
+   * file's real duration from ffprobe, act ourselves once that much time
+   * (plus a couple seconds of slack) has passed: move to whatever is queued
+   * behind it, or stop the stream when nothing is.
    */
   private scheduleVideoEndStop(durationSec: number): void {
     this.clearVideoEndTimer();
     this._videoEndTimer = setTimeout(() => {
       this._videoEndTimer = null;
-      console.log(`[VoiceBot ${this.config.id}] Video ended, auto-stopping`);
-      this.stopVideoStream().catch((err) => this.emit('error', err));
+      this.advanceVideoQueue().catch((err) => this.emit('error', err));
     }, (durationSec + 2) * 1000);
+  }
+
+  get videoQueue(): VideoQueueItem[] {
+    return [...this._videoQueue];
+  }
+
+  get videoNowPlaying(): VideoQueueItem | null {
+    return this._videoNowPlaying;
+  }
+
+  /**
+   * Append to the stream queue. `position` is what to tell the requester: 1 is
+   * what is playing right now, so the first queued entry is 2.
+   */
+  enqueueVideo(source: string, title: string, requestedBy?: string): VideoQueueItem & { position: number } {
+    const item: VideoQueueItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      source,
+      title,
+      requestedBy,
+    };
+    this._videoQueue.push(item);
+    console.log(`[VoiceBot ${this.config.id}] Queued video: ${title}`);
+    this.emit('videoQueueChanged', this.videoQueue);
+    return { ...item, position: this._videoQueue.length + 1 };
+  }
+
+  removeFromVideoQueue(id: string): boolean {
+    const idx = this._videoQueue.findIndex((item) => item.id === id);
+    if (idx === -1) return false;
+    this._videoQueue.splice(idx, 1);
+    this.emit('videoQueueChanged', this.videoQueue);
+    return true;
+  }
+
+  clearVideoQueue(): number {
+    const removed = this._videoQueue.length;
+    if (removed === 0) return 0;
+    this._videoQueue = [];
+    this.emit('videoQueueChanged', this.videoQueue);
+    return removed;
+  }
+
+  /**
+   * Cut the current video short and move on. Returns what took its place, or
+   * null when the queue was empty and the stream was therefore stopped.
+   */
+  async skipVideo(): Promise<VideoQueueItem | null> {
+    if (!this._videoStreaming) throw new Error('No active video stream');
+    this.clearVideoEndTimer();
+    return this.advanceVideoQueue();
+  }
+
+  /**
+   * Move to the next queued video, or stop the stream when there is none.
+   *
+   * A queued link can have gone stale between being added and its turn coming
+   * up - deleted, region-locked, too long - and one such entry must not strand
+   * everything behind it, so a failure moves on to the next rather than
+   * ending the stream.
+   */
+  private async advanceVideoQueue(): Promise<VideoQueueItem | null> {
+    while (this._videoQueue.length > 0) {
+      const next = this._videoQueue.shift()!;
+      this.emit('videoQueueChanged', this.videoQueue);
+      try {
+        await this.setVideoSource(next.source);
+        this._videoNowPlaying = next;
+        console.log(`[VoiceBot ${this.config.id}] Advancing to queued video: ${next.title}`);
+        this.emit('videoQueueAdvanced', next);
+        return next;
+      } catch (err: any) {
+        console.error(`[VoiceBot ${this.config.id}] Skipping unplayable queue entry "${next.title}": ${err.message}`);
+        this.emit('videoQueueEntryFailed', { item: next, error: err.message });
+      }
+    }
+
+    console.log(`[VoiceBot ${this.config.id}] Nothing left in the stream queue, stopping`);
+    await this.stopVideoStream();
+    return null;
   }
 
   /**
@@ -1111,6 +1217,10 @@ export class VoiceBot extends EventEmitter {
     this._videoSource = null;
     this._videoStreaming = false;
     this._videoStartedAt = null;
+    // Stopping is an explicit "that's enough" - anything still queued was
+    // meant for this stream, not for whatever someone starts next.
+    this._videoQueue = [];
+    this._videoNowPlaying = null;
     this.signaling = null;
     this.cleanupVideoTempFile();
 

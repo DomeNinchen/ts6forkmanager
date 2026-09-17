@@ -14,6 +14,9 @@ import {
   useStopVideoStream,
   useSetStreamSource,
   useKickVideoViewer,
+  useQueueVideo,
+  useDequeueVideo,
+  useSkipVideo,
 } from '@/hooks/use-music-bots';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { settingsApi, type StreamPreset, type StreamDefaults } from '@/api/settings.api';
+import type { VideoQueueItem } from '@/api/music.api';
 import type { SongInfo } from '@ts6/common';
 
 // Mirrors the server's own preset table, used until the real one arrives (and
@@ -76,8 +80,13 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
   const stopStream = useStopVideoStream();
   const setSource = useSetStreamSource();
   const kickViewer = useKickVideoViewer();
+  const queueVideo = useQueueVideo();
+  const dequeueVideo = useDequeueVideo();
+  const skipVideo = useSkipVideo();
 
   const isStreaming = streamStatus?.streaming ?? false;
+  const queue: VideoQueueItem[] = streamStatus?.queue ?? [];
+  const nowPlaying: VideoQueueItem | null = streamStatus?.nowPlaying ?? null;
   const isBotConnected = botStatus === 'connected' || botStatus === 'playing' || botStatus === 'paused';
 
   const handleStart = () => {
@@ -95,9 +104,20 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
     stopStream.mutate(botId);
   };
 
+  // Two deliberately separate actions: cutting the current video off for
+  // everyone watching is not the same decision as lining one up behind it.
+  // In chat, !stream does the second; here you choose.
   const handleChangeSource = () => {
     if (!sourceUrl.trim()) return;
-    setSource.mutate({ botId, source: sourceUrl.trim() });
+    setSource.mutate({ botId, source: sourceUrl.trim() }, { onSuccess: () => setSourceUrl('') });
+  };
+
+  const handleQueue = () => {
+    if (!sourceUrl.trim()) return;
+    queueVideo.mutate(
+      { botId, source: sourceUrl.trim(), title: sourceUrl.trim() },
+      { onSuccess: () => setSourceUrl('') },
+    );
   };
 
   const formatDuration = (ms: number) => {
@@ -144,14 +164,26 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                     disabled={startStream.isPending}
                   />
                   {isStreaming ? (
-                    <Button
-                      onClick={handleChangeSource}
-                      disabled={!sourceUrl.trim() || setSource.isPending}
-                      variant="outline"
-                      className="shrink-0"
-                    >
-                      Switch
-                    </Button>
+                    <>
+                      <Button
+                        onClick={handleQueue}
+                        disabled={!sourceUrl.trim() || queueVideo.isPending}
+                        variant="outline"
+                        className="shrink-0"
+                        title="Play it after the current video"
+                      >
+                        Queue
+                      </Button>
+                      <Button
+                        onClick={handleChangeSource}
+                        disabled={!sourceUrl.trim() || setSource.isPending}
+                        variant="outline"
+                        className="shrink-0"
+                        title="Switch the running stream over right now"
+                      >
+                        Switch now
+                      </Button>
+                    </>
                   ) : null}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -256,6 +288,65 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
           )}
         </CardContent>
       </Card>
+
+      {/* Queue */}
+      {isStreaming && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Up Next</CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => skipVideo.mutate(botId)}
+                disabled={skipVideo.isPending}
+                title={queue.length > 0 ? 'Play the next video now' : 'Nothing queued - this stops the stream'}
+              >
+                Skip
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-baseline gap-2">
+              <Badge variant="secondary" className="shrink-0">Now</Badge>
+              <span className="text-sm truncate" title={nowPlaying?.title}>
+                {nowPlaying?.title ?? streamStatus?.source ?? 'unknown'}
+              </span>
+            </div>
+
+            {queue.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nothing queued. Paste a URL above and choose <strong>Queue</strong> to line one up —
+                <code className="mx-1 text-[11px]">!stream &lt;url&gt;</code> in chat does the same
+                while a stream is running.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {queue.map((item, i) => (
+                  <li key={item.id} className="flex items-center gap-2 text-sm">
+                    <span className="w-5 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                      {i + 2}.
+                    </span>
+                    <span className="flex-1 truncate" title={item.title}>{item.title}</span>
+                    {item.requestedBy && (
+                      <span className="shrink-0 text-xs text-muted-foreground">{item.requestedBy}</span>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="shrink-0 h-7 px-2 text-xs"
+                      onClick={() => dequeueVideo.mutate({ botId, itemId: item.id })}
+                      disabled={dequeueVideo.isPending}
+                    >
+                      Remove
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Live Preview */}
       {isBotConnected && (
