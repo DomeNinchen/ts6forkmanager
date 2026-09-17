@@ -4,6 +4,7 @@ import type { VoiceBot } from './voice-bot.js';
 import type { QueueItem } from './playlist/queue.js';
 import { downloadYouTube } from './audio/youtube.js';
 import { STREAM_PRESETS } from './streaming/types.js';
+import { getStreamDefaults } from '../utils/stream-defaults.js';
 
 const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
 const CMD_PREFIX = '!';
@@ -453,7 +454,8 @@ export class MusicCommandHandler {
 
   private async handleStream(bot: VoiceBot, userClid: number, args: string): Promise<void> {
     if (!args) {
-      this.reply(bot, userClid, 'Usage: !stream <url or search terms> [preset]  — Presets: 480p, 720p, 1080p');
+      const presets = Object.keys(STREAM_PRESETS).join(', ');
+      this.reply(bot, userClid, `Usage: !stream <url or search terms> [preset]  — Presets: ${presets}`);
       return;
     }
 
@@ -481,7 +483,16 @@ export class MusicCommandHandler {
 
     this.reply(bot, userClid, 'Starting video stream...');
     try {
-      await bot.startVideoStream(source, preset);
+      // Naming a preset picks its resolution AND its frame rate and bitrate;
+      // leaving it off uses whatever the admin configured under
+      // Settings -> Streaming, which is the case this is tuned for.
+      const defaults = await getStreamDefaults(this.prisma);
+      await bot.startVideoStream(
+        source,
+        preset ?? defaults.preset,
+        preset ? undefined : defaults.framerate,
+        preset ? undefined : defaults.bitrate,
+      );
       this.reply(bot, userClid, `Video stream started: ${query}`);
     } catch (err: any) {
       this.reply(bot, userClid, `Failed to start stream: ${err.message}`);

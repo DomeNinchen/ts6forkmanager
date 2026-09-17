@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { VideoPlayer } from './VideoPlayer';
 import { useSongs } from '@/hooks/use-music-library';
 import {
@@ -20,19 +21,20 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { settingsApi, type StreamPreset, type StreamDefaults } from '@/api/settings.api';
 import type { SongInfo } from '@ts6/common';
 
-const PRESETS = [
-  { value: '480p', label: '480p (854x480, 1 Mbps)' },
-  { value: '720p', label: '720p (1280x720, 2.5 Mbps)' },
-  { value: '1080p', label: '1080p (1920x1080, 4.5 Mbps)' },
+// Mirrors the server's own preset table, used until the real one arrives (and
+// for anyone who can't read the settings endpoint, which is admin-only).
+const FALLBACK_PRESETS: StreamPreset[] = [
+  { name: '480p', label: '480p', width: 854, height: 480, framerate: 30, bitrate: '1500k' },
+  { name: '720p', label: '720p', width: 1280, height: 720, framerate: 60, bitrate: '4000k' },
+  { name: '1080p', label: '1080p', width: 1920, height: 1080, framerate: 60, bitrate: '6000k' },
 ];
 
-const FPS_OPTIONS = [
-  { value: '24', label: '24 FPS' },
-  { value: '30', label: '30 FPS' },
-  { value: '60', label: '60 FPS' },
-];
+const FALLBACK_DEFAULTS: StreamDefaults = { preset: '1080p', framerate: 60, bitrate: '6000k' };
+
+const FPS_OPTIONS = [24, 30, 60];
 
 interface VideoStreamTabProps {
   botId: number;
@@ -47,9 +49,25 @@ function fileBasename(filePath: string): string {
 
 export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStreamTabProps) {
   const [sourceUrl, setSourceUrl] = useState('');
-  const [preset, setPreset] = useState('720p');
-  const [framerate, setFramerate] = useState('30');
-  const [bitrate, setBitrate] = useState('2500k');
+
+  // Starts from whatever an admin configured under Settings -> Streaming, so
+  // this form and !stream agree, and stays on the shipped values if that
+  // endpoint isn't readable for this user.
+  const { data: configured } = useQuery({
+    queryKey: ['stream-defaults'],
+    queryFn: settingsApi.getStreamDefaults,
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+  const presets = configured?.presets ?? FALLBACK_PRESETS;
+  const [quality, setQuality] = useState<StreamDefaults | null>(null);
+  const active: StreamDefaults = quality ?? (configured
+    ? { preset: configured.preset, framerate: configured.framerate, bitrate: configured.bitrate }
+    : FALLBACK_DEFAULTS);
+
+  // A preset carries its frame rate and bitrate with it; both stay editable.
+  const pickPreset = (p: StreamPreset) =>
+    setQuality({ preset: p.name, framerate: p.framerate, bitrate: p.bitrate });
 
   const { data: videoLibrary } = useSongs(serverConfigId, 'video');
 
@@ -67,9 +85,9 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
     startStream.mutate({
       botId,
       source: sourceUrl.trim(),
-      preset,
-      framerate: Number(framerate),
-      bitrate: bitrate.trim(),
+      preset: active.preset,
+      framerate: active.framerate,
+      bitrate: active.bitrate.trim(),
     });
   };
 
@@ -165,14 +183,15 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                   <div className="space-y-2">
                     <Label>Quality Preset</Label>
                     <div className="flex gap-2">
-                      {PRESETS.map((p) => (
+                      {presets.map((p) => (
                         <Button
-                          key={p.value}
-                          variant={preset === p.value ? 'default' : 'outline'}
+                          key={p.name}
+                          variant={active.preset === p.name ? 'default' : 'outline'}
                           size="sm"
-                          onClick={() => setPreset(p.value)}
+                          onClick={() => pickPreset(p)}
+                          title={`${p.width}x${p.height}, ${p.framerate} FPS, ${p.bitrate}`}
                         >
-                          {p.value}
+                          {p.name}
                         </Button>
                       ))}
                     </div>
@@ -183,12 +202,12 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                     <div className="flex gap-2">
                       {FPS_OPTIONS.map((fps) => (
                         <Button
-                          key={fps.value}
-                          variant={framerate === fps.value ? 'default' : 'outline'}
+                          key={fps}
+                          variant={active.framerate === fps ? 'default' : 'outline'}
                           size="sm"
-                          onClick={() => setFramerate(fps.value)}
+                          onClick={() => setQuality({ ...active, framerate: fps })}
                         >
-                          {fps.label}
+                          {fps} FPS
                         </Button>
                       ))}
                     </div>
@@ -196,12 +215,12 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                   <div className="space-y-2">
                     <Label>Video Bitrate</Label>
                     <Input
-                      value={bitrate}
-                      onChange={(e) => setBitrate(e.target.value)}
-                      placeholder="e.g. 1500k, 2500k, 4500k"
+                      value={active.bitrate}
+                      onChange={(e) => setQuality({ ...active, bitrate: e.target.value })}
+                      placeholder="e.g. 1500k, 4000k, 6000k"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Examples: 1500k, 2500k, 4500k, 6000k
+                      Higher needs more upload bandwidth and CPU. Examples: 1500k, 4000k, 6000k, 8000k
                     </p>
                   </div>
                 </div>

@@ -13,6 +13,8 @@ import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-
 import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRestartConfig } from '../utils/scheduled-restart.js';
 import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-config.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
+import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN } from '../utils/stream-defaults.js';
+import { STREAM_PRESETS } from '../voice/streaming/types.js';
 import { forceCookieCheck } from '../utils/yt-cookie-check.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 
@@ -300,6 +302,47 @@ settingsRoutes.put('/music-cache', requireAdmin, async (req: Request, res: Respo
     const prisma = req.app.locals.prisma;
     await setKeepPlayedSongs(prisma, keepPlayedSongs);
     res.json({ keepPlayedSongs });
+  } catch (err) { next(err); }
+});
+
+// GET /api/settings/stream-defaults - what !stream uses when no preset is named
+settingsRoutes.get('/stream-defaults', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    res.json({
+      ...(await getStreamDefaults(prisma)),
+      builtIn: builtInStreamDefaults(),
+      presets: Object.entries(STREAM_PRESETS).map(([name, p]) => ({ name, ...p })),
+    });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/stream-defaults
+settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { preset, framerate, bitrate } = req.body ?? {};
+
+    if (typeof preset !== 'string' || !(preset in STREAM_PRESETS)) {
+      throw new AppError(400, `preset must be one of: ${Object.keys(STREAM_PRESETS).join(', ')}`);
+    }
+    if (!Number.isInteger(framerate) || framerate < 1 || framerate > 120) {
+      throw new AppError(400, 'framerate must be a whole number between 1 and 120');
+    }
+    // Checked for shape, not for sanity: what a machine can actually push is
+    // the admin's business, but a typo reaching ffmpeg as a bitrate argument
+    // makes the stream fail to start with nothing useful in the UI.
+    if (typeof bitrate !== 'string' || !BITRATE_PATTERN.test(bitrate.trim())) {
+      throw new AppError(400, 'bitrate must look like 6000k or 2M');
+    }
+
+    const prisma = req.app.locals.prisma;
+    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim() });
+    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}`);
+    res.json({
+      ...saved,
+      builtIn: builtInStreamDefaults(),
+      presets: Object.entries(STREAM_PRESETS).map(([name, p]) => ({ name, ...p })),
+    });
   } catch (err) { next(err); }
 });
 

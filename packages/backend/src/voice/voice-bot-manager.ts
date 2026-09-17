@@ -67,7 +67,6 @@ export class VoiceBotManager extends EventEmitter {
         identity,
         sidecarBinaryPath: process.env.SIDECAR_BINARY_PATH,
         sidecarPort: (dbBot as any).sidecarPort ?? 9800,
-        streamPreset: (dbBot as any).streamPreset ?? '720p',
         descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
         avatarImage: dbBot.avatarData
           ? { data: Buffer.from(dbBot.avatarData), mimeType: dbBot.avatarMimeType || 'image/png' }
@@ -237,7 +236,6 @@ export class VoiceBotManager extends EventEmitter {
       identity,
       sidecarBinaryPath: process.env.SIDECAR_BINARY_PATH,
       sidecarPort: 9800,
-      streamPreset: '720p',
       descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
       webQuery: {
         host: serverConfig.host,
