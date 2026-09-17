@@ -184,6 +184,65 @@ func maxDuration(a, b time.Duration) time.Duration {
 	return b
 }
 
+// rtpRewriter gives one outgoing track a single, unbroken RTP numbering even
+// though the media behind it comes from a series of ffmpeg processes.
+//
+// Every source switch starts a fresh ffmpeg, and ffmpeg picks a new random
+// sequence number and timestamp base each time. Forwarding those straight
+// through is what left already-connected viewers with a black, silent player:
+// their connection stayed up, but on an established SSRC the sequence numbers
+// suddenly jumped backwards and the timestamps bore no relation to what came
+// before, so the browser's jitter buffer discarded everything. Only rejoining
+// helped, because that negotiated a fresh stream.
+//
+// So sequence numbers are re-issued from our own counter, and timestamps are
+// shifted by a per-segment offset that continues just after whatever was last
+// sent. Deliberately uint32/uint16 arithmetic: the wraparound is exactly the
+// behaviour RTP wants.
+type rtpRewriter struct {
+	seq        uint16
+	tsOffset   uint32
+	lastOutTS  uint32
+	advance    uint32 // gap inserted between two sources, in clock units
+	started    bool
+	newSegment bool
+}
+
+func (r *rtpRewriter) apply(pkt *rtp.Packet) {
+	switch {
+	case !r.started:
+		r.started = true
+		r.tsOffset = 0
+		r.seq = pkt.SequenceNumber
+	case r.newSegment:
+		// Resume one step after the last timestamp the viewer saw, so the
+		// timeline moves forward across the cut instead of jumping.
+		r.tsOffset = r.lastOutTS + r.advance - pkt.Timestamp
+	}
+	r.newSegment = false
+
+	r.lastOutTS = pkt.Timestamp + r.tsOffset
+	pkt.Timestamp = r.lastOutTS
+	pkt.SequenceNumber = r.seq
+	r.seq++
+}
+
+func (r *rtpRewriter) markNewSegment() {
+	if r.started {
+		r.newSegment = true
+	}
+}
+
+// markNewRTPSegment tells both rewriters that the next packets come from a
+// different source, so they recompute their timestamp offset.
+func (s *Sidecar) markNewRTPSegment() {
+	s.rewriteMu.Lock()
+	defer s.rewriteMu.Unlock()
+
+	s.videoRewrite.markNewSegment()
+	s.audioRewrite.markNewSegment()
+}
+
 func (s *Sidecar) resetSyncTiming() {
 	s.timingMu.Lock()
 	defer s.timingMu.Unlock()
@@ -350,9 +409,12 @@ type Sidecar struct {
 	source     string
 	running    bool
 
-	// Atomic timestamps for RTCP Sender Report generation
-	lastVideoRTPTs  uint64 // atomic: latest video RTP timestamp seen
-	lastAudioRTPTs  uint64 // atomic: latest audio RTP timestamp seen
+	// Atomic timestamps for RTCP Sender Report generation. These hold the
+	// REWRITTEN timestamps actually put on the wire (see rtpRewriter), not
+	// what ffmpeg produced - a Sender Report has to describe the stream the
+	// receiver is really getting, or lip sync drifts.
+	lastVideoRTPTs  uint64 // atomic: latest video RTP timestamp sent
+	lastAudioRTPTs  uint64 // atomic: latest audio RTP timestamp sent
 	videoPktCount   uint64 // atomic
 	videOctetCount  uint64 // atomic
 	audioPktCount   uint64 // atomic
@@ -360,6 +422,11 @@ type Sidecar struct {
 
 	videoQueue chan *rtp.Packet
 	audioQueue chan *rtp.Packet
+
+	// Outgoing RTP numbering, kept continuous across source switches
+	rewriteMu    sync.Mutex
+	videoRewrite rtpRewriter
+	audioRewrite rtpRewriter
 
 	// Stream pacing / A/V alignment state
 	timingMu       sync.Mutex
@@ -374,8 +441,13 @@ type Sidecar struct {
 
 func NewSidecar() *Sidecar {
 	return &Sidecar{
-		peers:         make(map[string]*Peer),
-		creating:      make(map[string]*createInFlight),
+		peers:    make(map[string]*Peer),
+		creating: make(map[string]*createInFlight),
+		// One frame at 30fps on the 90kHz video clock, one 20ms Opus frame on
+		// the 48kHz audio clock - just enough to keep the timeline moving
+		// forward across a source switch.
+		videoRewrite:  rtpRewriter{advance: 3000},
+		audioRewrite:  rtpRewriter{advance: 960},
 		syncBuffer:    time.Duration(envIntOrDefault("SYNC_PLAYOUT_BUFFER_MS", 50)) * time.Millisecond,
 		videoBias:     time.Duration(envIntOrDefault("SYNC_VIDEO_BIAS_MS", 0)) * time.Millisecond,
 		maxTrackDelay: time.Duration(envIntOrDefault("SYNC_MAX_DELAY_MS", 500)) * time.Millisecond,
@@ -430,8 +502,8 @@ func (s *Sidecar) readVideoRTP() {
 			continue
 		}
 
-		// Track RTP stats used by optional debug / legacy reporting paths
-		atomic.StoreUint64(&s.lastVideoRTPTs, uint64(pkt.Timestamp))
+		// The timestamp for Sender Reports is recorded in processVideoRTP,
+		// after rewriting - what ffmpeg emits here is not what goes on the wire.
 		atomic.AddUint64(&s.videoPktCount, 1)
 		atomic.AddUint64(&s.videOctetCount, uint64(len(pkt.Payload)))
 
@@ -473,8 +545,8 @@ func (s *Sidecar) readAudioRTP() {
 			continue
 		}
 
-		// Track latest timestamp for RTCP Sender Reports
-		atomic.StoreUint64(&s.lastAudioRTPTs, uint64(pkt.Timestamp))
+		// See readVideoRTP: the Sender Report timestamp is recorded after
+		// rewriting, in processAudioRTP.
 		atomic.AddUint64(&s.audioPktCount, 1)
 		atomic.AddUint64(&s.audioOctetCount, uint64(len(pkt.Payload)))
 
@@ -513,6 +585,14 @@ func (s *Sidecar) processVideoRTP() {
 			haveTS = true
 		}
 
+		// Pacing above works on ffmpeg's own per-source timeline, which
+		// resetSyncTiming restarts on every switch. Only after that does the
+		// packet get the continuous numbering the receivers actually see.
+		s.rewriteMu.Lock()
+		s.videoRewrite.apply(pkt)
+		s.rewriteMu.Unlock()
+		atomic.StoreUint64(&s.lastVideoRTPTs, uint64(pkt.Timestamp))
+
 		s.peersLock.RLock()
 		for _, peer := range s.peers {
 			peer.mu.Lock()
@@ -550,6 +630,11 @@ func (s *Sidecar) processAudioRTP() {
 			lastTS = pkt.Timestamp
 			haveTS = true
 		}
+
+		s.rewriteMu.Lock()
+		s.audioRewrite.apply(pkt)
+		s.rewriteMu.Unlock()
+		atomic.StoreUint64(&s.lastAudioRTPTs, uint64(pkt.Timestamp))
 
 		s.peersLock.RLock()
 		for _, peer := range s.peers {
@@ -915,6 +1000,9 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 	s.resetSyncTiming()
 	s.drainRTPQueues()
 	s.resetPeerStreamState()
+	// Queues are drained, so the next packet through really is the new
+	// source's first - that's when the rewriters recompute their offset.
+	s.markNewRTPSegment()
 
 	s.source = source
 
