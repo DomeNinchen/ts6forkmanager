@@ -14,3 +14,4 @@ packages/backend/data/
 packages/backend/prisma/migrations/
 .claude/
 build-and-push.ps1
+CLAUDE.md
