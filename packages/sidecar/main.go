@@ -1011,7 +1011,11 @@ func (s *Sidecar) ClosePeer(id string) {
 	s.peersLock.Unlock()
 }
 
-func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate int, bitrate string, loop bool) {
+// volumePercent scales the source's audio on the way out, where 100 means
+// leave it alone. A video is mastered at whatever loudness its creator chose,
+// which is routinely far above a TeamSpeak channel's speaking level, so the
+// caller usually wants this well below 100.
+func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate int, bitrate string, loop bool, volumePercent int) {
 	s.ffmpegLock.Lock()
 	defer s.ffmpegLock.Unlock()
 
@@ -1108,10 +1112,24 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 			"-map", "0:a:0?",
 		)
 
+		// One -af for the whole chain: a second one replaces the first rather
+		// than adding to it, which would silently drop whichever came earlier.
+		audioFilters := []string{}
+		if volumePercent != 100 {
+			v := volumePercent
+			if v < 0 {
+				v = 0
+			}
+			if v > 200 {
+				v = 200
+			}
+			audioFilters = append(audioFilters, fmt.Sprintf("volume=%.2f", float64(v)/100))
+		}
 		if audioDelayMs > 0 {
-			args = append(args,
-				"-af", fmt.Sprintf("adelay=delays=%d:all=1", audioDelayMs),
-			)
+			audioFilters = append(audioFilters, fmt.Sprintf("adelay=delays=%d:all=1", audioDelayMs))
+		}
+		if len(audioFilters) > 0 {
+			args = append(args, "-af", strings.Join(audioFilters, ","))
 		}
 
 		args = append(args,
@@ -1292,14 +1310,21 @@ func main() {
 			// backend sets it false for on-demand downloaded clips, which
 			// should play once, not repeat.
 			Loop *bool `json:"loop"`
+			// Percent, omitted means 100 (the source's own level) so anything
+			// driving this API directly keeps the behaviour it had before.
+			Volume *int `json:"volume"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), 400)
 			return
 		}
 		loop := req.Loop == nil || *req.Loop
-		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s, loop=%v)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop)
-		sidecar.StartFFmpeg(req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop)
+		volume := 100
+		if req.Volume != nil {
+			volume = *req.Volume
+		}
+		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s, loop=%v, volume=%d%%)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume)
+		sidecar.StartFFmpeg(req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
