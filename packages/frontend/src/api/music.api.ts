@@ -2,6 +2,14 @@ import api from './client';
 
 // === Music Bot API ===
 
+/** What `play-url` did: started the track, or lined it up behind what was playing. */
+export interface UrlPlaybackResult {
+  success: boolean;
+  queued: boolean;
+  position: number;
+  queueItem: { title: string; artist?: string };
+}
+
 /** One entry in a bot's video stream queue - mirrors the backend's own type. */
 export interface VideoQueueItem {
   id: string;
@@ -23,7 +31,8 @@ export const musicBotsApi = {
   // Playback
   playRadio: (id: number, stationId: number) => api.post(`/music-bots/${id}/play-radio`, { stationId }).then((r) => r.data),
   play: (id: number, songId: number) => api.post(`/music-bots/${id}/play`, { songId }).then((r) => r.data),
-  playUrl: (id: number, url: string) => api.post(`/music-bots/${id}/play-url`, { url }).then((r) => r.data),
+  playUrl: (id: number, url: string, mode: 'now' | 'queue' = 'now') =>
+    api.post(`/music-bots/${id}/play-url`, { url, mode }).then((r) => r.data as UrlPlaybackResult),
   pause: (id: number) => api.post(`/music-bots/${id}/pause`).then((r) => r.data),
   resume: (id: number) => api.post(`/music-bots/${id}/resume`).then((r) => r.data),
   stopPlayback: (id: number) => api.post(`/music-bots/${id}/stop-playback`).then((r) => r.data),
