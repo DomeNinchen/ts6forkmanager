@@ -2,6 +2,14 @@ import api from './client';
 
 // === Music Bot API ===
 
+/** One entry in a bot's video stream queue - mirrors the backend's own type. */
+export interface VideoQueueItem {
+  id: string;
+  source: string;
+  title: string;
+  requestedBy?: string;
+}
+
 export const musicBotsApi = {
   list: () => api.get('/music-bots').then((r) => r.data),
   get: (id: number) => api.get(`/music-bots/${id}`).then((r) => r.data),
@@ -48,6 +56,14 @@ export const musicBotsApi = {
   setStreamSource: (id: number, source: string) =>
     api.post(`/music-bots/${id}/stream/source`, { source }, { timeout: 120000 }).then((r) => r.data),
   streamStatus: (id: number) => api.get(`/music-bots/${id}/stream/status`).then((r) => r.data),
+  // Queueing only records the URL - the download happens when its turn comes,
+  // so this one doesn't need the long timeout that start/source do.
+  queueStreamVideo: (id: number, source: string, title?: string) =>
+    api.post(`/music-bots/${id}/stream/queue`, { source, title }).then((r) => r.data),
+  dequeueStreamVideo: (id: number, itemId: string) =>
+    api.delete(`/music-bots/${id}/stream/queue/${itemId}`).then((r) => r.data),
+  skipStreamVideo: (id: number) =>
+    api.post(`/music-bots/${id}/stream/skip`, {}, { timeout: 120000 }).then((r) => r.data),
   kickViewer: (id: number, clid: number) => api.delete(`/music-bots/${id}/stream/viewer/${clid}`).then((r) => r.data),
   webrtcOffer: (id: number) => api.post(`/music-bots/${id}/stream/webrtc/offer`).then((r) => r.data),
   webrtcAnswer: (id: number, sdp: string) =>
