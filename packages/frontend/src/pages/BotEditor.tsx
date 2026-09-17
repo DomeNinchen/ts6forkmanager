@@ -257,21 +257,37 @@ function edgePath(src: Point, tgt: Point, waypoints?: Point[]): string {
 }
 
 /**
- * Where the "add a bend here" handle sits on a connection that has none: the
- * middle of its longest straight run, which is the roomiest place to grab.
+ * Where the "bend it here" handle sits on a connection that has none yet - the
+ * middle of its longest straight run, the roomiest place to grab - together
+ * with the bend points a click there should actually store.
+ *
+ * Storing only that one point is what made the line jump out from under the
+ * handle: a connection with no bend points is routed by one rule (step across
+ * at the halfway mark, or pass below both ends when running backwards) and one
+ * with bend points by another (hop to each point in turn), so a lone point in
+ * the middle of a long run re-routes everything around it and strands the
+ * handle beside its own line. Seeding the automatic route's own corners
+ * alongside the new point reproduces the current shape exactly - and makes
+ * every bend that was already there draggable, which is what someone reaching
+ * for a line wanted in the first place.
  */
-function edgeGhostPos(src: Point, tgt: Point, waypoints?: Point[]): Point {
-  const pts = edgePoints(src, tgt, waypoints);
-  let best = pts[0];
+function edgeGhostSpot(src: Point, tgt: Point): { point: Point; seed: Point[] } {
+  const pts = edgePoints(src, tgt);
+  let end = 1;
   let bestLen = -1;
   for (let i = 1; i < pts.length; i++) {
     const len = dist(pts[i - 1], pts[i]);
     if (len > bestLen) {
       bestLen = len;
-      best = { x: (pts[i - 1].x + pts[i].x) / 2, y: (pts[i - 1].y + pts[i].y) / 2 };
+      end = i;
     }
   }
-  return best;
+  const point = {
+    x: (pts[end - 1].x + pts[end].x) / 2,
+    y: (pts[end - 1].y + pts[end].y) / 2,
+  };
+  // Everything strictly between source and target, with the new point in place.
+  return { point, seed: [...pts.slice(1, end), point, ...pts.slice(end, -1)] };
 }
 
 // Calculate handle positions (absolute coords on canvas)
@@ -574,6 +590,12 @@ export default function BotEditor() {
     }));
   };
 
+  /** Hand a connection its first bend points - see edgeGhostSpot for why it is
+   *  more than the one that was clicked. */
+  const seedWaypoints = (edgeId: string, points: Point[]) => {
+    setEdges((prev) => prev.map((e) => (e.id === edgeId ? { ...e, waypoints: points } : e)));
+  };
+
   const removeWaypoint = (edgeId: string, index: number) => {
     setEdges((prev) => prev.map((e) => {
       if (e.id !== edgeId) return e;
@@ -874,7 +896,7 @@ export default function BotEditor() {
 
               const waypoints = edge.waypoints ?? [];
               const path = edgePath(src, tgt, waypoints);
-              const ghost = edgeGhostPos(src, tgt, waypoints);
+              const ghost = waypoints.length === 0 ? edgeGhostSpot(src, tgt) : null;
               const hovered = hoverEdge === edge.id;
               const isConditionTrue = edge.sourcePort === 'true';
               const isConditionFalse = edge.sourcePort === 'false';
@@ -913,10 +935,10 @@ export default function BotEditor() {
                   {/* Only offered while the pointer is on this connection - a
                       handle on every one of them at once is exactly the clutter
                       this change is meant to remove. */}
-                  {hovered && waypoints.length === 0 && (
+                  {hovered && ghost && (
                     <circle
-                      cx={ghost.x}
-                      cy={ghost.y}
+                      cx={ghost.point.x}
+                      cy={ghost.point.y}
                       r={5}
                       className="cursor-pointer"
                       fill="transparent"
@@ -924,7 +946,7 @@ export default function BotEditor() {
                       strokeWidth={1.5}
                       strokeOpacity={0.8}
                       onMouseDown={(ev) => ev.stopPropagation()}
-                      onClick={(ev) => { ev.stopPropagation(); addWaypoint(edge.id, -1, ghost); }}
+                      onClick={(ev) => { ev.stopPropagation(); seedWaypoints(edge.id, ghost.seed); }}
                     >
                       <title>Click to bend this connection here</title>
                     </circle>
