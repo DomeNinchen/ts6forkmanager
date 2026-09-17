@@ -121,6 +121,12 @@ function getNodeMeta(type: string): NodeTypeDef | undefined {
 const NODE_W = 180;
 const NODE_H = 64;
 const HANDLE_R = 6;
+// Smallest canvas, so an empty or tiny flow still gets room to drag around in.
+const CANVAS_MIN_W = 2000;
+const CANVAS_MIN_H = 1200;
+// Free space kept beyond the right-most and bottom-most node, so there is
+// somewhere to drag a node to instead of hitting the end of the canvas.
+const CANVAS_PAD = 320;
 
 // Calculate handle positions (absolute coords on canvas)
 function getOutputHandlePos(node: FlowNode, portIndex: number, portCount: number) {
@@ -456,6 +462,25 @@ export default function BotEditor() {
   const selectedNodeData = useMemo(() => nodes.find((n) => n.id === selectedNode), [nodes, selectedNode]);
   const nodeTypeMeta = useMemo(() => getNodeMeta(selectedNodeData?.type || ''), [selectedNodeData]);
 
+  // The edges are drawn in one SVG layered over the canvas, and an SVG clips
+  // whatever reaches past its own viewport. Sizing that layer to the visible
+  // area (width: 100% of a scroll container measures the visible box, not the
+  // scrolled content) therefore cut every edge off at CANVAS_MIN_W, while the
+  // nodes themselves - plain divs outside the SVG - kept rendering further
+  // right. A wide flow looked like it had lost its wiring: the shipped
+  // "Private Channel Creator" reaches x=2620, so its last two nodes sat there
+  // unconnected and the three orange error edges stopped in mid-air. So the
+  // layer is sized to the content instead.
+  const canvasSize = useMemo(() => {
+    let w = CANVAS_MIN_W;
+    let h = CANVAS_MIN_H;
+    for (const n of nodes) {
+      w = Math.max(w, n.x + NODE_W + CANVAS_PAD);
+      h = Math.max(h, n.y + NODE_H + CANVAS_PAD);
+    }
+    return { w, h };
+  }, [nodes]);
+
   if (isLoading) return <PageLoader />;
 
   return (
@@ -519,7 +544,10 @@ export default function BotEditor() {
           onMouseUp={handleCanvasMouseUp}
           onClick={handleCanvasClick}
         >
-          <svg className="absolute inset-0 pointer-events-none" style={{ minWidth: 2000, minHeight: 1200, width: '100%', height: '100%' }}>
+          <svg
+            className="absolute left-0 top-0 pointer-events-none"
+            style={{ width: canvasSize.w, height: canvasSize.h }}
+          >
             {/* Edges */}
             {edges.map((edge) => {
               const srcNode = nodes.find((n) => n.id === edge.source);
