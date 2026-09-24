@@ -43,7 +43,7 @@ Get started quickly with pre-built flow templates. Covers common use cases like 
 ![Flow Templates](docs/flow-templates.png)
 
 ### Permissions
-Edit permissions across all five layers, for online and offline clients alike. Compare several entities side by side with the differences highlighted automatically, look up where a permission is set anywhere on the server, and see every permission that applies to one client in one channel together with the layer it comes from.
+Edit permissions across all five layers, for online and offline clients alike. Set many permissions to the same value in one step, import a previously exported group file onto anything you have selected, compare several entities side by side with the differences highlighted automatically, look up where a permission is set anywhere on the server, and see every permission that applies to one client in one channel together with the layer it comes from.
 
 ![Permissions](docs/permissions-compare.png)
 
@@ -107,7 +107,7 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Server management** — dashboard with live stats and a bandwidth graph, virtual server control, channel tree with drag-and-drop, client list with bulk actions, bans, complaints, offline messages, file browser, log viewer, snapshots, and per-server advanced settings.
 
-**Permissions** — a full editor across all five permission layers, including offline clients. Bulk-apply to many entities at once, compare several side by side with automatic highlighting, look up where a permission is set anywhere on the server, and see every permission that applies to one client in one channel with the layer it comes from. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Permissions)
+**Permissions** — a full editor across all five permission layers, including offline clients. Bulk-apply to many entities at once, set many permissions to one value in a single step, import an exported group file onto the current selection (merging into it or replacing it outright), compare several side by side with automatic highlighting, look up where a permission is set anywhere on the server, and see every permission that applies to one client in one channel with the layer it comes from. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Permissions)
 
 **Groups** — server and channel group management with member handling, bulk selection, and export/import between servers.
 
