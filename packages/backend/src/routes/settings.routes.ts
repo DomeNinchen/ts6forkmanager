@@ -219,7 +219,7 @@ settingsRoutes.put('/oidc', requireAdmin, async (req: Request, res: Response, ne
   } catch (err) { next(err); }
 });
 
-const VALID_ACCENT_PRESETS = ['violet', 'teal', 'red', 'blue', 'yellow', 'green'] as const;
+const VALID_ACCENT_PRESETS = ['violet', 'teal', 'red', 'blue', 'yellow', 'green', 'orange', 'pink', 'cyan', 'lime'] as const;
 type AccentPreset = (typeof VALID_ACCENT_PRESETS)[number];
 
 // GET /api/settings/webgui-theme — the installation-wide default accent preset (any logged-in
@@ -252,7 +252,12 @@ settingsRoutes.put('/webgui-theme', requireAdmin, async (req: Request, res: Resp
   } catch (err) { next(err); }
 });
 
-const VALID_BASE_THEMES = ['command-deck', 'oled'] as const;
+// Dark and light themes share one list - a base theme carries its own light/dark nature,
+// there is no separate light/dark setting to keep in sync with it.
+const VALID_BASE_THEMES = [
+  'command-deck', 'oled', 'graphite', 'carbon', 'frost', 'deep-forest',
+  'daylight', 'paper', 'frost-light',
+] as const;
 type BaseTheme = (typeof VALID_BASE_THEMES)[number];
 
 // GET /api/settings/webgui-base-theme — the installation-wide default base theme (background/

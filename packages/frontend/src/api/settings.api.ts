@@ -65,9 +65,38 @@ export const settingsApi = {
     api.put('/settings/webgui-base-theme', { theme }).then((r) => r.data),
 };
 
-export type AccentPreset = 'violet' | 'teal' | 'red' | 'blue' | 'yellow' | 'green';
-/** The structural background/surface palette - independent of (and combinable with) the accent preset above. */
-export type BaseTheme = 'command-deck' | 'oled';
+export const ACCENT_PRESETS = ['violet', 'teal', 'red', 'blue', 'yellow', 'green', 'orange', 'pink', 'cyan', 'lime'] as const;
+export type AccentPreset = (typeof ACCENT_PRESETS)[number];
+
+/**
+ * The structural background/surface palette - independent of (and combinable with) the
+ * accent preset above. A base theme also decides whether the app renders light or dark,
+ * which is why these two lists are kept separate: the UI store derives the `.dark` class
+ * from which list the selected theme is in.
+ */
+export const DARK_BASE_THEMES = ['command-deck', 'oled', 'graphite', 'carbon', 'frost', 'deep-forest'] as const;
+export const LIGHT_BASE_THEMES = ['daylight', 'paper', 'frost-light'] as const;
+export type BaseTheme = (typeof DARK_BASE_THEMES)[number] | (typeof LIGHT_BASE_THEMES)[number];
+
+export function isDarkBaseTheme(theme: BaseTheme): boolean {
+  return (DARK_BASE_THEMES as readonly string[]).includes(theme);
+}
+
+/**
+ * The accent that suits each base theme. Only ever offered as a one-click suggestion when
+ * the theme changes - never applied silently, since the accent is the user's own choice.
+ */
+export const RECOMMENDED_ACCENT: Record<BaseTheme, AccentPreset> = {
+  'command-deck': 'violet',
+  oled: 'cyan',
+  graphite: 'violet',
+  carbon: 'orange',
+  frost: 'blue',
+  'deep-forest': 'lime',
+  daylight: 'teal',
+  paper: 'orange',
+  'frost-light': 'blue',
+};
 
 export interface OidcSettings {
   enabled: boolean;
