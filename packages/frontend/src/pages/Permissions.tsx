@@ -18,7 +18,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import {
   Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, UserCog, Save,
-  X, Check, Minus, Plus, Columns3, Upload, FileText, Layers,
+  X, Check, Minus, Plus, Columns3, Upload, FileText, Layers, ListChecks, FileInput, AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -183,6 +183,26 @@ export default function Permissions() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [colorPivot, setColorPivot] = useState<{ colKey: string; permsid: string } | null>(null);
 
+  // Set Multiple Permissions: tick several permissions in the editor list,
+  // then give them all a value in one step. Booleans and integers are set
+  // separately, since a single selection can easily contain both and one
+  // shared number would be meaningless for a boolean.
+  const [multiSelect, setMultiSelect] = useState(false);
+  const [selectedPerms, setSelectedPerms] = useState<Set<string>>(new Set());
+  const [showSetMultiple, setShowSetMultiple] = useState(false);
+  const [multiBoolOn, setMultiBoolOn] = useState(true);
+  const [multiIntValue, setMultiIntValue] = useState('');
+  const [multiSkip, setMultiSkip] = useState(false);
+  const [multiNegate, setMultiNegate] = useState(false);
+
+  // Import Permission File: read a previously exported group file and write
+  // its permissions onto whatever is selected right now, in any of the 5
+  // tiers - not just into a newly created group like the Groups pages do.
+  const [importGroups, setImportGroups] = useState<{ name: string; permissions: PermValue[] }[] | null>(null);
+  const [importGroupIdx, setImportGroupIdx] = useState(0);
+  const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge');
+  const importInputRef = useRef<HTMLInputElement>(null);
+
   // Find Permission: a reverse lookup (pick a permission, see everywhere it's
   // assigned across all 5 tiers). Sits alongside the tier tabs rather than
   // being one of them - it replaces the whole select/edit layout while active.
@@ -270,6 +290,8 @@ export default function Permissions() {
     setComparePermIds(null);
     setFileTargets([]);
     setColorPivot(null);
+    setMultiSelect(false);
+    setSelectedPerms(new Set());
     if (jump && jump.layer === layer) {
       setSelectedIds(new Set([jump.key]));
       setCcNames(jump.ccName ? new Map([[jump.key, jump.ccName]]) : new Map());
@@ -286,6 +308,9 @@ export default function Permissions() {
   // entered, so a stale checked state from Compare or single-entity view
   // can't carry over invisibly.
   useEffect(() => { if (bulkMode && !compareMode) setShowModifiedOnly(false); }, [bulkMode, compareMode]);
+  // Compare edits one cell at a time by design, so a ticked multi-selection
+  // would have nothing to act on there - leave the mode when Compare opens.
+  useEffect(() => { if (compareMode) { setMultiSelect(false); setSelectedPerms(new Set()); } }, [compareMode]);
 
   // Fetch each selected entity's permissions in Compare mode (shares its
   // query key with the single-entity fetch above, so switching between
@@ -668,6 +693,10 @@ export default function Permissions() {
     return catMap;
   }, [allPerms, search, showModifiedOnly, showDifferingOnly, compareMode, comparePermIds, currentPerms, changes, isSetForAny, permDiffers]);
 
+  // Every permission the current search/filters leave visible, flattened out
+  // of its categories - what "Select all shown" acts on.
+  const visiblePerms = useMemo(() => [...categories.values()].flat(), [categories]);
+
   // Advanced shows the raw technical permsid (e.g. b_virtualserver_create);
   // Simple shows TeamSpeak's own human-readable permdesc instead where one
   // exists - the mechanical "Needed Powers" permissions have none, so those
@@ -717,6 +746,135 @@ export default function Permissions() {
       return next;
     });
   }, [currentPerms]);
+
+  const togglePermSelect = useCallback((permsid: string) => {
+    setSelectedPerms((prev) => {
+      const next = new Set(prev);
+      next.has(permsid) ? next.delete(permsid) : next.add(permsid);
+      return next;
+    });
+  }, []);
+
+  // A ticked selection can mix both types, so the dialog offers a switch for
+  // the booleans and a number for the integers and applies only what fits.
+  const selectedBoolCount = useMemo(
+    () => [...selectedPerms].filter((p) => p.startsWith('b_')).length, [selectedPerms]);
+  const selectedIntCount = selectedPerms.size - selectedBoolCount;
+
+  const applyMultiValues = useCallback(() => {
+    const intVal = parseInt(multiIntValue);
+    const hasInt = !isNaN(intVal);
+    setChanges((prev) => {
+      const next = new Map(prev);
+      for (const permsid of selectedPerms) {
+        if (permsid.startsWith('b_')) {
+          // Booleans carry no skip/negate anywhere else on this page either
+          next.set(permsid, { permsid, permvalue: multiBoolOn ? 1 : 0, permnegated: 0, permskip: 0, action: 'set' });
+        } else if (hasInt) {
+          next.set(permsid, {
+            permsid, permvalue: intVal,
+            permnegated: supportsNegateSkip && multiNegate ? 1 : 0,
+            permskip: supportsNegateSkip && multiSkip ? 1 : 0,
+            action: 'set',
+          });
+        }
+      }
+      return next;
+    });
+    const touched = selectedBoolCount + (hasInt ? selectedIntCount : 0);
+    setShowSetMultiple(false);
+    toast.success(`${touched} permission(s) staged - press Save to apply`);
+  }, [multiIntValue, multiBoolOn, multiNegate, multiSkip, selectedPerms, supportsNegateSkip, selectedBoolCount, selectedIntCount]);
+
+  const removeMultiPerms = useCallback(() => {
+    setChanges((prev) => {
+      const next = new Map(prev);
+      for (const permsid of selectedPerms) {
+        // Only an actually-set permission needs a remove sent to the server;
+        // for anything else just drop a staged change, same as removePerm.
+        if (currentPerms.has(permsid) || bulkMode) {
+          next.set(permsid, { permsid, permvalue: 0, permnegated: 0, permskip: 0, action: 'remove' });
+        } else {
+          next.delete(permsid);
+        }
+      }
+      return next;
+    });
+    toast.success(`${selectedPerms.size} permission(s) staged for removal - press Save to apply`);
+  }, [selectedPerms, currentPerms, bulkMode]);
+
+  const handleImportFileChosen = useCallback(async (file: File) => {
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if (payload.format !== 'ts6manager-group-export' || !Array.isArray(payload.groups)) {
+        toast.error('Not a valid permission export file');
+        return;
+      }
+      const groups = payload.groups.map((g: any) => ({
+        name: g.name || 'Unnamed',
+        permissions: (g.permissions || [])
+          .map((p: any) => ({
+            permsid: p.permsid,
+            permvalue: Number(p.permvalue) || 0,
+            permnegated: Number(p.permnegated) || 0,
+            permskip: Number(p.permskip) || 0,
+          }))
+          .filter((p: PermValue) => !!p.permsid),
+      }));
+      if (groups.length === 0) {
+        toast.error('File contains no groups');
+        return;
+      }
+      setImportGroups(groups);
+      setImportGroupIdx(0);
+      setImportMode('merge');
+    } catch {
+      toast.error('Failed to read file - check it is a valid export');
+    }
+  }, []);
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      if (!c || !s || !importGroups || selectedIds.size === 0) return { applied: 0, removed: 0 };
+      const src = importGroups[importGroupIdx];
+      const inFile = new Set(src.permissions.map((p) => p.permsid));
+      let applied = 0;
+      let removed = 0;
+      for (const key of selectedIds) {
+        if (importMode === 'replace') {
+          // Read each target's own current set rather than trusting the
+          // editor's cached view - in bulk every target differs, and only
+          // what a target actually has can be meaningfully removed.
+          const existing = await fetchPerms(layer, c, s, key);
+          const names = (Array.isArray(existing) ? existing : [])
+            .map((p: any) => p.permsid || p.permname || permIdToName.get(Number(p.permid)) || '')
+            .filter((n: string) => !!n);
+          for (const name of names) {
+            if (!inFile.has(name)) {
+              await applyPermRemove(layer, c, s, key, name);
+              removed++;
+            }
+          }
+        }
+        for (const p of src.permissions) {
+          await applyPermSet(layer, c, s, key, { ...p, action: 'set' });
+          applied++;
+        }
+      }
+      return { applied, removed };
+    },
+    onSuccess: (r) => {
+      toast.success(
+        `Imported ${r?.applied ?? 0} permission(s) into ${selectedIds.size} target(s)` +
+        (r?.removed ? `, removed ${r.removed} not in the file` : ''),
+      );
+      setImportGroups(null);
+      setChanges(new Map());
+      qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer] });
+    },
+    onError: () => toast.error('Import failed - some permissions may already have been written'),
+  });
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -1514,6 +1672,35 @@ export default function Permissions() {
                       />
                     </>
                   )}
+                  {!compareMode && (
+                    <>
+                      <Button
+                        variant={multiSelect ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => { setMultiSelect((v) => !v); setSelectedPerms(new Set()); }}
+                        title="Tick several permissions, then give them all a value at once"
+                      >
+                        <ListChecks className="h-3.5 w-3.5 mr-1" /> Set Multiple
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => importInputRef.current?.click()}
+                        title="Apply a previously exported permission file to the current selection"
+                      >
+                        <FileInput className="h-3.5 w-3.5 mr-1" /> Import File
+                      </Button>
+                      <input
+                        ref={importInputRef}
+                        type="file"
+                        accept="application/json"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFileChosen(f); e.target.value = ''; }}
+                      />
+                    </>
+                  )}
                   <div className="relative w-64">
                     <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
@@ -1538,6 +1725,35 @@ export default function Permissions() {
                   : 'All permissions are shown by default ("Add/Remove Perm" to narrow down, the × on a row to drop it) - edit a cell to change just that one entity. Click a cell to pin it as the reference; the rest of that row colors relative to it (teal = lower, lime = same, red = higher, pink = unset).'}
                 {' '}"Add Target" loads a previously-exported group file as a read-only extra column. Use Bulk Apply instead to push the same value to all selected entities at once.
               </p>
+            )}
+            {multiSelect && !compareMode && (
+              <div className="flex items-center gap-2 pt-2 flex-wrap">
+                <Badge variant="secondary" className="font-mono-data">{selectedPerms.size} selected</Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setSelectedPerms(new Set(visiblePerms.map((p) => p.permsid)))}
+                >
+                  Select all shown ({visiblePerms.length})
+                </Button>
+                {selectedPerms.size > 0 && (
+                  <>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedPerms(new Set())}>
+                      Clear
+                    </Button>
+                    <Button size="sm" className="h-7 text-xs" onClick={() => setShowSetMultiple(true)}>
+                      <Check className="h-3.5 w-3.5 mr-1" /> Set values...
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={removeMultiPerms}>
+                      <Minus className="h-3.5 w-3.5 mr-1" /> Remove
+                    </Button>
+                  </>
+                )}
+                <span className="text-[11px] text-muted-foreground">
+                  Changes are staged like any other edit - press Save to write them.
+                </span>
+              </div>
             )}
           </CardHeader>
           <CardContent className="p-0">
@@ -1736,8 +1952,15 @@ export default function Permissions() {
                                   isSet ? 'text-foreground' : 'text-muted-foreground',
                                 )}
                               >
-                                <div className="col-span-5 truncate" title={permTooltip(perm)}>
-                                  <span className={cn('text-[11px]', permLabelMode === 'advanced' && 'font-mono-data')}>{permLabel(perm)}</span>
+                                <div className="col-span-5 flex items-center gap-2 min-w-0" title={permTooltip(perm)}>
+                                  {multiSelect && (
+                                    <Checkbox
+                                      checked={selectedPerms.has(perm.permsid)}
+                                      onCheckedChange={() => togglePermSelect(perm.permsid)}
+                                      className="h-3.5 w-3.5 shrink-0"
+                                    />
+                                  )}
+                                  <span className={cn('text-[11px] truncate', permLabelMode === 'advanced' && 'font-mono-data')}>{permLabel(perm)}</span>
                                 </div>
                                 <div className="col-span-2 flex justify-center">
                                   {isBoolean ? (
@@ -1912,6 +2135,158 @@ export default function Permissions() {
           </ScrollArea>
           <DialogFooter>
             <Button onClick={() => setShowAddPerm(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Set Multiple Permissions */}
+      <Dialog open={showSetMultiple} onOpenChange={setShowSetMultiple}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Set {selectedPerms.size} permission(s)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Booleans and integers are set separately, so a mixed selection can be handled in one step.
+            </p>
+            {selectedBoolCount > 0 && (
+              <div className="flex items-center justify-between rounded-md border border-border/50 p-3">
+                <div>
+                  <p className="text-sm font-medium">{selectedBoolCount} boolean(s)</p>
+                  <p className="text-[11px] text-muted-foreground">b_… permissions</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="multi-bool" checked={multiBoolOn} onCheckedChange={setMultiBoolOn} />
+                  <Label htmlFor="multi-bool" className="text-xs cursor-pointer w-8">{multiBoolOn ? 'On' : 'Off'}</Label>
+                </div>
+              </div>
+            )}
+            {selectedIntCount > 0 && (
+              <div className="space-y-2 rounded-md border border-border/50 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{selectedIntCount} integer(s)</p>
+                    <p className="text-[11px] text-muted-foreground">i_… permissions</p>
+                  </div>
+                  <Input
+                    type="number"
+                    className="h-8 w-24 text-xs text-center font-mono-data"
+                    placeholder="Value"
+                    value={multiIntValue}
+                    onChange={(e) => setMultiIntValue(e.target.value)}
+                  />
+                </div>
+                {supportsNegateSkip && (
+                  <div className="flex items-center gap-4 pt-1">
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={multiSkip} onCheckedChange={(v) => setMultiSkip(!!v)} /> Skip
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={multiNegate} onCheckedChange={(v) => setMultiNegate(!!v)} /> Negate
+                    </label>
+                  </div>
+                )}
+                {!multiIntValue && (
+                  <p className="text-[11px] text-amber-500">Leave empty to skip the integers and only set the booleans.</p>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSetMultiple(false)}>Cancel</Button>
+            <Button onClick={applyMultiValues} disabled={selectedBoolCount === 0 && !multiIntValue}>
+              Apply to {selectedBoolCount + (multiIntValue ? selectedIntCount : 0)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Permission File */}
+      <Dialog open={!!importGroups} onOpenChange={(o) => { if (!o) setImportGroups(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Import permission file</DialogTitle>
+          </DialogHeader>
+          {importGroups && (
+            <div className="space-y-4">
+              {importGroups.length > 1 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Group in file</Label>
+                  <Select value={String(importGroupIdx)} onValueChange={(v) => setImportGroupIdx(Number(v))}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {importGroups.map((g, i) => (
+                        <SelectItem key={i} value={String(i)} className="text-xs">
+                          {g.name} ({g.permissions.length} permissions)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="rounded-md border border-border/50 p-3 text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Source</span>
+                  <span className="font-mono-data">{importGroups[importGroupIdx].name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Permissions in file</span>
+                  <span className="font-mono-data">{importGroups[importGroupIdx].permissions.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Target</span>
+                  <span className="font-mono-data">
+                    {selectedIds.size} {LAYERS.find((l) => l.key === layer)?.label}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Mode</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setImportMode('merge')}
+                    className={cn(
+                      'rounded-md border p-2.5 text-left transition-colors',
+                      importMode === 'merge' ? 'border-primary bg-primary/5' : 'border-border/50 hover:border-border',
+                    )}
+                  >
+                    <p className="text-xs font-medium">Merge</p>
+                    <p className="text-[11px] text-muted-foreground">Only what the file contains is set. Everything else stays.</p>
+                  </button>
+                  <button
+                    onClick={() => setImportMode('replace')}
+                    className={cn(
+                      'rounded-md border p-2.5 text-left transition-colors',
+                      importMode === 'replace' ? 'border-destructive bg-destructive/5' : 'border-border/50 hover:border-border',
+                    )}
+                  >
+                    <p className="text-xs font-medium">Replace</p>
+                    <p className="text-[11px] text-muted-foreground">Target becomes an exact copy. Extra permissions are deleted.</p>
+                  </button>
+                </div>
+              </div>
+
+              {importMode === 'replace' && (
+                <div className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2.5">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-muted-foreground">
+                    Every permission the {selectedIds.size === 1 ? 'target has' : 'targets have'} that is not in this file will be
+                    removed. This is written straight to the server and cannot be undone from here.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportGroups(null)}>Cancel</Button>
+            <Button
+              variant={importMode === 'replace' ? 'destructive' : 'default'}
+              onClick={() => importMutation.mutate()}
+              disabled={importMutation.isPending || selectedIds.size === 0}
+            >
+              {importMutation.isPending ? 'Importing...' : importMode === 'replace' ? 'Replace' : 'Merge'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
