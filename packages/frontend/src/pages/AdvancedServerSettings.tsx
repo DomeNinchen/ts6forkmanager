@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { normalizeIconId } from '@ts6/common';
+import { IconImage } from '@/components/icons/IconImage';
 import { useServerStore } from '@/stores/server.store';
 import { useVirtualServerInfo, useEditVirtualServer } from '@/hooks/use-servers';
 import { useServerGroups, useChannelGroups } from '@/hooks/use-groups';
@@ -165,21 +167,42 @@ export default function AdvancedServerSettings() {
                   <Label className="text-xs">Default Server Group</Label>
                   <Select value={String(form.virtualserver_default_server_group ?? '')} onValueChange={(v) => set('virtualserver_default_server_group', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>{sGroups.map((g: any) => <SelectItem key={g.sgid} value={String(g.sgid)}>{g.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{sGroups.map((g: any) => (
+                      <SelectItem key={g.sgid} value={String(g.sgid)}>
+                        <span className="flex items-center gap-1.5">
+                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                          {g.name}
+                        </span>
+                      </SelectItem>
+                    ))}</SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-xs">Default Channel Group</Label>
                   <Select value={String(form.virtualserver_default_channel_group ?? '')} onValueChange={(v) => set('virtualserver_default_channel_group', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>{cGroups.map((g: any) => <SelectItem key={g.cgid} value={String(g.cgid)}>{g.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{cGroups.map((g: any) => (
+                      <SelectItem key={g.cgid} value={String(g.cgid)}>
+                        <span className="flex items-center gap-1.5">
+                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                          {g.name}
+                        </span>
+                      </SelectItem>
+                    ))}</SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-xs">Default Channel Admin Group</Label>
                   <Select value={String(form.virtualserver_default_channel_admin_group ?? '')} onValueChange={(v) => set('virtualserver_default_channel_admin_group', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>{cGroups.map((g: any) => <SelectItem key={g.cgid} value={String(g.cgid)}>{g.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{cGroups.map((g: any) => (
+                      <SelectItem key={g.cgid} value={String(g.cgid)}>
+                        <span className="flex items-center gap-1.5">
+                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                          {g.name}
+                        </span>
+                      </SelectItem>
+                    ))}</SelectContent>
                   </Select>
                 </div>
               </div>

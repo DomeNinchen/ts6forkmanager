@@ -1,7 +1,10 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
+import { normalizeIconId } from '@ts6/common';
 import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
+import { IconImage } from '@/components/icons/IconImage';
+import { IconPickerDialog } from '@/components/icons/IconPickerDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +22,7 @@ import { cn } from '@/lib/utils';
 import {
   Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, UserCog, Save,
   X, Check, Minus, Plus, Columns3, Upload, FileText, Layers, ListChecks, FileInput, AlertTriangle,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -202,6 +206,10 @@ export default function Permissions() {
   const [importGroupIdx, setImportGroupIdx] = useState(0);
   const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge');
   const importInputRef = useRef<HTMLInputElement>(null);
+
+  // i_icon_id's visual picker: which value it should write into when a
+  // choice is made - the single/bulk-apply editor, or one Compare column.
+  const [iconPickerFor, setIconPickerFor] = useState<{ mode: 'single' } | { mode: 'compare'; colKey: string } | null>(null);
 
   // Find Permission: a reverse lookup (pick a permission, see everywhere it's
   // assigned across all 5 tiers). Sits alongside the tier tabs rather than
@@ -922,11 +930,11 @@ export default function Permissions() {
     switch (layer) {
       case 'server-group':
         return (Array.isArray(serverGroups) ? serverGroups : []).map((g: any) => ({
-          id: String(g.sgid), name: g.name, type: Number(g.type),
+          id: String(g.sgid), name: g.name, type: Number(g.type), iconId: normalizeIconId(g.iconid),
         }));
       case 'channel-group':
         return (Array.isArray(channelGroups) ? channelGroups : []).map((g: any) => ({
-          id: String(g.cgid), name: g.name, type: Number(g.type),
+          id: String(g.cgid), name: g.name, type: Number(g.type), iconId: normalizeIconId(g.iconid),
         }));
       case 'channel':
         return (Array.isArray(channels) ? channels : []).map((ch: any) => ({
@@ -1580,6 +1588,9 @@ export default function Permissions() {
                           )}
                           {ent.name}
                         </span>
+                        {(layer === 'server-group' || layer === 'channel-group') && (
+                          <IconImage iconId={ent.iconId} size={16} alt={`Icon for ${ent.name}`} />
+                        )}
                         <span className="text-[10px] font-mono-data text-muted-foreground ml-1">#{ent.id}</span>
                       </div>
                     ))}
@@ -1882,6 +1893,18 @@ export default function Permissions() {
                                                   }
                                                 }}
                                               />
+                                              {perm.permsid === 'i_icon_id' && (
+                                                <>
+                                                  <IconImage iconId={normalizeIconId(effective?.permvalue)} size={18} />
+                                                  <button
+                                                    onClick={() => { setPivotHere(); setIconPickerFor({ mode: 'compare', colKey: key }); }}
+                                                    className="h-4 w-4 rounded-sm border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border"
+                                                    title="Choose icon"
+                                                  >
+                                                    <ImageIcon className="h-2.5 w-2.5" />
+                                                  </button>
+                                                </>
+                                              )}
                                               {supportsNegateSkip && (
                                                 <>
                                                   <button
@@ -1979,20 +2002,34 @@ export default function Permissions() {
                                       {isSet && <Check className="h-3 w-3" />}
                                     </button>
                                   ) : (
-                                    <Input
-                                      type="number"
-                                      className="h-6 w-20 text-xs text-center font-mono-data px-1"
-                                      value={effective?.permvalue ?? ''}
-                                      placeholder="—"
-                                      onChange={(e) => {
-                                        const val = parseInt(e.target.value);
-                                        if (!isNaN(val)) {
-                                          setPermValue(perm.permsid, val, effective?.permnegated || 0, effective?.permskip || 0);
-                                        } else if (e.target.value === '') {
-                                          removePerm(perm.permsid);
-                                        }
-                                      }}
-                                    />
+                                    <div className="inline-flex items-center gap-1">
+                                      <Input
+                                        type="number"
+                                        className="h-6 w-20 text-xs text-center font-mono-data px-1"
+                                        value={effective?.permvalue ?? ''}
+                                        placeholder="—"
+                                        onChange={(e) => {
+                                          const val = parseInt(e.target.value);
+                                          if (!isNaN(val)) {
+                                            setPermValue(perm.permsid, val, effective?.permnegated || 0, effective?.permskip || 0);
+                                          } else if (e.target.value === '') {
+                                            removePerm(perm.permsid);
+                                          }
+                                        }}
+                                      />
+                                      {perm.permsid === 'i_icon_id' && (
+                                        <>
+                                          <IconImage iconId={normalizeIconId(effective?.permvalue)} size={18} />
+                                          <button
+                                            onClick={() => setIconPickerFor({ mode: 'single' })}
+                                            className="h-4 w-4 rounded-sm border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border"
+                                            title="Choose icon"
+                                          >
+                                            <ImageIcon className="h-2.5 w-2.5" />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                                 <div className="col-span-1 flex justify-center">
@@ -2290,6 +2327,26 @@ export default function Permissions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <IconPickerDialog
+        open={!!iconPickerFor}
+        onOpenChange={(open) => { if (!open) setIconPickerFor(null); }}
+        currentIconId={normalizeIconId(
+          iconPickerFor?.mode === 'compare'
+            ? getCompareEffectiveValue(iconPickerFor.colKey, 'i_icon_id')?.permvalue
+            : getEffectiveValue('i_icon_id')?.permvalue,
+        )}
+        onSelect={(iconId) => {
+          if (!iconPickerFor) return;
+          if (iconPickerFor.mode === 'compare') {
+            const effective = getCompareEffectiveValue(iconPickerFor.colKey, 'i_icon_id');
+            setComparePermValue(iconPickerFor.colKey, 'i_icon_id', iconId, effective?.permnegated || 0, effective?.permskip || 0);
+          } else {
+            const effective = getEffectiveValue('i_icon_id');
+            setPermValue('i_icon_id', iconId, effective?.permnegated || 0, effective?.permskip || 0);
+          }
+        }}
+      />
     </div>
   );
 }

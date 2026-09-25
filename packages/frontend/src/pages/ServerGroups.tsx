@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
+import { normalizeIconId } from '@ts6/common';
+import { IconImage } from '@/components/icons/IconImage';
 import {
   useServerGroups, useServerGroupMembers, useCreateServerGroup, useDeleteServerGroup,
   useAddServerGroupMember, useRemoveServerGroupMember,
@@ -241,6 +243,7 @@ export default function ServerGroups() {
                       <span className="truncate">{g.name}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      <IconImage iconId={normalizeIconId(g.iconid)} size={16} alt={`Icon for ${g.name}`} />
                       <Badge variant="secondary" className="text-[10px] font-mono-data">{g.sgid}</Badge>
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     </div>
