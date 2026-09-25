@@ -189,7 +189,7 @@ layer(base);
     --secondary: 40 25% 89%;
     --secondary-foreground: 30 20% 18%;
     --muted: 40 25% 92%;
-    --muted-foreground: 35 12% 45%;
+    --muted-foreground: 35 12% 42%;
     --accent: 40 25% 90%;
     --accent-foreground: 30 20% 18%;
     --border: 38 18% 83%;
@@ -211,7 +211,7 @@ layer(base);
     --secondary: 219 28% 88%;
     --secondary-foreground: 220 22% 20%;
     --muted: 219 28% 91%;
-    --muted-foreground: 220 14% 45%;
+    --muted-foreground: 220 14% 44%;
     --accent: 219 28% 89%;
     --accent-foreground: 220 22% 20%;
     --border: 219 22% 82%;
@@ -232,7 +232,7 @@ layer(base);
     --card-foreground: 228 45% 94%;
     --popover: 227 39% 12%;
     --popover-foreground: 228 45% 94%;
-    --primary: 252 100% 68%;
+    --primary: 252 100% 66%;
     --primary-foreground: 210 40% 98%;
     --secondary: 226 37% 16%;
     --secondary-foreground: 228 30% 88%;
@@ -244,7 +244,7 @@ layer(base);
     --destructive-foreground: 210 40% 98%;
     --border: 226 33% 25%;
     --input: 226 33% 25%;
-    --ring: 252 100% 68%;
+    --ring: 252 100% 66%;
     --sidebar: 227 39% 12%;
     --sidebar-foreground: 227 22% 58%;
     --sidebar-accent: 226 37% 16%;
@@ -373,9 +373,9 @@ layer(base);
   /* ---------- Accents on dark base themes ---------- */
 
   .dark[data-accent='violet'] {
-    --primary: 252 100% 68%;
+    --primary: 252 100% 66%;
     --primary-foreground: 210 40% 98%;
-    --ring: 252 100% 68%;
+    --ring: 252 100% 66%;
     --sidebar-accent-foreground: 252 100% 76%;
     --chart-1: 252 100% 74%;
   }
@@ -407,9 +407,11 @@ layer(base);
     --sidebar-accent-foreground: 42 88% 62%;
     --chart-1: 42 88% 56%;
   }
+  /* Dark ink rather than a light label: against this green, white only reaches 2.94:1
+     while ink reaches 6.28:1, so the colour itself is kept and the label flipped. */
   .dark[data-accent='green'] {
     --primary: 142 65% 40%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 220 25% 6%;
     --ring: 142 65% 40%;
     --sidebar-accent-foreground: 142 65% 55%;
     --chart-1: 142 65% 48%;
@@ -474,12 +476,14 @@ layer(base);
     --sidebar-accent-foreground: 217 72% 40%;
     --chart-1: 217 72% 48%;
   }
+  /* 36% is a narrow fit: lighter and the colour washes out against Paper and Frost
+     Light, darker and its own dark label stops clearing 4.5:1. */
   :root:not(.dark)[data-accent='yellow'] {
-    --primary: 42 92% 38%;
+    --primary: 42 92% 36%;
     --primary-foreground: 45 60% 8%;
-    --ring: 42 92% 38%;
+    --ring: 42 92% 36%;
     --sidebar-accent-foreground: 38 85% 30%;
-    --chart-1: 42 88% 40%;
+    --chart-1: 42 88% 38%;
   }
   :root:not(.dark)[data-accent='green'] {
     --primary: 142 62% 32%;

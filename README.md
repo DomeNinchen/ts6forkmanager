@@ -121,7 +121,9 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Security** — role-based access control with four roles and per-server scoping, two-factor authentication with recovery codes, Single Sign-On via any OpenID Connect provider, AES-256-GCM encryption for stored credentials, JWT with refresh-token rotation, SSRF protection, and rate limiting. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
 
-**Administration** — theming, user and session management, yt-dlp cookie handling, runtime debug toggles, scheduled restarts, and an update status page.
+**Theming** — nine base themes, six dark (Command Deck, OLED-Black, Graphite, Carbon, Frost, Deep Forest) and three light (Daylight, Paper, Frost Light), combinable with any of ten accent colours. The admin sets an installation-wide default; every user can override both for themselves in their own browser.
+
+**Administration** — user and session management, yt-dlp cookie handling, runtime debug toggles, scheduled restarts, and an update status page.
 
 ## 📖 Documentation
 
