@@ -43,6 +43,7 @@ const Permissions = lazy(() => import('@/pages/Permissions'));
 const Bans = lazy(() => import('@/pages/Bans'));
 const Tokens = lazy(() => import('@/pages/Tokens'));
 const Files = lazy(() => import('@/pages/Files'));
+const Icons = lazy(() => import('@/pages/Icons'));
 const Complaints = lazy(() => import('@/pages/Complaints'));
 const Messages = lazy(() => import('@/pages/Messages'));
 const ServerLogs = lazy(() => import('@/pages/ServerLogs'));
@@ -83,6 +84,7 @@ export function App() {
               <Route path="/bans" element={<AdminRoute><Bans /></AdminRoute>} />
               <Route path="/tokens" element={<AdminRoute><Tokens /></AdminRoute>} />
               <Route path="/files" element={<AdminRoute><Files /></AdminRoute>} />
+              <Route path="/icons" element={<Icons />} />
               <Route path="/complaints" element={<AdminRoute><Complaints /></AdminRoute>} />
               <Route path="/messages" element={<AdminRoute><Messages /></AdminRoute>} />
               <Route path="/logs" element={<AdminRoute><ServerLogs /></AdminRoute>} />

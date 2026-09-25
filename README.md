@@ -105,7 +105,7 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 ## Features
 
-**Server management** — dashboard with live stats and a bandwidth graph, virtual server control, channel tree with drag-and-drop, client list with bulk actions, bans, complaints, offline messages, file browser, log viewer, snapshots, and per-server advanced settings.
+**Server management** — dashboard with live stats and a bandwidth graph, virtual server control, channel tree with drag-and-drop, client list with bulk actions, bans, complaints, offline messages, file browser, icon browser (view, upload and delete a server's icon pool, with search and where each icon is currently in use), log viewer, snapshots, and per-server advanced settings.
 
 **Permissions** — a full editor across all five permission layers, including offline clients. Bulk-apply to many entities at once, set many permissions to one value in a single step, import an exported group file onto the current selection (merging into it or replacing it outright), compare several side by side with automatic highlighting, look up where a permission is set anywhere on the server, and see every permission that applies to one client in one channel with the layer it comes from. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Permissions)
 

@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation } from 'react-router';
 import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
-  Lock, Ban, KeyRound, FolderOpen, MessageSquareWarning, Mail,
+  Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
   BarChart3, Wrench, SlidersHorizontal,
 } from 'lucide-react';
@@ -56,9 +56,12 @@ const navSections = [
   },
   {
     label: 'Content',
-    visible: adminOnly,
+    // Unlike the other admin-only sections, this one also has to appear for
+    // non-admins, since the icon browser is readable by every role.
+    visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
     items: [
       { to: '/files', icon: FolderOpen, label: 'Files', visible: adminOnly },
+      { to: '/icons', icon: ImageIcon, label: 'Icons' },
       { to: '/complaints', icon: MessageSquareWarning, label: 'Complaints', visible: adminOnly },
       { to: '/messages', icon: Mail, label: 'Messages', visible: adminOnly },
     ],
