@@ -45,7 +45,7 @@ RUN printf 'server {\n\
 \n\
     location /widget/ {\n\
         add_header X-Frame-Options "" always;\n\
-        add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"'; style-src '"'"'self'"'"' https://fonts.googleapis.com; font-src '"'"'self'"'"' https://fonts.gstatic.com data:; img-src '"'"'self'"'"' data: blob:; media-src '"'"'self'"'"' blob:; connect-src '"'"'self'"'"'; frame-ancestors *; base-uri '"'"'self'"'"'; form-action '"'"'self'"'"'; object-src '"'"'none'"'"'" always;\n\
+        add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"'; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"' https://fonts.googleapis.com; font-src '"'"'self'"'"' https://fonts.gstatic.com data:; img-src '"'"'self'"'"' data: blob:; media-src '"'"'self'"'"' blob:; connect-src '"'"'self'"'"'; frame-ancestors *; base-uri '"'"'self'"'"'; form-action '"'"'self'"'"'; object-src '"'"'none'"'"'" always;\n\
         add_header X-Content-Type-Options "nosniff" always;\n\
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;\n\
         add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;\n\
@@ -57,7 +57,7 @@ RUN printf 'server {\n\
 \n\
     location / {\n\
         add_header X-Frame-Options "SAMEORIGIN" always;\n\
-        add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"'; style-src '"'"'self'"'"' https://fonts.googleapis.com; font-src '"'"'self'"'"' https://fonts.gstatic.com data:; img-src '"'"'self'"'"' data: blob:; media-src '"'"'self'"'"' blob:; connect-src '"'"'self'"'"'; frame-ancestors '"'"'self'"'"'; base-uri '"'"'self'"'"'; form-action '"'"'self'"'"'; object-src '"'"'none'"'"'" always;\n\
+        add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"'; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"' https://fonts.googleapis.com; font-src '"'"'self'"'"' https://fonts.gstatic.com data:; img-src '"'"'self'"'"' data: blob:; media-src '"'"'self'"'"' blob:; connect-src '"'"'self'"'"'; frame-ancestors '"'"'self'"'"'; base-uri '"'"'self'"'"'; form-action '"'"'self'"'"'; object-src '"'"'none'"'"'" always;\n\
         add_header X-Content-Type-Options "nosniff" always;\n\
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;\n\
         add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;\n\
