@@ -138,6 +138,7 @@ model TsServerConfig {
   musicRequests MusicRequest[]
   commandPermissions  BotCommandPermission[]
   commandAdminGroups  BotCommandAdminGroup[]
+  metricSamples       ServerMetricSample[]
 }
 
 model BotFlow {
@@ -358,4 +359,40 @@ model BotCommandAdminGroup {
   createdAt      DateTime @default(now())
 
   @@unique([serverConfigId, groupId])
+}
+
+// === Dashboard metric history ===
+// One row per bandwidth/ping measurement taken by BandwidthSampler. This
+// exists so the dashboard's charts can show a full time window the moment
+// they are opened, instead of starting empty and filling in only while
+// somebody is watching. An in-memory ring buffer alone cannot do that: it is
+// lost on every backend restart, and the backend restarts on every
+// deployment - so the charts would be short of history exactly after an
+// update.
+//
+// Rows are pruned to the sampler's retention window on every sample, so this
+// table stays tiny: at a 30s interval that is roughly 40 rows per virtual
+// server, not a growing archive. It is deliberately not a general metrics
+// store - if longer-term history is ever wanted, the retention window in
+// bandwidth-sampler.ts is the single knob to change.
+model ServerMetricSample {
+  id              Int      @id @default(autoincrement())
+  serverConfigId  Int
+  serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  // TeamSpeak's own virtual server id (sid). Not a row in this database, so
+  // a plain Int rather than a relation - consistent with how sid is carried
+  // on BotFlow.virtualServerId.
+  virtualServerId Int
+  measuredAt      DateTime @default(now())
+  // Bytes per second, as reported by serverrequestconnectioninfo.
+  incoming        Int
+  outgoing        Int
+  // Round-trip time in ms of a TCP connect to the server's own host, or -1
+  // when it was unreachable - see BandwidthSampler.tcpPing for why this is
+  // measured rather than read from virtualserver_total_ping.
+  ping            Int
+
+  // Every read is "this server's samples in time order" and every prune is
+  // "everything older than X" - one composite index serves both.
+  @@index([serverConfigId, virtualServerId, measuredAt])
 }

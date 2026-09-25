@@ -12,7 +12,7 @@ import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
 import { formatBytes, formatUptime, cn } from '@/lib/utils';
 import { Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid, Lock, Bot } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
 
 interface SatelliteStatProps {
@@ -22,7 +22,7 @@ interface SatelliteStatProps {
   sub?: string;
   accentColor?: string;
   compact?: boolean;
-  /** Small inline history sparkline, e.g. the last ~10min of ping - see Sparkline below. */
+  /** Small inline history sparkline, e.g. the last 20min of ping - see Sparkline below. */
   chart?: React.ReactNode;
 }
 
@@ -113,8 +113,21 @@ function BotFlowRow({ flow, canEdit }: { flow: DashboardBotFlow; canEdit: boolea
 const formatSampleTime = (ms: number) =>
   new Date(ms).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-// Matches the backend BandwidthSampler: 10s interval, 90 samples = 15 minutes.
-const MAX_BANDWIDTH_POINTS = 90;
+/** One measurement as the backend's /bandwidth-history endpoint returns it. */
+interface BandwidthSample {
+  timestamp: number;
+  incoming: number;
+  outgoing: number;
+  ping?: number;
+}
+
+/** The same measurement in the shape the chart and sparkline plot. */
+interface ChartPoint {
+  time: string;
+  in: number;
+  out: number;
+  ping: number;
+}
 
 export default function Dashboard() {
   const { selectedConfigId, selectedSid } = useServerStore();
@@ -132,57 +145,29 @@ export default function Dashboard() {
   const serverBotFlows = (allBots ?? []).filter(
     (b: any) => b.serverConfigId === selectedConfigId && String(b.virtualServerId) === String(selectedSid),
   );
-  const [bandwidthHistory, setBandwidthHistory] = useState<any[]>([]);
   const [showWidgets, setShowWidgets] = useState(false);
-  const seededServerRef = useRef<string | null>(null);
 
-  // Seed the chart from the backend's rolling history buffer once per
-  // selected server, so it shows the last ~15min immediately instead of
-  // starting empty and only filling in from this point onward. React Query
-  // already keys bandwidthHistoryData by (configId, sid), so switching
-  // servers naturally clears it to undefined until the new server's history
-  // loads (or is already cached) - no separate reset effect needed, and one
-  // is actively wrong here since it would run on mount too and wipe out the
-  // seed that just happened in the same commit.
-  useEffect(() => {
-    const serverKey = `${selectedConfigId}:${selectedSid}`;
-    if (seededServerRef.current === serverKey) return;
-    if (!bandwidthHistoryData) {
-      setBandwidthHistory([]);
-      return;
-    }
-    seededServerRef.current = serverKey;
-    setBandwidthHistory(
-      bandwidthHistoryData.map((s: { timestamp: number; incoming: number; outgoing: number; ping?: number }) => ({
+  // Straight from the backend's measurements - the page keeps no history state
+  // of its own. The sampler runs continuously whether or not anyone is looking,
+  // so this is already the full 20-minute window on the very first render
+  // rather than a chart that starts empty and fills in while you watch it.
+  // Appending live points here instead would mix the dashboard's own 10s poll
+  // into the sampler's 30s cadence and, within a few minutes, push the real
+  // history out of the window entirely.
+  const bandwidthHistory = useMemo<ChartPoint[]>(
+    () =>
+      ((bandwidthHistoryData ?? []) as BandwidthSample[]).map((s) => ({
         time: formatSampleTime(s.timestamp),
         in: s.incoming,
         out: s.outgoing,
         ping: s.ping ?? -1,
       })),
-    );
-  }, [bandwidthHistoryData, selectedConfigId, selectedSid]);
+    [bandwidthHistoryData],
+  );
 
-  // Append the live 10s poll on top of the seeded history.
-  useEffect(() => {
-    if (data) {
-      setBandwidthHistory((prev) => {
-        const next = [
-          ...prev,
-          {
-            time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            in: data.bandwidth.incoming,
-            out: data.bandwidth.outgoing,
-            ping: data.ping,
-          },
-        ];
-        return next.slice(-MAX_BANDWIDTH_POINTS);
-      });
-    }
-  }, [data]);
-
-  // Last ~10min at the sampler's 10s cadence, clamping unreachable (-1) samples to 0 so one bad
-  // tick doesn't spike the sparkline - the headline value above still shows "timeout" for those.
-  const pingSparklineValues = bandwidthHistory.slice(-60).map((s) => Math.max(0, s.ping ?? 0));
+  // Clamps unreachable (-1) samples to 0 so one bad tick doesn't spike the
+  // sparkline - the headline value above still shows "timeout" for those.
+  const pingSparklineValues = bandwidthHistory.map((s) => Math.max(0, s.ping ?? 0));
 
   if (!selectedConfigId || !selectedSid) {
     const isForbidden = (virtualServersError as any)?.response?.status === 403;
@@ -286,6 +271,7 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
               Bandwidth
+              <span className="ml-auto text-[11px] font-normal normal-case tracking-normal">last 20 minutes</span>
             </CardTitle>
           </CardHeader>
           <CardContent>

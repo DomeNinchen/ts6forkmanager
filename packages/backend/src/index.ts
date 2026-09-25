@@ -99,7 +99,8 @@ async function main() {
   // Make services available via app.locals
   app.locals.prisma = prisma;
   app.locals.connectionPool = connectionPool;
-  app.locals.bandwidthSampler = new BandwidthSampler(connectionPool, prisma);
+  const bandwidthSampler = new BandwidthSampler(connectionPool, prisma);
+  app.locals.bandwidthSampler = bandwidthSampler;
   app.locals.wss = wss;
 
   // Initialize Bot Engine
@@ -119,6 +120,13 @@ async function main() {
   // Listens directly on each VoiceBot's TS3 connection (no SSH needed)
   const musicCommandHandler = new MusicCommandHandler(prisma, voiceBotManager);
   voiceBotManager.setMusicCommandHandler(musicCommandHandler);
+
+  // Start measuring bandwidth/ping for every running virtual server right
+  // away, so the dashboard charts already have a full window of history the
+  // first time anyone opens them. Deliberately not awaited: its first pass
+  // talks to every configured TeamSpeak server, and an unreachable one would
+  // otherwise hold up the HTTP listener. Failures are handled inside.
+  void bandwidthSampler.start();
 
   server.listen(config.port, () => {
     console.log(`[TS6 WebUI] Backend running on http://localhost:${config.port}`);
