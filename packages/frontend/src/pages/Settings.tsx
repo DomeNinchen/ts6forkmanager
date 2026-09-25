@@ -1767,6 +1767,29 @@ function UpdateStatusTab() {
   const { data, isLoading } = useUpdateCheck();
   const recheck = useRecheckUpdate();
 
+  const qc = useQueryClient();
+  const { data: githubToken } = useQuery({ queryKey: ['github-token'], queryFn: settingsApi.getGithubToken });
+  const [tokenDraft, setTokenDraft] = useState('');
+
+  const saveToken = useMutation({
+    mutationFn: (token: string) => settingsApi.setGithubToken(token),
+    onSuccess: (saved) => {
+      qc.setQueryData(['github-token'], saved);
+      setTokenDraft('');
+      toast.success('GitHub token saved');
+    },
+    onError: () => toast.error('Failed to save GitHub token'),
+  });
+
+  const removeToken = useMutation({
+    mutationFn: () => settingsApi.deleteGithubToken(),
+    onSuccess: (saved) => {
+      qc.setQueryData(['github-token'], saved);
+      toast.success('GitHub token removed');
+    },
+    onError: () => toast.error('Failed to remove GitHub token'),
+  });
+
   if (isLoading || !data) return <PageLoader />;
 
   const frontendUpdateAvailable = !!(data.frontendLatest && compareVersions(data.frontendLatest, __APP_VERSION__) > 0);
@@ -1836,6 +1859,51 @@ function UpdateStatusTab() {
           <p className="text-[11px] text-muted-foreground pt-3">
             {data.checkedAt ? `Last checked: ${new Date(data.checkedAt).toLocaleString()}` : 'Not checked yet'}
           </p>
+        </CardContent>
+      </Card>
+
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">GitHub API Token</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Optional. This check reads three small files from GitHub per run, which is fine within GitHub's unauthenticated limit of 60 requests/hour — but that budget is shared with anything else on this server calling GitHub's API, and "Recheck Now" is throttled to 20/hour without a token to stay inside it. Add a token (a plain <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noreferrer" className="underline">fine-grained personal access token</a> with no repository access needed, since it only reads public files) to raise that to 5,000 requests/hour.
+          </p>
+
+          <div>
+            <Label className="text-xs">Token</Label>
+            <Input
+              type="password"
+              className="h-8 mt-1 font-mono-data text-xs"
+              placeholder={githubToken?.hasToken ? 'Configured — leave blank and Save does nothing' : 'ghp_... or github_pat_...'}
+              value={tokenDraft}
+              onChange={(e) => setTokenDraft(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              disabled={!tokenDraft.trim() || saveToken.isPending}
+              onClick={() => saveToken.mutate(tokenDraft.trim())}
+            >
+              {saveToken.isPending ? 'Saving...' : 'Save'}
+            </Button>
+            {githubToken?.hasToken && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={removeToken.isPending}
+                onClick={() => removeToken.mutate()}
+              >
+                {removeToken.isPending ? 'Removing...' : 'Remove'}
+              </Button>
+            )}
+            <span className="text-[11px] text-muted-foreground">
+              {githubToken?.hasToken ? 'A token is configured.' : 'No token configured — using the unauthenticated limit.'}
+            </span>
+          </div>
         </CardContent>
       </Card>
     </div>

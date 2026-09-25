@@ -63,6 +63,15 @@ export const settingsApi = {
 
   setWebguiBaseTheme: (theme: BaseTheme): Promise<{ theme: BaseTheme }> =>
     api.put('/settings/webgui-base-theme', { theme }).then((r) => r.data),
+
+  getGithubToken: (): Promise<{ hasToken: boolean }> =>
+    api.get('/settings/github-token').then((r) => r.data),
+
+  setGithubToken: (token: string): Promise<{ hasToken: boolean }> =>
+    api.put('/settings/github-token', { token }).then((r) => r.data),
+
+  deleteGithubToken: (): Promise<{ hasToken: boolean }> =>
+    api.delete('/settings/github-token').then((r) => r.data),
 };
 
 export const ACCENT_PRESETS = ['violet', 'teal', 'red', 'blue', 'yellow', 'green', 'orange', 'pink', 'cyan', 'lime'] as const;

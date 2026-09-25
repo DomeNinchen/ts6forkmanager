@@ -12,6 +12,7 @@ import { setYtCookieFile, getYtCookieFile } from '../voice/audio/youtube.js';
 import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-flags.js';
 import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRestartConfig } from '../utils/scheduled-restart.js';
 import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-config.js';
+import { getGithubToken, setGithubToken } from '../utils/github-token.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
 import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN } from '../utils/stream-defaults.js';
 import { STREAM_PRESETS } from '../voice/streaming/types.js';
@@ -216,6 +217,35 @@ settingsRoutes.put('/oidc', requireAdmin, async (req: Request, res: Response, ne
       buttonLabel: next_.buttonLabel,
       hasClientSecret: !!next_.clientSecret,
     });
+  } catch (err) { next(err); }
+});
+
+// GET /api/settings/github-token — whether a token is configured (never returns the actual value)
+settingsRoutes.get('/github-token', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const token = await getGithubToken(prisma);
+    res.json({ hasToken: !!token });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/github-token — set/replace the token used for the update-checker's GitHub API calls
+settingsRoutes.put('/github-token', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { token } = req.body;
+    if (typeof token !== 'string' || !token.trim()) throw new AppError(400, 'token is required');
+    const prisma = req.app.locals.prisma;
+    await setGithubToken(prisma, token.trim());
+    res.json({ hasToken: true });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/settings/github-token — remove it, falling back to unauthenticated GitHub API calls (60/hour)
+settingsRoutes.delete('/github-token', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    await setGithubToken(prisma, null);
+    res.json({ hasToken: false });
   } catch (err) { next(err); }
 });
 

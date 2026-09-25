@@ -51,7 +51,7 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
   await loadDebugFlags(prisma);
   startScheduledRestartChecker(prisma);
-  startUpdateChecker();
+  startUpdateChecker(prisma);
   startPlayedSongCleanup(prisma);
   startYtCookieChecker();
 
