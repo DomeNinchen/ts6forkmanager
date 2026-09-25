@@ -361,3 +361,27 @@ export const CodecNames: Record<number, string> = {
   4: 'Opus Voice',
   5: 'Opus Music',
 };
+
+// Icons - a virtual server's icon pool lives in its own file repository
+// (cid=0), where every uploaded icon is a file named `icon_<crc32>`.
+export interface ServerIcon {
+  /** CRC32 of the file's bytes - this is what `iconid`/`channel_icon_id`/
+   * `virtualserver_icon_id` reference. */
+  iconId: number;
+  /** File name as the server stores it, e.g. `icon_2752363917`. */
+  name: string;
+  size: number;
+  /** Upload time in milliseconds since the epoch. */
+  datetime: number;
+}
+
+/** A single place an icon is currently assigned to. */
+export interface IconUsageRef {
+  kind: 'virtualserver' | 'servergroup' | 'channelgroup' | 'channel';
+  /** Database ID of the group/channel; omitted for the virtual server itself. */
+  id?: number;
+  name: string;
+}
+
+/** Icon ID -> everywhere that icon is currently in use. */
+export type IconUsageMap = Record<number, IconUsageRef[]>;
