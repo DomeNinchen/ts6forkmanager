@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { EditChannelDialog } from '@/components/channels/EditChannelDialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -265,7 +266,6 @@ export default function Channels() {
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ cid: number; name: string } | null>(null);
   const [editTarget, setEditTarget] = useState<ChannelNode | null>(null);
-  const [editForm, setEditForm] = useState({ channel_name: '', channel_topic: '', channel_password: '' });
   const [newNames, setNewNames] = useState('');
   const [draggedCid, setDraggedCid] = useState<number | null>(null);
 
@@ -390,21 +390,7 @@ export default function Channels() {
     });
   };
 
-  const handleEditOpen = (node: ChannelNode) => {
-    setEditTarget(node);
-    setEditForm({ channel_name: node.channel_name, channel_topic: node.channel_topic || '', channel_password: '' });
-  };
-
-  const handleEditSave = () => {
-    if (!editTarget || !editForm.channel_name.trim()) return;
-    const data: any = { channel_name: editForm.channel_name };
-    if (editForm.channel_topic !== undefined) data.channel_topic = editForm.channel_topic;
-    if (editForm.channel_password) data.channel_password = editForm.channel_password;
-    editChannel.mutate({ cid: editTarget.cid, data }, {
-      onSuccess: () => { toast.success('Channel updated'); setEditTarget(null); },
-      onError: () => toast.error('Failed to update channel'),
-    });
-  };
+  const handleEditOpen = (node: ChannelNode) => setEditTarget(node);
 
   const handleDrop = (draggedCid: number, targetCid: number) => {
     moveChannel.mutate({ cid: draggedCid, data: { cpid: targetCid } }, {
@@ -572,33 +558,11 @@ export default function Channels() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={(v) => { if (!v) setEditTarget(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Channel</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Channel Name</Label>
-              <Input value={editForm.channel_name} onChange={(e) => setEditForm({ ...editForm, channel_name: e.target.value })} />
-            </div>
-            <div>
-              <Label className="text-xs">Topic</Label>
-              <Input value={editForm.channel_topic} onChange={(e) => setEditForm({ ...editForm, channel_topic: e.target.value })} placeholder="Optional" />
-            </div>
-            <div>
-              <Label className="text-xs">Password</Label>
-              <Input type="password" value={editForm.channel_password} onChange={(e) => setEditForm({ ...editForm, channel_password: e.target.value })} placeholder="Leave empty to keep current" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
-            <Button onClick={handleEditSave} disabled={!editForm.channel_name.trim() || editChannel.isPending}>
-              {editChannel.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditChannelDialog
+        cid={editTarget?.cid ?? null}
+        fallbackName={editTarget?.channel_name ?? ''}
+        onClose={() => setEditTarget(null)}
+      />
 
       {/* Delete Confirm */}
       <ConfirmDialog
