@@ -10,7 +10,7 @@ Web-based management interface for TeamSpeak servers. Control virtual servers, c
 
 Built on the **WebQuery HTTP API** (the ServerQuery replacement in modern TeamSpeak builds). Telnet is not used or supported.
 
-![License](https://img.shields.io/badge/license-MIT-blue)
+![License](https://img.shields.io/badge/license-GPLv3-green.svg?style=flat)
 
 ## Screenshots
 
@@ -144,4 +144,4 @@ The music bot description template was affected by a similar-looking issue (`cli
 
 ## License
 
-MIT
+GPLv3
