@@ -44,12 +44,22 @@ RUN printf 'server {\n\
     }\n\
 \n\
     location /widget/ {\n\
-        add_header X-Frame-Options "";\n\
-        add_header Content-Security-Policy "frame-ancestors *";\n\
+        add_header X-Frame-Options "" always;\n\
+        add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"'; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"' https://fonts.googleapis.com; font-src '"'"'self'"'"' https://fonts.gstatic.com data:; img-src '"'"'self'"'"' data: blob:; media-src '"'"'self'"'"' blob:; connect-src '"'"'self'"'"' ws: wss:; frame-ancestors *; base-uri '"'"'self'"'"'; form-action '"'"'self'"'"'; object-src '"'"'none'"'"'" always;\n\
+        add_header X-Content-Type-Options "nosniff" always;\n\
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;\n\
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;\n\
+        add_header Cross-Origin-Resource-Policy "same-origin" always;\n\
         try_files $uri $uri/ /index.html;\n\
     }\n\
 \n\
     location / {\n\
+        add_header X-Frame-Options "SAMEORIGIN" always;\n\
+        add_header Content-Security-Policy "default-src '"'"'self'"'"'; script-src '"'"'self'"'"'; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"' https://fonts.googleapis.com; font-src '"'"'self'"'"' https://fonts.gstatic.com data:; img-src '"'"'self'"'"' data: blob:; media-src '"'"'self'"'"' blob:; connect-src '"'"'self'"'"' ws: wss:; frame-ancestors '"'"'self'"'"'; base-uri '"'"'self'"'"'; form-action '"'"'self'"'"'; object-src '"'"'none'"'"'" always;\n\
+        add_header X-Content-Type-Options "nosniff" always;\n\
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;\n\
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;\n\
+        add_header Cross-Origin-Resource-Policy "same-origin" always;\n\
         try_files $uri $uri/ /index.html;\n\
     }\n\
 \n\
