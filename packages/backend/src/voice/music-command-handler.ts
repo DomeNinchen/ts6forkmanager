@@ -5,6 +5,7 @@ import type { QueueItem } from './playlist/queue.js';
 import { downloadYouTube } from './audio/youtube.js';
 import { STREAM_PRESETS } from './streaming/types.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
+import { canRunCommand } from '../utils/command-permissions.js';
 
 const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
 const CMD_PREFIX = '!';
@@ -18,6 +19,18 @@ const MUSIC_COMMANDS = new Set([
   // switch the source lands in chat. Adding it to this set enables it; the
   // web interface already offers the same thing.
 ]);
+
+// Aliases that dispatch to the same handler in the switch below share one
+// permission entry, keyed by the first (canonical) name in each `case`
+// group - otherwise restricting "!skip" would do nothing against "!next"
+// typed instead (DomeNinchen/ts6forkmanager#184). Must stay in sync with the
+// RESTRICTABLE_COMMANDS list in @ts6/common, which lists canonical names only.
+const COMMAND_ALIASES: Record<string, string> = {
+  next: 'skip',
+  volume: 'vol',
+  nowplaying: 'np',
+  add: 'queue',
+};
 
 // Spotify doesn't allow playback through its API for third-party apps like
 // this one, so a track link is instead resolved to "<artist> <title>" and
@@ -120,6 +133,19 @@ export class MusicCommandHandler {
     // Ignore messages from ourselves (the bot)
     if (userClid === bot.ts3ClientId) return;
 
+    const serverConfigId = bot.currentConfig.serverConfigId;
+    const permissionCommand = COMMAND_ALIASES[command] ?? command;
+    const allowed = await canRunCommand(this.prisma, serverConfigId, permissionCommand, () =>
+      bot.getClientServerGroups(userClid).catch((err: any) => {
+        console.error(`[MusicCmd] Failed to look up server groups for clid=${userClid}: ${err.message}`);
+        return null;
+      }),
+    );
+    if (!allowed) {
+      await this.denyCommand(bot, userClid, serverConfigId, permissionCommand);
+      return;
+    }
+
     console.log(`[MusicCmd] Bot ${botId}: !${command} ${args} (from clid=${userClid})`);
 
     try {
@@ -186,6 +212,25 @@ export class MusicCommandHandler {
     } catch (err: any) {
       console.error(`[MusicCmd] Failed to send reply: ${err.message}`);
     }
+  }
+
+  /** Tells the user a command was blocked, naming the required group(s) by name where possible (DomeNinchen/ts6forkmanager#184). */
+  private async denyCommand(bot: VoiceBot, userClid: number, serverConfigId: number, command: string): Promise<void> {
+    const perm = await this.prisma.botCommandPermission.findUnique({
+      where: { serverConfigId_command: { serverConfigId, command } },
+    });
+    const groupIds = (perm?.allowedGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
+
+    let roleLabel = 'a different role';
+    if (groupIds.length > 0) {
+      try {
+        const names = await bot.getServerGroupNames();
+        if (names) roleLabel = groupIds.map((id) => names[id] || `#${id}`).join(' or ');
+      } catch (err: any) {
+        console.error(`[MusicCmd] Failed to resolve group names for denial message: ${err.message}`);
+      }
+    }
+    this.reply(bot, userClid, `You do not have permission to execute this command.\nRequired role: ${roleLabel}`);
   }
 
   // ─── Command Handlers ───────────────────────────────────────

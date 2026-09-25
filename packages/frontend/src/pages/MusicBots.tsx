@@ -38,12 +38,18 @@ import {
   Volume2, VolumeX, Upload, Search, Download, ListMusic, Shuffle,
   Repeat, Repeat1, Power, PowerOff, RefreshCw, Pencil, X, Loader2,
   Film, FileAudio, Link, GripVertical, Music2, Radio, Clock,
-  Video, ArrowUp, ArrowDown, ArrowUpDown, ImageIcon, UserRound,
+  Video, ArrowUp, ArrowDown, ArrowUpDown, ImageIcon, UserRound, ShieldCheck,
 } from 'lucide-react';
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
 import { toast } from 'sonner';
 import { formatBytes } from '@/lib/utils';
-import type { MusicBotSummary, PlaybackState, SongInfo, PlaylistSummary, PlaylistDetail, YouTubeSearchResult, RadioStationInfo, RadioPreset } from '@ts6/common';
+import { RESTRICTABLE_COMMANDS } from '@ts6/common';
+import type { MusicBotSummary, PlaybackState, SongInfo, PlaylistSummary, PlaylistDetail, YouTubeSearchResult, RadioStationInfo, RadioPreset, BotCommandPermissionInfo } from '@ts6/common';
+import { Checkbox } from '@/components/ui/checkbox';
+import { groupsApi } from '@/api/groups.api';
+import {
+  useCommandPermissions, useSetCommandPermission, useClearCommandPermission, useSetAdminGroups,
+} from '@/hooks/use-command-permissions';
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -1929,6 +1935,182 @@ function QueueTab() {
   );
 }
 
+function PermissionsTab() {
+  const { selectedConfigId } = useServerStore();
+  const { data: servers } = useServers();
+  const [serverId, setServerId] = useState<number | null>(selectedConfigId);
+  const configId = serverId || selectedConfigId;
+  const serverList = Array.isArray(servers) ? servers : [];
+
+  // Music bots assume a single virtual server per TS instance throughout
+  // this app (see the sid=1 comment in voice/voice-bot.ts) - group IDs here
+  // follow the same assumption.
+  const { data: groupsData } = useQuery({
+    queryKey: ['server-groups-for-command-perms', configId],
+    queryFn: () => groupsApi.serverGroups(configId!, 1),
+    enabled: !!configId,
+  });
+  // Template/query groups can't be assigned to a real client (TeamSpeak
+  // rejects them - see the same filter and note in ChannelGroups.tsx), so
+  // they'd never actually match anyone here either.
+  const groups = (Array.isArray(groupsData) ? groupsData : []).filter((g: any) => Number(g.type) === 1);
+
+  const { data: permData, isLoading } = useCommandPermissions(configId);
+  const setCommandPerm = useSetCommandPermission(configId);
+  const clearCommandPerm = useClearCommandPermission(configId);
+  const setAdminGroups = useSetAdminGroups(configId);
+
+  const permByCommand = new Map<string, BotCommandPermissionInfo>(
+    (permData?.permissions ?? []).map((p) => [p.command, p]),
+  );
+  const adminGroupIds = new Set(permData?.adminGroupIds ?? []);
+
+  const [editingCommand, setEditingCommand] = useState<string | null>(null);
+  const [editingSelected, setEditingSelected] = useState<Set<string>>(new Set());
+
+  const groupName = (sgid: string) => groups.find((g: any) => String(g.sgid) === sgid)?.name || `#${sgid}`;
+
+  const openEdit = (command: string) => {
+    const current = permByCommand.get(command)?.allowedGroupIds || '';
+    setEditingSelected(new Set(current.split(',').map((s) => s.trim()).filter(Boolean)));
+    setEditingCommand(command);
+  };
+
+  const saveEdit = () => {
+    if (!editingCommand) return;
+    const ids = [...editingSelected];
+    const mutation = ids.length === 0
+      ? clearCommandPerm.mutateAsync(editingCommand)
+      : setCommandPerm.mutateAsync({ command: editingCommand, allowedGroupIds: ids.join(',') });
+    mutation.then(
+      () => { toast.success('Permission updated'); setEditingCommand(null); },
+      () => toast.error('Failed to update permission'),
+    );
+  };
+
+  const toggleAdminGroup = (sgid: string) => {
+    const next = new Set(adminGroupIds);
+    next.has(sgid) ? next.delete(sgid) : next.add(sgid);
+    setAdminGroups.mutate([...next], { onError: () => toast.error('Failed to update admin groups') });
+  };
+
+  if (!configId) return <EmptyState icon={ShieldCheck} title="No server selected" />;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Select value={String(configId)} onValueChange={(v) => setServerId(Number(v))}>
+          <SelectTrigger className="h-8 w-56 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {serverList.map((s: any) => (
+              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Card className="card-hero">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" /> Admin Bypass Groups
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-3">
+            Members of any group checked here can use every chat command below, regardless of its individual restriction.
+          </p>
+          {groups.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No server groups found.</p>
+          ) : (
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {groups.map((g: any) => (
+                <label key={g.sgid} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={adminGroupIds.has(String(g.sgid))}
+                    onCheckedChange={() => toggleAdminGroup(String(g.sgid))}
+                  />
+                  {g.name}
+                </label>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="card-hero">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Chat Command Permissions</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? <PageLoader /> : (
+            <div className="divide-y divide-border">
+              {RESTRICTABLE_COMMANDS.map(({ command, label }) => {
+                const perm = permByCommand.get(command);
+                const ids = (perm?.allowedGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
+                return (
+                  <div key={command} className="flex items-center justify-between px-4 py-2.5">
+                    <div className="min-w-0">
+                      <div className="text-sm font-mono-data">{label}</div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {ids.length === 0 ? (
+                          <Badge variant="secondary" className="text-[10px]">Everyone</Badge>
+                        ) : (
+                          ids.map((id) => (
+                            <Badge key={id} variant="outline" className="text-[10px]">{groupName(id)}</Badge>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(command)}>
+                      <Pencil className="h-3 w-3 mr-1" /> Edit
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!editingCommand} onOpenChange={(open) => !open && setEditingCommand(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{RESTRICTABLE_COMMANDS.find((c) => c.command === editingCommand)?.label}</DialogTitle>
+            <DialogDescription>
+              Leave everything unchecked to allow everyone. Otherwise only the checked groups (and any admin bypass group above) may use this command.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[280px]">
+            <div className="space-y-2 pr-2">
+              {groups.map((g: any) => (
+                <label key={g.sgid} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={editingSelected.has(String(g.sgid))}
+                    onCheckedChange={() => {
+                      setEditingSelected((prev) => {
+                        const next = new Set(prev);
+                        const id = String(g.sgid);
+                        next.has(id) ? next.delete(id) : next.add(id);
+                        return next;
+                      });
+                    }}
+                  />
+                  {g.name}
+                </label>
+              ))}
+              {groups.length === 0 && <p className="text-sm text-muted-foreground">No server groups found.</p>}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCommand(null)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={setCommandPerm.isPending || clearCommandPerm.isPending}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function MusicBots() {
@@ -1949,6 +2131,7 @@ export default function MusicBots() {
           <TabsTrigger value="library"><FileAudio className="h-3.5 w-3.5 mr-1.5" /> Library</TabsTrigger>
           <TabsTrigger value="playlists"><ListMusic className="h-3.5 w-3.5 mr-1.5" /> Playlists</TabsTrigger>
           <TabsTrigger value="radio"><Radio className="h-3.5 w-3.5 mr-1.5" /> Radio</TabsTrigger>
+          <TabsTrigger value="permissions"><ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Permissions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="bots"><BotsTab /></TabsContent>
@@ -1957,6 +2140,7 @@ export default function MusicBots() {
         <TabsContent value="library"><LibraryTab /></TabsContent>
         <TabsContent value="playlists"><PlaylistsTab /></TabsContent>
         <TabsContent value="radio"><RadioTab /></TabsContent>
+        <TabsContent value="permissions"><PermissionsTab /></TabsContent>
       </Tabs>
     </div>
   );

@@ -136,6 +136,8 @@ model TsServerConfig {
   radioStations RadioStation[]
   widgets       Widget[]
   musicRequests MusicRequest[]
+  commandPermissions  BotCommandPermission[]
+  commandAdminGroups  BotCommandAdminGroup[]
 }
 
 model BotFlow {
@@ -319,4 +321,41 @@ model StreamSession {
   startedAt      DateTime  @default(now())
   endedAt        DateTime?
   peakViewers    Int       @default(0)
+}
+
+// === Chat Command Permissions (DomeNinchen/ts6forkmanager#184) ===
+// Restricts which TeamSpeak server groups may run a given "!command" in
+// bot chat (MusicBot today; the check itself is command-name-keyed and not
+// tied to MusicBot specifically, so other bot-triggered commands can reuse
+// it later). No row for a command, or an empty allowedGroupIds, means
+// "everyone can use it" - the default the feature request asked for.
+model BotCommandPermission {
+  id              Int      @id @default(autoincrement())
+  serverConfigId  Int
+  serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  command         String
+  // Comma-separated TeamSpeak server group IDs (sgid). Stored as a CSV
+  // string rather than a relation table, matching how group membership is
+  // already represented elsewhere in this app (e.g. bot-flow condition
+  // nodes, see utils/group-match.ts) - these IDs are TeamSpeak's own and
+  // aren't rows in this database.
+  allowedGroupIds String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([serverConfigId, command])
+}
+
+// Server groups that bypass every BotCommandPermission restriction on a
+// given server config - the feature request's "Admin bypasses all commands".
+// Kept separate from BotCommandPermission rather than a magic command name,
+// since it applies globally and shouldn't need re-adding to every command.
+model BotCommandAdminGroup {
+  id             Int      @id @default(autoincrement())
+  serverConfigId Int
+  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  groupId        String   // a single TeamSpeak sgid, as a string for consistency with allowedGroupIds above
+  createdAt      DateTime @default(now())
+
+  @@unique([serverConfigId, groupId])
 }
