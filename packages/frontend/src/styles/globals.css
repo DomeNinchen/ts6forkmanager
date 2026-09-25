@@ -125,7 +125,26 @@ layer(base);
   animation: pulseDot 2s ease-in-out infinite;
 }
 
+/*
+  Theming has two fully independent axes, both chosen in Settings → WebGui:
+
+  1. BASE THEME (`data-base-theme`) - the structural palette: background, surfaces,
+     borders, text, sidebar. A base theme also decides whether the app is light or
+     dark; the store adds/removes the `.dark` class to match, so there is no separate
+     light/dark setting any more. `daylight` is the `:root` block, `command-deck` the
+     `.dark` block - neither needs its own selector.
+  2. ACCENT (`data-accent`) - only the brand/interactive tokens (--primary,
+     --primary-foreground, --ring, --sidebar-accent-foreground, --chart-1).
+
+  The two never write the same token, so every accent combines with every base theme.
+  Accents are defined twice, once per mode, because the same hue needs a different
+  lightness to stay legible against a dark surface vs. a light one.
+*/
 @layer base {
+  /* ---------- Light base themes ---------- */
+
+  /* Daylight - the default light theme. Also holds the tokens shared by every theme
+     (radius, destructive, chart-2..5), so no other block has to repeat them. */
   :root {
     --background: 210 20% 98%;
     --foreground: 215 25% 10%;
@@ -133,8 +152,8 @@ layer(base);
     --card-foreground: 215 25% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 10%;
-    --primary: 186 72% 42%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 186 72% 32%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 214 20% 92%;
     --secondary-foreground: 215 25% 15%;
     --muted: 214 20% 96%;
@@ -145,22 +164,68 @@ layer(base);
     --destructive-foreground: 210 40% 98%;
     --border: 214 20% 88%;
     --input: 214 20% 88%;
-    --ring: 186 72% 42%;
+    --ring: 186 72% 32%;
     --radius: 0.25rem;
     --sidebar: 214 20% 95%;
     --sidebar-foreground: 215 25% 30%;
     --sidebar-accent: 214 20% 90%;
-    --sidebar-accent-foreground: 186 72% 35%;
+    --sidebar-accent-foreground: 186 72% 27%;
     --sidebar-border: 214 20% 88%;
-    --chart-1: 186 72% 42%;
+    --chart-1: 186 72% 34%;
     --chart-2: 160 60% 45%;
     --chart-3: 280 60% 55%;
     --chart-4: 40 80% 55%;
     --chart-5: 0 72% 55%;
   }
 
+  /* Paper - warm off-white with a light sepia cast, softer than plain white. */
+  :root:not(.dark)[data-base-theme='paper'] {
+    --background: 40 30% 95%;
+    --foreground: 30 20% 14%;
+    --card: 42 40% 98%;
+    --card-foreground: 30 20% 14%;
+    --popover: 42 40% 98%;
+    --popover-foreground: 30 20% 14%;
+    --secondary: 40 25% 89%;
+    --secondary-foreground: 30 20% 18%;
+    --muted: 40 25% 92%;
+    --muted-foreground: 35 12% 45%;
+    --accent: 40 25% 90%;
+    --accent-foreground: 30 20% 18%;
+    --border: 38 18% 83%;
+    --input: 38 18% 83%;
+    --sidebar: 40 28% 92%;
+    --sidebar-foreground: 32 15% 32%;
+    --sidebar-accent: 40 25% 87%;
+    --sidebar-border: 38 18% 83%;
+  }
+
+  /* Frost Light - cool blue-grey, the light counterpart to the Frost dark theme. */
+  :root:not(.dark)[data-base-theme='frost-light'] {
+    --background: 218 27% 94%;
+    --foreground: 220 25% 16%;
+    --card: 218 35% 98%;
+    --card-foreground: 220 25% 16%;
+    --popover: 218 35% 98%;
+    --popover-foreground: 220 25% 16%;
+    --secondary: 219 28% 88%;
+    --secondary-foreground: 220 22% 20%;
+    --muted: 219 28% 91%;
+    --muted-foreground: 220 14% 45%;
+    --accent: 219 28% 89%;
+    --accent-foreground: 220 22% 20%;
+    --border: 219 22% 82%;
+    --input: 219 22% 82%;
+    --sidebar: 219 28% 91%;
+    --sidebar-foreground: 220 18% 33%;
+    --sidebar-accent: 219 28% 86%;
+    --sidebar-border: 219 22% 82%;
+  }
+
+  /* ---------- Dark base themes ---------- */
+
+  /* Command Deck - deep ink navy, the default dark theme (see the WebGui redesign directions artifact). */
   .dark {
-    /* Command Deck base palette - deep ink navy, violet/cyan brand accent (see the WebGui redesign directions artifact) */
     --background: 225 38% 6%;
     --foreground: 228 45% 94%;
     --card: 227 39% 12%;
@@ -192,13 +257,8 @@ layer(base);
     --chart-5: 0 65% 60%;
   }
 
-  /* OLED-Black base theme (Settings → WebGui → Base Theme) - an alternate structural
-     palette to the Command Deck navy above: a true #000 page background (real OLED power
-     savings) with surfaces lifted just enough to stay legible against it, fully neutral
-     (no hue) rather than navy-tinted. Deliberately independent of the accent system below -
-     never touches --primary/--ring/--sidebar-accent-foreground/--chart-1, so any accent
-     preset still combines with either base theme. 'command-deck' needs no block - it's the
-     .dark defaults above. */
+  /* OLED-Black - a true #000 page background (real power saving on OLED panels) with
+     surfaces lifted just enough to stay legible, fully neutral rather than navy-tinted. */
   .dark[data-base-theme='oled'] {
     --background: 0 0% 0%;
     --foreground: 0 0% 95%;
@@ -220,9 +280,105 @@ layer(base);
     --sidebar-border: 0 0% 15%;
   }
 
-  /* WebGui accent presets layer on top of the Command Deck base above - 'violet' IS that base (no
-     override needed), the rest of this block only ever touches brand/interactive tokens, never
-     the structural neutrals (background/card/border/muted) set above. */
+  /* Graphite - neutral grey with no colour cast at all; sits between Command Deck's
+     navy and OLED's pure black. */
+  .dark[data-base-theme='graphite'] {
+    --background: 0 0% 9%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 95%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 62%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 95%;
+    --border: 0 0% 26%;
+    --input: 0 0% 26%;
+    --sidebar: 0 0% 12%;
+    --sidebar-foreground: 0 0% 62%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-border: 0 0% 22%;
+  }
+
+  /* Carbon - warm anthracite with a faint brown cast; softer than Graphite. */
+  .dark[data-base-theme='carbon'] {
+    --background: 20 10% 8%;
+    --foreground: 30 15% 93%;
+    --card: 20 10% 13%;
+    --card-foreground: 30 15% 93%;
+    --popover: 20 10% 13%;
+    --popover-foreground: 30 15% 93%;
+    --secondary: 20 9% 18%;
+    --secondary-foreground: 30 12% 88%;
+    --muted: 20 9% 18%;
+    --muted-foreground: 25 10% 60%;
+    --accent: 20 9% 18%;
+    --accent-foreground: 30 15% 93%;
+    --border: 20 9% 26%;
+    --input: 20 9% 26%;
+    --sidebar: 20 10% 11%;
+    --sidebar-foreground: 25 10% 60%;
+    --sidebar-accent: 20 9% 18%;
+    --sidebar-border: 20 9% 22%;
+  }
+
+  /* Frost - cool blue-grey in the style of the Nord palette; lighter and lower-contrast
+     than Command Deck. */
+  .dark[data-base-theme='frost'] {
+    --background: 220 17% 13%;
+    --foreground: 219 28% 90%;
+    --card: 220 16% 18%;
+    --card-foreground: 219 28% 90%;
+    --popover: 220 16% 18%;
+    --popover-foreground: 219 28% 90%;
+    --secondary: 220 16% 24%;
+    --secondary-foreground: 219 25% 86%;
+    --muted: 220 16% 24%;
+    --muted-foreground: 220 14% 62%;
+    --accent: 220 16% 24%;
+    --accent-foreground: 219 28% 90%;
+    --border: 220 15% 32%;
+    --input: 220 15% 32%;
+    --sidebar: 220 16% 16%;
+    --sidebar-foreground: 220 14% 62%;
+    --sidebar-accent: 220 16% 24%;
+    --sidebar-border: 220 15% 27%;
+  }
+
+  /* Deep Forest - dark green-black, the most strongly tinted of the dark themes. */
+  .dark[data-base-theme='deep-forest'] {
+    --background: 155 28% 6%;
+    --foreground: 150 20% 92%;
+    --card: 155 24% 10%;
+    --card-foreground: 150 20% 92%;
+    --popover: 155 24% 10%;
+    --popover-foreground: 150 20% 92%;
+    --secondary: 155 20% 15%;
+    --secondary-foreground: 150 16% 87%;
+    --muted: 155 20% 15%;
+    --muted-foreground: 150 12% 58%;
+    --accent: 155 20% 15%;
+    --accent-foreground: 150 20% 92%;
+    --border: 155 18% 23%;
+    --input: 155 18% 23%;
+    --sidebar: 155 24% 9%;
+    --sidebar-foreground: 150 12% 58%;
+    --sidebar-accent: 155 20% 15%;
+    --sidebar-border: 155 18% 19%;
+  }
+
+  /* ---------- Accents on dark base themes ---------- */
+
+  .dark[data-accent='violet'] {
+    --primary: 252 100% 68%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 252 100% 68%;
+    --sidebar-accent-foreground: 252 100% 76%;
+    --chart-1: 252 100% 74%;
+  }
   .dark[data-accent='teal'] {
     --primary: 186 72% 42%;
     --primary-foreground: 220 25% 4%;
@@ -230,13 +386,6 @@ layer(base);
     --sidebar-accent-foreground: 186 72% 55%;
     --chart-1: 186 72% 50%;
   }
-
-  /*
-    WebGui accent presets (Settings → WebGui) - only override the brand/interactive
-    color tokens, never the structural neutrals (background/card/border/muted). An
-    admin sets the installation default; any user can locally override it for
-    themselves. 'teal' needs no block - it's the .dark defaults above.
-  */
   .dark[data-accent='red'] {
     --primary: 355 75% 50%;
     --primary-foreground: 210 40% 98%;
@@ -264,6 +413,108 @@ layer(base);
     --ring: 142 65% 40%;
     --sidebar-accent-foreground: 142 65% 55%;
     --chart-1: 142 65% 48%;
+  }
+  .dark[data-accent='orange'] {
+    --primary: 25 92% 53%;
+    --primary-foreground: 20 30% 6%;
+    --ring: 25 92% 53%;
+    --sidebar-accent-foreground: 25 92% 64%;
+    --chart-1: 25 92% 58%;
+  }
+  .dark[data-accent='pink'] {
+    --primary: 330 80% 47%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 330 80% 47%;
+    --sidebar-accent-foreground: 330 80% 66%;
+    --chart-1: 330 80% 56%;
+  }
+  .dark[data-accent='cyan'] {
+    --primary: 190 90% 48%;
+    --primary-foreground: 195 60% 5%;
+    --ring: 190 90% 48%;
+    --sidebar-accent-foreground: 190 90% 60%;
+    --chart-1: 190 90% 55%;
+  }
+  .dark[data-accent='lime'] {
+    --primary: 85 68% 45%;
+    --primary-foreground: 90 40% 5%;
+    --ring: 85 68% 45%;
+    --sidebar-accent-foreground: 85 68% 58%;
+    --chart-1: 85 68% 52%;
+  }
+
+  /* ---------- Accents on light base themes ----------
+     Same hues as above, darkened so they stay readable against a light surface. */
+
+  :root:not(.dark)[data-accent='violet'] {
+    --primary: 252 72% 54%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 252 72% 54%;
+    --sidebar-accent-foreground: 252 72% 46%;
+    --chart-1: 252 72% 54%;
+  }
+  :root:not(.dark)[data-accent='teal'] {
+    --primary: 186 72% 32%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 186 72% 32%;
+    --sidebar-accent-foreground: 186 72% 27%;
+    --chart-1: 186 72% 34%;
+  }
+  :root:not(.dark)[data-accent='red'] {
+    --primary: 355 72% 46%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 355 72% 46%;
+    --sidebar-accent-foreground: 355 72% 40%;
+    --chart-1: 355 72% 48%;
+  }
+  :root:not(.dark)[data-accent='blue'] {
+    --primary: 217 72% 46%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 217 72% 46%;
+    --sidebar-accent-foreground: 217 72% 40%;
+    --chart-1: 217 72% 48%;
+  }
+  :root:not(.dark)[data-accent='yellow'] {
+    --primary: 42 92% 38%;
+    --primary-foreground: 45 60% 8%;
+    --ring: 42 92% 38%;
+    --sidebar-accent-foreground: 38 85% 30%;
+    --chart-1: 42 88% 40%;
+  }
+  :root:not(.dark)[data-accent='green'] {
+    --primary: 142 62% 32%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 142 62% 32%;
+    --sidebar-accent-foreground: 142 62% 27%;
+    --chart-1: 142 62% 34%;
+  }
+  :root:not(.dark)[data-accent='orange'] {
+    --primary: 25 88% 40%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 25 88% 40%;
+    --sidebar-accent-foreground: 25 88% 34%;
+    --chart-1: 25 88% 42%;
+  }
+  :root:not(.dark)[data-accent='pink'] {
+    --primary: 330 74% 46%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 330 74% 46%;
+    --sidebar-accent-foreground: 330 74% 40%;
+    --chart-1: 330 74% 48%;
+  }
+  :root:not(.dark)[data-accent='cyan'] {
+    --primary: 190 88% 32%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 190 88% 32%;
+    --sidebar-accent-foreground: 190 88% 27%;
+    --chart-1: 190 88% 34%;
+  }
+  :root:not(.dark)[data-accent='lime'] {
+    --primary: 85 62% 31%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 85 62% 31%;
+    --sidebar-accent-foreground: 85 62% 26%;
+    --chart-1: 85 62% 33%;
   }
 }
 

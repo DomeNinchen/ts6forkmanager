@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type StreamDefaults, type StreamPreset, type AccentPreset, type BaseTheme } from '@/api/settings.api';
+import { settingsApi, RECOMMENDED_ACCENT, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type StreamDefaults, type StreamPreset, type AccentPreset, type BaseTheme } from '@/api/settings.api';
+import { ACCENT_PRESETS, DARK_THEME_PRESETS, LIGHT_THEME_PRESETS, accentLabel, baseThemeLabel } from '@/lib/themes';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -300,15 +301,6 @@ function TwoFactorCard() {
   );
 }
 
-const ACCENT_PRESETS: { value: AccentPreset; label: string; swatch: string }[] = [
-  { value: 'violet', label: 'Violet', swatch: 'hsl(252 100% 68%)' },
-  { value: 'teal', label: 'Teal', swatch: 'hsl(186 72% 42%)' },
-  { value: 'red', label: 'Red', swatch: 'hsl(355 75% 50%)' },
-  { value: 'blue', label: 'Blue', swatch: 'hsl(217 75% 52%)' },
-  { value: 'yellow', label: 'Yellow', swatch: 'hsl(42 88% 50%)' },
-  { value: 'green', label: 'Green', swatch: 'hsl(142 65% 40%)' },
-];
-
 function AccentSwatchPicker({ value, onChange, disabled }: { value: AccentPreset | null; onChange: (preset: AccentPreset) => void; disabled?: boolean }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -332,30 +324,36 @@ function AccentSwatchPicker({ value, onChange, disabled }: { value: AccentPreset
   );
 }
 
-const BASE_THEME_PRESETS: { value: BaseTheme; label: string; description: string; preview: string }[] = [
-  { value: 'command-deck', label: 'Command Deck', description: 'Deep navy - the default look.', preview: 'hsl(225 38% 6%)' },
-  { value: 'oled', label: 'OLED-Black', description: 'True black background - saves power on OLED screens.', preview: 'hsl(0 0% 0%)' },
-];
-
 function BaseThemeSwatchPicker({ value, onChange, disabled }: { value: BaseTheme | null; onChange: (theme: BaseTheme) => void; disabled?: boolean }) {
+  const groups = [
+    { title: 'Dark', items: DARK_THEME_PRESETS },
+    { title: 'Light', items: LIGHT_THEME_PRESETS },
+  ];
   return (
-    <div className="flex flex-wrap gap-2">
-      {BASE_THEME_PRESETS.map((t) => (
-        <button
-          key={t.value}
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(t.value)}
-          title={t.description}
-          className={cn(
-            'flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors',
-            value === t.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
-            disabled && 'opacity-50 cursor-not-allowed',
-          )}
-        >
-          <span className="h-3 w-3 rounded-full border border-border/50" style={{ background: t.preview }} />
-          {t.label}
-        </button>
+    <div className="space-y-3">
+      {groups.map((group) => (
+        <div key={group.title} className="space-y-1.5">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{group.title}</p>
+          <div className="flex flex-wrap gap-2">
+            {group.items.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange(t.value)}
+                title={t.description}
+                className={cn(
+                  'flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors',
+                  value === t.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
+                  disabled && 'opacity-50 cursor-not-allowed',
+                )}
+              >
+                <span className="h-3 w-3 rounded-full border border-border/50" style={{ background: t.preview }} />
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -379,63 +377,57 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
 
   if (isLoading || isLoadingBaseTheme) return <PageLoader />;
 
+  // Picking a preset that already matches the installation default clears the personal
+  // override instead of pinning the same value, so a later admin change still reaches this browser.
+  const pickAccent = (preset: AccentPreset) => setAccentOverride(preset === installTheme?.preset ? null : preset);
+
+  const pickBaseTheme = (theme: BaseTheme) => {
+    setBaseThemeOverride(theme === installBaseTheme?.theme ? null : theme);
+    const recommended = RECOMMENDED_ACCENT[theme];
+    if (recommended !== (accentOverride ?? installTheme?.preset ?? 'violet')) {
+      toast(`${baseThemeLabel(theme)} goes well with the ${accentLabel(recommended)} accent.`, {
+        action: { label: 'Apply', onClick: () => pickAccent(recommended) },
+      });
+    }
+  };
+
   return (
     <div className="max-w-lg space-y-4">
-      <Card className="card-hero">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">My Preference</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Overrides the installation default below, just for you - stored in this browser only.
-          </p>
-          <AccentSwatchPicker
-            value={accentOverride ?? installTheme?.preset ?? 'teal'}
-            onChange={(preset) => setAccentOverride(preset === installTheme?.preset ? null : preset)}
-          />
-          {accentOverride && (
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setAccentOverride(null)}>
-              Reset to installation default
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
-      {isAdmin && (
-        <Card className="card-hero">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Installation Default</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Applies to every user who hasn't set their own preference above.
-            </p>
-            <AccentSwatchPicker
-              value={installTheme?.preset ?? 'teal'}
-              onChange={(preset) => setInstallTheme.mutate(preset, {
-                onSuccess: () => toast.success(`Installation accent set to ${ACCENT_PRESETS.find((p) => p.value === preset)?.label}`),
-                onError: () => toast.error('Failed to update installation accent'),
-              })}
-              disabled={setInstallTheme.isPending}
-            />
-          </CardContent>
-        </Card>
-      )}
-
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">My Base Theme</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            The background/surface look, independent of the accent color above. Overrides the installation default below, just for you.
+            The background and surface palette, which also decides whether the app is light or dark.
+            Overrides the installation default below, just for you - stored in this browser only.
           </p>
           <BaseThemeSwatchPicker
             value={baseThemeOverride ?? installBaseTheme?.theme ?? 'command-deck'}
-            onChange={(theme) => setBaseThemeOverride(theme === installBaseTheme?.theme ? null : theme)}
+            onChange={pickBaseTheme}
           />
           {baseThemeOverride && (
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setBaseThemeOverride(null)}>
+              Reset to installation default
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">My Accent</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Buttons, links and highlights - independent of the base theme above, every combination works.
+          </p>
+          <AccentSwatchPicker
+            value={accentOverride ?? installTheme?.preset ?? 'violet'}
+            onChange={pickAccent}
+          />
+          {accentOverride && (
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setAccentOverride(null)}>
               Reset to installation default
             </Button>
           )}
@@ -454,10 +446,31 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
             <BaseThemeSwatchPicker
               value={installBaseTheme?.theme ?? 'command-deck'}
               onChange={(theme) => setInstallBaseTheme.mutate(theme, {
-                onSuccess: () => toast.success(`Installation base theme set to ${BASE_THEME_PRESETS.find((t) => t.value === theme)?.label}`),
+                onSuccess: () => toast.success(`Installation base theme set to ${baseThemeLabel(theme)}`),
                 onError: () => toast.error('Failed to update installation base theme'),
               })}
               disabled={setInstallBaseTheme.isPending}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card className="card-hero">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Installation Default Accent</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Applies to every user who hasn't set their own accent preference above.
+            </p>
+            <AccentSwatchPicker
+              value={installTheme?.preset ?? 'violet'}
+              onChange={(preset) => setInstallTheme.mutate(preset, {
+                onSuccess: () => toast.success(`Installation accent set to ${accentLabel(preset)}`),
+                onError: () => toast.error('Failed to update installation accent'),
+              })}
+              disabled={setInstallTheme.isPending}
             />
           </CardContent>
         </Card>
