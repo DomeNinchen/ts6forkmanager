@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
+import { OPEN_BY_DEFAULT_COMMANDS } from '@ts6/common';
 import { commaListsIntersect } from './group-match.js';
 
 /**
@@ -6,17 +7,19 @@ import { commaListsIntersect } from './group-match.js';
  * (DomeNinchen/ts6forkmanager#184).
  *
  * A command with no BotCommandPermission row, or one with an empty
- * `allowedGroupIds`, defaults to "everyone can use it" - the default the
- * feature request asked for. BotCommandAdminGroup members bypass every
- * restriction.
+ * `allowedGroupIds`, falls back to its built-in default: OPEN_BY_DEFAULT_COMMANDS
+ * (!play, !stream, !np) stay usable by everyone, every other command is
+ * unusable by anyone until an admin explicitly assigns a group. Either way,
+ * BotCommandAdminGroup members bypass the restriction.
  *
  * `getClientGroupsCsv` is only called (and so only pays for a WebQuery
- * round-trip to look up the caller's TeamSpeak server groups) once a
- * restriction is actually configured for this command - the common case,
- * an unrestricted command, is a single indexed DB lookup. It resolves to
- * `null` when the caller's groups couldn't be determined at all (e.g. the
- * bot has no WebQuery connection configured), in which case a *configured*
- * restriction is denied rather than silently ignored.
+ * round-trip to look up the caller's TeamSpeak server groups) when it's
+ * actually needed to decide - an open-by-default command with no
+ * restriction configured is a single indexed DB lookup and nothing else.
+ * It resolves to `null` when the caller's groups couldn't be determined at
+ * all (e.g. the bot has no WebQuery connection configured), in which case
+ * anything short of "open to everyone" is denied rather than silently
+ * ignored.
  */
 export async function canRunCommand(
   prisma: PrismaClient,
@@ -27,7 +30,9 @@ export async function canRunCommand(
   const perm = await prisma.botCommandPermission.findUnique({
     where: { serverConfigId_command: { serverConfigId, command } },
   });
-  if (!perm || !perm.allowedGroupIds) return true;
+  const configuredGroupIds = perm?.allowedGroupIds || '';
+
+  if (!configuredGroupIds && OPEN_BY_DEFAULT_COMMANDS.has(command)) return true;
 
   const clientGroupsCsv = await getClientGroupsCsv();
   if (clientGroupsCsv === null) return false;
@@ -38,5 +43,6 @@ export async function canRunCommand(
     if (commaListsIntersect(clientGroupsCsv, adminIdsCsv)) return true;
   }
 
-  return commaListsIntersect(clientGroupsCsv, perm.allowedGroupIds);
+  if (!configuredGroupIds) return false; // restricted by default, caller isn't an admin
+  return commaListsIntersect(clientGroupsCsv, configuredGroupIds);
 }

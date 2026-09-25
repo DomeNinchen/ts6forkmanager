@@ -202,6 +202,16 @@ export const RESTRICTABLE_COMMANDS: { command: string; label: string }[] = [
   { command: 'viewers', label: '!viewers' },
 ];
 
+/**
+ * Commands that stay usable by everyone when no explicit restriction is
+ * configured for them. Every other command in RESTRICTABLE_COMMANDS
+ * defaults the other way - unusable by anyone until an admin explicitly
+ * assigns at least one group - so a fresh deployment doesn't silently open
+ * up privileged commands (!stop, !skip, !queue, ...) before an admin has
+ * had a chance to configure this feature at all.
+ */
+export const OPEN_BY_DEFAULT_COMMANDS: ReadonlySet<string> = new Set(['play', 'stream', 'np']);
+
 export interface BotCommandPermissionInfo {
   id: number;
   serverConfigId: number;
