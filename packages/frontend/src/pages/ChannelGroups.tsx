@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { tsErrorMessage } from '@/lib/ts-errors';
 import { ShieldCheck, Search, User, Plus, Trash2, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -103,24 +104,61 @@ export default function ChannelGroups() {
     if (!c || !s) return;
     setImporting(true);
     try {
-      const text = await file.text();
-      const payload = JSON.parse(text);
-      if (payload.format !== 'ts6manager-group-export' || payload.groupType !== 'channel' || !Array.isArray(payload.groups)) {
-        toast.error('Not a valid channel group export file');
+      let payload: any;
+      try {
+        payload = JSON.parse(await file.text());
+      } catch {
+        toast.error("This file isn't valid JSON");
         return;
       }
+      if (payload.format !== 'ts6manager-group-export' || !Array.isArray(payload.groups)) {
+        toast.error('Not a valid group export file');
+        return;
+      }
+      if (payload.groupType !== 'channel') {
+        toast.error(payload.groupType === 'server'
+          ? 'This is a server group export - import it on the Server Groups page instead'
+          : 'Not a valid channel group export file');
+        return;
+      }
+      if (payload.groups.length === 0) {
+        toast.error('The file contains no groups to import');
+        return;
+      }
+
+      let imported = 0;
       let permCount = 0;
+      let permFailed = 0;
+      const skipped: string[] = [];
       for (const g of payload.groups) {
-        const created = await createGroup.mutateAsync(g.name);
-        const cgid = Number(created?.[0]?.cgid ?? created?.cgid);
+        let cgid: number;
+        try {
+          const created = await createGroup.mutateAsync(g.name);
+          cgid = Number(created?.[0]?.cgid ?? created?.cgid);
+        } catch (err) {
+          skipped.push(`"${g.name}" (${tsErrorMessage(err, 'failed to create')})`);
+          continue;
+        }
+        imported++;
         for (const p of g.permissions || []) {
-          await permissionsApi.addChannelGroupPerm(c, s, cgid, p);
-          permCount++;
+          try {
+            await permissionsApi.addChannelGroupPerm(c, s, cgid, p);
+            permCount++;
+          } catch {
+            permFailed++;
+          }
         }
       }
-      toast.success(`Imported ${payload.groups.length} group(s), ${permCount} permission(s)`);
-    } catch {
-      toast.error('Import failed - check the file is a valid export');
+
+      if (imported === 0) {
+        toast.error(`Import failed - ${skipped[0] || 'no groups could be created'}`);
+        return;
+      }
+      let msg = `Imported ${imported} of ${payload.groups.length} group(s), ${permCount} permission(s)`;
+      if (permFailed > 0) msg += `, ${permFailed} permission(s) skipped`;
+      if (skipped.length > 0) msg += ` - skipped: ${skipped.join(', ')}`;
+      if (skipped.length > 0 || permFailed > 0) toast.warning(msg);
+      else toast.success(msg);
     } finally {
       setImporting(false);
     }
