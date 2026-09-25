@@ -14,8 +14,10 @@ updateCheckRoutes.get('/', (_req: Request, res: Response) => {
 });
 
 // POST /api/update-check/recheck — on-demand refresh (e.g. Settings → Update Status)
-updateCheckRoutes.post('/recheck', async (_req: Request, res: Response) => {
-  res.json(await forceUpdateCheck());
+updateCheckRoutes.post('/recheck', async (_req: Request, res: Response, next) => {
+  try {
+    res.json(await forceUpdateCheck());
+  } catch (err) { next(err); }
 });
 
 export { updateCheckRoutes };
