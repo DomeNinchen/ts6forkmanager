@@ -43,7 +43,7 @@ import {
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
 import { toast } from 'sonner';
 import { formatBytes } from '@/lib/utils';
-import { RESTRICTABLE_COMMANDS } from '@ts6/common';
+import { RESTRICTABLE_COMMANDS, OPEN_BY_DEFAULT_COMMANDS } from '@ts6/common';
 import type { MusicBotSummary, PlaybackState, SongInfo, PlaylistSummary, PlaylistDetail, YouTubeSearchResult, RadioStationInfo, RadioPreset, BotCommandPermissionInfo } from '@ts6/common';
 import { Checkbox } from '@/components/ui/checkbox';
 import { groupsApi } from '@/api/groups.api';
@@ -2053,7 +2053,11 @@ function PermissionsTab() {
                       <div className="text-sm font-mono-data">{label}</div>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {ids.length === 0 ? (
-                          <Badge variant="secondary" className="text-[10px]">Everyone</Badge>
+                          OPEN_BY_DEFAULT_COMMANDS.has(command) ? (
+                            <Badge variant="secondary" className="text-[10px]">Everyone</Badge>
+                          ) : (
+                            <Badge variant="warning" className="text-[10px]">No group assigned - unusable</Badge>
+                          )
                         ) : (
                           ids.map((id) => (
                             <Badge key={id} variant="outline" className="text-[10px]">{groupName(id)}</Badge>
@@ -2077,7 +2081,9 @@ function PermissionsTab() {
           <DialogHeader>
             <DialogTitle>{RESTRICTABLE_COMMANDS.find((c) => c.command === editingCommand)?.label}</DialogTitle>
             <DialogDescription>
-              Leave everything unchecked to allow everyone. Otherwise only the checked groups (and any admin bypass group above) may use this command.
+              {editingCommand && OPEN_BY_DEFAULT_COMMANDS.has(editingCommand)
+                ? 'Leave everything unchecked to allow everyone (this command\'s default). Otherwise only the checked groups (and any admin bypass group above) may use it.'
+                : 'This command is unusable by anyone until at least one group is checked here - leaving it unchecked is the same as not enabling it yet. Only the checked groups (and any admin bypass group above) may use it.'}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="h-[280px]">

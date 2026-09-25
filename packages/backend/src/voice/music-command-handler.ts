@@ -221,14 +221,19 @@ export class MusicCommandHandler {
     });
     const groupIds = (perm?.allowedGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
 
+    // Restricted by default (no row) with no group ever assigned - a
+    // "required role" would be misleading since none exists yet.
+    if (groupIds.length === 0) {
+      this.reply(bot, userClid, 'You do not have permission to execute this command.\nThis command has not been enabled for any group yet.');
+      return;
+    }
+
     let roleLabel = 'a different role';
-    if (groupIds.length > 0) {
-      try {
-        const names = await bot.getServerGroupNames();
-        if (names) roleLabel = groupIds.map((id) => names[id] || `#${id}`).join(' or ');
-      } catch (err: any) {
-        console.error(`[MusicCmd] Failed to resolve group names for denial message: ${err.message}`);
-      }
+    try {
+      const names = await bot.getServerGroupNames();
+      if (names) roleLabel = groupIds.map((id) => names[id] || `#${id}`).join(' or ');
+    } catch (err: any) {
+      console.error(`[MusicCmd] Failed to resolve group names for denial message: ${err.message}`);
     }
     this.reply(bot, userClid, `You do not have permission to execute this command.\nRequired role: ${roleLabel}`);
   }
