@@ -112,6 +112,16 @@ export function createApp(): Express {
   app.use('/api/update-check', updateCheckRoutes);
   app.use('/api/yt-cookie-check', ytCookieCheckRoutes);
 
+  // 404 for unmatched routes. Without this, Express's own default 404
+  // page (finalhandler) overwrites helmet's Content-Security-Policy
+  // header with a bare "default-src 'none'" that omits frame-ancestors
+  // and form-action, which ZAP flags (CSP: Failure to Define Directive
+  // with No Fallback) - answering here ourselves keeps helmet's headers
+  // intact.
+  app.use((_req, res) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+
   // Error handler (must be last)
   app.use(errorHandler);
 
