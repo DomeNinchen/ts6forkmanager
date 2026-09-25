@@ -220,6 +220,47 @@ export class VoiceBot extends EventEmitter {
     this.client.sendCommand(cmd);
   }
 
+  /**
+   * Server groups (comma-separated sgids, TeamSpeak's own `client_servergroups`
+   * format) for the given voice-connection client ID, via WebQuery
+   * `clientlist -groups`. Used for chat-command permission checks
+   * (DomeNinchen/ts6forkmanager#184) - returns null if this bot has no
+   * WebQuery connection configured, since there's then no way to look this
+   * up at all (the voice connection's own protocol has no equivalent query).
+   */
+  async getClientServerGroups(clid: number): Promise<string | null> {
+    if (!this.config.webQuery) return null;
+    if (!this.webQueryClient) {
+      const wq = this.config.webQuery;
+      this.webQueryClient = new WebQueryClient(wq.host, wq.port, wq.apiKey, wq.useHttps);
+    }
+    // sid=1: see the comment on pushDescription() below for why music bots
+    // hardcode this.
+    const list = await this.webQueryClient.execute(1, 'clientlist', { '-groups': '' });
+    const clients = Array.isArray(list) ? list : [list];
+    const match = clients.find((c: any) => Number(c.clid) === clid);
+    return match?.client_servergroups ?? '';
+  }
+
+  /**
+   * Server group id -> name map for this bot's virtual server, via WebQuery
+   * `servergrouplist`. Used only to show a readable role name in a
+   * chat-command permission denial (DomeNinchen/ts6forkmanager#184) - returns
+   * null under the same condition as getClientServerGroups().
+   */
+  async getServerGroupNames(): Promise<Record<string, string> | null> {
+    if (!this.config.webQuery) return null;
+    if (!this.webQueryClient) {
+      const wq = this.config.webQuery;
+      this.webQueryClient = new WebQueryClient(wq.host, wq.port, wq.apiKey, wq.useHttps);
+    }
+    const list = await this.webQueryClient.execute(1, 'servergrouplist');
+    const groups = Array.isArray(list) ? list : [list];
+    const map: Record<string, string> = {};
+    for (const g of groups) map[String(g.sgid)] = String(g.name ?? g.sgid);
+    return map;
+  }
+
   get currentConfig(): VoiceBotConfig {
     return { ...this.config };
   }

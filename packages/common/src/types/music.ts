@@ -174,3 +174,44 @@ export interface StartVideoStreamRequest {
 export interface SetVideoSourceRequest {
   source: string;
 }
+
+// === Chat Command Permissions (DomeNinchen/ts6forkmanager#184) ===
+
+/**
+ * Every "!command" the MusicBot chat handler recognizes and can individually
+ * restrict, by its canonical name - aliases that dispatch to the same
+ * handler (e.g. !skip/!next) share one entry here and one permission row on
+ * the backend (see COMMAND_ALIASES in voice/music-command-handler.ts). This
+ * list is the single source of truth for the permissions UI; keep it in
+ * sync with MUSIC_COMMANDS there when a command is added or removed.
+ */
+export const RESTRICTABLE_COMMANDS: { command: string; label: string }[] = [
+  { command: 'play', label: '!play' },
+  { command: 'stop', label: '!stop' },
+  { command: 'pause', label: '!pause' },
+  { command: 'skip', label: '!skip / !next' },
+  { command: 'prev', label: '!prev' },
+  { command: 'vol', label: '!vol / !volume' },
+  { command: 'np', label: '!np / !nowplaying' },
+  { command: 'queue', label: '!queue / !add' },
+  { command: 'radio', label: '!radio' },
+  { command: 'stream', label: '!stream' },
+  { command: 'streamqueue', label: '!streamqueue' },
+  { command: 'streamskip', label: '!streamskip' },
+  { command: 'stopstream', label: '!stopstream' },
+  { command: 'viewers', label: '!viewers' },
+];
+
+export interface BotCommandPermissionInfo {
+  id: number;
+  serverConfigId: number;
+  command: string;
+  allowedGroupIds: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommandPermissionsResponse {
+  permissions: BotCommandPermissionInfo[];
+  adminGroupIds: string[];
+}

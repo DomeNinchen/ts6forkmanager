@@ -30,6 +30,7 @@ import { musicLibraryRoutes } from './routes/music-library.routes.js';
 import { playlistRoutes } from './routes/playlists.routes.js';
 import { radioStationRoutes } from './routes/radio-stations.routes.js';
 import { musicRequestRoutes } from './routes/music-requests.routes.js';
+import { commandPermissionRoutes } from './routes/command-permissions.routes.js';
 import { widgetPublicRoutes } from './routes/widget-public.routes.js';
 import { widgetRoutes } from './routes/widget.routes.js';
 import { setupRoutes } from './routes/setup.routes.js';
@@ -99,6 +100,7 @@ export function createApp(): Express {
   app.use('/api/servers/:configId/vs/:sid/messages', serverAccess, messageRoutes);
   app.use('/api/servers/:configId/vs/:sid/logs', serverAccess, logRoutes);
   app.use('/api/servers/:configId/instance', serverAccess, instanceRoutes);
+  app.use('/api/servers/:configId/command-permissions', serverAccess, commandPermissionRoutes);
   app.use('/api/servers/:configId/vs/:sid/dashboard', serverAccess, dashboardRoutes);
   app.use('/api/bots', botRoutes);
   app.use('/api/users', userRoutes);
