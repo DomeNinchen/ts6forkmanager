@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { normalizeIconId } from '@ts6/common';
+import { IconImage } from '@/components/icons/IconImage';
 import { useChannelGroups, useCreateChannelGroup, useDeleteChannelGroup } from '@/hooks/use-groups';
 import { groupsApi } from '@/api/groups.api';
 import { permissionsApi } from '@/api/permissions.api';
@@ -309,6 +311,7 @@ export default function ChannelGroups() {
                       <span className="text-sm font-medium">{g.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
+                      <IconImage iconId={normalizeIconId(g.iconid)} size={16} alt={`Icon for ${g.name}`} />
                       <Badge variant="secondary" className="text-[10px] font-mono-data">CGID: {g.cgid}</Badge>
                       <Badge variant="outline" className="text-[10px] font-mono-data">Type: {g.type}</Badge>
                     </div>
@@ -384,7 +387,12 @@ export default function ChannelGroups() {
                         <SelectTrigger className="h-8 text-xs w-56"><SelectValue placeholder="Move all to..." /></SelectTrigger>
                         <SelectContent>
                           {assignableGroups.map((g: any) => (
-                            <SelectItem key={g.cgid} value={String(g.cgid)}>{g.name}</SelectItem>
+                            <SelectItem key={g.cgid} value={String(g.cgid)}>
+                              <span className="flex items-center gap-1.5">
+                                <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                                {g.name}
+                              </span>
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -441,7 +449,12 @@ export default function ChannelGroups() {
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {assignableGroups.map((g: any) => (
-                                <SelectItem key={g.cgid} value={String(g.cgid)}>{g.name}</SelectItem>
+                                <SelectItem key={g.cgid} value={String(g.cgid)}>
+                                  <span className="flex items-center gap-1.5">
+                                    <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                                    {g.name}
+                                  </span>
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>

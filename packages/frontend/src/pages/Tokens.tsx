@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { normalizeIconId } from '@ts6/common';
 import { tokensApi, tempPasswordsApi } from '@/api/bans.api';
 import { channelsApi } from '@/api/channels.api';
 import { groupsApi } from '@/api/groups.api';
+import { IconImage } from '@/components/icons/IconImage';
 import { useServerStore } from '@/stores/server.store';
 import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -122,10 +124,10 @@ export default function Tokens() {
   // query type, so this filter is a no-op there beyond excluding templates.
   const serverGroupList = useMemo(() => (Array.isArray(serverGroupData) ? serverGroupData : [])
     .filter((g: any) => Number(g.type) === 1)
-    .map((g: any) => ({ id: Number(g.sgid), name: g.name })), [serverGroupData]);
+    .map((g: any) => ({ id: Number(g.sgid), name: g.name, iconId: normalizeIconId(g.iconid) })), [serverGroupData]);
   const channelGroupList = useMemo(() => (Array.isArray(channelGroupData) ? channelGroupData : [])
     .filter((g: any) => Number(g.type) === 1)
-    .map((g: any) => ({ id: Number(g.cgid), name: g.name })), [channelGroupData]);
+    .map((g: any) => ({ id: Number(g.cgid), name: g.name, iconId: normalizeIconId(g.iconid) })), [channelGroupData]);
 
   const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => [
     { accessorKey: 'token', header: 'Token', cell: ({ getValue }) => (
@@ -220,7 +222,12 @@ export default function Tokens() {
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Choose a group..." /></SelectTrigger>
                 <SelectContent>
                   {(tokenType === '0' ? serverGroupList : channelGroupList).map((g) => (
-                    <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>
+                    <SelectItem key={g.id} value={String(g.id)}>
+                      <span className="flex items-center gap-1.5">
+                        <IconImage iconId={g.iconId} size={14} alt={`Icon for ${g.name}`} />
+                        {g.name}
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
