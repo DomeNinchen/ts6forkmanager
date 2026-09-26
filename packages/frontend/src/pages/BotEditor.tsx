@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { PlaceholderReference, PlaceholderReferenceContent } from '@/components/bots/PlaceholderReference';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 // --- Node type definitions ---
 type HandleConfig = {
@@ -37,73 +39,92 @@ interface NodeTypeDef {
   handles: HandleConfig;
 }
 
-const TRIGGER_NODES: NodeTypeDef[] = [
-  { type: 'trigger_event', label: 'TS Event', icon: Zap, color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', handles: { inputs: [], outputs: ['out'] } },
-  { type: 'trigger_cron', label: 'Cron Timer', icon: Clock, color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', handles: { inputs: [], outputs: ['out'] } },
-  { type: 'trigger_webhook', label: 'Webhook', icon: Webhook, color: 'bg-violet-500/20 text-violet-400 border-violet-500/30', handles: { inputs: [], outputs: ['out'] } },
-  { type: 'trigger_command', label: 'Chat Command', icon: Terminal, color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', handles: { inputs: [], outputs: ['out'] } },
-];
+function getTriggerNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'trigger_event', label: l('trigger_event'), icon: Zap, color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', handles: { inputs: [], outputs: ['out'] } },
+    { type: 'trigger_cron', label: l('trigger_cron'), icon: Clock, color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', handles: { inputs: [], outputs: ['out'] } },
+    { type: 'trigger_webhook', label: l('trigger_webhook'), icon: Webhook, color: 'bg-violet-500/20 text-violet-400 border-violet-500/30', handles: { inputs: [], outputs: ['out'] } },
+    { type: 'trigger_command', label: l('trigger_command'), icon: Terminal, color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', handles: { inputs: [], outputs: ['out'] } },
+  ];
+}
 
-const ACTION_NODES: NodeTypeDef[] = [
-  { type: 'action_message', label: 'Send Message', icon: MessageSquare, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_poke', label: 'Poke Client', icon: Bell, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_kick', label: 'Kick Client', icon: UserX, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_ban', label: 'Ban Client', icon: Ban, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_move', label: 'Move Client', icon: ArrowRightLeft, color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_channelCreate', label: 'Create Channel', icon: FolderPlus, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_channelEdit', label: 'Edit Channel', icon: PenLine, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_channelDelete', label: 'Delete Channel', icon: FolderMinus, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_groupAdd', label: 'Add to Group', icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_groupRemove', label: 'Remove from Group', icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_webquery', label: 'WebQuery', icon: Terminal, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_webhook', label: 'Webhook', icon: Send, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_httpRequest', label: 'HTTP Request', icon: Globe, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-];
+function getActionNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'action_message', label: l('action_message'), icon: MessageSquare, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_poke', label: l('action_poke'), icon: Bell, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_kick', label: l('action_kick'), icon: UserX, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_ban', label: l('action_ban'), icon: Ban, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_move', label: l('action_move'), icon: ArrowRightLeft, color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_channelCreate', label: l('action_channelCreate'), icon: FolderPlus, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_channelEdit', label: l('action_channelEdit'), icon: PenLine, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_channelDelete', label: l('action_channelDelete'), icon: FolderMinus, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_groupAdd', label: l('action_groupAdd'), icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_groupRemove', label: l('action_groupRemove'), icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_webquery', label: l('action_webquery'), icon: Terminal, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_webhook', label: l('action_webhook'), icon: Send, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_httpRequest', label: l('action_httpRequest'), icon: Globe, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  ];
+}
 
-const VOICE_ACTION_NODES: NodeTypeDef[] = [
-  { type: 'action_voicePlay', label: 'Voice Play', icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceStop', label: 'Voice Stop', icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceJoinChannel', label: 'Voice Join', icon: LogIn, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceLeaveChannel', label: 'Voice Leave', icon: LogOut, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceVolume', label: 'Voice Volume', icon: Volume2, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voicePauseResume', label: 'Voice Pause/Resume', icon: Pause, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceSkip', label: 'Voice Skip', icon: SkipForward, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceSeek', label: 'Voice Seek', icon: Navigation, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceTts', label: 'Voice TTS', icon: Mic, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-];
+function getVoiceActionNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'action_voicePlay', label: l('action_voicePlay'), icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceStop', label: l('action_voiceStop'), icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceJoinChannel', label: l('action_voiceJoinChannel'), icon: LogIn, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceLeaveChannel', label: l('action_voiceLeaveChannel'), icon: LogOut, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceVolume', label: l('action_voiceVolume'), icon: Volume2, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voicePauseResume', label: l('action_voicePauseResume'), icon: Pause, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceSkip', label: l('action_voiceSkip'), icon: SkipForward, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceSeek', label: l('action_voiceSeek'), icon: Navigation, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceTts', label: l('action_voiceTts'), icon: Mic, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  ];
+}
 
-const SMART_ACTION_NODES: NodeTypeDef[] = [
-  { type: 'action_afkMover', label: 'AFK Mover', icon: Moon, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_idleKicker', label: 'Idle Kicker', icon: Timer, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_pokeGroup', label: 'Poke Group', icon: Megaphone, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_rankCheck', label: 'Rank Check', icon: Award, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_tempChannelCleanup', label: 'Temp Cleanup', icon: Trash2, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_animatedChannel', label: 'Animated Channel', icon: Sparkles, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: [], outputs: [] } },
-];
+function getSmartActionNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'action_afkMover', label: l('action_afkMover'), icon: Moon, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_idleKicker', label: l('action_idleKicker'), icon: Timer, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_pokeGroup', label: l('action_pokeGroup'), icon: Megaphone, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_rankCheck', label: l('action_rankCheck'), icon: Award, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_tempChannelCleanup', label: l('action_tempChannelCleanup'), icon: Trash2, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_animatedChannel', label: l('action_animatedChannel'), icon: Sparkles, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: [], outputs: [] } },
+  ];
+}
 
-const LOGIC_NODES: NodeTypeDef[] = [
-  { type: 'condition', label: 'Condition', icon: GitBranch, color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', handles: { inputs: ['in'], outputs: ['true', 'false'] } },
-  { type: 'loop', label: 'Loop', icon: Repeat, color: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', handles: { inputs: ['in'], outputs: ['body', 'after'] } },
-  { type: 'delay', label: 'Delay', icon: Clock, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'variable', label: 'Set Variable', icon: Variable, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'log', label: 'Log', icon: FileText, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_generateCode', label: 'Generate Code', icon: Sparkles, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_countOnlineInGroups', label: 'Count Online in Groups', icon: Users, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_listMembership', label: 'List Add/Remove', icon: ListChecks, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-];
+function getLogicNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'condition', label: l('condition'), icon: GitBranch, color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', handles: { inputs: ['in'], outputs: ['true', 'false'] } },
+    { type: 'loop', label: l('loop'), icon: Repeat, color: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', handles: { inputs: ['in'], outputs: ['body', 'after'] } },
+    { type: 'delay', label: l('delay'), icon: Clock, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'variable', label: l('variable'), icon: Variable, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'log', label: l('log'), icon: FileText, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_generateCode', label: l('action_generateCode'), icon: Sparkles, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_countOnlineInGroups', label: l('action_countOnlineInGroups'), icon: Users, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_listMembership', label: l('action_listMembership'), icon: ListChecks, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  ];
+}
 
-const ALL_NODE_TYPES: NodeTypeDef[] = [...TRIGGER_NODES, ...ACTION_NODES, ...VOICE_ACTION_NODES, ...SMART_ACTION_NODES, ...LOGIC_NODES];
+function getAllNodeTypes(t: TFunction): NodeTypeDef[] {
+  return [...getTriggerNodes(t), ...getActionNodes(t), ...getVoiceActionNodes(t), ...getSmartActionNodes(t), ...getLogicNodes(t)];
+}
 
-const NODE_CATEGORIES = [
-  { label: 'Triggers', nodes: TRIGGER_NODES },
-  { label: 'Actions', nodes: ACTION_NODES },
-  { label: 'Voice', nodes: VOICE_ACTION_NODES },
-  { label: 'Smart Actions', nodes: SMART_ACTION_NODES },
-  { label: 'Logic', nodes: LOGIC_NODES },
-];
+function getNodeCategories(t: TFunction) {
+  return [
+    { label: t('pages.botEditor.categories.triggers'), nodes: getTriggerNodes(t) },
+    { label: t('pages.botEditor.categories.actions'), nodes: getActionNodes(t) },
+    { label: t('pages.botEditor.categories.voice'), nodes: getVoiceActionNodes(t) },
+    { label: t('pages.botEditor.categories.smartActions'), nodes: getSmartActionNodes(t) },
+    { label: t('pages.botEditor.categories.logic'), nodes: getLogicNodes(t) },
+  ];
+}
 
-function getNodeMeta(type: string): NodeTypeDef | undefined {
-  const meta = ALL_NODE_TYPES.find((n) => n.type === type);
+function getNodeMeta(type: string, t: TFunction): NodeTypeDef | undefined {
+  const meta = getAllNodeTypes(t).find((n) => n.type === type);
   if (!meta) return meta;
   // Every action node the backend dispatches through its generic 'action'
   // case can optionally have an 'error' edge wired - followed instead of
@@ -507,6 +528,7 @@ function ExpandableTextarea({
   className?: string;
   dialogTitle: string;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [showReference, setShowReference] = useState(false);
   return (
@@ -518,7 +540,7 @@ function ExpandableTextarea({
           size="icon"
           className="h-5 w-5 -mr-1 text-muted-foreground hover:text-foreground"
           onClick={() => setExpanded(true)}
-          title="Groß bearbeiten"
+          title={t('pages.botEditor.editFullscreen')}
         >
           <Maximize2 className="h-3 w-3" />
         </Button>
@@ -541,7 +563,7 @@ function ExpandableTextarea({
                 className="h-7 text-xs mr-6"
                 onClick={() => setShowReference((v) => !v)}
               >
-                <BookOpen className="h-3.5 w-3.5 mr-1" /> {showReference ? 'Hide' : 'Show'} Placeholders
+                <BookOpen className="h-3.5 w-3.5 mr-1" /> {showReference ? t('pages.botEditor.hidePlaceholders') : t('pages.botEditor.showPlaceholders')}
               </Button>
             </div>
           </DialogHeader>
@@ -582,18 +604,20 @@ function hasSeenEditorHelp(): boolean {
   }
 }
 
-const EDITOR_GESTURES: { what: string; how: string }[] = [
-  { what: 'Add a step', how: 'Click one in the list on the left' },
-  { what: 'Move a step', how: 'Drag it' },
-  { what: 'Configure a step', how: 'Click it — the settings open on the right' },
-  { what: 'Connect two steps', how: 'Drag from an output dot onto an input dot' },
-  { what: 'Delete a connection', how: 'Click the line' },
-  { what: 'Bend a connection', how: 'Hover it, then click the ring that appears' },
-  { what: 'Add another bend', how: 'Click a bend point — the next one appears after it' },
-  { what: 'Move a bend', how: 'Drag the point' },
-  { what: 'Remove a bend', how: 'Right-click the point' },
-  { what: 'Keep your changes', how: 'Press Save — nothing is stored until you do' },
-];
+function getEditorGestures(t: TFunction): { what: string; how: string }[] {
+  return [
+    { what: t('pages.botEditor.gestureAddStep'), how: t('pages.botEditor.gestureAddStepHow') },
+    { what: t('pages.botEditor.gestureMoveStep'), how: t('pages.botEditor.gestureMoveStepHow') },
+    { what: t('pages.botEditor.gestureConfigureStep'), how: t('pages.botEditor.gestureConfigureStepHow') },
+    { what: t('pages.botEditor.gestureConnectSteps'), how: t('pages.botEditor.gestureConnectStepsHow') },
+    { what: t('pages.botEditor.gestureDeleteConnection'), how: t('pages.botEditor.gestureDeleteConnectionHow') },
+    { what: t('pages.botEditor.gestureBendConnection'), how: t('pages.botEditor.gestureBendConnectionHow') },
+    { what: t('pages.botEditor.gestureAddBend'), how: t('pages.botEditor.gestureAddBendHow') },
+    { what: t('pages.botEditor.gestureMoveBend'), how: t('pages.botEditor.gestureMoveBendHow') },
+    { what: t('pages.botEditor.gestureRemoveBend'), how: t('pages.botEditor.gestureRemoveBendHow') },
+    { what: t('pages.botEditor.gestureKeepChanges'), how: t('pages.botEditor.gestureKeepChangesHow') },
+  ];
+}
 
 function EditorHelpDialog({
   open,
@@ -604,7 +628,9 @@ function EditorHelpDialog({
   onOpenChange: (open: boolean) => void;
   showDismiss: boolean;
 }) {
+  const { t } = useTranslation();
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const gestures = useMemo(() => getEditorGestures(t), [t]);
 
   const close = () => {
     if (dontShowAgain) {
@@ -617,11 +643,11 @@ function EditorHelpDialog({
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Using the flow editor</DialogTitle>
+          <DialogTitle>{t('pages.botEditor.usingTheFlowEditor')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-1.5">
-          {EDITOR_GESTURES.map((g) => (
+          {gestures.map((g) => (
             <div key={g.what} className="flex items-baseline gap-3 text-sm">
               <span className="w-44 shrink-0 text-muted-foreground">{g.what}</span>
               <span>{g.how}</span>
@@ -630,9 +656,7 @@ function EditorHelpDialog({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Connections route themselves at right angles, passing below both ends when
-          they have to run backwards. Bend points are only for the cases where you
-          want a line somewhere specific — a flow works exactly the same without them.
+          {t('pages.botEditor.routingExplanation')}
         </p>
 
         <div className="flex items-center justify-between gap-4 pt-1">
@@ -644,10 +668,10 @@ function EditorHelpDialog({
                 checked={dontShowAgain}
                 onChange={(e) => setDontShowAgain(e.target.checked)}
               />
-              Don't show this when opening a flow
+              {t('pages.botEditor.dontShowAgain')}
             </label>
           ) : <span />}
-          <Button size="sm" onClick={close}>Got it</Button>
+          <Button size="sm" onClick={close}>{t('pages.botEditor.gotIt')}</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -655,6 +679,7 @@ function EditorHelpDialog({
 }
 
 export default function BotEditor() {
+  const { t } = useTranslation();
   const { botId } = useParams();
   const navigate = useNavigate();
   const { data: bot, isLoading } = useBot(botId ? parseInt(botId) : null);
@@ -722,8 +747,8 @@ export default function BotEditor() {
       id: parseInt(botId),
       data: { name: botName, flowData: { nodes, edges } },
     }, {
-      onSuccess: () => toast.success('Flow saved'),
-      onError: () => toast.error('Failed to save flow'),
+      onSuccess: () => toast.success(t('pages.botEditor.flowSaved')),
+      onError: () => toast.error(t('pages.botEditor.flowSaveFailed')),
     });
   };
 
@@ -836,7 +861,7 @@ export default function BotEditor() {
         // Released on a node body — connect to first input if available
         const nodeId = targetNode.getAttribute('data-node-id');
         if (nodeId && connectFrom.nodeId !== nodeId) {
-          const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '');
+          const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '', t);
           if (targetMeta && targetMeta.handles.inputs.length > 0) {
             const targetPort = targetMeta.handles.inputs[0];
             const exists = edges.some((ed) => ed.source === connectFrom.nodeId && ed.sourcePort === connectFrom.port && ed.target === nodeId);
@@ -857,7 +882,7 @@ export default function BotEditor() {
         setConnectFrom(null);
       }
     }
-  }, [connectFrom, nodes, edges]);
+  }, [connectFrom, nodes, edges, t]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     // Only deselect if we clicked directly on the canvas (not on a node)
@@ -889,7 +914,7 @@ export default function BotEditor() {
 
     // If connecting, complete the connection to this node's input
     if (connectFrom) {
-      const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '');
+      const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '', t);
       if (connectFrom.nodeId !== nodeId && targetMeta && targetMeta.handles.inputs.length > 0) {
         const targetPort = targetMeta.handles.inputs[0];
         // Don't allow duplicate edges
@@ -912,7 +937,7 @@ export default function BotEditor() {
     if (!didDragRef.current) {
       setSelectedNode(nodeId);
     }
-  }, [connectFrom, nodes, edges]);
+  }, [connectFrom, nodes, edges, t]);
 
   // --- Output handle click: start connection ---
   const handleOutputClick = useCallback((e: React.MouseEvent, nodeId: string, port: string) => {
@@ -947,7 +972,8 @@ export default function BotEditor() {
   }, [connectFrom, edges]);
 
   const selectedNodeData = useMemo(() => nodes.find((n) => n.id === selectedNode), [nodes, selectedNode]);
-  const nodeTypeMeta = useMemo(() => getNodeMeta(selectedNodeData?.type || ''), [selectedNodeData]);
+  const nodeTypeMeta = useMemo(() => getNodeMeta(selectedNodeData?.type || '', t), [selectedNodeData, t]);
+  const nodeCategories = useMemo(() => getNodeCategories(t), [t]);
 
   // The edges are drawn in one SVG layered over the canvas, and an SVG clips
   // whatever reaches past its own viewport. Sizing that layer to the visible
@@ -986,8 +1012,8 @@ export default function BotEditor() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Input value={botName} onChange={(e) => setBotName(e.target.value)} className="h-8 w-60 text-sm font-medium" />
-          <Badge variant="outline" className="text-[10px]">{nodes.length} nodes</Badge>
-          <Badge variant="outline" className="text-[10px]">{edges.length} edges</Badge>
+          <Badge variant="outline" className="text-[10px]">{t('pages.botEditor.nodesCount', { count: nodes.length })}</Badge>
+          <Badge variant="outline" className="text-[10px]">{t('pages.botEditor.edgesCount', { count: edges.length })}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -995,15 +1021,15 @@ export default function BotEditor() {
             size="icon"
             className="h-8 w-8"
             onClick={() => { setHelpWasRequested(true); setShowEditorHelp(true); }}
-            title="Using the flow editor"
+            title={t('pages.botEditor.usingTheFlowEditor')}
           >
             <Info className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)} title="Placeholder Reference">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)} title={t('pages.botEditor.placeholderReference')}>
             <HelpCircle className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" className="h-8" onClick={handleSave} disabled={updateBot.isPending}>
-            <Save className="h-4 w-4 mr-1" /> Save
+            <Save className="h-4 w-4 mr-1" /> {t('pages.botEditor.save')}
           </Button>
         </div>
       </div>
@@ -1013,7 +1039,7 @@ export default function BotEditor() {
         <div className="w-52 border-r border-border bg-card/50 shrink-0">
           <ScrollArea className="h-full">
             <div className="p-3 space-y-4">
-              {NODE_CATEGORIES.map((cat) => (
+              {nodeCategories.map((cat) => (
                 <div key={cat.label}>
                   <p className="font-display text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{cat.label}</p>
                   <div className="space-y-1">
@@ -1058,8 +1084,8 @@ export default function BotEditor() {
               const tgtNode = nodes.find((n) => n.id === edge.target);
               if (!srcNode || !tgtNode) return null;
 
-              const srcMeta = getNodeMeta(srcNode.type);
-              const tgtMeta = getNodeMeta(tgtNode.type);
+              const srcMeta = getNodeMeta(srcNode.type, t);
+              const tgtMeta = getNodeMeta(tgtNode.type, t);
               if (!srcMeta || !tgtMeta) return null;
 
               const srcPortIdx = srcMeta.handles.outputs.indexOf(edge.sourcePort);
@@ -1126,7 +1152,7 @@ export default function BotEditor() {
                       onMouseDown={(ev) => ev.stopPropagation()}
                       onClick={(ev) => { ev.stopPropagation(); seedWaypoints(edge.id, ghost.seed); }}
                     >
-                      <title>Click to bend this connection here</title>
+                      <title>{t('pages.botEditor.clickToBend')}</title>
                     </circle>
                   )}
 
@@ -1156,7 +1182,7 @@ export default function BotEditor() {
                         }}
                         onContextMenu={(ev) => { ev.preventDefault(); ev.stopPropagation(); removeWaypoint(edge.id, i); }}
                       >
-                        <title>Drag to move, click to add another point, right-click to remove</title>
+                        <title>{t('pages.botEditor.dragBendPoint')}</title>
                       </circle>
                     );
                   })}
@@ -1167,7 +1193,7 @@ export default function BotEditor() {
             {/* Connection drag preview */}
             {connectFrom && (() => {
               const srcNode = nodes.find((n) => n.id === connectFrom.nodeId);
-              const srcMeta = srcNode ? getNodeMeta(srcNode.type) : null;
+              const srcMeta = srcNode ? getNodeMeta(srcNode.type, t) : null;
               if (!srcNode || !srcMeta) return null;
               const idx = srcMeta.handles.outputs.indexOf(connectFrom.port);
               if (idx < 0) return null;
@@ -1188,7 +1214,7 @@ export default function BotEditor() {
 
           {/* Nodes */}
           {nodes.map((node) => {
-            const meta = getNodeMeta(node.type);
+            const meta = getNodeMeta(node.type, t);
             if (!meta) return null;
             const Icon = meta.icon;
             const hasInputs = meta.handles.inputs.length > 0;
@@ -1236,7 +1262,7 @@ export default function BotEditor() {
                         height: HANDLE_R * 2,
                       }}
                       onClick={(e) => handleInputClick(e, node.id, port)}
-                      title={`Input: ${port}`}
+                      title={t('pages.botEditor.inputPortTitle', { port })}
                     />
                   );
                 })}
@@ -1266,7 +1292,7 @@ export default function BotEditor() {
                         )}
                         style={{ width: HANDLE_R * 2, height: HANDLE_R * 2 }}
                         onMouseDown={(e) => handleOutputClick(e, node.id, port)}
-                        title={`Output: ${port}`}
+                        title={t('pages.botEditor.outputPortTitle', { port })}
                       />
                       {outputs.length > 1 && (
                         <span className={cn(
@@ -1286,7 +1312,7 @@ export default function BotEditor() {
           {/* Connection hint */}
           {connectFrom && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-primary/20 border border-primary/30 text-primary text-xs px-3 py-1.5 rounded-full backdrop-blur-xs">
-              Click an input port or node to connect — ESC to cancel
+              {t('pages.botEditor.connectHint')}
             </div>
           )}
         </div>
@@ -1295,7 +1321,7 @@ export default function BotEditor() {
             flow is scrolled. Click-through, so it never swallows a drag. */}
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-40 flex justify-center pb-2">
           <span className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[10px] text-muted-foreground backdrop-blur-xs">
-            Drag from an output dot to connect · click a line to delete it · hover a line and click the ring to bend it
+            {t('pages.botEditor.canvasHint')}
           </span>
         </div>
         </div>
@@ -1306,7 +1332,7 @@ export default function BotEditor() {
             <ScrollArea className="h-full">
               <div className="p-3 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="font-display text-xs font-semibold tracking-wide">Node Properties</p>
+                  <p className="font-display text-xs font-semibold tracking-wide">{t('pages.botEditor.nodeProperties')}</p>
                   <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteNode(selectedNodeData.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -1315,7 +1341,7 @@ export default function BotEditor() {
                 <Separator />
 
                 <div>
-                  <Label className="text-[10px] text-muted-foreground">Label</Label>
+                  <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.labelField')}</Label>
                   <Input
                     className="h-7 text-xs mt-1"
                     value={selectedNodeData.label}
@@ -1324,7 +1350,7 @@ export default function BotEditor() {
                 </div>
 
                 <div>
-                  <Label className="text-[10px] text-muted-foreground">Type</Label>
+                  <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.typeField')}</Label>
                   <div className={cn('mt-1 text-xs px-2 py-1 rounded-sm border', nodeTypeMeta?.color || 'bg-muted/30')}>
                     {selectedNodeData.type.replace(/_/g, ' ')}
                   </div>
@@ -1334,16 +1360,16 @@ export default function BotEditor() {
                 {nodeTypeMeta && (
                   <div className="flex gap-2 text-[10px]">
                     {nodeTypeMeta.handles.inputs.length > 0 && (
-                      <Badge variant="secondary" className="text-[9px]">IN: {nodeTypeMeta.handles.inputs.join(', ')}</Badge>
+                      <Badge variant="secondary" className="text-[9px]">{t('pages.botEditor.inPorts', { ports: nodeTypeMeta.handles.inputs.join(', ') })}</Badge>
                     )}
-                    <Badge variant="secondary" className="text-[9px]">OUT: {nodeTypeMeta.handles.outputs.join(', ')}</Badge>
+                    <Badge variant="secondary" className="text-[9px]">{t('pages.botEditor.outPorts', { ports: nodeTypeMeta.handles.outputs.join(', ') })}</Badge>
                   </div>
                 )}
 
                 <Separator />
 
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground mb-2">CONFIGURATION</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground mb-2">{t('pages.botEditor.configuration')}</p>
 
                   {selectedNodeData.type === 'trigger_event' && (
                     <div>
@@ -2296,7 +2322,7 @@ export default function BotEditor() {
 
                 {/* Connections overview */}
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground mb-1">CONNECTIONS</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground mb-1">{t('pages.botEditor.connections')}</p>
                   <div className="space-y-1">
                     {edges.filter((e) => e.source === selectedNodeData.id).map((edge) => {
                       const target = nodes.find((n) => n.id === edge.target);
@@ -2325,7 +2351,7 @@ export default function BotEditor() {
                       );
                     })}
                     {edges.filter((e) => e.source === selectedNodeData.id || e.target === selectedNodeData.id).length === 0 && (
-                      <p className="text-[10px] text-muted-foreground/50">No connections</p>
+                      <p className="text-[10px] text-muted-foreground/50">{t('pages.botEditor.noConnections')}</p>
                     )}
                   </div>
                 </div>
