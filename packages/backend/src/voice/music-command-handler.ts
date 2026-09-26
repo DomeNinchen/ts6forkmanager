@@ -317,16 +317,17 @@ export class MusicCommandHandler {
         sourceUrl: info.url,
       };
 
-      bot.queue.add(queueItem);
-
       // Save to MusicRequest history
       this.saveMusicRequest(bot, queueItem);
 
       // If something is already playing, queue it instead of interrupting
       if (bot.status === 'playing' || bot.status === 'paused') {
+        bot.queue.add(queueItem);
         this.reply(bot, userClid, `Queued: ${info.artist} - ${info.title} (position #${bot.queue.length})`);
       } else {
-        bot.queue.playAt(bot.queue.length - 1);
+        // insertNext(), not add()+playAt(length-1) - the latter would strand
+        // anything already queued behind the new current index.
+        bot.queue.insertNext(queueItem);
         await bot.play(queueItem);
         this.reply(bot, userClid, `Now playing: ${info.artist} - ${info.title}`);
       }
@@ -414,17 +415,18 @@ export class MusicCommandHandler {
         sourceUrl: info.url,
       };
 
-      bot.queue.add(queueItem);
-
       // Save to MusicRequest history
       this.saveMusicRequest(bot, queueItem);
 
       // If nothing is playing, start playing the queued item
       if (bot.status !== 'playing' && bot.status !== 'paused') {
-        bot.queue.playAt(bot.queue.length - 1);
+        // insertNext(), not add()+playAt(length-1) - the latter would strand
+        // anything already queued behind the new current index.
+        bot.queue.insertNext(queueItem);
         await bot.play(queueItem);
         this.reply(bot, userClid, `Now playing: ${info.artist} - ${info.title}`);
       } else {
+        bot.queue.add(queueItem);
         this.reply(bot, userClid, `Queued: ${info.artist} - ${info.title} (position #${bot.queue.length})`);
       }
     } catch (err: any) {
