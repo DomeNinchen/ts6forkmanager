@@ -1,8 +1,10 @@
 import { AlertTriangle, X } from 'lucide-react';
+import { Trans, useTranslation } from 'react-i18next';
 import { useYtCookieCheck } from '@/hooks/use-yt-cookie-check';
 import { useYtCookieBannerStore } from '@/stores/yt-cookie-banner.store';
 
 export function YtCookieBanner() {
+  const { t } = useTranslation();
   const { data } = useYtCookieCheck();
   const dismissedFor = useYtCookieBannerStore((s) => s.dismissedFor);
   const dismiss = useYtCookieBannerStore((s) => s.dismiss);
@@ -18,11 +20,13 @@ export function YtCookieBanner() {
       <div className="flex items-center gap-2 flex-wrap">
         <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
         <span>
-          YouTube cookies stopped working — age-restricted/member-only content and searches may fail until they're refreshed in{' '}
-          <span className="font-mono-data">Settings → YouTube</span>.
+          <Trans i18nKey="components.ytCookieBanner.message">
+            YouTube cookies stopped working — age-restricted/member-only content and searches may fail until they're refreshed in{' '}
+            <span className="font-mono-data">Settings → YouTube</span>.
+          </Trans>
         </span>
       </div>
-      <button onClick={() => dismiss(data.checkedAt!)} className="p-1 hover:bg-muted rounded-sm shrink-0" title="Postpone">
+      <button onClick={() => dismiss(data.checkedAt!)} className="p-1 hover:bg-muted rounded-sm shrink-0" title={t('components.updateBanner.postpone')}>
         <X className="h-3.5 w-3.5" />
       </button>
     </div>

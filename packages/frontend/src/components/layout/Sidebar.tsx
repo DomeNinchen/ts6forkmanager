@@ -1,4 +1,6 @@
 import { Link, NavLink, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
@@ -23,77 +25,81 @@ interface NavContext {
 
 const adminOnly = (ctx: NavContext) => ctx.isAdmin;
 
-const navSections = [
-  {
-    label: 'Overview',
-    items: [
-      { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/servers', icon: Server, label: 'Virtual Servers', visible: adminOnly },
-      { to: '/server-stats', icon: BarChart3, label: 'Statistics', visible: adminOnly },
-    ],
-  },
-  {
-    label: 'Management',
-    // Channels/Clients are only meaningful once a server is actually
-    // reachable - for a non-admin with zero UserServerAccess grants,
-    // showing this section just leads to a guaranteed "no access" page.
-    visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
-    items: [
-      { to: '/channels', icon: Hash, label: 'Channels' },
-      { to: '/clients', icon: Users, label: 'Clients' },
-      { to: '/server-groups', icon: Shield, label: 'Server Groups', visible: adminOnly },
-      { to: '/channel-groups', icon: ShieldCheck, label: 'Channel Groups', visible: adminOnly },
-      { to: '/permissions', icon: Lock, label: 'Permissions', visible: adminOnly },
-    ],
-  },
-  {
-    label: 'Security',
-    visible: adminOnly,
-    items: [
-      { to: '/bans', icon: Ban, label: 'Bans', visible: adminOnly },
-      { to: '/tokens', icon: KeyRound, label: 'Tokens', visible: adminOnly },
-    ],
-  },
-  {
-    label: 'Content',
-    // Unlike the other admin-only sections, this one also has to appear for
-    // non-admins, since the icon browser is readable by every role.
-    visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
-    items: [
-      { to: '/files', icon: FolderOpen, label: 'Files', visible: adminOnly },
-      { to: '/icons', icon: ImageIcon, label: 'Icons' },
-      { to: '/complaints', icon: MessageSquareWarning, label: 'Complaints', visible: adminOnly },
-      { to: '/messages', icon: Mail, label: 'Messages', visible: adminOnly },
-    ],
-  },
-  {
-    label: 'System',
-    visible: adminOnly,
-    items: [
-      { to: '/logs', icon: ScrollText, label: 'Server Logs', visible: adminOnly },
-      { to: '/instance', icon: Cpu, label: 'Instance', visible: adminOnly },
-      { to: '/miscellaneous', icon: Wrench, label: 'Miscellaneous', visible: adminOnly },
-      { to: '/advanced-settings', icon: SlidersHorizontal, label: 'Advanced Settings', visible: adminOnly },
-      { to: '/music-requests', icon: ListMusic, label: 'Music Request History', visible: adminOnly },
-    ],
-  },
-  {
-    label: 'Automation',
-    visible: (ctx: NavContext) => ctx.canManageBotFlows || ctx.canManageMusicBots,
-    items: [
-      { to: '/bots', icon: Bot, label: 'Bot Flows', visible: (ctx: NavContext) => ctx.canManageBotFlows },
-      { to: '/music-bots', icon: Music, label: 'Music Bots', visible: (ctx: NavContext) => ctx.canManageMusicBots },
-    ],
-  },
-];
+function getNavSections(t: TFunction) {
+  return [
+    {
+      label: t('nav.sections.overview'),
+      items: [
+        { to: '/dashboard', icon: LayoutDashboard, label: t('nav.items.dashboard') },
+        { to: '/servers', icon: Server, label: t('nav.items.virtualServers'), visible: adminOnly },
+        { to: '/server-stats', icon: BarChart3, label: t('nav.items.statistics'), visible: adminOnly },
+      ],
+    },
+    {
+      label: t('nav.sections.management'),
+      // Channels/Clients are only meaningful once a server is actually
+      // reachable - for a non-admin with zero UserServerAccess grants,
+      // showing this section just leads to a guaranteed "no access" page.
+      visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
+      items: [
+        { to: '/channels', icon: Hash, label: t('nav.items.channels') },
+        { to: '/clients', icon: Users, label: t('nav.items.clients') },
+        { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: adminOnly },
+        { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: adminOnly },
+        { to: '/permissions', icon: Lock, label: t('nav.items.permissions'), visible: adminOnly },
+      ],
+    },
+    {
+      label: t('nav.sections.security'),
+      visible: adminOnly,
+      items: [
+        { to: '/bans', icon: Ban, label: t('nav.items.bans'), visible: adminOnly },
+        { to: '/tokens', icon: KeyRound, label: t('nav.items.tokens'), visible: adminOnly },
+      ],
+    },
+    {
+      label: t('nav.sections.content'),
+      // Unlike the other admin-only sections, this one also has to appear for
+      // non-admins, since the icon browser is readable by every role.
+      visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
+      items: [
+        { to: '/files', icon: FolderOpen, label: t('nav.items.files'), visible: adminOnly },
+        { to: '/icons', icon: ImageIcon, label: t('nav.items.icons') },
+        { to: '/complaints', icon: MessageSquareWarning, label: t('nav.items.complaints'), visible: adminOnly },
+        { to: '/messages', icon: Mail, label: t('nav.items.messages'), visible: adminOnly },
+      ],
+    },
+    {
+      label: t('nav.sections.system'),
+      visible: adminOnly,
+      items: [
+        { to: '/logs', icon: ScrollText, label: t('nav.items.serverLogs'), visible: adminOnly },
+        { to: '/instance', icon: Cpu, label: t('nav.items.instance'), visible: adminOnly },
+        { to: '/miscellaneous', icon: Wrench, label: t('nav.items.miscellaneous'), visible: adminOnly },
+        { to: '/advanced-settings', icon: SlidersHorizontal, label: t('nav.items.advancedSettings'), visible: adminOnly },
+        { to: '/music-requests', icon: ListMusic, label: t('nav.items.musicRequestHistory'), visible: adminOnly },
+      ],
+    },
+    {
+      label: t('nav.sections.automation'),
+      visible: (ctx: NavContext) => ctx.canManageBotFlows || ctx.canManageMusicBots,
+      items: [
+        { to: '/bots', icon: Bot, label: t('nav.items.botFlows'), visible: (ctx: NavContext) => ctx.canManageBotFlows },
+        { to: '/music-bots', icon: Music, label: t('nav.items.musicBots'), visible: (ctx: NavContext) => ctx.canManageMusicBots },
+      ],
+    },
+  ];
+}
 
 export function Sidebar() {
+  const { t } = useTranslation();
   const { sidebarCollapsed, toggleSidebar, collapsedSections, toggleSection } = useUiStore();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
   const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
   const { data: servers } = useServers();
   const location = useLocation();
+  const navSections = getNavSections(t);
 
   const navCtx: NavContext = {
     isAdmin,
@@ -196,7 +202,7 @@ export function Sidebar() {
             )}
           >
             <Settings className="h-4 w-4" />
-            {!sidebarCollapsed && <span>Settings</span>}
+            {!sidebarCollapsed && <span>{t('common.settings')}</span>}
           </NavLink>
 
           <button
@@ -207,7 +213,7 @@ export function Sidebar() {
             )}
           >
             {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            {!sidebarCollapsed && <span>Collapse</span>}
+            {!sidebarCollapsed && <span>{t('nav.collapse')}</span>}
           </button>
         </div>
       </aside>

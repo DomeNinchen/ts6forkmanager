@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ function copyText(text: string) {
 }
 
 export function WidgetManagerModal({ open, onOpenChange }: Props) {
+  const { t } = useTranslation();
   const { data: widgets = [], isLoading } = useWidgets();
   const { data: servers = [] } = useQuery<ServerConfig[]>({ queryKey: ['servers'], queryFn: serversApi.list });
   const createWidget = useCreateWidget();
@@ -134,10 +136,10 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            {view === 'list' && 'Server Widgets'}
-            {view === 'create' && 'Create Widget'}
-            {view === 'edit' && 'Edit Widget'}
-            {view === 'embed' && 'Embed Code'}
+            {view === 'list' && t('components.widgetManager.title.list')}
+            {view === 'create' && t('components.widgetManager.title.create')}
+            {view === 'edit' && t('components.widgetManager.title.edit')}
+            {view === 'embed' && t('components.widgetManager.title.embed')}
           </DialogTitle>
         </DialogHeader>
 
@@ -146,14 +148,14 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
           {view === 'list' && (
             <div className="space-y-3">
               <Button size="sm" onClick={openCreate} disabled={servers.length === 0}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> New Widget
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> {t('components.widgetManager.newWidget')}
               </Button>
 
-              {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+              {isLoading && <p className="text-sm text-muted-foreground">{t('common.loading')}</p>}
 
               {widgets.length === 0 && !isLoading && (
                 <p className="text-sm text-muted-foreground py-8 text-center">
-                  No widgets yet. Create one to embed your server status on external sites.
+                  {t('components.widgetManager.noWidgets')}
                 </p>
               )}
 
@@ -168,23 +170,23 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Server: {(w as any).serverConfig?.name || `#${w.serverConfigId}`} | VS {w.virtualServerId}
+                    {t('components.widgetManager.serverLabel', { name: (w as any).serverConfig?.name || `#${w.serverConfigId}`, vs: w.virtualServerId })}
                   </p>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEmbed(w)}>
-                      <Code2 className="h-3 w-3 mr-1" /> Embed
+                      <Code2 className="h-3 w-3 mr-1" /> {t('components.widgetManager.embed')}
                     </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => window.open(`/widget/${w.token}`, '_blank')}>
-                      <ExternalLink className="h-3 w-3 mr-1" /> Preview
+                      <ExternalLink className="h-3 w-3 mr-1" /> {t('components.widgetManager.preview')}
                     </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => window.open(`/api/widget/${w.token}/image.svg`, '_blank')}>
                       <Image className="h-3 w-3 mr-1" /> SVG
                     </Button>
                     <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => openEdit(w)}>
-                      <Pencil className="h-3 w-3 mr-1" /> Edit
+                      <Pencil className="h-3 w-3 mr-1" /> {t('common.edit')}
                     </Button>
                     <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => handleDelete(w.id)}>
-                      <Trash2 className="h-3 w-3 mr-1" /> Delete
+                      <Trash2 className="h-3 w-3 mr-1" /> {t('common.delete')}
                     </Button>
                   </div>
                 </div>
@@ -196,16 +198,16 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
           {(view === 'create' || view === 'edit') && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Server Widget" />
+                <Label>{t('common.name')}</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('components.widgetManager.namePlaceholder')} />
               </div>
 
               {view === 'create' && (
                 <>
                   <div className="space-y-2">
-                    <Label>Server</Label>
+                    <Label>{t('components.widgetManager.server')}</Label>
                     <Select value={String(serverConfigId)} onValueChange={(v) => setServerConfigId(Number(v))}>
-                      <SelectTrigger><SelectValue placeholder="Select server" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('components.serverSelector.selectServer')} /></SelectTrigger>
                       <SelectContent>
                         {servers.map((s) => (
                           <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
@@ -215,14 +217,14 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Virtual Server ID</Label>
+                    <Label>{t('components.widgetManager.virtualServerId')}</Label>
                     <Input type="number" min={1} value={virtualServerId} onChange={(e) => setVirtualServerId(Number(e.target.value))} />
                   </div>
                 </>
               )}
 
               <div className="space-y-2">
-                <Label>Theme</Label>
+                <Label>{t('components.widgetManager.theme')}</Label>
                 <Select value={theme} onValueChange={(v) => setTheme(v as WidgetTheme)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -236,29 +238,29 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
               <Separator />
 
               <div className="flex items-center justify-between">
-                <Label>Show Channel Tree</Label>
+                <Label>{t('components.widgetManager.showChannelTree')}</Label>
                 <Switch checked={showChannelTree} onCheckedChange={setShowChannelTree} />
               </div>
 
               <div className="flex items-center justify-between">
-                <Label>Show Clients</Label>
+                <Label>{t('components.widgetManager.showClients')}</Label>
                 <Switch checked={showClients} onCheckedChange={setShowClients} />
               </div>
 
               <div className="flex items-center justify-between">
-                <Label>Hide Empty Channels</Label>
+                <Label>{t('components.widgetManager.hideEmptyChannels')}</Label>
                 <Switch checked={hideEmptyChannels} onCheckedChange={setHideEmptyChannels} />
               </div>
 
               <div className="space-y-2">
-                <Label>Max Channel Depth: {maxChannelDepth}</Label>
+                <Label>{t('components.widgetManager.maxChannelDepth', { depth: maxChannelDepth })}</Label>
                 <Slider min={1} max={10} step={1} value={[maxChannelDepth]} onValueChange={([v]) => setMaxChannelDepth(v)} />
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setView('list')}>Cancel</Button>
+                <Button variant="outline" onClick={() => setView('list')}>{t('common.cancel')}</Button>
                 <Button onClick={view === 'create' ? handleCreate : handleUpdate} disabled={!name.trim()}>
-                  {view === 'create' ? 'Create' : 'Save'}
+                  {view === 'create' ? t('common.create') : t('common.save')}
                 </Button>
               </div>
             </div>
@@ -270,19 +272,19 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
               <div className="flex items-center justify-between">
                 <p className="font-medium text-sm">{embedTarget.name}</p>
                 <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleRegenerate(embedTarget)}>
-                  <RefreshCw className="h-3 w-3 mr-1" /> Regenerate Token
+                  <RefreshCw className="h-3 w-3 mr-1" /> {t('components.widgetManager.regenerateToken')}
                 </Button>
               </div>
 
               <Tabs defaultValue="iframe">
                 <TabsList className="w-full">
                   <TabsTrigger value="iframe" className="flex-1">iFrame</TabsTrigger>
-                  <TabsTrigger value="image" className="flex-1">Image URLs</TabsTrigger>
+                  <TabsTrigger value="image" className="flex-1">{t('components.widgetManager.imageUrls')}</TabsTrigger>
                   <TabsTrigger value="bbcode" className="flex-1">BBCode</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="iframe" className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Paste this into your website HTML:</Label>
+                  <Label className="text-xs text-muted-foreground">{t('components.widgetManager.pasteIntoHtml')}</Label>
                   <div className="relative">
                     <code className="block bg-muted rounded-md p-3 text-xs font-mono break-all leading-relaxed">
                       {`<iframe src="${origin}/widget/${embedTarget.token}" width="420" height="600" frameborder="0" scrolling="auto" style="border-radius:8px;border:none;"></iframe>`}
@@ -299,7 +301,7 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
 
                 <TabsContent value="image" className="space-y-3">
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">SVG (scalable, best quality):</Label>
+                    <Label className="text-xs text-muted-foreground">{t('components.widgetManager.svgLabel')}</Label>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 bg-muted rounded-md p-2 text-xs font-mono break-all">
                         {`${origin}/api/widget/${embedTarget.token}/image.svg`}
@@ -310,7 +312,7 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">PNG (for forums / signatures):</Label>
+                    <Label className="text-xs text-muted-foreground">{t('components.widgetManager.pngLabel')}</Label>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 bg-muted rounded-md p-2 text-xs font-mono break-all">
                         {`${origin}/api/widget/${embedTarget.token}/image.png`}
@@ -321,7 +323,7 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">HTML img tag:</Label>
+                    <Label className="text-xs text-muted-foreground">{t('components.widgetManager.htmlImgLabel')}</Label>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 bg-muted rounded-md p-2 text-xs font-mono break-all">
                         {`<img src="${origin}/api/widget/${embedTarget.token}/image.png" alt="TeamSpeak Server" />`}
@@ -334,7 +336,7 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                 </TabsContent>
 
                 <TabsContent value="bbcode" className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Forum BBCode (uses PNG):</Label>
+                  <Label className="text-xs text-muted-foreground">{t('components.widgetManager.bbcodeLabel')}</Label>
                   <div className="relative">
                     <code className="block bg-muted rounded-md p-3 text-xs font-mono break-all">
                       {`[img]${origin}/api/widget/${embedTarget.token}/image.png[/img]`}

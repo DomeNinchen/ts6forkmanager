@@ -1,12 +1,15 @@
 import { LogOut, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { ServerSelector } from './ServerSelector';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLogout } from '@/hooks/use-auth';
+import { roleLabel } from '@/lib/roles';
 
 export function Header() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const logout = useLogout();
 
@@ -29,12 +32,12 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel className="font-normal">
               <p className="text-sm font-medium">{user?.displayName}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+              <p className="text-xs text-muted-foreground">{roleLabel(t, user?.role)}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span>{t('common.logout')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { BOT_TEMPLATES, TEMPLATE_CATEGORIES, type BotTemplate, type TemplateConfigField } from '@/data/bot-templates';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getBotTemplates, getTemplateCategories, type BotTemplate, type TemplateConfigField } from '@/data/bot-templates';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,9 @@ interface TemplateGalleryProps {
 }
 
 export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGalleryProps) {
+  const { t } = useTranslation();
+  const botTemplates = useMemo(() => getBotTemplates(t), [t]);
+  const templateCategories = useMemo(() => getTemplateCategories(t), [t]);
   const [selected, setSelected] = useState<BotTemplate | null>(null);
   const [config, setConfig] = useState<Record<string, string>>({});
 
@@ -74,7 +78,7 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
-              {selected ? `Configure: ${selected.name}` : 'Flow Templates'}
+              {selected ? t('components.templateGallery.configureTitle', { name: selected.name }) : t('components.templateGallery.title')}
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -82,8 +86,8 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
         {!selected ? (
           <div className="overflow-y-auto max-h-[60vh] px-6">
             <div className="space-y-6 pb-4">
-              {TEMPLATE_CATEGORIES.map((cat) => {
-                const templates = BOT_TEMPLATES.filter(t => t.category === cat.id);
+              {templateCategories.map((cat) => {
+                const templates = botTemplates.filter(tpl => tpl.category === cat.id);
                 if (templates.length === 0) return null;
                 return (
                   <div key={cat.id}>
@@ -134,7 +138,7 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
 
                 {selected.variablesHint && selected.variablesHint.length > 0 && (
                   <div className="rounded-md border border-border bg-muted/30 p-2.5">
-                    <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">Available Variables</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">{t('components.templateGallery.availableVariables')}</p>
                     <ul className="space-y-0.5">
                       {selected.variablesHint.map((v) => (
                         <li key={v} className="text-[10px] font-mono-data text-muted-foreground">{v}</li>
@@ -144,7 +148,7 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
                 )}
 
                 {selected.configFields.length === 0 ? (
-                  <p className="text-xs text-muted-foreground/60">No configuration needed — ready to create.</p>
+                  <p className="text-xs text-muted-foreground/60">{t('components.templateGallery.noConfigNeeded')}</p>
                 ) : (
                   <div className="space-y-3">
                     {selected.configFields.filter(isFieldVisible).map((field) => (
@@ -189,9 +193,9 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
 
             <div className="p-6 pt-2">
               <DialogFooter>
-                <Button variant="outline" size="sm" onClick={handleBack}>Back</Button>
+                <Button variant="outline" size="sm" onClick={handleBack}>{t('common.back')}</Button>
                 <Button size="sm" onClick={handleCreate} disabled={selected.configFields.length > 0 && !isValid}>
-                  Create Bot
+                  {t('components.templateGallery.createBot')}
                 </Button>
               </DialogFooter>
             </div>

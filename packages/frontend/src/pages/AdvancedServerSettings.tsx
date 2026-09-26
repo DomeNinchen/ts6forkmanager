@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { normalizeIconId } from '@ts6/common';
 import { IconImage } from '@/components/icons/IconImage';
 import { useServerStore } from '@/stores/server.store';
@@ -48,6 +49,8 @@ function LogSwitch({ label, checked, onChange }: { label: string; checked: boole
 }
 
 export default function AdvancedServerSettings() {
+  const { t } = useTranslation();
+  const as = (key: string) => t(`pages.advancedSettings.${key}`);
   const { selectedConfigId, selectedSid } = useServerStore();
   const { data: info, isLoading } = useVirtualServerInfo();
   const { data: serverGroups } = useServerGroups();
@@ -63,7 +66,7 @@ export default function AdvancedServerSettings() {
   }, [s, form]);
 
   if (!selectedConfigId || !selectedSid) {
-    return <EmptyState icon={SlidersHorizontal} title="No server selected" description="Select a server under Virtual Servers first." />;
+    return <EmptyState icon={SlidersHorizontal} title={t('pages.noServerSelected')} description={t('pages.serverStats.selectServerFirst')} />;
   }
   if (isLoading || !form) return <PageLoader />;
 
@@ -73,8 +76,8 @@ export default function AdvancedServerSettings() {
     editServer.mutate(
       { ...pick(form, fields), ...extra },
       {
-        onSuccess: () => toast.success('Saved'),
-        onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to save'),
+        onSuccess: () => toast.success(t('pages.advancedSettings.saved')),
+        onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.advancedSettings.saveFailed')),
       },
     );
   };
@@ -84,93 +87,93 @@ export default function AdvancedServerSettings() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Advanced Settings</h1>
+      <h1 className="text-xl font-semibold">{as('title')}</h1>
 
       <Tabs defaultValue="appearance">
         <TabsList>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="access">Access &amp; Groups</TabsTrigger>
-          <TabsTrigger value="moderation">Moderation &amp; Logging</TabsTrigger>
-          <TabsTrigger value="limits">File Transfer Limits</TabsTrigger>
+          <TabsTrigger value="appearance">{as('tabs.appearance')}</TabsTrigger>
+          <TabsTrigger value="access">{as('tabs.access')}</TabsTrigger>
+          <TabsTrigger value="moderation">{as('tabs.moderation')}</TabsTrigger>
+          <TabsTrigger value="limits">{as('tabs.limits')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="appearance" className="mt-4 space-y-4">
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Welcome &amp; Host Message</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('welcomeHostMessage')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <Label className="text-xs">Welcome Message</Label>
-                <Textarea value={form.virtualserver_welcomemessage ?? ''} onChange={(e) => set('virtualserver_welcomemessage', e.target.value)} rows={2} className="text-sm mt-1" placeholder="Shown to clients right after they connect" />
+                <Label className="text-xs">{as('welcomeMessage')}</Label>
+                <Textarea value={form.virtualserver_welcomemessage ?? ''} onChange={(e) => set('virtualserver_welcomemessage', e.target.value)} rows={2} className="text-sm mt-1" placeholder={as('welcomeMessagePlaceholder')} />
               </div>
               <div>
-                <Label className="text-xs">Host Message</Label>
+                <Label className="text-xs">{as('hostMessage')}</Label>
                 <Input value={form.virtualserver_hostmessage ?? ''} onChange={(e) => set('virtualserver_hostmessage', e.target.value)} className="h-8 text-sm mt-1" />
               </div>
               <div>
-                <Label className="text-xs">Host Message Mode</Label>
+                <Label className="text-xs">{as('hostMessageMode')}</Label>
                 <Select value={String(form.virtualserver_hostmessage_mode ?? '0')} onValueChange={(v) => set('virtualserver_hostmessage_mode', Number(v))}>
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">Don't show</SelectItem>
-                    <SelectItem value="1">Show in chat log</SelectItem>
-                    <SelectItem value="2">Show as modal</SelectItem>
-                    <SelectItem value="3">Show as modal, then quit</SelectItem>
+                    <SelectItem value="0">{as('dontShow')}</SelectItem>
+                    <SelectItem value="1">{as('showInChatLog')}</SelectItem>
+                    <SelectItem value="2">{as('showAsModal')}</SelectItem>
+                    <SelectItem value="3">{as('showAsModalThenQuit')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_welcomemessage', 'virtualserver_hostmessage', 'virtualserver_hostmessage_mode'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_welcomemessage', 'virtualserver_hostmessage', 'virtualserver_hostmessage_mode'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
 
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Host Banner</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('hostBanner')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div><Label className="text-xs">Link URL</Label><Input value={form.virtualserver_hostbanner_url ?? ''} onChange={(e) => set('virtualserver_hostbanner_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
-                <div><Label className="text-xs">Image URL</Label><Input value={form.virtualserver_hostbanner_gfx_url ?? ''} onChange={(e) => set('virtualserver_hostbanner_gfx_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
-                <NumField label="Rotation Interval (s)" value={form.virtualserver_hostbanner_gfx_interval} onChange={(v) => set('virtualserver_hostbanner_gfx_interval', Number(v))} />
+                <div><Label className="text-xs">{as('linkUrl')}</Label><Input value={form.virtualserver_hostbanner_url ?? ''} onChange={(e) => set('virtualserver_hostbanner_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
+                <div><Label className="text-xs">{as('imageUrl')}</Label><Input value={form.virtualserver_hostbanner_gfx_url ?? ''} onChange={(e) => set('virtualserver_hostbanner_gfx_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
+                <NumField label={as('rotationInterval')} value={form.virtualserver_hostbanner_gfx_interval} onChange={(v) => set('virtualserver_hostbanner_gfx_interval', Number(v))} />
                 <div>
-                  <Label className="text-xs">Display Mode</Label>
+                  <Label className="text-xs">{as('displayMode')}</Label>
                   <Select value={String(form.virtualserver_hostbanner_mode ?? '0')} onValueChange={(v) => set('virtualserver_hostbanner_mode', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0">No adjust</SelectItem>
-                      <SelectItem value="1">Stretch (ignore aspect ratio)</SelectItem>
-                      <SelectItem value="2">Keep aspect ratio</SelectItem>
+                      <SelectItem value="0">{as('noAdjust')}</SelectItem>
+                      <SelectItem value="1">{as('stretchIgnoreAspect')}</SelectItem>
+                      <SelectItem value="2">{as('keepAspectRatio')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_hostbanner_url', 'virtualserver_hostbanner_gfx_url', 'virtualserver_hostbanner_gfx_interval', 'virtualserver_hostbanner_mode'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_hostbanner_url', 'virtualserver_hostbanner_gfx_url', 'virtualserver_hostbanner_gfx_interval', 'virtualserver_hostbanner_mode'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
 
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Host Button</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('hostButton')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div><Label className="text-xs">Link URL (opened on click)</Label><Input value={form.virtualserver_hostbutton_url ?? ''} onChange={(e) => set('virtualserver_hostbutton_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
-                <div><Label className="text-xs">Image URL</Label><Input value={form.virtualserver_hostbutton_gfx_url ?? ''} onChange={(e) => set('virtualserver_hostbutton_gfx_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
-                <div><Label className="text-xs">Tooltip</Label><Input value={form.virtualserver_hostbutton_tooltip ?? ''} onChange={(e) => set('virtualserver_hostbutton_tooltip', e.target.value)} className="h-8 text-sm mt-1" /></div>
+                <div><Label className="text-xs">{as('linkUrlOnClick')}</Label><Input value={form.virtualserver_hostbutton_url ?? ''} onChange={(e) => set('virtualserver_hostbutton_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
+                <div><Label className="text-xs">{as('imageUrl')}</Label><Input value={form.virtualserver_hostbutton_gfx_url ?? ''} onChange={(e) => set('virtualserver_hostbutton_gfx_url', e.target.value)} className="h-8 text-sm mt-1" /></div>
+                <div><Label className="text-xs">{as('tooltip')}</Label><Input value={form.virtualserver_hostbutton_tooltip ?? ''} onChange={(e) => set('virtualserver_hostbutton_tooltip', e.target.value)} className="h-8 text-sm mt-1" /></div>
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_hostbutton_url', 'virtualserver_hostbutton_gfx_url', 'virtualserver_hostbutton_tooltip'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_hostbutton_url', 'virtualserver_hostbutton_gfx_url', 'virtualserver_hostbutton_tooltip'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="access" className="mt-4 space-y-4">
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Default Groups</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('defaultGroups')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs">Default Server Group</Label>
+                  <Label className="text-xs">{as('defaultServerGroup')}</Label>
                   <Select value={String(form.virtualserver_default_server_group ?? '')} onValueChange={(v) => set('virtualserver_default_server_group', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>{sGroups.map((g: any) => (
                       <SelectItem key={g.sgid} value={String(g.sgid)}>
                         <span className="flex items-center gap-1.5">
-                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={t('pages.tokens.iconForGroup', { name: g.name })} />
                           {g.name}
                         </span>
                       </SelectItem>
@@ -178,13 +181,13 @@ export default function AdvancedServerSettings() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Default Channel Group</Label>
+                  <Label className="text-xs">{as('defaultChannelGroup')}</Label>
                   <Select value={String(form.virtualserver_default_channel_group ?? '')} onValueChange={(v) => set('virtualserver_default_channel_group', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>{cGroups.map((g: any) => (
                       <SelectItem key={g.cgid} value={String(g.cgid)}>
                         <span className="flex items-center gap-1.5">
-                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={t('pages.tokens.iconForGroup', { name: g.name })} />
                           {g.name}
                         </span>
                       </SelectItem>
@@ -192,13 +195,13 @@ export default function AdvancedServerSettings() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Default Channel Admin Group</Label>
+                  <Label className="text-xs">{as('defaultChannelAdminGroup')}</Label>
                   <Select value={String(form.virtualserver_default_channel_admin_group ?? '')} onValueChange={(v) => set('virtualserver_default_channel_admin_group', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>{cGroups.map((g: any) => (
                       <SelectItem key={g.cgid} value={String(g.cgid)}>
                         <span className="flex items-center gap-1.5">
-                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                          <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={t('pages.tokens.iconForGroup', { name: g.name })} />
                           {g.name}
                         </span>
                       </SelectItem>
@@ -206,34 +209,34 @@ export default function AdvancedServerSettings() {
                   </Select>
                 </div>
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_default_server_group', 'virtualserver_default_channel_group', 'virtualserver_default_channel_admin_group'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_default_server_group', 'virtualserver_default_channel_group', 'virtualserver_default_channel_admin_group'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
 
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Access &amp; Security</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('accessSecurity')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">Server Password</Label>
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave empty to keep unchanged" className="h-8 text-sm mt-1" />
+                  <Label className="text-xs">{as('serverPassword')}</Label>
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('components.editChannelDialog.leaveEmptyToKeep')} className="h-8 text-sm mt-1" />
                 </div>
-                <NumField label="Minimum Identity Security Level" value={form.virtualserver_needed_identity_security_level} onChange={(v) => set('virtualserver_needed_identity_security_level', Number(v))} />
-                <NumField label="Minimum Client Build" value={form.virtualserver_min_client_version} onChange={(v) => set('virtualserver_min_client_version', Number(v))} />
-                <NumField label="Reserved Slots" value={form.virtualserver_reserved_slots} onChange={(v) => set('virtualserver_reserved_slots', Number(v))} />
+                <NumField label={as('minIdentitySecurityLevel')} value={form.virtualserver_needed_identity_security_level} onChange={(v) => set('virtualserver_needed_identity_security_level', Number(v))} />
+                <NumField label={as('minClientBuild')} value={form.virtualserver_min_client_version} onChange={(v) => set('virtualserver_min_client_version', Number(v))} />
+                <NumField label={as('reservedSlots')} value={form.virtualserver_reserved_slots} onChange={(v) => set('virtualserver_reserved_slots', Number(v))} />
                 <div>
-                  <Label className="text-xs">Codec Encryption</Label>
+                  <Label className="text-xs">{as('codecEncryption')}</Label>
                   <Select value={String(form.virtualserver_codec_encryption_mode ?? '0')} onValueChange={(v) => set('virtualserver_codec_encryption_mode', Number(v))}>
                     <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0">Per-channel setting</SelectItem>
-                      <SelectItem value="1">Forced off</SelectItem>
-                      <SelectItem value="2">Forced on</SelectItem>
+                      <SelectItem value="0">{as('perChannelSetting')}</SelectItem>
+                      <SelectItem value="1">{as('forcedOff')}</SelectItem>
+                      <SelectItem value="2">{as('forcedOn')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="flex items-center justify-between md:pt-5">
-                  <Label className="text-xs">Show on Global Weblist</Label>
+                  <Label className="text-xs">{as('showOnGlobalWeblist')}</Label>
                   <Switch checked={Number(form.virtualserver_weblist_enabled) === 1} onCheckedChange={(v) => set('virtualserver_weblist_enabled', v ? 1 : 0)} />
                 </div>
               </div>
@@ -245,7 +248,7 @@ export default function AdvancedServerSettings() {
                 )}
                 disabled={editServer.isPending}
               >
-                Save
+                {t('common.save')}
               </Button>
             </CardContent>
           </Card>
@@ -253,67 +256,67 @@ export default function AdvancedServerSettings() {
 
         <TabsContent value="moderation" className="mt-4 space-y-4">
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Complaints</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('nav.items.complaints')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <NumField label="Complaints Before Ban" value={form.virtualserver_complain_autoban_count} onChange={(v) => set('virtualserver_complain_autoban_count', Number(v))} />
-                <NumField label="Ban Duration (s)" value={form.virtualserver_complain_autoban_time} onChange={(v) => set('virtualserver_complain_autoban_time', Number(v))} />
-                <NumField label="Complaint Removed After (s)" value={form.virtualserver_complain_remove_time} onChange={(v) => set('virtualserver_complain_remove_time', Number(v))} />
+                <NumField label={as('complaintsBeforeBan')} value={form.virtualserver_complain_autoban_count} onChange={(v) => set('virtualserver_complain_autoban_count', Number(v))} />
+                <NumField label={as('banDurationSeconds')} value={form.virtualserver_complain_autoban_time} onChange={(v) => set('virtualserver_complain_autoban_time', Number(v))} />
+                <NumField label={as('complaintRemovedAfter')} value={form.virtualserver_complain_remove_time} onChange={(v) => set('virtualserver_complain_remove_time', Number(v))} />
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_complain_autoban_count', 'virtualserver_complain_autoban_time', 'virtualserver_complain_remove_time'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_complain_autoban_count', 'virtualserver_complain_autoban_time', 'virtualserver_complain_remove_time'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
 
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Priority &amp; Silence</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('prioritySilence')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <NumField label="Clients in Channel Before Forced Silence" value={form.virtualserver_min_clients_in_channel_before_forced_silence} onChange={(v) => set('virtualserver_min_clients_in_channel_before_forced_silence', Number(v))} />
-                <NumField label="Priority Speaker Volume Reduction (dB)" value={form.virtualserver_priority_speaker_dimm_modificator} onChange={(v) => set('virtualserver_priority_speaker_dimm_modificator', Number(v))} />
+                <NumField label={as('clientsBeforeForcedSilence')} value={form.virtualserver_min_clients_in_channel_before_forced_silence} onChange={(v) => set('virtualserver_min_clients_in_channel_before_forced_silence', Number(v))} />
+                <NumField label={as('prioritySpeakerReduction')} value={form.virtualserver_priority_speaker_dimm_modificator} onChange={(v) => set('virtualserver_priority_speaker_dimm_modificator', Number(v))} />
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_min_clients_in_channel_before_forced_silence', 'virtualserver_priority_speaker_dimm_modificator'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_min_clients_in_channel_before_forced_silence', 'virtualserver_priority_speaker_dimm_modificator'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
 
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Anti-Flood</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('antiFlood')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <NumField label="Points Reduced for Being Good" value={form.virtualserver_antiflood_points_tick_reduce} onChange={(v) => set('virtualserver_antiflood_points_tick_reduce', Number(v))} />
-                <NumField label="Points to Block Commands" value={form.virtualserver_antiflood_points_needed_command_block} onChange={(v) => set('virtualserver_antiflood_points_needed_command_block', Number(v))} />
-                <NumField label="Points to Block Connections" value={form.virtualserver_antiflood_points_needed_ip_block} onChange={(v) => set('virtualserver_antiflood_points_needed_ip_block', Number(v))} />
+                <NumField label={as('pointsReducedGood')} value={form.virtualserver_antiflood_points_tick_reduce} onChange={(v) => set('virtualserver_antiflood_points_tick_reduce', Number(v))} />
+                <NumField label={as('pointsToBlockCommands')} value={form.virtualserver_antiflood_points_needed_command_block} onChange={(v) => set('virtualserver_antiflood_points_needed_command_block', Number(v))} />
+                <NumField label={as('pointsToBlockConnections')} value={form.virtualserver_antiflood_points_needed_ip_block} onChange={(v) => set('virtualserver_antiflood_points_needed_ip_block', Number(v))} />
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_antiflood_points_tick_reduce', 'virtualserver_antiflood_points_needed_command_block', 'virtualserver_antiflood_points_needed_ip_block'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_antiflood_points_tick_reduce', 'virtualserver_antiflood_points_needed_command_block', 'virtualserver_antiflood_points_needed_ip_block'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
 
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Event Logging</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('eventLogging')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-2">
-                <LogSwitch label="Clients" checked={Number(form.virtualserver_log_client) === 1} onChange={(v) => set('virtualserver_log_client', v ? 1 : 0)} />
-                <LogSwitch label="ServerQuery Clients" checked={Number(form.virtualserver_log_query) === 1} onChange={(v) => set('virtualserver_log_query', v ? 1 : 0)} />
-                <LogSwitch label="Channels" checked={Number(form.virtualserver_log_channel) === 1} onChange={(v) => set('virtualserver_log_channel', v ? 1 : 0)} />
-                <LogSwitch label="Permissions" checked={Number(form.virtualserver_log_permissions) === 1} onChange={(v) => set('virtualserver_log_permissions', v ? 1 : 0)} />
-                <LogSwitch label="Server Changes" checked={Number(form.virtualserver_log_server) === 1} onChange={(v) => set('virtualserver_log_server', v ? 1 : 0)} />
-                <LogSwitch label="File Transfers" checked={Number(form.virtualserver_log_filetransfer) === 1} onChange={(v) => set('virtualserver_log_filetransfer', v ? 1 : 0)} />
+                <LogSwitch label={t('nav.items.clients')} checked={Number(form.virtualserver_log_client) === 1} onChange={(v) => set('virtualserver_log_client', v ? 1 : 0)} />
+                <LogSwitch label={as('serverqueryClients')} checked={Number(form.virtualserver_log_query) === 1} onChange={(v) => set('virtualserver_log_query', v ? 1 : 0)} />
+                <LogSwitch label={t('nav.items.channels')} checked={Number(form.virtualserver_log_channel) === 1} onChange={(v) => set('virtualserver_log_channel', v ? 1 : 0)} />
+                <LogSwitch label={t('nav.items.permissions')} checked={Number(form.virtualserver_log_permissions) === 1} onChange={(v) => set('virtualserver_log_permissions', v ? 1 : 0)} />
+                <LogSwitch label={as('serverChanges')} checked={Number(form.virtualserver_log_server) === 1} onChange={(v) => set('virtualserver_log_server', v ? 1 : 0)} />
+                <LogSwitch label={as('fileTransfers')} checked={Number(form.virtualserver_log_filetransfer) === 1} onChange={(v) => set('virtualserver_log_filetransfer', v ? 1 : 0)} />
               </div>
-              <Button size="sm" onClick={() => save(['virtualserver_log_client', 'virtualserver_log_query', 'virtualserver_log_channel', 'virtualserver_log_permissions', 'virtualserver_log_server', 'virtualserver_log_filetransfer'])} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(['virtualserver_log_client', 'virtualserver_log_query', 'virtualserver_log_channel', 'virtualserver_log_permissions', 'virtualserver_log_server', 'virtualserver_log_filetransfer'])} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="limits" className="mt-4 space-y-4">
           <Card className="card-hero">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">File Transfer Limits (per user)</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('fileTransferLimitsPerUser')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <NumField label="Upload Quota (MB)" hint="0 = unlimited" value={form.virtualserver_upload_quota} onChange={(v) => set('virtualserver_upload_quota', Number(v))} />
-                <NumField label="Download Quota (MB)" hint="0 = unlimited" value={form.virtualserver_download_quota} onChange={(v) => set('virtualserver_download_quota', Number(v))} />
-                <NumField label="Upload Bandwidth (Bytes/s)" hint="0 = unlimited" value={form.virtualserver_max_upload_total_bandwidth} onChange={(v) => set('virtualserver_max_upload_total_bandwidth', Number(v))} />
-                <NumField label="Download Bandwidth (Bytes/s)" hint="0 = unlimited" value={form.virtualserver_max_download_total_bandwidth} onChange={(v) => set('virtualserver_max_download_total_bandwidth', Number(v))} />
+                <NumField label={as('uploadQuotaMb')} hint={as('zeroUnlimited')} value={form.virtualserver_upload_quota} onChange={(v) => set('virtualserver_upload_quota', Number(v))} />
+                <NumField label={as('downloadQuotaMb')} hint={as('zeroUnlimited')} value={form.virtualserver_download_quota} onChange={(v) => set('virtualserver_download_quota', Number(v))} />
+                <NumField label={as('uploadBandwidth')} hint={as('zeroUnlimited')} value={form.virtualserver_max_upload_total_bandwidth} onChange={(v) => set('virtualserver_max_upload_total_bandwidth', Number(v))} />
+                <NumField label={as('downloadBandwidth')} hint={as('zeroUnlimited')} value={form.virtualserver_max_download_total_bandwidth} onChange={(v) => set('virtualserver_max_download_total_bandwidth', Number(v))} />
               </div>
-              <Button size="sm" onClick={() => save(LIMITS_FIELDS)} disabled={editServer.isPending}>Save</Button>
+              <Button size="sm" onClick={() => save(LIMITS_FIELDS)} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>
           </Card>
         </TabsContent>

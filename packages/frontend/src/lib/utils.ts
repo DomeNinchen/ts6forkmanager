@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import i18n from '@/lib/i18n';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -28,7 +29,7 @@ export function formatUptime(seconds: number): string {
 }
 
 export function formatDuration(seconds: number): string {
-  if (seconds === 0) return 'Permanent';
+  if (seconds === 0) return i18n.t('common.duration.permanent');
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -42,8 +43,8 @@ export function formatDuration(seconds: number): string {
 export function timeAgo(timestamp: number): string {
   const now = Math.floor(Date.now() / 1000);
   const diff = now - timestamp;
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 60) return i18n.t('common.duration.justNow');
+  if (diff < 3600) return i18n.t('common.duration.minutesAgo', { count: Math.floor(diff / 60) });
+  if (diff < 86400) return i18n.t('common.duration.hoursAgo', { count: Math.floor(diff / 3600) });
+  return i18n.t('common.duration.daysAgo', { count: Math.floor(diff / 86400) });
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVirtualServers, useCreateVirtualServer } from '@/hooks/use-servers';
 import { useServerStore } from '@/stores/server.store';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,6 +32,7 @@ function CounterTile({ icon: Icon, label, value, sub }: { icon: React.ElementTyp
 }
 
 export default function VirtualServers() {
+  const { t } = useTranslation();
   const { selectedConfigId, selectedSid, setSid } = useServerStore();
   const { data, isLoading } = useVirtualServers();
   const createVirtual = useCreateVirtualServer();
@@ -63,23 +65,23 @@ export default function VirtualServers() {
     return { online, offline, autostartCount: autostartServers.length, totalSlots, autostartSlots };
   }, [servers]);
 
-  if (!selectedConfigId) return <EmptyState icon={Server} title="No server selected" />;
+  if (!selectedConfigId) return <EmptyState icon={Server} title={t('pages.noServerSelected')} />;
   if (isLoading) return <PageLoader />;
 
   const handleStart = async (sid: number) => {
     try {
       await serversApi.startVirtual(selectedConfigId, sid);
-      toast.success('Server started');
+      toast.success(t('pages.virtualServers.started'));
       qc.invalidateQueries({ queryKey: ['virtual-servers'] });
-    } catch { toast.error('Failed to start server'); }
+    } catch { toast.error(t('pages.virtualServers.startFailed')); }
   };
 
   const handleStop = async (sid: number) => {
     try {
       await serversApi.stopVirtual(selectedConfigId, sid);
-      toast.success('Server stopped');
+      toast.success(t('pages.virtualServers.stopped'));
       qc.invalidateQueries({ queryKey: ['virtual-servers'] });
-    } catch { toast.error('Failed to stop server'); }
+    } catch { toast.error(t('pages.virtualServers.stopFailed')); }
   };
 
   const handleCreate = () => {
@@ -93,29 +95,29 @@ export default function VirtualServers() {
 
     createVirtual.mutate(payload, {
       onSuccess: () => {
-        toast.success('Virtual server created');
+        toast.success(t('pages.virtualServers.created'));
         setShowCreate(false);
         setForm({ name: '', maxclients: 32, port: '', autostart: false });
       },
-      onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to create virtual server'),
+      onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.virtualServers.createFailed')),
     });
   };
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Virtual Servers</h1>
+        <h1 className="text-xl font-semibold">{t('nav.items.virtualServers')}</h1>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Create Server
+          <Plus className="h-4 w-4 mr-1" /> {t('pages.virtualServers.createServer')}
         </Button>
       </div>
 
       <Card className="card-hero">
         <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <CounterTile icon={Server} label="Servers" sub="online+offline" value={`${counters.online}+${counters.offline}`} />
-          <CounterTile icon={Power} label="Autostarting" value={String(counters.autostartCount)} />
-          <CounterTile icon={Layers} label="Slots" value={String(counters.totalSlots)} />
-          <CounterTile icon={Layers} label="Autostart Slots" value={counters.autostartSlots != null ? String(counters.autostartSlots) : '—'} />
+          <CounterTile icon={Server} label={t('pages.virtualServers.servers')} sub={t('pages.virtualServers.onlineOffline')} value={`${counters.online}+${counters.offline}`} />
+          <CounterTile icon={Power} label={t('pages.virtualServers.autostarting')} value={String(counters.autostartCount)} />
+          <CounterTile icon={Layers} label={t('pages.virtualServers.slots')} value={String(counters.totalSlots)} />
+          <CounterTile icon={Layers} label={t('pages.virtualServers.autostartSlots')} value={counters.autostartSlots != null ? String(counters.autostartSlots) : '—'} />
         </CardContent>
       </Card>
 
@@ -142,11 +144,11 @@ export default function VirtualServers() {
                         <Badge variant={vs.virtualserver_status === 'online' ? 'success' : 'secondary'} className="text-[10px]">
                           {vs.virtualserver_status?.toUpperCase()}
                         </Badge>
-                        {isSelected && <Badge variant="outline" className="text-[10px] border-primary text-primary">SELECTED</Badge>}
+                        {isSelected && <Badge variant="outline" className="text-[10px] border-primary text-primary">{t('pages.virtualServers.selected')}</Badge>}
                       </div>
                       <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                         <span className="font-mono-data">SID: {vs.virtualserver_id}</span>
-                        <span className="font-mono-data">Port: {vs.virtualserver_port}</span>
+                        <span className="font-mono-data">{t('pages.serverStats.port')}: {vs.virtualserver_port}</span>
                         {vs.virtualserver_status === 'online' && (
                           <>
                             <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {vs.virtualserver_clientsonline - (vs.virtualserver_queryclientsonline || 0)}/{vs.virtualserver_maxclients}</span>
@@ -159,20 +161,20 @@ export default function VirtualServers() {
                   <div className="flex items-center gap-2">
                     {isSelected ? (
                       <Button variant="outline" size="sm" onClick={() => setSid(null)}>
-                        Deselect
+                        {t('pages.virtualServers.deselect')}
                       </Button>
                     ) : (
                       <Button variant="outline" size="sm" onClick={() => setSid(vs.virtualserver_id)}>
-                        <Check className="h-3 w-3 mr-1" /> Select
+                        <Check className="h-3 w-3 mr-1" /> {t('common.select')}
                       </Button>
                     )}
                     {vs.virtualserver_status === 'online' ? (
                       <Button variant="outline" size="sm" onClick={() => handleStop(vs.virtualserver_id)}>
-                        <Square className="h-3 w-3 mr-1" /> Stop
+                        <Square className="h-3 w-3 mr-1" /> {t('pages.virtualServers.stop')}
                       </Button>
                     ) : (
                       <Button size="sm" onClick={() => handleStart(vs.virtualserver_id)}>
-                        <Play className="h-3 w-3 mr-1" /> Start
+                        <Play className="h-3 w-3 mr-1" /> {t('pages.virtualServers.start')}
                       </Button>
                     )}
                   </div>
@@ -187,31 +189,31 @@ export default function VirtualServers() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Virtual Server</DialogTitle>
-            <DialogDescription>Creates a new virtual server on this TeamSpeak instance.</DialogDescription>
+            <DialogTitle>{t('pages.virtualServers.createDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('pages.virtualServers.createDialogDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My TeamSpeak Server" autoFocus />
+              <Label className="text-xs">{t('common.name')}</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('pages.virtualServers.namePlaceholder')} autoFocus />
             </div>
             <div>
-              <Label className="text-xs">Slots</Label>
+              <Label className="text-xs">{t('pages.serverStats.slots')}</Label>
               <Input type="number" min={1} value={form.maxclients} onChange={(e) => setForm({ ...form, maxclients: parseInt(e.target.value) || 1 })} />
             </div>
             <div>
-              <Label className="text-xs">Port (optional)</Label>
-              <Input type="number" value={form.port} onChange={(e) => setForm({ ...form, port: e.target.value })} placeholder="Leave empty for first free port" />
+              <Label className="text-xs">{t('pages.virtualServers.portOptional')}</Label>
+              <Input type="number" value={form.port} onChange={(e) => setForm({ ...form, port: e.target.value })} placeholder={t('pages.virtualServers.portPlaceholder')} />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.autostart} onCheckedChange={(v) => setForm({ ...form, autostart: v })} />
-              <Label className="text-xs">Autostart with the instance</Label>
+              <Label className="text-xs">{t('pages.virtualServers.autostartWithInstance')}</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreate} disabled={!form.name.trim() || createVirtual.isPending}>
-              {createVirtual.isPending ? 'Creating...' : 'Create'}
+              {createVirtual.isPending ? t('common.creating') : t('common.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

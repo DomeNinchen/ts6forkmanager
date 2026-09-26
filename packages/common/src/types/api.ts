@@ -26,6 +26,7 @@ export interface UserInfo {
   username: string;
   displayName: string;
   role: 'admin' | 'moderator' | 'viewer';
+  language?: 'en' | 'de' | null;
 }
 
 // Server Connection Config

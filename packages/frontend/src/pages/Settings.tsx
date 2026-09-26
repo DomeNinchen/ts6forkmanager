@@ -24,7 +24,9 @@ import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { useSetWebguiTheme, useSetWebguiBaseTheme } from '@/hooks/use-webgui-theme';
 import { useUiStore } from '@/stores/ui.store';
+import { useLanguagePreference } from '@/hooks/use-language';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
   const { user } = useAuthStore();
@@ -360,6 +362,8 @@ function BaseThemeSwatchPicker({ value, onChange, disabled }: { value: BaseTheme
 }
 
 function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
+  const { t } = useTranslation();
+  const { language, setLanguage, isSaving: isSavingLanguage } = useLanguagePreference();
   const { data: installTheme, isLoading } = useQuery({
     queryKey: ['webgui-theme'],
     queryFn: settingsApi.getWebguiTheme,
@@ -393,6 +397,26 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="max-w-lg space-y-4">
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.language.title')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {t('pages.settings.webgui.language.description')}
+          </p>
+          <Select value={language} onValueChange={(v) => setLanguage(v as 'en' | 'de')} disabled={isSavingLanguage}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="de">Deutsch</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">My Base Theme</CardTitle>

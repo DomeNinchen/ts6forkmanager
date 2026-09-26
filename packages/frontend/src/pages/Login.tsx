@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,15 +13,15 @@ import { useAuthStore } from '@/stores/auth.store';
 import { authApi } from '@/api/auth.api';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
-const SSO_ERROR_MESSAGES: Record<string, string> = {
-  sso_not_configured: 'SSO is not configured.',
-  sso_failed: 'SSO login failed. Please try again.',
-  sso_invalid_state: 'SSO login expired or was tampered with. Please try again.',
-  sso_no_subject: 'The SSO provider did not return a valid identity.',
-  account_disabled: 'This account has been disabled.',
-};
-
 export default function Login() {
+  const { t } = useTranslation();
+  const ssoErrorMessages: Record<string, string> = {
+    sso_not_configured: t('pages.login.ssoErrors.notConfigured'),
+    sso_failed: t('pages.login.ssoErrors.failed'),
+    sso_invalid_state: t('pages.login.ssoErrors.invalidState'),
+    sso_no_subject: t('pages.login.ssoErrors.noSubject'),
+    account_disabled: t('pages.login.ssoErrors.accountDisabled'),
+  };
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
@@ -55,15 +56,15 @@ export default function Login() {
             <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 border border-primary/20 mb-4">
               <ShieldCheck className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-xl font-semibold text-foreground">Two-Factor Authentication</h1>
-            <p className="text-sm text-muted-foreground mt-1">Enter the code from your authenticator app</p>
+            <h1 className="text-xl font-semibold text-foreground">{t('pages.login.twoFactorAuth')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('pages.login.enterCode')}</p>
           </div>
 
           <Card className="card-hero border-border/50 backdrop-blur-xs">
             <CardContent className="pt-6">
               <form onSubmit={handleVerifyTotp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="totp-code" className="text-xs">Code (or a recovery code)</Label>
+                  <Label htmlFor="totp-code" className="text-xs">{t('pages.login.codeOrRecovery')}</Label>
                   <Input
                     id="totp-code"
                     value={totpCode}
@@ -75,14 +76,14 @@ export default function Login() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="remember-device" className="text-xs text-muted-foreground">Remember this device for 15 days</Label>
+                  <Label htmlFor="remember-device" className="text-xs text-muted-foreground">{t('pages.login.rememberDevice')}</Label>
                   <Switch id="remember-device" checked={rememberDevice} onCheckedChange={setRememberDevice} />
                 </div>
 
                 {verifyTotp.isError && (
                   <div className="flex items-center gap-2 text-destructive text-xs bg-destructive/10 rounded-md px-3 py-2">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                    <span>Invalid code. Please try again.</span>
+                    <span>{t('pages.login.invalidCode')}</span>
                   </div>
                 )}
 
@@ -90,14 +91,14 @@ export default function Login() {
                   {verifyTotp.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Verifying...
+                      {t('pages.login.verifying')}
                     </>
                   ) : (
-                    'Verify'
+                    t('pages.login.verify')
                   )}
                 </Button>
                 <Button type="button" variant="ghost" className="w-full" onClick={() => login.reset()}>
-                  Back to login
+                  {t('pages.login.backToLogin')}
                 </Button>
               </form>
             </CardContent>
@@ -119,17 +120,17 @@ export default function Login() {
             <img src="/logo-256.png" alt="TS6 Manager" className="h-10 w-10 object-contain" />
           </div>
           <h1 className="text-xl font-semibold text-foreground">TeamSpeak 6 Manager</h1>
-          <p className="text-sm text-muted-foreground mt-1">Server Administration Panel</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('pages.login.subtitle')}</p>
         </div>
 
         <Card className="card-hero border-border/50 backdrop-blur-xs">
           <CardHeader className="pb-4">
-            <h2 className="text-sm font-medium text-center text-muted-foreground">Sign in to continue</h2>
+            <h2 className="text-sm font-medium text-center text-muted-foreground">{t('pages.login.signInToContinue')}</h2>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-xs">Username</Label>
+                <Label htmlFor="username" className="text-xs">{t('common.username')}</Label>
                 <Input
                   id="username"
                   value={username}
@@ -140,7 +141,7 @@ export default function Login() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs">Password</Label>
+                <Label htmlFor="password" className="text-xs">{t('common.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -154,14 +155,14 @@ export default function Login() {
               {login.isError && (
                 <div className="flex items-center gap-2 text-destructive text-xs bg-destructive/10 rounded-md px-3 py-2">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  <span>Invalid credentials. Please try again.</span>
+                  <span>{t('pages.login.invalidCredentials')}</span>
                 </div>
               )}
 
               {ssoError && (
                 <div className="flex items-center gap-2 text-destructive text-xs bg-destructive/10 rounded-md px-3 py-2">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  <span>{SSO_ERROR_MESSAGES[ssoError] || 'SSO login failed.'}</span>
+                  <span>{ssoErrorMessages[ssoError] || t('pages.login.ssoErrors.generic')}</span>
                 </div>
               )}
 
@@ -169,10 +170,10 @@ export default function Login() {
                 {login.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t('pages.login.signingIn')}
                   </>
                 ) : (
-                  'Sign In'
+                  t('pages.login.signIn')
                 )}
               </Button>
             </form>
@@ -181,7 +182,7 @@ export default function Login() {
               <>
                 <div className="flex items-center gap-3 my-4">
                   <Separator className="flex-1" />
-                  <span className="text-[10px] text-muted-foreground uppercase">or</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">{t('pages.login.or')}</span>
                   <Separator className="flex-1" />
                 </div>
                 <Button

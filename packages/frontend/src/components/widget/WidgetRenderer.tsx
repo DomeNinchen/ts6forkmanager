@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { WidgetData, WidgetChannelNode as WidgetChannelNodeType, WidgetTheme } from '@ts6/common';
 import { WIDGET_THEMES } from '@ts6/common';
 
@@ -53,6 +54,7 @@ function ChannelNode({ node, depth, showClients, theme }: {
   showClients: boolean;
   theme: WidgetTheme;
 }) {
+  const { t: translate } = useTranslation();
   const t = WIDGET_THEMES[theme];
   const indent = depth * 16;
 
@@ -102,8 +104,8 @@ function ChannelNode({ node, depth, showClients, theme }: {
           }} />
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {client.nickname}
-            {client.isAway && <span style={{ color: t.textSecondary }}> [away]</span>}
-            {client.isMuted && <span style={{ color: t.textSecondary }}> [muted]</span>}
+            {client.isAway && <span style={{ color: t.textSecondary }}> [{translate('components.widget.away')}]</span>}
+            {client.isMuted && <span style={{ color: t.textSecondary }}> [{translate('components.widget.muted')}]</span>}
           </span>
         </div>
       ))}
@@ -117,6 +119,7 @@ function ChannelNode({ node, depth, showClients, theme }: {
 }
 
 export function WidgetRenderer({ data }: { data: WidgetData }) {
+  const { t: translate } = useTranslation();
   const t = WIDGET_THEMES[data.theme] || WIDGET_THEMES.dark;
 
   const joinUrl = data.serverHost
@@ -154,7 +157,7 @@ export function WidgetRenderer({ data }: { data: WidgetData }) {
                 marginRight: '8px',
                 textDecoration: 'none',
               }}
-              title="Click to join server"
+              title={translate('components.widget.clickToJoin')}
             >
               {data.serverName}
             </a>
@@ -182,7 +185,7 @@ export function WidgetRenderer({ data }: { data: WidgetData }) {
             flexShrink: 0,
             letterSpacing: '0.5px',
           }}>
-            ONLINE
+            {translate('components.widget.online')}
           </span>
         </div>
         <div style={{
@@ -192,8 +195,8 @@ export function WidgetRenderer({ data }: { data: WidgetData }) {
           display: 'flex',
           gap: '14px',
         }}>
-          <span>{data.onlineUsers} / {data.maxClients} users</span>
-          <span>{formatUptime(data.uptime)} uptime</span>
+          <span>{translate('components.widget.userCount', { count: data.onlineUsers, max: data.maxClients })}</span>
+          <span>{translate('components.widget.uptime', { uptime: formatUptime(data.uptime) })}</span>
         </div>
       </div>
 
@@ -221,7 +224,7 @@ export function WidgetRenderer({ data }: { data: WidgetData }) {
         fontSize: '9px',
         opacity: 0.6,
       }}>
-        TS6 WebUI Widget
+        {translate('components.widget.footer')}
       </div>
     </div>
   );
