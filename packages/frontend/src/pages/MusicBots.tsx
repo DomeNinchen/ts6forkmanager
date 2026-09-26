@@ -614,10 +614,17 @@ function BotsTab() {
   // Create form
   const [form, setForm] = useState({
     name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
+    autoplayMode: 'none' as 'none' | 'song' | 'radio', autoplaySongId: '', autoplayRadioStationId: '',
   });
 
   const bots = Array.isArray(data) ? data : [];
   const serverList = Array.isArray(servers) ? servers : [];
+
+  // Scoped to whichever server this bot belongs to (or is being created for),
+  // for the autoplay song/station pickers below.
+  const autoplayServerConfigId = editBot ? editBot.serverConfigId : (parseInt(form.serverConfigId) || null);
+  const { data: autoplaySongs } = useSongs(autoplayServerConfigId);
+  const { data: autoplayStations } = useRadioStations(autoplayServerConfigId);
 
   if (isLoading) return <PageLoader />;
 
@@ -635,6 +642,9 @@ function BotsTab() {
       volume: form.volume,
       autoStart: form.autoStart,
       descriptionTemplate: form.descriptionTemplate || undefined,
+      autoplayMode: form.autoplayMode,
+      autoplaySongId: form.autoplayMode === 'song' && form.autoplaySongId ? parseInt(form.autoplaySongId) : undefined,
+      autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
     }, {
       onSuccess: (result: { id: number }) => {
         toast.success('Music bot created');
@@ -662,6 +672,9 @@ function BotsTab() {
       volume: form.volume,
       autoStart: form.autoStart,
       descriptionTemplate: form.descriptionTemplate || undefined,
+      autoplayMode: form.autoplayMode,
+      autoplaySongId: form.autoplayMode === 'song' && form.autoplaySongId ? parseInt(form.autoplaySongId) : undefined,
+      autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
     }}, {
       onSuccess: () => {
         toast.success('Bot updated');
@@ -678,7 +691,10 @@ function BotsTab() {
   };
 
   const resetForm = () => {
-    setForm({ name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '' });
+    setForm({
+      name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
+      autoplayMode: 'none', autoplaySongId: '', autoplayRadioStationId: '',
+    });
     setAvatarFile(null);
     setAvatarRemoved(false);
   };
@@ -712,6 +728,9 @@ function BotsTab() {
                   volume: bot.volume,
                   autoStart: bot.autoStart,
                   descriptionTemplate: bot.descriptionTemplate || '',
+                  autoplayMode: bot.autoplayMode,
+                  autoplaySongId: bot.autoplaySongId != null ? String(bot.autoplaySongId) : '',
+                  autoplayRadioStationId: bot.autoplayRadioStationId != null ? String(bot.autoplayRadioStationId) : '',
                 });
                 setAvatarFile(null);
                 setAvatarRemoved(false);
@@ -791,6 +810,45 @@ function BotsTab() {
               <Label className="text-xs">Auto-start on server startup</Label>
             </div>
             <div>
+              <Label className="text-xs">Autoplay on Connect</Label>
+              <p className="text-[11px] text-muted-foreground mb-1.5">
+                Starts on its own every time this bot connects (manual start, server restart, or a reconnect) - only while it's coming up idle, never interrupting something already queued.
+              </p>
+              <Select
+                value={form.autoplayMode}
+                onValueChange={(v: 'none' | 'song' | 'radio') => setForm({ ...form, autoplayMode: v, autoplaySongId: '', autoplayRadioStationId: '' })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Off</SelectItem>
+                  <SelectItem value="song">Play a song</SelectItem>
+                  <SelectItem value="radio">Play a radio station</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.autoplayMode === 'song' && (
+                <Select value={form.autoplaySongId} onValueChange={(v) => setForm({ ...form, autoplaySongId: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a song..." /></SelectTrigger>
+                  <SelectContent>
+                    {((autoplaySongs as SongInfo[] | undefined) ?? [])
+                      .filter((s) => s.mediaType === 'audio')
+                      .map((s) => (
+                        <SelectItem key={s.id} value={String(s.id)}>{s.title}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {form.autoplayMode === 'radio' && (
+                <Select value={form.autoplayRadioStationId} onValueChange={(v) => setForm({ ...form, autoplayRadioStationId: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a station..." /></SelectTrigger>
+                  <SelectContent>
+                    {((autoplayStations as RadioStationInfo[] | undefined) ?? []).map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div>
               <Label className="text-xs">Description Template</Label>
               <Textarea
                 value={form.descriptionTemplate}
@@ -812,7 +870,14 @@ function BotsTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowCreate(false); setEditBot(null); }}>Cancel</Button>
-            <Button onClick={editBot ? handleUpdate : handleCreate} disabled={!form.name || (!editBot && !form.serverConfigId) || createBot.isPending || updateBot.isPending}>
+            <Button
+              onClick={editBot ? handleUpdate : handleCreate}
+              disabled={
+                !form.name || (!editBot && !form.serverConfigId) || createBot.isPending || updateBot.isPending
+                || (form.autoplayMode === 'song' && !form.autoplaySongId)
+                || (form.autoplayMode === 'radio' && !form.autoplayRadioStationId)
+              }
+            >
               {editBot ? 'Save' : 'Create'}
             </Button>
           </DialogFooter>

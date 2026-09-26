@@ -103,6 +103,17 @@ export class VoiceBotManager extends EventEmitter {
       }
     });
 
+    // Fires once per successful connect (manual Start, autoStart at boot,
+    // or an automatic reconnect) - unlike 'statusChange', which also reports
+    // 'connected' every time playback simply returns to idle (track end,
+    // Stop, a failed play), so autoplay can't hook into that one without
+    // re-triggering on every song that finishes.
+    bot.on('connected', () => {
+      this.runAutoplayOnConnect(config.id, bot).catch((err) => {
+        console.error(`[VoiceBotManager] Bot ${config.id}: autoplay-on-connect failed: ${err.message}`);
+      });
+    });
+
     bot.on('error', (err: Error) => {
       console.error(`[VoiceBotManager] Bot ${config.id} error: ${err.message}`);
     });
@@ -185,6 +196,9 @@ export class VoiceBotManager extends EventEmitter {
     volume?: number;
     autoStart?: boolean;
     descriptionTemplate?: string;
+    autoplayMode?: string;
+    autoplaySongId?: number;
+    autoplayRadioStationId?: number;
   }): Promise<{ id: number }> {
     // Enforce bot limit
     const limitSetting = await this.prisma.appSetting.findUnique({ where: { key: 'max_music_bots' } });
@@ -219,6 +233,9 @@ export class VoiceBotManager extends EventEmitter {
         autoStart: data.autoStart ?? false,
         identityData,
         descriptionTemplate: data.descriptionTemplate,
+        autoplayMode: data.autoplayMode ?? 'none',
+        autoplaySongId: data.autoplayMode === 'song' ? data.autoplaySongId : undefined,
+        autoplayRadioStationId: data.autoplayMode === 'radio' ? data.autoplayRadioStationId : undefined,
       },
     });
 
@@ -389,6 +406,44 @@ export class VoiceBotManager extends EventEmitter {
       // Schedule next attempt (guard in scheduleReconnect prevents double-scheduling
       // if 'disconnected' event also fires from the failed connect)
       this.scheduleReconnect(botId);
+    }
+  }
+
+  /** Starts the bot's configured autoplay track/station right after it
+   * connects, as long as it came up idle - never overrides a queue that
+   * survived a reconnect on the same bot instance. */
+  private async runAutoplayOnConnect(botId: number, bot: VoiceBot): Promise<void> {
+    if (bot.queue.length > 0) return;
+
+    const dbBot = await this.prisma.musicBot.findUnique({ where: { id: botId } });
+    if (!dbBot || dbBot.autoplayMode === 'none') return;
+
+    if (dbBot.autoplayMode === 'song' && dbBot.autoplaySongId) {
+      const song = await this.prisma.song.findUnique({ where: { id: dbBot.autoplaySongId } });
+      if (!song) return;
+      const queueItem: QueueItem = {
+        id: String(song.id),
+        title: song.title,
+        artist: song.artist ?? undefined,
+        duration: song.duration ?? undefined,
+        filePath: song.filePath,
+        source: song.source as any,
+        sourceUrl: song.sourceUrl ?? undefined,
+      };
+      bot.queue.insertNext(queueItem);
+      await bot.play(queueItem);
+    } else if (dbBot.autoplayMode === 'radio' && dbBot.autoplayRadioStationId) {
+      const station = await this.prisma.radioStation.findUnique({ where: { id: dbBot.autoplayRadioStationId } });
+      if (!station) return;
+      const queueItem: QueueItem = {
+        id: `radio_${station.id}`,
+        title: station.name,
+        artist: station.genre ?? 'Radio',
+        filePath: '',
+        source: 'radio',
+        streamUrl: station.url,
+      };
+      await bot.playStream(queueItem);
     }
   }
 

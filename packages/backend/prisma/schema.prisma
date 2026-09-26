@@ -230,6 +230,16 @@ model MusicBot {
   descriptionTemplate String?
   avatarData      Bytes?
   avatarMimeType  String?
+  // What to start playing on its own, every time this bot connects
+  // (manual Start, backend restart via autoStart, or an automatic
+  // reconnect) - only when it comes up with an empty queue, so it never
+  // overrides whatever was already lined up. "none" leaves it idle, same
+  // as before this existed.
+  autoplayMode           String        @default("none") // "none" | "song" | "radio"
+  autoplaySongId         Int?
+  autoplaySong           Song?         @relation(fields: [autoplaySongId], references: [id], onDelete: SetNull)
+  autoplayRadioStationId Int?
+  autoplayRadioStation   RadioStation? @relation(fields: [autoplayRadioStationId], references: [id], onDelete: SetNull)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -251,6 +261,7 @@ model Song {
   createdAt       DateTime  @default(now())
 
   playlistSongs PlaylistSong[]
+  autoplayingBots MusicBot[]
 }
 
 model Playlist {
@@ -283,6 +294,8 @@ model RadioStation {
   serverConfigId Int
   serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
   createdAt      DateTime       @default(now())
+
+  autoplayingBots MusicBot[]
 }
 
 // === Server Widget / Banner ===

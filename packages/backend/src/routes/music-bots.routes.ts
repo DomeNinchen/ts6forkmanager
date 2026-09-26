@@ -78,6 +78,9 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         volume: b.volume,
         autoStart: b.autoStart,
         descriptionTemplate: b.descriptionTemplate,
+        autoplayMode: b.autoplayMode,
+        autoplaySongId: b.autoplaySongId,
+        autoplayRadioStationId: b.autoplayRadioStationId,
         hasAvatar: b.avatarData != null,
         status: runtime?.status ?? 'stopped',
         nowPlaying: runtime?.nowPlaying ?? null,
@@ -121,7 +124,7 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
 musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate } = req.body;
+    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId } = req.body;
     if (!name || !serverConfigId) throw new AppError(400, 'name and serverConfigId are required');
 
     const result = await manager.createBot({
@@ -135,6 +138,9 @@ musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
       volume: volume != null ? parseInt(volume) : undefined,
       autoStart: autoStart ?? false,
       descriptionTemplate: descriptionTemplate || undefined,
+      autoplayMode: autoplayMode || undefined,
+      autoplaySongId: autoplaySongId != null ? parseInt(autoplaySongId) : undefined,
+      autoplayRadioStationId: autoplayRadioStationId != null ? parseInt(autoplayRadioStationId) : undefined,
     });
 
     res.status(201).json(result);
@@ -147,7 +153,7 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const id = parseInt(req.params.id as string);
-    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate } = req.body;
+    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId } = req.body;
 
     const dbBot = await prisma.musicBot.update({
       where: { id },
@@ -161,6 +167,14 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(volume != null && { volume: parseInt(volume) }),
         ...(autoStart != null && { autoStart }),
         ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || null }),
+        // The two ID fields are only ever meaningful together with the mode
+        // that names them, so clear both whenever the mode changes away from
+        // theirs instead of leaving a stale reference behind.
+        ...(autoplayMode != null && {
+          autoplayMode,
+          autoplaySongId: autoplayMode === 'song' ? (autoplaySongId != null ? parseInt(autoplaySongId) : null) : null,
+          autoplayRadioStationId: autoplayMode === 'radio' ? (autoplayRadioStationId != null ? parseInt(autoplayRadioStationId) : null) : null,
+        }),
       },
     });
 
