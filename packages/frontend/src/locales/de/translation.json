@@ -562,6 +562,281 @@
           "description": "Die Anzeigesprache der WebGUI, nur für dich - im Konto gespeichert, damit sie dir in jeden Browser folgt."
         }
       }
+    },
+    "icons": {
+      "title": "Icon-Browser",
+      "searchPlaceholder": "Icon-ID suchen...",
+      "uploading": "Wird hochgeladen...",
+      "uploadIcons": "Icons hochladen",
+      "iconPool": "Icon-Pool",
+      "maxSize": "max {{size}}",
+      "iconCount_one": "{{count}} Icon",
+      "iconCount_other": "{{count}} Icons",
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "clear": "Leeren",
+      "deleteSelected": "Auswahl löschen",
+      "unavailableTitle": "Icon-Browser nicht verfügbar",
+      "unavailableSsh": "Das Auslesen des Icon-Pools erfordert SSH-Zugriff, da die TeamSpeak-WebQuery-HTTP-API keine Dateiübertragungsbefehle unterstützt. Bitte SSH-Zugangsdaten (Benutzername & Passwort) in den Servereinstellungen konfigurieren.",
+      "loadFailed": "Der Icon-Pool konnte nicht geladen werden.",
+      "noMatching": "Keine passenden Icons",
+      "noIcons": "Keine Icons hochgeladen",
+      "noMatchingDescription": "Kein Icon in diesem Pool entspricht deiner Suche.",
+      "uploadHintAdmin": "Lade eine PNG-, JPEG-, GIF-, WebP- oder SVG-Datei hoch - oder ziehe eine hierher -, um sie zum Icon-Pool dieses Servers hinzuzufügen.",
+      "uploadHintViewer": "Dieser Server hat noch keine Icons in seinem Icon-Pool.",
+      "inUse": "in Verwendung",
+      "poolFooter": "Icons werden im eigenen Icon-Pool des virtuellen Servers gespeichert. Die Icon-ID ist die CRC32-Prüfsumme der Datei, daher ergibt das Hochladen desselben Bildes immer dieselbe ID.",
+      "poolFooterMaxSize": " Dieser Server akzeptiert Icons bis zu {{size}} (i_max_icon_filesize).",
+      "poolFooterNoPermission": " Hinweis: Der Query-Identität fehlt die Berechtigung b_icon_manage.",
+      "deleteTitle_one": "Icon löschen?",
+      "deleteTitle_other": "{{count}} Icons löschen?",
+      "deleteWarning_one": "Achtung: {{count}} der ausgewählten Icons wird noch verwendet — {{list}}. Beim Löschen zeigt diese Zuordnung anschließend auf ein fehlendes Icon.",
+      "deleteWarning_other": "Achtung: {{count}} der ausgewählten Icons werden noch verwendet — {{list}}. Beim Löschen zeigen diese Zuordnungen anschließend auf ein fehlendes Icon.",
+      "deleteDescription": "Dies entfernt das Icon aus dem Icon-Pool des Servers. Kann nicht rückgängig gemacht werden.",
+      "uploadedToast_one": "{{count}} Icon hochgeladen",
+      "uploadedToast_other": "{{count}} Icons hochgeladen",
+      "duplicateToast_one": "{{count}} Icon war bereits im Pool",
+      "duplicateToast_other": "{{count}} Icons waren bereits im Pool",
+      "uploadFailed": "Hochladen fehlgeschlagen",
+      "deletedToast_one": "{{count}} Icon gelöscht",
+      "deletedToast_other": "{{count}} Icons gelöscht",
+      "deleteFailedToast_one": "{{count}} Icon konnte nicht gelöscht werden",
+      "deleteFailedToast_other": "{{count}} Icons konnten nicht gelöscht werden",
+      "deleteFailed": "Löschen fehlgeschlagen",
+      "tooLargeToast_one": "{{count}} Datei überschreitet das Icon-Größenlimit dieses Servers von {{size}} (i_max_icon_filesize).",
+      "tooLargeToast_other": "{{count}} Dateien überschreiten das Icon-Größenlimit dieses Servers von {{size}} (i_max_icon_filesize).",
+      "usage": {
+        "virtualserver": "Virtueller Server",
+        "servergroup": "Servergruppe",
+        "channelgroup": "Channel-Gruppe",
+        "channel": "Channel"
+      }
+    },
+    "files": {
+      "title": "Datei-Browser",
+      "newFolder": "Neuer Ordner",
+      "channels": "Channels",
+      "noChannels": "Keine Channels",
+      "itemCount_one": "{{count}} Element",
+      "itemCount_other": "{{count}} Elemente",
+      "selectChannelHint": "Wähle einen Channel, um Dateien zu durchsuchen",
+      "unavailableTitle": "Datei-Browser nicht verfügbar",
+      "unavailableSsh": "Das Durchsuchen von Dateien erfordert SSH-Zugriff, da die TeamSpeak-WebQuery-HTTP-API keine Dateiübertragungsbefehle unterstützt. Bitte SSH-Zugangsdaten (Benutzername & Passwort) in den Servereinstellungen konfigurieren.",
+      "sshConnectFailed": "Verbindung zum TeamSpeak-Server per SSH fehlgeschlagen. Bitte SSH-Zugangsdaten und Port in den Servereinstellungen prüfen.",
+      "loadFailed": "Dateien konnten nicht geladen werden. Stelle sicher, dass SSH-Zugangsdaten in den Servereinstellungen konfiguriert sind.",
+      "ts3ErrorCode": "TS3-Fehlercode: {{code}}",
+      "colName": "Name",
+      "colSize": "Größe",
+      "colModified": "Geändert",
+      "emptyDirectory": "Leeres Verzeichnis",
+      "emptyDirectoryDescription": "Keine Dateien in diesem Verzeichnis.",
+      "moveToAnotherChannel": "In anderen Channel verschieben",
+      "uploadDownloadNotice": "Datei-Upload/Download ist über die WebQuery-API nicht verfügbar. Für Dateiübertragungen den TS3-Client verwenden.",
+      "createDirectory": "Verzeichnis erstellen",
+      "directoryName": "Verzeichnisname",
+      "newFolderPlaceholder": "Neuer Ordner",
+      "moveTitle": "\"{{name}}\" verschieben",
+      "moveHint": "Wird vollständig auf dem Server verschoben - die Datei-Bytes durchlaufen diese App nie.",
+      "targetChannel": "Zielchannel",
+      "chooseChannelPlaceholder": "Channel wählen...",
+      "move": "Verschieben",
+      "deleteFileTitle": "Datei löschen",
+      "deleteFileDescription": "Bist du sicher, dass du \"{{name}}\" löschen willst? Dies kann nicht rückgängig gemacht werden.",
+      "directoryCreated": "Verzeichnis erstellt",
+      "directoryCreateFailed": "Verzeichnis konnte nicht erstellt werden",
+      "fileDeleted": "Datei gelöscht",
+      "fileDeleteFailed": "Datei konnte nicht gelöscht werden",
+      "fileMoved": "Datei verschoben",
+      "fileMoveFailed": "Datei konnte nicht verschoben werden"
+    },
+    "dashboard": {
+      "noAccessTitle": "Kein Zugriff auf diesen Server",
+      "noAccessDescription": "Dein Konto hat keinen Zugriff auf diese Serververbindung. Bitte einen Admin, ihn unter Einstellungen → Benutzer zu gewähren.",
+      "noServerDescription": "Wähle oben eine Serververbindung aus, um das Dashboard zu sehen.",
+      "connectionFailedTitle": "Verbindung fehlgeschlagen",
+      "connectionFailedDescription": "Verbindung zum TeamSpeak-Server fehlgeschlagen. Bitte die Verbindungseinstellungen prüfen.",
+      "widgets": "Widgets",
+      "liveMonitoring": "Live-Überwachung",
+      "onlineUsers": "Online-Nutzer",
+      "ofSlots": "von {{max}} Plätzen",
+      "channels": "Channels",
+      "uptime": "Laufzeit",
+      "ping": "Ping",
+      "timeout": "Timeout",
+      "bandwidth": "Bandbreite",
+      "last20Minutes": "letzte 20 Minuten",
+      "download": "Download",
+      "upload": "Upload",
+      "collectingData": "Daten werden gesammelt...",
+      "in": "Rein:",
+      "out": "Raus:",
+      "serverCapacity": "Serverkapazität",
+      "userSlots": "Nutzer-Slots",
+      "utilized": "{{percent}}% ausgelastet",
+      "serverVersion": "Serverversion",
+      "platform": "Plattform",
+      "botFlows": "Bot-Flows"
+    },
+    "serverGroups": {
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "exportSelected": "Auswahl exportieren",
+      "deleteSelected": "Auswahl löschen",
+      "import": "Import",
+      "createGroup": "Gruppe erstellen",
+      "groupsHeading": "Gruppen ({{count}})",
+      "selectForBulkDelete": "Für Sammellöschung auswählen",
+      "iconAlt": "Icon für {{name}}",
+      "members": "Mitglieder",
+      "sgidLabel": "SGID: {{id}}",
+      "addMember": "Mitglied hinzufügen",
+      "deleteGroup": "Gruppe löschen",
+      "selectGroupHint": "Wähle eine Gruppe, um ihre Mitglieder zu sehen",
+      "noMembers": "Keine Mitglieder in dieser Gruppe",
+      "dbidLabel": "DBID: {{id}}",
+      "removeFromGroup": "Aus Gruppe entfernen",
+      "memberRemoved": "Mitglied entfernt",
+      "memberRemoveFailed": "Mitglied konnte nicht entfernt werden",
+      "searchClientsPlaceholder": "Clients suchen...",
+      "noMatchingClients": "Keine passenden Clients",
+      "added": "{{name}} hinzugefügt",
+      "genericClient": "Client",
+      "addMemberFailed": "Mitglied konnte nicht hinzugefügt werden",
+      "createServerGroupTitle": "Servergruppe erstellen",
+      "groupNameLabel": "Gruppenname",
+      "newGroupPlaceholder": "Neue Gruppe",
+      "groupCreated": "Gruppe erstellt",
+      "deleteServerGroupTitle": "Servergruppe löschen",
+      "deleteGroupDescription": "\"{{name}}\" löschen?",
+      "groupDeleted": "Gruppe gelöscht",
+      "deleteServerGroupsTitle": "Servergruppen löschen",
+      "bulkDeleteDescription_one": "{{count}} ausgewählte Gruppe löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeleteDescription_other": "{{count}} ausgewählte Gruppen löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeletePartial": "{{succeeded}} gelöscht, {{failed}} fehlgeschlagen",
+      "bulkDeleteSuccess_one": "{{count}} Gruppe gelöscht",
+      "bulkDeleteSuccess_other": "{{count}} Gruppen gelöscht",
+      "invalidJson": "Diese Datei ist kein gültiges JSON",
+      "notValidGroupExport": "Keine gültige Gruppen-Exportdatei",
+      "wrongExportTypeChannel": "Dies ist ein Channel-Gruppen-Export - importiere ihn stattdessen auf der Channel-Gruppen-Seite",
+      "notValidServerExport": "Keine gültige Servergruppen-Exportdatei",
+      "emptyExportFile": "Die Datei enthält keine Gruppen zum Importieren",
+      "createFailedFallback": "Erstellung fehlgeschlagen",
+      "importFailedNoGroups": "es konnte keine Gruppe erstellt werden",
+      "importFailed": "Import fehlgeschlagen - {{reason}}",
+      "importSummary": "{{imported}} von {{total}} Gruppe(n) importiert, {{permCount}} Berechtigung(en)",
+      "importPermSkipped": ", {{count}} Berechtigung(en) übersprungen",
+      "importSkippedList": " - übersprungen: {{list}}",
+      "exportedCount_one": "{{count}} Gruppe exportiert",
+      "exportedCount_other": "{{count}} Gruppen exportiert",
+      "exportFailed": "Export fehlgeschlagen"
+    },
+    "channelGroups": {
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "exportSelected": "Auswahl exportieren",
+      "deleteSelected": "Auswahl löschen",
+      "import": "Import",
+      "createGroup": "Gruppe erstellen",
+      "tabGroups": "Gruppen",
+      "tabByClient": "Nach Client",
+      "groupsHeading": "Gruppen ({{count}})",
+      "selectForBulkDelete": "Für Sammellöschung auswählen",
+      "iconAlt": "Icon für {{name}}",
+      "cgidLabel": "CGID: {{id}}",
+      "typeLabel": "Typ: {{type}}",
+      "selectClient": "Client auswählen",
+      "searchClientsPlaceholder": "Clients suchen...",
+      "showOfflineClients": "Offline-Clients anzeigen",
+      "noClientsFound": "Keine Clients gefunden",
+      "clientChannelGroupsHeading": "Channel-Gruppen von {{name}}",
+      "selectAClient": "Client auswählen",
+      "selectClientHint": "Wähle einen Client aus dem linken Bereich",
+      "noAssignmentsTitle": "Keine Channel-Gruppen-Zuweisungen",
+      "noAssignmentsDescription": "Dieser Client hat in keinem Channel eine abweichende Channel-Gruppe.",
+      "channelsSelectedCount_one": "{{count}} Channel ausgewählt",
+      "channelsSelectedCount_other": "{{count}} Channels ausgewählt",
+      "moveAllToPlaceholder": "Alle verschieben nach...",
+      "applyToCount": "Auf {{count}} anwenden",
+      "selectAllChannels": "Alle Channels auswählen",
+      "selectChannelForBulk": "Channel für Sammeländerung auswählen",
+      "colChannel": "Channel",
+      "colChannelGroup": "Channel-Gruppe",
+      "clientFallback": "Client #{{id}}",
+      "createChannelGroupTitle": "Channel-Gruppe erstellen",
+      "groupNameLabel": "Gruppenname",
+      "newGroupPlaceholder": "Neue Gruppe",
+      "groupCreated": "Gruppe erstellt",
+      "deleteChannelGroupsTitle": "Channel-Gruppen löschen",
+      "bulkDeleteDescription_one": "{{count}} ausgewählte Gruppe löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeleteDescription_other": "{{count}} ausgewählte Gruppen löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeletePartial": "{{succeeded}} gelöscht, {{failed}} fehlgeschlagen",
+      "bulkDeleteSuccess_one": "{{count}} Gruppe gelöscht",
+      "bulkDeleteSuccess_other": "{{count}} Gruppen gelöscht",
+      "channelGroupUpdated": "Channel-Gruppe aktualisiert",
+      "channelGroupUpdateFailed": "Channel-Gruppe konnte nicht aktualisiert werden",
+      "channelGroupsUpdatedForCount_one": "Channel-Gruppe für {{count}} Channel aktualisiert",
+      "channelGroupsUpdatedForCount_other": "Channel-Gruppe für {{count}} Channels aktualisiert",
+      "channelGroupsUpdateFailed": "Channel-Gruppen konnten nicht aktualisiert werden",
+      "invalidJson": "Diese Datei ist kein gültiges JSON",
+      "notValidGroupExport": "Keine gültige Gruppen-Exportdatei",
+      "wrongExportTypeServer": "Dies ist ein Servergruppen-Export - importiere ihn stattdessen auf der Servergruppen-Seite",
+      "notValidChannelExport": "Keine gültige Channel-Gruppen-Exportdatei",
+      "emptyExportFile": "Die Datei enthält keine Gruppen zum Importieren",
+      "createFailedFallback": "Erstellung fehlgeschlagen",
+      "importFailedNoGroups": "es konnte keine Gruppe erstellt werden",
+      "importFailed": "Import fehlgeschlagen - {{reason}}",
+      "importSummary": "{{imported}} von {{total}} Gruppe(n) importiert, {{permCount}} Berechtigung(en)",
+      "importPermSkipped": ", {{count}} Berechtigung(en) übersprungen",
+      "importSkippedList": " - übersprungen: {{list}}",
+      "exportedCount_one": "{{count}} Gruppe exportiert",
+      "exportedCount_other": "{{count}} Gruppen exportiert",
+      "exportFailed": "Export fehlgeschlagen"
+    },
+    "channels": {
+      "selectChannel": "Channel auswählen",
+      "useAsTemplate": "Als Vorlage verwenden",
+      "query": "Query",
+      "away": "Abwesend",
+      "muted": "Stumm",
+      "channelCount_one": "{{count}} Channel",
+      "channelCount_other": "{{count}} Channels",
+      "clientsOnlineCount_one": "{{count}} Client online",
+      "clientsOnlineCount_other": "{{count}} Clients online",
+      "createChannel": "Channel erstellen",
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "editSelected": "Auswahl bearbeiten",
+      "channelTree": "Channel-Baum",
+      "channelNamesLabel": "Channel-Name(n)",
+      "channelNamesPlaceholder": "Neuer Channel\nEin Name pro Zeile, um mehrere auf einmal zu erstellen",
+      "editCountTitle_one": "{{count}} Channel bearbeiten",
+      "editCountTitle_other": "{{count}} Channels bearbeiten",
+      "bulkEditHint": "Nur angehakte Felder werden angewendet - der Rest bleibt bei jedem ausgewählten Channel unverändert.",
+      "codec": "Codec",
+      "opusVoice": "Opus Voice",
+      "opusMusic": "Opus Music",
+      "codecQuality": "Codec-Qualität",
+      "neededTalkPower": "Benötigte Sprechkraft",
+      "permanent": "Dauerhaft",
+      "duplicateTitle": "\"{{name}}\" duplizieren",
+      "duplicateHint": "Erstellt einen neuen Channel mit denselben Einstellungen (Thema, Codec, Limits, Sprechkraft) wie diesen.",
+      "newChannelNameLabel": "Neuer Channel-Name",
+      "duplicateNamePlaceholder": "{{name}} Kopie",
+      "duplicate": "Duplizieren",
+      "deleteChannelTitle": "Channel löschen",
+      "deleteChannelDescription": "Bist du sicher, dass du \"{{name}}\" löschen willst? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "channelsCreated_one": "Channel erstellt",
+      "channelsCreated_other": "{{count}} Channels erstellt",
+      "createPartialFailure": "{{succeeded}}/{{total}} erstellt, {{failed}} fehlgeschlagen",
+      "bulkUpdatedCount_one": "{{count}} Channel aktualisiert",
+      "bulkUpdatedCount_other": "{{count}} Channels aktualisiert",
+      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} aktualisiert, {{failed}} fehlgeschlagen",
+      "duplicateCreated": "\"{{newName}}\" aus \"{{sourceName}}\" erstellt",
+      "duplicateFailed": "Channel konnte nicht dupliziert werden",
+      "channelDeleted": "Channel gelöscht",
+      "channelDeleteFailed": "Channel konnte nicht gelöscht werden",
+      "channelMoved": "Channel verschoben",
+      "channelMoveFailed": "Channel konnte nicht verschoben werden"
     }
   },
   "components": {
@@ -713,61 +988,169 @@
       "event": {
         "intro": "Felder aus dem auslösenden TS3-Event. Verfügbare Felder hängen vom Event-Typ ab.",
         "h1": "Client verbunden — notifycliententerview",
-        "clid": { "desc": "Client-ID", "example": "Client #{{event.clid}} in Channel verschieben" },
-        "clientNickname": { "desc": "Nickname", "example": "Willkommen {{event.client_nickname}}!" },
-        "clientDatabaseId": { "desc": "Datenbank-ID", "example": "DB-ID: {{event.client_database_id}}" },
-        "clientUid": { "desc": "Eindeutige ID (UID)", "example": "UID: {{event.client_unique_identifier}}" },
-        "clientType": { "desc": "Typ (0=Nutzer, 1=Query)", "example": "Bedingung: event.client_type == 0" },
-        "clientServergroups": { "desc": "Servergruppen-IDs (kommagetrennt)", "example": "contains(event.client_servergroups, '6')" },
-        "connectionClientIp": { "desc": "IP-Adresse", "example": "VPN-Check: https://api.vpn.io/{{event.connection_client_ip}}" },
-        "cidJoined": { "desc": "Channel, den der Client betreten hat", "example": "Bedingung: event.cid == 42" },
+        "clid": {
+          "desc": "Client-ID",
+          "example": "Client #{{event.clid}} in Channel verschieben"
+        },
+        "clientNickname": {
+          "desc": "Nickname",
+          "example": "Willkommen {{event.client_nickname}}!"
+        },
+        "clientDatabaseId": {
+          "desc": "Datenbank-ID",
+          "example": "DB-ID: {{event.client_database_id}}"
+        },
+        "clientUid": {
+          "desc": "Eindeutige ID (UID)",
+          "example": "UID: {{event.client_unique_identifier}}"
+        },
+        "clientType": {
+          "desc": "Typ (0=Nutzer, 1=Query)",
+          "example": "Bedingung: event.client_type == 0"
+        },
+        "clientServergroups": {
+          "desc": "Servergruppen-IDs (kommagetrennt)",
+          "example": "contains(event.client_servergroups, '6')"
+        },
+        "connectionClientIp": {
+          "desc": "IP-Adresse",
+          "example": "VPN-Check: https://api.vpn.io/{{event.connection_client_ip}}"
+        },
+        "cidJoined": {
+          "desc": "Channel, den der Client betreten hat",
+          "example": "Bedingung: event.cid == 42"
+        },
         "h2": "Client getrennt — notifyclientleftview",
-        "clidDisc": { "desc": "Client-ID" },
-        "cfidDisc": { "desc": "Channel, in dem der Client war" },
-        "reasonidDisc": { "desc": "Grund (3=Verbindung verloren, 5=Kick, 6=Bann, 8=Verlassen)", "example": "Bedingung: event.reasonid == 5" },
-        "reasonmsg": { "desc": "Grund-Nachricht", "example": "Gekickt: {{event.reasonmsg}}" },
+        "clidDisc": {
+          "desc": "Client-ID"
+        },
+        "cfidDisc": {
+          "desc": "Channel, in dem der Client war"
+        },
+        "reasonidDisc": {
+          "desc": "Grund (3=Verbindung verloren, 5=Kick, 6=Bann, 8=Verlassen)",
+          "example": "Bedingung: event.reasonid == 5"
+        },
+        "reasonmsg": {
+          "desc": "Grund-Nachricht",
+          "example": "Gekickt: {{event.reasonmsg}}"
+        },
         "h3": "Client verschoben — notifyclientmoved",
-        "clidMoved": { "desc": "Client-ID" },
-        "ctid": { "desc": "Ziel-Channel-ID", "example": "Bedingung: event.ctid == 10" },
-        "cfidMoved": { "desc": "Quell-Channel-ID" },
-        "reasonidMoved": { "desc": "Grund (0=selbst, 1=von Admin verschoben)" },
+        "clidMoved": {
+          "desc": "Client-ID"
+        },
+        "ctid": {
+          "desc": "Ziel-Channel-ID",
+          "example": "Bedingung: event.ctid == 10"
+        },
+        "cfidMoved": {
+          "desc": "Quell-Channel-ID"
+        },
+        "reasonidMoved": {
+          "desc": "Grund (0=selbst, 1=von Admin verschoben)"
+        },
         "h4": "Textnachricht — notifytextmessage",
-        "clidMsg": { "desc": "Absender-Client-ID" },
-        "clientNicknameMsg": { "desc": "Absender-Nickname" },
-        "msg": { "desc": "Nachrichtentext", "example": "Nutzer schrieb: {{event.msg}}" },
-        "targetmode": { "desc": "Ziel (1=privat, 2=Channel, 3=Server)" },
+        "clidMsg": {
+          "desc": "Absender-Client-ID"
+        },
+        "clientNicknameMsg": {
+          "desc": "Absender-Nickname"
+        },
+        "msg": {
+          "desc": "Nachrichtentext",
+          "example": "Nutzer schrieb: {{event.msg}}"
+        },
+        "targetmode": {
+          "desc": "Ziel (1=privat, 2=Channel, 3=Server)"
+        },
         "h5": "Chat-Befehl — trigger_command",
-        "commandName": { "desc": "Befehlsname (ohne Präfix)", "example": "Befehl: {{event.command_name}}" },
-        "commandArgs": { "desc": "Argumente nach dem Befehl", "example": "Argumente: {{event.command_args}}" },
-        "clidCmd": { "desc": "Absender-Client-ID" },
-        "clientNicknameCmd": { "desc": "Absender-Nickname" },
+        "commandName": {
+          "desc": "Befehlsname (ohne Präfix)",
+          "example": "Befehl: {{event.command_name}}"
+        },
+        "commandArgs": {
+          "desc": "Argumente nach dem Befehl",
+          "example": "Argumente: {{event.command_args}}"
+        },
+        "clidCmd": {
+          "desc": "Absender-Client-ID"
+        },
+        "clientNicknameCmd": {
+          "desc": "Absender-Nickname"
+        },
         "h6": "Channel-Events — erstellt / bearbeitet / gelöscht",
-        "cidChannel": { "desc": "Channel-ID" },
-        "invokerid": { "desc": "Client-ID der Person, die die Änderung vorgenommen hat" },
-        "invokername": { "desc": "Name der Person, die die Änderung vorgenommen hat" },
+        "cidChannel": {
+          "desc": "Channel-ID"
+        },
+        "invokerid": {
+          "desc": "Client-ID der Person, die die Änderung vorgenommen hat"
+        },
+        "invokername": {
+          "desc": "Name der Person, die die Änderung vorgenommen hat"
+        },
         "h7": "Webhook — trigger_webhook",
-        "webhookPath": { "desc": "Anfragepfad" },
-        "webhookMethod": { "desc": "HTTP-Methode", "example": "GET oder POST" },
-        "webhookBody": { "desc": "Anfragekörper (rohes JSON)" },
-        "webhookBodyField": { "desc": "Verschachteltes Feld aus dem JSON-Body", "example": "Status: {{event.webhook_body.status}}" },
-        "webhookQuery": { "desc": "Query-Parameter (rohes JSON)" }
+        "webhookPath": {
+          "desc": "Anfragepfad"
+        },
+        "webhookMethod": {
+          "desc": "HTTP-Methode",
+          "example": "GET oder POST"
+        },
+        "webhookBody": {
+          "desc": "Anfragekörper (rohes JSON)"
+        },
+        "webhookBodyField": {
+          "desc": "Verschachteltes Feld aus dem JSON-Body",
+          "example": "Status: {{event.webhook_body.status}}"
+        },
+        "webhookQuery": {
+          "desc": "Query-Parameter (rohes JSON)"
+        }
       },
       "time": {
         "intro": "Aktuelles Datum und aktuelle Uhrzeit. Berücksichtigt die am Cron-Trigger konfigurierte Zeitzone (Fallback auf UTC).",
-        "time": { "desc": "Formatierte Uhrzeit HH:MM", "example": "Channelname: Es ist {{time.time}} Uhr" },
-        "date": { "desc": "Formatiertes Datum TT.MM.JJJJ", "example": "Datum: {{time.date}}" },
-        "hours": { "desc": "Stunde (00-23)", "example": "Bedingung: time.hours >= 22" },
-        "minutes": { "desc": "Minute (00-59)" },
-        "seconds": { "desc": "Sekunde (00-59)" },
-        "day": { "desc": "Tag des Monats (01-31)" },
-        "month": { "desc": "Monat (01-12)", "example": "Bedingung: time.month == 12" },
-        "year": { "desc": "Jahr (4-stellig)" },
-        "dayOfWeek": { "desc": "Wochentag (0=So, 1=Mo, ..., 6=Sa)", "example": "Bedingung: time.dayOfWeek == 0" },
-        "timestamp": { "desc": "Unix-Zeitstempel (Sekunden)" }
+        "time": {
+          "desc": "Formatierte Uhrzeit HH:MM",
+          "example": "Channelname: Es ist {{time.time}} Uhr"
+        },
+        "date": {
+          "desc": "Formatiertes Datum TT.MM.JJJJ",
+          "example": "Datum: {{time.date}}"
+        },
+        "hours": {
+          "desc": "Stunde (00-23)",
+          "example": "Bedingung: time.hours >= 22"
+        },
+        "minutes": {
+          "desc": "Minute (00-59)"
+        },
+        "seconds": {
+          "desc": "Sekunde (00-59)"
+        },
+        "day": {
+          "desc": "Tag des Monats (01-31)"
+        },
+        "month": {
+          "desc": "Monat (01-12)",
+          "example": "Bedingung: time.month == 12"
+        },
+        "year": {
+          "desc": "Jahr (4-stellig)"
+        },
+        "dayOfWeek": {
+          "desc": "Wochentag (0=So, 1=Mo, ..., 6=Sa)",
+          "example": "Bedingung: time.dayOfWeek == 0"
+        },
+        "timestamp": {
+          "desc": "Unix-Zeitstempel (Sekunden)"
+        }
       },
       "var": {
         "intro": "Persistente Variablen, in der Datenbank gespeichert. Überstehen Neustarts. Pro Flow gültig. Gesetzt über den Aktionsknoten <1>Variable setzen</1>.",
-        "name": { "desc": "Variable per Name lesen", "example": "Zähler: {{var.visit_count}}" },
+        "name": {
+          "desc": "Variable per Name lesen",
+          "example": "Zähler: {{var.visit_count}}"
+        },
         "h1": "Aktionen für Variablen",
         "actionSet": "<0>Setzen</0> — Variable auf einen festen Wert oder ein Template setzen",
         "actionIncrement": "<0>Erhöhen</0> — Eine Zahl zum aktuellen Wert addieren",
@@ -780,49 +1163,114 @@
       "temp": {
         "intro": "Temporäre Variablen, die nur während einer einzelnen Flow-Ausführung existieren. Werden automatisch von bestimmten Aktionsknoten gesetzt. Unterstützt verschachtelten Zugriff über Punktnotation.",
         "h1": "Automatisch gesetzt von Aktionen",
-        "lastCreatedChannelId": { "desc": "CID des von \"Channel erstellen\" erstellten Channels", "example": "Client nach {{temp.lastCreatedChannelId}} verschieben" },
-        "lastResult": { "desc": "Rohes JSON-Ergebnis der WebQuery-Aktion" },
-        "afkMovedCount": { "desc": "Anzahl der vom AFK Mover verschobenen Clients", "example": "{{temp.afkMovedCount}} AFK-Nutzer verschoben" },
-        "idleKickedCount": { "desc": "Anzahl der vom Idle Kicker gekickten Clients" },
-        "pokedCount": { "desc": "Anzahl der von Poke Group angestupsten Clients" },
-        "rankPromotedCount": { "desc": "Anzahl der von Rank Check beförderten Clients" },
-        "tempChannelsDeleted": { "desc": "Anzahl der von Temp Cleanup gelöschten Channels" },
+        "lastCreatedChannelId": {
+          "desc": "CID des von \"Channel erstellen\" erstellten Channels",
+          "example": "Client nach {{temp.lastCreatedChannelId}} verschieben"
+        },
+        "lastResult": {
+          "desc": "Rohes JSON-Ergebnis der WebQuery-Aktion"
+        },
+        "afkMovedCount": {
+          "desc": "Anzahl der vom AFK Mover verschobenen Clients",
+          "example": "{{temp.afkMovedCount}} AFK-Nutzer verschoben"
+        },
+        "idleKickedCount": {
+          "desc": "Anzahl der vom Idle Kicker gekickten Clients"
+        },
+        "pokedCount": {
+          "desc": "Anzahl der von Poke Group angestupsten Clients"
+        },
+        "rankPromotedCount": {
+          "desc": "Anzahl der von Rank Check beförderten Clients"
+        },
+        "tempChannelsDeleted": {
+          "desc": "Anzahl der von Temp Cleanup gelöschten Channels"
+        },
         "h2": "Benutzerdefiniert über \"Speichern als\"",
         "storeAsIntro": "WebQuery- und HTTP-Request-Aktionen haben ein \"Speichern als\"-Feld. Die VOLLSTÄNDIGE Ergebnisliste wird als Temp-Variable gespeichert — selbst bei einzeiligen Befehlen wie clientinfo oder serverinfo, daher der explizite Zugriff über <1>.0.</1> für \"die erste (einzige) Zeile\".",
-        "serverOnline": { "desc": "Online-Nutzer (nachdem serverinfo als \"server\" gespeichert wurde)", "example": "Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}" },
-        "serverUptime": { "desc": "Serverlaufzeit in Sekunden", "example": "Laufzeit: {{temp.server.0.virtualserver_uptime|uptime}}" },
-        "clientNickname": { "desc": "Client-Name (nachdem clientinfo als \"client\" gespeichert wurde)" },
+        "serverOnline": {
+          "desc": "Online-Nutzer (nachdem serverinfo als \"server\" gespeichert wurde)",
+          "example": "Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}"
+        },
+        "serverUptime": {
+          "desc": "Serverlaufzeit in Sekunden",
+          "example": "Laufzeit: {{temp.server.0.virtualserver_uptime|uptime}}"
+        },
+        "clientNickname": {
+          "desc": "Client-Name (nachdem clientinfo als \"client\" gespeichert wurde)"
+        },
         "h3": "Loop-Knoten",
         "loopIntro": "Ein Loop-Knoten liest eine bestehende Liste (z. B. ein \"Speichern als\"-Ergebnis einer clientlist-WebQuery) und führt seinen \"Body\"-Ausgang einmal pro Element aus, danach seinen \"After\"-Ausgang einmal, wenn fertig.",
-        "loopItem": { "desc": "Aktuelles Element (unter dem Namen, der als Item-Variablenname des Loop-Knotens gesetzt ist), nur innerhalb seines Body-Zweigs" },
-        "loopField": { "desc": "Ein Feld des aktuellen Elements - Item-Variablenname + \".\" + Feld (kein .0 hier, anders als bei \"Speichern als\" oben - ein einzelnes Objekt pro Durchlauf, keine Liste)" },
-        "loopIndex": { "desc": "Position des aktuellen Elements in der Liste, beginnend bei 0" }
+        "loopItem": {
+          "desc": "Aktuelles Element (unter dem Namen, der als Item-Variablenname des Loop-Knotens gesetzt ist), nur innerhalb seines Body-Zweigs"
+        },
+        "loopField": {
+          "desc": "Ein Feld des aktuellen Elements - Item-Variablenname + \".\" + Feld (kein .0 hier, anders als bei \"Speichern als\" oben - ein einzelnes Objekt pro Durchlauf, keine Liste)"
+        },
+        "loopIndex": {
+          "desc": "Position des aktuellen Elements in der Liste, beginnend bei 0"
+        }
       },
       "exec": {
         "intro": "Nur lesbare Metadaten zur aktuellen Flow-Ausführung.",
-        "flowId": { "desc": "ID des ausgeführten Flows" },
-        "executionId": { "desc": "Eindeutige ID der Ausführungsinstanz" },
-        "configId": { "desc": "Server-Konfigurations-ID" },
-        "sid": { "desc": "Virtuelle-Server-ID" },
-        "triggerType": { "desc": "Trigger-Typ (event, cron, webhook, command)", "example": "Bedingung: exec.triggerType == \"cron\"" }
+        "flowId": {
+          "desc": "ID des ausgeführten Flows"
+        },
+        "executionId": {
+          "desc": "Eindeutige ID der Ausführungsinstanz"
+        },
+        "configId": {
+          "desc": "Server-Konfigurations-ID"
+        },
+        "sid": {
+          "desc": "Virtuelle-Server-ID"
+        },
+        "triggerType": {
+          "desc": "Trigger-Typ (event, cron, webhook, command)",
+          "example": "Bedingung: exec.triggerType == \"cron\""
+        }
       },
       "filter": {
         "intro": "Filter transformieren Werte. Anwendung mit Pipe-Syntax: <1>{{value|filter}}</1>",
-        "uptime": { "desc": "Wandelt Sekunden in lesbare Laufzeit um" },
-        "round": { "desc": "Rundet auf die nächste Ganzzahl" },
-        "floor": { "desc": "Rundet ab auf Ganzzahl" }
+        "uptime": {
+          "desc": "Wandelt Sekunden in lesbare Laufzeit um"
+        },
+        "round": {
+          "desc": "Rundet auf die nächste Ganzzahl"
+        },
+        "floor": {
+          "desc": "Rundet ab auf Ganzzahl"
+        }
       },
       "functions": {
         "intro": "Funktionen zur Verwendung in <1>Bedingung</1>-Knoten-Ausdrücken. Geben 0 oder 1 zurück (falsch/wahr).",
-        "contains": { "desc": "String enthält Teilstring? (reiner Teilstring-Vergleich - siehe hasGroup unten für numerische ID-Listen)" },
-        "startsWith": { "desc": "String beginnt mit Präfix?" },
-        "endsWith": { "desc": "String endet mit Suffix?" },
-        "lower": { "desc": "In Kleinbuchstaben umwandeln" },
-        "upper": { "desc": "In Großbuchstaben umwandeln" },
-        "length": { "desc": "String-Länge" },
-        "split": { "desc": "String teilen und Element an Index abrufen" },
-        "hasGroup": { "desc": "Exakter Abgleich gegen eine kommagetrennte ID-Liste - dies für Servergruppen-IDs verwenden, nicht contains(), das Gruppe '1' fälschlich auch gegen '10' oder '21' matchen würde" },
-        "count": { "desc": "Zeilenanzahl eines gespeicherten WebQuery-Ergebnisses (Array), sonst String-Länge - zum Prüfen, ob eine Abfrage etwas gefunden hat" },
+        "contains": {
+          "desc": "String enthält Teilstring? (reiner Teilstring-Vergleich - siehe hasGroup unten für numerische ID-Listen)"
+        },
+        "startsWith": {
+          "desc": "String beginnt mit Präfix?"
+        },
+        "endsWith": {
+          "desc": "String endet mit Suffix?"
+        },
+        "lower": {
+          "desc": "In Kleinbuchstaben umwandeln"
+        },
+        "upper": {
+          "desc": "In Großbuchstaben umwandeln"
+        },
+        "length": {
+          "desc": "String-Länge"
+        },
+        "split": {
+          "desc": "String teilen und Element an Index abrufen"
+        },
+        "hasGroup": {
+          "desc": "Exakter Abgleich gegen eine kommagetrennte ID-Liste - dies für Servergruppen-IDs verwenden, nicht contains(), das Gruppe '1' fälschlich auch gegen '10' oder '21' matchen würde"
+        },
+        "count": {
+          "desc": "Zeilenanzahl eines gespeicherten WebQuery-Ergebnisses (Array), sonst String-Länge - zum Prüfen, ob eine Abfrage etwas gefunden hat"
+        },
         "h1": "Bedingungsbeispiele",
         "condition1": "Nur echte Nutzer (keine Query-Clients)",
         "condition2": "Client ist in Servergruppe 7",
@@ -882,43 +1330,95 @@
   "data": {
     "botTemplates": {
       "categories": {
-        "infoChannels": { "label": "Info-Channels", "description": "Dynamische Channel-Namen mit Live-Daten" },
-        "moderation": { "label": "Moderation", "description": "Automatisierte Moderation und Schutz" },
-        "automation": { "label": "Automatisierung", "description": "Willkommensnachrichten, temporäre Channels, Ranking" },
-        "integration": { "label": "Integration", "description": "Externe APIs und Webhooks" }
+        "infoChannels": {
+          "label": "Info-Channels",
+          "description": "Dynamische Channel-Namen mit Live-Daten"
+        },
+        "moderation": {
+          "label": "Moderation",
+          "description": "Automatisierte Moderation und Schutz"
+        },
+        "automation": {
+          "label": "Automatisierung",
+          "description": "Willkommensnachrichten, temporäre Channels, Ranking"
+        },
+        "integration": {
+          "label": "Integration",
+          "description": "Externe APIs und Webhooks"
+        }
       },
       "items": {
         "clockChannel": {
           "name": "Uhr-Channel",
           "description": "Aktualisiert einen Channel-Namen jede Minute mit der aktuellen Uhrzeit.",
           "fields": {
-            "channelId": { "label": "Channel-ID" },
-            "timezone": { "label": "Zeitzone" }
+            "channelId": {
+              "label": "Channel-ID"
+            },
+            "timezone": {
+              "label": "Zeitzone"
+            }
           }
         },
         "onlineCounter": {
           "name": "Online-Zähler",
           "description": "Zeigt die aktuelle Anzahl online befindlicher Clients in einem Channel-Namen.",
-          "fields": { "channelId": { "label": "Channel-ID" } }
+          "fields": {
+            "channelId": {
+              "label": "Channel-ID"
+            }
+          }
         },
         "serverStats": {
           "name": "Server-Statistiken",
           "description": "Zeigt Laufzeit, Online-Clients und Channel-Anzahl in drei Info-Channels an.",
           "fields": {
-            "uptimeChannelId": { "label": "Laufzeit-Channel-ID" },
-            "clientsChannelId": { "label": "Clients-Channel-ID" },
-            "channelCountChannelId": { "label": "Channel-Anzahl-Channel-ID" }
+            "uptimeChannelId": {
+              "label": "Laufzeit-Channel-ID"
+            },
+            "clientsChannelId": {
+              "label": "Clients-Channel-ID"
+            },
+            "channelCountChannelId": {
+              "label": "Channel-Anzahl-Channel-ID"
+            }
           }
         },
         "animatedChannel": {
           "name": "Animierter Channel-Name",
           "description": "Animiert einen Channel-Namen mit visuellen Effekten wie Laufschrift, Schreibmaschine, Hüpfen und mehr. Aktualisiert alle 2-5 Sekunden.",
           "fields": {
-            "channelId": { "label": "Channel-ID" },
-            "text": { "label": "Anzeigetext" },
-            "style": { "label": "Animationsstil", "options": { "0": "Nach links scrollen (Laufschrift)", "1": "Schreibmaschine", "2": "Hüpfen", "3": "Blinken", "4": "Welle (dekorativ)", "5": "Wechselnde Groß-/Kleinschreibung" } },
-            "intervalSeconds": { "label": "Geschwindigkeit", "options": { "0": "Langsam (5s)", "1": "Mittel (3s)", "2": "Schnell (2s)", "3": "Sehr schnell (1s)", "4": "Ultra (0,5s)", "5": "Wahnsinnig (0,25s)" } },
-            "prefix": { "label": "Channel-Namen-Präfix" }
+            "channelId": {
+              "label": "Channel-ID"
+            },
+            "text": {
+              "label": "Anzeigetext"
+            },
+            "style": {
+              "label": "Animationsstil",
+              "options": {
+                "0": "Nach links scrollen (Laufschrift)",
+                "1": "Schreibmaschine",
+                "2": "Hüpfen",
+                "3": "Blinken",
+                "4": "Welle (dekorativ)",
+                "5": "Wechselnde Groß-/Kleinschreibung"
+              }
+            },
+            "intervalSeconds": {
+              "label": "Geschwindigkeit",
+              "options": {
+                "0": "Langsam (5s)",
+                "1": "Mittel (3s)",
+                "2": "Schnell (2s)",
+                "3": "Sehr schnell (1s)",
+                "4": "Ultra (0,5s)",
+                "5": "Wahnsinnig (0,25s)"
+              }
+            },
+            "prefix": {
+              "label": "Channel-Namen-Präfix"
+            }
           }
         },
         "welcomeMessage": {
@@ -931,19 +1431,37 @@
             "{{temp.teamOnline}} - Team-Mitglieder, die gerade online sind (löst nur auf, wenn unten Team-Gruppen gesetzt ist)"
           ],
           "fields": {
-            "message": { "label": "Willkommensnachricht" },
-            "usePokeInstead": { "label": "Zustellmethode", "options": { "0": "Private Nachricht", "1": "Poke" } },
-            "ignoreGroupIds": { "label": "Ignorierte Gruppen (kommagetrennt, optional)" },
-            "teamGroupIds": { "label": "Team-Gruppen für {{temp.teamOnline}} (kommagetrennt, optional)" }
+            "message": {
+              "label": "Willkommensnachricht"
+            },
+            "usePokeInstead": {
+              "label": "Zustellmethode",
+              "options": {
+                "0": "Private Nachricht",
+                "1": "Poke"
+              }
+            },
+            "ignoreGroupIds": {
+              "label": "Ignorierte Gruppen (kommagetrennt, optional)"
+            },
+            "teamGroupIds": {
+              "label": "Team-Gruppen für {{temp.teamOnline}} (kommagetrennt, optional)"
+            }
           }
         },
         "supportSystem": {
           "name": "Support-System",
           "description": "Benachrichtigt Admins, wenn ein Client den Support-Channel betritt.",
           "fields": {
-            "supportChannelId": { "label": "Support-Channel-ID" },
-            "adminGroupId": { "label": "Admin-Gruppen-ID" },
-            "message": { "label": "Benachrichtigungsnachricht" }
+            "supportChannelId": {
+              "label": "Support-Channel-ID"
+            },
+            "adminGroupId": {
+              "label": "Admin-Gruppen-ID"
+            },
+            "message": {
+              "label": "Benachrichtigungsnachricht"
+            }
           }
         },
         "privateChannelCreator": {
@@ -953,32 +1471,98 @@
             "{{temp.joinerInfo.0.client_nickname}} - Name des beitretenden Clients (für Channel-Namens-/Beschreibungs-Template)"
           ],
           "fields": {
-            "lobbyChannelId": { "label": "Lobby-Channel-ID" },
-            "parentChannelId": { "label": "Übergeordnete Channel-ID (optional - überschreibt, wo Channels erstellt werden)" },
-            "channelPlacement": { "label": "Channel-Platzierung", "options": { "0": "Standard-Channel (neben Lobby)", "1": "Unterchannel der Lobby" } },
-            "channelAdminGroupId": { "label": "Channel-Admin-Gruppen-ID (als Besitzer zugewiesen)" },
-            "channelNameTemplate": { "label": "Channel-Namens-Template" },
-            "channelDescriptionTemplate": { "label": "Channel-Beschreibungs-Template (optional)" },
-            "privateChannelType": { "label": "Typ des privaten Channels", "options": { "0": "Permanent", "1": "Halbpermanent", "2": "Temporär (TeamSpeak löscht ihn, sobald er leer ist)" } },
-            "autoGeneratePassword": { "label": "Passwortschutz", "options": { "0": "Keiner", "1": "Automatisch generieren" } },
-            "spamProtectionEnabled": { "label": "Spam-Schutz (bannt Clients, die die Lobby wiederholt erneut betreten)", "options": { "0": "Nein", "1": "Ja" } },
-            "spamProtectionMaxStrikes": { "label": "Maximale Verstöße vor Bann" },
-            "spamProtectionBanSeconds": { "label": "Banndauer (Sekunden)" },
-            "channelCreateMessage": { "label": "Channel-Erstellungs-Nachricht" },
-            "channelMoveMessage": { "label": "Channel-Verschiebungs-Nachricht" },
-            "channelErrorMessage": { "label": "Channel-Fehler-Nachricht" },
-            "channelPasswordMessage": { "label": "Channel-Passwort-Nachricht" },
-            "spamProtectionBanMessage": { "label": "Spam-Schutz-Bann-Nachricht" }
+            "lobbyChannelId": {
+              "label": "Lobby-Channel-ID"
+            },
+            "parentChannelId": {
+              "label": "Übergeordnete Channel-ID (optional - überschreibt, wo Channels erstellt werden)"
+            },
+            "channelPlacement": {
+              "label": "Channel-Platzierung",
+              "options": {
+                "0": "Standard-Channel (neben Lobby)",
+                "1": "Unterchannel der Lobby"
+              }
+            },
+            "channelAdminGroupId": {
+              "label": "Channel-Admin-Gruppen-ID (als Besitzer zugewiesen)"
+            },
+            "channelNameTemplate": {
+              "label": "Channel-Namens-Template"
+            },
+            "channelDescriptionTemplate": {
+              "label": "Channel-Beschreibungs-Template (optional)"
+            },
+            "privateChannelType": {
+              "label": "Typ des privaten Channels",
+              "options": {
+                "0": "Permanent",
+                "1": "Halbpermanent",
+                "2": "Temporär (TeamSpeak löscht ihn, sobald er leer ist)"
+              }
+            },
+            "autoGeneratePassword": {
+              "label": "Passwortschutz",
+              "options": {
+                "0": "Keiner",
+                "1": "Automatisch generieren"
+              }
+            },
+            "spamProtectionEnabled": {
+              "label": "Spam-Schutz (bannt Clients, die die Lobby wiederholt erneut betreten)",
+              "options": {
+                "0": "Nein",
+                "1": "Ja"
+              }
+            },
+            "spamProtectionMaxStrikes": {
+              "label": "Maximale Verstöße vor Bann"
+            },
+            "spamProtectionBanSeconds": {
+              "label": "Banndauer (Sekunden)"
+            },
+            "channelCreateMessage": {
+              "label": "Channel-Erstellungs-Nachricht"
+            },
+            "channelMoveMessage": {
+              "label": "Channel-Verschiebungs-Nachricht"
+            },
+            "channelErrorMessage": {
+              "label": "Channel-Fehler-Nachricht"
+            },
+            "channelPasswordMessage": {
+              "label": "Channel-Passwort-Nachricht"
+            },
+            "spamProtectionBanMessage": {
+              "label": "Spam-Schutz-Bann-Nachricht"
+            }
           }
         },
         "autoRank": {
           "name": "Auto-Rang",
           "description": "Weist automatisch Servergruppen basierend auf kumulierter Online-Zeit zu.",
           "fields": {
-            "ranks": { "label": "Ränge (JSON)" },
-            "mode": { "label": "Stunden gemessen als", "options": { "0": "Tatsächliche Online-Zeit (über Sitzungen hinweg akkumuliert)", "1": "Zeit seit erster Verbindung (Mitgliedsalter)" } },
-            "excludeGroupIds": { "label": "Ausgeschlossene Gruppen-IDs (kommagetrennt, optional)" },
-            "pollInterval": { "label": "Prüfintervall", "options": { "0": "Alle 5 Min", "1": "Alle 15 Min", "2": "Jede Stunde" } }
+            "ranks": {
+              "label": "Ränge (JSON)"
+            },
+            "mode": {
+              "label": "Stunden gemessen als",
+              "options": {
+                "0": "Tatsächliche Online-Zeit (über Sitzungen hinweg akkumuliert)",
+                "1": "Zeit seit erster Verbindung (Mitgliedsalter)"
+              }
+            },
+            "excludeGroupIds": {
+              "label": "Ausgeschlossene Gruppen-IDs (kommagetrennt, optional)"
+            },
+            "pollInterval": {
+              "label": "Prüfintervall",
+              "options": {
+                "0": "Alle 5 Min",
+                "1": "Alle 15 Min",
+                "2": "Jede Stunde"
+              }
+            }
           }
         },
         "lastSeenTracker": {
@@ -989,74 +1573,140 @@
           "name": "AFK-Mover",
           "description": "Verschiebt inaktive Clients nach einer konfigurierbaren Zeitüberschreitung in einen AFK-Channel.",
           "fields": {
-            "afkChannelId": { "label": "AFK-Channel-ID" },
-            "idleThresholdSeconds": { "label": "Inaktivitäts-Schwelle (Sekunden)" },
-            "exemptGroupIds": { "label": "Ausgenommene Gruppen-IDs (kommagetrennt)" },
-            "exemptChannelIds": { "label": "Ausgenommene Channel-IDs (kommagetrennt)" }
+            "afkChannelId": {
+              "label": "AFK-Channel-ID"
+            },
+            "idleThresholdSeconds": {
+              "label": "Inaktivitäts-Schwelle (Sekunden)"
+            },
+            "exemptGroupIds": {
+              "label": "Ausgenommene Gruppen-IDs (kommagetrennt)"
+            },
+            "exemptChannelIds": {
+              "label": "Ausgenommene Channel-IDs (kommagetrennt)"
+            }
           }
         },
         "idleKicker": {
           "name": "Idle-Kicker",
           "description": "Kickt Clients, die zu lange inaktiv waren.",
           "fields": {
-            "idleThresholdSeconds": { "label": "Inaktivitäts-Schwelle (Sekunden)" },
-            "reason": { "label": "Kick-Grund" },
-            "exemptGroupIds": { "label": "Ausgenommene Gruppen-IDs (kommagetrennt)" }
+            "idleThresholdSeconds": {
+              "label": "Inaktivitäts-Schwelle (Sekunden)"
+            },
+            "reason": {
+              "label": "Kick-Grund"
+            },
+            "exemptGroupIds": {
+              "label": "Ausgenommene Gruppen-IDs (kommagetrennt)"
+            }
           }
         },
         "badNameChecker": {
           "name": "Prüfung auf unerlaubte Namen",
           "description": "Kickt Clients, deren Nickname verbotene Wörter enthält.",
           "fields": {
-            "badWords": { "label": "Verbotene Wörter (kommagetrennt)" },
-            "reason": { "label": "Kick-Grund" }
+            "badWords": {
+              "label": "Verbotene Wörter (kommagetrennt)"
+            },
+            "reason": {
+              "label": "Kick-Grund"
+            }
           }
         },
         "groupProtector": {
           "name": "Gruppen-Schutz",
           "description": "Kickt Clients, die eine geschützte Gruppe haben, aber der erforderlichen Berechtigungsgruppe nicht angehören.",
           "fields": {
-            "protectedGroupId": { "label": "Geschützte Gruppen-ID" },
-            "allowedGroupId": { "label": "Berechtigte Gruppen-ID" },
-            "action": { "label": "Aktion", "options": { "0": "Kicken", "1": "Gruppe entfernen" } }
+            "protectedGroupId": {
+              "label": "Geschützte Gruppen-ID"
+            },
+            "allowedGroupId": {
+              "label": "Berechtigte Gruppen-ID"
+            },
+            "action": {
+              "label": "Aktion",
+              "options": {
+                "0": "Kicken",
+                "1": "Gruppe entfernen"
+              }
+            }
           }
         },
         "webhookServerMessage": {
           "name": "Webhook → Servernachricht",
           "description": "Empfängt einen Webhook-POST und sendet die Nachricht an den TeamSpeak-Server. Ideal für Monitoring-Alarme, CI/CD-Benachrichtigungen oder Discord-Bridges.",
           "fields": {
-            "path": { "label": "Webhook-Pfad" },
-            "secret": { "label": "Secret (optional)" }
+            "path": {
+              "label": "Webhook-Pfad"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
           }
         },
         "webhookGroupAssign": {
           "name": "Webhook → Gruppe zuweisen",
           "description": "Ein externes System (z. B. Website-Verifizierung) sendet einen Webhook mit einer Client-Datenbank-ID, um eine Servergruppe zuzuweisen. Für Website-zu-TS3-Nutzerverifizierung.",
           "fields": {
-            "path": { "label": "Webhook-Pfad" },
-            "groupId": { "label": "Zuzuweisende Servergruppen-ID" },
-            "secret": { "label": "Secret (optional)" }
+            "path": {
+              "label": "Webhook-Pfad"
+            },
+            "groupId": {
+              "label": "Zuzuweisende Servergruppen-ID"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
           }
         },
         "webhookChannelRename": {
           "name": "Webhook → Channel aktualisieren",
           "description": "Empfängt einen Webhook und aktualisiert einen Channel-Namen. Für externe Statusanzeigen wie Gameserver-Status, Stream-Status oder Monitoring-Dashboards.",
           "fields": {
-            "path": { "label": "Webhook-Pfad" },
-            "channelId": { "label": "Zu aktualisierende Channel-ID" },
-            "nameTemplate": { "label": "Channel-Namens-Template" },
-            "secret": { "label": "Secret (optional)" }
+            "path": {
+              "label": "Webhook-Pfad"
+            },
+            "channelId": {
+              "label": "Zu aktualisierende Channel-ID"
+            },
+            "nameTemplate": {
+              "label": "Channel-Namens-Template"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
           }
         },
         "antiVpn": {
           "name": "Anti-VPN",
           "description": "Prüft sich verbindende Clients gegen eine VPN-Erkennungs-API und kickt/bannt VPN-Nutzer.",
           "fields": {
-            "apiUrl": { "label": "API-URL (verwende den Platzhalter {{ip}})" },
-            "action": { "label": "Aktion bei VPN", "options": { "0": "Kicken", "1": "Bannen (1h)" } }
+            "apiUrl": {
+              "label": "API-URL (verwende den Platzhalter {{ip}})"
+            },
+            "action": {
+              "label": "Aktion bei VPN",
+              "options": {
+                "0": "Kicken",
+                "1": "Bannen (1h)"
+              }
+            }
           }
         }
       }
+    }
+  },
+  "errors": {
+    "ts": {
+      "groupNameExists": "Eine Gruppe mit diesem Namen existiert bereits",
+      "invalidGroup": "Ungültige Gruppe - sie wurde möglicherweise gelöscht",
+      "permAlreadySet": "Diese Berechtigung ist bei dieser Gruppe bereits gesetzt",
+      "unknownPermission": "Dieser Server erkennt eine der Berechtigungen in der Datei nicht",
+      "cannotModifyDefaultGroup": "Berechtigungen einer Standard-/Vorlagengruppe können nicht geändert werden",
+      "invalidPermValueSize": "Ungültige Berechtigungswertgröße in der Datei",
+      "invalidPermValue": "Ungültiger Berechtigungswert in der Datei",
+      "insufficientModifyPower": "Unzureichende Berechtigungs-Änderungsmacht für einen der importierten Werte"
     }
   }
 }

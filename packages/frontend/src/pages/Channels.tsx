@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useChannels, useCreateChannel, useDeleteChannel, useEditChannel, useMoveChannel } from '@/hooks/use-channels';
 import { useClients } from '@/hooks/use-clients';
 import { channelsApi } from '@/api/channels.api';
@@ -67,6 +68,7 @@ function buildTree(channels: any[]): ChannelNode[] {
 }
 
 function ClientEntry({ client, depth }: { client: ClientInfo; depth: number }) {
+  const { t } = useTranslation();
   const isQuery = client.client_type === '1';
   return (
     <div
@@ -83,9 +85,9 @@ function ClientEntry({ client, depth }: { client: ClientInfo; depth: number }) {
         </div>
       )}
       <span className="truncate">{client.client_nickname}</span>
-      {isQuery && <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5">Query</Badge>}
-      {client.client_away === 1 && <Badge variant="warning" className="text-[8px] px-1 py-0 h-3.5">Away</Badge>}
-      {client.client_input_muted === 1 && !client.client_away && <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5">Muted</Badge>}
+      {isQuery && <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5">{t('pages.channels.query')}</Badge>}
+      {client.client_away === 1 && <Badge variant="warning" className="text-[8px] px-1 py-0 h-3.5">{t('pages.channels.away')}</Badge>}
+      {client.client_input_muted === 1 && !client.client_away && <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5">{t('pages.channels.muted')}</Badge>}
     </div>
   );
 }
@@ -106,6 +108,7 @@ interface TreeNodeProps {
 }
 
 function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete, onEdit, onDuplicate, onDrop, draggedCid, setDraggedCid, selected, onToggleSelect }: TreeNodeProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const [dropOver, setDropOver] = useState(false);
   const hasChildren = node.children.length > 0;
@@ -172,7 +175,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
             checked={selected.has(node.cid)}
             onCheckedChange={() => onToggleSelect(node.cid)}
             onClick={(e) => e.stopPropagation()}
-            aria-label="Select channel"
+            aria-label={t('pages.channels.selectChannel')}
           />
         )}
 
@@ -194,7 +197,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onDuplicate(node)}
-              title="Use as template"
+              title={t('pages.channels.useAsTemplate')}
               className="p-1 rounded-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             >
               <Copy className="h-3 w-3" />
@@ -254,6 +257,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
 }
 
 export default function Channels() {
+  const { t } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const { data: channelData, isLoading: channelsLoading } = useChannels();
@@ -313,7 +317,7 @@ export default function Channels() {
     return map;
   }, [clientData]);
 
-  if (!selectedConfigId || !selectedSid) return <EmptyState icon={Hash} title="No server selected" />;
+  if (!selectedConfigId || !selectedSid) return <EmptyState icon={Hash} title={t('pages.noServerSelected')} />;
   if (channelsLoading) return <PageLoader />;
 
   const handleCreate = async () => {
@@ -324,9 +328,9 @@ export default function Channels() {
     );
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed === 0) {
-      toast.success(names.length === 1 ? 'Channel created' : `${names.length} channels created`);
+      toast.success(t('pages.channels.channelsCreated', { count: names.length }));
     } else {
-      toast.error(`${names.length - failed}/${names.length} created, ${failed} failed`);
+      toast.error(t('pages.channels.createPartialFailure', { succeeded: names.length - failed, total: names.length, failed }));
     }
     setShowCreate(false);
     setNewNames('');
@@ -346,8 +350,8 @@ export default function Channels() {
     );
     setBulkEditPending(false);
     const failed = results.filter((r) => r.status === 'rejected').length;
-    if (failed === 0) toast.success(`Updated ${selected.size} channel(s)`);
-    else toast.error(`${selected.size - failed}/${selected.size} updated, ${failed} failed`);
+    if (failed === 0) toast.success(t('pages.channels.bulkUpdatedCount', { count: selected.size }));
+    else toast.error(t('pages.channels.bulkUpdatePartialFailure', { succeeded: selected.size - failed, total: selected.size, failed }));
     setShowBulkEdit(false);
     setSelected(new Set());
   };
@@ -372,11 +376,11 @@ export default function Channels() {
         cpid: source?.pid,
       };
       await createChannel.mutateAsync(data);
-      toast.success(`Created "${duplicateName.trim()}" from "${duplicateSource.channel_name}"`);
+      toast.success(t('pages.channels.duplicateCreated', { newName: duplicateName.trim(), sourceName: duplicateSource.channel_name }));
       setDuplicateSource(null);
       setDuplicateName('');
     } catch (err: any) {
-      toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to duplicate channel');
+      toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.channels.duplicateFailed'));
     } finally {
       setDuplicatePending(false);
     }
@@ -385,8 +389,8 @@ export default function Channels() {
   const handleDelete = () => {
     if (!deleteTarget) return;
     deleteChannel.mutate(deleteTarget.cid, {
-      onSuccess: () => { toast.success('Channel deleted'); setDeleteTarget(null); },
-      onError: () => toast.error('Failed to delete channel'),
+      onSuccess: () => { toast.success(t('pages.channels.channelDeleted')); setDeleteTarget(null); },
+      onError: () => toast.error(t('pages.channels.channelDeleteFailed')),
     });
   };
 
@@ -394,8 +398,8 @@ export default function Channels() {
 
   const handleDrop = (draggedCid: number, targetCid: number) => {
     moveChannel.mutate({ cid: draggedCid, data: { cpid: targetCid } }, {
-      onSuccess: () => toast.success('Channel moved'),
-      onError: () => toast.error('Failed to move channel'),
+      onSuccess: () => toast.success(t('pages.channels.channelMoved')),
+      onError: () => toast.error(t('pages.channels.channelMoveFailed')),
     });
   };
 
@@ -407,27 +411,27 @@ export default function Channels() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Channels</h1>
+          <h1 className="text-xl font-semibold">{t('nav.items.channels')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {Array.isArray(channelData) ? channelData.length : 0} channels · {totalClients} clients online
+            {t('pages.channels.channelCount', { count: Array.isArray(channelData) ? channelData.length : 0 })} · {t('pages.channels.clientsOnlineCount', { count: totalClients })}
           </p>
         </div>
         {isAdmin && (
           <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Create Channel
+            <Plus className="h-4 w-4 mr-1" /> {t('pages.channels.createChannel')}
           </Button>
         )}
       </div>
 
       {isAdmin && selected.size > 0 && (
         <div className="card-hero flex items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-2.5">
-          <span className="text-sm font-medium">{selected.size} selected</span>
+          <span className="text-sm font-medium">{t('pages.channels.selectedCount', { count: selected.size })}</span>
           <div className="flex-1" />
           <Button size="sm" variant="outline" onClick={() => setShowBulkEdit(true)}>
-            <ListChecks className="h-3.5 w-3.5 mr-1.5" /> Edit Selected
+            <ListChecks className="h-3.5 w-3.5 mr-1.5" /> {t('pages.channels.editSelected')}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
-            <X className="h-3.5 w-3.5 mr-1.5" /> Clear
+            <X className="h-3.5 w-3.5 mr-1.5" /> {t('common.clear')}
           </Button>
         </div>
       )}
@@ -436,7 +440,7 @@ export default function Channels() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Volume2 className="h-4 w-4 text-primary" />
-            Channel Tree
+            {t('pages.channels.channelTree')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -467,23 +471,23 @@ export default function Channels() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Channel</DialogTitle>
+            <DialogTitle>{t('pages.channels.createChannel')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Channel Name(s)</Label>
+              <Label className="text-xs">{t('pages.channels.channelNamesLabel')}</Label>
               <Textarea
                 value={newNames}
                 onChange={(e) => setNewNames(e.target.value)}
-                placeholder={'New Channel\nOne name per line to create multiple at once'}
+                placeholder={t('pages.channels.channelNamesPlaceholder')}
                 rows={3}
                 autoFocus
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newNames.trim() || createChannel.isPending}>Create</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleCreate} disabled={!newNames.trim() || createChannel.isPending}>{t('common.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -492,46 +496,46 @@ export default function Channels() {
       <Dialog open={showBulkEdit} onOpenChange={(v) => !v && setShowBulkEdit(false)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit {selected.size} channel(s)</DialogTitle>
+            <DialogTitle>{t('pages.channels.editCountTitle', { count: selected.size })}</DialogTitle>
           </DialogHeader>
-          <p className="text-[11px] text-muted-foreground">Only checked fields are applied - the rest are left untouched on each selected channel.</p>
+          <p className="text-[11px] text-muted-foreground">{t('pages.channels.bulkEditHint')}</p>
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox checked={bulkEdit.codec.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, codec: { ...bulkEdit.codec, apply: !!v } })} />
-              <Label className="text-xs w-28">Codec</Label>
+              <Label className="text-xs w-28">{t('pages.channels.codec')}</Label>
               <Select value={bulkEdit.codec.value} onValueChange={(v) => setBulkEdit({ ...bulkEdit, codec: { ...bulkEdit.codec, value: v } })} disabled={!bulkEdit.codec.apply}>
                 <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="4">Opus Voice</SelectItem>
-                  <SelectItem value="5">Opus Music</SelectItem>
+                  <SelectItem value="4">{t('pages.channels.opusVoice')}</SelectItem>
+                  <SelectItem value="5">{t('pages.channels.opusMusic')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox checked={bulkEdit.codecQuality.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, codecQuality: { ...bulkEdit.codecQuality, apply: !!v } })} />
-              <Label className="text-xs w-28">Codec Quality</Label>
+              <Label className="text-xs w-28">{t('pages.channels.codecQuality')}</Label>
               <Input type="number" min={0} max={10} className="h-8 text-xs flex-1" disabled={!bulkEdit.codecQuality.apply}
                 value={bulkEdit.codecQuality.value} onChange={(e) => setBulkEdit({ ...bulkEdit, codecQuality: { ...bulkEdit.codecQuality, value: e.target.value } })} />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox checked={bulkEdit.talkPower.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, talkPower: { ...bulkEdit.talkPower, apply: !!v } })} />
-              <Label className="text-xs w-28">Needed Talk Power</Label>
+              <Label className="text-xs w-28">{t('pages.channels.neededTalkPower')}</Label>
               <Input type="number" min={0} className="h-8 text-xs flex-1" disabled={!bulkEdit.talkPower.apply}
                 value={bulkEdit.talkPower.value} onChange={(e) => setBulkEdit({ ...bulkEdit, talkPower: { ...bulkEdit.talkPower, value: e.target.value } })} />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox checked={bulkEdit.permanent.apply} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, permanent: { ...bulkEdit.permanent, apply: !!v } })} />
-              <Label className="text-xs w-28">Permanent</Label>
+              <Label className="text-xs w-28">{t('pages.channels.permanent')}</Label>
               <Switch checked={bulkEdit.permanent.value} onCheckedChange={(v) => setBulkEdit({ ...bulkEdit, permanent: { ...bulkEdit.permanent, value: v } })} disabled={!bulkEdit.permanent.apply} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBulkEdit(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowBulkEdit(false)}>{t('common.cancel')}</Button>
             <Button
               onClick={handleBulkEditSave}
               disabled={bulkEditPending || !(bulkEdit.codec.apply || bulkEdit.codecQuality.apply || bulkEdit.talkPower.apply || bulkEdit.permanent.apply)}
             >
-              Save
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -541,17 +545,17 @@ export default function Channels() {
       <Dialog open={!!duplicateSource} onOpenChange={(v) => !v && setDuplicateSource(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Duplicate "{duplicateSource?.channel_name}"</DialogTitle>
+            <DialogTitle>{t('pages.channels.duplicateTitle', { name: duplicateSource?.channel_name })}</DialogTitle>
           </DialogHeader>
-          <p className="text-[11px] text-muted-foreground">Creates a new channel with the same settings (topic, codec, limits, talk power) as this one.</p>
+          <p className="text-[11px] text-muted-foreground">{t('pages.channels.duplicateHint')}</p>
           <div>
-            <Label className="text-xs">New Channel Name</Label>
-            <Input value={duplicateName} onChange={(e) => setDuplicateName(e.target.value)} placeholder={`${duplicateSource?.channel_name || ''} Copy`} autoFocus />
+            <Label className="text-xs">{t('pages.channels.newChannelNameLabel')}</Label>
+            <Input value={duplicateName} onChange={(e) => setDuplicateName(e.target.value)} placeholder={t('pages.channels.duplicateNamePlaceholder', { name: duplicateSource?.channel_name || '' })} autoFocus />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDuplicateSource(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDuplicateSource(null)}>{t('common.cancel')}</Button>
             <Button onClick={handleDuplicate} disabled={!duplicateName.trim() || duplicatePending}>
-              <Copy className="h-4 w-4 mr-1" /> Duplicate
+              <Copy className="h-4 w-4 mr-1" /> {t('pages.channels.duplicate')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -568,9 +572,9 @@ export default function Channels() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
-        title="Delete Channel"
-        description={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('pages.channels.deleteChannelTitle')}
+        description={t('pages.channels.deleteChannelDescription', { name: deleteTarget?.name })}
+        confirmLabel={t('common.delete')}
         destructive
         onConfirm={handleDelete}
         loading={deleteChannel.isPending}

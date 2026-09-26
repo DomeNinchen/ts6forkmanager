@@ -562,6 +562,281 @@
           "description": "The WebGUI's display language, just for you - stored on your account so it follows you to any browser."
         }
       }
+    },
+    "icons": {
+      "title": "Icon Browser",
+      "searchPlaceholder": "Search icon ID...",
+      "uploading": "Uploading...",
+      "uploadIcons": "Upload Icons",
+      "iconPool": "Icon Pool",
+      "maxSize": "max {{size}}",
+      "iconCount_one": "{{count}} icon",
+      "iconCount_other": "{{count}} icons",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "clear": "Clear",
+      "deleteSelected": "Delete selected",
+      "unavailableTitle": "Icon Browser Unavailable",
+      "unavailableSsh": "Reading the icon pool requires SSH access, because the TeamSpeak WebQuery HTTP API does not support file transfer commands. Please configure SSH credentials (username & password) in the server settings.",
+      "loadFailed": "Failed to load the icon pool.",
+      "noMatching": "No matching icons",
+      "noIcons": "No icons uploaded",
+      "noMatchingDescription": "No icon in this pool matches your search.",
+      "uploadHintAdmin": "Upload a PNG, JPEG, GIF, WebP or SVG file - or drop one here - to add it to this server's icon pool.",
+      "uploadHintViewer": "This server has no icons in its icon pool yet.",
+      "inUse": "in use",
+      "poolFooter": "Icons are stored in the virtual server's own icon pool. The icon ID is the CRC32 checksum of the file, so uploading the same image twice always yields the same ID.",
+      "poolFooterMaxSize": " This server accepts icons up to {{size}} (i_max_icon_filesize).",
+      "poolFooterNoPermission": " Note: the query identity is missing the b_icon_manage permission.",
+      "deleteTitle_one": "Delete icon?",
+      "deleteTitle_other": "Delete {{count}} icons?",
+      "deleteWarning_one": "Warning: {{count}} of the selected icon is still assigned — {{list}}. Deleting it leaves that assignment pointing at a missing icon.",
+      "deleteWarning_other": "Warning: {{count}} of the selected icon(s) are still assigned — {{list}}. Deleting them leaves those assignments pointing at a missing icon.",
+      "deleteDescription": "This removes the icon from the server's icon pool. This cannot be undone.",
+      "uploadedToast_one": "{{count}} icon uploaded",
+      "uploadedToast_other": "{{count}} icons uploaded",
+      "duplicateToast_one": "{{count}} icon was already in the pool",
+      "duplicateToast_other": "{{count}} icons were already in the pool",
+      "uploadFailed": "Upload failed",
+      "deletedToast_one": "{{count}} icon deleted",
+      "deletedToast_other": "{{count}} icons deleted",
+      "deleteFailedToast_one": "{{count}} icon could not be deleted",
+      "deleteFailedToast_other": "{{count}} icons could not be deleted",
+      "deleteFailed": "Delete failed",
+      "tooLargeToast_one": "{{count}} file exceeds this server's icon size limit of {{size}} (i_max_icon_filesize).",
+      "tooLargeToast_other": "{{count}} files exceed this server's icon size limit of {{size}} (i_max_icon_filesize).",
+      "usage": {
+        "virtualserver": "Virtual Server",
+        "servergroup": "Server Group",
+        "channelgroup": "Channel Group",
+        "channel": "Channel"
+      }
+    },
+    "files": {
+      "title": "File Browser",
+      "newFolder": "New Folder",
+      "channels": "Channels",
+      "noChannels": "No channels",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items",
+      "selectChannelHint": "Select a channel to browse files",
+      "unavailableTitle": "File Browser Unavailable",
+      "unavailableSsh": "File browsing requires SSH access because the TeamSpeak WebQuery HTTP API does not support file transfer commands. Please configure SSH credentials (username & password) in the server settings.",
+      "sshConnectFailed": "Could not connect to TeamSpeak server via SSH. Please check the SSH credentials and port in server settings.",
+      "loadFailed": "Failed to load files. Ensure SSH credentials are configured in server settings.",
+      "ts3ErrorCode": "TS3 error code: {{code}}",
+      "colName": "Name",
+      "colSize": "Size",
+      "colModified": "Modified",
+      "emptyDirectory": "Empty directory",
+      "emptyDirectoryDescription": "No files in this directory.",
+      "moveToAnotherChannel": "Move to another channel",
+      "uploadDownloadNotice": "File upload/download is not available via WebQuery API. Use the TS3 client for file transfers.",
+      "createDirectory": "Create Directory",
+      "directoryName": "Directory Name",
+      "newFolderPlaceholder": "New Folder",
+      "moveTitle": "Move \"{{name}}\"",
+      "moveHint": "Moved entirely on the server - the file's bytes never pass through this app.",
+      "targetChannel": "Target Channel",
+      "chooseChannelPlaceholder": "Choose a channel...",
+      "move": "Move",
+      "deleteFileTitle": "Delete File",
+      "deleteFileDescription": "Are you sure you want to delete \"{{name}}\"? This cannot be undone.",
+      "directoryCreated": "Directory created",
+      "directoryCreateFailed": "Failed to create directory",
+      "fileDeleted": "File deleted",
+      "fileDeleteFailed": "Failed to delete file",
+      "fileMoved": "File moved",
+      "fileMoveFailed": "Failed to move file"
+    },
+    "dashboard": {
+      "noAccessTitle": "No access to this server",
+      "noAccessDescription": "Your account isn't granted access to this server connection. Ask an admin to grant it in Settings → Users.",
+      "noServerDescription": "Select a server connection from the header to view the dashboard.",
+      "connectionFailedTitle": "Connection failed",
+      "connectionFailedDescription": "Could not connect to the TeamSpeak server. Check your connection settings.",
+      "widgets": "Widgets",
+      "liveMonitoring": "Live Monitoring",
+      "onlineUsers": "Online Users",
+      "ofSlots": "of {{max}} slots",
+      "channels": "Channels",
+      "uptime": "Uptime",
+      "ping": "Ping",
+      "timeout": "timeout",
+      "bandwidth": "Bandwidth",
+      "last20Minutes": "last 20 minutes",
+      "download": "Download",
+      "upload": "Upload",
+      "collectingData": "Collecting data...",
+      "in": "In:",
+      "out": "Out:",
+      "serverCapacity": "Server Capacity",
+      "userSlots": "User Slots",
+      "utilized": "{{percent}}% utilized",
+      "serverVersion": "Server Version",
+      "platform": "Platform",
+      "botFlows": "Bot Flows"
+    },
+    "serverGroups": {
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "exportSelected": "Export Selected",
+      "deleteSelected": "Delete Selected",
+      "import": "Import",
+      "createGroup": "Create Group",
+      "groupsHeading": "Groups ({{count}})",
+      "selectForBulkDelete": "Select for bulk delete",
+      "iconAlt": "Icon for {{name}}",
+      "members": "Members",
+      "sgidLabel": "SGID: {{id}}",
+      "addMember": "Add Member",
+      "deleteGroup": "Delete Group",
+      "selectGroupHint": "Select a group to view its members",
+      "noMembers": "No members in this group",
+      "dbidLabel": "DBID: {{id}}",
+      "removeFromGroup": "Remove from group",
+      "memberRemoved": "Member removed",
+      "memberRemoveFailed": "Failed to remove member",
+      "searchClientsPlaceholder": "Search clients...",
+      "noMatchingClients": "No matching clients",
+      "added": "Added {{name}}",
+      "genericClient": "client",
+      "addMemberFailed": "Failed to add member",
+      "createServerGroupTitle": "Create Server Group",
+      "groupNameLabel": "Group Name",
+      "newGroupPlaceholder": "New Group",
+      "groupCreated": "Group created",
+      "deleteServerGroupTitle": "Delete Server Group",
+      "deleteGroupDescription": "Delete \"{{name}}\"?",
+      "groupDeleted": "Group deleted",
+      "deleteServerGroupsTitle": "Delete Server Groups",
+      "bulkDeleteDescription_one": "Delete {{count}} selected group? This cannot be undone.",
+      "bulkDeleteDescription_other": "Delete {{count}} selected groups? This cannot be undone.",
+      "bulkDeletePartial": "Deleted {{succeeded}}, failed {{failed}}",
+      "bulkDeleteSuccess_one": "{{count}} group deleted",
+      "bulkDeleteSuccess_other": "{{count}} groups deleted",
+      "invalidJson": "This file isn't valid JSON",
+      "notValidGroupExport": "Not a valid group export file",
+      "wrongExportTypeChannel": "This is a channel group export - import it on the Channel Groups page instead",
+      "notValidServerExport": "Not a valid server group export file",
+      "emptyExportFile": "The file contains no groups to import",
+      "createFailedFallback": "failed to create",
+      "importFailedNoGroups": "no groups could be created",
+      "importFailed": "Import failed - {{reason}}",
+      "importSummary": "Imported {{imported}} of {{total}} group(s), {{permCount}} permission(s)",
+      "importPermSkipped": ", {{count}} permission(s) skipped",
+      "importSkippedList": " - skipped: {{list}}",
+      "exportedCount_one": "Exported {{count}} group",
+      "exportedCount_other": "Exported {{count}} groups",
+      "exportFailed": "Export failed"
+    },
+    "channelGroups": {
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "exportSelected": "Export Selected",
+      "deleteSelected": "Delete Selected",
+      "import": "Import",
+      "createGroup": "Create Group",
+      "tabGroups": "Groups",
+      "tabByClient": "By Client",
+      "groupsHeading": "Groups ({{count}})",
+      "selectForBulkDelete": "Select for bulk delete",
+      "iconAlt": "Icon for {{name}}",
+      "cgidLabel": "CGID: {{id}}",
+      "typeLabel": "Type: {{type}}",
+      "selectClient": "Select Client",
+      "searchClientsPlaceholder": "Search clients...",
+      "showOfflineClients": "Show offline clients",
+      "noClientsFound": "No clients found",
+      "clientChannelGroupsHeading": "{{name}}'s Channel Groups",
+      "selectAClient": "Select a client",
+      "selectClientHint": "Select a client from the left panel",
+      "noAssignmentsTitle": "No channel group assignments",
+      "noAssignmentsDescription": "This client has no non-default channel group in any channel.",
+      "channelsSelectedCount_one": "{{count}} channel selected",
+      "channelsSelectedCount_other": "{{count}} channels selected",
+      "moveAllToPlaceholder": "Move all to...",
+      "applyToCount": "Apply to {{count}}",
+      "selectAllChannels": "Select all channels",
+      "selectChannelForBulk": "Select channel for bulk change",
+      "colChannel": "Channel",
+      "colChannelGroup": "Channel Group",
+      "clientFallback": "Client #{{id}}",
+      "createChannelGroupTitle": "Create Channel Group",
+      "groupNameLabel": "Group Name",
+      "newGroupPlaceholder": "New Group",
+      "groupCreated": "Group created",
+      "deleteChannelGroupsTitle": "Delete Channel Groups",
+      "bulkDeleteDescription_one": "Delete {{count}} selected group? This cannot be undone.",
+      "bulkDeleteDescription_other": "Delete {{count}} selected groups? This cannot be undone.",
+      "bulkDeletePartial": "Deleted {{succeeded}}, failed {{failed}}",
+      "bulkDeleteSuccess_one": "{{count}} group deleted",
+      "bulkDeleteSuccess_other": "{{count}} groups deleted",
+      "channelGroupUpdated": "Channel group updated",
+      "channelGroupUpdateFailed": "Failed to update channel group",
+      "channelGroupsUpdatedForCount_one": "Channel group updated for {{count}} channel",
+      "channelGroupsUpdatedForCount_other": "Channel group updated for {{count}} channels",
+      "channelGroupsUpdateFailed": "Failed to update channel groups",
+      "invalidJson": "This file isn't valid JSON",
+      "notValidGroupExport": "Not a valid group export file",
+      "wrongExportTypeServer": "This is a server group export - import it on the Server Groups page instead",
+      "notValidChannelExport": "Not a valid channel group export file",
+      "emptyExportFile": "The file contains no groups to import",
+      "createFailedFallback": "failed to create",
+      "importFailedNoGroups": "no groups could be created",
+      "importFailed": "Import failed - {{reason}}",
+      "importSummary": "Imported {{imported}} of {{total}} group(s), {{permCount}} permission(s)",
+      "importPermSkipped": ", {{count}} permission(s) skipped",
+      "importSkippedList": " - skipped: {{list}}",
+      "exportedCount_one": "Exported {{count}} group",
+      "exportedCount_other": "Exported {{count}} groups",
+      "exportFailed": "Export failed"
+    },
+    "channels": {
+      "selectChannel": "Select channel",
+      "useAsTemplate": "Use as template",
+      "query": "Query",
+      "away": "Away",
+      "muted": "Muted",
+      "channelCount_one": "{{count}} channel",
+      "channelCount_other": "{{count}} channels",
+      "clientsOnlineCount_one": "{{count}} client online",
+      "clientsOnlineCount_other": "{{count}} clients online",
+      "createChannel": "Create Channel",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "editSelected": "Edit Selected",
+      "channelTree": "Channel Tree",
+      "channelNamesLabel": "Channel Name(s)",
+      "channelNamesPlaceholder": "New Channel\nOne name per line to create multiple at once",
+      "editCountTitle_one": "Edit {{count}} channel",
+      "editCountTitle_other": "Edit {{count}} channels",
+      "bulkEditHint": "Only checked fields are applied - the rest are left untouched on each selected channel.",
+      "codec": "Codec",
+      "opusVoice": "Opus Voice",
+      "opusMusic": "Opus Music",
+      "codecQuality": "Codec Quality",
+      "neededTalkPower": "Needed Talk Power",
+      "permanent": "Permanent",
+      "duplicateTitle": "Duplicate \"{{name}}\"",
+      "duplicateHint": "Creates a new channel with the same settings (topic, codec, limits, talk power) as this one.",
+      "newChannelNameLabel": "New Channel Name",
+      "duplicateNamePlaceholder": "{{name}} Copy",
+      "duplicate": "Duplicate",
+      "deleteChannelTitle": "Delete Channel",
+      "deleteChannelDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "channelsCreated_one": "Channel created",
+      "channelsCreated_other": "{{count}} channels created",
+      "createPartialFailure": "{{succeeded}}/{{total}} created, {{failed}} failed",
+      "bulkUpdatedCount_one": "Updated {{count}} channel",
+      "bulkUpdatedCount_other": "Updated {{count}} channels",
+      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} updated, {{failed}} failed",
+      "duplicateCreated": "Created \"{{newName}}\" from \"{{sourceName}}\"",
+      "duplicateFailed": "Failed to duplicate channel",
+      "channelDeleted": "Channel deleted",
+      "channelDeleteFailed": "Failed to delete channel",
+      "channelMoved": "Channel moved",
+      "channelMoveFailed": "Failed to move channel"
     }
   },
   "components": {
@@ -713,61 +988,169 @@
       "event": {
         "intro": "Fields from the triggering TS3 event. Available fields depend on the event type.",
         "h1": "Client Connected — notifycliententerview",
-        "clid": { "desc": "Client ID", "example": "Move client #{{event.clid}} to channel" },
-        "clientNickname": { "desc": "Nickname", "example": "Welcome {{event.client_nickname}}!" },
-        "clientDatabaseId": { "desc": "Database ID", "example": "DB-ID: {{event.client_database_id}}" },
-        "clientUid": { "desc": "Unique ID (UID)", "example": "UID: {{event.client_unique_identifier}}" },
-        "clientType": { "desc": "Type (0=User, 1=Query)", "example": "Condition: event.client_type == 0" },
-        "clientServergroups": { "desc": "Server group IDs (comma-separated)", "example": "contains(event.client_servergroups, '6')" },
-        "connectionClientIp": { "desc": "IP address", "example": "VPN check: https://api.vpn.io/{{event.connection_client_ip}}" },
-        "cidJoined": { "desc": "Channel the client joined", "example": "Condition: event.cid == 42" },
+        "clid": {
+          "desc": "Client ID",
+          "example": "Move client #{{event.clid}} to channel"
+        },
+        "clientNickname": {
+          "desc": "Nickname",
+          "example": "Welcome {{event.client_nickname}}!"
+        },
+        "clientDatabaseId": {
+          "desc": "Database ID",
+          "example": "DB-ID: {{event.client_database_id}}"
+        },
+        "clientUid": {
+          "desc": "Unique ID (UID)",
+          "example": "UID: {{event.client_unique_identifier}}"
+        },
+        "clientType": {
+          "desc": "Type (0=User, 1=Query)",
+          "example": "Condition: event.client_type == 0"
+        },
+        "clientServergroups": {
+          "desc": "Server group IDs (comma-separated)",
+          "example": "contains(event.client_servergroups, '6')"
+        },
+        "connectionClientIp": {
+          "desc": "IP address",
+          "example": "VPN check: https://api.vpn.io/{{event.connection_client_ip}}"
+        },
+        "cidJoined": {
+          "desc": "Channel the client joined",
+          "example": "Condition: event.cid == 42"
+        },
         "h2": "Client Disconnected — notifyclientleftview",
-        "clidDisc": { "desc": "Client ID" },
-        "cfidDisc": { "desc": "Channel the client was in" },
-        "reasonidDisc": { "desc": "Reason (3=lost, 5=kick, 6=ban, 8=leave)", "example": "Condition: event.reasonid == 5" },
-        "reasonmsg": { "desc": "Reason message", "example": "Kicked: {{event.reasonmsg}}" },
+        "clidDisc": {
+          "desc": "Client ID"
+        },
+        "cfidDisc": {
+          "desc": "Channel the client was in"
+        },
+        "reasonidDisc": {
+          "desc": "Reason (3=lost, 5=kick, 6=ban, 8=leave)",
+          "example": "Condition: event.reasonid == 5"
+        },
+        "reasonmsg": {
+          "desc": "Reason message",
+          "example": "Kicked: {{event.reasonmsg}}"
+        },
         "h3": "Client Moved — notifyclientmoved",
-        "clidMoved": { "desc": "Client ID" },
-        "ctid": { "desc": "Target channel ID", "example": "Condition: event.ctid == 10" },
-        "cfidMoved": { "desc": "Source channel ID" },
-        "reasonidMoved": { "desc": "Reason (0=self, 1=moved by admin)" },
+        "clidMoved": {
+          "desc": "Client ID"
+        },
+        "ctid": {
+          "desc": "Target channel ID",
+          "example": "Condition: event.ctid == 10"
+        },
+        "cfidMoved": {
+          "desc": "Source channel ID"
+        },
+        "reasonidMoved": {
+          "desc": "Reason (0=self, 1=moved by admin)"
+        },
         "h4": "Text Message — notifytextmessage",
-        "clidMsg": { "desc": "Sender client ID" },
-        "clientNicknameMsg": { "desc": "Sender nickname" },
-        "msg": { "desc": "Message text", "example": "User wrote: {{event.msg}}" },
-        "targetmode": { "desc": "Target (1=private, 2=channel, 3=server)" },
+        "clidMsg": {
+          "desc": "Sender client ID"
+        },
+        "clientNicknameMsg": {
+          "desc": "Sender nickname"
+        },
+        "msg": {
+          "desc": "Message text",
+          "example": "User wrote: {{event.msg}}"
+        },
+        "targetmode": {
+          "desc": "Target (1=private, 2=channel, 3=server)"
+        },
         "h5": "Chat Command — trigger_command",
-        "commandName": { "desc": "Command name (without prefix)", "example": "Command: {{event.command_name}}" },
-        "commandArgs": { "desc": "Arguments after command", "example": "Args: {{event.command_args}}" },
-        "clidCmd": { "desc": "Sender client ID" },
-        "clientNicknameCmd": { "desc": "Sender nickname" },
+        "commandName": {
+          "desc": "Command name (without prefix)",
+          "example": "Command: {{event.command_name}}"
+        },
+        "commandArgs": {
+          "desc": "Arguments after command",
+          "example": "Args: {{event.command_args}}"
+        },
+        "clidCmd": {
+          "desc": "Sender client ID"
+        },
+        "clientNicknameCmd": {
+          "desc": "Sender nickname"
+        },
         "h6": "Channel Events — created / edited / deleted",
-        "cidChannel": { "desc": "Channel ID" },
-        "invokerid": { "desc": "Client ID of who made the change" },
-        "invokername": { "desc": "Name of who made the change" },
+        "cidChannel": {
+          "desc": "Channel ID"
+        },
+        "invokerid": {
+          "desc": "Client ID of who made the change"
+        },
+        "invokername": {
+          "desc": "Name of who made the change"
+        },
         "h7": "Webhook — trigger_webhook",
-        "webhookPath": { "desc": "Request path" },
-        "webhookMethod": { "desc": "HTTP method", "example": "GET or POST" },
-        "webhookBody": { "desc": "Request body (raw JSON)" },
-        "webhookBodyField": { "desc": "Nested field from JSON body", "example": "Status: {{event.webhook_body.status}}" },
-        "webhookQuery": { "desc": "Query parameters (raw JSON)" }
+        "webhookPath": {
+          "desc": "Request path"
+        },
+        "webhookMethod": {
+          "desc": "HTTP method",
+          "example": "GET or POST"
+        },
+        "webhookBody": {
+          "desc": "Request body (raw JSON)"
+        },
+        "webhookBodyField": {
+          "desc": "Nested field from JSON body",
+          "example": "Status: {{event.webhook_body.status}}"
+        },
+        "webhookQuery": {
+          "desc": "Query parameters (raw JSON)"
+        }
       },
       "time": {
         "intro": "Current date and time. Respects the timezone configured on the Cron trigger (falls back to UTC).",
-        "time": { "desc": "Formatted time HH:MM", "example": "Channel name: It's {{time.time}}" },
-        "date": { "desc": "Formatted date DD.MM.YYYY", "example": "Date: {{time.date}}" },
-        "hours": { "desc": "Hour (00-23)", "example": "Condition: time.hours >= 22" },
-        "minutes": { "desc": "Minute (00-59)" },
-        "seconds": { "desc": "Second (00-59)" },
-        "day": { "desc": "Day of month (01-31)" },
-        "month": { "desc": "Month (01-12)", "example": "Condition: time.month == 12" },
-        "year": { "desc": "Year (4-digit)" },
-        "dayOfWeek": { "desc": "Day of week (0=Sun, 1=Mon, ..., 6=Sat)", "example": "Condition: time.dayOfWeek == 0" },
-        "timestamp": { "desc": "Unix timestamp (seconds)" }
+        "time": {
+          "desc": "Formatted time HH:MM",
+          "example": "Channel name: It's {{time.time}}"
+        },
+        "date": {
+          "desc": "Formatted date DD.MM.YYYY",
+          "example": "Date: {{time.date}}"
+        },
+        "hours": {
+          "desc": "Hour (00-23)",
+          "example": "Condition: time.hours >= 22"
+        },
+        "minutes": {
+          "desc": "Minute (00-59)"
+        },
+        "seconds": {
+          "desc": "Second (00-59)"
+        },
+        "day": {
+          "desc": "Day of month (01-31)"
+        },
+        "month": {
+          "desc": "Month (01-12)",
+          "example": "Condition: time.month == 12"
+        },
+        "year": {
+          "desc": "Year (4-digit)"
+        },
+        "dayOfWeek": {
+          "desc": "Day of week (0=Sun, 1=Mon, ..., 6=Sat)",
+          "example": "Condition: time.dayOfWeek == 0"
+        },
+        "timestamp": {
+          "desc": "Unix timestamp (seconds)"
+        }
       },
       "var": {
         "intro": "Persistent variables stored in the database. Survive restarts. Scoped per flow. Set via the <1>Set Variable</1> action node.",
-        "name": { "desc": "Read variable by name", "example": "Counter: {{var.visit_count}}" },
+        "name": {
+          "desc": "Read variable by name",
+          "example": "Counter: {{var.visit_count}}"
+        },
         "h1": "Actions for Variables",
         "actionSet": "<0>Set</0> — Set a variable to a fixed value or template",
         "actionIncrement": "<0>Increment</0> — Add a number to the current value",
@@ -780,49 +1163,114 @@
       "temp": {
         "intro": "Temporary variables that only exist during a single flow execution. Automatically set by certain action nodes. Supports nested access via dot notation.",
         "h1": "Auto-set by Actions",
-        "lastCreatedChannelId": { "desc": "CID of channel created by Create Channel", "example": "Move client to {{temp.lastCreatedChannelId}}" },
-        "lastResult": { "desc": "Raw JSON result from WebQuery action" },
-        "afkMovedCount": { "desc": "Number of clients moved by AFK Mover", "example": "Moved {{temp.afkMovedCount}} AFK users" },
-        "idleKickedCount": { "desc": "Number of clients kicked by Idle Kicker" },
-        "pokedCount": { "desc": "Number of clients poked by Poke Group" },
-        "rankPromotedCount": { "desc": "Number of clients promoted by Rank Check" },
-        "tempChannelsDeleted": { "desc": "Number of channels deleted by Temp Cleanup" },
+        "lastCreatedChannelId": {
+          "desc": "CID of channel created by Create Channel",
+          "example": "Move client to {{temp.lastCreatedChannelId}}"
+        },
+        "lastResult": {
+          "desc": "Raw JSON result from WebQuery action"
+        },
+        "afkMovedCount": {
+          "desc": "Number of clients moved by AFK Mover",
+          "example": "Moved {{temp.afkMovedCount}} AFK users"
+        },
+        "idleKickedCount": {
+          "desc": "Number of clients kicked by Idle Kicker"
+        },
+        "pokedCount": {
+          "desc": "Number of clients poked by Poke Group"
+        },
+        "rankPromotedCount": {
+          "desc": "Number of clients promoted by Rank Check"
+        },
+        "tempChannelsDeleted": {
+          "desc": "Number of channels deleted by Temp Cleanup"
+        },
         "h2": "Custom via \"Store As\"",
         "storeAsIntro": "WebQuery and HTTP Request actions have a \"Store As\" field. The FULL result list is saved as a temp variable — even a single-row command like clientinfo or serverinfo, so access it with an explicit <1>.0.</1> for \"the first (only) row\".",
-        "serverOnline": { "desc": "Online users (after serverinfo stored as \"server\")", "example": "Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}" },
-        "serverUptime": { "desc": "Server uptime in seconds", "example": "Uptime: {{temp.server.0.virtualserver_uptime|uptime}}" },
-        "clientNickname": { "desc": "Client name (after clientinfo stored as \"client\")" },
+        "serverOnline": {
+          "desc": "Online users (after serverinfo stored as \"server\")",
+          "example": "Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}"
+        },
+        "serverUptime": {
+          "desc": "Server uptime in seconds",
+          "example": "Uptime: {{temp.server.0.virtualserver_uptime|uptime}}"
+        },
+        "clientNickname": {
+          "desc": "Client name (after clientinfo stored as \"client\")"
+        },
         "h3": "Loop Node",
         "loopIntro": "A Loop node reads an existing list (e.g. a \"Store As\" result from a clientlist WebQuery) and runs its \"Body\" output once per item, then its \"After\" output once when done.",
-        "loopItem": { "desc": "Current item (whatever name the Loop node's Item Variable Name is set to), inside its Body branch only" },
-        "loopField": { "desc": "A field of the current item - item variable name + \".\" + field (no .0 here, unlike Store As above - a single object per iteration, not a list)" },
-        "loopIndex": { "desc": "Position of the current item in the list, starting at 0" }
+        "loopItem": {
+          "desc": "Current item (whatever name the Loop node's Item Variable Name is set to), inside its Body branch only"
+        },
+        "loopField": {
+          "desc": "A field of the current item - item variable name + \".\" + field (no .0 here, unlike Store As above - a single object per iteration, not a list)"
+        },
+        "loopIndex": {
+          "desc": "Position of the current item in the list, starting at 0"
+        }
       },
       "exec": {
         "intro": "Read-only metadata about the current flow execution.",
-        "flowId": { "desc": "ID of the flow being executed" },
-        "executionId": { "desc": "Unique execution instance ID" },
-        "configId": { "desc": "Server config ID" },
-        "sid": { "desc": "Virtual server ID" },
-        "triggerType": { "desc": "Trigger type (event, cron, webhook, command)", "example": "Condition: exec.triggerType == \"cron\"" }
+        "flowId": {
+          "desc": "ID of the flow being executed"
+        },
+        "executionId": {
+          "desc": "Unique execution instance ID"
+        },
+        "configId": {
+          "desc": "Server config ID"
+        },
+        "sid": {
+          "desc": "Virtual server ID"
+        },
+        "triggerType": {
+          "desc": "Trigger type (event, cron, webhook, command)",
+          "example": "Condition: exec.triggerType == \"cron\""
+        }
       },
       "filter": {
         "intro": "Filters transform values. Apply with pipe syntax: <1>{{value|filter}}</1>",
-        "uptime": { "desc": "Converts seconds to readable uptime" },
-        "round": { "desc": "Rounds to nearest integer" },
-        "floor": { "desc": "Rounds down to integer" }
+        "uptime": {
+          "desc": "Converts seconds to readable uptime"
+        },
+        "round": {
+          "desc": "Rounds to nearest integer"
+        },
+        "floor": {
+          "desc": "Rounds down to integer"
+        }
       },
       "functions": {
         "intro": "Functions for use in <1>Condition</1> node expressions. Return 0 or 1 (false/true).",
-        "contains": { "desc": "String contains substring? (plain substring match - see hasGroup below for numeric ID lists)" },
-        "startsWith": { "desc": "String starts with prefix?" },
-        "endsWith": { "desc": "String ends with suffix?" },
-        "lower": { "desc": "Convert to lowercase" },
-        "upper": { "desc": "Convert to uppercase" },
-        "length": { "desc": "String length" },
-        "split": { "desc": "Split string and get element at index" },
-        "hasGroup": { "desc": "Exact match against a comma-separated ID list - use this for server group IDs, not contains(), which would wrongly match group '1' against '10' or '21' too" },
-        "count": { "desc": "Row count of a stored WebQuery result (array), or string length otherwise - use to check whether a lookup found anything" },
+        "contains": {
+          "desc": "String contains substring? (plain substring match - see hasGroup below for numeric ID lists)"
+        },
+        "startsWith": {
+          "desc": "String starts with prefix?"
+        },
+        "endsWith": {
+          "desc": "String ends with suffix?"
+        },
+        "lower": {
+          "desc": "Convert to lowercase"
+        },
+        "upper": {
+          "desc": "Convert to uppercase"
+        },
+        "length": {
+          "desc": "String length"
+        },
+        "split": {
+          "desc": "Split string and get element at index"
+        },
+        "hasGroup": {
+          "desc": "Exact match against a comma-separated ID list - use this for server group IDs, not contains(), which would wrongly match group '1' against '10' or '21' too"
+        },
+        "count": {
+          "desc": "Row count of a stored WebQuery result (array), or string length otherwise - use to check whether a lookup found anything"
+        },
         "h1": "Condition Examples",
         "condition1": "Only real users (no query clients)",
         "condition2": "Client is in server group 7",
@@ -882,43 +1330,95 @@
   "data": {
     "botTemplates": {
       "categories": {
-        "infoChannels": { "label": "Info Channels", "description": "Dynamic channel names with live data" },
-        "moderation": { "label": "Moderation", "description": "Automated moderation and protection" },
-        "automation": { "label": "Automation", "description": "Welcome messages, temp channels, ranking" },
-        "integration": { "label": "Integration", "description": "External APIs and webhooks" }
+        "infoChannels": {
+          "label": "Info Channels",
+          "description": "Dynamic channel names with live data"
+        },
+        "moderation": {
+          "label": "Moderation",
+          "description": "Automated moderation and protection"
+        },
+        "automation": {
+          "label": "Automation",
+          "description": "Welcome messages, temp channels, ranking"
+        },
+        "integration": {
+          "label": "Integration",
+          "description": "External APIs and webhooks"
+        }
       },
       "items": {
         "clockChannel": {
           "name": "Clock Channel",
           "description": "Updates a channel name with the current time every minute.",
           "fields": {
-            "channelId": { "label": "Channel ID" },
-            "timezone": { "label": "Timezone" }
+            "channelId": {
+              "label": "Channel ID"
+            },
+            "timezone": {
+              "label": "Timezone"
+            }
           }
         },
         "onlineCounter": {
           "name": "Online Counter",
           "description": "Shows the current online client count in a channel name.",
-          "fields": { "channelId": { "label": "Channel ID" } }
+          "fields": {
+            "channelId": {
+              "label": "Channel ID"
+            }
+          }
         },
         "serverStats": {
           "name": "Server Stats",
           "description": "Displays uptime, online clients, and channel count in three info channels.",
           "fields": {
-            "uptimeChannelId": { "label": "Uptime Channel ID" },
-            "clientsChannelId": { "label": "Clients Channel ID" },
-            "channelCountChannelId": { "label": "Channel Count Channel ID" }
+            "uptimeChannelId": {
+              "label": "Uptime Channel ID"
+            },
+            "clientsChannelId": {
+              "label": "Clients Channel ID"
+            },
+            "channelCountChannelId": {
+              "label": "Channel Count Channel ID"
+            }
           }
         },
         "animatedChannel": {
           "name": "Animated Channel Name",
           "description": "Animates a channel name with visual effects like scrolling marquee, typewriter, bounce, and more. Updates every 2-5 seconds.",
           "fields": {
-            "channelId": { "label": "Channel ID" },
-            "text": { "label": "Display Text" },
-            "style": { "label": "Animation Style", "options": { "0": "Scroll Left (Marquee)", "1": "Typewriter", "2": "Bounce", "3": "Blink", "4": "Wave (Decorative)", "5": "Alternate Case" } },
-            "intervalSeconds": { "label": "Speed", "options": { "0": "Slow (5s)", "1": "Medium (3s)", "2": "Fast (2s)", "3": "Very Fast (1s)", "4": "Ultra (0.5s)", "5": "Insane (0.25s)" } },
-            "prefix": { "label": "Channel Name Prefix" }
+            "channelId": {
+              "label": "Channel ID"
+            },
+            "text": {
+              "label": "Display Text"
+            },
+            "style": {
+              "label": "Animation Style",
+              "options": {
+                "0": "Scroll Left (Marquee)",
+                "1": "Typewriter",
+                "2": "Bounce",
+                "3": "Blink",
+                "4": "Wave (Decorative)",
+                "5": "Alternate Case"
+              }
+            },
+            "intervalSeconds": {
+              "label": "Speed",
+              "options": {
+                "0": "Slow (5s)",
+                "1": "Medium (3s)",
+                "2": "Fast (2s)",
+                "3": "Very Fast (1s)",
+                "4": "Ultra (0.5s)",
+                "5": "Insane (0.25s)"
+              }
+            },
+            "prefix": {
+              "label": "Channel Name Prefix"
+            }
           }
         },
         "welcomeMessage": {
@@ -931,19 +1431,37 @@
             "{{temp.teamOnline}} - team members online right now (only resolves if Team Groups is set below)"
           ],
           "fields": {
-            "message": { "label": "Welcome Message" },
-            "usePokeInstead": { "label": "Delivery Method", "options": { "0": "Private Message", "1": "Poke" } },
-            "ignoreGroupIds": { "label": "Ignore Groups (comma-separated, optional)" },
-            "teamGroupIds": { "label": "Team Groups for {{temp.teamOnline}} (comma-separated, optional)" }
+            "message": {
+              "label": "Welcome Message"
+            },
+            "usePokeInstead": {
+              "label": "Delivery Method",
+              "options": {
+                "0": "Private Message",
+                "1": "Poke"
+              }
+            },
+            "ignoreGroupIds": {
+              "label": "Ignore Groups (comma-separated, optional)"
+            },
+            "teamGroupIds": {
+              "label": "Team Groups for {{temp.teamOnline}} (comma-separated, optional)"
+            }
           }
         },
         "supportSystem": {
           "name": "Support System",
           "description": "Notifies admins when a client joins the support channel.",
           "fields": {
-            "supportChannelId": { "label": "Support Channel ID" },
-            "adminGroupId": { "label": "Admin Group ID" },
-            "message": { "label": "Notification Message" }
+            "supportChannelId": {
+              "label": "Support Channel ID"
+            },
+            "adminGroupId": {
+              "label": "Admin Group ID"
+            },
+            "message": {
+              "label": "Notification Message"
+            }
           }
         },
         "privateChannelCreator": {
@@ -953,32 +1471,98 @@
             "{{temp.joinerInfo.0.client_nickname}} - joining client's name (for the channel name/description template)"
           ],
           "fields": {
-            "lobbyChannelId": { "label": "Lobby Channel ID" },
-            "parentChannelId": { "label": "Parent Channel ID (optional - overrides where channels are created)" },
-            "channelPlacement": { "label": "Channel Placement", "options": { "0": "Standard Channel (next to Lobby)", "1": "Subchannel of Lobby" } },
-            "channelAdminGroupId": { "label": "Channel Admin Group ID (assigned as owner)" },
-            "channelNameTemplate": { "label": "Channel Name Template" },
-            "channelDescriptionTemplate": { "label": "Channel Description Template (optional)" },
-            "privateChannelType": { "label": "Private Channel Type", "options": { "0": "Permanent", "1": "Semi-Permanent", "2": "Temporary (TeamSpeak deletes it once empty)" } },
-            "autoGeneratePassword": { "label": "Password Protection", "options": { "0": "None", "1": "Auto-generate" } },
-            "spamProtectionEnabled": { "label": "Spam Protection (ban clients who repeatedly rejoin the lobby)", "options": { "0": "No", "1": "Yes" } },
-            "spamProtectionMaxStrikes": { "label": "Max Strikes Before Ban" },
-            "spamProtectionBanSeconds": { "label": "Ban Duration (seconds)" },
-            "channelCreateMessage": { "label": "Channel Create Message" },
-            "channelMoveMessage": { "label": "Channel Move Message" },
-            "channelErrorMessage": { "label": "Channel Error Message" },
-            "channelPasswordMessage": { "label": "Channel Password Message" },
-            "spamProtectionBanMessage": { "label": "Spam Protection Ban Message" }
+            "lobbyChannelId": {
+              "label": "Lobby Channel ID"
+            },
+            "parentChannelId": {
+              "label": "Parent Channel ID (optional - overrides where channels are created)"
+            },
+            "channelPlacement": {
+              "label": "Channel Placement",
+              "options": {
+                "0": "Standard Channel (next to Lobby)",
+                "1": "Subchannel of Lobby"
+              }
+            },
+            "channelAdminGroupId": {
+              "label": "Channel Admin Group ID (assigned as owner)"
+            },
+            "channelNameTemplate": {
+              "label": "Channel Name Template"
+            },
+            "channelDescriptionTemplate": {
+              "label": "Channel Description Template (optional)"
+            },
+            "privateChannelType": {
+              "label": "Private Channel Type",
+              "options": {
+                "0": "Permanent",
+                "1": "Semi-Permanent",
+                "2": "Temporary (TeamSpeak deletes it once empty)"
+              }
+            },
+            "autoGeneratePassword": {
+              "label": "Password Protection",
+              "options": {
+                "0": "None",
+                "1": "Auto-generate"
+              }
+            },
+            "spamProtectionEnabled": {
+              "label": "Spam Protection (ban clients who repeatedly rejoin the lobby)",
+              "options": {
+                "0": "No",
+                "1": "Yes"
+              }
+            },
+            "spamProtectionMaxStrikes": {
+              "label": "Max Strikes Before Ban"
+            },
+            "spamProtectionBanSeconds": {
+              "label": "Ban Duration (seconds)"
+            },
+            "channelCreateMessage": {
+              "label": "Channel Create Message"
+            },
+            "channelMoveMessage": {
+              "label": "Channel Move Message"
+            },
+            "channelErrorMessage": {
+              "label": "Channel Error Message"
+            },
+            "channelPasswordMessage": {
+              "label": "Channel Password Message"
+            },
+            "spamProtectionBanMessage": {
+              "label": "Spam Protection Ban Message"
+            }
           }
         },
         "autoRank": {
           "name": "Auto-Rank",
           "description": "Automatically assigns server groups based on cumulative online time.",
           "fields": {
-            "ranks": { "label": "Ranks (JSON)" },
-            "mode": { "label": "Hours measured as", "options": { "0": "Actual online time (accumulated across sessions)", "1": "Time since first connection (member age)" } },
-            "excludeGroupIds": { "label": "Exclude Group IDs (comma-separated, optional)" },
-            "pollInterval": { "label": "Check Interval", "options": { "0": "Every 5 min", "1": "Every 15 min", "2": "Every hour" } }
+            "ranks": {
+              "label": "Ranks (JSON)"
+            },
+            "mode": {
+              "label": "Hours measured as",
+              "options": {
+                "0": "Actual online time (accumulated across sessions)",
+                "1": "Time since first connection (member age)"
+              }
+            },
+            "excludeGroupIds": {
+              "label": "Exclude Group IDs (comma-separated, optional)"
+            },
+            "pollInterval": {
+              "label": "Check Interval",
+              "options": {
+                "0": "Every 5 min",
+                "1": "Every 15 min",
+                "2": "Every hour"
+              }
+            }
           }
         },
         "lastSeenTracker": {
@@ -989,74 +1573,140 @@
           "name": "AFK Mover",
           "description": "Moves idle clients to an AFK channel after a configurable timeout.",
           "fields": {
-            "afkChannelId": { "label": "AFK Channel ID" },
-            "idleThresholdSeconds": { "label": "Idle Threshold (seconds)" },
-            "exemptGroupIds": { "label": "Exempt Group IDs (comma-separated)" },
-            "exemptChannelIds": { "label": "Exempt Channel IDs (comma-separated)" }
+            "afkChannelId": {
+              "label": "AFK Channel ID"
+            },
+            "idleThresholdSeconds": {
+              "label": "Idle Threshold (seconds)"
+            },
+            "exemptGroupIds": {
+              "label": "Exempt Group IDs (comma-separated)"
+            },
+            "exemptChannelIds": {
+              "label": "Exempt Channel IDs (comma-separated)"
+            }
           }
         },
         "idleKicker": {
           "name": "Idle Kicker",
           "description": "Kicks clients that have been idle for too long.",
           "fields": {
-            "idleThresholdSeconds": { "label": "Idle Threshold (seconds)" },
-            "reason": { "label": "Kick Reason" },
-            "exemptGroupIds": { "label": "Exempt Group IDs (comma-separated)" }
+            "idleThresholdSeconds": {
+              "label": "Idle Threshold (seconds)"
+            },
+            "reason": {
+              "label": "Kick Reason"
+            },
+            "exemptGroupIds": {
+              "label": "Exempt Group IDs (comma-separated)"
+            }
           }
         },
         "badNameChecker": {
           "name": "Bad Name Checker",
           "description": "Kicks clients whose nickname contains forbidden words.",
           "fields": {
-            "badWords": { "label": "Bad Words (comma-separated)" },
-            "reason": { "label": "Kick Reason" }
+            "badWords": {
+              "label": "Bad Words (comma-separated)"
+            },
+            "reason": {
+              "label": "Kick Reason"
+            }
           }
         },
         "groupProtector": {
           "name": "Group Protector",
           "description": "Kicks clients who have a protected group but lack the required authorization group.",
           "fields": {
-            "protectedGroupId": { "label": "Protected Group ID" },
-            "allowedGroupId": { "label": "Authorized Group ID" },
-            "action": { "label": "Action", "options": { "0": "Kick", "1": "Remove Group" } }
+            "protectedGroupId": {
+              "label": "Protected Group ID"
+            },
+            "allowedGroupId": {
+              "label": "Authorized Group ID"
+            },
+            "action": {
+              "label": "Action",
+              "options": {
+                "0": "Kick",
+                "1": "Remove Group"
+              }
+            }
           }
         },
         "webhookServerMessage": {
           "name": "Webhook → Server Message",
           "description": "Receives a webhook POST and broadcasts the message to the TeamSpeak server. Great for monitoring alerts, CI/CD notifications, or Discord bridges.",
           "fields": {
-            "path": { "label": "Webhook Path" },
-            "secret": { "label": "Secret (optional)" }
+            "path": {
+              "label": "Webhook Path"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
           }
         },
         "webhookGroupAssign": {
           "name": "Webhook → Assign Group",
           "description": "External system (e.g. website verification) sends a webhook with a client database ID to assign a server group. Use for website-to-TS3 user verification.",
           "fields": {
-            "path": { "label": "Webhook Path" },
-            "groupId": { "label": "Server Group ID to assign" },
-            "secret": { "label": "Secret (optional)" }
+            "path": {
+              "label": "Webhook Path"
+            },
+            "groupId": {
+              "label": "Server Group ID to assign"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
           }
         },
         "webhookChannelRename": {
           "name": "Webhook → Update Channel",
           "description": "Receives a webhook and updates a channel name. Use for external status displays like game server status, stream status, or monitoring dashboards.",
           "fields": {
-            "path": { "label": "Webhook Path" },
-            "channelId": { "label": "Channel ID to update" },
-            "nameTemplate": { "label": "Channel Name Template" },
-            "secret": { "label": "Secret (optional)" }
+            "path": {
+              "label": "Webhook Path"
+            },
+            "channelId": {
+              "label": "Channel ID to update"
+            },
+            "nameTemplate": {
+              "label": "Channel Name Template"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
           }
         },
         "antiVpn": {
           "name": "Anti-VPN",
           "description": "Checks connecting clients against a VPN detection API and kicks/bans VPN users.",
           "fields": {
-            "apiUrl": { "label": "API URL (use {{ip}} placeholder)" },
-            "action": { "label": "Action for VPN", "options": { "0": "Kick", "1": "Ban (1h)" } }
+            "apiUrl": {
+              "label": "API URL (use {{ip}} placeholder)"
+            },
+            "action": {
+              "label": "Action for VPN",
+              "options": {
+                "0": "Kick",
+                "1": "Ban (1h)"
+              }
+            }
           }
         }
       }
+    }
+  },
+  "errors": {
+    "ts": {
+      "groupNameExists": "A group with this name already exists",
+      "invalidGroup": "Invalid group - it may have been deleted",
+      "permAlreadySet": "That permission is already set on this group",
+      "unknownPermission": "This server does not recognize one of the permissions in the file",
+      "cannotModifyDefaultGroup": "Cannot modify permissions on a default/template group",
+      "invalidPermValueSize": "Invalid permission value size in the file",
+      "invalidPermValue": "Invalid permission value in the file",
+      "insufficientModifyPower": "Insufficient permission modify power for one of the imported values"
     }
   }
 }

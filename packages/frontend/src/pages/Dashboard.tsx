@@ -14,6 +14,8 @@ import { Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, 
 import { AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 interface SatelliteStatProps {
   icon: React.ElementType;
@@ -90,7 +92,7 @@ interface DashboardBotFlow {
 /** Visible to everyone (view-only awareness of what's automated on this server); only clickable
     through to the editor for a user who actually has bot-flow permissions - the editor route
     itself redirects anyone else straight back here, which would otherwise look like a dead click. */
-function BotFlowRow({ flow, canEdit }: { flow: DashboardBotFlow; canEdit: boolean }) {
+function BotFlowRow({ flow, canEdit, t }: { flow: DashboardBotFlow; canEdit: boolean; t: TFunction }) {
   const inner = (
     <div
       className={cn(
@@ -103,15 +105,15 @@ function BotFlowRow({ flow, canEdit }: { flow: DashboardBotFlow; canEdit: boolea
         <span className="text-sm truncate">{flow.name}</span>
       </div>
       <Badge variant={flow.enabled ? 'success' : 'secondary'} className="text-[10px] shrink-0">
-        {flow.enabled ? 'Active' : 'Inactive'}
+        {flow.enabled ? t('common.active') : t('common.inactive')}
       </Badge>
     </div>
   );
   return canEdit ? <Link to={`/bots/${flow.id}`}>{inner}</Link> : inner;
 }
 
-const formatSampleTime = (ms: number) =>
-  new Date(ms).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const formatSampleTime = (ms: number, locale: string) =>
+  new Date(ms).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 /** One measurement as the backend's /bandwidth-history endpoint returns it. */
 interface BandwidthSample {
@@ -130,6 +132,7 @@ interface ChartPoint {
 }
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
   const { data, isLoading, error } = useDashboard();
   const { data: bandwidthHistoryData } = useBandwidthHistory();
@@ -157,12 +160,12 @@ export default function Dashboard() {
   const bandwidthHistory = useMemo<ChartPoint[]>(
     () =>
       ((bandwidthHistoryData ?? []) as BandwidthSample[]).map((s) => ({
-        time: formatSampleTime(s.timestamp),
+        time: formatSampleTime(s.timestamp, i18n.language),
         in: s.incoming,
         out: s.outgoing,
         ping: s.ping ?? -1,
       })),
-    [bandwidthHistoryData],
+    [bandwidthHistoryData, i18n.language],
   );
 
   // Clamps unreachable (-1) samples to 0 so one bad tick doesn't spike the
@@ -174,14 +177,14 @@ export default function Dashboard() {
     return isForbidden ? (
       <EmptyState
         icon={Lock}
-        title="No access to this server"
-        description="Your account isn't granted access to this server connection. Ask an admin to grant it in Settings → Users."
+        title={t('pages.dashboard.noAccessTitle')}
+        description={t('pages.dashboard.noAccessDescription')}
       />
     ) : (
       <EmptyState
         icon={Server}
-        title="No server selected"
-        description="Select a server connection from the header to view the dashboard."
+        title={t('pages.noServerSelected')}
+        description={t('pages.dashboard.noServerDescription')}
       />
     );
   }
@@ -192,14 +195,14 @@ export default function Dashboard() {
     return isForbidden ? (
       <EmptyState
         icon={Lock}
-        title="No access to this server"
-        description="Your account isn't granted access to this server connection. Ask an admin to grant it in Settings → Users."
+        title={t('pages.dashboard.noAccessTitle')}
+        description={t('pages.dashboard.noAccessDescription')}
       />
     ) : (
       <EmptyState
         icon={Wifi}
-        title="Connection failed"
-        description="Could not connect to the TeamSpeak server. Check your connection settings."
+        title={t('pages.dashboard.connectionFailedTitle')}
+        description={t('pages.dashboard.connectionFailedDescription')}
       />
     );
   }
@@ -211,21 +214,21 @@ export default function Dashboard() {
         <div>
           <h1 className="text-xl font-semibold">{data.serverName}</h1>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="success" className="font-mono-data text-[10px]">ONLINE</Badge>
+            <Badge variant="success" className="font-mono-data text-[10px]">{t('common.online').toUpperCase()}</Badge>
             <span className="text-xs text-muted-foreground font-mono-data">{data.version} / {data.platform}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {isAdmin && (
             <Button size="sm" variant="outline" onClick={() => setShowWidgets(true)}>
-              <LayoutGrid className="h-3.5 w-3.5 mr-1.5" /> Widgets
+              <LayoutGrid className="h-3.5 w-3.5 mr-1.5" /> {t('pages.dashboard.widgets')}
             </Button>
           )}
           <div className="text-right">
-            <p className="text-[10px] text-muted-foreground font-mono-data uppercase tracking-widest">Live Monitoring</p>
+            <p className="text-[10px] text-muted-foreground font-mono-data uppercase tracking-widest">{t('pages.dashboard.liveMonitoring')}</p>
             <div className="flex items-center gap-1 justify-end mt-0.5">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
-              <span className="text-[10px] text-emerald-400 font-mono-data">ACTIVE</span>
+              <span className="text-[10px] text-emerald-400 font-mono-data">{t('common.active').toUpperCase()}</span>
             </div>
           </div>
         </div>
@@ -239,20 +242,20 @@ export default function Dashboard() {
         <CardContent className="p-0">
           <div className="flex flex-col lg:flex-row">
             <div className="p-6 flex flex-col items-center justify-center text-center lg:w-80 shrink-0">
-              <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">Online Users</p>
+              <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('pages.dashboard.onlineUsers')}</p>
               <ArcGauge percent={data.maxClients ? data.onlineUsers / data.maxClients : 0} />
               <p className="text-4xl font-bold font-mono-data text-primary -mt-4">
                 {data.onlineUsers}<span className="text-lg font-medium text-muted-foreground">/{data.maxClients}</span>
               </p>
-              <p className="text-[11px] text-muted-foreground mt-1">of {data.maxClients} slots</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{t('pages.dashboard.ofSlots', { max: data.maxClients })}</p>
             </div>
             <div className="flex-1 flex flex-col justify-center">
-              <StatCell icon={Hash} label="Channels" value={data.channelCount} accentColor="text-violet-400" compact />
-              <StatCell icon={Clock} label="Uptime" value={formatUptime(data.uptime)} accentColor="text-emerald-400" compact />
+              <StatCell icon={Hash} label={t('pages.dashboard.channels')} value={data.channelCount} accentColor="text-violet-400" compact />
+              <StatCell icon={Clock} label={t('pages.dashboard.uptime')} value={formatUptime(data.uptime)} accentColor="text-emerald-400" compact />
               <StatCell
                 icon={Activity}
-                label="Ping"
-                value={data.ping < 0 ? 'timeout' : `${data.ping}ms`}
+                label={t('pages.dashboard.ping')}
+                value={data.ping < 0 ? t('pages.dashboard.timeout') : `${data.ping}ms`}
                 sub={data.pingTarget ? `→ ${data.pingTarget}` : undefined}
                 accentColor={data.ping < 0 ? 'text-destructive' : 'text-amber-400'}
                 compact
@@ -270,8 +273,8 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
-              Bandwidth
-              <span className="ml-auto text-[11px] font-normal normal-case tracking-normal">last 20 minutes</span>
+              {t('pages.dashboard.bandwidth')}
+              <span className="ml-auto text-[11px] font-normal normal-case tracking-normal">{t('pages.dashboard.last20Minutes')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -294,7 +297,7 @@ export default function Dashboard() {
                     <ReTooltip
                       contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '6px', fontSize: '12px' }}
                       labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                      formatter={(value, name) => [formatBytes(Number(value) || 0) + '/s', name === 'in' ? 'Download' : 'Upload']}
+                      formatter={(value, name) => [formatBytes(Number(value) || 0) + '/s', name === 'in' ? t('pages.dashboard.download') : t('pages.dashboard.upload')]}
                     />
                     <Area type="monotone" dataKey="in" stroke="hsl(var(--chart-1))" fill="url(#inGrad)" strokeWidth={2} />
                     <Area type="monotone" dataKey="out" stroke="hsl(var(--chart-3))" fill="url(#outGrad)" strokeWidth={2} />
@@ -302,19 +305,19 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground font-mono-data">
-                  Collecting data...
+                  {t('pages.dashboard.collectingData')}
                 </div>
               )}
             </div>
             <div className="flex items-center gap-6 mt-3">
               <div className="flex items-center gap-2 text-xs">
                 <ArrowDownToLine className="h-3.5 w-3.5 text-primary" />
-                <span className="text-muted-foreground">In:</span>
+                <span className="text-muted-foreground">{t('pages.dashboard.in')}</span>
                 <span className="font-mono-data text-primary">{formatBytes(data.bandwidth.incoming)}/s</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <ArrowUpFromLine className="h-3.5 w-3.5 text-violet-400" />
-                <span className="text-muted-foreground">Out:</span>
+                <span className="text-muted-foreground">{t('pages.dashboard.out')}</span>
                 <span className="font-mono-data text-violet-400">{formatBytes(data.bandwidth.outgoing)}/s</span>
               </div>
             </div>
@@ -324,12 +327,12 @@ export default function Dashboard() {
         {/* Capacity */}
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Server Capacity</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('pages.dashboard.serverCapacity')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-muted-foreground">User Slots</span>
+                <span className="text-muted-foreground">{t('pages.dashboard.userSlots')}</span>
                 <span className="font-mono-data">{data.onlineUsers} / {data.maxClients}</span>
               </div>
               <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -339,25 +342,25 @@ export default function Dashboard() {
                 />
               </div>
               <p className="text-[10px] text-muted-foreground mt-1 font-mono-data">
-                {((data.onlineUsers / data.maxClients) * 100).toFixed(1)}% utilized
+                {t('pages.dashboard.utilized', { percent: ((data.onlineUsers / data.maxClients) * 100).toFixed(1) })}
               </p>
             </div>
 
             <div className="pt-3 border-t border-border space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Server Version</span>
+                <span className="text-muted-foreground">{t('pages.dashboard.serverVersion')}</span>
                 <span className="font-mono-data text-foreground">{data.version?.split(' ')[0]}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Platform</span>
+                <span className="text-muted-foreground">{t('pages.dashboard.platform')}</span>
                 <span className="font-mono-data text-foreground">{data.platform}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Channels</span>
+                <span className="text-muted-foreground">{t('pages.dashboard.channels')}</span>
                 <span className="font-mono-data text-foreground">{data.channelCount}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Uptime</span>
+                <span className="text-muted-foreground">{t('pages.dashboard.uptime')}</span>
                 <span className="font-mono-data text-emerald-400">{formatUptime(data.uptime)}</span>
               </div>
             </div>
@@ -370,13 +373,13 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Bot className="h-4 w-4 text-primary" />
-              Bot Flows
+              {t('pages.dashboard.botFlows')}
               <span className="font-mono-data text-[11px] text-muted-foreground/70 font-normal">({serverBotFlows.length})</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             {serverBotFlows.map((flow: DashboardBotFlow) => (
-              <BotFlowRow key={flow.id} flow={flow} canEdit={canManageBotFlows} />
+              <BotFlowRow key={flow.id} flow={flow} canEdit={canManageBotFlows} t={t} />
             ))}
           </CardContent>
         </Card>
