@@ -109,21 +109,21 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Permissions** — a full editor across all five permission layers, including offline clients. Bulk-apply to many entities at once, set many permissions to one value in a single step, import an exported group file onto the current selection (merging into it or replacing it outright), compare several side by side with automatic highlighting, look up where a permission is set anywhere on the server, and see every permission that applies to one client in one channel with the layer it comes from. A group's `i_icon_id` permission has its own preview and a visual picker over the server's icon pool, instead of a bare number. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Permissions)
 
-**Groups** — server and channel group management with member handling, bulk selection, and export/import between servers. Each group's actual icon is shown wherever it's listed or picked, not just a generic type glyph.
+**Groups** — server and channel group management with member handling, bulk selection, and export/import between servers. Each group's actual icon is shown wherever it's listed or picked, not just a generic type glyph. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Server-and-Channel-Groups)
 
-**Music bots** — multiple bots per server with independent queues, radio streaming, YouTube via yt-dlp, a media library with playlists, and in-channel text commands. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots)
+**Music bots** — multiple bots per server with independent queues, radio streaming, YouTube (via yt-dlp) and Spotify links, a media library with playlists, and in-channel text commands whose access can be restricted per command to chosen server groups, with an admin bypass. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots)
 
 **Video streaming** — WebRTC streaming from YouTube, Twitch, direct URLs or your library into a TeamSpeak channel, with a queue, configurable quality defaults, an in-browser preview and a live viewer list.
 
 **Bot flows** — a visual editor for automation. Triggers from TeamSpeak events, cron schedules, webhooks and chat commands; actions covering kick/ban/move/message, channel management, HTTP requests and WebQuery commands; plus conditions, variables, loops and a placeholder system. Ships with ready-made templates. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Bot-Flows)
 
-**Server widgets** — embeddable status banners for websites and forums, as a live page, SVG or PNG, with public token-based access.
+**Server widgets** — embeddable status banners for websites and forums, as a live page, SVG or PNG, with public token-based access. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
 
 **Security** — role-based access control with four roles and per-server scoping, two-factor authentication with recovery codes, Single Sign-On via any OpenID Connect provider, AES-256-GCM encryption for stored credentials, JWT with refresh-token rotation, SSRF protection, and rate limiting. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
 
-**Theming** — nine base themes, six dark (Command Deck, OLED-Black, Graphite, Carbon, Frost, Deep Forest) and three light (Daylight, Paper, Frost Light), combinable with any of ten accent colours. The admin sets an installation-wide default; every user can override both for themselves in their own browser.
+**Theming** — nine base themes, six dark (Command Deck, OLED-Black, Graphite, Carbon, Frost, Deep Forest) and three light (Daylight, Paper, Frost Light), combinable with any of ten accent colours. The admin sets an installation-wide default; every user can override both for themselves in their own browser. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Themes-and-Appearance)
 
-**Administration** — user and session management, yt-dlp cookie handling, runtime debug toggles, scheduled restarts, and an update status page.
+**Administration** — user and session management, yt-dlp cookie handling, runtime debug toggles, scheduled restarts, and an update status page. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Administration)
 
 ## 📖 Documentation
 
