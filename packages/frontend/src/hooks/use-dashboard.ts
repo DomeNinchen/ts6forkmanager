@@ -12,14 +12,18 @@ export function useDashboard() {
   });
 }
 
-// One-time fetch of the backend's rolling bandwidth buffer, to seed the
-// dashboard's chart with real history instead of starting empty on every
-// mount. Not polled - the live 10s useDashboard() poll keeps appending to it.
+// The last 20 minutes of bandwidth and ping, measured by the backend
+// continuously rather than only while a dashboard is open - so the charts show
+// a full window on the very first render. This is their only data source: the
+// page does not append points of its own, which would mix its own 10s cadence
+// into the sampler's 30s one and push real history out of the window. Polled
+// at the sampler's own interval, since that is how often a new point exists.
 export function useBandwidthHistory() {
   const { selectedConfigId, selectedSid } = useServerStore();
   return useQuery({
     queryKey: ['bandwidth-history', selectedConfigId, selectedSid],
     queryFn: () => dashboardApi.bandwidthHistory(selectedConfigId!, selectedSid!),
     enabled: !!selectedConfigId && !!selectedSid,
+    refetchInterval: 30000,
   });
 }

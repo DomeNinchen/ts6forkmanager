@@ -37,10 +37,10 @@ dashboardRoutes.get('/', async (req: Request, res: Response, next) => {
     // connect, see BandwidthSampler.tcpPing) - not TeamSpeak's own
     // virtualserver_total_ping, which averages currently connected clients
     // and reads as a meaningless 0 whenever nobody's online. Reuses the
-    // sampler's own rolling buffer instead of timing a second, redundant
+    // sampler's newest measurement instead of timing a second, redundant
     // connect here, so the headline number always matches the history chart.
-    const pingHistory = sampler.getHistory(configId, sid);
-    const latestPing = pingHistory.length > 0 ? pingHistory[pingHistory.length - 1].ping : -1;
+    const latestSample = await sampler.getLatest(configId, sid);
+    const latestPing = latestSample?.ping ?? -1;
 
     res.json({
       serverName: info.virtualserver_name,
@@ -60,12 +60,16 @@ dashboardRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /bandwidth-history — rolling ~15min buffer sampled independently of
-// this dashboard being open, so a fresh page load has history to show
-// immediately instead of starting empty.
-dashboardRoutes.get('/bandwidth-history', (req: Request, res: Response) => {
-  const configId = parseInt(String(req.params.configId));
-  const sid = parseInt(String(req.params.sid));
-  const sampler: BandwidthSampler = req.app.locals.bandwidthSampler;
-  res.json(sampler.getHistory(configId, sid));
+// GET /bandwidth-history — the last 20 minutes, measured continuously since
+// the backend started and stored in the database, so a fresh page load (or the
+// first load after a deployment) has a full window to show instead of an empty
+// chart that only fills in while someone watches it. This is the charts' only
+// data source; the frontend does not append points of its own.
+dashboardRoutes.get('/bandwidth-history', async (req: Request, res: Response, next) => {
+  try {
+    const configId = parseInt(String(req.params.configId));
+    const sid = parseInt(String(req.params.sid));
+    const sampler: BandwidthSampler = req.app.locals.bandwidthSampler;
+    res.json(await sampler.getHistory(configId, sid));
+  } catch (err) { next(err); }
 });
