@@ -262,24 +262,29 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
           </div>
         )}
 
-        {/* Queue preview */}
-        {state?.queue && state.queue.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-[10px] text-muted-foreground font-medium">Queue ({state.queue.length})</p>
-            <div className="space-y-0.5 max-h-24 overflow-y-auto">
-              {state.queue.slice(0, 5).map((item, i) => (
-                <div key={item.id} className="flex items-center gap-2 text-[10px] py-0.5">
-                  <span className="text-muted-foreground w-4 text-right">{i + 1}</span>
-                  <span className="truncate flex-1">{item.title}</span>
-                  <span className="text-muted-foreground">{formatTime(item.duration)}</span>
-                </div>
-              ))}
-              {state.queue.length > 5 && (
-                <p className="text-[10px] text-muted-foreground text-center">+{state.queue.length - 5} more</p>
-              )}
+        {/* Queue preview - only what's still upcoming, matching the
+            {queue_length} count in the bot's own TeamSpeak description;
+            state.queue itself is the full history+upcoming array. */}
+        {state?.queue && state.queue.length > state.currentIndex + 1 && (() => {
+          const upcoming = state.queue.slice(state.currentIndex + 1);
+          return (
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground font-medium">Queue ({upcoming.length})</p>
+              <div className="space-y-0.5 max-h-24 overflow-y-auto">
+                {upcoming.slice(0, 5).map((item, i) => (
+                  <div key={item.id} className="flex items-center gap-2 text-[10px] py-0.5">
+                    <span className="text-muted-foreground w-4 text-right">{i + 1}</span>
+                    <span className="truncate flex-1">{item.title}</span>
+                    <span className="text-muted-foreground">{formatTime(item.duration)}</span>
+                  </div>
+                ))}
+                {upcoming.length > 5 && (
+                  <p className="text-[10px] text-muted-foreground text-center">+{upcoming.length - 5} more</p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Start/Stop */}
         <div className="flex items-center gap-1.5 pt-1">
