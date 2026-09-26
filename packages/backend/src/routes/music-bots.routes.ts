@@ -322,9 +322,10 @@ musicBotRoutes.post('/:id/play', async (req: Request, res: Response, next) => {
       sourceUrl: song.sourceUrl ?? undefined,
     };
 
-    // Add to queue so repeat modes work, then play
-    bot.queue.add(queueItem);
-    bot.queue.playAt(bot.queue.length - 1);
+    // Insert right after whatever's currently playing (or at the front if
+    // idle) and jump to it - add()+playAt(length-1) would append behind
+    // anything already queued and strand it there, unreachable.
+    bot.queue.insertNext(queueItem);
     await bot.play(queueItem);
 
     res.json({ success: true });
@@ -364,14 +365,16 @@ musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) =
       sourceUrl: url,
     };
 
-    bot.queue.add(queueItem);
-
     // Queueing into silence still starts playback, exactly as !play does -
     // otherwise the bot would sit idle with a track waiting in its queue.
     const busy = bot.status === 'playing' || bot.status === 'paused';
     const queued = mode === 'queue' && busy;
-    if (!queued) {
-      bot.queue.playAt(bot.queue.length - 1);
+    if (queued) {
+      bot.queue.add(queueItem);
+    } else {
+      // insertNext(), not add()+playAt(length-1) - the latter would strand
+      // anything already queued behind the new current index.
+      bot.queue.insertNext(queueItem);
       await bot.play(queueItem);
     }
 

@@ -76,6 +76,28 @@ export class PlayQueue extends EventEmitter {
     this.emit('lengthChange', this.items.length);
   }
 
+  /** Insert an item right after the current track (or at the front if
+   * nothing is playing) and jump to it - for "play this now" call sites.
+   * Unlike add()+playAt(length-1), which appends behind everything and then
+   * jumps past it, this leaves whatever was already queued after the old
+   * current track queued after the new one too, instead of stranding it
+   * behind the new current index where {queue_length}/next() can't reach it. */
+  insertNext(item: QueueItem): void {
+    if (this._shuffle) {
+      // Playback order lives in shuffleOrder, not `items` order, so
+      // appending here is fine - only shuffleOrder's insertion point matters.
+      this.items.push(item);
+      const insertAt = this.currentIndex + 1;
+      this.shuffleOrder.splice(insertAt, 0, this.items.length - 1);
+      this.currentIndex = insertAt;
+    } else {
+      const insertAt = this.currentIndex + 1;
+      this.items.splice(insertAt, 0, item);
+      this.currentIndex = insertAt;
+    }
+    this.emit('lengthChange', this.items.length);
+  }
+
   remove(id: string): boolean {
     const idx = this.items.findIndex((item) => item.id === id);
     if (idx < 0) return false;
