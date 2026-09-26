@@ -2,6 +2,11 @@
 
 export type VoiceBotStatus = 'stopped' | 'starting' | 'connected' | 'playing' | 'paused' | 'error';
 
+/** What a bot starts playing on its own right after it connects (manual
+ * Start, autoStart at boot, or an automatic reconnect) - "none" leaves it
+ * idle, same as before this existed. */
+export type AutoplayMode = 'none' | 'song' | 'radio';
+
 export interface MusicBotSummary {
   id: number;
   name: string;
@@ -15,6 +20,9 @@ export interface MusicBotSummary {
   volume: number;
   autoStart: boolean;
   descriptionTemplate: string | null;
+  autoplayMode: AutoplayMode;
+  autoplaySongId: number | null;
+  autoplayRadioStationId: number | null;
   hasAvatar: boolean;
   status: VoiceBotStatus;
   nowPlaying: QueueItemInfo | null;
@@ -37,6 +45,9 @@ export interface CreateMusicBotRequest {
   volume?: number;
   autoStart?: boolean;
   descriptionTemplate?: string;
+  autoplayMode?: AutoplayMode;
+  autoplaySongId?: number;
+  autoplayRadioStationId?: number;
 }
 
 export interface UpdateMusicBotRequest {
@@ -49,6 +60,9 @@ export interface UpdateMusicBotRequest {
   volume?: number;
   autoStart?: boolean;
   descriptionTemplate?: string;
+  autoplayMode?: AutoplayMode;
+  autoplaySongId?: number;
+  autoplayRadioStationId?: number;
 }
 
 // === Song Types ===
