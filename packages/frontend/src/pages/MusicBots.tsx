@@ -11,6 +11,7 @@ import {
   useSetShuffle, useSetRepeat,
   usePlayFromQueue, useMoveQueueItem,
   useDescriptionPlaceholders, useUploadBotAvatar, useDeleteBotAvatar,
+  useVideoStreamStatus, useStartVideoStream, useSetStreamSource, useQueueVideo,
 } from '@/hooks/use-music-bots';
 import { useSongs, useUploadSong, useDeleteSong, useYouTubeSearch, useYouTubeDownload, useYouTubeInfo, useYouTubeDownloadBatch, useScanMusicLibrary } from '@/hooks/use-music-library';
 import { useRadioStations, useRadioPresets, useCreateRadioStation, useDeleteRadioStation, usePlayRadio } from '@/hooks/use-radio-stations';
@@ -30,6 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -42,7 +44,8 @@ import {
 } from 'lucide-react';
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
 import { toast } from 'sonner';
-import { formatBytes } from '@/lib/utils';
+import { formatBytes, fileBasename } from '@/lib/utils';
+import { settingsApi } from '@/api/settings.api';
 import { RESTRICTABLE_COMMANDS, OPEN_BY_DEFAULT_COMMANDS } from '@ts6/common';
 import type { MusicBotSummary, PlaybackState, SongInfo, PlaylistSummary, PlaylistDetail, YouTubeSearchResult, RadioStationInfo, RadioPreset, BotCommandPermissionInfo } from '@ts6/common';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -899,6 +902,82 @@ function LibraryTab() {
   const ytInfo = useYouTubeInfo();
   const ytBatchDownload = useYouTubeDownloadBatch();
 
+  const { data: bots } = useMusicBots();
+  const runningBots = (Array.isArray(bots) ? bots : []).filter(
+    (b: MusicBotSummary) => b.status !== 'stopped' && b.status !== 'error'
+  );
+  const [selectedBotId, setSelectedBotId] = useState<number | null>(null);
+  // Auto-select first running bot
+  useEffect(() => {
+    if (!selectedBotId && runningBots.length > 0) {
+      setSelectedBotId(runningBots[0].id);
+    }
+  }, [runningBots, selectedBotId]);
+
+  const playSong = usePlaySong();
+  const enqueueSong = useEnqueue();
+  const { data: streamStatus } = useVideoStreamStatus(selectedBotId);
+  const isStreaming = streamStatus?.streaming ?? false;
+  // Same admin-configured quality defaults the Video tab's own Start button uses.
+  const { data: streamDefaults } = useQuery({
+    queryKey: ['stream-defaults'],
+    queryFn: settingsApi.getStreamDefaults,
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+  const startStream = useStartVideoStream();
+  const setStreamSource = useSetStreamSource();
+  const queueVideo = useQueueVideo();
+
+  const handlePlaySong = (song: SongInfo) => {
+    if (!selectedBotId) return;
+    playSong.mutate({ botId: selectedBotId, songId: song.id }, {
+      onSuccess: () => toast.success(`Playing: ${song.title}`),
+      onError: () => toast.error('Failed to play song'),
+    });
+  };
+
+  const handleEnqueueSong = (song: SongInfo) => {
+    if (!selectedBotId) return;
+    enqueueSong.mutate({ botId: selectedBotId, songId: song.id }, {
+      onSuccess: () => toast.success(`Added to queue: ${song.title}`),
+      onError: () => toast.error('Failed to add to queue'),
+    });
+  };
+
+  // "Stream" doubles as Play-now for video: switch the live source if one is
+  // already running, otherwise start a fresh stream - mirrors the Video tab's
+  // own Queue/Switch-now split.
+  const handleStreamVideo = (song: SongInfo) => {
+    if (!selectedBotId) return;
+    const source = fileBasename(song.filePath);
+    if (isStreaming) {
+      setStreamSource.mutate({ botId: selectedBotId, source }, {
+        onSuccess: () => toast.success(`Switched stream to: ${song.title}`),
+        onError: () => toast.error('Failed to switch stream'),
+      });
+    } else {
+      startStream.mutate({
+        botId: selectedBotId,
+        source,
+        preset: streamDefaults?.preset,
+        framerate: streamDefaults?.framerate,
+        bitrate: streamDefaults?.bitrate,
+      }, {
+        onSuccess: () => toast.success(`Streaming: ${song.title}`),
+        onError: () => toast.error('Failed to start stream'),
+      });
+    }
+  };
+
+  const handleQueueVideo = (song: SongInfo) => {
+    if (!selectedBotId) return;
+    queueVideo.mutate({ botId: selectedBotId, source: fileBasename(song.filePath), title: song.title }, {
+      onSuccess: () => toast.success(`Added to stream queue: ${song.title}`),
+      onError: () => toast.error('Failed to add to stream queue'),
+    });
+  };
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [ytResults, setYtResults] = useState<YouTubeSearchResult[]>([]);
@@ -1053,6 +1132,24 @@ function LibraryTab() {
             </Button>
           ))}
         </div>
+
+        <Separator orientation="vertical" className="h-6" />
+
+        <Label className="text-xs text-muted-foreground">Play on:</Label>
+        <Select
+          value={selectedBotId ? String(selectedBotId) : ''}
+          onValueChange={(v) => setSelectedBotId(parseInt(v))}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder={runningBots.length === 0 ? 'No running bots' : 'Select bot...'} />
+          </SelectTrigger>
+          <SelectContent>
+            {runningBots.map((b: MusicBotSummary) => (
+              <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <div className="flex-1" />
         <Input
           value={filter}
@@ -1238,6 +1335,12 @@ function LibraryTab() {
         </Card>
       )}
 
+      {runningBots.length === 0 && (
+        <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
+          <p className="text-xs text-amber-500">Start a music bot first to play or stream files from the library.</p>
+        </div>
+      )}
+
       {/* Song List */}
       {isLoading ? <PageLoader /> : filtered.length === 0 ? (
         <EmptyState icon={Music} title="No files yet" description="Upload audio/video files or download from YouTube to build your library." />
@@ -1272,7 +1375,7 @@ function LibraryTab() {
             </button>
             <span className="w-16 text-center">Source</span>
             <span className="w-16 text-right">Size</span>
-            <span className="w-16" />
+            <span className="w-20" />
           </div>
           <div className="max-h-[400px] overflow-y-auto">
             {sorted.map((song) => (
@@ -1292,7 +1395,45 @@ function LibraryTab() {
                   <Badge variant="outline" className="text-[9px] gap-1">{sourceIcon(song.source)} {song.source}</Badge>
                 </span>
                 <span className="text-xs text-muted-foreground w-16 text-right">{song.fileSize ? formatBytes(song.fileSize) : '-'}</span>
-                <div className="w-16 flex justify-end">
+                <div className="w-20 flex justify-end items-center gap-0.5">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={!selectedBotId}
+                        title={!selectedBotId ? 'No running bot selected' : song.mediaType === 'video' ? 'Stream options' : 'Play options'}
+                      >
+                        {song.mediaType === 'video' ? <Video className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {song.mediaType === 'video' ? (
+                        <>
+                          <DropdownMenuItem onClick={() => handleStreamVideo(song)}>
+                            <Video className="mr-2 h-3.5 w-3.5" /> Stream
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!isStreaming}
+                            title={!isStreaming ? 'Start a stream first' : undefined}
+                            onClick={() => handleQueueVideo(song)}
+                          >
+                            <ListMusic className="mr-2 h-3.5 w-3.5" /> Add to Stream Queue
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <DropdownMenuItem onClick={() => handlePlaySong(song)}>
+                            <Play className="mr-2 h-3.5 w-3.5" /> Play
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEnqueueSong(song)}>
+                            <ListMusic className="mr-2 h-3.5 w-3.5" /> Add to Queue
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive"
                     onClick={() => setDeleteId(song.id)}
                   >

@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { settingsApi, type StreamPreset, type StreamDefaults } from '@/api/settings.api';
 import type { VideoQueueItem } from '@/api/music.api';
 import type { SongInfo } from '@ts6/common';
+import { fileBasename } from '@/lib/utils';
 
 // Mirrors the server's own preset table, used until the real one arrives (and
 // for anyone who can't read the settings endpoint, which is admin-only).
@@ -44,11 +45,6 @@ interface VideoStreamTabProps {
   botId: number;
   botStatus: string;
   serverConfigId: number;
-}
-
-/** Basename of a Song.filePath (works for both `/` and `\` separators). */
-function fileBasename(filePath: string): string {
-  return filePath.split(/[\\/]/).pop() || filePath;
 }
 
 export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStreamTabProps) {

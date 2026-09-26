@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Basename of a Song.filePath (works for both `/` and `\` separators). */
+export function fileBasename(filePath: string): string {
+  return filePath.split(/[\\/]/).pop() || filePath;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
