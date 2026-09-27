@@ -25,6 +25,7 @@ import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-che
 import { useSetWebguiTheme, useSetWebguiBaseTheme } from '@/hooks/use-webgui-theme';
 import { useUiStore } from '@/stores/ui.store';
 import { useLanguagePreference } from '@/hooks/use-language';
+import { SUPPORTED_LANGUAGES, nativeLanguageName } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
@@ -409,13 +410,14 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
           <p className="text-xs text-muted-foreground">
             {t('pages.settings.webgui.language.description')}
           </p>
-          <Select value={language} onValueChange={(v) => setLanguage(v as 'en' | 'de')} disabled={isSavingLanguage}>
+          <Select value={language} onValueChange={setLanguage} disabled={isSavingLanguage}>
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="de">Deutsch</SelectItem>
+              {SUPPORTED_LANGUAGES.map((code) => (
+                <SelectItem key={code} value={code}>{nativeLanguageName(code)}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </CardContent>

@@ -8,7 +8,7 @@ interface UserInfo {
   role: 'admin' | 'viewer' | 'bot-operator' | 'music-operator';
   authProvider?: 'local' | 'oidc';
   totpEnabled?: boolean;
-  language?: 'en' | 'de' | null;
+  language?: string | null;
 }
 
 interface AuthStore {
