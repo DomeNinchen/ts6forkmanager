@@ -25,27 +25,22 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 // Permission categories based on TS3 naming convention
-const PERM_CATEGORIES: Record<string, string> = {
-  b_virtualserver: 'Virtual Server',
-  b_serverinstance: 'Server Instance',
-  b_serverquery: 'Server Query',
-  b_channel: 'Channel',
-  b_client: 'Client',
-  b_group: 'Group',
-  b_ft: 'File Transfer',
-  i_channel: 'Channel (Values)',
-  i_group: 'Group (Values)',
-  i_client: 'Client (Values)',
-  i_ft: 'File Transfer (Values)',
-  i_max: 'Limits',
-  i_needed: 'Needed Powers',
-};
+const PERM_CATEGORY_KEYS = [
+  'b_virtualserver', 'b_serverinstance', 'b_serverquery', 'b_channel', 'b_client', 'b_group', 'b_ft',
+  'i_channel', 'i_group', 'i_client', 'i_ft', 'i_max', 'i_needed',
+] as const;
+
+function getPermCategories(t: TFunction): Record<string, string> {
+  return Object.fromEntries(PERM_CATEGORY_KEYS.map((k) => [k, t(`pages.permissions.categories.${k}`)]));
+}
 
 function getCategoryKey(permsid: string): string {
   // Match longest prefix first
-  const prefixes = Object.keys(PERM_CATEGORIES).sort((a, b) => b.length - a.length);
+  const prefixes = [...PERM_CATEGORY_KEYS].sort((a, b) => b.length - a.length);
   for (const prefix of prefixes) {
     if (permsid.startsWith(prefix)) return prefix;
   }
@@ -75,13 +70,15 @@ interface PendingChange {
   action: 'set' | 'remove';
 }
 
-const LAYERS: { key: PermLayer; label: string; icon: React.ElementType }[] = [
-  { key: 'server-group', label: 'Server Groups', icon: Shield },
-  { key: 'channel-group', label: 'Channel Groups', icon: Users },
-  { key: 'channel', label: 'Channel', icon: Hash },
-  { key: 'client', label: 'Client', icon: User },
-  { key: 'channel-client', label: 'Client in Channel', icon: UserCog },
-];
+function getLayers(t: TFunction): { key: PermLayer; label: string; singularLabel: string; icon: React.ElementType }[] {
+  return [
+    { key: 'server-group', label: t('pages.permissions.layers.serverGroups'), singularLabel: t('pages.permissions.layers.serverGroup'), icon: Shield },
+    { key: 'channel-group', label: t('pages.permissions.layers.channelGroups'), singularLabel: t('pages.permissions.layers.channelGroup'), icon: Users },
+    { key: 'channel', label: t('pages.permissions.layers.channel'), singularLabel: t('pages.permissions.layers.channel'), icon: Hash },
+    { key: 'client', label: t('pages.permissions.layers.client'), singularLabel: t('pages.permissions.layers.client'), icon: User },
+    { key: 'channel-client', label: t('pages.permissions.layers.clientInChannel'), singularLabel: t('pages.permissions.layers.clientInChannel'), icon: UserCog },
+  ];
+}
 
 // How permoverview labels each row's source. The id fields differ per tier:
 // channel groups report the CHANNEL in id1 and the group in id2, and
@@ -95,13 +92,16 @@ const LAYERS: { key: PermLayer; label: string; icon: React.ElementType }[] = [
 // that documentation found online sometimes states a different, incompatible
 // order (client highest, channel-client third) - that order is wrong, and an
 // earlier version of this file shipped it before the bundled docs settled it.
-const OVERVIEW_TIER_OF: Record<number, { rank: number; key: PermLayer; label: string }> = {
-  0: { rank: 1, key: 'server-group', label: 'Server Group' },
-  1: { rank: 2, key: 'client', label: 'Client' },
-  2: { rank: 3, key: 'channel', label: 'Channel' },
-  3: { rank: 4, key: 'channel-group', label: 'Channel Group' },
-  4: { rank: 5, key: 'channel-client', label: 'Client in Channel' },
-};
+function getOverviewTierOf(t: TFunction): Record<number, { rank: number; key: PermLayer; label: string }> {
+  const byKey = Object.fromEntries(getLayers(t).map((l) => [l.key, l]));
+  return {
+    0: { rank: 1, key: 'server-group', label: byKey['server-group'].singularLabel },
+    1: { rank: 2, key: 'client', label: byKey['client'].singularLabel },
+    2: { rank: 3, key: 'channel', label: byKey['channel'].singularLabel },
+    3: { rank: 4, key: 'channel-group', label: byKey['channel-group'].singularLabel },
+    4: { rank: 5, key: 'channel-client', label: byKey['channel-client'].singularLabel },
+  };
+}
 
 // Entity keys are strings everywhere on this page. For the 4 "flat list"
 // layers it's just the numeric id as a string; for channel-client (no
@@ -152,8 +152,12 @@ function applyPermRemove(layer: PermLayer, c: number, s: number, key: string, pe
 }
 
 export default function Permissions() {
+  const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const qc = useQueryClient();
+  const layers = useMemo(() => getLayers(t), [t]);
+  const permCategories = useMemo(() => getPermCategories(t), [t]);
+  const overviewTierOf = useMemo(() => getOverviewTierOf(t), [t]);
 
   const [layer, setLayer] = useState<PermLayer>('server-group');
   const supportsNegateSkip = layer !== 'channel-client';
@@ -395,11 +399,11 @@ export default function Permissions() {
         }
       })
       .filter((h): h is { layer: PermLayer; key: string } => h !== null);
-    const order = LAYERS.map((l) => l.key);
+    const order = layers.map((l) => l.key);
     return hits.sort(
       (a, b) => order.indexOf(a.layer) - order.indexOf(b.layer) || Number(a.key.split(':')[0]) - Number(b.key.split(':')[0]),
     );
-  }, [findRaw]);
+  }, [findRaw, layers]);
 
   const findValueQueries = useQueries({
     queries: findMode
@@ -425,7 +429,7 @@ export default function Permissions() {
   const overviewRows = useMemo(() => {
     if (!Array.isArray(overviewRaw)) return [];
     return (overviewRaw as any[]).map((r) => ({
-      tier: OVERVIEW_TIER_OF[Number(r.t)] ?? null,
+      tier: overviewTierOf[Number(r.t)] ?? null,
       id1: String(Number(r.id1)),
       id2: String(Number(r.id2)),
       permsid: permIdToName.get(Number(r.p)) ?? `permid_${r.p}`,
@@ -433,7 +437,7 @@ export default function Permissions() {
       permnegated: Number(r.n) || 0,
       permskip: Number(r.s) || 0,
     })).filter((r) => r.tier !== null);
-  }, [overviewRaw, permIdToName]);
+  }, [overviewRaw, permIdToName, overviewTierOf]);
 
   // Group by permission, then work out which source actually applies, per
   // doc/server/permissiondoc.txt shipped with the server:
@@ -580,7 +584,7 @@ export default function Permissions() {
   // are offered, "Select all" acts on exactly that narrowed-down set.
   const addPermCatKeys = useMemo(() => {
     const present = new Set(allPerms.map((p) => getCategoryKey(p.permsid)));
-    return Object.keys(PERM_CATEGORIES).filter((k) => present.has(k));
+    return PERM_CATEGORY_KEYS.filter((k) => present.has(k));
   }, [allPerms]);
   const addPermVisible = useMemo(() => {
     let list = allPerms;
@@ -607,7 +611,7 @@ export default function Permissions() {
       const text = await file.text();
       const payload = JSON.parse(text);
       if (payload.format !== 'ts6manager-group-export' || !Array.isArray(payload.groups)) {
-        toast.error('Not a valid group export file');
+        toast.error(t('pages.permissions.notValidGroupExport'));
         return;
       }
       const loaded = payload.groups.map((g: any, i: number) => ({
@@ -621,11 +625,11 @@ export default function Permissions() {
         ),
       }));
       setFileTargets((prev) => [...prev, ...loaded]);
-      toast.success(`Loaded ${loaded.length} group(s) from file`);
+      toast.success(t('pages.permissions.loadedFromFile', { count: loaded.length }));
     } catch {
-      toast.error('Failed to read file - check it is a valid export');
+      toast.error(t('pages.permissions.failedToReadFile'));
     }
-  }, []);
+  }, [t]);
 
   const removeFileTarget = useCallback((id: string) => {
     setFileTargets((prev) => prev.filter((t) => t.id !== id));
@@ -791,8 +795,8 @@ export default function Permissions() {
     });
     const touched = selectedBoolCount + (hasInt ? selectedIntCount : 0);
     setShowSetMultiple(false);
-    toast.success(`${touched} permission(s) staged - press Save to apply`);
-  }, [multiIntValue, multiBoolOn, multiNegate, multiSkip, selectedPerms, supportsNegateSkip, selectedBoolCount, selectedIntCount]);
+    toast.success(t('pages.permissions.stagedForApply', { count: touched }));
+  }, [multiIntValue, multiBoolOn, multiNegate, multiSkip, selectedPerms, supportsNegateSkip, selectedBoolCount, selectedIntCount, t]);
 
   const removeMultiPerms = useCallback(() => {
     setChanges((prev) => {
@@ -808,19 +812,19 @@ export default function Permissions() {
       }
       return next;
     });
-    toast.success(`${selectedPerms.size} permission(s) staged for removal - press Save to apply`);
-  }, [selectedPerms, currentPerms, bulkMode]);
+    toast.success(t('pages.permissions.stagedForRemoval', { count: selectedPerms.size }));
+  }, [selectedPerms, currentPerms, bulkMode, t]);
 
   const handleImportFileChosen = useCallback(async (file: File) => {
     try {
       const text = await file.text();
       const payload = JSON.parse(text);
       if (payload.format !== 'ts6manager-group-export' || !Array.isArray(payload.groups)) {
-        toast.error('Not a valid permission export file');
+        toast.error(t('pages.permissions.notValidPermissionExport'));
         return;
       }
       const groups = payload.groups.map((g: any) => ({
-        name: g.name || 'Unnamed',
+        name: g.name || t('pages.permissions.unnamed'),
         permissions: (g.permissions || [])
           .map((p: any) => ({
             permsid: p.permsid,
@@ -831,16 +835,16 @@ export default function Permissions() {
           .filter((p: PermValue) => !!p.permsid),
       }));
       if (groups.length === 0) {
-        toast.error('File contains no groups');
+        toast.error(t('pages.permissions.fileContainsNoGroups'));
         return;
       }
       setImportGroups(groups);
       setImportGroupIdx(0);
       setImportMode('merge');
     } catch {
-      toast.error('Failed to read file - check it is a valid export');
+      toast.error(t('pages.permissions.failedToReadFile'));
     }
-  }, []);
+  }, [t]);
 
   const importMutation = useMutation({
     mutationFn: async () => {
@@ -874,14 +878,14 @@ export default function Permissions() {
     },
     onSuccess: (r) => {
       toast.success(
-        `Imported ${r?.applied ?? 0} permission(s) into ${selectedIds.size} target(s)` +
-        (r?.removed ? `, removed ${r.removed} not in the file` : ''),
+        t('pages.permissions.importedIntoTargets', { count: r?.applied ?? 0, targets: selectedIds.size }) +
+        (r?.removed ? t('pages.permissions.removedNotInFile', { count: r.removed }) : ''),
       );
       setImportGroups(null);
       setChanges(new Map());
       qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer] });
     },
-    onError: () => toast.error('Import failed - some permissions may already have been written'),
+    onError: () => toast.error(t('pages.permissions.importFailed')),
   });
 
   const saveMutation = useMutation({
@@ -896,11 +900,11 @@ export default function Permissions() {
       }
     },
     onSuccess: () => {
-      toast.success(bulkMode ? `Permissions applied to ${selectedIds.size} entities` : 'Permissions saved');
+      toast.success(bulkMode ? t('pages.permissions.appliedToEntities', { count: selectedIds.size }) : t('pages.permissions.permissionsSaved'));
       setChanges(new Map());
       qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer] });
     },
-    onError: () => toast.error('Failed to save permissions'),
+    onError: () => toast.error(t('pages.permissions.saveFailed')),
   });
 
   const compareSaveMutation = useMutation({
@@ -916,14 +920,14 @@ export default function Permissions() {
     onSuccess: () => {
       const n = [...compareChanges.values()].reduce((sum, m) => sum + m.size, 0);
       const entCount = compareChanges.size;
-      toast.success(`${n} change(s) saved across ${entCount} entit${entCount === 1 ? 'y' : 'ies'}`);
+      toast.success(t('pages.permissions.changesSavedAcross', { count: n, entities: entCount }));
       setCompareChanges(new Map());
       qc.invalidateQueries({ queryKey: ['entity-perms', c, s, layer] });
     },
-    onError: () => toast.error('Failed to save permissions'),
+    onError: () => toast.error(t('pages.permissions.saveFailed')),
   });
 
-  if (!c || !s) return <EmptyState icon={Lock} title="No server selected" />;
+  if (!c || !s) return <EmptyState icon={Lock} title={t('pages.noServerSelected')} />;
   if (loadingDefs) return <PageLoader />;
 
   const entities = (() => {
@@ -954,7 +958,7 @@ export default function Permissions() {
         const offline = (Array.isArray(offlineClients) ? offlineClients : [])
           .filter((cl: any) => !onlineIds.has(String(cl.cldbid)))
           .map((cl: any) => ({
-            id: String(cl.cldbid), name: cl.client_nickname || `Client #${cl.cldbid}`, type: 0, online: false,
+            id: String(cl.cldbid), name: cl.client_nickname || t('pages.permissions.clientFallback', { id: cl.cldbid }), type: 0, online: false,
           }));
         return [...online, ...offline].sort((a, b) =>
           a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1);
@@ -973,7 +977,7 @@ export default function Permissions() {
     const onlineIds = new Set(online.map((o) => o.id));
     const offline = (Array.isArray(offlineClients) ? offlineClients : [])
       .filter((cl: any) => !onlineIds.has(String(cl.cldbid)))
-      .map((cl: any) => ({ id: String(cl.cldbid), name: cl.client_nickname || `Client #${cl.cldbid}`, online: false }));
+      .map((cl: any) => ({ id: String(cl.cldbid), name: cl.client_nickname || t('pages.permissions.clientFallback', { id: cl.cldbid }), online: false }));
     return [...online, ...offline]
       .sort((a, b) => (a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1))
       .filter((cl) => !entitySearch || cl.name.toLowerCase().includes(entitySearch.toLowerCase()));
@@ -990,18 +994,18 @@ export default function Permissions() {
   // Find Permission needs names for every tier at once, not just the current
   // one, so it can't reuse entityName above (which is scoped to `layer`).
   const channelNameOf = (cid: string) =>
-    (Array.isArray(channels) ? channels : []).find((ch: any) => String(ch.cid) === cid)?.channel_name || `Channel #${cid}`;
+    (Array.isArray(channels) ? channels : []).find((ch: any) => String(ch.cid) === cid)?.channel_name || t('pages.permissions.channelFallback', { id: cid });
   const clientNameOf = (cldbid: string) =>
     (Array.isArray(clients) ? clients : []).find((cl: any) => String(cl.client_database_id) === cldbid)?.client_nickname
     || (Array.isArray(offlineClients) ? offlineClients : []).find((cl: any) => String(cl.cldbid) === cldbid)?.client_nickname
-    || `Client #${cldbid}`;
+    || t('pages.permissions.clientFallback', { id: cldbid });
 
   const findHitName = (hit: { layer: PermLayer; key: string }): string => {
     switch (hit.layer) {
       case 'server-group':
-        return (Array.isArray(serverGroups) ? serverGroups : []).find((g: any) => String(g.sgid) === hit.key)?.name || `Server Group #${hit.key}`;
+        return (Array.isArray(serverGroups) ? serverGroups : []).find((g: any) => String(g.sgid) === hit.key)?.name || t('pages.permissions.serverGroupFallback', { id: hit.key });
       case 'channel-group':
-        return (Array.isArray(channelGroups) ? channelGroups : []).find((g: any) => String(g.cgid) === hit.key)?.name || `Channel Group #${hit.key}`;
+        return (Array.isArray(channelGroups) ? channelGroups : []).find((g: any) => String(g.cgid) === hit.key)?.name || t('pages.permissions.channelGroupFallback', { id: hit.key });
       case 'channel':
         return channelNameOf(hit.key);
       case 'client':
@@ -1104,23 +1108,23 @@ export default function Permissions() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Permissions</h1>
+        <h1 className="text-xl font-semibold">{t('pages.permissions.title')}</h1>
         <div className="flex items-center gap-2">
           {bulkMode && (
-            <Badge variant="secondary" className="font-mono-data">{selectedIds.size} entities selected</Badge>
+            <Badge variant="secondary" className="font-mono-data">{t('pages.permissions.entitiesSelected', { count: selectedIds.size })}</Badge>
           )}
           {activeChangeCount > 0 && (
             <>
-              <Badge variant="secondary" className="font-mono-data">{activeChangeCount} change(s)</Badge>
+              <Badge variant="secondary" className="font-mono-data">{t('pages.permissions.changesCount', { count: activeChangeCount })}</Badge>
               <Button variant="outline" size="sm" onClick={() => (compareMode ? setCompareChanges(new Map()) : setChanges(new Map()))}>
-                <X className="h-3.5 w-3.5 mr-1" /> Discard
+                <X className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.discard')}
               </Button>
               <Button
                 size="sm"
                 onClick={() => (compareMode ? compareSaveMutation.mutate() : saveMutation.mutate())}
                 disabled={compareMode ? compareSaveMutation.isPending : saveMutation.isPending}
               >
-                <Save className="h-3.5 w-3.5 mr-1" /> {compareMode ? 'Save' : bulkMode ? `Apply to ${selectedIds.size}` : 'Save'}
+                <Save className="h-3.5 w-3.5 mr-1" /> {compareMode ? t('pages.permissions.save') : bulkMode ? t('pages.permissions.applyToCount', { count: selectedIds.size }) : t('pages.permissions.save')}
               </Button>
             </>
           )}
@@ -1129,7 +1133,7 @@ export default function Permissions() {
 
       {/* Layer Tabs */}
       <div className="flex gap-1 p-1 bg-muted/30 rounded-lg w-fit">
-        {LAYERS.map(({ key, label, icon: Icon }) => (
+        {layers.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => { setLayer(key); setFindMode(false); }}
@@ -1155,7 +1159,7 @@ export default function Permissions() {
           )}
         >
           <Search className="h-3.5 w-3.5" />
-          Find Permission
+          {t('pages.permissions.findPermission')}
         </button>
         <button
           onClick={() => setMode('overview')}
@@ -1167,7 +1171,7 @@ export default function Permissions() {
           )}
         >
           <Layers className="h-3.5 w-3.5" />
-          Permission Overview
+          {t('pages.permissions.permissionOverview')}
         </button>
       </div>
 
@@ -1177,14 +1181,14 @@ export default function Permissions() {
           <Card className="card-hero col-span-3">
             <CardHeader className="pb-2 space-y-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Select Client
+                {t('pages.permissions.selectClient')}
               </CardTitle>
               <div className="relative">
                 <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   value={entitySearch}
                   onChange={(e) => setEntitySearch(e.target.value)}
-                  placeholder="Search clients..."
+                  placeholder={t('pages.permissions.searchClientsPlaceholder')}
                   className="h-7 pl-7 text-xs"
                 />
               </div>
@@ -1203,14 +1207,14 @@ export default function Permissions() {
                     >
                       <span
                         className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', cl.online ? 'bg-emerald-500' : 'bg-zinc-500')}
-                        title={cl.online ? 'Online' : 'Offline'}
+                        title={cl.online ? t('common.online') : t('common.offline')}
                       />
                       <span className="truncate flex-1">{cl.name}</span>
                       <span className="text-[10px] font-mono-data text-muted-foreground">#{cl.id}</span>
                     </button>
                   ))}
                   {overviewClients.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-4">No clients found</p>
+                    <p className="text-xs text-muted-foreground text-center py-4">{t('pages.permissions.noClientsFound')}</p>
                   )}
                 </div>
               </ScrollArea>
@@ -1222,11 +1226,11 @@ export default function Permissions() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Permission Overview
+                  {t('pages.permissions.permissionOverview')}
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Select value={ovChannel} onValueChange={setOvChannel}>
-                    <SelectTrigger className="h-8 text-xs w-56"><SelectValue placeholder="Choose a channel..." /></SelectTrigger>
+                    <SelectTrigger className="h-8 text-xs w-56"><SelectValue placeholder={t('pages.permissions.choosePlaceholder')} /></SelectTrigger>
                     <SelectContent>
                       {(Array.isArray(channels) ? channels : []).map((ch: any) => (
                         <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.channel_name}</SelectItem>
@@ -1238,18 +1242,14 @@ export default function Permissions() {
                     <Input
                       value={ovSearch}
                       onChange={(e) => setOvSearch(e.target.value)}
-                      placeholder="Search permissions..."
+                      placeholder={t('pages.permissions.searchPermissionsPlaceholder')}
                       className="pl-7 h-8 text-xs"
                     />
                   </div>
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground pt-1">
-                Every permission this client actually has in the chosen channel, and which layer each one comes from. Where
-                several layers grant the same permission, the winning one is highlighted, following the tier order in
-                TeamSpeak's own permission documentation: client-in-channel beats channel group, beats channel, beats
-                client, beats server group - with a Skip flag on a server group or client entry shielding it from the
-                channel and channel group layers. The other sources stay listed so the result can always be checked by eye.
+                {t('pages.permissions.overviewExplanation')}
               </p>
             </CardHeader>
             <CardContent className="p-0">
@@ -1257,21 +1257,21 @@ export default function Permissions() {
                 {!ovClient || !ovChannel ? (
                   <div className="flex items-center justify-center h-[400px]">
                     <p className="text-sm text-muted-foreground">
-                      {!ovClient ? 'Select a client from the left panel' : 'Choose a channel to see their permissions in it'}
+                      {!ovClient ? t('pages.permissions.selectClientHint') : t('pages.permissions.chooseChannelHint')}
                     </p>
                   </div>
                 ) : overviewFetching ? (
                   <div className="flex items-center justify-center h-[400px]"><PageLoader /></div>
                 ) : overviewResolved.length === 0 ? (
                   <div className="flex items-center justify-center h-[400px]">
-                    <p className="text-sm text-muted-foreground">No permissions apply to this client in this channel</p>
+                    <p className="text-sm text-muted-foreground">{t('pages.permissions.noPermissionsApply')}</p>
                   </div>
                 ) : (
                   <div className="px-3 pb-3">
                     <div className="grid grid-cols-12 gap-2 px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
-                      <div className="col-span-6">Permission</div>
-                      <div className="col-span-4">Comes From</div>
-                      <div className="col-span-2 text-center">Value</div>
+                      <div className="col-span-6">{t('pages.permissions.colPermission')}</div>
+                      <div className="col-span-4">{t('pages.permissions.colComesFrom')}</div>
+                      <div className="col-span-2 text-center">{t('pages.permissions.colValue')}</div>
                     </div>
                     {overviewResolved
                       .filter((row) => {
@@ -1331,14 +1331,14 @@ export default function Permissions() {
           <Card className="card-hero col-span-3">
             <CardHeader className="pb-2 space-y-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Select Permission
+                {t('pages.permissions.selectPermission')}
               </CardTitle>
               <div className="relative">
                 <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   value={findSearch}
                   onChange={(e) => setFindSearch(e.target.value)}
-                  placeholder="Search permissions..."
+                  placeholder={t('pages.permissions.searchPermissionsPlaceholder')}
                   className="h-7 pl-7 text-xs"
                 />
               </div>
@@ -1377,36 +1377,34 @@ export default function Permissions() {
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 {findPermsid
-                  ? `Assignments of ${permLabel(allPerms.find((p) => p.permsid === findPermsid) ?? { permsid: findPermsid, permdesc: '' })}`
-                  : 'Find Permission'}
+                  ? t('pages.permissions.assignmentsOf', { label: permLabel(allPerms.find((p) => p.permsid === findPermsid) ?? { permsid: findPermsid, permdesc: '' }) })
+                  : t('pages.permissions.findPermission')}
               </CardTitle>
               <p className="text-[11px] text-muted-foreground pt-1">
-                Pick a permission on the left to see every place it's actually assigned, across all five tiers. Click a
-                result to open it in the editor. TeamSpeak's own lookup only reports where a permission is set, not to
-                what - each value below is read back per entity afterwards.
+                {t('pages.permissions.findExplanation')}
               </p>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[500px]">
                 {!findPermsid ? (
                   <div className="flex items-center justify-center h-[400px]">
-                    <p className="text-sm text-muted-foreground">Select a permission from the left panel</p>
+                    <p className="text-sm text-muted-foreground">{t('pages.permissions.selectPermissionHint')}</p>
                   </div>
                 ) : findFetching ? (
                   <div className="flex items-center justify-center h-[400px]"><PageLoader /></div>
                 ) : findHits.length === 0 ? (
                   <div className="flex items-center justify-center h-[400px]">
-                    <p className="text-sm text-muted-foreground">This permission isn't assigned anywhere on this server</p>
+                    <p className="text-sm text-muted-foreground">{t('pages.permissions.notAssignedAnywhere')}</p>
                   </div>
                 ) : (
                   <div className="px-3 pb-3">
                     <div className="grid grid-cols-12 gap-2 px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
-                      <div className="col-span-3">Tier</div>
-                      <div className="col-span-6">Assigned To</div>
-                      <div className="col-span-3 text-center">Value</div>
+                      <div className="col-span-3">{t('pages.permissions.colTier')}</div>
+                      <div className="col-span-6">{t('pages.permissions.colAssignedTo')}</div>
+                      <div className="col-span-3 text-center">{t('pages.permissions.colValue')}</div>
                     </div>
                     {findHits.map((hit, i) => {
-                      const tier = LAYERS.find((l) => l.key === hit.layer)!;
+                      const tier = layers.find((l) => l.key === hit.layer)!;
                       const TierIcon = tier.icon;
                       const val = findValueAt(i);
                       const loading = findValueQueries[i]?.isLoading;
@@ -1416,7 +1414,7 @@ export default function Permissions() {
                           key={`${hit.layer}:${hit.key}`}
                           onClick={() => jumpToHit(hit)}
                           className="grid grid-cols-12 gap-2 px-2 py-1.5 rounded-sm text-xs items-center w-full text-left hover:bg-muted/50 transition-colors group"
-                          title="Open in editor"
+                          title={t('pages.permissions.openInEditor')}
                         >
                           <div className="col-span-3 flex items-center gap-1.5 text-muted-foreground">
                             <TierIcon className="h-3.5 w-3.5 shrink-0" />
@@ -1458,12 +1456,12 @@ export default function Permissions() {
             <>
               <CardHeader className="pb-2 space-y-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Add Client in Channel
+                  {t('pages.permissions.addClientInChannel')}
                 </CardTitle>
                 <div>
-                  <Label className="text-[10px] text-muted-foreground">Channel</Label>
+                  <Label className="text-[10px] text-muted-foreground">{t('pages.permissions.channelLabel')}</Label>
                   <Select value={ccChannel} onValueChange={setCcChannel}>
-                    <SelectTrigger className="h-7 text-xs mt-0.5"><SelectValue placeholder="Choose a channel..." /></SelectTrigger>
+                    <SelectTrigger className="h-7 text-xs mt-0.5"><SelectValue placeholder={t('pages.permissions.choosePlaceholder')} /></SelectTrigger>
                     <SelectContent>
                       {(Array.isArray(channels) ? channels : []).map((ch: any) => (
                         <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.channel_name}</SelectItem>
@@ -1476,13 +1474,13 @@ export default function Permissions() {
                   <Input
                     value={entitySearch}
                     onChange={(e) => setEntitySearch(e.target.value)}
-                    placeholder="Search clients..."
+                    placeholder={t('pages.permissions.searchClientsPlaceholder')}
                     className="h-7 pl-7 text-xs"
                   />
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Switch id="show-offline-clients-cc" checked={showOffline} onCheckedChange={setShowOffline} />
-                  <Label htmlFor="show-offline-clients-cc" className="text-xs text-muted-foreground cursor-pointer">Show offline clients</Label>
+                  <Label htmlFor="show-offline-clients-cc" className="text-xs text-muted-foreground cursor-pointer">{t('pages.permissions.showOfflineClients')}</Label>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -1494,12 +1492,12 @@ export default function Permissions() {
                         disabled={!ccChannel}
                         onClick={() => addChannelClientPair(ent.id, ent.name)}
                         className="w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={!ccChannel ? 'Choose a channel first' : `Add ${ent.name}`}
+                        title={!ccChannel ? t('pages.permissions.chooseChannelFirst') : t('pages.permissions.addEntity', { name: ent.name })}
                       >
                         {showOffline && (
                           <span
                             className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', ent.online ? 'bg-emerald-500' : 'bg-zinc-500')}
-                            title={ent.online ? 'Online' : 'Offline'}
+                            title={ent.online ? t('common.online') : t('common.offline')}
                           />
                         )}
                         <span className="truncate flex-1">{ent.name}</span>
@@ -1507,13 +1505,13 @@ export default function Permissions() {
                       </button>
                     ))}
                     {entities.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">No clients found</p>
+                      <p className="text-xs text-muted-foreground text-center py-4">{t('pages.permissions.noClientsFound')}</p>
                     )}
                   </div>
                 </ScrollArea>
                 <div className="border-t border-border/50 p-2">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-0.5 mb-1">
-                    Added ({selectedIds.size})
+                    {t('pages.permissions.addedCount', { count: selectedIds.size })}
                   </p>
                   <ScrollArea className="h-[150px]">
                     <div className="space-y-0.5">
@@ -1527,7 +1525,7 @@ export default function Permissions() {
                       ))}
                       {selectedIds.size === 0 && (
                         <p className="text-[11px] text-muted-foreground text-center py-2">
-                          Pick a channel, then click a client to add it.
+                          {t('pages.permissions.pickChannelThenClient')}
                         </p>
                       )}
                     </div>
@@ -1539,7 +1537,7 @@ export default function Permissions() {
             <>
               <CardHeader className="pb-2 space-y-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Select {LAYERS.find((l) => l.key === layer)?.label.replace(/s$/, '')}
+                  {t('pages.permissions.selectLayer', { layer: layers.find((l) => l.key === layer)?.singularLabel })}
                 </CardTitle>
                 {layer === 'client' && (
                   <>
@@ -1548,13 +1546,13 @@ export default function Permissions() {
                       <Input
                         value={entitySearch}
                         onChange={(e) => setEntitySearch(e.target.value)}
-                        placeholder="Search clients..."
+                        placeholder={t('pages.permissions.searchClientsPlaceholder')}
                         className="h-7 pl-7 text-xs"
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Switch id="show-offline-clients" checked={showOffline} onCheckedChange={setShowOffline} />
-                      <Label htmlFor="show-offline-clients" className="text-xs text-muted-foreground cursor-pointer">Show offline clients</Label>
+                      <Label htmlFor="show-offline-clients" className="text-xs text-muted-foreground cursor-pointer">{t('pages.permissions.showOfflineClients')}</Label>
                     </div>
                   </>
                 )}
@@ -1577,25 +1575,25 @@ export default function Permissions() {
                           checked={selectedIds.has(ent.id)}
                           onCheckedChange={() => toggleEntitySelect(ent.id)}
                           onClick={(e) => e.stopPropagation()}
-                          aria-label="Select for bulk edit"
+                          aria-label={t('pages.permissions.selectForBulkEdit')}
                         />
                         <span className="truncate flex items-center gap-1.5 flex-1">
                           {layer === 'client' && showOffline && (
                             <span
                               className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', ent.online ? 'bg-emerald-500' : 'bg-zinc-500')}
-                              title={ent.online ? 'Online' : 'Offline'}
+                              title={ent.online ? t('common.online') : t('common.offline')}
                             />
                           )}
                           {ent.name}
                         </span>
                         {(layer === 'server-group' || layer === 'channel-group') && (
-                          <IconImage iconId={ent.iconId} size={16} alt={`Icon for ${ent.name}`} />
+                          <IconImage iconId={ent.iconId} size={16} alt={t('pages.permissions.iconAlt', { name: ent.name })} />
                         )}
                         <span className="text-[10px] font-mono-data text-muted-foreground ml-1">#{ent.id}</span>
                       </div>
                     ))}
                     {entities.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">No entities found</p>
+                      <p className="text-xs text-muted-foreground text-center py-4">{t('pages.permissions.noEntitiesFound')}</p>
                     )}
                   </div>
                 </ScrollArea>
@@ -1618,7 +1616,7 @@ export default function Permissions() {
                         !compareMode ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      Bulk Apply
+                      {t('pages.permissions.bulkApply')}
                     </button>
                     <button
                       onClick={() => { setCompareMode(true); setChanges(new Map()); }}
@@ -1627,14 +1625,14 @@ export default function Permissions() {
                         compareMode ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      <Columns3 className="h-3 w-3" /> Compare
+                      <Columns3 className="h-3 w-3" /> {t('pages.permissions.compare')}
                     </button>
                   </div>
-                ) : entityKey ? 'Permissions' : 'Select an entity'}
+                ) : entityKey ? t('pages.permissions.permissionsTitle') : t('pages.permissions.selectAnEntity')}
               </CardTitle>
               {(entityKey || bulkMode) && (
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 p-0.5 bg-muted/30 rounded-md w-fit" title="Advanced shows the raw permission name, Simple shows TeamSpeak's own plain-language description">
+                  <div className="flex items-center gap-1 p-0.5 bg-muted/30 rounded-md w-fit" title={t('pages.permissions.labelModeHint')}>
                     <button
                       onClick={() => setPermLabelMode('advanced')}
                       className={cn(
@@ -1642,7 +1640,7 @@ export default function Permissions() {
                         permLabelMode === 'advanced' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      Advanced
+                      {t('pages.permissions.advanced')}
                     </button>
                     <button
                       onClick={() => setPermLabelMode('simple')}
@@ -1651,28 +1649,28 @@ export default function Permissions() {
                         permLabelMode === 'simple' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      Simple
+                      {t('pages.permissions.simple')}
                     </button>
                   </div>
                   {(!bulkMode || compareMode) && (
                     <div className="flex items-center gap-1.5">
                       <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
-                      <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">Only show set</Label>
+                      <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">{t('pages.permissions.onlyShowSet')}</Label>
                     </div>
                   )}
                   {compareMode && (
                     <div className="flex items-center gap-1.5">
                       <Switch id="show-differing-only" checked={showDifferingOnly} onCheckedChange={setShowDifferingOnly} />
-                      <Label htmlFor="show-differing-only" className="text-xs text-muted-foreground cursor-pointer">Only show differing</Label>
+                      <Label htmlFor="show-differing-only" className="text-xs text-muted-foreground cursor-pointer">{t('pages.permissions.onlyShowDiffering')}</Label>
                     </div>
                   )}
                   {compareMode && (
                     <>
                       <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddPerm(true)}>
-                        <Plus className="h-3.5 w-3.5 mr-1" /> Add/Remove Perm
+                        <Plus className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.addRemovePerm')}
                       </Button>
                       <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()}>
-                        <Upload className="h-3.5 w-3.5 mr-1" /> Add Target
+                        <Upload className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.addTarget')}
                       </Button>
                       <input
                         ref={fileInputRef}
@@ -1690,18 +1688,18 @@ export default function Permissions() {
                         size="sm"
                         className="h-8 text-xs"
                         onClick={() => { setMultiSelect((v) => !v); setSelectedPerms(new Set()); }}
-                        title="Tick several permissions, then give them all a value at once"
+                        title={t('pages.permissions.setMultipleHint')}
                       >
-                        <ListChecks className="h-3.5 w-3.5 mr-1" /> Set Multiple
+                        <ListChecks className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.setMultiple')}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         className="h-8 text-xs"
                         onClick={() => importInputRef.current?.click()}
-                        title="Apply a previously exported permission file to the current selection"
+                        title={t('pages.permissions.importFileHint')}
                       >
-                        <FileInput className="h-3.5 w-3.5 mr-1" /> Import File
+                        <FileInput className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.importFile')}
                       </Button>
                       <input
                         ref={importInputRef}
@@ -1715,7 +1713,7 @@ export default function Permissions() {
                   <div className="relative w-64">
                     <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
-                      placeholder="Search permissions..."
+                      placeholder={t('pages.permissions.searchPermissionsPlaceholder')}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       className="pl-7 h-8 text-xs"
@@ -1726,43 +1724,43 @@ export default function Permissions() {
             </div>
             {bulkMode && !compareMode && (
               <p className="text-[11px] text-muted-foreground pt-1">
-                Set values here to apply them to all {selectedIds.size} selected entities - current per-entity values aren't shown while multiple are selected.
+                {t('pages.permissions.bulkApplyHint', { count: selectedIds.size })}
               </p>
             )}
             {compareMode && (
               <p className="text-[11px] text-muted-foreground pt-1">
                 {autoRankMode
-                  ? 'All permissions are shown by default ("Add/Remove Perm" to narrow down, the × on a row to drop it) - edit a cell to change just that one entity. With 3 or fewer entities, each row colors by rank automatically: red = highest, yellow = tied/middle, green = lowest, pink = unset.'
-                  : 'All permissions are shown by default ("Add/Remove Perm" to narrow down, the × on a row to drop it) - edit a cell to change just that one entity. Click a cell to pin it as the reference; the rest of that row colors relative to it (teal = lower, lime = same, red = higher, pink = unset).'}
-                {' '}"Add Target" loads a previously-exported group file as a read-only extra column. Use Bulk Apply instead to push the same value to all selected entities at once.
+                  ? t('pages.permissions.compareHintAutoRank')
+                  : t('pages.permissions.compareHintPivot')}
+                {' '}{t('pages.permissions.compareHintSuffix')}
               </p>
             )}
             {multiSelect && !compareMode && (
               <div className="flex items-center gap-2 pt-2 flex-wrap">
-                <Badge variant="secondary" className="font-mono-data">{selectedPerms.size} selected</Badge>
+                <Badge variant="secondary" className="font-mono-data">{t('pages.permissions.selectedCount', { count: selectedPerms.size })}</Badge>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-7 text-xs"
                   onClick={() => setSelectedPerms(new Set(visiblePerms.map((p) => p.permsid)))}
                 >
-                  Select all shown ({visiblePerms.length})
+                  {t('pages.permissions.selectAllShown', { count: visiblePerms.length })}
                 </Button>
                 {selectedPerms.size > 0 && (
                   <>
                     <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedPerms(new Set())}>
-                      Clear
+                      {t('pages.permissions.clear')}
                     </Button>
                     <Button size="sm" className="h-7 text-xs" onClick={() => setShowSetMultiple(true)}>
-                      <Check className="h-3.5 w-3.5 mr-1" /> Set values...
+                      <Check className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.setValuesEllipsis')}
                     </Button>
                     <Button variant="outline" size="sm" className="h-7 text-xs" onClick={removeMultiPerms}>
-                      <Minus className="h-3.5 w-3.5 mr-1" /> Remove
+                      <Minus className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.remove')}
                     </Button>
                   </>
                 )}
                 <span className="text-[11px] text-muted-foreground">
-                  Changes are staged like any other edit - press Save to write them.
+                  {t('pages.permissions.stagedEditHint')}
                 </span>
               </div>
             )}
@@ -1771,7 +1769,7 @@ export default function Permissions() {
             <ScrollArea className="h-[500px]">
               {!entityKey && !bulkMode ? (
                 <div className="flex items-center justify-center h-[400px]">
-                  <p className="text-sm text-muted-foreground">Select an entity from the left panel</p>
+                  <p className="text-sm text-muted-foreground">{t('pages.permissions.selectEntityHint')}</p>
                 </div>
               ) : (compareMode ? compareLoading : loadingPerms) ? (
                 <div className="flex items-center justify-center h-[400px]">
@@ -1786,7 +1784,7 @@ export default function Permissions() {
                         className="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-sm"
                       >
                         {expandedCats.has(catKey) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                        {PERM_CATEGORIES[catKey] || catKey}
+                        {permCategories[catKey] || catKey}
                         <Badge variant="secondary" className="text-[9px] h-4 ml-1">{perms.length}</Badge>
                       </button>
                       {expandedCats.has(catKey) && compareMode ? (
@@ -1794,7 +1792,7 @@ export default function Permissions() {
                           <table className="w-full text-xs border-collapse">
                             <thead>
                               <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                                <th className="text-left px-2 py-1 sticky left-0 bg-card font-normal">Permission</th>
+                                <th className="text-left px-2 py-1 sticky left-0 bg-card font-normal">{t('pages.permissions.colPermission')}</th>
                                 {allCompareCols.map((key) => {
                                   const isFile = isFileTargetCol(key);
                                   const name = isFile ? (fileTargets.find((t) => t.id === key)?.name ?? key) : entityName(key);
@@ -1808,7 +1806,7 @@ export default function Permissions() {
                                         {isFile && <FileText className="h-3 w-3 text-muted-foreground shrink-0" />}
                                         {name}
                                         {isFile && (
-                                          <button onClick={() => removeFileTarget(key)} title="Remove this file target">
+                                          <button onClick={() => removeFileTarget(key)} title={t('pages.permissions.removeFileTarget')}>
                                             <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                                           </button>
                                         )}
@@ -1830,7 +1828,7 @@ export default function Permissions() {
                                         <button
                                           onClick={() => toggleComparePerm(perm.permsid)}
                                           className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                          title="Remove from comparison"
+                                          title={t('pages.permissions.removeFromComparison')}
                                         >
                                           <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                                         </button>
@@ -1899,7 +1897,7 @@ export default function Permissions() {
                                                   <button
                                                     onClick={() => { setPivotHere(); setIconPickerFor({ mode: 'compare', colKey: key }); }}
                                                     className="h-4 w-4 rounded-sm border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border"
-                                                    title="Choose icon"
+                                                    title={t('pages.permissions.chooseIcon')}
                                                   >
                                                     <ImageIcon className="h-2.5 w-2.5" />
                                                   </button>
@@ -1920,7 +1918,7 @@ export default function Permissions() {
                                                         ? 'bg-amber-500/20 border-amber-500 text-amber-400'
                                                         : 'border-border/50 text-muted-foreground/40',
                                                     )}
-                                                    title="Skip"
+                                                    title={t('pages.permissions.skip')}
                                                   >S</button>
                                                   <button
                                                     onClick={() => {
@@ -1935,7 +1933,7 @@ export default function Permissions() {
                                                         ? 'bg-destructive/20 border-destructive text-destructive'
                                                         : 'border-border/50 text-muted-foreground/40',
                                                     )}
-                                                    title="Negate"
+                                                    title={t('pages.permissions.negate')}
                                                   >N</button>
                                                 </>
                                               )}
@@ -1954,10 +1952,10 @@ export default function Permissions() {
                         <div className="ml-4 border-l border-border/50 pl-2">
                           {/* Header */}
                           <div className="grid grid-cols-12 gap-2 px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
-                            <div className="col-span-5">Permission</div>
-                            <div className="col-span-2 text-center">Value</div>
-                            <div className="col-span-1 text-center">Skip</div>
-                            <div className="col-span-1 text-center">Negate</div>
+                            <div className="col-span-5">{t('pages.permissions.colPermission')}</div>
+                            <div className="col-span-2 text-center">{t('pages.permissions.colValue')}</div>
+                            <div className="col-span-1 text-center">{t('pages.permissions.colSkip')}</div>
+                            <div className="col-span-1 text-center">{t('pages.permissions.colNegate')}</div>
                             <div className="col-span-3"></div>
                           </div>
                           {perms.map((perm) => {
@@ -2023,7 +2021,7 @@ export default function Permissions() {
                                           <button
                                             onClick={() => setIconPickerFor({ mode: 'single' })}
                                             className="h-4 w-4 rounded-sm border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border"
-                                            title="Choose icon"
+                                            title={t('pages.permissions.chooseIcon')}
                                           >
                                             <ImageIcon className="h-2.5 w-2.5" />
                                           </button>
@@ -2046,7 +2044,7 @@ export default function Permissions() {
                                           ? 'bg-amber-500/20 border-amber-500 text-amber-400'
                                           : 'border-border/50',
                                       )}
-                                      title="Skip"
+                                      title={t('pages.permissions.skip')}
                                     >
                                       {isSet && effective?.permskip ? 'S' : ''}
                                     </button>
@@ -2066,7 +2064,7 @@ export default function Permissions() {
                                           ? 'bg-destructive/20 border-destructive text-destructive'
                                           : 'border-border/50',
                                       )}
-                                      title="Negate"
+                                      title={t('pages.permissions.negate')}
                                     >
                                       {isSet && effective?.permnegated ? 'N' : ''}
                                     </button>
@@ -2077,13 +2075,13 @@ export default function Permissions() {
                                     <button
                                       onClick={() => removePerm(perm.permsid)}
                                       className="p-0.5 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                                      title="Remove permission"
+                                      title={t('pages.permissions.removePermission')}
                                     >
                                       <Minus className="h-3 w-3" />
                                     </button>
                                   )}
                                   {isChanged && (
-                                    <span className="text-[9px] text-primary font-mono-data">modified</span>
+                                    <span className="text-[9px] text-primary font-mono-data">{t('pages.permissions.modified')}</span>
                                   )}
                                 </div>
                               </div>
@@ -2098,13 +2096,13 @@ export default function Permissions() {
                       <p className="text-sm text-muted-foreground">
                         {compareMode
                           ? showDifferingOnly
-                            ? 'No permissions differ across the selected entities'
+                            ? t('pages.permissions.noPermissionsDiffer')
                             : showModifiedOnly
-                              ? 'No permissions are set on any selected entity'
-                              : 'No permissions match your search'
+                              ? t('pages.permissions.noPermissionsSetAny')
+                              : t('pages.permissions.noPermissionsMatchSearch')
                           : showModifiedOnly
-                            ? 'No permissions are set on this entity'
-                            : 'No permissions match your search'}
+                            ? t('pages.permissions.noPermissionsSetEntity')
+                            : t('pages.permissions.noPermissionsMatchSearch')}
                       </p>
                     </div>
                   )}
@@ -2118,23 +2116,23 @@ export default function Permissions() {
 
       <Dialog open={showAddPerm} onOpenChange={setShowAddPerm}>
         <DialogContent className="sm:max-w-2xl">
-          <DialogHeader><DialogTitle>Add/Remove Perm</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.permissions.addRemovePerm')}</DialogTitle></DialogHeader>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               value={addPermSearch}
               onChange={(e) => setAddPermSearch(e.target.value)}
-              placeholder="Search permissions..."
+              placeholder={t('pages.permissions.searchPermissionsPlaceholder')}
               className="pl-8 h-9"
               autoFocus
             />
           </div>
           <Tabs value={addPermCat} onValueChange={setAddPermCat}>
             <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-muted">All</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-muted">{t('pages.permissions.all')}</TabsTrigger>
               {addPermCatKeys.map((cat) => (
                 <TabsTrigger key={cat} value={cat} className="text-xs data-[state=active]:bg-muted">
-                  {PERM_CATEGORIES[cat] || cat}
+                  {permCategories[cat] || cat}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -2142,9 +2140,9 @@ export default function Permissions() {
           <div className="flex items-center justify-between px-0.5">
             <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
               <Checkbox checked={allVisibleSelected} onCheckedChange={toggleSelectAllVisible} />
-              Select all ({addPermVisible.length})
+              {t('pages.permissions.selectAllCount', { count: addPermVisible.length })}
             </label>
-            <span className="text-[11px] text-muted-foreground font-mono-data">{comparePermIds?.size ?? 0} shown in comparison</span>
+            <span className="text-[11px] text-muted-foreground font-mono-data">{t('pages.permissions.shownInComparison', { count: comparePermIds?.size ?? 0 })}</span>
           </div>
           <ScrollArea className="h-[340px]">
             <div className="space-y-0.5 pr-2">
@@ -2166,12 +2164,12 @@ export default function Permissions() {
                 );
               })}
               {addPermVisible.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-4">No permissions match your search</p>
+                <p className="text-xs text-muted-foreground text-center py-4">{t('pages.permissions.noPermissionsMatchSearch')}</p>
               )}
             </div>
           </ScrollArea>
           <DialogFooter>
-            <Button onClick={() => setShowAddPerm(false)}>Done</Button>
+            <Button onClick={() => setShowAddPerm(false)}>{t('pages.permissions.done')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2180,21 +2178,21 @@ export default function Permissions() {
       <Dialog open={showSetMultiple} onOpenChange={setShowSetMultiple}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Set {selectedPerms.size} permission(s)</DialogTitle>
+            <DialogTitle>{t('pages.permissions.setCountPermissions', { count: selectedPerms.size })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Booleans and integers are set separately, so a mixed selection can be handled in one step.
+              {t('pages.permissions.setMultipleExplanation')}
             </p>
             {selectedBoolCount > 0 && (
               <div className="flex items-center justify-between rounded-md border border-border/50 p-3">
                 <div>
-                  <p className="text-sm font-medium">{selectedBoolCount} boolean(s)</p>
-                  <p className="text-[11px] text-muted-foreground">b_… permissions</p>
+                  <p className="text-sm font-medium">{t('pages.permissions.booleanCount', { count: selectedBoolCount })}</p>
+                  <p className="text-[11px] text-muted-foreground">{t('pages.permissions.booleanPermsHint')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch id="multi-bool" checked={multiBoolOn} onCheckedChange={setMultiBoolOn} />
-                  <Label htmlFor="multi-bool" className="text-xs cursor-pointer w-8">{multiBoolOn ? 'On' : 'Off'}</Label>
+                  <Label htmlFor="multi-bool" className="text-xs cursor-pointer w-8">{multiBoolOn ? t('common.on') : t('common.off')}</Label>
                 </div>
               </div>
             )}
@@ -2202,13 +2200,13 @@ export default function Permissions() {
               <div className="space-y-2 rounded-md border border-border/50 p-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">{selectedIntCount} integer(s)</p>
-                    <p className="text-[11px] text-muted-foreground">i_… permissions</p>
+                    <p className="text-sm font-medium">{t('pages.permissions.integerCount', { count: selectedIntCount })}</p>
+                    <p className="text-[11px] text-muted-foreground">{t('pages.permissions.integerPermsHint')}</p>
                   </div>
                   <Input
                     type="number"
                     className="h-8 w-24 text-xs text-center font-mono-data"
-                    placeholder="Value"
+                    placeholder={t('pages.permissions.valuePlaceholder')}
                     value={multiIntValue}
                     onChange={(e) => setMultiIntValue(e.target.value)}
                   />
@@ -2216,23 +2214,23 @@ export default function Permissions() {
                 {supportsNegateSkip && (
                   <div className="flex items-center gap-4 pt-1">
                     <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                      <Checkbox checked={multiSkip} onCheckedChange={(v) => setMultiSkip(!!v)} /> Skip
+                      <Checkbox checked={multiSkip} onCheckedChange={(v) => setMultiSkip(!!v)} /> {t('pages.permissions.skip')}
                     </label>
                     <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                      <Checkbox checked={multiNegate} onCheckedChange={(v) => setMultiNegate(!!v)} /> Negate
+                      <Checkbox checked={multiNegate} onCheckedChange={(v) => setMultiNegate(!!v)} /> {t('pages.permissions.negate')}
                     </label>
                   </div>
                 )}
                 {!multiIntValue && (
-                  <p className="text-[11px] text-amber-500">Leave empty to skip the integers and only set the booleans.</p>
+                  <p className="text-[11px] text-amber-500">{t('pages.permissions.leaveEmptySkipInt')}</p>
                 )}
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSetMultiple(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowSetMultiple(false)}>{t('pages.permissions.cancel')}</Button>
             <Button onClick={applyMultiValues} disabled={selectedBoolCount === 0 && !multiIntValue}>
-              Apply to {selectedBoolCount + (multiIntValue ? selectedIntCount : 0)}
+              {t('pages.permissions.applyToCount', { count: selectedBoolCount + (multiIntValue ? selectedIntCount : 0) })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2242,19 +2240,19 @@ export default function Permissions() {
       <Dialog open={!!importGroups} onOpenChange={(o) => { if (!o) setImportGroups(null); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Import permission file</DialogTitle>
+            <DialogTitle>{t('pages.permissions.importPermissionFile')}</DialogTitle>
           </DialogHeader>
           {importGroups && (
             <div className="space-y-4">
               {importGroups.length > 1 && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Group in file</Label>
+                  <Label className="text-xs">{t('pages.permissions.groupInFile')}</Label>
                   <Select value={String(importGroupIdx)} onValueChange={(v) => setImportGroupIdx(Number(v))}>
                     <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {importGroups.map((g, i) => (
                         <SelectItem key={i} value={String(i)} className="text-xs">
-                          {g.name} ({g.permissions.length} permissions)
+                          {t('pages.permissions.groupPermissionsCount', { name: g.name, count: g.permissions.length })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -2263,23 +2261,23 @@ export default function Permissions() {
               )}
               <div className="rounded-md border border-border/50 p-3 text-xs space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Source</span>
+                  <span className="text-muted-foreground">{t('pages.permissions.source')}</span>
                   <span className="font-mono-data">{importGroups[importGroupIdx].name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Permissions in file</span>
+                  <span className="text-muted-foreground">{t('pages.permissions.permissionsInFile')}</span>
                   <span className="font-mono-data">{importGroups[importGroupIdx].permissions.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Target</span>
+                  <span className="text-muted-foreground">{t('pages.permissions.target')}</span>
                   <span className="font-mono-data">
-                    {selectedIds.size} {LAYERS.find((l) => l.key === layer)?.label}
+                    {t('pages.permissions.targetCount', { count: selectedIds.size, layer: layers.find((l) => l.key === layer)?.label })}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs">Mode</Label>
+                <Label className="text-xs">{t('pages.permissions.mode')}</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setImportMode('merge')}
@@ -2288,8 +2286,8 @@ export default function Permissions() {
                       importMode === 'merge' ? 'border-primary bg-primary/5' : 'border-border/50 hover:border-border',
                     )}
                   >
-                    <p className="text-xs font-medium">Merge</p>
-                    <p className="text-[11px] text-muted-foreground">Only what the file contains is set. Everything else stays.</p>
+                    <p className="text-xs font-medium">{t('pages.permissions.merge')}</p>
+                    <p className="text-[11px] text-muted-foreground">{t('pages.permissions.mergeDescription')}</p>
                   </button>
                   <button
                     onClick={() => setImportMode('replace')}
@@ -2298,8 +2296,8 @@ export default function Permissions() {
                       importMode === 'replace' ? 'border-destructive bg-destructive/5' : 'border-border/50 hover:border-border',
                     )}
                   >
-                    <p className="text-xs font-medium">Replace</p>
-                    <p className="text-[11px] text-muted-foreground">Target becomes an exact copy. Extra permissions are deleted.</p>
+                    <p className="text-xs font-medium">{t('pages.permissions.replace')}</p>
+                    <p className="text-[11px] text-muted-foreground">{t('pages.permissions.replaceDescription')}</p>
                   </button>
                 </div>
               </div>
@@ -2308,21 +2306,20 @@ export default function Permissions() {
                 <div className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2.5">
                   <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                   <p className="text-[11px] text-muted-foreground">
-                    Every permission the {selectedIds.size === 1 ? 'target has' : 'targets have'} that is not in this file will be
-                    removed. This is written straight to the server and cannot be undone from here.
+                    {t('pages.permissions.replaceWarningPrefix')} {selectedIds.size === 1 ? t('pages.permissions.replaceWarningTargetHas') : t('pages.permissions.replaceWarningTargetsHave')} {t('pages.permissions.replaceWarningSuffix')}
                   </p>
                 </div>
               )}
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImportGroups(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setImportGroups(null)}>{t('pages.permissions.cancel')}</Button>
             <Button
               variant={importMode === 'replace' ? 'destructive' : 'default'}
               onClick={() => importMutation.mutate()}
               disabled={importMutation.isPending || selectedIds.size === 0}
             >
-              {importMutation.isPending ? 'Importing...' : importMode === 'replace' ? 'Replace' : 'Merge'}
+              {importMutation.isPending ? t('pages.permissions.importing') : importMode === 'replace' ? t('pages.permissions.replace') : t('pages.permissions.merge')}
             </Button>
           </DialogFooter>
         </DialogContent>
