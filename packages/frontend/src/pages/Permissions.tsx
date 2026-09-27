@@ -35,7 +35,10 @@ const PERM_CATEGORY_KEYS = [
 ] as const;
 
 function getPermCategories(t: TFunction): Record<string, string> {
-  return Object.fromEntries(PERM_CATEGORY_KEYS.map((k) => [k, t(`pages.permissions.categories.${k}`)]));
+  return {
+    ...Object.fromEntries(PERM_CATEGORY_KEYS.map((k) => [k, t(`pages.permissions.categories.${k}`)])),
+    other: t('pages.permissions.categories.other'),
+  };
 }
 
 function getCategoryKey(permsid: string): string {

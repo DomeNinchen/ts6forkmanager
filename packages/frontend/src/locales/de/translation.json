@@ -225,7 +225,7 @@
       "saveChanges": "Änderungen speichern",
       "ipBindings": "IP-Bindungen",
       "subsystem": {
-        "voice": "Sprache",
+        "voice": "Sprachübertragung",
         "query": "Query",
         "filetransfer": "Dateiübertragung"
       }
@@ -1506,7 +1506,8 @@
         "i_client": "Client (Werte)",
         "i_ft": "Dateiübertragung (Werte)",
         "i_max": "Limits",
-        "i_needed": "Benötigte Rechte"
+        "i_needed": "Benötigte Rechte",
+        "other": "Sonstige"
       },
       "layers": {
         "serverGroups": "Servergruppen",
@@ -2379,7 +2380,7 @@
       "loadingSettings": "Vollständige Channel-Einstellungen werden geladen...",
       "tabs": {
         "general": "Allgemein",
-        "voice": "Sprache",
+        "voice": "Audio",
         "limits": "Limits & Typ",
         "advanced": "Erweitert"
       },

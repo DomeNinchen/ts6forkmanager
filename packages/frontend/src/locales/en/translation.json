@@ -1506,7 +1506,8 @@
         "i_client": "Client (Values)",
         "i_ft": "File Transfer (Values)",
         "i_max": "Limits",
-        "i_needed": "Needed Powers"
+        "i_needed": "Needed Powers",
+        "other": "Other"
       },
       "layers": {
         "serverGroups": "Server Groups",

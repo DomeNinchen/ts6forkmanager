@@ -123,6 +123,8 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Theming** — nine base themes, six dark (Command Deck, OLED-Black, Graphite, Carbon, Frost, Deep Forest) and three light (Daylight, Paper, Frost Light), combinable with any of ten accent colours. The admin sets an installation-wide default; every user can override both for themselves in their own browser. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Themes-and-Appearance)
 
+**Language** — the interface is available in English and German. Pick one in Settings → WebGui and it's remembered on your account across devices; before logging in, the login and setup screens instead follow your browser's own language automatically.
+
 **Administration** — user and session management, yt-dlp cookie handling, runtime debug toggles, scheduled restarts, and an update status page. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Administration)
 
 ## 📖 Documentation
