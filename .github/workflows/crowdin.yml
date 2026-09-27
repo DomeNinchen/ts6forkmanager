@@ -4,9 +4,12 @@ name: Crowdin
 # translations PR on its own: pulling translations back in means a version
 # bump + CHANGELOG entry too, same as every other change in this repo, so
 # that step only runs when someone deliberately triggers it via "Run
-# workflow". Needs three repo secrets (Settings -> Secrets and variables ->
-# Actions): CROWDIN_PROJECT_ID, CROWDIN_PERSONAL_TOKEN, and GH_TOKEN (see
-# below).
+# workflow". skip_untranslated_files keeps a language with zero real
+# translations out of the PR entirely - Crowdin's own export otherwise fills
+# an untranslated string with the English source text, which would silently
+# add a "new language" that's actually just English under a different code.
+# Needs three repo secrets (Settings -> Secrets and variables -> Actions):
+# CROWDIN_PROJECT_ID, CROWDIN_PERSONAL_TOKEN, and GH_TOKEN (see below).
 on:
   push:
     branches: [main]
@@ -46,6 +49,7 @@ jobs:
           upload_sources: false
           upload_translations: false
           download_translations: true
+          skip_untranslated_files: true
           localization_branch_name: l10n_crowdin_translations
           create_pull_request: true
           pull_request_title: "New Crowdin translations"
