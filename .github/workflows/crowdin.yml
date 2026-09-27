@@ -1,18 +1,17 @@
 name: Crowdin
 
-# Keeps the WebGui's translations in sync with Crowdin in both directions:
-# uploads the English source strings whenever they change on main, and pulls
-# back whatever the community has translated since - either on the weekly
-# schedule below or on demand via "Run workflow". Needs three repo secrets
-# (Settings -> Secrets and variables -> Actions) before this can do anything:
-# CROWDIN_PROJECT_ID, CROWDIN_PERSONAL_TOKEN, and GH_TOKEN (see below).
+# Keeps Crowdin's source strings current automatically, but never opens a
+# translations PR on its own: pulling translations back in means a version
+# bump + CHANGELOG entry too, same as every other change in this repo, so
+# that step only runs when someone deliberately triggers it via "Run
+# workflow". Needs three repo secrets (Settings -> Secrets and variables ->
+# Actions): CROWDIN_PROJECT_ID, CROWDIN_PERSONAL_TOKEN, and GH_TOKEN (see
+# below).
 on:
   push:
     branches: [main]
     paths:
       - "packages/frontend/src/locales/en/translation.json"
-  schedule:
-    - cron: "0 3 * * 1" # Monday 03:00 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -20,21 +19,44 @@ permissions:
   pull-requests: write
 
 jobs:
-  synchronize-with-crowdin:
+  upload-sources:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: crowdin action
+      - name: Upload English source strings to Crowdin
         uses: crowdin/github-action@v3
         with:
           upload_sources: true
+          upload_translations: false
+          download_translations: false
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+  download-translations:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Pull translations from Crowdin and open a PR
+        uses: crowdin/github-action@v3
+        with:
+          upload_sources: false
           upload_translations: false
           download_translations: true
           localization_branch_name: l10n_crowdin_translations
           create_pull_request: true
           pull_request_title: "New Crowdin translations"
-          pull_request_body: "New and updated translations pulled from Crowdin."
+          pull_request_body: |
+            New and updated translations pulled from Crowdin.
+
+            Before merging: this needs the same treatment as every other
+            user-visible change in this repo - a frontend version bump and a
+            CHANGELOG.md entry naming what language(s) changed. Ask Claude
+            to take care of that in its own branch/PR before this one goes in
+            (or fold this diff into that PR and close this one).
           pull_request_base_branch_name: "main"
         env:
           # A classic PAT with the "repo" scope, NOT the ambient GITHUB_TOKEN
