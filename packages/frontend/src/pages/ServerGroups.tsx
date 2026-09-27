@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { normalizeIconId } from '@ts6/common';
 import { IconImage } from '@/components/icons/IconImage';
 import {
@@ -25,6 +26,7 @@ import { Shield, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search, Downloa
 import { toast } from 'sonner';
 
 export default function ServerGroups() {
+  const { t } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
   const { data, isLoading } = useServerGroups();
   const createGroup = useCreateServerGroup();
@@ -57,8 +59,8 @@ export default function ServerGroups() {
     const failed = results.filter((r) => r.status === 'rejected').length;
     setBulkDeleting(false);
     setShowBulkDelete(false);
-    if (failed > 0) toast.error(`Deleted ${results.length - failed}, failed ${failed}`);
-    else toast.success(`${results.length} group(s) deleted`);
+    if (failed > 0) toast.error(t('pages.serverGroups.bulkDeletePartial', { succeeded: results.length - failed, failed }));
+    else toast.success(t('pages.serverGroups.bulkDeleteSuccess', { count: results.length }));
     if (checkedIds.has(selectedGroup!)) setSelectedGroup(null);
     setCheckedIds(new Set());
   };
@@ -91,9 +93,9 @@ export default function ServerGroups() {
       a.download = `server-groups-export-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success(`Exported ${exported.length} group(s)`);
+      toast.success(t('pages.serverGroups.exportedCount', { count: exported.length }));
     } catch {
-      toast.error('Export failed');
+      toast.error(t('pages.serverGroups.exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -107,21 +109,21 @@ export default function ServerGroups() {
       try {
         payload = JSON.parse(await file.text());
       } catch {
-        toast.error("This file isn't valid JSON");
+        toast.error(t('pages.serverGroups.invalidJson'));
         return;
       }
       if (payload.format !== 'ts6manager-group-export' || !Array.isArray(payload.groups)) {
-        toast.error('Not a valid group export file');
+        toast.error(t('pages.serverGroups.notValidGroupExport'));
         return;
       }
       if (payload.groupType !== 'server') {
         toast.error(payload.groupType === 'channel'
-          ? 'This is a channel group export - import it on the Channel Groups page instead'
-          : 'Not a valid server group export file');
+          ? t('pages.serverGroups.wrongExportTypeChannel')
+          : t('pages.serverGroups.notValidServerExport'));
         return;
       }
       if (payload.groups.length === 0) {
-        toast.error('The file contains no groups to import');
+        toast.error(t('pages.serverGroups.emptyExportFile'));
         return;
       }
 
@@ -135,7 +137,7 @@ export default function ServerGroups() {
           const created = await createGroup.mutateAsync(g.name);
           sgid = Number(created?.[0]?.sgid ?? created?.sgid);
         } catch (err) {
-          skipped.push(`"${g.name}" (${tsErrorMessage(err, 'failed to create')})`);
+          skipped.push(`"${g.name}" (${tsErrorMessage(err, t('pages.serverGroups.createFailedFallback'), t)})`);
           continue;
         }
         imported++;
@@ -150,12 +152,12 @@ export default function ServerGroups() {
       }
 
       if (imported === 0) {
-        toast.error(`Import failed - ${skipped[0] || 'no groups could be created'}`);
+        toast.error(t('pages.serverGroups.importFailed', { reason: skipped[0] || t('pages.serverGroups.importFailedNoGroups') }));
         return;
       }
-      let msg = `Imported ${imported} of ${payload.groups.length} group(s), ${permCount} permission(s)`;
-      if (permFailed > 0) msg += `, ${permFailed} permission(s) skipped`;
-      if (skipped.length > 0) msg += ` - skipped: ${skipped.join(', ')}`;
+      let msg = t('pages.serverGroups.importSummary', { imported, total: payload.groups.length, permCount });
+      if (permFailed > 0) msg += t('pages.serverGroups.importPermSkipped', { count: permFailed });
+      if (skipped.length > 0) msg += t('pages.serverGroups.importSkippedList', { list: skipped.join(', ') });
       if (skipped.length > 0 || permFailed > 0) toast.warning(msg);
       else toast.success(msg);
     } finally {
@@ -177,7 +179,7 @@ export default function ServerGroups() {
       .slice(0, 50);
   }, [dbClients, memberSearch, memberCldbids]);
 
-  if (!selectedConfigId || !selectedSid) return <EmptyState icon={Shield} title="No server selected" />;
+  if (!selectedConfigId || !selectedSid) return <EmptyState icon={Shield} title={t('pages.noServerSelected')} />;
   if (isLoading) return <PageLoader />;
 
   const groups = Array.isArray(data) ? data : [];
@@ -185,21 +187,21 @@ export default function ServerGroups() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Server Groups</h1>
+        <h1 className="text-xl font-semibold">{t('nav.items.serverGroups')}</h1>
         <div className="flex items-center gap-2">
           {checkedIds.size > 0 && (
             <>
-              <Badge variant="secondary" className="font-mono-data">{checkedIds.size} selected</Badge>
+              <Badge variant="secondary" className="font-mono-data">{t('pages.serverGroups.selectedCount', { count: checkedIds.size })}</Badge>
               <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
-                <Download className="h-3.5 w-3.5 mr-1" /> Export Selected
+                <Download className="h-3.5 w-3.5 mr-1" /> {t('pages.serverGroups.exportSelected')}
               </Button>
               <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowBulkDelete(true)}>
-                <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Selected
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> {t('pages.serverGroups.deleteSelected')}
               </Button>
             </>
           )}
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-            <Upload className="h-3.5 w-3.5 mr-1" /> Import
+            <Upload className="h-3.5 w-3.5 mr-1" /> {t('pages.serverGroups.import')}
           </Button>
           <input
             ref={fileInputRef}
@@ -209,7 +211,7 @@ export default function ServerGroups() {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
           />
           <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Create Group
+            <Plus className="h-4 w-4 mr-1" /> {t('pages.serverGroups.createGroup')}
           </Button>
         </div>
       </div>
@@ -218,7 +220,7 @@ export default function ServerGroups() {
         {/* Group List */}
         <Card className="card-hero lg:col-span-1">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Groups ({groups.length})</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('pages.serverGroups.groupsHeading', { count: groups.length })}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[500px]">
@@ -237,13 +239,13 @@ export default function ServerGroups() {
                         checked={checkedIds.has(g.sgid)}
                         onCheckedChange={() => toggleChecked(g.sgid)}
                         onClick={(e) => e.stopPropagation()}
-                        aria-label="Select for bulk delete"
+                        aria-label={t('pages.serverGroups.selectForBulkDelete')}
                       />
                       <Shield className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{g.name}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <IconImage iconId={normalizeIconId(g.iconid)} size={16} alt={`Icon for ${g.name}`} />
+                      <IconImage iconId={normalizeIconId(g.iconid)} size={16} alt={t('pages.serverGroups.iconAlt', { name: g.name })} />
                       <Badge variant="secondary" className="text-[10px] font-mono-data">{g.sgid}</Badge>
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     </div>
@@ -260,19 +262,19 @@ export default function ServerGroups() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
-                Members
-                {selectedGroup && <Badge variant="default" className="font-mono-data text-[10px]">SGID: {selectedGroup}</Badge>}
+                {t('pages.serverGroups.members')}
+                {selectedGroup && <Badge variant="default" className="font-mono-data text-[10px]">{t('pages.serverGroups.sgidLabel', { id: selectedGroup })}</Badge>}
               </CardTitle>
               {selectedGroup && (
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => { setMemberSearch(''); setShowAddMember(true); }}>
-                    <UserPlus className="h-3 w-3 mr-1" /> Add Member
+                    <UserPlus className="h-3 w-3 mr-1" /> {t('pages.serverGroups.addMember')}
                   </Button>
                   <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => {
                     const g = groups.find((g: any) => g.sgid === selectedGroup);
                     if (g) setDeleteTarget({ sgid: g.sgid, name: g.name });
                   }}>
-                    <Trash2 className="h-3 w-3 mr-1" /> Delete Group
+                    <Trash2 className="h-3 w-3 mr-1" /> {t('pages.serverGroups.deleteGroup')}
                   </Button>
                 </div>
               )}
@@ -280,7 +282,7 @@ export default function ServerGroups() {
           </CardHeader>
           <CardContent>
             {!selectedGroup ? (
-              <p className="text-sm text-muted-foreground text-center py-12">Select a group to view its members</p>
+              <p className="text-sm text-muted-foreground text-center py-12">{t('pages.serverGroups.selectGroupHint')}</p>
             ) : (
               <ScrollArea className="h-[440px]">
                 <div className="space-y-1">
@@ -291,18 +293,18 @@ export default function ServerGroups() {
                           <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-mono-data text-primary">
                             {m.client_nickname?.[0]?.toUpperCase() || '?'}
                           </div>
-                          <span className="text-sm">{m.client_nickname || `DBID: ${m.cldbid}`}</span>
+                          <span className="text-sm">{m.client_nickname || t('pages.serverGroups.dbidLabel', { id: m.cldbid })}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground font-mono-data">DBID: {m.cldbid}</span>
+                          <span className="text-xs text-muted-foreground font-mono-data">{t('pages.serverGroups.dbidLabel', { id: m.cldbid })}</span>
                           <button
                             className="p-0.5 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                            title="Remove from group"
+                            title={t('pages.serverGroups.removeFromGroup')}
                             onClick={() => {
                               if (!selectedGroup) return;
                               removeMember.mutate({ sgid: selectedGroup, cldbid: Number(m.cldbid) }, {
-                                onSuccess: () => toast.success('Member removed'),
-                                onError: () => toast.error('Failed to remove member'),
+                                onSuccess: () => toast.success(t('pages.serverGroups.memberRemoved')),
+                                onError: () => toast.error(t('pages.serverGroups.memberRemoveFailed')),
                               });
                             }}
                           >
@@ -312,7 +314,7 @@ export default function ServerGroups() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">No members in this group</p>
+                    <p className="text-sm text-muted-foreground text-center py-8">{t('pages.serverGroups.noMembers')}</p>
                   )}
                 </div>
               </ScrollArea>
@@ -323,13 +325,13 @@ export default function ServerGroups() {
 
       <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Member</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.serverGroups.addMember')}</DialogTitle></DialogHeader>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
-              placeholder="Search clients..."
+              placeholder={t('pages.serverGroups.searchClientsPlaceholder')}
               className="pl-8 h-9"
               autoFocus
             />
@@ -343,7 +345,7 @@ export default function ServerGroups() {
                       <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-mono-data text-primary shrink-0">
                         {c.client_nickname?.[0]?.toUpperCase() || '?'}
                       </div>
-                      <span className="text-sm truncate">{c.client_nickname || `DBID: ${c.cldbid}`}</span>
+                      <span className="text-sm truncate">{c.client_nickname || t('pages.serverGroups.dbidLabel', { id: c.cldbid })}</span>
                     </div>
                     <Button
                       size="sm"
@@ -353,45 +355,45 @@ export default function ServerGroups() {
                       onClick={() => {
                         if (!selectedGroup) return;
                         addMember.mutate({ sgid: selectedGroup, cldbid: Number(c.cldbid) }, {
-                          onSuccess: () => toast.success(`Added ${c.client_nickname || 'client'}`),
-                          onError: () => toast.error('Failed to add member'),
+                          onSuccess: () => toast.success(t('pages.serverGroups.added', { name: c.client_nickname || t('pages.serverGroups.genericClient') })),
+                          onError: () => toast.error(t('pages.serverGroups.addMemberFailed')),
                         });
                       }}
                     >
-                      <Plus className="h-3 w-3 mr-1" /> Add
+                      <Plus className="h-3 w-3 mr-1" /> {t('common.add')}
                     </Button>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">No matching clients</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t('pages.serverGroups.noMatchingClients')}</p>
               )}
             </div>
           </ScrollArea>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddMember(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setShowAddMember(false)}>{t('common.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Server Group</DialogTitle></DialogHeader>
-          <div><Label className="text-xs">Group Name</Label><Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New Group" autoFocus /></div>
+          <DialogHeader><DialogTitle>{t('pages.serverGroups.createServerGroupTitle')}</DialogTitle></DialogHeader>
+          <div><Label className="text-xs">{t('pages.serverGroups.groupNameLabel')}</Label><Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('pages.serverGroups.newGroupPlaceholder')} autoFocus /></div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={() => { createGroup.mutate(newName, { onSuccess: () => { toast.success('Group created'); setShowCreate(false); setNewName(''); } }); }}>Create</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
+            <Button onClick={() => { createGroup.mutate(newName, { onSuccess: () => { toast.success(t('pages.serverGroups.groupCreated')); setShowCreate(false); setNewName(''); } }); }}>{t('common.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="Delete Server Group" description={`Delete "${deleteTarget?.name}"?`} confirmLabel="Delete" destructive onConfirm={() => { if (deleteTarget) deleteGroup.mutate(deleteTarget.sgid, { onSuccess: () => { toast.success('Group deleted'); setDeleteTarget(null); setSelectedGroup(null); } }); }} />
+      <ConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title={t('pages.serverGroups.deleteServerGroupTitle')} description={t('pages.serverGroups.deleteGroupDescription', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} destructive onConfirm={() => { if (deleteTarget) deleteGroup.mutate(deleteTarget.sgid, { onSuccess: () => { toast.success(t('pages.serverGroups.groupDeleted')); setDeleteTarget(null); setSelectedGroup(null); } }); }} />
 
       <ConfirmDialog
         open={showBulkDelete}
         onOpenChange={setShowBulkDelete}
-        title="Delete Server Groups"
-        description={`Delete ${checkedIds.size} selected group(s)? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('pages.serverGroups.deleteServerGroupsTitle')}
+        description={t('pages.serverGroups.bulkDeleteDescription', { count: checkedIds.size })}
+        confirmLabel={t('common.delete')}
         destructive
         onConfirm={handleBulkDelete}
         loading={bulkDeleting}

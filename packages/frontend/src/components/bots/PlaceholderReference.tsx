@@ -4,7 +4,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { BOT_TEMPLATES } from '@/data/bot-templates';
+import { useMemo } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { getBotTemplates } from '@/data/bot-templates';
 
 export type PlaceholderTabKey = 'event' | 'time' | 'var' | 'temp' | 'exec' | 'filter' | 'functions' | 'templates';
 
@@ -34,23 +37,35 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
   return <div className="mt-3 mb-1.5 first:mt-0"><Badge variant="outline" className="text-[10px]">{children}</Badge></div>;
 }
 
-const TAB_LABELS: Record<PlaceholderTabKey, string> = {
-  event: 'Event', time: 'Time', var: 'Variables', temp: 'Temp', exec: 'Exec',
-  filter: 'Filter', functions: 'Functions', templates: 'Templates',
-};
+function getTabLabels(t: TFunction): Record<PlaceholderTabKey, string> {
+  return {
+    event: t('components.placeholderReference.tabs.event'),
+    time: t('components.placeholderReference.tabs.time'),
+    var: t('components.placeholderReference.tabs.var'),
+    temp: t('components.placeholderReference.tabs.temp'),
+    exec: t('components.placeholderReference.tabs.exec'),
+    filter: t('components.placeholderReference.tabs.filter'),
+    functions: t('components.placeholderReference.tabs.functions'),
+    templates: t('components.placeholderReference.tabs.templates'),
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /*  Content only - reused both standalone (full reference) and        */
 /*  embedded in the Bot Flow editor's popup text editor (reduced set) */
 /* ------------------------------------------------------------------ */
 export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: PlaceholderTabKey[] }) {
-  const templatesWithHints = BOT_TEMPLATES.filter((t) => t.variablesHint && t.variablesHint.length > 0);
+  const { t } = useTranslation();
+  const botTemplates = useMemo(() => getBotTemplates(t), [t]);
+  const templatesWithHints = botTemplates.filter((tpl) => tpl.variablesHint && tpl.variablesHint.length > 0);
+  const tabLabels = getTabLabels(t);
+  const pr = (key: string) => t(`components.placeholderReference.${key}`);
 
   return (
     <Tabs defaultValue={tabs[0]}>
       <TabsList className="h-8 mb-3 flex-wrap h-auto">
         {tabs.map((key) => (
-          <TabsTrigger key={key} value={key} className="text-xs px-2.5 h-6">{TAB_LABELS[key]}</TabsTrigger>
+          <TabsTrigger key={key} value={key} className="text-xs px-2.5 h-6">{tabLabels[key]}</TabsTrigger>
         ))}
       </TabsList>
 
@@ -59,54 +74,54 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('event') && (
         <TabsContent value="event" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Fields from the triggering TS3 event. Available fields depend on the event type.
+            {pr('event.intro')}
           </p>
 
-          <SectionHeader>Client Connected &mdash; notifycliententerview</SectionHeader>
-          <P code="{{event.clid}}" desc="Client ID" example='Move client #{{event.clid}} to channel' />
-          <P code="{{event.client_nickname}}" desc="Nickname" example='Welcome {{event.client_nickname}}!' />
-          <P code="{{event.client_database_id}}" desc="Database ID" example='DB-ID: {{event.client_database_id}}' />
-          <P code="{{event.client_unique_identifier}}" desc="Unique ID (UID)" example='UID: {{event.client_unique_identifier}}' />
-          <P code="{{event.client_type}}" desc="Type (0=User, 1=Query)" example='Condition: event.client_type == 0' />
-          <P code="{{event.client_servergroups}}" desc="Server group IDs (comma-separated)" example="contains(event.client_servergroups, '6')" />
-          <P code="{{event.connection_client_ip}}" desc="IP address" example='VPN check: https://api.vpn.io/{{event.connection_client_ip}}' />
-          <P code="{{event.cid}}" desc="Channel the client joined" example='Condition: event.cid == 42' />
+          <SectionHeader>{pr('event.h1')}</SectionHeader>
+          <P code="{{event.clid}}" desc={pr('event.clid.desc')} example={pr('event.clid.example')} />
+          <P code="{{event.client_nickname}}" desc={pr('event.clientNickname.desc')} example={pr('event.clientNickname.example')} />
+          <P code="{{event.client_database_id}}" desc={pr('event.clientDatabaseId.desc')} example={pr('event.clientDatabaseId.example')} />
+          <P code="{{event.client_unique_identifier}}" desc={pr('event.clientUid.desc')} example={pr('event.clientUid.example')} />
+          <P code="{{event.client_type}}" desc={pr('event.clientType.desc')} example={pr('event.clientType.example')} />
+          <P code="{{event.client_servergroups}}" desc={pr('event.clientServergroups.desc')} example={pr('event.clientServergroups.example')} />
+          <P code="{{event.connection_client_ip}}" desc={pr('event.connectionClientIp.desc')} example={pr('event.connectionClientIp.example')} />
+          <P code="{{event.cid}}" desc={pr('event.cidJoined.desc')} example={pr('event.cidJoined.example')} />
 
-          <SectionHeader>Client Disconnected &mdash; notifyclientleftview</SectionHeader>
-          <P code="{{event.clid}}" desc="Client ID" />
-          <P code="{{event.cfid}}" desc="Channel the client was in" />
-          <P code="{{event.reasonid}}" desc="Reason (3=lost, 5=kick, 6=ban, 8=leave)" example='Condition: event.reasonid == 5' />
-          <P code="{{event.reasonmsg}}" desc="Reason message" example='Kicked: {{event.reasonmsg}}' />
+          <SectionHeader>{pr('event.h2')}</SectionHeader>
+          <P code="{{event.clid}}" desc={pr('event.clidDisc.desc')} />
+          <P code="{{event.cfid}}" desc={pr('event.cfidDisc.desc')} />
+          <P code="{{event.reasonid}}" desc={pr('event.reasonidDisc.desc')} example={pr('event.reasonidDisc.example')} />
+          <P code="{{event.reasonmsg}}" desc={pr('event.reasonmsg.desc')} example={pr('event.reasonmsg.example')} />
 
-          <SectionHeader>Client Moved &mdash; notifyclientmoved</SectionHeader>
-          <P code="{{event.clid}}" desc="Client ID" />
-          <P code="{{event.ctid}}" desc="Target channel ID" example='Condition: event.ctid == 10' />
-          <P code="{{event.cfid}}" desc="Source channel ID" />
-          <P code="{{event.reasonid}}" desc="Reason (0=self, 1=moved by admin)" />
+          <SectionHeader>{pr('event.h3')}</SectionHeader>
+          <P code="{{event.clid}}" desc={pr('event.clidMoved.desc')} />
+          <P code="{{event.ctid}}" desc={pr('event.ctid.desc')} example={pr('event.ctid.example')} />
+          <P code="{{event.cfid}}" desc={pr('event.cfidMoved.desc')} />
+          <P code="{{event.reasonid}}" desc={pr('event.reasonidMoved.desc')} />
 
-          <SectionHeader>Text Message &mdash; notifytextmessage</SectionHeader>
-          <P code="{{event.clid}}" desc="Sender client ID" />
-          <P code="{{event.client_nickname}}" desc="Sender nickname" />
-          <P code="{{event.msg}}" desc="Message text" example='User wrote: {{event.msg}}' />
-          <P code="{{event.targetmode}}" desc="Target (1=private, 2=channel, 3=server)" />
+          <SectionHeader>{pr('event.h4')}</SectionHeader>
+          <P code="{{event.clid}}" desc={pr('event.clidMsg.desc')} />
+          <P code="{{event.client_nickname}}" desc={pr('event.clientNicknameMsg.desc')} />
+          <P code="{{event.msg}}" desc={pr('event.msg.desc')} example={pr('event.msg.example')} />
+          <P code="{{event.targetmode}}" desc={pr('event.targetmode.desc')} />
 
-          <SectionHeader>Chat Command &mdash; trigger_command</SectionHeader>
-          <P code="{{event.command_name}}" desc="Command name (without prefix)" example='Command: {{event.command_name}}' />
-          <P code="{{event.command_args}}" desc="Arguments after command" example='Args: {{event.command_args}}' />
-          <P code="{{event.clid}}" desc="Sender client ID" />
-          <P code="{{event.client_nickname}}" desc="Sender nickname" />
+          <SectionHeader>{pr('event.h5')}</SectionHeader>
+          <P code="{{event.command_name}}" desc={pr('event.commandName.desc')} example={pr('event.commandName.example')} />
+          <P code="{{event.command_args}}" desc={pr('event.commandArgs.desc')} example={pr('event.commandArgs.example')} />
+          <P code="{{event.clid}}" desc={pr('event.clidCmd.desc')} />
+          <P code="{{event.client_nickname}}" desc={pr('event.clientNicknameCmd.desc')} />
 
-          <SectionHeader>Channel Events &mdash; created / edited / deleted</SectionHeader>
-          <P code="{{event.cid}}" desc="Channel ID" />
-          <P code="{{event.invokerid}}" desc="Client ID of who made the change" />
-          <P code="{{event.invokername}}" desc="Name of who made the change" />
+          <SectionHeader>{pr('event.h6')}</SectionHeader>
+          <P code="{{event.cid}}" desc={pr('event.cidChannel.desc')} />
+          <P code="{{event.invokerid}}" desc={pr('event.invokerid.desc')} />
+          <P code="{{event.invokername}}" desc={pr('event.invokername.desc')} />
 
-          <SectionHeader>Webhook &mdash; trigger_webhook</SectionHeader>
-          <P code="{{event.webhook_path}}" desc="Request path" example='/my-hook' />
-          <P code="{{event.webhook_method}}" desc="HTTP method" example='GET or POST' />
-          <P code="{{event.webhook_body}}" desc="Request body (raw JSON)" />
-          <P code="{{event.webhook_body.field}}" desc="Nested field from JSON body" example='Status: {{event.webhook_body.status}}' />
-          <P code="{{event.webhook_query}}" desc="Query parameters (raw JSON)" />
+          <SectionHeader>{pr('event.h7')}</SectionHeader>
+          <P code="{{event.webhook_path}}" desc={pr('event.webhookPath.desc')} example="/my-hook" />
+          <P code="{{event.webhook_method}}" desc={pr('event.webhookMethod.desc')} example={pr('event.webhookMethod.example')} />
+          <P code="{{event.webhook_body}}" desc={pr('event.webhookBody.desc')} />
+          <P code="{{event.webhook_body.field}}" desc={pr('event.webhookBodyField.desc')} example={pr('event.webhookBodyField.example')} />
+          <P code="{{event.webhook_query}}" desc={pr('event.webhookQuery.desc')} />
         </TabsContent>
         )}
 
@@ -114,18 +129,18 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('time') && (
         <TabsContent value="time" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Current date and time. Respects the timezone configured on the Cron trigger (falls back to UTC).
+            {pr('time.intro')}
           </p>
-          <P code="{{time.time}}" desc="Formatted time HH:MM" example='Channel name: Es ist {{time.time}} Uhr' />
-          <P code="{{time.date}}" desc="Formatted date DD.MM.YYYY" example='Datum: {{time.date}}' />
-          <P code="{{time.hours}}" desc="Hour (00-23)" example='Condition: time.hours >= 22' />
-          <P code="{{time.minutes}}" desc="Minute (00-59)" />
-          <P code="{{time.seconds}}" desc="Second (00-59)" />
-          <P code="{{time.day}}" desc="Day of month (01-31)" />
-          <P code="{{time.month}}" desc="Month (01-12)" example='Condition: time.month == 12' />
-          <P code="{{time.year}}" desc="Year (4-digit)" example='2026' />
-          <P code="{{time.dayOfWeek}}" desc="Day of week (0=Sun, 1=Mon, ..., 6=Sat)" example='Condition: time.dayOfWeek == 0' />
-          <P code="{{time.timestamp}}" desc="Unix timestamp (seconds)" example='1739462400' />
+          <P code="{{time.time}}" desc={pr('time.time.desc')} example={pr('time.time.example')} />
+          <P code="{{time.date}}" desc={pr('time.date.desc')} example={pr('time.date.example')} />
+          <P code="{{time.hours}}" desc={pr('time.hours.desc')} example={pr('time.hours.example')} />
+          <P code="{{time.minutes}}" desc={pr('time.minutes.desc')} />
+          <P code="{{time.seconds}}" desc={pr('time.seconds.desc')} />
+          <P code="{{time.day}}" desc={pr('time.day.desc')} />
+          <P code="{{time.month}}" desc={pr('time.month.desc')} example={pr('time.month.example')} />
+          <P code="{{time.year}}" desc={pr('time.year.desc')} example="2026" />
+          <P code="{{time.dayOfWeek}}" desc={pr('time.dayOfWeek.desc')} example={pr('time.dayOfWeek.example')} />
+          <P code="{{time.timestamp}}" desc={pr('time.timestamp.desc')} example="1739462400" />
         </TabsContent>
         )}
 
@@ -133,23 +148,25 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('var') && (
         <TabsContent value="var" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Persistent variables stored in the database. Survive restarts. Scoped per flow.
-            Set via the <strong>Set Variable</strong> action node.
+            <Trans i18nKey="components.placeholderReference.var.intro">
+              Persistent variables stored in the database. Survive restarts. Scoped per flow.
+              Set via the <strong>Set Variable</strong> action node.
+            </Trans>
           </p>
-          <P code={'{{var.name}}'} desc="Read variable by name" example='Counter: {{var.visit_count}}' />
+          <P code={'{{var.name}}'} desc={pr('var.name.desc')} example={pr('var.name.example')} />
 
-          <SectionHeader>Actions for Variables</SectionHeader>
+          <SectionHeader>{pr('var.h1')}</SectionHeader>
           <div className="text-xs text-muted-foreground space-y-1 mt-1">
-            <p><strong>Set</strong> &mdash; Set a variable to a fixed value or template</p>
-            <p><strong>Increment</strong> &mdash; Add a number to the current value</p>
-            <p><strong>Append</strong> &mdash; Append text to the current value</p>
+            <p><Trans i18nKey="components.placeholderReference.var.actionSet"><strong>Set</strong> &mdash; Set a variable to a fixed value or template</Trans></p>
+            <p><Trans i18nKey="components.placeholderReference.var.actionIncrement"><strong>Increment</strong> &mdash; Add a number to the current value</Trans></p>
+            <p><Trans i18nKey="components.placeholderReference.var.actionAppend"><strong>Append</strong> &mdash; Append text to the current value</Trans></p>
           </div>
 
-          <SectionHeader>Use Case Examples</SectionHeader>
+          <SectionHeader>{pr('var.h2')}</SectionHeader>
           <div className="text-xs text-muted-foreground space-y-1 mt-1">
-            <p>Visit counter: Increment <code className="text-emerald-400">visit_count</code> by 1 on each join</p>
-            <p>Last seen: Set <code className="text-emerald-400">{'lastseen_{{event.client_database_id}}'}</code> to <code className="text-emerald-400">{'{{time.timestamp}}'}</code></p>
-            <p>Online time tracking: Increment <code className="text-emerald-400">{'onlinetime_{{event.clid}}'}</code></p>
+            <p><Trans i18nKey="components.placeholderReference.var.example1">Visit counter: Increment <code className="text-emerald-400">visit_count</code> by 1 on each join</Trans></p>
+            <p><Trans i18nKey="components.placeholderReference.var.example2">Last seen: Set <code className="text-emerald-400">{'lastseen_{{event.client_database_id}}'}</code> to <code className="text-emerald-400">{'{{time.timestamp}}'}</code></Trans></p>
+            <p><Trans i18nKey="components.placeholderReference.var.example3">Online time tracking: Increment <code className="text-emerald-400">{'onlinetime_{{event.clid}}'}</code></Trans></p>
           </div>
         </TabsContent>
         )}
@@ -158,34 +175,35 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('temp') && (
         <TabsContent value="temp" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Temporary variables that only exist during a single flow execution.
-            Automatically set by certain action nodes. Supports nested access via dot notation.
+            {pr('temp.intro')}
           </p>
 
-          <SectionHeader>Auto-set by Actions</SectionHeader>
-          <P code="{{temp.lastCreatedChannelId}}" desc="CID of channel created by Create Channel" example='Move client to {{temp.lastCreatedChannelId}}' />
-          <P code="{{temp.lastResult}}" desc="Raw JSON result from WebQuery action" />
-          <P code="{{temp.afkMovedCount}}" desc="Number of clients moved by AFK Mover" example='Moved {{temp.afkMovedCount}} AFK users' />
-          <P code="{{temp.idleKickedCount}}" desc="Number of clients kicked by Idle Kicker" />
-          <P code="{{temp.pokedCount}}" desc="Number of clients poked by Poke Group" />
-          <P code="{{temp.rankPromotedCount}}" desc="Number of clients promoted by Rank Check" />
-          <P code="{{temp.tempChannelsDeleted}}" desc="Number of channels deleted by Temp Cleanup" />
+          <SectionHeader>{pr('temp.h1')}</SectionHeader>
+          <P code="{{temp.lastCreatedChannelId}}" desc={pr('temp.lastCreatedChannelId.desc')} example={pr('temp.lastCreatedChannelId.example')} />
+          <P code="{{temp.lastResult}}" desc={pr('temp.lastResult.desc')} />
+          <P code="{{temp.afkMovedCount}}" desc={pr('temp.afkMovedCount.desc')} example={pr('temp.afkMovedCount.example')} />
+          <P code="{{temp.idleKickedCount}}" desc={pr('temp.idleKickedCount.desc')} />
+          <P code="{{temp.pokedCount}}" desc={pr('temp.pokedCount.desc')} />
+          <P code="{{temp.rankPromotedCount}}" desc={pr('temp.rankPromotedCount.desc')} />
+          <P code="{{temp.tempChannelsDeleted}}" desc={pr('temp.tempChannelsDeleted.desc')} />
 
-          <SectionHeader>Custom via "Store As"</SectionHeader>
+          <SectionHeader>{pr('temp.h2')}</SectionHeader>
           <p className="text-xs text-muted-foreground mb-1">
-            WebQuery and HTTP Request actions have a "Store As" field. The FULL result list is saved as a temp variable — even a single-row command like clientinfo or serverinfo, so access it with an explicit <code className="text-emerald-400">.0.</code> for "the first (only) row".
+            <Trans i18nKey="components.placeholderReference.temp.storeAsIntro">
+              WebQuery and HTTP Request actions have a "Store As" field. The FULL result list is saved as a temp variable — even a single-row command like clientinfo or serverinfo, so access it with an explicit <code className="text-emerald-400">.0.</code> for "the first (only) row".
+            </Trans>
           </p>
-          <P code={'{{temp.server.0.virtualserver_clientsonline}}'} desc='Online users (after serverinfo stored as "server")' example='Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}' />
-          <P code={'{{temp.server.0.virtualserver_uptime}}'} desc='Server uptime in seconds' example='Uptime: {{temp.server.0.virtualserver_uptime|uptime}}' />
-          <P code={'{{temp.client.0.client_nickname}}'} desc='Client name (after clientinfo stored as "client")' />
+          <P code={'{{temp.server.0.virtualserver_clientsonline}}'} desc={pr('temp.serverOnline.desc')} example={pr('temp.serverOnline.example')} />
+          <P code={'{{temp.server.0.virtualserver_uptime}}'} desc={pr('temp.serverUptime.desc')} example={pr('temp.serverUptime.example')} />
+          <P code={'{{temp.client.0.client_nickname}}'} desc={pr('temp.clientNickname.desc')} />
 
-          <SectionHeader>Loop Node</SectionHeader>
+          <SectionHeader>{pr('temp.h3')}</SectionHeader>
           <p className="text-xs text-muted-foreground mb-1">
-            A Loop node reads an existing list (e.g. a "Store As" result from a clientlist WebQuery) and runs its "Body" output once per item, then its "After" output once when done.
+            {pr('temp.loopIntro')}
           </p>
-          <P code={'{{temp.client}}'} desc="Current item (whatever name the Loop node's Item Variable Name is set to), inside its Body branch only" />
-          <P code={'{{temp.client.client_nickname}}'} desc='A field of the current item - item variable name + "." + field (no .0 here, unlike Store As above - a single object per iteration, not a list)' />
-          <P code={'{{temp.client_index}}'} desc='Position of the current item in the list, starting at 0' />
+          <P code={'{{temp.client}}'} desc={pr('temp.loopItem.desc')} />
+          <P code={'{{temp.client.client_nickname}}'} desc={pr('temp.loopField.desc')} />
+          <P code={'{{temp.client_index}}'} desc={pr('temp.loopIndex.desc')} />
         </TabsContent>
         )}
 
@@ -193,13 +211,13 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('exec') && (
         <TabsContent value="exec" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Read-only metadata about the current flow execution.
+            {pr('exec.intro')}
           </p>
-          <P code="{{exec.flowId}}" desc="ID of the flow being executed" />
-          <P code="{{exec.executionId}}" desc="Unique execution instance ID" />
-          <P code="{{exec.configId}}" desc="Server config ID" />
-          <P code="{{exec.sid}}" desc="Virtual server ID" />
-          <P code="{{exec.triggerType}}" desc="Trigger type (event, cron, webhook, command)" example='Condition: exec.triggerType == "cron"' />
+          <P code="{{exec.flowId}}" desc={pr('exec.flowId.desc')} />
+          <P code="{{exec.executionId}}" desc={pr('exec.executionId.desc')} />
+          <P code="{{exec.configId}}" desc={pr('exec.configId.desc')} />
+          <P code="{{exec.sid}}" desc={pr('exec.sid.desc')} />
+          <P code="{{exec.triggerType}}" desc={pr('exec.triggerType.desc')} example={pr('exec.triggerType.example')} />
         </TabsContent>
         )}
 
@@ -207,11 +225,13 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('filter') && (
         <TabsContent value="filter" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Filters transform values. Apply with pipe syntax: <code className="text-emerald-400">{'{{value|filter}}'}</code>
+            <Trans i18nKey="components.placeholderReference.filter.intro">
+              Filters transform values. Apply with pipe syntax: <code className="text-emerald-400">{'{{value|filter}}'}</code>
+            </Trans>
           </p>
-          <P code="uptime" desc="Converts seconds to readable uptime" example='{{temp.server.virtualserver_uptime|uptime}} → "5d 3h 42m"' />
-          <P code="round" desc="Rounds to nearest integer" example='{{temp.value|round}} → "42"' />
-          <P code="floor" desc="Rounds down to integer" example='{{temp.value|floor}} → "41"' />
+          <P code="uptime" desc={pr('filter.uptime.desc')} example='{{temp.server.virtualserver_uptime|uptime}} → "5d 3h 42m"' />
+          <P code="round" desc={pr('filter.round.desc')} example='{{temp.value|round}} → "42"' />
+          <P code="floor" desc={pr('filter.floor.desc')} example='{{temp.value|floor}} → "41"' />
         </TabsContent>
         )}
 
@@ -219,25 +239,27 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('functions') && (
         <TabsContent value="functions" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Functions for use in <strong>Condition</strong> node expressions. Return 0 or 1 (false/true).
+            <Trans i18nKey="components.placeholderReference.functions.intro">
+              Functions for use in <strong>Condition</strong> node expressions. Return 0 or 1 (false/true).
+            </Trans>
           </p>
-          <P code="contains(str, sub)" desc="String contains substring? (plain substring match - see hasGroup below for numeric ID lists)" example="contains(event.client_nickname, 'Bot')" />
-          <P code="startsWith(str, prefix)" desc="String starts with prefix?" example="startsWith(event.client_nickname, 'Admin')" />
-          <P code="endsWith(str, suffix)" desc="String ends with suffix?" example="endsWith(event.client_nickname, 'Bot')" />
-          <P code="lower(str)" desc="Convert to lowercase" example="contains(lower(event.client_nickname), 'bot')" />
-          <P code="upper(str)" desc="Convert to uppercase" />
-          <P code="length(str)" desc="String length" example="length(event.msg) > 100" />
-          <P code="split(str, sep, idx)" desc="Split string and get element at index" example="split(event.command_args, ' ', 0)" />
-          <P code="hasGroup(csv, id)" desc="Exact match against a comma-separated ID list - use this for server group IDs, not contains(), which would wrongly match group '1' against '10' or '21' too" example="hasGroup(event.client_servergroups, '6')" />
-          <P code="count(value)" desc="Row count of a stored WebQuery result (array), or string length otherwise - use to check whether a lookup found anything" example="count(temp.ownership) > 0" />
+          <P code="contains(str, sub)" desc={pr('functions.contains.desc')} example="contains(event.client_nickname, 'Bot')" />
+          <P code="startsWith(str, prefix)" desc={pr('functions.startsWith.desc')} example="startsWith(event.client_nickname, 'Admin')" />
+          <P code="endsWith(str, suffix)" desc={pr('functions.endsWith.desc')} example="endsWith(event.client_nickname, 'Bot')" />
+          <P code="lower(str)" desc={pr('functions.lower.desc')} example="contains(lower(event.client_nickname), 'bot')" />
+          <P code="upper(str)" desc={pr('functions.upper.desc')} />
+          <P code="length(str)" desc={pr('functions.length.desc')} example="length(event.msg) > 100" />
+          <P code="split(str, sep, idx)" desc={pr('functions.split.desc')} example="split(event.command_args, ' ', 0)" />
+          <P code="hasGroup(csv, id)" desc={pr('functions.hasGroup.desc')} example="hasGroup(event.client_servergroups, '6')" />
+          <P code="count(value)" desc={pr('functions.count.desc')} example="count(temp.ownership) > 0" />
 
-          <SectionHeader>Condition Examples</SectionHeader>
+          <SectionHeader>{pr('functions.h1')}</SectionHeader>
           <div className="text-xs text-muted-foreground space-y-1 mt-1">
-            <p><code className="text-emerald-400">event.client_type == 0</code> &mdash; Only real users (no query clients)</p>
-            <p><code className="text-emerald-400">{"hasGroup(event.client_servergroups, '7')"}</code> &mdash; Client is in server group 7</p>
-            <p><code className="text-emerald-400">time.hours {'>='} 22 or time.hours {'<'} 6</code> &mdash; Nighttime only</p>
-            <p><code className="text-emerald-400">event.ctid == 42</code> &mdash; Client moved to specific channel</p>
-            <p><code className="text-emerald-400">temp.vpn.security.vpn == 1</code> &mdash; VPN detected (after HTTP request)</p>
+            <p><code className="text-emerald-400">event.client_type == 0</code> &mdash; {pr('functions.condition1')}</p>
+            <p><code className="text-emerald-400">{"hasGroup(event.client_servergroups, '7')"}</code> &mdash; {pr('functions.condition2')}</p>
+            <p><code className="text-emerald-400">time.hours {'>='} 22 or time.hours {'<'} 6</code> &mdash; {pr('functions.condition3')}</p>
+            <p><code className="text-emerald-400">event.ctid == 42</code> &mdash; {pr('functions.condition4')}</p>
+            <p><code className="text-emerald-400">temp.vpn.security.vpn == 1</code> &mdash; {pr('functions.condition5')}</p>
           </div>
         </TabsContent>
         )}
@@ -246,12 +268,12 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
         {tabs.includes('templates') && (
         <TabsContent value="templates" className="mt-0 pr-3">
           <p className="text-xs text-muted-foreground mb-2">
-            Extra placeholders specific templates from the Template Gallery resolve automatically, beyond the general ones above.
+            {pr('templates.intro')}
           </p>
-          {templatesWithHints.map((t) => (
-            <div key={t.name}>
-              <SectionHeader>{t.name}</SectionHeader>
-              {t.variablesHint!.map((hint) => {
+          {templatesWithHints.map((tpl) => (
+            <div key={tpl.name}>
+              <SectionHeader>{tpl.name}</SectionHeader>
+              {tpl.variablesHint!.map((hint) => {
                 const [code, ...descParts] = hint.split(' - ');
                 return <P key={hint} code={code} desc={descParts.join(' - ')} />;
               })}
@@ -268,13 +290,16 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
 /*  Standalone dialog - the main "?" help button in the editor toolbar */
 /* ------------------------------------------------------------------ */
 export function PlaceholderReference({ open, onOpenChange }: Props) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl grid-rows-none! block! p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-2">
-          <DialogTitle className="text-base">Placeholder Reference</DialogTitle>
+          <DialogTitle className="text-base">{t('components.placeholderReference.dialogTitle')}</DialogTitle>
           <p className="text-xs text-muted-foreground">
-            Use <code className="text-emerald-400">{'{{placeholder}}'}</code> in any text field. Values are resolved at runtime.
+            <Trans i18nKey="components.placeholderReference.dialogIntro">
+              Use <code className="text-emerald-400">{'{{placeholder}}'}</code> in any text field. Values are resolved at runtime.
+            </Trans>
           </p>
         </DialogHeader>
         <div className="px-5 pb-5">

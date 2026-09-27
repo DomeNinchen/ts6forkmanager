@@ -22,6 +22,14 @@
   "pnpm": {
     "overrides": {
       "qs": "^6.16.0"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "better-sqlite3",
+      "cpu-features",
+      "esbuild",
+      "prisma",
+      "ssh2"
+    ]
   }
 }

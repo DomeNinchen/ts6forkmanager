@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { filesApi } from '@/api/files.api';
 import { channelsApi } from '@/api/channels.api';
 import { useServerStore } from '@/stores/server.store';
@@ -28,6 +29,7 @@ interface FileEntry {
 }
 
 export default function Files() {
+  const { t, i18n } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const qc = useQueryClient();
 
@@ -79,33 +81,33 @@ export default function Files() {
   const mkdirMutation = useMutation({
     mutationFn: (dirname: string) => filesApi.createDir(c!, s!, selectedCid!, dirname),
     onSuccess: () => {
-      toast.success('Directory created');
+      toast.success(t('pages.files.directoryCreated'));
       setShowMkdir(false);
       setNewDirName('');
       qc.invalidateQueries({ queryKey: ['files', c, s, selectedCid, currentPath] });
     },
-    onError: () => toast.error('Failed to create directory'),
+    onError: () => toast.error(t('pages.files.directoryCreateFailed')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (name: string) => filesApi.delete(c!, s!, selectedCid!, name),
     onSuccess: () => {
-      toast.success('File deleted');
+      toast.success(t('pages.files.fileDeleted'));
       setDeleteTarget(null);
       qc.invalidateQueries({ queryKey: ['files', c, s, selectedCid, currentPath] });
     },
-    onError: () => toast.error('Failed to delete file'),
+    onError: () => toast.error(t('pages.files.fileDeleteFailed')),
   });
 
   const moveMutation = useMutation({
     mutationFn: ({ name, targetCid }: { name: string; targetCid: number }) => filesApi.move(c!, s!, selectedCid!, name, targetCid),
     onSuccess: () => {
-      toast.success('File moved');
+      toast.success(t('pages.files.fileMoved'));
       setMoveTarget(null);
       setMoveTargetCid('');
       qc.invalidateQueries({ queryKey: ['files', c, s, selectedCid, currentPath] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to move file'),
+    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.files.fileMoveFailed')),
   });
 
   const navigateTo = (entry: FileEntry) => {
@@ -142,7 +144,7 @@ export default function Files() {
 
   const formatDate = (ts: number) => {
     if (!ts) return '-';
-    return new Date(ts * 1000).toLocaleDateString('de-DE', {
+    return new Date(ts * 1000).toLocaleDateString(i18n.language, {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
@@ -151,15 +153,15 @@ export default function Files() {
   // Breadcrumb parts
   const pathParts = currentPath.split('/').filter(Boolean);
 
-  if (!c || !s) return <EmptyState icon={FolderOpen} title="No server selected" />;
+  if (!c || !s) return <EmptyState icon={FolderOpen} title={t('pages.noServerSelected')} />;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">File Browser</h1>
+        <h1 className="text-xl font-semibold">{t('pages.files.title')}</h1>
         {selectedCid && (
           <Button size="sm" onClick={() => setShowMkdir(true)}>
-            <FolderPlus className="h-4 w-4 mr-1" /> New Folder
+            <FolderPlus className="h-4 w-4 mr-1" /> {t('pages.files.newFolder')}
           </Button>
         )}
       </div>
@@ -169,7 +171,7 @@ export default function Files() {
         <Card className="card-hero col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Hash className="h-3.5 w-3.5" /> Channels
+              <Hash className="h-3.5 w-3.5" /> {t('pages.files.channels')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -190,7 +192,7 @@ export default function Files() {
                   </button>
                 ))}
                 {channels.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-4">No channels</p>
+                  <p className="text-xs text-muted-foreground text-center py-4">{t('pages.files.noChannels')}</p>
                 )}
               </div>
             </ScrollArea>
@@ -225,7 +227,7 @@ export default function Files() {
               </div>
               {selectedCid && (
                 <Badge variant="secondary" className="text-[10px] font-mono-data">
-                  {files.length} item(s)
+                  {t('pages.files.itemCount', { count: files.length })}
                 </Badge>
               )}
             </div>
@@ -233,7 +235,7 @@ export default function Files() {
           <CardContent className="p-0">
             {!selectedCid ? (
               <div className="flex items-center justify-center h-[400px]">
-                <p className="text-sm text-muted-foreground">Select a channel to browse files</p>
+                <p className="text-sm text-muted-foreground">{t('pages.files.selectChannelHint')}</p>
               </div>
             ) : loadingFiles ? (
               <div className="flex items-center justify-center h-[400px]">
@@ -242,31 +244,31 @@ export default function Files() {
             ) : filesError ? (
               <div className="flex flex-col items-center justify-center h-[400px] gap-3 px-8">
                 <AlertTriangle className="h-8 w-8 text-amber-400" />
-                <p className="text-sm font-medium text-foreground">File Browser Unavailable</p>
+                <p className="text-sm font-medium text-foreground">{t('pages.files.unavailableTitle')}</p>
                 <p className="text-xs text-muted-foreground text-center max-w-md">
                   {(filesError as any)?.response?.data?.error?.includes('SSH credentials not configured')
-                    ? 'File browsing requires SSH access because the TeamSpeak WebQuery HTTP API does not support file transfer commands. Please configure SSH credentials (username & password) in the server settings.'
+                    ? t('pages.files.unavailableSsh')
                     : (filesError as any)?.response?.data?.error?.includes('SSH')
-                      ? 'Could not connect to TeamSpeak server via SSH. Please check the SSH credentials and port in server settings.'
-                      : (filesError as any)?.response?.data?.details || (filesError as any)?.response?.data?.error || 'Failed to load files. Ensure SSH credentials are configured in server settings.'}
+                      ? t('pages.files.sshConnectFailed')
+                      : (filesError as any)?.response?.data?.details || (filesError as any)?.response?.data?.error || t('pages.files.loadFailed')}
                 </p>
                 {(filesError as any)?.response?.data?.code != null && (
-                  <p className="text-[10px] text-muted-foreground/60 mt-1">TS3 error code: {(filesError as any).response.data.code}</p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1">{t('pages.files.ts3ErrorCode', { code: (filesError as any).response.data.code })}</p>
                 )}
               </div>
             ) : (
               <ScrollArea className="h-[460px]">
                 {/* File table header */}
                 <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border">
-                  <div className="col-span-6">Name</div>
-                  <div className="col-span-2 text-right">Size</div>
-                  <div className="col-span-3">Modified</div>
+                  <div className="col-span-6">{t('pages.files.colName')}</div>
+                  <div className="col-span-2 text-right">{t('pages.files.colSize')}</div>
+                  <div className="col-span-3">{t('pages.files.colModified')}</div>
                   <div className="col-span-1"></div>
                 </div>
 
                 {files.length === 0 ? (
                   <div className="flex items-center justify-center h-[350px]">
-                    <EmptyState icon={FolderOpen} title="Empty directory" description="No files in this directory." />
+                    <EmptyState icon={FolderOpen} title={t('pages.files.emptyDirectory')} description={t('pages.files.emptyDirectoryDescription')} />
                   </div>
                 ) : (
                   <div className="divide-y divide-border/50">
@@ -298,7 +300,7 @@ export default function Files() {
                             <button
                               onClick={(e) => { e.stopPropagation(); setMoveTarget(file); setMoveTargetCid(''); }}
                               className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-                              title="Move to another channel"
+                              title={t('pages.files.moveToAnotherChannel')}
                             >
                               <FolderInput className="h-3.5 w-3.5" />
                             </button>
@@ -322,20 +324,20 @@ export default function Files() {
 
       {/* Info notice */}
       <p className="text-xs text-muted-foreground text-center">
-        File upload/download is not available via WebQuery API. Use the TS3 client for file transfers.
+        {t('pages.files.uploadDownloadNotice')}
       </p>
 
       {/* Create Directory Dialog */}
       <Dialog open={showMkdir} onOpenChange={setShowMkdir}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Directory</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.files.createDirectory')}</DialogTitle></DialogHeader>
           <div>
-            <Label className="text-xs">Directory Name</Label>
-            <Input value={newDirName} onChange={(e) => setNewDirName(e.target.value)} placeholder="New Folder" autoFocus />
+            <Label className="text-xs">{t('pages.files.directoryName')}</Label>
+            <Input value={newDirName} onChange={(e) => setNewDirName(e.target.value)} placeholder={t('pages.files.newFolderPlaceholder')} autoFocus />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowMkdir(false)}>Cancel</Button>
-            <Button onClick={handleMkdir} disabled={mkdirMutation.isPending || !newDirName.trim()}>Create</Button>
+            <Button variant="outline" onClick={() => setShowMkdir(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleMkdir} disabled={mkdirMutation.isPending || !newDirName.trim()}>{t('common.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -343,12 +345,12 @@ export default function Files() {
       {/* Move File Dialog */}
       <Dialog open={!!moveTarget} onOpenChange={(v) => !v && setMoveTarget(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Move "{moveTarget?.name}"</DialogTitle></DialogHeader>
-          <p className="text-[11px] text-muted-foreground">Moved entirely on the server - the file's bytes never pass through this app.</p>
+          <DialogHeader><DialogTitle>{t('pages.files.moveTitle', { name: moveTarget?.name })}</DialogTitle></DialogHeader>
+          <p className="text-[11px] text-muted-foreground">{t('pages.files.moveHint')}</p>
           <div>
-            <Label className="text-xs">Target Channel</Label>
+            <Label className="text-xs">{t('pages.files.targetChannel')}</Label>
             <Select value={moveTargetCid} onValueChange={setMoveTargetCid}>
-              <SelectTrigger className="mt-1"><SelectValue placeholder="Choose a channel..." /></SelectTrigger>
+              <SelectTrigger className="mt-1"><SelectValue placeholder={t('pages.files.chooseChannelPlaceholder')} /></SelectTrigger>
               <SelectContent>
                 {channels.filter((ch) => ch.cid !== selectedCid).map((ch) => (
                   <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.name}</SelectItem>
@@ -357,9 +359,9 @@ export default function Files() {
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMoveTarget(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setMoveTarget(null)}>{t('common.cancel')}</Button>
             <Button onClick={handleMove} disabled={!moveTargetCid || moveMutation.isPending}>
-              <FolderInput className="h-4 w-4 mr-1" /> Move
+              <FolderInput className="h-4 w-4 mr-1" /> {t('pages.files.move')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -369,9 +371,9 @@ export default function Files() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
-        title="Delete File"
-        description={`Are you sure you want to delete "${deleteTarget?.name}"? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('pages.files.deleteFileTitle')}
+        description={t('pages.files.deleteFileDescription', { name: deleteTarget?.name })}
+        confirmLabel={t('common.delete')}
         destructive
         onConfirm={handleDelete}
         loading={deleteMutation.isPending}

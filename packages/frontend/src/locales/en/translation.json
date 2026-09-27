@@ -1,0 +1,2802 @@
+{
+  "common": {
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "edit": "Edit",
+    "create": "Create",
+    "creating": "Creating...",
+    "add": "Add",
+    "remove": "Remove",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "name": "Name",
+    "description": "Description",
+    "status": "Status",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "yes": "Yes",
+    "no": "No",
+    "none": "None",
+    "unknown": "Unknown",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "copy": "Copy",
+    "copied": "Copied",
+    "download": "Download",
+    "upload": "Upload",
+    "submit": "Submit",
+    "reset": "Reset",
+    "apply": "Apply",
+    "select": "Select",
+    "selectAll": "Select all",
+    "clear": "Clear",
+    "clearAll": "Clear all",
+    "noResults": "No results found",
+    "noData": "No data available",
+    "somethingWentWrong": "Something went wrong",
+    "areYouSure": "Are you sure?",
+    "actionCannotBeUndone": "This action cannot be undone.",
+    "optional": "optional",
+    "required": "Required",
+    "on": "On",
+    "off": "Off",
+    "active": "Active",
+    "inactive": "Inactive",
+    "online": "Online",
+    "offline": "Offline",
+    "id": "ID",
+    "type": "Type",
+    "date": "Date",
+    "time": "Time",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "role": "Role",
+    "logout": "Log out",
+    "settings": "Settings",
+    "language": "Language",
+    "duration": {
+      "permanent": "Permanent",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "roles": {
+      "admin": "Admin",
+      "viewer": "Viewer",
+      "botOperator": "Bot Operator",
+      "musicOperator": "Music Operator"
+    }
+  },
+  "nav": {
+    "collapse": "Collapse",
+    "sections": {
+      "overview": "Overview",
+      "management": "Management",
+      "security": "Security",
+      "content": "Content",
+      "system": "System",
+      "automation": "Automation"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "virtualServers": "Virtual Servers",
+      "statistics": "Statistics",
+      "channels": "Channels",
+      "clients": "Clients",
+      "serverGroups": "Server Groups",
+      "channelGroups": "Channel Groups",
+      "permissions": "Permissions",
+      "bans": "Bans",
+      "tokens": "Tokens",
+      "files": "Files",
+      "icons": "Icons",
+      "complaints": "Complaints",
+      "messages": "Messages",
+      "serverLogs": "Server Logs",
+      "instance": "Instance",
+      "miscellaneous": "Miscellaneous",
+      "advancedSettings": "Advanced Settings",
+      "musicRequestHistory": "Music Request History",
+      "botFlows": "Bot Flows",
+      "musicBots": "Music Bots"
+    }
+  },
+  "layout": {},
+  "pages": {
+    "noServerSelected": "No server selected",
+    "bans": {
+      "lastNickname": "Last Nickname",
+      "reason": "Reason",
+      "duration": "Duration",
+      "created": "Created",
+      "by": "By",
+      "removed": "Ban removed",
+      "added": "Ban added",
+      "addFailed": "Failed to add ban",
+      "addBan": "Add Ban",
+      "searchPlaceholder": "Search bans...",
+      "banType": "Ban Type",
+      "ipAddress": "IP Address",
+      "nameRegex": "Name (Regex)",
+      "uniqueId": "Unique ID",
+      "value": "Value",
+      "reasonPlaceholder": "Ban reason",
+      "oneHour": "1 Hour",
+      "oneDay": "1 Day",
+      "oneWeek": "1 Week",
+      "thirtyDays": "30 Days"
+    },
+    "messages": {
+      "title": "Offline Messages",
+      "compose": "Compose",
+      "searchPlaceholder": "Search messages...",
+      "from": "From",
+      "subject": "Subject",
+      "date": "Date",
+      "read": "Read",
+      "unread": "Unread",
+      "deleted": "Message deleted",
+      "sent": "Message sent",
+      "sendFailed": "Failed to send message",
+      "message": "Message",
+      "noContent": "No content",
+      "composeTitle": "Compose Message",
+      "recipientUid": "Recipient Client UID",
+      "recipientUidPlaceholder": "Client unique ID",
+      "subjectPlaceholder": "Message subject",
+      "bodyPlaceholder": "Message body...",
+      "send": "Send"
+    },
+    "setup": {
+      "passwordMismatch": "Passwords do not match",
+      "setupFailed": "Setup failed",
+      "title": "Initial Setup",
+      "subtitle": "Create your administrator account",
+      "intro": "This is the first time setup. Create an admin account to get started.",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Administrator",
+      "passwordHint": "Min. 8 chars, uppercase, lowercase, digit",
+      "confirmPassword": "Confirm Password",
+      "repeatPassword": "Repeat password",
+      "creatingAccount": "Creating account...",
+      "createAdminAccount": "Create Admin Account"
+    },
+    "botList": {
+      "selectServerFirst": "Please select a server first",
+      "created": "Bot created",
+      "createFailed": "Failed to create bot",
+      "fromTemplate": "From Template",
+      "newBot": "New Bot",
+      "noneYetTitle": "No bot flows yet",
+      "noneYetDescription": "Create your first automation flow to get started.",
+      "enabled": "Bot enabled",
+      "disabled": "Bot disabled",
+      "noDescription": "No description",
+      "serverHash": "Server #{{id}}",
+      "updated": "Updated {{time}}",
+      "editFlow": "Edit Flow",
+      "newBotFlow": "New Bot Flow",
+      "namePlaceholder": "My Automation",
+      "descriptionPlaceholder": "What does this bot do?",
+      "createdFromTemplate": "Bot '{{name}}' created from template",
+      "createFromTemplateFailed": "Failed to create bot from template",
+      "deleteTitle": "Delete Bot?",
+      "deleteDescription": "This will permanently delete this bot flow and all its execution history.",
+      "deleted": "Bot deleted"
+    },
+    "instance": {
+      "updated": "Instance settings updated",
+      "updateFailed": "Failed to update instance settings",
+      "fields": {
+        "guestServerqueryGroup": "Guest ServerQuery Group",
+        "templateServerAdminGroup": "Template Server Admin Group",
+        "templateServerDefaultGroup": "Template Server Default Group",
+        "templateChannelDefaultGroup": "Template Channel Default Group",
+        "templateChannelAdminGroup": "Template Channel Admin Group",
+        "filetransferPort": "File Transfer Port",
+        "floodCommands": "Flood Commands",
+        "floodTime": "Flood Time (sec)",
+        "floodBanTime": "Flood Ban Time (sec)"
+      },
+      "version": "Version",
+      "build": "Build",
+      "platform": "Platform",
+      "host": "Host",
+      "uptime": "Uptime",
+      "bytesSent": "Bytes Sent",
+      "bytesReceived": "Bytes Received",
+      "database": "Database",
+      "dbPlugin": "DB Plugin",
+      "ftPort": "FT Port",
+      "permissionsVersion": "Permissions Version",
+      "instanceSettings": "Instance Settings",
+      "saveChanges": "Save Changes",
+      "ipBindings": "IP Bindings",
+      "subsystem": {
+        "voice": "Voice",
+        "query": "Query",
+        "filetransfer": "File Transfer"
+      }
+    },
+    "serverStats": {
+      "noConnectionSelected": "No server connection selected",
+      "serversOnline": "Servers Online",
+      "users": "Users",
+      "instanceUptime": "Instance Uptime",
+      "currentBandwidth": "Current Bandwidth",
+      "uploadSecond": "Upload (this second)",
+      "uploadMinute": "Upload (this minute)",
+      "downloadSecond": "Download (this second)",
+      "downloadMinute": "Download (this minute)",
+      "transferredSinceStart": "Transferred Since Start",
+      "dataSent": "Data Sent",
+      "dataReceived": "Data Received",
+      "packetsSent": "Packets Sent",
+      "packetsReceived": "Packets Received",
+      "fileTransfersSinceStart": "File Transfers Since Start",
+      "filesSent": "Files Sent",
+      "filesReceived": "Files Received",
+      "selectServerFirst": "Select a server under Virtual Servers first.",
+      "noData": "No data",
+      "couldNotLoad": "Could not load statistics for this server.",
+      "general": "General",
+      "port": "Port",
+      "autostart": "Autostart",
+      "uptime": "Uptime",
+      "created": "Created",
+      "connections": "Connections",
+      "regularClients": "Regular Clients",
+      "queryClients": "Query Clients",
+      "slots": "Slots",
+      "network": "Network",
+      "packetLoss": "Packet Loss",
+      "ping": "Ping",
+      "currentUpload": "Current Upload",
+      "currentDownload": "Current Download",
+      "trafficSinceStart": "Traffic Since Start",
+      "sent": "Sent",
+      "received": "Received",
+      "total": "Total",
+      "overview": "Overview",
+      "selectedServer": "Selected Server"
+    },
+    "login": {
+      "ssoErrors": {
+        "notConfigured": "SSO is not configured.",
+        "failed": "SSO login failed. Please try again.",
+        "invalidState": "SSO login expired or was tampered with. Please try again.",
+        "noSubject": "The SSO provider did not return a valid identity.",
+        "accountDisabled": "This account has been disabled.",
+        "generic": "SSO login failed."
+      },
+      "twoFactorAuth": "Two-Factor Authentication",
+      "enterCode": "Enter the code from your authenticator app",
+      "codeOrRecovery": "Code (or a recovery code)",
+      "rememberDevice": "Remember this device for 15 days",
+      "invalidCode": "Invalid code. Please try again.",
+      "verifying": "Verifying...",
+      "verify": "Verify",
+      "backToLogin": "Back to login",
+      "subtitle": "Server Administration Panel",
+      "signInToContinue": "Sign in to continue",
+      "invalidCredentials": "Invalid credentials. Please try again.",
+      "signingIn": "Signing in...",
+      "signIn": "Sign In",
+      "or": "or"
+    },
+    "serverLogs": {
+      "entryAdded": "Log entry added",
+      "addFailed": "Failed to add log entry",
+      "addEntry": "Add Entry",
+      "export": "Export",
+      "asTxt": "as .txt",
+      "asHtml": "as .html",
+      "filterPlaceholder": "Filter logs...",
+      "thisServer": "This Server",
+      "instanceLog": "Instance Log",
+      "allLevels": "All Levels",
+      "levelError": "Error",
+      "levelWarning": "Warning",
+      "levelInfo": "Info",
+      "levelDebug": "Debug",
+      "nLines_one": "{{count}} line",
+      "nLines_other": "{{count}} lines",
+      "noEntriesFound": "No log entries found.",
+      "entriesShown_one": "{{count}} entry shown",
+      "entriesShown_other": "{{count}} entries shown",
+      "skippingFirst": "skipping first {{count}}",
+      "newer": "Newer",
+      "older": "Older",
+      "level": "Level"
+    },
+    "virtualServers": {
+      "started": "Server started",
+      "startFailed": "Failed to start server",
+      "stopped": "Server stopped",
+      "stopFailed": "Failed to stop server",
+      "created": "Virtual server created",
+      "createFailed": "Failed to create virtual server",
+      "createServer": "Create Server",
+      "servers": "Servers",
+      "onlineOffline": "online+offline",
+      "autostarting": "Autostarting",
+      "slots": "Slots",
+      "autostartSlots": "Autostart Slots",
+      "selected": "SELECTED",
+      "deselect": "Deselect",
+      "stop": "Stop",
+      "start": "Start",
+      "createDialogTitle": "Create Virtual Server",
+      "createDialogDescription": "Creates a new virtual server on this TeamSpeak instance.",
+      "namePlaceholder": "My TeamSpeak Server",
+      "portOptional": "Port (optional)",
+      "portPlaceholder": "Leave empty for first free port",
+      "autostartWithInstance": "Autostart with the instance"
+    },
+    "misc": {
+      "identityUpdated": "Identity updated",
+      "identityUpdateFailed": "Failed to update identity",
+      "snapshotCreated": "Snapshot created and downloaded",
+      "snapshotCreateFailed": "Failed to create snapshot",
+      "snapshotRestored": "Snapshot restored",
+      "snapshotRestoreFailed": "Failed to restore snapshot",
+      "permissionsReset": "Permissions reset to defaults",
+      "permissionsResetFailed": "Failed to reset permissions",
+      "messageSent": "Message sent",
+      "messageSendFailed": "Failed to send message",
+      "notValidSnapshot": "Not a valid snapshot file",
+      "globalMessage": "Global Message",
+      "announcementPlaceholder": "Important announcement...",
+      "allServers": "All Servers",
+      "thisServerOnly": "This Server Only",
+      "sentAnonymously": "Sent anonymously as \"server\" to every virtual server on this instance.",
+      "sentUnderIdentity": "Sent under your current query identity (see below) to this server only - not anonymous.",
+      "identity": "Identity",
+      "identityDescription": "The nickname your manual actions through this app (e.g. renaming a channel) show as in TeamSpeak's own logs. Separate from any per-server Bot Identity, which only covers bot-flow actions.",
+      "current": "Current: {{name}}",
+      "newNickname": "New nickname",
+      "snapshots": "Snapshots",
+      "snapshotsDescription": "Saves all settings, groups, and known client identities of the currently selected server. Files, icons, and avatars are not included.",
+      "creating": "Creating...",
+      "createAndDownload": "Create & Download",
+      "restoreFromFile": "Restore from File",
+      "restoreWarning": "Restoring overwrites the currently selected server's settings, groups, and permissions.",
+      "dangerZone": "Danger Zone",
+      "dangerZoneDescription": "Deletes every group, client, and channel permission on the currently selected server, then recreates the default template groups. Cannot be undone.",
+      "resetAllPermissions": "Reset All Permissions",
+      "restoreSnapshotTitle": "Restore Snapshot?",
+      "restoreSnapshotDescription": "This overwrites the currently selected server's settings, groups, and permissions with the contents of \"{{name}}\". This cannot be undone.",
+      "restore": "Restore",
+      "resetAllPermissionsTitle": "Reset All Permissions?",
+      "resetAllPermissionsDescription": "This permanently deletes every server group, channel group, client, and channel permission on the currently selected server, then recreates the default template groups. This cannot be undone."
+    },
+    "clients": {
+      "nickname": "Nickname",
+      "country": "Country",
+      "idle": "Idle",
+      "away": "Away",
+      "muted": "Muted",
+      "poke": "Poke",
+      "kickedName": "Kicked {{name}}",
+      "kickFromServer": "Kick from Server",
+      "bannedName": "Banned {{name}}",
+      "banOneHour": "Ban (1 hour)",
+      "onlineCount_one": "{{count}} online",
+      "onlineCount_other": "{{count}} online",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "move": "Move",
+      "kick": "Kick",
+      "ban": "Ban",
+      "describe": "Describe",
+      "searchPlaceholder": "Search clients...",
+      "pokeName": "Poke {{name}}",
+      "pokePlaceholder": "Hey!",
+      "pokedName": "Poked {{name}}",
+      "moveCount_one": "Move {{count}} client",
+      "moveCount_other": "Move {{count}} clients",
+      "targetChannel": "Target Channel",
+      "chooseChannel": "Choose a channel...",
+      "movedCount_one": "Moved {{count}} client",
+      "movedCount_other": "Moved {{count}} clients",
+      "moveFailed": "Failed to move clients",
+      "kickCount_one": "Kick {{count}} client",
+      "kickCount_other": "Kick {{count}} clients",
+      "reasonOptional": "Reason (optional, shown to the kicked clients)",
+      "kickedByAdmin": "Kicked by admin",
+      "kickedCount_one": "Kicked {{count}} client",
+      "kickedCount_other": "Kicked {{count}} clients",
+      "kickFailed": "Failed to kick clients",
+      "banCount_one": "Ban {{count}} client",
+      "banCount_other": "Ban {{count}} clients",
+      "durationSeconds": "Duration (seconds, 0 = permanent)",
+      "bannedByAdmin": "Banned by admin",
+      "bannedCount_one": "Banned {{count}} client",
+      "bannedCount_other": "Banned {{count}} clients",
+      "banFailed": "Failed to ban clients",
+      "describeCount_one": "Describe {{count}} client",
+      "describeCount_other": "Describe {{count}} clients",
+      "descriptionApplied": "Description (applied to all selected clients)",
+      "descriptionUpdated_one": "Updated description for {{count}} client",
+      "descriptionUpdated_other": "Updated description for {{count}} clients",
+      "descriptionUpdateFailed": "Failed to update descriptions"
+    },
+    "tokens": {
+      "createdAndCopied": "Token created and copied to clipboard",
+      "created": "Token created",
+      "createFailed": "Failed to create token",
+      "tempCreated": "Temporary password created",
+      "tempCreateFailed": "Failed to create temporary password",
+      "tempDeleted": "Temporary password deleted",
+      "defaultChannel": "Default Channel",
+      "token": "Token",
+      "serverGroup": "Server Group",
+      "channelGroup": "Channel Group",
+      "groupId": "Group ID",
+      "tokenDeleted": "Token deleted",
+      "targetChannel": "Target Channel",
+      "expires": "Expires",
+      "expired": "Expired",
+      "createdBy": "Created By",
+      "title": "Privilege Keys",
+      "createToken": "Create Token",
+      "searchTokens": "Search tokens...",
+      "temporaryPasswords": "Temporary Passwords",
+      "noTempPasswords": "No temporary passwords set",
+      "searchTempPasswords": "Search temporary passwords...",
+      "groupType": "Group Type",
+      "group": "Group",
+      "chooseGroup": "Choose a group...",
+      "iconForGroup": "Icon for {{name}}",
+      "createTempPassword": "Create Temporary Password",
+      "enterOrGenerate": "Enter or generate a password",
+      "generateRandom": "Generate random password",
+      "validFor": "Valid For",
+      "unit": "Unit",
+      "minutes": "Minutes",
+      "hours": "Hours",
+      "days": "Days"
+    },
+    "advancedSettings": {
+      "title": "Advanced Settings",
+      "saveFailed": "Failed to save",
+      "saved": "Saved",
+      "tabs": {
+        "appearance": "Appearance",
+        "access": "Access & Groups",
+        "moderation": "Moderation & Logging",
+        "limits": "File Transfer Limits"
+      },
+      "welcomeHostMessage": "Welcome & Host Message",
+      "welcomeMessage": "Welcome Message",
+      "welcomeMessagePlaceholder": "Shown to clients right after they connect",
+      "hostMessage": "Host Message",
+      "hostMessageMode": "Host Message Mode",
+      "dontShow": "Don't show",
+      "showInChatLog": "Show in chat log",
+      "showAsModal": "Show as modal",
+      "showAsModalThenQuit": "Show as modal, then quit",
+      "hostBanner": "Host Banner",
+      "linkUrl": "Link URL",
+      "imageUrl": "Image URL",
+      "rotationInterval": "Rotation Interval (s)",
+      "displayMode": "Display Mode",
+      "noAdjust": "No adjust",
+      "stretchIgnoreAspect": "Stretch (ignore aspect ratio)",
+      "keepAspectRatio": "Keep aspect ratio",
+      "hostButton": "Host Button",
+      "linkUrlOnClick": "Link URL (opened on click)",
+      "tooltip": "Tooltip",
+      "defaultGroups": "Default Groups",
+      "defaultServerGroup": "Default Server Group",
+      "defaultChannelGroup": "Default Channel Group",
+      "defaultChannelAdminGroup": "Default Channel Admin Group",
+      "accessSecurity": "Access & Security",
+      "serverPassword": "Server Password",
+      "minIdentitySecurityLevel": "Minimum Identity Security Level",
+      "minClientBuild": "Minimum Client Build",
+      "reservedSlots": "Reserved Slots",
+      "codecEncryption": "Codec Encryption",
+      "perChannelSetting": "Per-channel setting",
+      "forcedOff": "Forced off",
+      "forcedOn": "Forced on",
+      "showOnGlobalWeblist": "Show on Global Weblist",
+      "complaintsBeforeBan": "Complaints Before Ban",
+      "banDurationSeconds": "Ban Duration (s)",
+      "complaintRemovedAfter": "Complaint Removed After (s)",
+      "prioritySilence": "Priority & Silence",
+      "clientsBeforeForcedSilence": "Clients in Channel Before Forced Silence",
+      "prioritySpeakerReduction": "Priority Speaker Volume Reduction (dB)",
+      "antiFlood": "Anti-Flood",
+      "pointsReducedGood": "Points Reduced for Being Good",
+      "pointsToBlockCommands": "Points to Block Commands",
+      "pointsToBlockConnections": "Points to Block Connections",
+      "eventLogging": "Event Logging",
+      "serverqueryClients": "ServerQuery Clients",
+      "serverChanges": "Server Changes",
+      "fileTransfers": "File Transfers",
+      "fileTransferLimitsPerUser": "File Transfer Limits (per user)",
+      "uploadQuotaMb": "Upload Quota (MB)",
+      "downloadQuotaMb": "Download Quota (MB)",
+      "uploadBandwidth": "Upload Bandwidth (Bytes/s)",
+      "downloadBandwidth": "Download Bandwidth (Bytes/s)",
+      "zeroUnlimited": "0 = unlimited"
+    },
+    "notFound": {
+      "title": "Page Not Found",
+      "description": "The page you're looking for doesn't exist or has been moved.",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "complaints": {
+      "from": "From",
+      "about": "About",
+      "when": "When",
+      "searchPlaceholder": "Search complaints..."
+    },
+    "widgetPage": {
+      "title": "TS Server Widget",
+      "notAvailable": "Widget not available"
+    },
+    "musicRequests": {
+      "description": "History of songs requested via the <1>!play</1> command on this server.",
+      "noneYetTitle": "No music requests yet",
+      "noneYetDescription": "When users request songs using the !play command, they will appear here as a history log.",
+      "requested": "Requested {{time}}"
+    },
+    "settings": {
+      "webgui": {
+        "language": {
+          "title": "My Language",
+          "description": "The WebGUI's display language, just for you - stored on your account so it follows you to any browser."
+        },
+        "darkGroup": "Dark",
+        "lightGroup": "Light",
+        "myBaseTheme": "My Base Theme",
+        "baseThemeDescription": "The background and surface palette, which also decides whether the app is light or dark. Overrides the installation default below, just for you - stored in this browser only.",
+        "resetToInstallDefault": "Reset to installation default",
+        "myAccent": "My Accent",
+        "accentDescription": "Buttons, links and highlights - independent of the base theme above, every combination works.",
+        "installDefaultBaseTheme": "Installation Default Base Theme",
+        "installDefaultBaseThemeDescription": "Applies to every user who hasn't set their own base theme preference above.",
+        "installDefaultAccent": "Installation Default Accent",
+        "installDefaultAccentDescription": "Applies to every user who hasn't set their own accent preference above.",
+        "baseThemeSetToast": "Installation base theme set to {{theme}}",
+        "baseThemeSetFailed": "Failed to update installation base theme",
+        "accentSetToast": "Installation accent set to {{accent}}",
+        "accentSetFailed": "Failed to update installation accent",
+        "pairingHint": "{{theme}} goes well with the {{accent}} accent."
+      },
+      "title": "Settings",
+      "tabs": {
+        "connections": "Connections",
+        "account": "Account",
+        "webgui": "WebGui",
+        "users": "Users",
+        "youtube": "YouTube",
+        "streaming": "Streaming",
+        "debug": "Debug",
+        "restart": "Restart",
+        "sso": "SSO",
+        "updateStatus": "Update Status"
+      },
+      "account": {
+        "passwordMinLength": "New password must be at least 6 characters",
+        "passwordMismatch": "Passwords do not match",
+        "passwordChangedSuccess": "Password changed successfully",
+        "passwordChangeFailed": "Failed to change password",
+        "changePasswordTitle": "Change Password",
+        "currentPasswordLabel": "Current Password",
+        "currentPasswordPlaceholder": "Enter current password",
+        "newPasswordLabel": "New Password",
+        "newPasswordPlaceholder": "Min. 6 characters",
+        "confirmNewPasswordLabel": "Confirm New Password",
+        "confirmNewPasswordPlaceholder": "Repeat new password",
+        "changing": "Changing..."
+      },
+      "twoFactor": {
+        "title": "Two-Factor Authentication",
+        "description": "Adds a one-time code from an authenticator app (Google Authenticator, Authy, ...) on top of your password.",
+        "disable2fa": "Disable 2FA",
+        "starting": "Starting...",
+        "enable2fa": "Enable 2FA",
+        "setupTitle": "Set Up Two-Factor Authentication",
+        "scanInstructions": "Scan this with your authenticator app, then enter the 6-digit code it shows to confirm.",
+        "qrAlt": "2FA QR code",
+        "manualEntryLabel": "Can't scan? Enter manually:",
+        "confirmationCodeLabel": "Confirmation Code",
+        "verifying": "Verifying...",
+        "verifyAndEnable": "Verify & Enable",
+        "recoveryCodesHint": "Save these recovery codes somewhere safe. Each one can be used once to log in if you lose access to your authenticator app - they won't be shown again.",
+        "savedCodesConfirm": "I've saved these codes",
+        "twoFaEnabledToast": "2FA enabled",
+        "disableTitle": "Disable Two-Factor Authentication",
+        "disableConfirmHint": "Enter your current password to confirm.",
+        "disablePasswordPlaceholder": "Current password",
+        "disabling": "Disabling...",
+        "setupFailed": "Failed to start 2FA setup",
+        "invalidCode": "Invalid code",
+        "twoFaDisabledToast": "2FA disabled",
+        "disableFailed": "Failed to disable 2FA",
+        "disableAction": "Disable"
+      },
+      "connections": {
+        "manageDescription": "Manage TeamSpeak server connections",
+        "addConnection": "Add Connection",
+        "host": "Host",
+        "protocol": "Protocol",
+        "ssh": "SSH",
+        "test": "Test",
+        "botIdentityFallback": "Bot Identity",
+        "connectionSuccessful": "Connection successful",
+        "connectionFailedWithError": "Connection failed: {{error}}",
+        "connectionFailed": "Connection failed",
+        "editConnectionTitle": "Edit Connection",
+        "namePlaceholder": "My TS Server",
+        "hostPlaceholder": "127.0.0.1",
+        "webqueryPortLabel": "WebQuery Port",
+        "apiKeyLabel": "API Key",
+        "apiKeyUnchangedPlaceholder": "(unchanged — enter new key to update)",
+        "apiKeyPlaceholder": "WebQuery API Key",
+        "useHttps": "Use HTTPS",
+        "pingTargetLabel": "Dashboard Ping Target (optional)",
+        "pingTargetPlaceholder": "Defaults to Host above ({{host}})",
+        "pingTargetHint": "Only affects the Dashboard's Ping reading - useful if Host above is an internal address but the public domain is what should actually be tested. Bot flows always use Host, never this.",
+        "sshPortLabel": "SSH Port",
+        "sshUserLabel": "SSH User",
+        "sshUserPlaceholder": "serveradmin",
+        "unchanged": "(unchanged)",
+        "sshPasswordLabel": "SSH Password",
+        "update": "Update",
+        "connectionUpdated": "Connection updated",
+        "updateFailed": "Failed to update",
+        "connectionAdded": "Connection added",
+        "createFailed": "Failed to create",
+        "deleteConnectionTitle": "Delete Connection?",
+        "deleteConnectionDescription": "This will remove the server connection. Bots linked to this server will stop working.",
+        "connectionDeleted": "Connection deleted"
+      },
+      "botIdentity": {
+        "apiKeyReissued": "API key reissued",
+        "createdToast": "Bot identity created",
+        "createFailed": "Failed to create bot identity",
+        "renamedToast": "Bot identity renamed",
+        "renameFailed": "Failed to rename bot identity",
+        "dialogTitle": "Bot Identity — {{name}}",
+        "hasIdentityDescription": "Bot flow actions on this server are attributed to this name in TeamSpeak's own logs and notifications, instead of the same identity your own manual actions in this app use.",
+        "noIdentityDescription": "Optional: give bot flows their own separate ServerQuery identity, so their actions (e.g. renaming a channel) show up under this name in TeamSpeak's own logs instead of blurring together with your own manual actions in this app. Nothing changes for bot flows until you create one.",
+        "scopeFixHint": "Bot flow actions failing with a permission or \"out of scope\" error? This identity may have been created before a scope fix - use \"Fix Permissions\" below to reissue its key without changing anything else.",
+        "displayNameLabel": "Display Name",
+        "fixing": "Fixing...",
+        "fixPermissions": "Fix Permissions",
+        "createBotIdentityButton": "Create Bot Identity"
+      },
+      "users": {
+        "manageDescription": "Manage webapp users and roles",
+        "searchPlaceholder": "Search users...",
+        "addUser": "Add User",
+        "colUsername": "Username",
+        "colDisplayName": "Display Name",
+        "colLastLogin": "Last Login",
+        "noUsersMatch": "No users match \"{{search}}\"",
+        "ssoBadge": "SSO",
+        "cantChangeOwnRole": "You can't change your own role",
+        "cantDisableOwnAccount": "You can't disable your own account",
+        "never": "Never",
+        "serverAccessTitle": "Server Access",
+        "sessionsTitle": "Sessions",
+        "resetPasswordTitle": "Reset Password",
+        "cantDeleteOwnAccount": "You can't delete your own account",
+        "usernamePlaceholder": "johndoe",
+        "displayNamePlaceholder": "John Doe",
+        "passwordPlaceholder": "********",
+        "userCreated": "User created",
+        "createUserFailed": "Failed to create user",
+        "roleUpdated": "Role updated",
+        "roleUpdateFailed": "Failed to update role",
+        "userEnabledToast": "User enabled",
+        "userDisabledToast": "User disabled",
+        "statusUpdateFailed": "Failed to update status",
+        "resetPasswordMinLength": "Password must be at least 6 characters",
+        "passwordResetSuccess": "Password reset successfully",
+        "resetPasswordFailed": "Failed to reset password",
+        "userUpdated": "User updated",
+        "updateUserFailed": "Failed to update user",
+        "setNewPasswordFor": "Set a new password for {{username}}",
+        "deleteUserTitle": "Delete User?",
+        "deleteUserDescription": "This user will be permanently deleted.",
+        "userDeleted": "User deleted",
+        "deleteUserFailed": "Failed to delete user",
+        "resetting": "Resetting...",
+        "editUserTitle": "Edit User"
+      },
+      "serverAccess": {
+        "updated": "Server access updated",
+        "updateFailed": "Failed to update server access",
+        "title": "Server Access — {{username}}",
+        "noConnections": "No server connections configured yet."
+      },
+      "sessions": {
+        "title": "Sessions — {{username}}",
+        "description": "One entry per logged-in device/browser. Revoking a session forces that device to log in again.",
+        "selfWarning": " Revoking your own current session will log you out too.",
+        "noActiveSessions": "No active sessions.",
+        "signedIn": "Signed in {{date}}",
+        "expires": "Expires {{date}}",
+        "revoke": "Revoke",
+        "revoked": "Session revoked",
+        "revokeFailed": "Failed to revoke session",
+        "revokedAllToast": "Revoked {{count}} session(s)",
+        "revokeAllFailed": "Failed to revoke sessions",
+        "revoking": "Revoking...",
+        "revokeAll": "Revoke All"
+      },
+      "youtube": {
+        "title": "YouTube Cookies",
+        "description": "Upload a cookies.txt file to access age-restricted or member-only YouTube content. You can export cookies from your browser using extensions like",
+        "extensionName": "Get cookies.txt LOCALLY",
+        "extensionSuffix": " (Chrome/Firefox).",
+        "noCookiesConfigured": "No cookies configured",
+        "cookiesRejected": "YouTube rejected these cookies ({{size}}) — re-export and re-upload",
+        "cookiesWorking": "Cookies active and working ({{size}})",
+        "cookiesNotChecked": "Cookies active ({{size}}) — not yet checked",
+        "checking": "Checking...",
+        "recheck": "Recheck",
+        "uploading": "Uploading...",
+        "uploadCookiesFile": "Upload cookies.txt",
+        "pasteCookies": "Paste cookies",
+        "settingSaved": "Setting saved",
+        "settingSaveFailed": "Failed to save setting",
+        "uploadedButRejected": "Uploaded, but YouTube rejected these cookies",
+        "cookieFileUploaded": "Cookie file uploaded",
+        "uploadFailed": "Failed to upload cookie file",
+        "savedButRejected": "Saved, but YouTube rejected these cookies",
+        "cookiesSaved": "Cookies saved",
+        "saveCookiesFailed": "Failed to save cookies",
+        "cookieFileRemoved": "Cookie file removed",
+        "removeCookiesFailed": "Failed to remove cookies",
+        "playedSongStorageTitle": "Played Song Storage",
+        "playedSongStorageDescriptionPart1": "Controls what happens to songs downloaded via chat commands (",
+        "playedSongStorageDescriptionPart2": "). This does not affect songs added deliberately through the Library tab (upload or \"download by URL\") — those are always kept.",
+        "keepPlayedSongsLabel": "Keep played songs",
+        "keepOnDescription": "On: chat-played songs can be picked up into the library by \"Scan for New Files\" and kept indefinitely (default).",
+        "keepOffDescription": "Off: chat-played songs are never added to the library and are deleted automatically about an hour after playing, to save disk space."
+      },
+      "streaming": {
+        "title": "Stream Defaults",
+        "descriptionUsage": "uses when nobody names a quality. Naming one in the chat ({{names}}) still wins for that stream. Higher values need more upload bandwidth and more CPU on this machine, so if viewers report stuttering, come back here and lower them.",
+        "resolutionLabel": "Resolution",
+        "pixelsSuffix": "{{width}}x{{height}} pixels",
+        "frameRateLabel": "Frame Rate",
+        "frameRateHint": "Frames per second, 1-120.",
+        "bitrateLabel": "Bitrate",
+        "bitrateHintPrefix": "As ffmpeg writes it, e.g.",
+        "volumeLabel": "Volume",
+        "volumeHint": "Percent of the video's own loudness, 0-100. Videos are mastered far louder than people speak, so a stream at its own level arrives as a shout — hence the low default. Viewers can still turn their own player up. Takes effect on the next stream, not the running one.",
+        "restoreShippedValues": "Restore shipped values",
+        "unsavedChanges": "Unsaved changes",
+        "streamDefaultsSaved": "Stream defaults saved",
+        "streamDefaultsSaveFailed": "Failed to save stream defaults"
+      },
+      "debug": {
+        "loggingTitle": "Debug Logging",
+        "loggingDescription": "Extra verbose logging for diagnosing issues. Leave these off during normal operation — they can produce a lot of log output. Changes take effect immediately.",
+        "voiceBotDebugLabel": "Voice Bot Debug",
+        "voiceBotDebugHint": "Per-second audio streaming stats (jitter, frame timing) for music/stream bots.",
+        "rankCheckDebugLabel": "Rank Check Debug",
+        "rankCheckDebugHint": "Per-client detail (computed hours, group membership) for the Rank Check bot-flow action.",
+        "serverQueryDebugLabel": "ServerQuery Debug",
+        "serverQueryDebugHint": "Every WebQuery/SSH command sent to a TeamSpeak server and its raw response, including errors (e.g. insufficient permissions) - useful when a bot flow action silently doesn't do what's expected.",
+        "debugFlagUpdateFailed": "Failed to update debug flag",
+        "dangerZone": "Danger Zone",
+        "idResetHint": "SQLite's id counters never go back down on their own, even after deleting everything - these wipe a table entirely (across every server, not just the one selected above) so its next entry starts back at #1.",
+        "resetRadioIdsLabel": "Reset Radio Station IDs",
+        "resetRadioIdsHint": "Deletes every radio station on every server.",
+        "reset": "Reset",
+        "resetBotIdsLabel": "Reset Music Bot IDs",
+        "resetBotIdsHint": "Stops and deletes every music bot on every server.",
+        "radioIdsResetToast_one": "Deleted {{count}} radio station, IDs reset",
+        "radioIdsResetToast_other": "Deleted {{count}} radio stations, IDs reset",
+        "radioIdsResetFailed": "Failed to reset radio station IDs",
+        "botIdsResetToast_one": "Deleted {{count}} music bot, IDs reset",
+        "botIdsResetToast_other": "Deleted {{count}} music bots, IDs reset",
+        "botIdsResetFailed": "Failed to reset music bot IDs",
+        "resetRadioTitle": "Reset Radio Station IDs?",
+        "resetBotsTitle": "Reset Music Bot IDs?",
+        "resetRadioDescription": "This permanently deletes every radio station on every server. They will need to be re-added.",
+        "resetBotsDescription": "This stops and permanently deletes every music bot on every server. They will need to be re-created."
+      },
+      "restart": {
+        "title": "Scheduled Restart",
+        "descriptionPart1": "Periodically restart ts6-manager's own containers to clear memory and ensure a clean runtime state. This does",
+        "descriptionPart2": "restart your TeamSpeak server — only ts6-manager itself. Pick at least one container below to enable it.",
+        "restartBackendLabel": "Restart Backend",
+        "restartBackendHint": "Bot connections, EventBridge, WebSocket state.",
+        "restartSidecarLabel": "Restart Sidecar",
+        "restartSidecarHint": "The video-streaming (WebRTC/RTP) process.",
+        "timeLabel": "Time (24h, server-local)",
+        "daysLabel": "Days",
+        "restartScheduleSaved": "Restart schedule saved",
+        "restartScheduleSaveFailed": "Failed to save restart schedule",
+        "days": {
+          "sun": "Sun",
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat"
+        },
+        "notEmphasis": "not"
+      },
+      "sso": {
+        "title": "Single Sign-On (OIDC)",
+        "descriptionPart1": "Let users log in via an external OpenID Connect provider (Authentik, Keycloak, Authelia, Zitadel, ...). A brand-new user is created as a",
+        "descriptionPart2": "on their first SSO login — promote them to admin afterward from the Users tab if needed. Local username/password login stays available alongside this.",
+        "viewerEmphasis": "viewer",
+        "enabledHint": "Shows a \"Sign in with SSO\" button on the login page.",
+        "issuerUrlLabel": "Issuer URL",
+        "issuerUrlHint": "The provider's OIDC discovery document must be reachable at",
+        "clientIdLabel": "Client ID",
+        "clientSecretLabel": "Client Secret",
+        "clientSecretPlaceholderExisting": "Leave blank to keep the existing secret",
+        "clientSecretPlaceholder": "Client secret",
+        "buttonLabelLabel": "Button Label",
+        "redirectUriHint": "Redirect URI to register at your provider:",
+        "ssoSettingsSaved": "SSO settings saved",
+        "ssoSettingsSaveFailed": "Failed to save SSO settings"
+      },
+      "updateStatus": {
+        "title": "Update Status",
+        "recheckNow": "Recheck Now",
+        "checkingForUpdates": "Checking for updates...",
+        "updateAvailable": "Update available",
+        "allUpToDate": "All up to date",
+        "checkFailed": "Failed to check for updates",
+        "comparisonHintPrefix": "Compares this deployment against GitHub's",
+        "comparisonHintSuffix": "branch. Notify-only — nothing here runs an update automatically.",
+        "backend": "Backend",
+        "sidecar": "Sidecar",
+        "frontend": "Frontend",
+        "installed": "Installed",
+        "latestMain": "Latest (main)",
+        "unreachable": "unreachable",
+        "unknown": "unknown",
+        "updateAvailableBadge": "update available",
+        "upToDate": "up to date",
+        "lastChecked": "Last checked: {{date}}",
+        "notCheckedYet": "Not checked yet",
+        "githubTokenTitle": "GitHub API Token",
+        "githubTokenDescriptionPrefix": "Optional. This check reads three small files from GitHub per run, which is fine within GitHub's unauthenticated limit of 60 requests/hour — but that budget is shared with anything else on this server calling GitHub's API, and \"Recheck Now\" is throttled to 20/hour without a token to stay inside it. Add a token (a plain",
+        "githubTokenLinkText": "fine-grained personal access token",
+        "githubTokenDescriptionSuffix": "with no repository access needed, since it only reads public files) to raise that to 5,000 requests/hour.",
+        "tokenLabel": "Token",
+        "tokenConfiguredPlaceholder": "Configured — leave blank and Save does nothing",
+        "tokenPlaceholder": "ghp_... or github_pat_...",
+        "tokenConfiguredHint": "A token is configured.",
+        "noTokenConfiguredHint": "No token configured — using the unauthenticated limit.",
+        "tokenSaved": "GitHub token saved",
+        "tokenSaveFailed": "Failed to save GitHub token",
+        "tokenRemoved": "GitHub token removed",
+        "tokenRemoveFailed": "Failed to remove GitHub token",
+        "removing": "Removing..."
+      }
+    },
+    "icons": {
+      "title": "Icon Browser",
+      "searchPlaceholder": "Search icon ID...",
+      "uploading": "Uploading...",
+      "uploadIcons": "Upload Icons",
+      "iconPool": "Icon Pool",
+      "maxSize": "max {{size}}",
+      "iconCount_one": "{{count}} icon",
+      "iconCount_other": "{{count}} icons",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "clear": "Clear",
+      "deleteSelected": "Delete selected",
+      "unavailableTitle": "Icon Browser Unavailable",
+      "unavailableSsh": "Reading the icon pool requires SSH access, because the TeamSpeak WebQuery HTTP API does not support file transfer commands. Please configure SSH credentials (username & password) in the server settings.",
+      "loadFailed": "Failed to load the icon pool.",
+      "noMatching": "No matching icons",
+      "noIcons": "No icons uploaded",
+      "noMatchingDescription": "No icon in this pool matches your search.",
+      "uploadHintAdmin": "Upload a PNG, JPEG, GIF, WebP or SVG file - or drop one here - to add it to this server's icon pool.",
+      "uploadHintViewer": "This server has no icons in its icon pool yet.",
+      "inUse": "in use",
+      "poolFooter": "Icons are stored in the virtual server's own icon pool. The icon ID is the CRC32 checksum of the file, so uploading the same image twice always yields the same ID.",
+      "poolFooterMaxSize": " This server accepts icons up to {{size}} (i_max_icon_filesize).",
+      "poolFooterNoPermission": " Note: the query identity is missing the b_icon_manage permission.",
+      "deleteTitle_one": "Delete icon?",
+      "deleteTitle_other": "Delete {{count}} icons?",
+      "deleteWarning_one": "Warning: {{count}} of the selected icon is still assigned — {{list}}. Deleting it leaves that assignment pointing at a missing icon.",
+      "deleteWarning_other": "Warning: {{count}} of the selected icon(s) are still assigned — {{list}}. Deleting them leaves those assignments pointing at a missing icon.",
+      "deleteDescription": "This removes the icon from the server's icon pool. This cannot be undone.",
+      "uploadedToast_one": "{{count}} icon uploaded",
+      "uploadedToast_other": "{{count}} icons uploaded",
+      "duplicateToast_one": "{{count}} icon was already in the pool",
+      "duplicateToast_other": "{{count}} icons were already in the pool",
+      "uploadFailed": "Upload failed",
+      "deletedToast_one": "{{count}} icon deleted",
+      "deletedToast_other": "{{count}} icons deleted",
+      "deleteFailedToast_one": "{{count}} icon could not be deleted",
+      "deleteFailedToast_other": "{{count}} icons could not be deleted",
+      "deleteFailed": "Delete failed",
+      "tooLargeToast_one": "{{count}} file exceeds this server's icon size limit of {{size}} (i_max_icon_filesize).",
+      "tooLargeToast_other": "{{count}} files exceed this server's icon size limit of {{size}} (i_max_icon_filesize).",
+      "usage": {
+        "virtualserver": "Virtual Server",
+        "servergroup": "Server Group",
+        "channelgroup": "Channel Group",
+        "channel": "Channel"
+      }
+    },
+    "files": {
+      "title": "File Browser",
+      "newFolder": "New Folder",
+      "channels": "Channels",
+      "noChannels": "No channels",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items",
+      "selectChannelHint": "Select a channel to browse files",
+      "unavailableTitle": "File Browser Unavailable",
+      "unavailableSsh": "File browsing requires SSH access because the TeamSpeak WebQuery HTTP API does not support file transfer commands. Please configure SSH credentials (username & password) in the server settings.",
+      "sshConnectFailed": "Could not connect to TeamSpeak server via SSH. Please check the SSH credentials and port in server settings.",
+      "loadFailed": "Failed to load files. Ensure SSH credentials are configured in server settings.",
+      "ts3ErrorCode": "TS3 error code: {{code}}",
+      "colName": "Name",
+      "colSize": "Size",
+      "colModified": "Modified",
+      "emptyDirectory": "Empty directory",
+      "emptyDirectoryDescription": "No files in this directory.",
+      "moveToAnotherChannel": "Move to another channel",
+      "uploadDownloadNotice": "File upload/download is not available via WebQuery API. Use the TS3 client for file transfers.",
+      "createDirectory": "Create Directory",
+      "directoryName": "Directory Name",
+      "newFolderPlaceholder": "New Folder",
+      "moveTitle": "Move \"{{name}}\"",
+      "moveHint": "Moved entirely on the server - the file's bytes never pass through this app.",
+      "targetChannel": "Target Channel",
+      "chooseChannelPlaceholder": "Choose a channel...",
+      "move": "Move",
+      "deleteFileTitle": "Delete File",
+      "deleteFileDescription": "Are you sure you want to delete \"{{name}}\"? This cannot be undone.",
+      "directoryCreated": "Directory created",
+      "directoryCreateFailed": "Failed to create directory",
+      "fileDeleted": "File deleted",
+      "fileDeleteFailed": "Failed to delete file",
+      "fileMoved": "File moved",
+      "fileMoveFailed": "Failed to move file"
+    },
+    "dashboard": {
+      "noAccessTitle": "No access to this server",
+      "noAccessDescription": "Your account isn't granted access to this server connection. Ask an admin to grant it in Settings → Users.",
+      "noServerDescription": "Select a server connection from the header to view the dashboard.",
+      "connectionFailedTitle": "Connection failed",
+      "connectionFailedDescription": "Could not connect to the TeamSpeak server. Check your connection settings.",
+      "widgets": "Widgets",
+      "liveMonitoring": "Live Monitoring",
+      "onlineUsers": "Online Users",
+      "ofSlots": "of {{max}} slots",
+      "channels": "Channels",
+      "uptime": "Uptime",
+      "ping": "Ping",
+      "timeout": "timeout",
+      "bandwidth": "Bandwidth",
+      "last20Minutes": "last 20 minutes",
+      "download": "Download",
+      "upload": "Upload",
+      "collectingData": "Collecting data...",
+      "in": "In:",
+      "out": "Out:",
+      "serverCapacity": "Server Capacity",
+      "userSlots": "User Slots",
+      "utilized": "{{percent}}% utilized",
+      "serverVersion": "Server Version",
+      "platform": "Platform",
+      "botFlows": "Bot Flows"
+    },
+    "serverGroups": {
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "exportSelected": "Export Selected",
+      "deleteSelected": "Delete Selected",
+      "import": "Import",
+      "createGroup": "Create Group",
+      "groupsHeading": "Groups ({{count}})",
+      "selectForBulkDelete": "Select for bulk delete",
+      "iconAlt": "Icon for {{name}}",
+      "members": "Members",
+      "sgidLabel": "SGID: {{id}}",
+      "addMember": "Add Member",
+      "deleteGroup": "Delete Group",
+      "selectGroupHint": "Select a group to view its members",
+      "noMembers": "No members in this group",
+      "dbidLabel": "DBID: {{id}}",
+      "removeFromGroup": "Remove from group",
+      "memberRemoved": "Member removed",
+      "memberRemoveFailed": "Failed to remove member",
+      "searchClientsPlaceholder": "Search clients...",
+      "noMatchingClients": "No matching clients",
+      "added": "Added {{name}}",
+      "genericClient": "client",
+      "addMemberFailed": "Failed to add member",
+      "createServerGroupTitle": "Create Server Group",
+      "groupNameLabel": "Group Name",
+      "newGroupPlaceholder": "New Group",
+      "groupCreated": "Group created",
+      "deleteServerGroupTitle": "Delete Server Group",
+      "deleteGroupDescription": "Delete \"{{name}}\"?",
+      "groupDeleted": "Group deleted",
+      "deleteServerGroupsTitle": "Delete Server Groups",
+      "bulkDeleteDescription_one": "Delete {{count}} selected group? This cannot be undone.",
+      "bulkDeleteDescription_other": "Delete {{count}} selected groups? This cannot be undone.",
+      "bulkDeletePartial": "Deleted {{succeeded}}, failed {{failed}}",
+      "bulkDeleteSuccess_one": "{{count}} group deleted",
+      "bulkDeleteSuccess_other": "{{count}} groups deleted",
+      "invalidJson": "This file isn't valid JSON",
+      "notValidGroupExport": "Not a valid group export file",
+      "wrongExportTypeChannel": "This is a channel group export - import it on the Channel Groups page instead",
+      "notValidServerExport": "Not a valid server group export file",
+      "emptyExportFile": "The file contains no groups to import",
+      "createFailedFallback": "failed to create",
+      "importFailedNoGroups": "no groups could be created",
+      "importFailed": "Import failed - {{reason}}",
+      "importSummary": "Imported {{imported}} of {{total}} group(s), {{permCount}} permission(s)",
+      "importPermSkipped": ", {{count}} permission(s) skipped",
+      "importSkippedList": " - skipped: {{list}}",
+      "exportedCount_one": "Exported {{count}} group",
+      "exportedCount_other": "Exported {{count}} groups",
+      "exportFailed": "Export failed"
+    },
+    "channelGroups": {
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "exportSelected": "Export Selected",
+      "deleteSelected": "Delete Selected",
+      "import": "Import",
+      "createGroup": "Create Group",
+      "tabGroups": "Groups",
+      "tabByClient": "By Client",
+      "groupsHeading": "Groups ({{count}})",
+      "selectForBulkDelete": "Select for bulk delete",
+      "iconAlt": "Icon for {{name}}",
+      "cgidLabel": "CGID: {{id}}",
+      "typeLabel": "Type: {{type}}",
+      "selectClient": "Select Client",
+      "searchClientsPlaceholder": "Search clients...",
+      "showOfflineClients": "Show offline clients",
+      "noClientsFound": "No clients found",
+      "clientChannelGroupsHeading": "{{name}}'s Channel Groups",
+      "selectAClient": "Select a client",
+      "selectClientHint": "Select a client from the left panel",
+      "noAssignmentsTitle": "No channel group assignments",
+      "noAssignmentsDescription": "This client has no non-default channel group in any channel.",
+      "channelsSelectedCount_one": "{{count}} channel selected",
+      "channelsSelectedCount_other": "{{count}} channels selected",
+      "moveAllToPlaceholder": "Move all to...",
+      "applyToCount": "Apply to {{count}}",
+      "selectAllChannels": "Select all channels",
+      "selectChannelForBulk": "Select channel for bulk change",
+      "colChannel": "Channel",
+      "colChannelGroup": "Channel Group",
+      "clientFallback": "Client #{{id}}",
+      "createChannelGroupTitle": "Create Channel Group",
+      "groupNameLabel": "Group Name",
+      "newGroupPlaceholder": "New Group",
+      "groupCreated": "Group created",
+      "deleteChannelGroupsTitle": "Delete Channel Groups",
+      "bulkDeleteDescription_one": "Delete {{count}} selected group? This cannot be undone.",
+      "bulkDeleteDescription_other": "Delete {{count}} selected groups? This cannot be undone.",
+      "bulkDeletePartial": "Deleted {{succeeded}}, failed {{failed}}",
+      "bulkDeleteSuccess_one": "{{count}} group deleted",
+      "bulkDeleteSuccess_other": "{{count}} groups deleted",
+      "channelGroupUpdated": "Channel group updated",
+      "channelGroupUpdateFailed": "Failed to update channel group",
+      "channelGroupsUpdatedForCount_one": "Channel group updated for {{count}} channel",
+      "channelGroupsUpdatedForCount_other": "Channel group updated for {{count}} channels",
+      "channelGroupsUpdateFailed": "Failed to update channel groups",
+      "invalidJson": "This file isn't valid JSON",
+      "notValidGroupExport": "Not a valid group export file",
+      "wrongExportTypeServer": "This is a server group export - import it on the Server Groups page instead",
+      "notValidChannelExport": "Not a valid channel group export file",
+      "emptyExportFile": "The file contains no groups to import",
+      "createFailedFallback": "failed to create",
+      "importFailedNoGroups": "no groups could be created",
+      "importFailed": "Import failed - {{reason}}",
+      "importSummary": "Imported {{imported}} of {{total}} group(s), {{permCount}} permission(s)",
+      "importPermSkipped": ", {{count}} permission(s) skipped",
+      "importSkippedList": " - skipped: {{list}}",
+      "exportedCount_one": "Exported {{count}} group",
+      "exportedCount_other": "Exported {{count}} groups",
+      "exportFailed": "Export failed"
+    },
+    "channels": {
+      "selectChannel": "Select channel",
+      "useAsTemplate": "Use as template",
+      "query": "Query",
+      "away": "Away",
+      "muted": "Muted",
+      "channelCount_one": "{{count}} channel",
+      "channelCount_other": "{{count}} channels",
+      "clientsOnlineCount_one": "{{count}} client online",
+      "clientsOnlineCount_other": "{{count}} clients online",
+      "createChannel": "Create Channel",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "editSelected": "Edit Selected",
+      "channelTree": "Channel Tree",
+      "channelNamesLabel": "Channel Name(s)",
+      "channelNamesPlaceholder": "New Channel\nOne name per line to create multiple at once",
+      "editCountTitle_one": "Edit {{count}} channel",
+      "editCountTitle_other": "Edit {{count}} channels",
+      "bulkEditHint": "Only checked fields are applied - the rest are left untouched on each selected channel.",
+      "codec": "Codec",
+      "opusVoice": "Opus Voice",
+      "opusMusic": "Opus Music",
+      "codecQuality": "Codec Quality",
+      "neededTalkPower": "Needed Talk Power",
+      "permanent": "Permanent",
+      "duplicateTitle": "Duplicate \"{{name}}\"",
+      "duplicateHint": "Creates a new channel with the same settings (topic, codec, limits, talk power) as this one.",
+      "newChannelNameLabel": "New Channel Name",
+      "duplicateNamePlaceholder": "{{name}} Copy",
+      "duplicate": "Duplicate",
+      "deleteChannelTitle": "Delete Channel",
+      "deleteChannelDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "channelsCreated_one": "Channel created",
+      "channelsCreated_other": "{{count}} channels created",
+      "createPartialFailure": "{{succeeded}}/{{total}} created, {{failed}} failed",
+      "bulkUpdatedCount_one": "Updated {{count}} channel",
+      "bulkUpdatedCount_other": "Updated {{count}} channels",
+      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} updated, {{failed}} failed",
+      "duplicateCreated": "Created \"{{newName}}\" from \"{{sourceName}}\"",
+      "duplicateFailed": "Failed to duplicate channel",
+      "channelDeleted": "Channel deleted",
+      "channelDeleteFailed": "Failed to delete channel",
+      "channelMoved": "Channel moved",
+      "channelMoveFailed": "Failed to move channel"
+    },
+    "botEditor": {
+      "nodeLabels": {
+        "trigger_event": "TS Event",
+        "trigger_cron": "Cron Timer",
+        "trigger_webhook": "Webhook",
+        "trigger_command": "Chat Command",
+        "action_message": "Send Message",
+        "action_poke": "Poke Client",
+        "action_kick": "Kick Client",
+        "action_ban": "Ban Client",
+        "action_move": "Move Client",
+        "action_channelCreate": "Create Channel",
+        "action_channelEdit": "Edit Channel",
+        "action_channelDelete": "Delete Channel",
+        "action_groupAdd": "Add to Group",
+        "action_groupRemove": "Remove from Group",
+        "action_webquery": "WebQuery",
+        "action_webhook": "Webhook",
+        "action_httpRequest": "HTTP Request",
+        "action_voicePlay": "Voice Play",
+        "action_voiceStop": "Voice Stop",
+        "action_voiceJoinChannel": "Voice Join",
+        "action_voiceLeaveChannel": "Voice Leave",
+        "action_voiceVolume": "Voice Volume",
+        "action_voicePauseResume": "Voice Pause/Resume",
+        "action_voiceSkip": "Voice Skip",
+        "action_voiceSeek": "Voice Seek",
+        "action_voiceTts": "Voice TTS",
+        "action_afkMover": "AFK Mover",
+        "action_idleKicker": "Idle Kicker",
+        "action_pokeGroup": "Poke Group",
+        "action_rankCheck": "Rank Check",
+        "action_tempChannelCleanup": "Temp Cleanup",
+        "action_animatedChannel": "Animated Channel",
+        "condition": "Condition",
+        "loop": "Loop",
+        "delay": "Delay",
+        "variable": "Set Variable",
+        "log": "Log",
+        "action_generateCode": "Generate Code",
+        "action_countOnlineInGroups": "Count Online in Groups",
+        "action_listMembership": "List Add/Remove"
+      },
+      "categories": {
+        "triggers": "Triggers",
+        "actions": "Actions",
+        "voice": "Voice",
+        "smartActions": "Smart Actions",
+        "logic": "Logic"
+      },
+      "editFullscreen": "Edit fullscreen",
+      "hidePlaceholders": "Hide Placeholders",
+      "showPlaceholders": "Show Placeholders",
+      "gestureAddStep": "Add a step",
+      "gestureAddStepHow": "Click one in the list on the left",
+      "gestureMoveStep": "Move a step",
+      "gestureMoveStepHow": "Drag it",
+      "gestureConfigureStep": "Configure a step",
+      "gestureConfigureStepHow": "Click it — the settings open on the right",
+      "gestureConnectSteps": "Connect two steps",
+      "gestureConnectStepsHow": "Drag from an output dot onto an input dot",
+      "gestureDeleteConnection": "Delete a connection",
+      "gestureDeleteConnectionHow": "Click the line",
+      "gestureBendConnection": "Bend a connection",
+      "gestureBendConnectionHow": "Hover it, then click the ring that appears",
+      "gestureAddBend": "Add another bend",
+      "gestureAddBendHow": "Click a bend point — the next one appears after it",
+      "gestureMoveBend": "Move a bend",
+      "gestureMoveBendHow": "Drag the point",
+      "gestureRemoveBend": "Remove a bend",
+      "gestureRemoveBendHow": "Right-click the point",
+      "gestureKeepChanges": "Keep your changes",
+      "gestureKeepChangesHow": "Press Save — nothing is stored until you do",
+      "usingTheFlowEditor": "Using the flow editor",
+      "routingExplanation": "Connections route themselves at right angles, passing below both ends when they have to run backwards. Bend points are only for the cases where you want a line somewhere specific — a flow works exactly the same without them.",
+      "dontShowAgain": "Don't show this when opening a flow",
+      "gotIt": "Got it",
+      "flowSaved": "Flow saved",
+      "flowSaveFailed": "Failed to save flow",
+      "nodesCount_one": "{{count}} node",
+      "nodesCount_other": "{{count}} nodes",
+      "edgesCount_one": "{{count}} edge",
+      "edgesCount_other": "{{count}} edges",
+      "placeholderReference": "Placeholder Reference",
+      "save": "Save",
+      "connectHint": "Click an input port or node to connect — ESC to cancel",
+      "canvasHint": "Drag from an output dot to connect · click a line to delete it · hover a line and click the ring to bend it",
+      "inputPortTitle": "Input: {{port}}",
+      "outputPortTitle": "Output: {{port}}",
+      "clickToBend": "Click to bend this connection here",
+      "dragBendPoint": "Drag to move, click to add another point, right-click to remove",
+      "nodeProperties": "Node Properties",
+      "labelField": "Label",
+      "typeField": "Type",
+      "inPorts": "IN: {{ports}}",
+      "outPorts": "OUT: {{ports}}",
+      "configuration": "CONFIGURATION",
+      "connections": "CONNECTIONS",
+      "noConnections": "No connections",
+      "config": {
+        "shared": {
+          "commandLabel": "Command",
+          "channelIdLabel": "Channel ID",
+          "channelIdOrTemplatePlaceholder": "Channel ID or {{event.ctid}}",
+          "clientIdLabel": "Client ID",
+          "clientIdOrTemplatePlaceholder": "Client ID or {{event.clid}}",
+          "clientOption": "Client",
+          "channelOption": "Channel",
+          "serverOption": "Server",
+          "messageLabel": "Message",
+          "reasonLabel": "Reason",
+          "channelNameLabel": "Channel Name",
+          "parentChannelIdLabel": "Parent Channel ID",
+          "channelPasswordLabel": "Channel Password (optional)",
+          "optionalPlaceholder": "Optional",
+          "serverGroupIdLabel": "Server Group ID",
+          "storeAsTempLabel": "Store As (temp variable)",
+          "storeAsLabel": "Store As",
+          "urlLabel": "URL",
+          "methodLabel": "Method",
+          "bodyJsonLabel": "Body (JSON)",
+          "idleThresholdLabel": "Idle Threshold (seconds)",
+          "exemptGroupIdsLabel": "Exempt Group IDs (comma-separated)",
+          "textLabel": "Text",
+          "operationLabel": "Operation",
+          "valueLabel": "Value",
+          "useAsHintPrefix": "Use as:",
+          "botIdLabel": "Bot ID",
+          "channelPasswordExamplePlaceholder": "secret or {{temp.channelPassword}}"
+        },
+        "triggerEvent": {
+          "eventNameLabel": "Event Name",
+          "selectEventPlaceholder": "Select event...",
+          "clientEnter": "Client Enter",
+          "clientLeave": "Client Leave",
+          "textMessage": "Text Message",
+          "clientMoved": "Client Moved",
+          "serverEdited": "Server Edited",
+          "channelDescChanged": "Channel Desc Changed"
+        },
+        "triggerCron": {
+          "cronExpressionLabel": "Cron Expression",
+          "timezoneLabel": "Timezone"
+        },
+        "triggerWebhook": {
+          "webhookPathLabel": "Webhook Path",
+          "httpMethodLabel": "HTTP Method",
+          "secretLabel": "Secret (optional)",
+          "secretPlaceholder": "Leave empty for no auth",
+          "secretHint": "Validated via X-Webhook-Secret header or ?secret= query param"
+        },
+        "triggerCommand": {
+          "listenChannelIdLabel": "Listen Channel ID (optional)",
+          "listenChannelHint": "Commands are only received while a ServerQuery client is in that channel."
+        },
+        "actionMessage": {
+          "targetModeLabel": "Target Mode",
+          "editMessageDialogTitle": "Edit Message",
+          "messagePlaceholder": "This is the HelpList:\n\n!create - creates a channel\n!delete - deletes your channel\n!help - shows this list",
+          "messageHint": "Tip: line breaks are preserved."
+        },
+        "actionKick": {
+          "kickFromLabel": "Kick From",
+          "reasonPlaceholder": "Kicked by bot"
+        },
+        "actionBan": {
+          "durationLabel": "Duration (seconds, 0=permanent)",
+          "reasonPlaceholder": "Banned by bot"
+        },
+        "actionMove": {
+          "targetChannelIdLabel": "Target Channel ID (or template)",
+          "exampleHint": "Example: 94 or {{temp.lastCreatedChannelId}}"
+        },
+        "actionPoke": {
+          "messagePlaceholder": "Hey {{event.client_nickname}}!"
+        },
+        "actionChannelCreate": {
+          "temporaryLabel": "Temporary",
+          "permanentOption": "Permanent",
+          "temporaryOption": "Temporary"
+        },
+        "actionChannelEdit": {
+          "channelTopicLabel": "Channel Topic",
+          "channelDescriptionLabel": "Channel Description",
+          "editDescriptionDialogTitle": "Edit Channel Description",
+          "passwordHint": "Leave empty to keep unchanged."
+        },
+        "actionChannelDelete": {
+          "forceDeleteLabel": "Force Delete",
+          "forceNoOption": "No",
+          "forceYesOption": "Yes (delete sub-channels)"
+        },
+        "actionWebquery": {
+          "accessHintPrefix": "Access via"
+        },
+        "actionHttpRequest": {
+          "headersLabel": "Headers (JSON)",
+          "headersHint": "Key-value pairs as JSON object. Supports {{placeholders}}."
+        },
+        "actionAfkMover": {
+          "afkChannelIdLabel": "AFK Channel ID",
+          "exemptChannelIdsLabel": "Exempt Channel IDs (comma-separated)"
+        },
+        "actionIdleKicker": {
+          "kickReasonLabel": "Kick Reason",
+          "kickReasonPlaceholder": "Idle timeout"
+        },
+        "actionPokeGroup": {
+          "messagePlaceholder": "Support needed!"
+        },
+        "actionRankCheck": {
+          "ranksLabel": "Ranks (JSON)",
+          "ranksHint": "Array of {hours, groupId} — highest eligible rank is assigned",
+          "hoursMeasuredAsLabel": "Hours measured as",
+          "accumulatedTimeOption": "Actual online time (accumulated across sessions)",
+          "firstConnectionAgeOption": "Time since first connection (member age)",
+          "excludeGroupIdsLabel": "Exclude Group IDs (comma-separated)",
+          "excludeGroupIdsPlaceholder": "e.g. Bot group ID",
+          "excludeGroupIdsHint": "Clients in any of these groups are skipped entirely. ServerQuery clients are always skipped."
+        },
+        "actionTempChannelCleanup": {
+          "protectedChannelIdsLabel": "Protected Channel IDs (comma-separated)",
+          "protectedChannelIdsHint": "Channels under the parent that should NOT be deleted (e.g. the lobby)"
+        },
+        "actionAnimatedChannel": {
+          "displayTextLabel": "Display Text",
+          "displayTextPlaceholder": "Welcome to MyServer",
+          "displayTextHint": "Supports {{time.time}}, {{time.date}}, etc.",
+          "animationStyleLabel": "Animation Style",
+          "styleScroll": "Scroll Left (Marquee)",
+          "styleTypewriter": "Typewriter",
+          "styleBounce": "Bounce",
+          "styleBlink": "Blink",
+          "styleWave": "Wave (Decorative)",
+          "styleAlternateCase": "Alternate Case",
+          "speedLabel": "Speed",
+          "speedInsane": "Insane (0.25s)",
+          "speedUltra": "Ultra (0.5s)",
+          "speedVeryFast": "Very Fast (1s)",
+          "speedFast": "Fast (2s)",
+          "speedMedium": "Medium (3s)",
+          "speedSlow": "Slow (5s)",
+          "prefixLabel": "Prefix",
+          "prefixHint": "TS3 channel name prefix (e.g. [cspacer] for centered spacer)"
+        },
+        "actionVoicePlay": {
+          "songIdLabel": "Song ID",
+          "songIdPlaceholder": "Song ID to play",
+          "playlistIdLabel": "Playlist ID (alternative)",
+          "playlistIdPlaceholder": "Load playlist instead"
+        },
+        "actionVoiceVolume": {
+          "volumeLabel": "Volume (0-100)"
+        },
+        "actionVoicePauseResume": {
+          "actionLabel": "Action",
+          "pauseOption": "Pause",
+          "resumeOption": "Resume",
+          "toggleOption": "Toggle"
+        },
+        "actionVoiceSkip": {
+          "directionLabel": "Direction",
+          "nextOption": "Next",
+          "previousOption": "Previous"
+        },
+        "actionVoiceSeek": {
+          "positionLabel": "Position (seconds)"
+        },
+        "actionVoiceTts": {
+          "textPlaceholder": "Hello {{event.client_nickname}}",
+          "languageLabel": "Language (optional)",
+          "notConfiguredHint": "TTS engine not yet configured — placeholder only"
+        },
+        "condition": {
+          "expressionLabel": "Expression",
+          "expressionHint": "True → green output, False → red output"
+        },
+        "loop": {
+          "arrayVariableLabel": "Array Variable",
+          "arrayVariableHint": "Name of an existing temp variable holding a list, e.g. a WebQuery node's \"Store As\" result — without {{temp....}}",
+          "itemVariableLabel": "Item Variable Name",
+          "inLoopBodyPrefix": "In the loop body:",
+          "indexLabel": "index:",
+          "maxIterationsLabel": "Max Iterations (optional)",
+          "maxIterationsHint": "Default 50, hard ceiling 500 regardless of this value",
+          "bodyAfterHint": "Body → runs once per item. After → runs once when the loop finishes."
+        },
+        "delay": {
+          "delayLabel": "Delay (ms)"
+        },
+        "variable": {
+          "setOption": "Set",
+          "incrementOption": "Increment",
+          "appendOption": "Append",
+          "getOption": "Get (read into temp.*)",
+          "variableNameLabel": "Variable Name",
+          "valueExpressionLabel": "Value (Expression)"
+        },
+        "actionGenerateCode": {
+          "lengthLabel": "Length",
+          "charactersLabel": "Characters",
+          "digitsOnlyOption": "Digits only",
+          "alphanumericOption": "Alphanumeric"
+        },
+        "actionCountOnlineInGroups": {
+          "groupIdsLabel": "Server Group IDs (comma-separated)"
+        },
+        "actionListMembership": {
+          "listNameLabel": "List Name",
+          "listNameHintPrefix": "Persists across restarts. Check membership elsewhere with: contains(var.",
+          "listNameHintSuffix": ", ...)",
+          "addOption": "Add",
+          "removeOption": "Remove"
+        },
+        "log": {
+          "logLevelLabel": "Log Level",
+          "debugOption": "Debug",
+          "infoOption": "Info",
+          "warnOption": "Warning",
+          "errorOption": "Error",
+          "messagePlaceholder": "Client joined: {{event.client_nickname}}"
+        }
+      }
+    },
+    "permissions": {
+      "categories": {
+        "b_virtualserver": "Virtual Server",
+        "b_serverinstance": "Server Instance",
+        "b_serverquery": "Server Query",
+        "b_channel": "Channel",
+        "b_client": "Client",
+        "b_group": "Group",
+        "b_ft": "File Transfer",
+        "i_channel": "Channel (Values)",
+        "i_group": "Group (Values)",
+        "i_client": "Client (Values)",
+        "i_ft": "File Transfer (Values)",
+        "i_max": "Limits",
+        "i_needed": "Needed Powers",
+        "other": "Other"
+      },
+      "layers": {
+        "serverGroups": "Server Groups",
+        "serverGroup": "Server Group",
+        "channelGroups": "Channel Groups",
+        "channelGroup": "Channel Group",
+        "channel": "Channel",
+        "client": "Client",
+        "clientInChannel": "Client in Channel"
+      },
+      "title": "Permissions",
+      "entitiesSelected_one": "{{count}} entity selected",
+      "entitiesSelected_other": "{{count}} entities selected",
+      "changesCount_one": "{{count}} change",
+      "changesCount_other": "{{count}} changes",
+      "discard": "Discard",
+      "save": "Save",
+      "applyToCount": "Apply to {{count}}",
+      "findPermission": "Find Permission",
+      "permissionOverview": "Permission Overview",
+      "selectClient": "Select Client",
+      "searchClientsPlaceholder": "Search clients...",
+      "noClientsFound": "No clients found",
+      "choosePlaceholder": "Choose a channel...",
+      "searchPermissionsPlaceholder": "Search permissions...",
+      "overviewExplanation": "Every permission this client actually has in the chosen channel, and which layer each one comes from. Where several layers grant the same permission, the winning one is highlighted, following the tier order in TeamSpeak's own permission documentation: client-in-channel beats channel group, beats channel, beats client, beats server group - with a Skip flag on a server group or client entry shielding it from the channel and channel group layers. The other sources stay listed so the result can always be checked by eye.",
+      "selectClientHint": "Select a client from the left panel",
+      "chooseChannelHint": "Choose a channel to see their permissions in it",
+      "noPermissionsApply": "No permissions apply to this client in this channel",
+      "colPermission": "Permission",
+      "colComesFrom": "Comes From",
+      "colValue": "Value",
+      "selectPermission": "Select Permission",
+      "assignmentsOf": "Assignments of {{label}}",
+      "findExplanation": "Pick a permission on the left to see every place it's actually assigned, across all five tiers. Click a result to open it in the editor. TeamSpeak's own lookup only reports where a permission is set, not to what - each value below is read back per entity afterwards.",
+      "selectPermissionHint": "Select a permission from the left panel",
+      "notAssignedAnywhere": "This permission isn't assigned anywhere on this server",
+      "colTier": "Tier",
+      "colAssignedTo": "Assigned To",
+      "openInEditor": "Open in editor",
+      "addClientInChannel": "Add Client in Channel",
+      "channelLabel": "Channel",
+      "showOfflineClients": "Show offline clients",
+      "chooseChannelFirst": "Choose a channel first",
+      "addEntity": "Add {{name}}",
+      "addedCount": "Added ({{count}})",
+      "pickChannelThenClient": "Pick a channel, then click a client to add it.",
+      "selectLayer": "Select {{layer}}",
+      "iconAlt": "Icon for {{name}}",
+      "selectForBulkEdit": "Select for bulk edit",
+      "noEntitiesFound": "No entities found",
+      "bulkApply": "Bulk Apply",
+      "compare": "Compare",
+      "permissionsTitle": "Permissions",
+      "selectAnEntity": "Select an entity",
+      "labelModeHint": "Advanced shows the raw permission name, Simple shows TeamSpeak's own plain-language description",
+      "advanced": "Advanced",
+      "simple": "Simple",
+      "onlyShowSet": "Only show set",
+      "onlyShowDiffering": "Only show differing",
+      "addRemovePerm": "Add/Remove Perm",
+      "addTarget": "Add Target",
+      "setMultipleHint": "Tick several permissions, then give them all a value at once",
+      "setMultiple": "Set Multiple",
+      "importFileHint": "Apply a previously exported permission file to the current selection",
+      "importFile": "Import File",
+      "bulkApplyHint": "Set values here to apply them to all {{count}} selected entities - current per-entity values aren't shown while multiple are selected.",
+      "compareHintAutoRank": "All permissions are shown by default (\"Add/Remove Perm\" to narrow down, the × on a row to drop it) - edit a cell to change just that one entity. With 3 or fewer entities, each row colors by rank automatically: red = highest, yellow = tied/middle, green = lowest, pink = unset.",
+      "compareHintPivot": "All permissions are shown by default (\"Add/Remove Perm\" to narrow down, the × on a row to drop it) - edit a cell to change just that one entity. Click a cell to pin it as the reference; the rest of that row colors relative to it (teal = lower, lime = same, red = higher, pink = unset).",
+      "compareHintSuffix": "\"Add Target\" loads a previously-exported group file as a read-only extra column. Use Bulk Apply instead to push the same value to all selected entities at once.",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "selectAllShown": "Select all shown ({{count}})",
+      "clear": "Clear",
+      "setValuesEllipsis": "Set values...",
+      "remove": "Remove",
+      "stagedEditHint": "Changes are staged like any other edit - press Save to write them.",
+      "selectEntityHint": "Select an entity from the left panel",
+      "removeFileTarget": "Remove this file target",
+      "removeFromComparison": "Remove from comparison",
+      "chooseIcon": "Choose icon",
+      "skip": "Skip",
+      "negate": "Negate",
+      "colSkip": "Skip",
+      "colNegate": "Negate",
+      "removePermission": "Remove permission",
+      "modified": "modified",
+      "noPermissionsDiffer": "No permissions differ across the selected entities",
+      "noPermissionsSetAny": "No permissions are set on any selected entity",
+      "noPermissionsMatchSearch": "No permissions match your search",
+      "noPermissionsSetEntity": "No permissions are set on this entity",
+      "all": "All",
+      "selectAllCount": "Select all ({{count}})",
+      "shownInComparison": "{{count}} shown in comparison",
+      "done": "Done",
+      "setCountPermissions": "Set {{count}} permission(s)",
+      "setMultipleExplanation": "Booleans and integers are set separately, so a mixed selection can be handled in one step.",
+      "booleanCount_one": "{{count}} boolean",
+      "booleanCount_other": "{{count}} booleans",
+      "booleanPermsHint": "b_… permissions",
+      "integerCount_one": "{{count}} integer",
+      "integerCount_other": "{{count}} integers",
+      "integerPermsHint": "i_… permissions",
+      "valuePlaceholder": "Value",
+      "leaveEmptySkipInt": "Leave empty to skip the integers and only set the booleans.",
+      "cancel": "Cancel",
+      "importPermissionFile": "Import permission file",
+      "groupInFile": "Group in file",
+      "groupPermissionsCount_one": "{{name}} ({{count}} permission)",
+      "groupPermissionsCount_other": "{{name}} ({{count}} permissions)",
+      "source": "Source",
+      "permissionsInFile": "Permissions in file",
+      "target": "Target",
+      "targetCount": "{{count}} {{layer}}",
+      "mode": "Mode",
+      "merge": "Merge",
+      "mergeDescription": "Only what the file contains is set. Everything else stays.",
+      "replace": "Replace",
+      "replaceDescription": "Target becomes an exact copy. Extra permissions are deleted.",
+      "replaceWarningPrefix": "Every permission the",
+      "replaceWarningTargetHas": "target has",
+      "replaceWarningTargetsHave": "targets have",
+      "replaceWarningSuffix": "that is not in this file will be removed. This is written straight to the server and cannot be undone from here.",
+      "importing": "Importing...",
+      "clientFallback": "Client #{{id}}",
+      "channelFallback": "Channel #{{id}}",
+      "serverGroupFallback": "Server Group #{{id}}",
+      "channelGroupFallback": "Channel Group #{{id}}",
+      "notValidGroupExport": "Not a valid group export file",
+      "loadedFromFile_one": "Loaded {{count}} group from file",
+      "loadedFromFile_other": "Loaded {{count}} groups from file",
+      "failedToReadFile": "Failed to read file - check it is a valid export",
+      "stagedForApply_one": "{{count}} permission staged - press Save to apply",
+      "stagedForApply_other": "{{count}} permissions staged - press Save to apply",
+      "stagedForRemoval_one": "{{count}} permission staged for removal - press Save to apply",
+      "stagedForRemoval_other": "{{count}} permissions staged for removal - press Save to apply",
+      "notValidPermissionExport": "Not a valid permission export file",
+      "fileContainsNoGroups": "File contains no groups",
+      "importedIntoTargets_one": "Imported {{count}} permission(s) into {{targets}} target",
+      "importedIntoTargets_other": "Imported {{count}} permission(s) into {{targets}} targets",
+      "removedNotInFile_one": ", removed {{count}} not in the file",
+      "removedNotInFile_other": ", removed {{count}} not in the file",
+      "importFailed": "Import failed - some permissions may already have been written",
+      "appliedToEntities_one": "Permissions applied to {{count}} entity",
+      "appliedToEntities_other": "Permissions applied to {{count}} entities",
+      "permissionsSaved": "Permissions saved",
+      "saveFailed": "Failed to save permissions",
+      "changesSavedAcross_one": "{{count}} change saved across {{entities}} entity",
+      "changesSavedAcross_other": "{{count}} changes saved across {{entities}} entities",
+      "unnamed": "Unnamed"
+    },
+    "musicBots": {
+      "title": "Music Bots",
+      "tabBots": "Bots",
+      "tabQueue": "Queue",
+      "tabVideo": "Video",
+      "tabLibrary": "Library",
+      "tabPlaylists": "Playlists",
+      "tabRadio": "Radio",
+      "tabPermissions": "Permissions",
+      "shared": {
+        "serverPlaceholder": "Server...",
+        "playOn": "Play on:",
+        "noRunningBots": "No running bots",
+        "selectBotPlaceholder": "Select bot...",
+        "filterSongsPlaceholder": "Filter songs...",
+        "cancel": "Cancel",
+        "create": "Create",
+        "done": "Done",
+        "add": "Add",
+        "name": "Name",
+        "title": "Title",
+        "duration": "Duration",
+        "source": "Source",
+        "noServerGroupsFound": "No server groups found.",
+        "songsCount_one": "{{count}} song",
+        "songsCount_other": "{{count}} songs"
+      },
+      "botPlayerCard": {
+        "playerWidget": "Player Widget",
+        "playSongEllipsis": "Play Song...",
+        "live": "LIVE",
+        "stop": "Stop",
+        "playEllipsis": "Play...",
+        "stopAudio": "Stop Audio",
+        "start": "Start",
+        "botStopped": "Bot stopped",
+        "botStarted": "Bot started",
+        "startFailed": "Failed to start bot",
+        "queueCount": "Queue ({{count}})",
+        "moreCount": "+{{count}} more",
+        "widgetDescription": "Embed these URLs in your TeamSpeak channel description or website.",
+        "bbcodeUrlLabel": "BBCode URL (for channel description)",
+        "jsonUrlLabel": "JSON URL (for websites/integrations)",
+        "tokenLabel": "Token",
+        "copy": "Copy",
+        "copied": "Copied!"
+      },
+      "playSongDialog": {
+        "title": "Play Music",
+        "description": "Select a song or playlist to play on this bot.",
+        "tabSongs": "Songs",
+        "tabPlaylists": "Playlists",
+        "tabHistory": "History",
+        "noSongsFound": "No songs found. Upload songs in the Library tab first.",
+        "play": "Play",
+        "queue": "Queue",
+        "noPlaylists": "No playlists. Create one in the Playlists tab.",
+        "loadAndPlay": "Load & Play",
+        "noHistory": "No music requests found. Use !play in chat to build history.",
+        "playNowHint": "Play this now, interrupting whatever is running",
+        "queueAfterHint": "Play this after whatever is running",
+        "close": "Close"
+      },
+      "avatarPicker": {
+        "alt": "Avatar",
+        "change": "Change",
+        "upload": "Upload",
+        "remove": "Remove",
+        "sizeHint": "PNG/JPEG/GIF/WebP (your TS server's own size limit applies - you'll see a warning if it rejects the file)"
+      },
+      "botsTab": {
+        "botsCount_one": "{{count}} music bot",
+        "botsCount_other": "{{count}} music bots",
+        "newBot": "New Bot",
+        "noBotsYetTitle": "No music bots yet",
+        "noBotsYetDescription": "Create your first voice bot to play music on your TeamSpeak server.",
+        "selectServerError": "Please select a server",
+        "botCreated": "Music bot created",
+        "createFailed": "Failed to create bot",
+        "botUpdated": "Bot updated",
+        "updateFailed": "Failed to update bot",
+        "editBotTitle": "Edit Music Bot",
+        "newBotTitle": "New Music Bot",
+        "avatarBugNoticePrefix": "An avatar this bot uploads currently shows correctly to TS6 clients, but not TS3 clients — a confirmed TS6 server bug, not this fork.",
+        "reportedUpstream": "Reported upstream",
+        "avatarLabel": "Avatar",
+        "serverLabel": "Server",
+        "selectServerPlaceholder": "Select server...",
+        "voicePortLabel": "Voice Port",
+        "nicknameLabel": "Nickname",
+        "serverPasswordLabel": "Server Password",
+        "defaultChannelLabel": "Default Channel",
+        "defaultChannelPlaceholder": "Channel name or ID (optional)",
+        "channelPasswordLabel": "Channel Password",
+        "leaveEmptyIfNone": "Leave empty if none",
+        "volumeLabel": "Volume ({{percent}}%)",
+        "autoStartLabel": "Auto-start on server startup",
+        "autoplayLabel": "Autoplay on Connect",
+        "autoplayHint": "Starts on its own every time this bot connects (manual start, server restart, or a reconnect) - only while it's coming up idle, never interrupting something already queued.",
+        "autoplayOff": "Off",
+        "autoplaySong": "Play a song",
+        "autoplayRadio": "Play a radio station",
+        "chooseSongPlaceholder": "Choose a song...",
+        "chooseStationPlaceholder": "Choose a station...",
+        "descriptionTemplateLabel": "Description Template",
+        "descriptionTemplatePlaceholder": "e.g. Now playing: {title} ({remaining} left)",
+        "save": "Save",
+        "deleteBotTitle": "Delete Music Bot?",
+        "deleteBotDescription": "This will permanently delete this music bot and disconnect it from the server.",
+        "botDeleted": "Bot deleted",
+        "playing": "Playing",
+        "playSongFailed": "Failed to play song",
+        "playingUrl": "Playing URL",
+        "playUrlFailed": "Failed to play URL",
+        "addedToQueuePosition": "Added to queue (position #{{position}})",
+        "queueUrlFailed": "Failed to queue URL",
+        "addedToQueue": "Added to queue",
+        "enqueueFailed": "Failed to enqueue",
+        "playlistLoaded": "Playlist loaded",
+        "loadPlaylistFailed": "Failed to load playlist",
+        "namePlaceholder": "My Music Bot"
+      },
+      "libraryTab": {
+        "selectServerTitle": "Select a server",
+        "selectServerDescription": "Choose a server to manage its music library.",
+        "filterAll": "All",
+        "filterAudio": "Audio",
+        "filterVideo": "Video",
+        "uploading": "Uploading...",
+        "upload": "Upload",
+        "scanHint": "Scan for audio/video files already in the music folder (e.g. shared with another app)",
+        "scanning": "Scanning...",
+        "scanForNewFiles": "Scan for New Files",
+        "foundNewFiles_one": "found {{count}} new file",
+        "foundNewFiles_other": "found {{count}} new files",
+        "fixedTitles_one": "fixed {{count}} title",
+        "fixedTitles_other": "fixed {{count}} titles",
+        "noNewFilesFound": "No new files found",
+        "scanFailed": "Scan failed",
+        "pasteUrlPlaceholder": "Paste YouTube URL or Playlist URL...",
+        "load": "Load",
+        "playlistVideosCount": "Playlist ({{count}} videos)",
+        "singleVideo": "Single Video",
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
+        "downloading": "Downloading...",
+        "downloadSelectedCount": "Download {{count}} Selected",
+        "downloadingProgress": "Downloading {{done}}/{{total}}...",
+        "downloadedCount": "Downloaded {{done}}/{{total}} songs",
+        "failedCount": "{{count}} failed",
+        "batchDownloadFailed": "Batch download failed",
+        "download": "Download",
+        "searchYoutubePlaceholder": "Search YouTube...",
+        "search": "Search",
+        "youtubeResultsCount": "YouTube Results ({{count}})",
+        "startBotToPlayHint": "Start a music bot first to play or stream files from the library.",
+        "noFilesYetTitle": "No files yet",
+        "noFilesYetDescription": "Upload audio/video files or download from YouTube to build your library.",
+        "colType": "Type",
+        "colSize": "Size",
+        "refreshing": "Refreshing...",
+        "noBotSelectedHint": "No running bot selected",
+        "streamOptions": "Stream options",
+        "playOptions": "Play options",
+        "stream": "Stream",
+        "addToStreamQueue": "Add to Stream Queue",
+        "startStreamFirst": "Start a stream first",
+        "addToQueue": "Add to Queue",
+        "deleteFileTitle": "Delete File?",
+        "deleteFileDescription": "This will permanently remove this file from the library.",
+        "songDeleted": "Song deleted",
+        "playingTitle": "Playing: {{title}}",
+        "addedToQueueTitle": "Added to queue: {{title}}",
+        "addToQueueFailed": "Failed to add to queue",
+        "switchedStreamTo": "Switched stream to: {{title}}",
+        "switchStreamFailed": "Failed to switch stream",
+        "streamingTitle": "Streaming: {{title}}",
+        "startStreamFailed": "Failed to start stream",
+        "addedToStreamQueue": "Added to stream queue: {{title}}",
+        "addToStreamQueueFailed": "Failed to add to stream queue",
+        "uploadedFile": "Uploaded: {{name}}",
+        "uploadFileFailed": "Failed to upload: {{name}}",
+        "youtubeSearchFailed": "YouTube search failed",
+        "downloadStarted": "Download started",
+        "downloadFailed": "Download failed",
+        "loadUrlInfoFailed": "Failed to load URL info"
+      },
+      "playlistsTab": {
+        "playlistsCount_one": "{{count}} playlist",
+        "playlistsCount_other": "{{count}} playlists",
+        "newPlaylist": "New Playlist",
+        "noPlaylistsTitle": "No playlists",
+        "noPlaylistsDescription": "Create a playlist to organize your songs.",
+        "addSongs": "Add Songs",
+        "noSongsInPlaylist": "No songs in this playlist",
+        "songRemoved": "Song removed",
+        "selectPlaylistHint": "Select a playlist to view its songs",
+        "newPlaylistTitle": "New Playlist",
+        "namePlaceholder": "My Playlist",
+        "playlistCreated": "Playlist created",
+        "createPlaylistFailed": "Failed to create playlist",
+        "addSongsToPlaylistTitle": "Add Songs to Playlist",
+        "noSongsAvailable": "No songs available. Upload songs to the library first.",
+        "songAdded": "Song added",
+        "deletePlaylistTitle": "Delete Playlist?",
+        "deletePlaylistDescription": "This will permanently delete this playlist.",
+        "playlistDeleted": "Playlist deleted"
+      },
+      "radioTab": {
+        "selectServerTitle": "Select a server",
+        "selectServerDescription": "Choose a server to manage radio stations.",
+        "presets": "Presets",
+        "addStation": "Add Station",
+        "startBotToPlayHint": "Start a music bot first to play radio stations.",
+        "noStationsTitle": "No radio stations",
+        "noStationsDescription": "Add stations manually or from presets to start streaming.",
+        "selectRunningBotFirst": "Select a running bot first",
+        "playingRadio": "Playing radio",
+        "playRadioFailed": "Failed to play radio",
+        "stationAdded": "Station added",
+        "addStationFailed": "Failed to add station",
+        "addedName": "Added: {{name}}",
+        "addFailedName": "Failed to add: {{name}}",
+        "addStationTitle": "Add Radio Station",
+        "addStationDescription": "Add a custom internet radio station by providing its stream URL.",
+        "streamUrlLabel": "Stream URL",
+        "streamUrlPlaceholder": "https://stream.example.com/live",
+        "genreLabel": "Genre (optional)",
+        "genrePlaceholder": "Pop, Rock, Electronic...",
+        "stationNamePlaceholder": "Station name",
+        "presetsTitle": "Radio Presets",
+        "presetsDescription": "Add popular radio stations with one click.",
+        "noPresetsAvailable": "No presets available.",
+        "deleteStationTitle": "Delete Radio Station?",
+        "deleteStationDescription": "This will remove this station from your list.",
+        "stationRemoved": "Station removed"
+      },
+      "videoTab": {
+        "noBotsTitle": "No bots available",
+        "noBotsDescription": "Create a music bot first, then use it for video streaming.",
+        "selectBotLabel": "Select Bot:",
+        "chooseBotPlaceholder": "Choose a bot...",
+        "selectBotHint": "Select a bot to manage video streaming."
+      },
+      "queueTab": {
+        "botLabel": "Bot:",
+        "selectBotPlaceholder": "Select bot",
+        "tracksCount": "{{count}} tracks",
+        "clear": "Clear",
+        "selectBotHint": "Select a bot to manage its queue",
+        "queueEmpty": "Queue is empty",
+        "clickToPlay": "Click to play",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "removeFromQueue": "Remove from queue"
+      },
+      "permissionsTab": {
+        "adminBypassGroups": "Admin Bypass Groups",
+        "adminBypassHint": "Members of any group checked here can use every chat command below, regardless of its individual restriction.",
+        "chatCommandPermissions": "Chat Command Permissions",
+        "everyone": "Everyone",
+        "noGroupAssigned": "No group assigned - unusable",
+        "permissionUpdated": "Permission updated",
+        "permissionUpdateFailed": "Failed to update permission",
+        "adminGroupsUpdateFailed": "Failed to update admin groups",
+        "openByDefaultHint": "Leave everything unchecked to allow everyone (this command's default). Otherwise only the checked groups (and any admin bypass group above) may use it.",
+        "restrictedHint": "This command is unusable by anyone until at least one group is checked here - leaving it unchecked is the same as not enabling it yet. Only the checked groups (and any admin bypass group above) may use it."
+      }
+    }
+  },
+  "components": {
+    "serverSelector": {
+      "selectServer": "Select server...",
+      "selectVirtualServer": "Virtual server..."
+    },
+    "updateBanner": {
+      "updateAvailable": "Update available:",
+      "copyDeployCommand": "Copy deploy command",
+      "postpone": "Postpone"
+    },
+    "ytCookieBanner": {
+      "message": "YouTube cookies stopped working — age-restricted/member-only content and searches may fail until they're refreshed in <1>Settings → YouTube</1>."
+    },
+    "confirmDialog": {
+      "processing": "Processing..."
+    },
+    "dataTable": {
+      "searchPlaceholder": "Search...",
+      "selectRow": "Select row",
+      "resultCount_one": "{{count}} result",
+      "resultCount_other": "{{count}} results",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "themeToggle": {
+      "switchTo": "Switch to {{theme}}"
+    },
+    "iconImage": {
+      "builtinTitle": "Built-in client icon #{{id}}",
+      "couldNotLoad": "Icon {{id}} could not be loaded",
+      "iconAlt": "Icon {{id}}"
+    },
+    "iconPickerDialog": {
+      "title": "Choose an icon",
+      "searchPlaceholder": "Search icon ID...",
+      "poolUnavailable": "Icon pool unavailable",
+      "sshRequired": "Reading the icon pool requires SSH access, because the TeamSpeak WebQuery HTTP API does not support file transfer commands. Configure SSH credentials in the server settings, or type the icon ID directly.",
+      "loadFailed": "Failed to load the icon pool - type the icon ID directly instead.",
+      "noMatchingIcons": "No matching icons",
+      "noIconsUploaded": "No icons uploaded",
+      "noMatchDescription": "No icon in this pool matches your search.",
+      "noIconsDescription": "Upload icons on the Icons page first, then pick one here."
+    },
+    "widget": {
+      "away": "away",
+      "muted": "muted",
+      "clickToJoin": "Click to join server",
+      "online": "ONLINE",
+      "userCount": "{{count}} / {{max}} users",
+      "uptime": "{{uptime}} uptime",
+      "footer": "TS6 WebUI Widget"
+    },
+    "widgetManager": {
+      "title": {
+        "list": "Server Widgets",
+        "create": "Create Widget",
+        "edit": "Edit Widget",
+        "embed": "Embed Code"
+      },
+      "newWidget": "New Widget",
+      "noWidgets": "No widgets yet. Create one to embed your server status on external sites.",
+      "serverLabel": "Server: {{name}} | VS {{vs}}",
+      "embed": "Embed",
+      "preview": "Preview",
+      "namePlaceholder": "My Server Widget",
+      "server": "Server",
+      "virtualServerId": "Virtual Server ID",
+      "theme": "Theme",
+      "showChannelTree": "Show Channel Tree",
+      "showClients": "Show Clients",
+      "hideEmptyChannels": "Hide Empty Channels",
+      "maxChannelDepth": "Max Channel Depth: {{depth}}",
+      "regenerateToken": "Regenerate Token",
+      "imageUrls": "Image URLs",
+      "pasteIntoHtml": "Paste this into your website HTML:",
+      "svgLabel": "SVG (scalable, best quality):",
+      "pngLabel": "PNG (for forums / signatures):",
+      "htmlImgLabel": "HTML img tag:",
+      "bbcodeLabel": "Forum BBCode (uses PNG):"
+    },
+    "videoPlayer": {
+      "failedToConnect": "Failed to connect",
+      "noActiveStream": "No active video stream",
+      "unmute": "Unmute",
+      "mute": "Mute",
+      "connecting": "Connecting to stream...",
+      "retry": "Retry",
+      "live": "LIVE"
+    },
+    "videoStreamTab": {
+      "title": "Video Stream",
+      "botMustBeConnected": "Bot must be connected to start video streaming.",
+      "sourceUrl": "Source URL",
+      "sourceUrlPlaceholder": "https://youtube.com/watch?v=... or direct video URL",
+      "queue": "Queue",
+      "queueTitle": "Play it after the current video",
+      "switchNow": "Switch now",
+      "switchNowTitle": "Switch the running stream over right now",
+      "sourceHint": "YouTube, direct video URLs (MP4, HLS), or local file paths",
+      "pickFromLibrary": "Or pick from the library:",
+      "chooseUploadedVideo": "Choose an uploaded video...",
+      "qualityPreset": "Quality Preset",
+      "frameRate": "Frame Rate (FPS)",
+      "videoBitrate": "Video Bitrate",
+      "bitratePlaceholder": "e.g. 1500k, 4000k, 6000k",
+      "bitrateHint": "Higher needs more upload bandwidth and CPU. Examples: 1500k, 4000k, 6000k, 8000k",
+      "starting": "Starting...",
+      "startStream": "Start Stream",
+      "stopping": "Stopping...",
+      "stopStream": "Stop Stream",
+      "upNext": "Up Next",
+      "playNextNow": "Play the next video now",
+      "nothingQueuedStops": "Nothing queued - this stops the stream",
+      "skip": "Skip",
+      "now": "Now",
+      "nothingQueuedHint": "Nothing queued. Paste a URL above and choose <1>Queue</1> to line one up — <3>!stream &lt;url&gt;</3> in chat does the same while a stream is running.",
+      "livePreview": "Live Preview",
+      "volume": "Volume",
+      "volumeHint": "Set under Settings -> Streaming; viewers can still turn their own player up",
+      "source": "Source",
+      "uptime": "Uptime",
+      "viewersCount": "Viewers ({{count}})",
+      "noViewers": "No viewers connected",
+      "clientHash": "Client #{{id}}",
+      "kick": "Kick"
+    },
+    "templateGallery": {
+      "title": "Flow Templates",
+      "configureTitle": "Configure: {{name}}",
+      "availableVariables": "Available Variables",
+      "noConfigNeeded": "No configuration needed — ready to create.",
+      "createBot": "Create Bot"
+    },
+    "placeholderReference": {
+      "dialogTitle": "Placeholder Reference",
+      "dialogIntro": "Use <1>{{placeholder}}</1> in any text field. Values are resolved at runtime.",
+      "tabs": {
+        "event": "Event",
+        "time": "Time",
+        "var": "Variables",
+        "temp": "Temp",
+        "exec": "Exec",
+        "filter": "Filter",
+        "functions": "Functions",
+        "templates": "Templates"
+      },
+      "event": {
+        "intro": "Fields from the triggering TS3 event. Available fields depend on the event type.",
+        "h1": "Client Connected — notifycliententerview",
+        "clid": {
+          "desc": "Client ID",
+          "example": "Move client #{{event.clid}} to channel"
+        },
+        "clientNickname": {
+          "desc": "Nickname",
+          "example": "Welcome {{event.client_nickname}}!"
+        },
+        "clientDatabaseId": {
+          "desc": "Database ID",
+          "example": "DB-ID: {{event.client_database_id}}"
+        },
+        "clientUid": {
+          "desc": "Unique ID (UID)",
+          "example": "UID: {{event.client_unique_identifier}}"
+        },
+        "clientType": {
+          "desc": "Type (0=User, 1=Query)",
+          "example": "Condition: event.client_type == 0"
+        },
+        "clientServergroups": {
+          "desc": "Server group IDs (comma-separated)",
+          "example": "contains(event.client_servergroups, '6')"
+        },
+        "connectionClientIp": {
+          "desc": "IP address",
+          "example": "VPN check: https://api.vpn.io/{{event.connection_client_ip}}"
+        },
+        "cidJoined": {
+          "desc": "Channel the client joined",
+          "example": "Condition: event.cid == 42"
+        },
+        "h2": "Client Disconnected — notifyclientleftview",
+        "clidDisc": {
+          "desc": "Client ID"
+        },
+        "cfidDisc": {
+          "desc": "Channel the client was in"
+        },
+        "reasonidDisc": {
+          "desc": "Reason (3=lost, 5=kick, 6=ban, 8=leave)",
+          "example": "Condition: event.reasonid == 5"
+        },
+        "reasonmsg": {
+          "desc": "Reason message",
+          "example": "Kicked: {{event.reasonmsg}}"
+        },
+        "h3": "Client Moved — notifyclientmoved",
+        "clidMoved": {
+          "desc": "Client ID"
+        },
+        "ctid": {
+          "desc": "Target channel ID",
+          "example": "Condition: event.ctid == 10"
+        },
+        "cfidMoved": {
+          "desc": "Source channel ID"
+        },
+        "reasonidMoved": {
+          "desc": "Reason (0=self, 1=moved by admin)"
+        },
+        "h4": "Text Message — notifytextmessage",
+        "clidMsg": {
+          "desc": "Sender client ID"
+        },
+        "clientNicknameMsg": {
+          "desc": "Sender nickname"
+        },
+        "msg": {
+          "desc": "Message text",
+          "example": "User wrote: {{event.msg}}"
+        },
+        "targetmode": {
+          "desc": "Target (1=private, 2=channel, 3=server)"
+        },
+        "h5": "Chat Command — trigger_command",
+        "commandName": {
+          "desc": "Command name (without prefix)",
+          "example": "Command: {{event.command_name}}"
+        },
+        "commandArgs": {
+          "desc": "Arguments after command",
+          "example": "Args: {{event.command_args}}"
+        },
+        "clidCmd": {
+          "desc": "Sender client ID"
+        },
+        "clientNicknameCmd": {
+          "desc": "Sender nickname"
+        },
+        "h6": "Channel Events — created / edited / deleted",
+        "cidChannel": {
+          "desc": "Channel ID"
+        },
+        "invokerid": {
+          "desc": "Client ID of who made the change"
+        },
+        "invokername": {
+          "desc": "Name of who made the change"
+        },
+        "h7": "Webhook — trigger_webhook",
+        "webhookPath": {
+          "desc": "Request path"
+        },
+        "webhookMethod": {
+          "desc": "HTTP method",
+          "example": "GET or POST"
+        },
+        "webhookBody": {
+          "desc": "Request body (raw JSON)"
+        },
+        "webhookBodyField": {
+          "desc": "Nested field from JSON body",
+          "example": "Status: {{event.webhook_body.status}}"
+        },
+        "webhookQuery": {
+          "desc": "Query parameters (raw JSON)"
+        }
+      },
+      "time": {
+        "intro": "Current date and time. Respects the timezone configured on the Cron trigger (falls back to UTC).",
+        "time": {
+          "desc": "Formatted time HH:MM",
+          "example": "Channel name: It's {{time.time}}"
+        },
+        "date": {
+          "desc": "Formatted date DD.MM.YYYY",
+          "example": "Date: {{time.date}}"
+        },
+        "hours": {
+          "desc": "Hour (00-23)",
+          "example": "Condition: time.hours >= 22"
+        },
+        "minutes": {
+          "desc": "Minute (00-59)"
+        },
+        "seconds": {
+          "desc": "Second (00-59)"
+        },
+        "day": {
+          "desc": "Day of month (01-31)"
+        },
+        "month": {
+          "desc": "Month (01-12)",
+          "example": "Condition: time.month == 12"
+        },
+        "year": {
+          "desc": "Year (4-digit)"
+        },
+        "dayOfWeek": {
+          "desc": "Day of week (0=Sun, 1=Mon, ..., 6=Sat)",
+          "example": "Condition: time.dayOfWeek == 0"
+        },
+        "timestamp": {
+          "desc": "Unix timestamp (seconds)"
+        }
+      },
+      "var": {
+        "intro": "Persistent variables stored in the database. Survive restarts. Scoped per flow. Set via the <1>Set Variable</1> action node.",
+        "name": {
+          "desc": "Read variable by name",
+          "example": "Counter: {{var.visit_count}}"
+        },
+        "h1": "Actions for Variables",
+        "actionSet": "<0>Set</0> — Set a variable to a fixed value or template",
+        "actionIncrement": "<0>Increment</0> — Add a number to the current value",
+        "actionAppend": "<0>Append</0> — Append text to the current value",
+        "h2": "Use Case Examples",
+        "example1": "Visit counter: Increment <1>visit_count</1> by 1 on each join",
+        "example2": "Last seen: Set <1>lastseen_{{event.client_database_id}}</1> to <3>{{time.timestamp}}</3>",
+        "example3": "Online time tracking: Increment <1>onlinetime_{{event.clid}}</1>"
+      },
+      "temp": {
+        "intro": "Temporary variables that only exist during a single flow execution. Automatically set by certain action nodes. Supports nested access via dot notation.",
+        "h1": "Auto-set by Actions",
+        "lastCreatedChannelId": {
+          "desc": "CID of channel created by Create Channel",
+          "example": "Move client to {{temp.lastCreatedChannelId}}"
+        },
+        "lastResult": {
+          "desc": "Raw JSON result from WebQuery action"
+        },
+        "afkMovedCount": {
+          "desc": "Number of clients moved by AFK Mover",
+          "example": "Moved {{temp.afkMovedCount}} AFK users"
+        },
+        "idleKickedCount": {
+          "desc": "Number of clients kicked by Idle Kicker"
+        },
+        "pokedCount": {
+          "desc": "Number of clients poked by Poke Group"
+        },
+        "rankPromotedCount": {
+          "desc": "Number of clients promoted by Rank Check"
+        },
+        "tempChannelsDeleted": {
+          "desc": "Number of channels deleted by Temp Cleanup"
+        },
+        "h2": "Custom via \"Store As\"",
+        "storeAsIntro": "WebQuery and HTTP Request actions have a \"Store As\" field. The FULL result list is saved as a temp variable — even a single-row command like clientinfo or serverinfo, so access it with an explicit <1>.0.</1> for \"the first (only) row\".",
+        "serverOnline": {
+          "desc": "Online users (after serverinfo stored as \"server\")",
+          "example": "Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}"
+        },
+        "serverUptime": {
+          "desc": "Server uptime in seconds",
+          "example": "Uptime: {{temp.server.0.virtualserver_uptime|uptime}}"
+        },
+        "clientNickname": {
+          "desc": "Client name (after clientinfo stored as \"client\")"
+        },
+        "h3": "Loop Node",
+        "loopIntro": "A Loop node reads an existing list (e.g. a \"Store As\" result from a clientlist WebQuery) and runs its \"Body\" output once per item, then its \"After\" output once when done.",
+        "loopItem": {
+          "desc": "Current item (whatever name the Loop node's Item Variable Name is set to), inside its Body branch only"
+        },
+        "loopField": {
+          "desc": "A field of the current item - item variable name + \".\" + field (no .0 here, unlike Store As above - a single object per iteration, not a list)"
+        },
+        "loopIndex": {
+          "desc": "Position of the current item in the list, starting at 0"
+        }
+      },
+      "exec": {
+        "intro": "Read-only metadata about the current flow execution.",
+        "flowId": {
+          "desc": "ID of the flow being executed"
+        },
+        "executionId": {
+          "desc": "Unique execution instance ID"
+        },
+        "configId": {
+          "desc": "Server config ID"
+        },
+        "sid": {
+          "desc": "Virtual server ID"
+        },
+        "triggerType": {
+          "desc": "Trigger type (event, cron, webhook, command)",
+          "example": "Condition: exec.triggerType == \"cron\""
+        }
+      },
+      "filter": {
+        "intro": "Filters transform values. Apply with pipe syntax: <1>{{value|filter}}</1>",
+        "uptime": {
+          "desc": "Converts seconds to readable uptime"
+        },
+        "round": {
+          "desc": "Rounds to nearest integer"
+        },
+        "floor": {
+          "desc": "Rounds down to integer"
+        }
+      },
+      "functions": {
+        "intro": "Functions for use in <1>Condition</1> node expressions. Return 0 or 1 (false/true).",
+        "contains": {
+          "desc": "String contains substring? (plain substring match - see hasGroup below for numeric ID lists)"
+        },
+        "startsWith": {
+          "desc": "String starts with prefix?"
+        },
+        "endsWith": {
+          "desc": "String ends with suffix?"
+        },
+        "lower": {
+          "desc": "Convert to lowercase"
+        },
+        "upper": {
+          "desc": "Convert to uppercase"
+        },
+        "length": {
+          "desc": "String length"
+        },
+        "split": {
+          "desc": "Split string and get element at index"
+        },
+        "hasGroup": {
+          "desc": "Exact match against a comma-separated ID list - use this for server group IDs, not contains(), which would wrongly match group '1' against '10' or '21' too"
+        },
+        "count": {
+          "desc": "Row count of a stored WebQuery result (array), or string length otherwise - use to check whether a lookup found anything"
+        },
+        "h1": "Condition Examples",
+        "condition1": "Only real users (no query clients)",
+        "condition2": "Client is in server group 7",
+        "condition3": "Nighttime only",
+        "condition4": "Client moved to specific channel",
+        "condition5": "VPN detected (after HTTP request)"
+      },
+      "templates": {
+        "intro": "Extra placeholders specific templates from the Template Gallery resolve automatically, beyond the general ones above."
+      }
+    },
+    "editChannelDialog": {
+      "title": "Edit Channel",
+      "loadFailed": "Failed to load full channel settings",
+      "updated": "Channel updated",
+      "updateFailed": "Failed to update channel",
+      "loadingSettings": "Loading full channel settings...",
+      "tabs": {
+        "general": "General",
+        "voice": "Voice",
+        "limits": "Limits & Type",
+        "advanced": "Advanced"
+      },
+      "channelName": "Channel Name",
+      "topic": "Topic",
+      "leaveEmptyToKeep": "Leave empty to keep current",
+      "codec": "Codec",
+      "codecQuality": "Codec Quality ({{quality}})",
+      "codecQualityHint": "0 = lowest, 10 = highest. Higher quality uses more bandwidth.",
+      "encryptVoice": "Encrypt voice data in this channel",
+      "type": {
+        "permanent": "Permanent",
+        "semipermanent": "Semi-Permanent",
+        "temporary": "Temporary"
+      },
+      "deleteDelay": "Delete Delay (seconds when empty)",
+      "defaultChannel": "Default channel",
+      "defaultChannelHint": "A server has only one default channel — enabling this removes the flag from whichever channel currently has it.",
+      "maxClients": "Max Clients",
+      "limited": "Limited",
+      "unlimited": "Unlimited",
+      "maxFamilyClients": "Max Family Clients",
+      "inherited": "Inherited",
+      "maxFamilyClientsHint": "Limits clients across this channel and all its sub-channels combined.",
+      "neededTalkPower": "Needed Talk Power",
+      "sortPosition": "Sort Position",
+      "sortPositionHint": "The channel ID this one should be positioned directly below among its siblings (0 = first). Channel IDs are shown as \"#id\" in the channel tree.",
+      "phoneticName": "Phonetic Name",
+      "phoneticNamePlaceholder": "How text-to-speech should pronounce this channel's name",
+      "bannerImageUrl": "Banner Image URL",
+      "bannerMode": "Banner Mode",
+      "bannerMode0": "Don't adjust",
+      "bannerMode1": "Adjust, ignore aspect ratio",
+      "bannerMode2": "Adjust, keep aspect ratio"
+    }
+  },
+  "data": {
+    "botTemplates": {
+      "categories": {
+        "infoChannels": {
+          "label": "Info Channels",
+          "description": "Dynamic channel names with live data"
+        },
+        "moderation": {
+          "label": "Moderation",
+          "description": "Automated moderation and protection"
+        },
+        "automation": {
+          "label": "Automation",
+          "description": "Welcome messages, temp channels, ranking"
+        },
+        "integration": {
+          "label": "Integration",
+          "description": "External APIs and webhooks"
+        }
+      },
+      "items": {
+        "clockChannel": {
+          "name": "Clock Channel",
+          "description": "Updates a channel name with the current time every minute.",
+          "fields": {
+            "channelId": {
+              "label": "Channel ID"
+            },
+            "timezone": {
+              "label": "Timezone"
+            }
+          }
+        },
+        "onlineCounter": {
+          "name": "Online Counter",
+          "description": "Shows the current online client count in a channel name.",
+          "fields": {
+            "channelId": {
+              "label": "Channel ID"
+            }
+          }
+        },
+        "serverStats": {
+          "name": "Server Stats",
+          "description": "Displays uptime, online clients, and channel count in three info channels.",
+          "fields": {
+            "uptimeChannelId": {
+              "label": "Uptime Channel ID"
+            },
+            "clientsChannelId": {
+              "label": "Clients Channel ID"
+            },
+            "channelCountChannelId": {
+              "label": "Channel Count Channel ID"
+            }
+          }
+        },
+        "animatedChannel": {
+          "name": "Animated Channel Name",
+          "description": "Animates a channel name with visual effects like scrolling marquee, typewriter, bounce, and more. Updates every 2-5 seconds.",
+          "fields": {
+            "channelId": {
+              "label": "Channel ID"
+            },
+            "text": {
+              "label": "Display Text"
+            },
+            "style": {
+              "label": "Animation Style",
+              "options": {
+                "0": "Scroll Left (Marquee)",
+                "1": "Typewriter",
+                "2": "Bounce",
+                "3": "Blink",
+                "4": "Wave (Decorative)",
+                "5": "Alternate Case"
+              }
+            },
+            "intervalSeconds": {
+              "label": "Speed",
+              "options": {
+                "0": "Slow (5s)",
+                "1": "Medium (3s)",
+                "2": "Fast (2s)",
+                "3": "Very Fast (1s)",
+                "4": "Ultra (0.5s)",
+                "5": "Insane (0.25s)"
+              }
+            },
+            "prefix": {
+              "label": "Channel Name Prefix"
+            }
+          }
+        },
+        "welcomeMessage": {
+          "name": "Welcome Message",
+          "description": "Sends a welcome message or poke when a client joins the server, with an opt-out command and server-group exclusions.",
+          "variablesHint": [
+            "{{event.client_nickname}} - joining client's name",
+            "{{temp.onlineCount}} - real users online right now (query/bot connections not counted)",
+            "{{temp.dbInfo.0.client_totalconnections}} - this client's lifetime connection count",
+            "{{temp.teamOnline}} - team members online right now (only resolves if Team Groups is set below)"
+          ],
+          "fields": {
+            "message": {
+              "label": "Welcome Message"
+            },
+            "usePokeInstead": {
+              "label": "Delivery Method",
+              "options": {
+                "0": "Private Message",
+                "1": "Poke"
+              }
+            },
+            "ignoreGroupIds": {
+              "label": "Ignore Groups (comma-separated, optional)"
+            },
+            "teamGroupIds": {
+              "label": "Team Groups for {{temp.teamOnline}} (comma-separated, optional)"
+            }
+          }
+        },
+        "supportSystem": {
+          "name": "Support System",
+          "description": "Notifies admins when a client joins the support channel.",
+          "fields": {
+            "supportChannelId": {
+              "label": "Support Channel ID"
+            },
+            "adminGroupId": {
+              "label": "Admin Group ID"
+            },
+            "message": {
+              "label": "Notification Message"
+            }
+          }
+        },
+        "privateChannelCreator": {
+          "name": "Private Channel Creator",
+          "description": "Creates a persistent private channel for a client on first joining a lobby, and moves them back to it every time after - with them set as its channel owner.",
+          "variablesHint": [
+            "{{temp.joinerInfo.0.client_nickname}} - joining client's name (for the channel name/description template)"
+          ],
+          "fields": {
+            "lobbyChannelId": {
+              "label": "Lobby Channel ID"
+            },
+            "parentChannelId": {
+              "label": "Parent Channel ID (optional - overrides where channels are created)"
+            },
+            "channelPlacement": {
+              "label": "Channel Placement",
+              "options": {
+                "0": "Standard Channel (next to Lobby)",
+                "1": "Subchannel of Lobby"
+              }
+            },
+            "channelAdminGroupId": {
+              "label": "Channel Admin Group ID (assigned as owner)"
+            },
+            "channelNameTemplate": {
+              "label": "Channel Name Template"
+            },
+            "channelDescriptionTemplate": {
+              "label": "Channel Description Template (optional)"
+            },
+            "privateChannelType": {
+              "label": "Private Channel Type",
+              "options": {
+                "0": "Permanent",
+                "1": "Semi-Permanent",
+                "2": "Temporary (TeamSpeak deletes it once empty)"
+              }
+            },
+            "autoGeneratePassword": {
+              "label": "Password Protection",
+              "options": {
+                "0": "None",
+                "1": "Auto-generate"
+              }
+            },
+            "spamProtectionEnabled": {
+              "label": "Spam Protection (ban clients who repeatedly rejoin the lobby)",
+              "options": {
+                "0": "No",
+                "1": "Yes"
+              }
+            },
+            "spamProtectionMaxStrikes": {
+              "label": "Max Strikes Before Ban"
+            },
+            "spamProtectionBanSeconds": {
+              "label": "Ban Duration (seconds)"
+            },
+            "channelCreateMessage": {
+              "label": "Channel Create Message"
+            },
+            "channelMoveMessage": {
+              "label": "Channel Move Message"
+            },
+            "channelErrorMessage": {
+              "label": "Channel Error Message"
+            },
+            "channelPasswordMessage": {
+              "label": "Channel Password Message"
+            },
+            "spamProtectionBanMessage": {
+              "label": "Spam Protection Ban Message"
+            }
+          }
+        },
+        "autoRank": {
+          "name": "Auto-Rank",
+          "description": "Automatically assigns server groups based on cumulative online time.",
+          "fields": {
+            "ranks": {
+              "label": "Ranks (JSON)"
+            },
+            "mode": {
+              "label": "Hours measured as",
+              "options": {
+                "0": "Actual online time (accumulated across sessions)",
+                "1": "Time since first connection (member age)"
+              }
+            },
+            "excludeGroupIds": {
+              "label": "Exclude Group IDs (comma-separated, optional)"
+            },
+            "pollInterval": {
+              "label": "Check Interval",
+              "options": {
+                "0": "Every 5 min",
+                "1": "Every 15 min",
+                "2": "Every hour"
+              }
+            }
+          }
+        },
+        "lastSeenTracker": {
+          "name": "Last-Seen Tracker",
+          "description": "Records the last-seen timestamp when a client disconnects."
+        },
+        "afkMover": {
+          "name": "AFK Mover",
+          "description": "Moves idle clients to an AFK channel after a configurable timeout.",
+          "fields": {
+            "afkChannelId": {
+              "label": "AFK Channel ID"
+            },
+            "idleThresholdSeconds": {
+              "label": "Idle Threshold (seconds)"
+            },
+            "exemptGroupIds": {
+              "label": "Exempt Group IDs (comma-separated)"
+            },
+            "exemptChannelIds": {
+              "label": "Exempt Channel IDs (comma-separated)"
+            }
+          }
+        },
+        "idleKicker": {
+          "name": "Idle Kicker",
+          "description": "Kicks clients that have been idle for too long.",
+          "fields": {
+            "idleThresholdSeconds": {
+              "label": "Idle Threshold (seconds)"
+            },
+            "reason": {
+              "label": "Kick Reason"
+            },
+            "exemptGroupIds": {
+              "label": "Exempt Group IDs (comma-separated)"
+            }
+          }
+        },
+        "badNameChecker": {
+          "name": "Bad Name Checker",
+          "description": "Kicks clients whose nickname contains forbidden words.",
+          "fields": {
+            "badWords": {
+              "label": "Bad Words (comma-separated)"
+            },
+            "reason": {
+              "label": "Kick Reason"
+            }
+          }
+        },
+        "groupProtector": {
+          "name": "Group Protector",
+          "description": "Kicks clients who have a protected group but lack the required authorization group.",
+          "fields": {
+            "protectedGroupId": {
+              "label": "Protected Group ID"
+            },
+            "allowedGroupId": {
+              "label": "Authorized Group ID"
+            },
+            "action": {
+              "label": "Action",
+              "options": {
+                "0": "Kick",
+                "1": "Remove Group"
+              }
+            }
+          }
+        },
+        "webhookServerMessage": {
+          "name": "Webhook → Server Message",
+          "description": "Receives a webhook POST and broadcasts the message to the TeamSpeak server. Great for monitoring alerts, CI/CD notifications, or Discord bridges.",
+          "fields": {
+            "path": {
+              "label": "Webhook Path"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
+          }
+        },
+        "webhookGroupAssign": {
+          "name": "Webhook → Assign Group",
+          "description": "External system (e.g. website verification) sends a webhook with a client database ID to assign a server group. Use for website-to-TS3 user verification.",
+          "fields": {
+            "path": {
+              "label": "Webhook Path"
+            },
+            "groupId": {
+              "label": "Server Group ID to assign"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
+          }
+        },
+        "webhookChannelRename": {
+          "name": "Webhook → Update Channel",
+          "description": "Receives a webhook and updates a channel name. Use for external status displays like game server status, stream status, or monitoring dashboards.",
+          "fields": {
+            "path": {
+              "label": "Webhook Path"
+            },
+            "channelId": {
+              "label": "Channel ID to update"
+            },
+            "nameTemplate": {
+              "label": "Channel Name Template"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
+          }
+        },
+        "antiVpn": {
+          "name": "Anti-VPN",
+          "description": "Checks connecting clients against a VPN detection API and kicks/bans VPN users.",
+          "fields": {
+            "apiUrl": {
+              "label": "API URL (use {{ip}} placeholder)"
+            },
+            "action": {
+              "label": "Action for VPN",
+              "options": {
+                "0": "Kick",
+                "1": "Ban (1h)"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "errors": {
+    "ts": {
+      "groupNameExists": "A group with this name already exists",
+      "invalidGroup": "Invalid group - it may have been deleted",
+      "permAlreadySet": "That permission is already set on this group",
+      "unknownPermission": "This server does not recognize one of the permissions in the file",
+      "cannotModifyDefaultGroup": "Cannot modify permissions on a default/template group",
+      "invalidPermValueSize": "Invalid permission value size in the file",
+      "invalidPermValue": "Invalid permission value in the file",
+      "insufficientModifyPower": "Insufficient permission modify power for one of the imported values"
+    }
+  }
+}

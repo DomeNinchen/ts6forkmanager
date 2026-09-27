@@ -1,0 +1,2802 @@
+{
+  "common": {
+    "save": "Speichern",
+    "saving": "Wird gespeichert...",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "deleting": "Wird gelöscht...",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "creating": "Wird erstellt...",
+    "add": "Hinzufügen",
+    "remove": "Entfernen",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "search": "Suche",
+    "loading": "Wird geladen...",
+    "refresh": "Aktualisieren",
+    "actions": "Aktionen",
+    "name": "Name",
+    "description": "Beschreibung",
+    "status": "Status",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "yes": "Ja",
+    "no": "Nein",
+    "none": "Keine",
+    "unknown": "Unbekannt",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "warning": "Warnung",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "submit": "Absenden",
+    "reset": "Zurücksetzen",
+    "apply": "Anwenden",
+    "select": "Auswählen",
+    "selectAll": "Alle auswählen",
+    "clear": "Leeren",
+    "clearAll": "Alle leeren",
+    "noResults": "Keine Ergebnisse gefunden",
+    "noData": "Keine Daten verfügbar",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "areYouSure": "Bist du sicher?",
+    "actionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "optional": "optional",
+    "required": "Erforderlich",
+    "on": "Ein",
+    "off": "Aus",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "online": "Online",
+    "offline": "Offline",
+    "id": "ID",
+    "type": "Typ",
+    "date": "Datum",
+    "time": "Zeit",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "logout": "Abmelden",
+    "settings": "Einstellungen",
+    "language": "Sprache",
+    "duration": {
+      "permanent": "Dauerhaft",
+      "justNow": "Gerade eben",
+      "minutesAgo": "vor {{count}}m",
+      "hoursAgo": "vor {{count}}h",
+      "daysAgo": "vor {{count}}d"
+    },
+    "roles": {
+      "admin": "Admin",
+      "viewer": "Betrachter",
+      "botOperator": "Bot-Operator",
+      "musicOperator": "Musik-Operator"
+    }
+  },
+  "nav": {
+    "collapse": "Einklappen",
+    "sections": {
+      "overview": "Übersicht",
+      "management": "Verwaltung",
+      "security": "Sicherheit",
+      "content": "Inhalte",
+      "system": "System",
+      "automation": "Automatisierung"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "virtualServers": "Virtuelle Server",
+      "statistics": "Statistiken",
+      "channels": "Channels",
+      "clients": "Clients",
+      "serverGroups": "Servergruppen",
+      "channelGroups": "Channel-Gruppen",
+      "permissions": "Berechtigungen",
+      "bans": "Sperren",
+      "tokens": "Tokens",
+      "files": "Dateien",
+      "icons": "Icons",
+      "complaints": "Beschwerden",
+      "messages": "Nachrichten",
+      "serverLogs": "Server-Logs",
+      "instance": "Instanz",
+      "miscellaneous": "Sonstiges",
+      "advancedSettings": "Erweiterte Einstellungen",
+      "musicRequestHistory": "Musikanfragen-Verlauf",
+      "botFlows": "Bot-Flows",
+      "musicBots": "Musik-Bots"
+    }
+  },
+  "layout": {},
+  "pages": {
+    "noServerSelected": "Kein Server ausgewählt",
+    "bans": {
+      "lastNickname": "Letzter Nickname",
+      "reason": "Grund",
+      "duration": "Dauer",
+      "created": "Erstellt",
+      "by": "Von",
+      "removed": "Sperre entfernt",
+      "added": "Sperre hinzugefügt",
+      "addFailed": "Sperre konnte nicht hinzugefügt werden",
+      "addBan": "Sperre hinzufügen",
+      "searchPlaceholder": "Sperren durchsuchen...",
+      "banType": "Sperrtyp",
+      "ipAddress": "IP-Adresse",
+      "nameRegex": "Name (Regex)",
+      "uniqueId": "Eindeutige ID",
+      "value": "Wert",
+      "reasonPlaceholder": "Sperrgrund",
+      "oneHour": "1 Stunde",
+      "oneDay": "1 Tag",
+      "oneWeek": "1 Woche",
+      "thirtyDays": "30 Tage"
+    },
+    "messages": {
+      "title": "Offline-Nachrichten",
+      "compose": "Verfassen",
+      "searchPlaceholder": "Nachrichten durchsuchen...",
+      "from": "Von",
+      "subject": "Betreff",
+      "date": "Datum",
+      "read": "Gelesen",
+      "unread": "Ungelesen",
+      "deleted": "Nachricht gelöscht",
+      "sent": "Nachricht gesendet",
+      "sendFailed": "Nachricht konnte nicht gesendet werden",
+      "message": "Nachricht",
+      "noContent": "Kein Inhalt",
+      "composeTitle": "Nachricht verfassen",
+      "recipientUid": "Empfänger-Client-UID",
+      "recipientUidPlaceholder": "Eindeutige Client-ID",
+      "subjectPlaceholder": "Betreff der Nachricht",
+      "bodyPlaceholder": "Nachrichtentext...",
+      "send": "Senden"
+    },
+    "setup": {
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "setupFailed": "Einrichtung fehlgeschlagen",
+      "title": "Ersteinrichtung",
+      "subtitle": "Erstelle dein Administrator-Konto",
+      "intro": "Dies ist die Ersteinrichtung. Erstelle ein Admin-Konto, um loszulegen.",
+      "displayName": "Anzeigename",
+      "displayNamePlaceholder": "Administrator",
+      "passwordHint": "Mind. 8 Zeichen, Groß-/Kleinbuchstaben, Ziffer",
+      "confirmPassword": "Passwort bestätigen",
+      "repeatPassword": "Passwort wiederholen",
+      "creatingAccount": "Konto wird erstellt...",
+      "createAdminAccount": "Admin-Konto erstellen"
+    },
+    "botList": {
+      "selectServerFirst": "Bitte zuerst einen Server auswählen",
+      "created": "Bot erstellt",
+      "createFailed": "Bot konnte nicht erstellt werden",
+      "fromTemplate": "Aus Vorlage",
+      "newBot": "Neuer Bot",
+      "noneYetTitle": "Noch keine Bot-Flows",
+      "noneYetDescription": "Erstelle deinen ersten Automatisierungs-Flow, um loszulegen.",
+      "enabled": "Bot aktiviert",
+      "disabled": "Bot deaktiviert",
+      "noDescription": "Keine Beschreibung",
+      "serverHash": "Server #{{id}}",
+      "updated": "Aktualisiert {{time}}",
+      "editFlow": "Flow bearbeiten",
+      "newBotFlow": "Neuer Bot-Flow",
+      "namePlaceholder": "Meine Automatisierung",
+      "descriptionPlaceholder": "Was macht dieser Bot?",
+      "createdFromTemplate": "Bot '{{name}}' aus Vorlage erstellt",
+      "createFromTemplateFailed": "Bot konnte nicht aus Vorlage erstellt werden",
+      "deleteTitle": "Bot löschen?",
+      "deleteDescription": "Dies löscht diesen Bot-Flow und seinen gesamten Ausführungsverlauf dauerhaft.",
+      "deleted": "Bot gelöscht"
+    },
+    "instance": {
+      "updated": "Instanz-Einstellungen aktualisiert",
+      "updateFailed": "Instanz-Einstellungen konnten nicht aktualisiert werden",
+      "fields": {
+        "guestServerqueryGroup": "Gast-ServerQuery-Gruppe",
+        "templateServerAdminGroup": "Vorlage Server-Admin-Gruppe",
+        "templateServerDefaultGroup": "Vorlage Server-Standardgruppe",
+        "templateChannelDefaultGroup": "Vorlage Channel-Standardgruppe",
+        "templateChannelAdminGroup": "Vorlage Channel-Admin-Gruppe",
+        "filetransferPort": "Dateiübertragungs-Port",
+        "floodCommands": "Flood-Befehle",
+        "floodTime": "Flood-Zeit (Sek.)",
+        "floodBanTime": "Flood-Bannzeit (Sek.)"
+      },
+      "version": "Version",
+      "build": "Build",
+      "platform": "Plattform",
+      "host": "Host",
+      "uptime": "Laufzeit",
+      "bytesSent": "Gesendete Bytes",
+      "bytesReceived": "Empfangene Bytes",
+      "database": "Datenbank",
+      "dbPlugin": "DB-Plugin",
+      "ftPort": "DÜ-Port",
+      "permissionsVersion": "Berechtigungsversion",
+      "instanceSettings": "Instanz-Einstellungen",
+      "saveChanges": "Änderungen speichern",
+      "ipBindings": "IP-Bindungen",
+      "subsystem": {
+        "voice": "Sprachübertragung",
+        "query": "Query",
+        "filetransfer": "Dateiübertragung"
+      }
+    },
+    "serverStats": {
+      "noConnectionSelected": "Keine Serververbindung ausgewählt",
+      "serversOnline": "Server online",
+      "users": "Nutzer",
+      "instanceUptime": "Instanz-Laufzeit",
+      "currentBandwidth": "Aktuelle Bandbreite",
+      "uploadSecond": "Upload (diese Sekunde)",
+      "uploadMinute": "Upload (diese Minute)",
+      "downloadSecond": "Download (diese Sekunde)",
+      "downloadMinute": "Download (diese Minute)",
+      "transferredSinceStart": "Übertragen seit Start",
+      "dataSent": "Gesendete Daten",
+      "dataReceived": "Empfangene Daten",
+      "packetsSent": "Gesendete Pakete",
+      "packetsReceived": "Empfangene Pakete",
+      "fileTransfersSinceStart": "Dateiübertragungen seit Start",
+      "filesSent": "Gesendete Dateien",
+      "filesReceived": "Empfangene Dateien",
+      "selectServerFirst": "Wähle zuerst einen Server unter Virtuelle Server aus.",
+      "noData": "Keine Daten",
+      "couldNotLoad": "Statistiken für diesen Server konnten nicht geladen werden.",
+      "general": "Allgemein",
+      "port": "Port",
+      "autostart": "Autostart",
+      "uptime": "Laufzeit",
+      "created": "Erstellt",
+      "connections": "Verbindungen",
+      "regularClients": "Reguläre Clients",
+      "queryClients": "Query-Clients",
+      "slots": "Plätze",
+      "network": "Netzwerk",
+      "packetLoss": "Paketverlust",
+      "ping": "Ping",
+      "currentUpload": "Aktueller Upload",
+      "currentDownload": "Aktueller Download",
+      "trafficSinceStart": "Datenverkehr seit Start",
+      "sent": "Gesendet",
+      "received": "Empfangen",
+      "total": "Gesamt",
+      "overview": "Übersicht",
+      "selectedServer": "Ausgewählter Server"
+    },
+    "login": {
+      "ssoErrors": {
+        "notConfigured": "SSO ist nicht konfiguriert.",
+        "failed": "SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+        "invalidState": "SSO-Anmeldung abgelaufen oder manipuliert. Bitte erneut versuchen.",
+        "noSubject": "Der SSO-Anbieter hat keine gültige Identität zurückgegeben.",
+        "accountDisabled": "Dieses Konto wurde deaktiviert.",
+        "generic": "SSO-Anmeldung fehlgeschlagen."
+      },
+      "twoFactorAuth": "Zwei-Faktor-Authentifizierung",
+      "enterCode": "Gib den Code aus deiner Authenticator-App ein",
+      "codeOrRecovery": "Code (oder ein Wiederherstellungscode)",
+      "rememberDevice": "Dieses Gerät für 15 Tage merken",
+      "invalidCode": "Ungültiger Code. Bitte erneut versuchen.",
+      "verifying": "Wird überprüft...",
+      "verify": "Bestätigen",
+      "backToLogin": "Zurück zur Anmeldung",
+      "subtitle": "Server-Administrationspanel",
+      "signInToContinue": "Anmelden, um fortzufahren",
+      "invalidCredentials": "Ungültige Zugangsdaten. Bitte erneut versuchen.",
+      "signingIn": "Anmeldung läuft...",
+      "signIn": "Anmelden",
+      "or": "oder"
+    },
+    "serverLogs": {
+      "entryAdded": "Logeintrag hinzugefügt",
+      "addFailed": "Logeintrag konnte nicht hinzugefügt werden",
+      "addEntry": "Eintrag hinzufügen",
+      "export": "Export",
+      "asTxt": "als .txt",
+      "asHtml": "als .html",
+      "filterPlaceholder": "Logs filtern...",
+      "thisServer": "Dieser Server",
+      "instanceLog": "Instanz-Log",
+      "allLevels": "Alle Stufen",
+      "levelError": "Fehler",
+      "levelWarning": "Warnung",
+      "levelInfo": "Info",
+      "levelDebug": "Debug",
+      "nLines_one": "{{count}} Zeile",
+      "nLines_other": "{{count}} Zeilen",
+      "noEntriesFound": "Keine Logeinträge gefunden.",
+      "entriesShown_one": "{{count}} Eintrag angezeigt",
+      "entriesShown_other": "{{count}} Einträge angezeigt",
+      "skippingFirst": "erste {{count}} übersprungen",
+      "newer": "Neuer",
+      "older": "Älter",
+      "level": "Stufe"
+    },
+    "virtualServers": {
+      "started": "Server gestartet",
+      "startFailed": "Server konnte nicht gestartet werden",
+      "stopped": "Server gestoppt",
+      "stopFailed": "Server konnte nicht gestoppt werden",
+      "created": "Virtueller Server erstellt",
+      "createFailed": "Virtueller Server konnte nicht erstellt werden",
+      "createServer": "Server erstellen",
+      "servers": "Server",
+      "onlineOffline": "online+offline",
+      "autostarting": "Autostart aktiv",
+      "slots": "Plätze",
+      "autostartSlots": "Autostart-Plätze",
+      "selected": "AUSGEWÄHLT",
+      "deselect": "Abwählen",
+      "stop": "Stoppen",
+      "start": "Starten",
+      "createDialogTitle": "Virtuellen Server erstellen",
+      "createDialogDescription": "Erstellt einen neuen virtuellen Server auf dieser TeamSpeak-Instanz.",
+      "namePlaceholder": "Mein TeamSpeak-Server",
+      "portOptional": "Port (optional)",
+      "portPlaceholder": "Leer lassen für ersten freien Port",
+      "autostartWithInstance": "Automatisch mit der Instanz starten"
+    },
+    "misc": {
+      "identityUpdated": "Identität aktualisiert",
+      "identityUpdateFailed": "Identität konnte nicht aktualisiert werden",
+      "snapshotCreated": "Snapshot erstellt und heruntergeladen",
+      "snapshotCreateFailed": "Snapshot konnte nicht erstellt werden",
+      "snapshotRestored": "Snapshot wiederhergestellt",
+      "snapshotRestoreFailed": "Snapshot konnte nicht wiederhergestellt werden",
+      "permissionsReset": "Berechtigungen auf Standard zurückgesetzt",
+      "permissionsResetFailed": "Berechtigungen konnten nicht zurückgesetzt werden",
+      "messageSent": "Nachricht gesendet",
+      "messageSendFailed": "Nachricht konnte nicht gesendet werden",
+      "notValidSnapshot": "Keine gültige Snapshot-Datei",
+      "globalMessage": "Globale Nachricht",
+      "announcementPlaceholder": "Wichtige Ankündigung...",
+      "allServers": "Alle Server",
+      "thisServerOnly": "Nur dieser Server",
+      "sentAnonymously": "Wird anonym als \"server\" an jeden virtuellen Server dieser Instanz gesendet.",
+      "sentUnderIdentity": "Wird unter deiner aktuellen Query-Identität (siehe unten) nur an diesen Server gesendet - nicht anonym.",
+      "identity": "Identität",
+      "identityDescription": "Der Nickname, unter dem deine manuellen Aktionen über diese App (z. B. das Umbenennen eines Channels) in TeamSpeaks eigenen Logs erscheinen. Getrennt von einer serverbezogenen Bot-Identität, die nur Bot-Flow-Aktionen betrifft.",
+      "current": "Aktuell: {{name}}",
+      "newNickname": "Neuer Nickname",
+      "snapshots": "Snapshots",
+      "snapshotsDescription": "Speichert alle Einstellungen, Gruppen und bekannten Client-Identitäten des aktuell ausgewählten Servers. Dateien, Icons und Avatare sind nicht enthalten.",
+      "creating": "Wird erstellt...",
+      "createAndDownload": "Erstellen & Herunterladen",
+      "restoreFromFile": "Aus Datei wiederherstellen",
+      "restoreWarning": "Das Wiederherstellen überschreibt die Einstellungen, Gruppen und Berechtigungen des aktuell ausgewählten Servers.",
+      "dangerZone": "Gefahrenzone",
+      "dangerZoneDescription": "Löscht jede Gruppen-, Client- und Channel-Berechtigung auf dem aktuell ausgewählten Server und erstellt anschließend die Standard-Vorlagengruppen neu. Kann nicht rückgängig gemacht werden.",
+      "resetAllPermissions": "Alle Berechtigungen zurücksetzen",
+      "restoreSnapshotTitle": "Snapshot wiederherstellen?",
+      "restoreSnapshotDescription": "Dies überschreibt die Einstellungen, Gruppen und Berechtigungen des aktuell ausgewählten Servers mit dem Inhalt von \"{{name}}\". Dies kann nicht rückgängig gemacht werden.",
+      "restore": "Wiederherstellen",
+      "resetAllPermissionsTitle": "Alle Berechtigungen zurücksetzen?",
+      "resetAllPermissionsDescription": "Dies löscht dauerhaft jede Servergruppen-, Channel-Gruppen-, Client- und Channel-Berechtigung auf dem aktuell ausgewählten Server und erstellt anschließend die Standard-Vorlagengruppen neu. Dies kann nicht rückgängig gemacht werden."
+    },
+    "clients": {
+      "nickname": "Nickname",
+      "country": "Land",
+      "idle": "Inaktiv",
+      "away": "Abwesend",
+      "muted": "Stumm",
+      "poke": "Anstupsen",
+      "kickedName": "{{name}} gekickt",
+      "kickFromServer": "Vom Server kicken",
+      "bannedName": "{{name}} gesperrt",
+      "banOneHour": "Sperren (1 Stunde)",
+      "onlineCount_one": "{{count}} online",
+      "onlineCount_other": "{{count}} online",
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "move": "Verschieben",
+      "kick": "Kicken",
+      "ban": "Sperren",
+      "describe": "Beschreiben",
+      "searchPlaceholder": "Clients durchsuchen...",
+      "pokeName": "{{name}} anstupsen",
+      "pokePlaceholder": "Hey!",
+      "pokedName": "{{name}} angestupst",
+      "moveCount_one": "{{count}} Client verschieben",
+      "moveCount_other": "{{count}} Clients verschieben",
+      "targetChannel": "Zielchannel",
+      "chooseChannel": "Channel wählen...",
+      "movedCount_one": "{{count}} Client verschoben",
+      "movedCount_other": "{{count}} Clients verschoben",
+      "moveFailed": "Clients konnten nicht verschoben werden",
+      "kickCount_one": "{{count}} Client kicken",
+      "kickCount_other": "{{count}} Clients kicken",
+      "reasonOptional": "Grund (optional, wird den gekickten Clients angezeigt)",
+      "kickedByAdmin": "Vom Admin gekickt",
+      "kickedCount_one": "{{count}} Client gekickt",
+      "kickedCount_other": "{{count}} Clients gekickt",
+      "kickFailed": "Clients konnten nicht gekickt werden",
+      "banCount_one": "{{count}} Client sperren",
+      "banCount_other": "{{count}} Clients sperren",
+      "durationSeconds": "Dauer (Sekunden, 0 = dauerhaft)",
+      "bannedByAdmin": "Vom Admin gesperrt",
+      "bannedCount_one": "{{count}} Client gesperrt",
+      "bannedCount_other": "{{count}} Clients gesperrt",
+      "banFailed": "Clients konnten nicht gesperrt werden",
+      "describeCount_one": "{{count}} Client beschreiben",
+      "describeCount_other": "{{count}} Clients beschreiben",
+      "descriptionApplied": "Beschreibung (auf alle ausgewählten Clients angewendet)",
+      "descriptionUpdated_one": "Beschreibung für {{count}} Client aktualisiert",
+      "descriptionUpdated_other": "Beschreibung für {{count}} Clients aktualisiert",
+      "descriptionUpdateFailed": "Beschreibungen konnten nicht aktualisiert werden"
+    },
+    "tokens": {
+      "createdAndCopied": "Token erstellt und in Zwischenablage kopiert",
+      "created": "Token erstellt",
+      "createFailed": "Token konnte nicht erstellt werden",
+      "tempCreated": "Temporäres Passwort erstellt",
+      "tempCreateFailed": "Temporäres Passwort konnte nicht erstellt werden",
+      "tempDeleted": "Temporäres Passwort gelöscht",
+      "defaultChannel": "Standard-Channel",
+      "token": "Token",
+      "serverGroup": "Servergruppe",
+      "channelGroup": "Channel-Gruppe",
+      "groupId": "Gruppen-ID",
+      "tokenDeleted": "Token gelöscht",
+      "targetChannel": "Zielchannel",
+      "expires": "Läuft ab",
+      "expired": "Abgelaufen",
+      "createdBy": "Erstellt von",
+      "title": "Privilegien-Schlüssel",
+      "createToken": "Token erstellen",
+      "searchTokens": "Tokens durchsuchen...",
+      "temporaryPasswords": "Temporäre Passwörter",
+      "noTempPasswords": "Keine temporären Passwörter festgelegt",
+      "searchTempPasswords": "Temporäre Passwörter durchsuchen...",
+      "groupType": "Gruppentyp",
+      "group": "Gruppe",
+      "chooseGroup": "Gruppe wählen...",
+      "iconForGroup": "Icon für {{name}}",
+      "createTempPassword": "Temporäres Passwort erstellen",
+      "enterOrGenerate": "Passwort eingeben oder generieren",
+      "generateRandom": "Zufälliges Passwort generieren",
+      "validFor": "Gültig für",
+      "unit": "Einheit",
+      "minutes": "Minuten",
+      "hours": "Stunden",
+      "days": "Tage"
+    },
+    "advancedSettings": {
+      "title": "Erweiterte Einstellungen",
+      "saveFailed": "Speichern fehlgeschlagen",
+      "saved": "Gespeichert",
+      "tabs": {
+        "appearance": "Erscheinungsbild",
+        "access": "Zugriff & Gruppen",
+        "moderation": "Moderation & Protokollierung",
+        "limits": "Dateiübertragungslimits"
+      },
+      "welcomeHostMessage": "Willkommens- & Host-Nachricht",
+      "welcomeMessage": "Willkommensnachricht",
+      "welcomeMessagePlaceholder": "Wird Clients direkt nach dem Verbinden angezeigt",
+      "hostMessage": "Host-Nachricht",
+      "hostMessageMode": "Host-Nachricht-Modus",
+      "dontShow": "Nicht anzeigen",
+      "showInChatLog": "Im Chat-Log anzeigen",
+      "showAsModal": "Als Modal anzeigen",
+      "showAsModalThenQuit": "Als Modal anzeigen, dann trennen",
+      "hostBanner": "Host-Banner",
+      "linkUrl": "Link-URL",
+      "imageUrl": "Bild-URL",
+      "rotationInterval": "Rotationsintervall (s)",
+      "displayMode": "Anzeigemodus",
+      "noAdjust": "Nicht anpassen",
+      "stretchIgnoreAspect": "Strecken (Seitenverhältnis ignorieren)",
+      "keepAspectRatio": "Seitenverhältnis beibehalten",
+      "hostButton": "Host-Button",
+      "linkUrlOnClick": "Link-URL (beim Klick geöffnet)",
+      "tooltip": "Tooltip",
+      "defaultGroups": "Standardgruppen",
+      "defaultServerGroup": "Standard-Servergruppe",
+      "defaultChannelGroup": "Standard-Channel-Gruppe",
+      "defaultChannelAdminGroup": "Standard-Channel-Admin-Gruppe",
+      "accessSecurity": "Zugriff & Sicherheit",
+      "serverPassword": "Serverpasswort",
+      "minIdentitySecurityLevel": "Minimale Identitäts-Sicherheitsstufe",
+      "minClientBuild": "Minimale Client-Version",
+      "reservedSlots": "Reservierte Plätze",
+      "codecEncryption": "Codec-Verschlüsselung",
+      "perChannelSetting": "Pro-Channel-Einstellung",
+      "forcedOff": "Erzwungen aus",
+      "forcedOn": "Erzwungen ein",
+      "showOnGlobalWeblist": "In globaler Weblist anzeigen",
+      "complaintsBeforeBan": "Beschwerden vor Bann",
+      "banDurationSeconds": "Banndauer (s)",
+      "complaintRemovedAfter": "Beschwerde entfernt nach (s)",
+      "prioritySilence": "Priorität & Stille",
+      "clientsBeforeForcedSilence": "Clients im Channel vor erzwungener Stille",
+      "prioritySpeakerReduction": "Lautstärkereduzierung bei Prioritätssprecher (dB)",
+      "antiFlood": "Anti-Flood",
+      "pointsReducedGood": "Punkte reduziert für gutes Verhalten",
+      "pointsToBlockCommands": "Punkte zum Blockieren von Befehlen",
+      "pointsToBlockConnections": "Punkte zum Blockieren von Verbindungen",
+      "eventLogging": "Ereignisprotokollierung",
+      "serverqueryClients": "ServerQuery-Clients",
+      "serverChanges": "Server-Änderungen",
+      "fileTransfers": "Dateiübertragungen",
+      "fileTransferLimitsPerUser": "Dateiübertragungslimits (pro Nutzer)",
+      "uploadQuotaMb": "Upload-Kontingent (MB)",
+      "downloadQuotaMb": "Download-Kontingent (MB)",
+      "uploadBandwidth": "Upload-Bandbreite (Bytes/s)",
+      "downloadBandwidth": "Download-Bandbreite (Bytes/s)",
+      "zeroUnlimited": "0 = unbegrenzt"
+    },
+    "notFound": {
+      "title": "Seite nicht gefunden",
+      "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+      "backToDashboard": "Zurück zum Dashboard"
+    },
+    "complaints": {
+      "from": "Von",
+      "about": "Über",
+      "when": "Wann",
+      "searchPlaceholder": "Beschwerden durchsuchen..."
+    },
+    "widgetPage": {
+      "title": "TS-Server-Widget",
+      "notAvailable": "Widget nicht verfügbar"
+    },
+    "musicRequests": {
+      "description": "Verlauf der Songs, die über den Befehl <1>!play</1> auf diesem Server angefragt wurden.",
+      "noneYetTitle": "Noch keine Musikanfragen",
+      "noneYetDescription": "Wenn Nutzer mit dem !play-Befehl Songs anfragen, erscheinen sie hier als Verlaufsprotokoll.",
+      "requested": "Angefragt {{time}}"
+    },
+    "settings": {
+      "webgui": {
+        "language": {
+          "title": "Meine Sprache",
+          "description": "Die Anzeigesprache der WebGUI, nur für dich - im Konto gespeichert, damit sie dir in jeden Browser folgt."
+        },
+        "darkGroup": "Dunkel",
+        "lightGroup": "Hell",
+        "myBaseTheme": "Mein Grunddesign",
+        "baseThemeDescription": "Die Hintergrund- und Oberflächenpalette, die auch entscheidet, ob die App hell oder dunkel ist. Überschreibt den Installationsstandard unten, nur für dich - nur in diesem Browser gespeichert.",
+        "resetToInstallDefault": "Auf Installationsstandard zurücksetzen",
+        "myAccent": "Mein Akzent",
+        "accentDescription": "Buttons, Links und Hervorhebungen - unabhängig vom Grunddesign oben, jede Kombination funktioniert.",
+        "installDefaultBaseTheme": "Installations-Standardgrunddesign",
+        "installDefaultBaseThemeDescription": "Gilt für jeden Benutzer, der oben noch keine eigene Grunddesign-Einstellung festgelegt hat.",
+        "installDefaultAccent": "Installations-Standardakzent",
+        "installDefaultAccentDescription": "Gilt für jeden Benutzer, der oben noch keine eigene Akzent-Einstellung festgelegt hat.",
+        "baseThemeSetToast": "Installations-Grunddesign auf {{theme}} gesetzt",
+        "baseThemeSetFailed": "Installations-Grunddesign konnte nicht aktualisiert werden",
+        "accentSetToast": "Installationsakzent auf {{accent}} gesetzt",
+        "accentSetFailed": "Installationsakzent konnte nicht aktualisiert werden",
+        "pairingHint": "{{theme}} passt gut zum Akzent {{accent}}."
+      },
+      "title": "Einstellungen",
+      "tabs": {
+        "connections": "Verbindungen",
+        "account": "Konto",
+        "webgui": "WebGui",
+        "users": "Benutzer",
+        "youtube": "YouTube",
+        "streaming": "Streaming",
+        "debug": "Debug",
+        "restart": "Neustart",
+        "sso": "SSO",
+        "updateStatus": "Update-Status"
+      },
+      "account": {
+        "passwordMinLength": "Das neue Passwort muss mindestens 6 Zeichen lang sein",
+        "passwordMismatch": "Passwörter stimmen nicht überein",
+        "passwordChangedSuccess": "Passwort erfolgreich geändert",
+        "passwordChangeFailed": "Passwort konnte nicht geändert werden",
+        "changePasswordTitle": "Passwort ändern",
+        "currentPasswordLabel": "Aktuelles Passwort",
+        "currentPasswordPlaceholder": "Aktuelles Passwort eingeben",
+        "newPasswordLabel": "Neues Passwort",
+        "newPasswordPlaceholder": "Min. 6 Zeichen",
+        "confirmNewPasswordLabel": "Neues Passwort bestätigen",
+        "confirmNewPasswordPlaceholder": "Neues Passwort wiederholen",
+        "changing": "Wird geändert..."
+      },
+      "twoFactor": {
+        "title": "Zwei-Faktor-Authentifizierung",
+        "description": "Fügt zusätzlich zu deinem Passwort einen Einmalcode aus einer Authenticator-App (Google Authenticator, Authy, ...) hinzu.",
+        "disable2fa": "2FA deaktivieren",
+        "starting": "Wird gestartet...",
+        "enable2fa": "2FA aktivieren",
+        "setupTitle": "Zwei-Faktor-Authentifizierung einrichten",
+        "scanInstructions": "Scanne dies mit deiner Authenticator-App und gib dann den angezeigten 6-stelligen Code zur Bestätigung ein.",
+        "qrAlt": "2FA-QR-Code",
+        "manualEntryLabel": "Kann nicht scannen? Manuell eingeben:",
+        "confirmationCodeLabel": "Bestätigungscode",
+        "verifying": "Wird überprüft...",
+        "verifyAndEnable": "Bestätigen & aktivieren",
+        "recoveryCodesHint": "Bewahre diese Wiederherstellungscodes sicher auf. Jeder kann einmal verwendet werden, um dich anzumelden, falls du den Zugriff auf deine Authenticator-App verlierst - sie werden nicht erneut angezeigt.",
+        "savedCodesConfirm": "Ich habe diese Codes gespeichert",
+        "twoFaEnabledToast": "2FA aktiviert",
+        "disableTitle": "Zwei-Faktor-Authentifizierung deaktivieren",
+        "disableConfirmHint": "Gib dein aktuelles Passwort zur Bestätigung ein.",
+        "disablePasswordPlaceholder": "Aktuelles Passwort",
+        "disabling": "Wird deaktiviert...",
+        "setupFailed": "2FA-Einrichtung konnte nicht gestartet werden",
+        "invalidCode": "Ungültiger Code",
+        "twoFaDisabledToast": "2FA deaktiviert",
+        "disableFailed": "2FA konnte nicht deaktiviert werden",
+        "disableAction": "Deaktivieren"
+      },
+      "connections": {
+        "manageDescription": "TeamSpeak-Serververbindungen verwalten",
+        "addConnection": "Verbindung hinzufügen",
+        "host": "Host",
+        "protocol": "Protokoll",
+        "ssh": "SSH",
+        "test": "Test",
+        "botIdentityFallback": "Bot-Identität",
+        "connectionSuccessful": "Verbindung erfolgreich",
+        "connectionFailedWithError": "Verbindung fehlgeschlagen: {{error}}",
+        "connectionFailed": "Verbindung fehlgeschlagen",
+        "editConnectionTitle": "Verbindung bearbeiten",
+        "namePlaceholder": "Mein TS-Server",
+        "hostPlaceholder": "127.0.0.1",
+        "webqueryPortLabel": "WebQuery-Port",
+        "apiKeyLabel": "API-Schlüssel",
+        "apiKeyUnchangedPlaceholder": "(unverändert — neuen Schlüssel zum Aktualisieren eingeben)",
+        "apiKeyPlaceholder": "WebQuery-API-Schlüssel",
+        "useHttps": "HTTPS verwenden",
+        "pingTargetLabel": "Dashboard-Ping-Ziel (optional)",
+        "pingTargetPlaceholder": "Standardmäßig obiger Host ({{host}})",
+        "pingTargetHint": "Betrifft nur die Ping-Anzeige des Dashboards - nützlich, wenn der Host oben eine interne Adresse ist, aber eigentlich die öffentliche Domain getestet werden soll. Bot-Flows verwenden immer den Host, niemals dies.",
+        "sshPortLabel": "SSH-Port",
+        "sshUserLabel": "SSH-Benutzer",
+        "sshUserPlaceholder": "serveradmin",
+        "unchanged": "(unverändert)",
+        "sshPasswordLabel": "SSH-Passwort",
+        "update": "Aktualisieren",
+        "connectionUpdated": "Verbindung aktualisiert",
+        "updateFailed": "Aktualisierung fehlgeschlagen",
+        "connectionAdded": "Verbindung hinzugefügt",
+        "createFailed": "Erstellung fehlgeschlagen",
+        "deleteConnectionTitle": "Verbindung löschen?",
+        "deleteConnectionDescription": "Dies entfernt die Serververbindung. Bots, die mit diesem Server verknüpft sind, funktionieren dann nicht mehr.",
+        "connectionDeleted": "Verbindung gelöscht"
+      },
+      "botIdentity": {
+        "apiKeyReissued": "API-Schlüssel neu ausgestellt",
+        "createdToast": "Bot-Identität erstellt",
+        "createFailed": "Bot-Identität konnte nicht erstellt werden",
+        "renamedToast": "Bot-Identität umbenannt",
+        "renameFailed": "Bot-Identität konnte nicht umbenannt werden",
+        "dialogTitle": "Bot-Identität — {{name}}",
+        "hasIdentityDescription": "Bot-Flow-Aktionen auf diesem Server werden in TeamSpeaks eigenen Logs und Benachrichtigungen diesem Namen zugeschrieben, statt derselben Identität, die deine eigenen manuellen Aktionen in dieser App verwenden.",
+        "noIdentityDescription": "Optional: Gib Bot-Flows eine eigene, separate ServerQuery-Identität, sodass ihre Aktionen (z. B. das Umbenennen eines Channels) in TeamSpeaks eigenen Logs unter diesem Namen erscheinen, statt mit deinen eigenen manuellen Aktionen in dieser App zu verschmelzen. Für Bot-Flows ändert sich nichts, bis du eine erstellst.",
+        "scopeFixHint": "Schlagen Bot-Flow-Aktionen mit einem Berechtigungs- oder \"out of scope\"-Fehler fehl? Diese Identität wurde möglicherweise vor einer Scope-Korrektur erstellt - verwende unten \"Berechtigungen reparieren\", um ihren Schlüssel neu auszustellen, ohne sonst etwas zu ändern.",
+        "displayNameLabel": "Anzeigename",
+        "fixing": "Wird repariert...",
+        "fixPermissions": "Berechtigungen reparieren",
+        "createBotIdentityButton": "Bot-Identität erstellen"
+      },
+      "users": {
+        "manageDescription": "Webapp-Benutzer und Rollen verwalten",
+        "searchPlaceholder": "Benutzer suchen...",
+        "addUser": "Benutzer hinzufügen",
+        "colUsername": "Benutzername",
+        "colDisplayName": "Anzeigename",
+        "colLastLogin": "Letzte Anmeldung",
+        "noUsersMatch": "Keine Benutzer entsprechen \"{{search}}\"",
+        "ssoBadge": "SSO",
+        "cantChangeOwnRole": "Du kannst deine eigene Rolle nicht ändern",
+        "cantDisableOwnAccount": "Du kannst dein eigenes Konto nicht deaktivieren",
+        "never": "Nie",
+        "serverAccessTitle": "Serverzugriff",
+        "sessionsTitle": "Sitzungen",
+        "resetPasswordTitle": "Passwort zurücksetzen",
+        "cantDeleteOwnAccount": "Du kannst dein eigenes Konto nicht löschen",
+        "usernamePlaceholder": "johndoe",
+        "displayNamePlaceholder": "John Doe",
+        "passwordPlaceholder": "********",
+        "userCreated": "Benutzer erstellt",
+        "createUserFailed": "Benutzer konnte nicht erstellt werden",
+        "roleUpdated": "Rolle aktualisiert",
+        "roleUpdateFailed": "Rolle konnte nicht aktualisiert werden",
+        "userEnabledToast": "Benutzer aktiviert",
+        "userDisabledToast": "Benutzer deaktiviert",
+        "statusUpdateFailed": "Status konnte nicht aktualisiert werden",
+        "resetPasswordMinLength": "Das Passwort muss mindestens 6 Zeichen lang sein",
+        "passwordResetSuccess": "Passwort erfolgreich zurückgesetzt",
+        "resetPasswordFailed": "Passwort konnte nicht zurückgesetzt werden",
+        "userUpdated": "Benutzer aktualisiert",
+        "updateUserFailed": "Benutzer konnte nicht aktualisiert werden",
+        "setNewPasswordFor": "Neues Passwort festlegen für {{username}}",
+        "deleteUserTitle": "Benutzer löschen?",
+        "deleteUserDescription": "Dieser Benutzer wird dauerhaft gelöscht.",
+        "userDeleted": "Benutzer gelöscht",
+        "deleteUserFailed": "Benutzer konnte nicht gelöscht werden",
+        "resetting": "Wird zurückgesetzt...",
+        "editUserTitle": "Benutzer bearbeiten"
+      },
+      "serverAccess": {
+        "updated": "Serverzugriff aktualisiert",
+        "updateFailed": "Serverzugriff konnte nicht aktualisiert werden",
+        "title": "Serverzugriff — {{username}}",
+        "noConnections": "Noch keine Serververbindungen konfiguriert."
+      },
+      "sessions": {
+        "title": "Sitzungen — {{username}}",
+        "description": "Ein Eintrag pro angemeldetem Gerät/Browser. Das Widerrufen einer Sitzung zwingt dieses Gerät zur erneuten Anmeldung.",
+        "selfWarning": " Das Widerrufen deiner eigenen aktuellen Sitzung meldet auch dich ab.",
+        "noActiveSessions": "Keine aktiven Sitzungen.",
+        "signedIn": "Angemeldet am {{date}}",
+        "expires": "Läuft ab am {{date}}",
+        "revoke": "Widerrufen",
+        "revoked": "Sitzung widerrufen",
+        "revokeFailed": "Sitzung konnte nicht widerrufen werden",
+        "revokedAllToast": "{{count}} Sitzung(en) widerrufen",
+        "revokeAllFailed": "Sitzungen konnten nicht widerrufen werden",
+        "revoking": "Wird widerrufen...",
+        "revokeAll": "Alle widerrufen"
+      },
+      "youtube": {
+        "title": "YouTube-Cookies",
+        "description": "Lade eine cookies.txt-Datei hoch, um auf altersbeschränkte oder Mitglieder-only-YouTube-Inhalte zuzugreifen. Du kannst Cookies aus deinem Browser mit Erweiterungen wie",
+        "extensionName": "Get cookies.txt LOCALLY",
+        "extensionSuffix": " (Chrome/Firefox) exportieren.",
+        "noCookiesConfigured": "Keine Cookies konfiguriert",
+        "cookiesRejected": "YouTube hat diese Cookies abgelehnt ({{size}}) — erneut exportieren und hochladen",
+        "cookiesWorking": "Cookies aktiv und funktionsfähig ({{size}})",
+        "cookiesNotChecked": "Cookies aktiv ({{size}}) — noch nicht geprüft",
+        "checking": "Wird geprüft...",
+        "recheck": "Erneut prüfen",
+        "uploading": "Wird hochgeladen...",
+        "uploadCookiesFile": "cookies.txt hochladen",
+        "pasteCookies": "Cookies einfügen",
+        "settingSaved": "Einstellung gespeichert",
+        "settingSaveFailed": "Einstellung konnte nicht gespeichert werden",
+        "uploadedButRejected": "Hochgeladen, aber YouTube hat diese Cookies abgelehnt",
+        "cookieFileUploaded": "Cookie-Datei hochgeladen",
+        "uploadFailed": "Cookie-Datei konnte nicht hochgeladen werden",
+        "savedButRejected": "Gespeichert, aber YouTube hat diese Cookies abgelehnt",
+        "cookiesSaved": "Cookies gespeichert",
+        "saveCookiesFailed": "Cookies konnten nicht gespeichert werden",
+        "cookieFileRemoved": "Cookie-Datei entfernt",
+        "removeCookiesFailed": "Cookies konnten nicht entfernt werden",
+        "playedSongStorageTitle": "Speicherung gespielter Songs",
+        "playedSongStorageDescriptionPart1": "Legt fest, was mit Songs passiert, die über Chatbefehle heruntergeladen werden (",
+        "playedSongStorageDescriptionPart2": "). Dies betrifft nicht Songs, die bewusst über den Bibliothek-Tab hinzugefügt wurden (Upload oder \"per URL herunterladen\") — diese werden immer behalten.",
+        "keepPlayedSongsLabel": "Gespielte Songs behalten",
+        "keepOnDescription": "Ein: Im Chat gespielte Songs können über \"Nach neuen Dateien suchen\" in die Bibliothek übernommen und dauerhaft behalten werden (Standard).",
+        "keepOffDescription": "Aus: Im Chat gespielte Songs werden nie zur Bibliothek hinzugefügt und automatisch etwa eine Stunde nach dem Abspielen gelöscht, um Speicherplatz zu sparen."
+      },
+      "streaming": {
+        "title": "Stream-Standardwerte",
+        "descriptionUsage": "verwendet wird, wenn niemand eine Qualität angibt. Eine Angabe im Chat ({{names}}) gewinnt weiterhin für diesen Stream. Höhere Werte benötigen mehr Upload-Bandbreite und mehr CPU auf dieser Maschine - falls Zuschauer Ruckler melden, hier zurückkommen und die Werte senken.",
+        "resolutionLabel": "Auflösung",
+        "pixelsSuffix": "{{width}}x{{height}} Pixel",
+        "frameRateLabel": "Bildrate",
+        "frameRateHint": "Bilder pro Sekunde, 1-120.",
+        "bitrateLabel": "Bitrate",
+        "bitrateHintPrefix": "So wie ffmpeg es schreibt, z. B.",
+        "volumeLabel": "Lautstärke",
+        "volumeHint": "Prozent der Eigenlautstärke des Videos, 0-100. Videos sind deutlich lauter abgemischt, als Menschen sprechen, sodass ein Stream auf voller Videolautstärke wie ein Schrei ankommt - daher der niedrige Standardwert. Zuschauer können ihren eigenen Player trotzdem lauter stellen. Wirkt sich erst auf den nächsten Stream aus, nicht auf den laufenden.",
+        "restoreShippedValues": "Ausgelieferte Werte wiederherstellen",
+        "unsavedChanges": "Ungespeicherte Änderungen",
+        "streamDefaultsSaved": "Stream-Standardwerte gespeichert",
+        "streamDefaultsSaveFailed": "Stream-Standardwerte konnten nicht gespeichert werden"
+      },
+      "debug": {
+        "loggingTitle": "Debug-Protokollierung",
+        "loggingDescription": "Besonders ausführliche Protokollierung zur Fehlerdiagnose. Im Normalbetrieb ausgeschaltet lassen — sie kann sehr viel Log-Ausgabe erzeugen. Änderungen wirken sich sofort aus.",
+        "voiceBotDebugLabel": "Voice-Bot-Debug",
+        "voiceBotDebugHint": "Audiostreaming-Statistiken pro Sekunde (Jitter, Frame-Timing) für Musik-/Stream-Bots.",
+        "rankCheckDebugLabel": "Rang-Prüfung-Debug",
+        "rankCheckDebugHint": "Detailangaben pro Client (berechnete Stunden, Gruppenmitgliedschaft) für die Bot-Flow-Aktion Rang-Prüfung.",
+        "serverQueryDebugLabel": "ServerQuery-Debug",
+        "serverQueryDebugHint": "Jeder WebQuery-/SSH-Befehl an einen TeamSpeak-Server und seine Rohantwort, einschließlich Fehlern (z. B. unzureichende Berechtigungen) - nützlich, wenn eine Bot-Flow-Aktion stillschweigend nicht das tut, was erwartet wird.",
+        "debugFlagUpdateFailed": "Debug-Flag konnte nicht aktualisiert werden",
+        "dangerZone": "Gefahrenzone",
+        "idResetHint": "SQLites ID-Zähler gehen nie von selbst zurück, auch nach dem Löschen von allem - diese Aktionen leeren eine ganze Tabelle (über jeden Server hinweg, nicht nur den oben ausgewählten), sodass ihr nächster Eintrag wieder bei #1 beginnt.",
+        "resetRadioIdsLabel": "Radiosender-IDs zurücksetzen",
+        "resetRadioIdsHint": "Löscht jeden Radiosender auf jedem Server.",
+        "reset": "Zurücksetzen",
+        "resetBotIdsLabel": "Musik-Bot-IDs zurücksetzen",
+        "resetBotIdsHint": "Stoppt und löscht jeden Musik-Bot auf jedem Server.",
+        "radioIdsResetToast_one": "{{count}} Radiosender gelöscht, IDs zurückgesetzt",
+        "radioIdsResetToast_other": "{{count}} Radiosender gelöscht, IDs zurückgesetzt",
+        "radioIdsResetFailed": "Radiosender-IDs konnten nicht zurückgesetzt werden",
+        "botIdsResetToast_one": "{{count}} Musik-Bot gelöscht, IDs zurückgesetzt",
+        "botIdsResetToast_other": "{{count}} Musik-Bots gelöscht, IDs zurückgesetzt",
+        "botIdsResetFailed": "Musik-Bot-IDs konnten nicht zurückgesetzt werden",
+        "resetRadioTitle": "Radiosender-IDs zurücksetzen?",
+        "resetBotsTitle": "Musik-Bot-IDs zurücksetzen?",
+        "resetRadioDescription": "Dies löscht dauerhaft jeden Radiosender auf jedem Server. Sie müssen neu angelegt werden.",
+        "resetBotsDescription": "Dies stoppt und löscht dauerhaft jeden Musik-Bot auf jedem Server. Sie müssen neu erstellt werden."
+      },
+      "restart": {
+        "title": "Geplanter Neustart",
+        "descriptionPart1": "Startet die eigenen Container von ts6-manager regelmäßig neu, um Arbeitsspeicher freizugeben und einen sauberen Laufzeitzustand sicherzustellen. Dies startet",
+        "descriptionPart2": "deinen TeamSpeak-Server neu — nur ts6-manager selbst. Wähle unten mindestens einen Container aus, um dies zu aktivieren.",
+        "restartBackendLabel": "Backend neustarten",
+        "restartBackendHint": "Bot-Verbindungen, EventBridge, WebSocket-Zustand.",
+        "restartSidecarLabel": "Sidecar neustarten",
+        "restartSidecarHint": "Der Video-Streaming-Prozess (WebRTC/RTP).",
+        "timeLabel": "Uhrzeit (24h, serverlokal)",
+        "daysLabel": "Tage",
+        "restartScheduleSaved": "Neustartplan gespeichert",
+        "restartScheduleSaveFailed": "Neustartplan konnte nicht gespeichert werden",
+        "days": {
+          "sun": "So",
+          "mon": "Mo",
+          "tue": "Di",
+          "wed": "Mi",
+          "thu": "Do",
+          "fri": "Fr",
+          "sat": "Sa"
+        },
+        "notEmphasis": "nicht"
+      },
+      "sso": {
+        "title": "Single Sign-On (OIDC)",
+        "descriptionPart1": "Lässt Benutzer sich über einen externen OpenID-Connect-Anbieter anmelden (Authentik, Keycloak, Authelia, Zitadel, ...). Ein brandneuer Benutzer wird bei der ersten SSO-Anmeldung als",
+        "descriptionPart2": "angelegt — befördere ihn bei Bedarf danach im Benutzer-Tab zum Admin. Die lokale Anmeldung mit Benutzername/Passwort bleibt daneben weiterhin verfügbar.",
+        "viewerEmphasis": "Betrachter",
+        "enabledHint": "Zeigt einen \"Mit SSO anmelden\"-Button auf der Login-Seite.",
+        "issuerUrlLabel": "Issuer-URL",
+        "issuerUrlHint": "Das OIDC-Discovery-Dokument des Anbieters muss erreichbar sein unter",
+        "clientIdLabel": "Client-ID",
+        "clientSecretLabel": "Client-Secret",
+        "clientSecretPlaceholderExisting": "Leer lassen, um das vorhandene Secret zu behalten",
+        "clientSecretPlaceholder": "Client-Secret",
+        "buttonLabelLabel": "Button-Beschriftung",
+        "redirectUriHint": "Bei deinem Anbieter zu registrierende Redirect-URI:",
+        "ssoSettingsSaved": "SSO-Einstellungen gespeichert",
+        "ssoSettingsSaveFailed": "SSO-Einstellungen konnten nicht gespeichert werden"
+      },
+      "updateStatus": {
+        "title": "Update-Status",
+        "recheckNow": "Jetzt erneut prüfen",
+        "checkingForUpdates": "Suche nach Updates...",
+        "updateAvailable": "Update verfügbar",
+        "allUpToDate": "Alles aktuell",
+        "checkFailed": "Update-Prüfung fehlgeschlagen",
+        "comparisonHintPrefix": "Vergleicht diese Installation mit GitHubs",
+        "comparisonHintSuffix": "-Branch. Nur Benachrichtigung — hier wird kein Update automatisch ausgeführt.",
+        "backend": "Backend",
+        "sidecar": "Sidecar",
+        "frontend": "Frontend",
+        "installed": "Installiert",
+        "latestMain": "Neueste (main)",
+        "unreachable": "nicht erreichbar",
+        "unknown": "unbekannt",
+        "updateAvailableBadge": "Update verfügbar",
+        "upToDate": "aktuell",
+        "lastChecked": "Zuletzt geprüft: {{date}}",
+        "notCheckedYet": "Noch nicht geprüft",
+        "githubTokenTitle": "GitHub-API-Token",
+        "githubTokenDescriptionPrefix": "Optional. Diese Prüfung liest pro Durchlauf drei kleine Dateien von GitHub, was innerhalb von GitHubs unauthentifiziertem Limit von 60 Anfragen/Stunde problemlos passt — aber dieses Budget wird mit allem anderen auf diesem Server geteilt, das GitHubs API aufruft, und \"Jetzt erneut prüfen\" ist ohne Token auf 20/Stunde gedrosselt, um innerhalb des Limits zu bleiben. Füge ein Token hinzu (ein einfaches",
+        "githubTokenLinkText": "Fine-grained Personal Access Token",
+        "githubTokenDescriptionSuffix": "ohne benötigten Repository-Zugriff, da nur öffentliche Dateien gelesen werden), um das Limit auf 5.000 Anfragen/Stunde zu erhöhen.",
+        "tokenLabel": "Token",
+        "tokenConfiguredPlaceholder": "Konfiguriert — leer lassen, Speichern bewirkt dann nichts",
+        "tokenPlaceholder": "ghp_... oder github_pat_...",
+        "tokenConfiguredHint": "Ein Token ist konfiguriert.",
+        "noTokenConfiguredHint": "Kein Token konfiguriert — verwendet das unauthentifizierte Limit.",
+        "tokenSaved": "GitHub-Token gespeichert",
+        "tokenSaveFailed": "GitHub-Token konnte nicht gespeichert werden",
+        "tokenRemoved": "GitHub-Token entfernt",
+        "tokenRemoveFailed": "GitHub-Token konnte nicht entfernt werden",
+        "removing": "Wird entfernt..."
+      }
+    },
+    "icons": {
+      "title": "Icon-Browser",
+      "searchPlaceholder": "Icon-ID suchen...",
+      "uploading": "Wird hochgeladen...",
+      "uploadIcons": "Icons hochladen",
+      "iconPool": "Icon-Pool",
+      "maxSize": "max {{size}}",
+      "iconCount_one": "{{count}} Icon",
+      "iconCount_other": "{{count}} Icons",
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "clear": "Leeren",
+      "deleteSelected": "Auswahl löschen",
+      "unavailableTitle": "Icon-Browser nicht verfügbar",
+      "unavailableSsh": "Das Auslesen des Icon-Pools erfordert SSH-Zugriff, da die TeamSpeak-WebQuery-HTTP-API keine Dateiübertragungsbefehle unterstützt. Bitte SSH-Zugangsdaten (Benutzername & Passwort) in den Servereinstellungen konfigurieren.",
+      "loadFailed": "Der Icon-Pool konnte nicht geladen werden.",
+      "noMatching": "Keine passenden Icons",
+      "noIcons": "Keine Icons hochgeladen",
+      "noMatchingDescription": "Kein Icon in diesem Pool entspricht deiner Suche.",
+      "uploadHintAdmin": "Lade eine PNG-, JPEG-, GIF-, WebP- oder SVG-Datei hoch - oder ziehe eine hierher -, um sie zum Icon-Pool dieses Servers hinzuzufügen.",
+      "uploadHintViewer": "Dieser Server hat noch keine Icons in seinem Icon-Pool.",
+      "inUse": "in Verwendung",
+      "poolFooter": "Icons werden im eigenen Icon-Pool des virtuellen Servers gespeichert. Die Icon-ID ist die CRC32-Prüfsumme der Datei, daher ergibt das Hochladen desselben Bildes immer dieselbe ID.",
+      "poolFooterMaxSize": " Dieser Server akzeptiert Icons bis zu {{size}} (i_max_icon_filesize).",
+      "poolFooterNoPermission": " Hinweis: Der Query-Identität fehlt die Berechtigung b_icon_manage.",
+      "deleteTitle_one": "Icon löschen?",
+      "deleteTitle_other": "{{count}} Icons löschen?",
+      "deleteWarning_one": "Achtung: {{count}} der ausgewählten Icons wird noch verwendet — {{list}}. Beim Löschen zeigt diese Zuordnung anschließend auf ein fehlendes Icon.",
+      "deleteWarning_other": "Achtung: {{count}} der ausgewählten Icons werden noch verwendet — {{list}}. Beim Löschen zeigen diese Zuordnungen anschließend auf ein fehlendes Icon.",
+      "deleteDescription": "Dies entfernt das Icon aus dem Icon-Pool des Servers. Kann nicht rückgängig gemacht werden.",
+      "uploadedToast_one": "{{count}} Icon hochgeladen",
+      "uploadedToast_other": "{{count}} Icons hochgeladen",
+      "duplicateToast_one": "{{count}} Icon war bereits im Pool",
+      "duplicateToast_other": "{{count}} Icons waren bereits im Pool",
+      "uploadFailed": "Hochladen fehlgeschlagen",
+      "deletedToast_one": "{{count}} Icon gelöscht",
+      "deletedToast_other": "{{count}} Icons gelöscht",
+      "deleteFailedToast_one": "{{count}} Icon konnte nicht gelöscht werden",
+      "deleteFailedToast_other": "{{count}} Icons konnten nicht gelöscht werden",
+      "deleteFailed": "Löschen fehlgeschlagen",
+      "tooLargeToast_one": "{{count}} Datei überschreitet das Icon-Größenlimit dieses Servers von {{size}} (i_max_icon_filesize).",
+      "tooLargeToast_other": "{{count}} Dateien überschreiten das Icon-Größenlimit dieses Servers von {{size}} (i_max_icon_filesize).",
+      "usage": {
+        "virtualserver": "Virtueller Server",
+        "servergroup": "Servergruppe",
+        "channelgroup": "Channel-Gruppe",
+        "channel": "Channel"
+      }
+    },
+    "files": {
+      "title": "Datei-Browser",
+      "newFolder": "Neuer Ordner",
+      "channels": "Channels",
+      "noChannels": "Keine Channels",
+      "itemCount_one": "{{count}} Element",
+      "itemCount_other": "{{count}} Elemente",
+      "selectChannelHint": "Wähle einen Channel, um Dateien zu durchsuchen",
+      "unavailableTitle": "Datei-Browser nicht verfügbar",
+      "unavailableSsh": "Das Durchsuchen von Dateien erfordert SSH-Zugriff, da die TeamSpeak-WebQuery-HTTP-API keine Dateiübertragungsbefehle unterstützt. Bitte SSH-Zugangsdaten (Benutzername & Passwort) in den Servereinstellungen konfigurieren.",
+      "sshConnectFailed": "Verbindung zum TeamSpeak-Server per SSH fehlgeschlagen. Bitte SSH-Zugangsdaten und Port in den Servereinstellungen prüfen.",
+      "loadFailed": "Dateien konnten nicht geladen werden. Stelle sicher, dass SSH-Zugangsdaten in den Servereinstellungen konfiguriert sind.",
+      "ts3ErrorCode": "TS3-Fehlercode: {{code}}",
+      "colName": "Name",
+      "colSize": "Größe",
+      "colModified": "Geändert",
+      "emptyDirectory": "Leeres Verzeichnis",
+      "emptyDirectoryDescription": "Keine Dateien in diesem Verzeichnis.",
+      "moveToAnotherChannel": "In anderen Channel verschieben",
+      "uploadDownloadNotice": "Datei-Upload/Download ist über die WebQuery-API nicht verfügbar. Für Dateiübertragungen den TS3-Client verwenden.",
+      "createDirectory": "Verzeichnis erstellen",
+      "directoryName": "Verzeichnisname",
+      "newFolderPlaceholder": "Neuer Ordner",
+      "moveTitle": "\"{{name}}\" verschieben",
+      "moveHint": "Wird vollständig auf dem Server verschoben - die Datei-Bytes durchlaufen diese App nie.",
+      "targetChannel": "Zielchannel",
+      "chooseChannelPlaceholder": "Channel wählen...",
+      "move": "Verschieben",
+      "deleteFileTitle": "Datei löschen",
+      "deleteFileDescription": "Bist du sicher, dass du \"{{name}}\" löschen willst? Dies kann nicht rückgängig gemacht werden.",
+      "directoryCreated": "Verzeichnis erstellt",
+      "directoryCreateFailed": "Verzeichnis konnte nicht erstellt werden",
+      "fileDeleted": "Datei gelöscht",
+      "fileDeleteFailed": "Datei konnte nicht gelöscht werden",
+      "fileMoved": "Datei verschoben",
+      "fileMoveFailed": "Datei konnte nicht verschoben werden"
+    },
+    "dashboard": {
+      "noAccessTitle": "Kein Zugriff auf diesen Server",
+      "noAccessDescription": "Dein Konto hat keinen Zugriff auf diese Serververbindung. Bitte einen Admin, ihn unter Einstellungen → Benutzer zu gewähren.",
+      "noServerDescription": "Wähle oben eine Serververbindung aus, um das Dashboard zu sehen.",
+      "connectionFailedTitle": "Verbindung fehlgeschlagen",
+      "connectionFailedDescription": "Verbindung zum TeamSpeak-Server fehlgeschlagen. Bitte die Verbindungseinstellungen prüfen.",
+      "widgets": "Widgets",
+      "liveMonitoring": "Live-Überwachung",
+      "onlineUsers": "Online-Nutzer",
+      "ofSlots": "von {{max}} Plätzen",
+      "channels": "Channels",
+      "uptime": "Laufzeit",
+      "ping": "Ping",
+      "timeout": "Timeout",
+      "bandwidth": "Bandbreite",
+      "last20Minutes": "letzte 20 Minuten",
+      "download": "Download",
+      "upload": "Upload",
+      "collectingData": "Daten werden gesammelt...",
+      "in": "Rein:",
+      "out": "Raus:",
+      "serverCapacity": "Serverkapazität",
+      "userSlots": "Nutzer-Slots",
+      "utilized": "{{percent}}% ausgelastet",
+      "serverVersion": "Serverversion",
+      "platform": "Plattform",
+      "botFlows": "Bot-Flows"
+    },
+    "serverGroups": {
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "exportSelected": "Auswahl exportieren",
+      "deleteSelected": "Auswahl löschen",
+      "import": "Import",
+      "createGroup": "Gruppe erstellen",
+      "groupsHeading": "Gruppen ({{count}})",
+      "selectForBulkDelete": "Für Sammellöschung auswählen",
+      "iconAlt": "Icon für {{name}}",
+      "members": "Mitglieder",
+      "sgidLabel": "SGID: {{id}}",
+      "addMember": "Mitglied hinzufügen",
+      "deleteGroup": "Gruppe löschen",
+      "selectGroupHint": "Wähle eine Gruppe, um ihre Mitglieder zu sehen",
+      "noMembers": "Keine Mitglieder in dieser Gruppe",
+      "dbidLabel": "DBID: {{id}}",
+      "removeFromGroup": "Aus Gruppe entfernen",
+      "memberRemoved": "Mitglied entfernt",
+      "memberRemoveFailed": "Mitglied konnte nicht entfernt werden",
+      "searchClientsPlaceholder": "Clients suchen...",
+      "noMatchingClients": "Keine passenden Clients",
+      "added": "{{name}} hinzugefügt",
+      "genericClient": "Client",
+      "addMemberFailed": "Mitglied konnte nicht hinzugefügt werden",
+      "createServerGroupTitle": "Servergruppe erstellen",
+      "groupNameLabel": "Gruppenname",
+      "newGroupPlaceholder": "Neue Gruppe",
+      "groupCreated": "Gruppe erstellt",
+      "deleteServerGroupTitle": "Servergruppe löschen",
+      "deleteGroupDescription": "\"{{name}}\" löschen?",
+      "groupDeleted": "Gruppe gelöscht",
+      "deleteServerGroupsTitle": "Servergruppen löschen",
+      "bulkDeleteDescription_one": "{{count}} ausgewählte Gruppe löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeleteDescription_other": "{{count}} ausgewählte Gruppen löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeletePartial": "{{succeeded}} gelöscht, {{failed}} fehlgeschlagen",
+      "bulkDeleteSuccess_one": "{{count}} Gruppe gelöscht",
+      "bulkDeleteSuccess_other": "{{count}} Gruppen gelöscht",
+      "invalidJson": "Diese Datei ist kein gültiges JSON",
+      "notValidGroupExport": "Keine gültige Gruppen-Exportdatei",
+      "wrongExportTypeChannel": "Dies ist ein Channel-Gruppen-Export - importiere ihn stattdessen auf der Channel-Gruppen-Seite",
+      "notValidServerExport": "Keine gültige Servergruppen-Exportdatei",
+      "emptyExportFile": "Die Datei enthält keine Gruppen zum Importieren",
+      "createFailedFallback": "Erstellung fehlgeschlagen",
+      "importFailedNoGroups": "es konnte keine Gruppe erstellt werden",
+      "importFailed": "Import fehlgeschlagen - {{reason}}",
+      "importSummary": "{{imported}} von {{total}} Gruppe(n) importiert, {{permCount}} Berechtigung(en)",
+      "importPermSkipped": ", {{count}} Berechtigung(en) übersprungen",
+      "importSkippedList": " - übersprungen: {{list}}",
+      "exportedCount_one": "{{count}} Gruppe exportiert",
+      "exportedCount_other": "{{count}} Gruppen exportiert",
+      "exportFailed": "Export fehlgeschlagen"
+    },
+    "channelGroups": {
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "exportSelected": "Auswahl exportieren",
+      "deleteSelected": "Auswahl löschen",
+      "import": "Import",
+      "createGroup": "Gruppe erstellen",
+      "tabGroups": "Gruppen",
+      "tabByClient": "Nach Client",
+      "groupsHeading": "Gruppen ({{count}})",
+      "selectForBulkDelete": "Für Sammellöschung auswählen",
+      "iconAlt": "Icon für {{name}}",
+      "cgidLabel": "CGID: {{id}}",
+      "typeLabel": "Typ: {{type}}",
+      "selectClient": "Client auswählen",
+      "searchClientsPlaceholder": "Clients suchen...",
+      "showOfflineClients": "Offline-Clients anzeigen",
+      "noClientsFound": "Keine Clients gefunden",
+      "clientChannelGroupsHeading": "Channel-Gruppen von {{name}}",
+      "selectAClient": "Client auswählen",
+      "selectClientHint": "Wähle einen Client aus dem linken Bereich",
+      "noAssignmentsTitle": "Keine Channel-Gruppen-Zuweisungen",
+      "noAssignmentsDescription": "Dieser Client hat in keinem Channel eine abweichende Channel-Gruppe.",
+      "channelsSelectedCount_one": "{{count}} Channel ausgewählt",
+      "channelsSelectedCount_other": "{{count}} Channels ausgewählt",
+      "moveAllToPlaceholder": "Alle verschieben nach...",
+      "applyToCount": "Auf {{count}} anwenden",
+      "selectAllChannels": "Alle Channels auswählen",
+      "selectChannelForBulk": "Channel für Sammeländerung auswählen",
+      "colChannel": "Channel",
+      "colChannelGroup": "Channel-Gruppe",
+      "clientFallback": "Client #{{id}}",
+      "createChannelGroupTitle": "Channel-Gruppe erstellen",
+      "groupNameLabel": "Gruppenname",
+      "newGroupPlaceholder": "Neue Gruppe",
+      "groupCreated": "Gruppe erstellt",
+      "deleteChannelGroupsTitle": "Channel-Gruppen löschen",
+      "bulkDeleteDescription_one": "{{count}} ausgewählte Gruppe löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeleteDescription_other": "{{count}} ausgewählte Gruppen löschen? Dies kann nicht rückgängig gemacht werden.",
+      "bulkDeletePartial": "{{succeeded}} gelöscht, {{failed}} fehlgeschlagen",
+      "bulkDeleteSuccess_one": "{{count}} Gruppe gelöscht",
+      "bulkDeleteSuccess_other": "{{count}} Gruppen gelöscht",
+      "channelGroupUpdated": "Channel-Gruppe aktualisiert",
+      "channelGroupUpdateFailed": "Channel-Gruppe konnte nicht aktualisiert werden",
+      "channelGroupsUpdatedForCount_one": "Channel-Gruppe für {{count}} Channel aktualisiert",
+      "channelGroupsUpdatedForCount_other": "Channel-Gruppe für {{count}} Channels aktualisiert",
+      "channelGroupsUpdateFailed": "Channel-Gruppen konnten nicht aktualisiert werden",
+      "invalidJson": "Diese Datei ist kein gültiges JSON",
+      "notValidGroupExport": "Keine gültige Gruppen-Exportdatei",
+      "wrongExportTypeServer": "Dies ist ein Servergruppen-Export - importiere ihn stattdessen auf der Servergruppen-Seite",
+      "notValidChannelExport": "Keine gültige Channel-Gruppen-Exportdatei",
+      "emptyExportFile": "Die Datei enthält keine Gruppen zum Importieren",
+      "createFailedFallback": "Erstellung fehlgeschlagen",
+      "importFailedNoGroups": "es konnte keine Gruppe erstellt werden",
+      "importFailed": "Import fehlgeschlagen - {{reason}}",
+      "importSummary": "{{imported}} von {{total}} Gruppe(n) importiert, {{permCount}} Berechtigung(en)",
+      "importPermSkipped": ", {{count}} Berechtigung(en) übersprungen",
+      "importSkippedList": " - übersprungen: {{list}}",
+      "exportedCount_one": "{{count}} Gruppe exportiert",
+      "exportedCount_other": "{{count}} Gruppen exportiert",
+      "exportFailed": "Export fehlgeschlagen"
+    },
+    "channels": {
+      "selectChannel": "Channel auswählen",
+      "useAsTemplate": "Als Vorlage verwenden",
+      "query": "Query",
+      "away": "Abwesend",
+      "muted": "Stumm",
+      "channelCount_one": "{{count}} Channel",
+      "channelCount_other": "{{count}} Channels",
+      "clientsOnlineCount_one": "{{count}} Client online",
+      "clientsOnlineCount_other": "{{count}} Clients online",
+      "createChannel": "Channel erstellen",
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "editSelected": "Auswahl bearbeiten",
+      "channelTree": "Channel-Baum",
+      "channelNamesLabel": "Channel-Name(n)",
+      "channelNamesPlaceholder": "Neuer Channel\nEin Name pro Zeile, um mehrere auf einmal zu erstellen",
+      "editCountTitle_one": "{{count}} Channel bearbeiten",
+      "editCountTitle_other": "{{count}} Channels bearbeiten",
+      "bulkEditHint": "Nur angehakte Felder werden angewendet - der Rest bleibt bei jedem ausgewählten Channel unverändert.",
+      "codec": "Codec",
+      "opusVoice": "Opus Voice",
+      "opusMusic": "Opus Music",
+      "codecQuality": "Codec-Qualität",
+      "neededTalkPower": "Benötigte Sprechkraft",
+      "permanent": "Dauerhaft",
+      "duplicateTitle": "\"{{name}}\" duplizieren",
+      "duplicateHint": "Erstellt einen neuen Channel mit denselben Einstellungen (Thema, Codec, Limits, Sprechkraft) wie diesen.",
+      "newChannelNameLabel": "Neuer Channel-Name",
+      "duplicateNamePlaceholder": "{{name}} Kopie",
+      "duplicate": "Duplizieren",
+      "deleteChannelTitle": "Channel löschen",
+      "deleteChannelDescription": "Bist du sicher, dass du \"{{name}}\" löschen willst? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "channelsCreated_one": "Channel erstellt",
+      "channelsCreated_other": "{{count}} Channels erstellt",
+      "createPartialFailure": "{{succeeded}}/{{total}} erstellt, {{failed}} fehlgeschlagen",
+      "bulkUpdatedCount_one": "{{count}} Channel aktualisiert",
+      "bulkUpdatedCount_other": "{{count}} Channels aktualisiert",
+      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} aktualisiert, {{failed}} fehlgeschlagen",
+      "duplicateCreated": "\"{{newName}}\" aus \"{{sourceName}}\" erstellt",
+      "duplicateFailed": "Channel konnte nicht dupliziert werden",
+      "channelDeleted": "Channel gelöscht",
+      "channelDeleteFailed": "Channel konnte nicht gelöscht werden",
+      "channelMoved": "Channel verschoben",
+      "channelMoveFailed": "Channel konnte nicht verschoben werden"
+    },
+    "botEditor": {
+      "nodeLabels": {
+        "trigger_event": "TS-Ereignis",
+        "trigger_cron": "Cron-Timer",
+        "trigger_webhook": "Webhook",
+        "trigger_command": "Chat-Befehl",
+        "action_message": "Nachricht senden",
+        "action_poke": "Client anstupsen",
+        "action_kick": "Client kicken",
+        "action_ban": "Client bannen",
+        "action_move": "Client verschieben",
+        "action_channelCreate": "Channel erstellen",
+        "action_channelEdit": "Channel bearbeiten",
+        "action_channelDelete": "Channel löschen",
+        "action_groupAdd": "Zu Gruppe hinzufügen",
+        "action_groupRemove": "Aus Gruppe entfernen",
+        "action_webquery": "WebQuery",
+        "action_webhook": "Webhook",
+        "action_httpRequest": "HTTP-Anfrage",
+        "action_voicePlay": "Voice: Abspielen",
+        "action_voiceStop": "Voice: Stopp",
+        "action_voiceJoinChannel": "Voice: Beitreten",
+        "action_voiceLeaveChannel": "Voice: Verlassen",
+        "action_voiceVolume": "Voice: Lautstärke",
+        "action_voicePauseResume": "Voice: Pause/Fortsetzen",
+        "action_voiceSkip": "Voice: Überspringen",
+        "action_voiceSeek": "Voice: Spulen",
+        "action_voiceTts": "Voice: TTS",
+        "action_afkMover": "AFK-Mover",
+        "action_idleKicker": "Idle-Kicker",
+        "action_pokeGroup": "Gruppe anstupsen",
+        "action_rankCheck": "Rang-Prüfung",
+        "action_tempChannelCleanup": "Temp-Bereinigung",
+        "action_animatedChannel": "Animierter Channel",
+        "condition": "Bedingung",
+        "loop": "Schleife",
+        "delay": "Verzögerung",
+        "variable": "Variable setzen",
+        "log": "Log",
+        "action_generateCode": "Code generieren",
+        "action_countOnlineInGroups": "Online in Gruppen zählen",
+        "action_listMembership": "Liste hinzufügen/entfernen"
+      },
+      "categories": {
+        "triggers": "Trigger",
+        "actions": "Aktionen",
+        "voice": "Voice",
+        "smartActions": "Smart-Aktionen",
+        "logic": "Logik"
+      },
+      "editFullscreen": "Groß bearbeiten",
+      "hidePlaceholders": "Platzhalter ausblenden",
+      "showPlaceholders": "Platzhalter anzeigen",
+      "gestureAddStep": "Schritt hinzufügen",
+      "gestureAddStepHow": "Auf einen in der Liste links klicken",
+      "gestureMoveStep": "Schritt verschieben",
+      "gestureMoveStepHow": "Ziehen",
+      "gestureConfigureStep": "Schritt konfigurieren",
+      "gestureConfigureStepHow": "Anklicken — die Einstellungen öffnen sich rechts",
+      "gestureConnectSteps": "Zwei Schritte verbinden",
+      "gestureConnectStepsHow": "Von einem Ausgangspunkt auf einen Eingangspunkt ziehen",
+      "gestureDeleteConnection": "Verbindung löschen",
+      "gestureDeleteConnectionHow": "Auf die Linie klicken",
+      "gestureBendConnection": "Verbindung biegen",
+      "gestureBendConnectionHow": "Mit der Maus darüberfahren, dann auf den erscheinenden Ring klicken",
+      "gestureAddBend": "Weiteren Knick hinzufügen",
+      "gestureAddBendHow": "Auf einen Knickpunkt klicken — der nächste erscheint danach",
+      "gestureMoveBend": "Knick verschieben",
+      "gestureMoveBendHow": "Den Punkt ziehen",
+      "gestureRemoveBend": "Knick entfernen",
+      "gestureRemoveBendHow": "Rechtsklick auf den Punkt",
+      "gestureKeepChanges": "Änderungen behalten",
+      "gestureKeepChangesHow": "Speichern klicken — nichts wird übernommen, bis du das tust",
+      "usingTheFlowEditor": "Den Flow-Editor benutzen",
+      "routingExplanation": "Verbindungen verlaufen automatisch in rechten Winkeln und führen unterhalb beider Enden entlang, wenn sie rückwärts laufen müssen. Knickpunkte sind nur für die Fälle gedacht, in denen du eine Linie an einer bestimmten Stelle haben willst — ein Flow funktioniert genauso gut ohne sie.",
+      "dontShowAgain": "Dies beim Öffnen eines Flows nicht mehr anzeigen",
+      "gotIt": "Verstanden",
+      "flowSaved": "Flow gespeichert",
+      "flowSaveFailed": "Flow konnte nicht gespeichert werden",
+      "nodesCount_one": "{{count}} Node",
+      "nodesCount_other": "{{count}} Nodes",
+      "edgesCount_one": "{{count}} Verbindung",
+      "edgesCount_other": "{{count}} Verbindungen",
+      "placeholderReference": "Platzhalter-Referenz",
+      "save": "Speichern",
+      "connectHint": "Klicke einen Eingangspunkt oder Node zum Verbinden — ESC zum Abbrechen",
+      "canvasHint": "Von einem Ausgangspunkt ziehen zum Verbinden · auf eine Linie klicken zum Löschen · über eine Linie fahren und auf den Ring klicken zum Biegen",
+      "inputPortTitle": "Eingang: {{port}}",
+      "outputPortTitle": "Ausgang: {{port}}",
+      "clickToBend": "Klicken, um diese Verbindung hier zu biegen",
+      "dragBendPoint": "Ziehen zum Verschieben, klicken für einen weiteren Punkt, Rechtsklick zum Entfernen",
+      "nodeProperties": "Node-Eigenschaften",
+      "labelField": "Label",
+      "typeField": "Typ",
+      "inPorts": "EIN: {{ports}}",
+      "outPorts": "AUS: {{ports}}",
+      "configuration": "KONFIGURATION",
+      "connections": "VERBINDUNGEN",
+      "noConnections": "Keine Verbindungen",
+      "config": {
+        "shared": {
+          "commandLabel": "Befehl",
+          "channelIdLabel": "Channel-ID",
+          "channelIdOrTemplatePlaceholder": "Channel-ID oder {{event.ctid}}",
+          "clientIdLabel": "Client-ID",
+          "clientIdOrTemplatePlaceholder": "Client-ID oder {{event.clid}}",
+          "clientOption": "Client",
+          "channelOption": "Channel",
+          "serverOption": "Server",
+          "messageLabel": "Nachricht",
+          "reasonLabel": "Grund",
+          "channelNameLabel": "Channel-Name",
+          "parentChannelIdLabel": "Übergeordnete Channel-ID",
+          "channelPasswordLabel": "Channel-Passwort (optional)",
+          "optionalPlaceholder": "Optional",
+          "serverGroupIdLabel": "Servergruppen-ID",
+          "storeAsTempLabel": "Speichern als (temp-Variable)",
+          "storeAsLabel": "Speichern als",
+          "urlLabel": "URL",
+          "methodLabel": "Methode",
+          "bodyJsonLabel": "Body (JSON)",
+          "idleThresholdLabel": "Inaktivitätsschwelle (Sekunden)",
+          "exemptGroupIdsLabel": "Ausgenommene Gruppen-IDs (kommagetrennt)",
+          "textLabel": "Text",
+          "operationLabel": "Operation",
+          "valueLabel": "Wert",
+          "useAsHintPrefix": "Verwenden als:",
+          "botIdLabel": "Bot-ID",
+          "channelPasswordExamplePlaceholder": "geheim oder {{temp.channelPassword}}"
+        },
+        "triggerEvent": {
+          "eventNameLabel": "Ereignisname",
+          "selectEventPlaceholder": "Ereignis auswählen...",
+          "clientEnter": "Client betritt",
+          "clientLeave": "Client verlässt",
+          "textMessage": "Textnachricht",
+          "clientMoved": "Client verschoben",
+          "serverEdited": "Server bearbeitet",
+          "channelDescChanged": "Channel-Beschr. geändert"
+        },
+        "triggerCron": {
+          "cronExpressionLabel": "Cron-Ausdruck",
+          "timezoneLabel": "Zeitzone"
+        },
+        "triggerWebhook": {
+          "webhookPathLabel": "Webhook-Pfad",
+          "httpMethodLabel": "HTTP-Methode",
+          "secretLabel": "Secret (optional)",
+          "secretPlaceholder": "Leer lassen für keine Authentifizierung",
+          "secretHint": "Wird über den X-Webhook-Secret-Header oder den ?secret=-Query-Parameter geprüft"
+        },
+        "triggerCommand": {
+          "listenChannelIdLabel": "Channel-ID zum Abhören (optional)",
+          "listenChannelHint": "Befehle werden nur empfangen, während ein ServerQuery-Client in diesem Channel ist."
+        },
+        "actionMessage": {
+          "targetModeLabel": "Zielmodus",
+          "editMessageDialogTitle": "Nachricht bearbeiten",
+          "messagePlaceholder": "Dies ist die HelpList:\n\n!create - erstellt einen Channel\n!delete - löscht deinen Channel\n!help - zeigt diese Liste",
+          "messageHint": "Tipp: Zeilenumbrüche werden übernommen."
+        },
+        "actionKick": {
+          "kickFromLabel": "Kicken aus",
+          "reasonPlaceholder": "Vom Bot gekickt"
+        },
+        "actionBan": {
+          "durationLabel": "Dauer (Sekunden, 0=dauerhaft)",
+          "reasonPlaceholder": "Vom Bot gebannt"
+        },
+        "actionMove": {
+          "targetChannelIdLabel": "Ziel-Channel-ID (oder Vorlage)",
+          "exampleHint": "Beispiel: 94 oder {{temp.lastCreatedChannelId}}"
+        },
+        "actionPoke": {
+          "messagePlaceholder": "Hey {{event.client_nickname}}!"
+        },
+        "actionChannelCreate": {
+          "temporaryLabel": "Temporär",
+          "permanentOption": "Dauerhaft",
+          "temporaryOption": "Temporär"
+        },
+        "actionChannelEdit": {
+          "channelTopicLabel": "Channel-Thema",
+          "channelDescriptionLabel": "Channel-Beschreibung",
+          "editDescriptionDialogTitle": "Channel-Beschreibung bearbeiten",
+          "passwordHint": "Leer lassen, um es unverändert zu lassen."
+        },
+        "actionChannelDelete": {
+          "forceDeleteLabel": "Erzwungenes Löschen",
+          "forceNoOption": "Nein",
+          "forceYesOption": "Ja (Unterchannel löschen)"
+        },
+        "actionWebquery": {
+          "accessHintPrefix": "Zugriff über"
+        },
+        "actionHttpRequest": {
+          "headersLabel": "Header (JSON)",
+          "headersHint": "Schlüssel-Wert-Paare als JSON-Objekt. Unterstützt {{placeholders}}."
+        },
+        "actionAfkMover": {
+          "afkChannelIdLabel": "AFK-Channel-ID",
+          "exemptChannelIdsLabel": "Ausgenommene Channel-IDs (kommagetrennt)"
+        },
+        "actionIdleKicker": {
+          "kickReasonLabel": "Kick-Grund",
+          "kickReasonPlaceholder": "Inaktivitäts-Timeout"
+        },
+        "actionPokeGroup": {
+          "messagePlaceholder": "Unterstützung benötigt!"
+        },
+        "actionRankCheck": {
+          "ranksLabel": "Ränge (JSON)",
+          "ranksHint": "Array aus {hours, groupId} — der höchste erreichte Rang wird zugewiesen",
+          "hoursMeasuredAsLabel": "Stunden gemessen als",
+          "accumulatedTimeOption": "Tatsächliche Online-Zeit (über Sitzungen summiert)",
+          "firstConnectionAgeOption": "Zeit seit erster Verbindung (Mitgliedsalter)",
+          "excludeGroupIdsLabel": "Ausgeschlossene Gruppen-IDs (kommagetrennt)",
+          "excludeGroupIdsPlaceholder": "z. B. Bot-Gruppen-ID",
+          "excludeGroupIdsHint": "Clients in einer dieser Gruppen werden vollständig übersprungen. ServerQuery-Clients werden immer übersprungen."
+        },
+        "actionTempChannelCleanup": {
+          "protectedChannelIdsLabel": "Geschützte Channel-IDs (kommagetrennt)",
+          "protectedChannelIdsHint": "Channels unter dem übergeordneten Channel, die NICHT gelöscht werden sollen (z. B. die Lobby)"
+        },
+        "actionAnimatedChannel": {
+          "displayTextLabel": "Anzeigetext",
+          "displayTextPlaceholder": "Willkommen auf MeinServer",
+          "displayTextHint": "Unterstützt {{time.time}}, {{time.date}}, usw.",
+          "animationStyleLabel": "Animationsstil",
+          "styleScroll": "Nach links scrollen (Laufband)",
+          "styleTypewriter": "Schreibmaschine",
+          "styleBounce": "Springen",
+          "styleBlink": "Blinken",
+          "styleWave": "Welle (dekorativ)",
+          "styleAlternateCase": "Abwechselnde Groß-/Kleinschreibung",
+          "speedLabel": "Geschwindigkeit",
+          "speedInsane": "Wahnsinnig (0,25s)",
+          "speedUltra": "Ultra (0,5s)",
+          "speedVeryFast": "Sehr schnell (1s)",
+          "speedFast": "Schnell (2s)",
+          "speedMedium": "Mittel (3s)",
+          "speedSlow": "Langsam (5s)",
+          "prefixLabel": "Präfix",
+          "prefixHint": "TS3-Channel-Namenspräfix (z. B. [cspacer] für zentrierten Spacer)"
+        },
+        "actionVoicePlay": {
+          "songIdLabel": "Song-ID",
+          "songIdPlaceholder": "Abzuspielende Song-ID",
+          "playlistIdLabel": "Playlist-ID (Alternative)",
+          "playlistIdPlaceholder": "Stattdessen Playlist laden"
+        },
+        "actionVoiceVolume": {
+          "volumeLabel": "Lautstärke (0-100)"
+        },
+        "actionVoicePauseResume": {
+          "actionLabel": "Aktion",
+          "pauseOption": "Pausieren",
+          "resumeOption": "Fortsetzen",
+          "toggleOption": "Umschalten"
+        },
+        "actionVoiceSkip": {
+          "directionLabel": "Richtung",
+          "nextOption": "Nächster",
+          "previousOption": "Vorheriger"
+        },
+        "actionVoiceSeek": {
+          "positionLabel": "Position (Sekunden)"
+        },
+        "actionVoiceTts": {
+          "textPlaceholder": "Hallo {{event.client_nickname}}",
+          "languageLabel": "Sprache (optional)",
+          "notConfiguredHint": "TTS-Engine noch nicht konfiguriert — nur Platzhalter"
+        },
+        "condition": {
+          "expressionLabel": "Ausdruck",
+          "expressionHint": "Wahr → grüner Ausgang, Falsch → roter Ausgang"
+        },
+        "loop": {
+          "arrayVariableLabel": "Array-Variable",
+          "arrayVariableHint": "Name einer vorhandenen temp-Variable mit einer Liste, z. B. das \"Speichern als\"-Ergebnis eines WebQuery-Nodes — ohne {{temp....}}",
+          "itemVariableLabel": "Name der Element-Variable",
+          "inLoopBodyPrefix": "Im Schleifenkörper:",
+          "indexLabel": "Index:",
+          "maxIterationsLabel": "Max. Durchläufe (optional)",
+          "maxIterationsHint": "Standard 50, harte Obergrenze 500 unabhängig von diesem Wert",
+          "bodyAfterHint": "Body → läuft einmal pro Element. After → läuft einmal, wenn die Schleife fertig ist."
+        },
+        "delay": {
+          "delayLabel": "Verzögerung (ms)"
+        },
+        "variable": {
+          "setOption": "Setzen",
+          "incrementOption": "Erhöhen",
+          "appendOption": "Anhängen",
+          "getOption": "Lesen (in temp.* einlesen)",
+          "variableNameLabel": "Variablenname",
+          "valueExpressionLabel": "Wert (Ausdruck)"
+        },
+        "actionGenerateCode": {
+          "lengthLabel": "Länge",
+          "charactersLabel": "Zeichen",
+          "digitsOnlyOption": "Nur Ziffern",
+          "alphanumericOption": "Alphanumerisch"
+        },
+        "actionCountOnlineInGroups": {
+          "groupIdsLabel": "Servergruppen-IDs (kommagetrennt)"
+        },
+        "actionListMembership": {
+          "listNameLabel": "Listenname",
+          "listNameHintPrefix": "Bleibt über Neustarts erhalten. Mitgliedschaft anderswo prüfen mit: contains(var.",
+          "listNameHintSuffix": ", ...)",
+          "addOption": "Hinzufügen",
+          "removeOption": "Entfernen"
+        },
+        "log": {
+          "logLevelLabel": "Log-Level",
+          "debugOption": "Debug",
+          "infoOption": "Info",
+          "warnOption": "Warnung",
+          "errorOption": "Fehler",
+          "messagePlaceholder": "Client beigetreten: {{event.client_nickname}}"
+        }
+      }
+    },
+    "permissions": {
+      "categories": {
+        "b_virtualserver": "Virtueller Server",
+        "b_serverinstance": "Server-Instanz",
+        "b_serverquery": "Server-Query",
+        "b_channel": "Channel",
+        "b_client": "Client",
+        "b_group": "Gruppe",
+        "b_ft": "Dateiübertragung",
+        "i_channel": "Channel (Werte)",
+        "i_group": "Gruppe (Werte)",
+        "i_client": "Client (Werte)",
+        "i_ft": "Dateiübertragung (Werte)",
+        "i_max": "Limits",
+        "i_needed": "Benötigte Rechte",
+        "other": "Sonstige"
+      },
+      "layers": {
+        "serverGroups": "Servergruppen",
+        "serverGroup": "Servergruppe",
+        "channelGroups": "Channel-Gruppen",
+        "channelGroup": "Channel-Gruppe",
+        "channel": "Channel",
+        "client": "Client",
+        "clientInChannel": "Client im Channel"
+      },
+      "title": "Berechtigungen",
+      "entitiesSelected_one": "{{count}} Eintrag ausgewählt",
+      "entitiesSelected_other": "{{count}} Einträge ausgewählt",
+      "changesCount_one": "{{count}} Änderung",
+      "changesCount_other": "{{count}} Änderungen",
+      "discard": "Verwerfen",
+      "save": "Speichern",
+      "applyToCount": "Auf {{count}} anwenden",
+      "findPermission": "Berechtigung suchen",
+      "permissionOverview": "Berechtigungsübersicht",
+      "selectClient": "Client auswählen",
+      "searchClientsPlaceholder": "Clients suchen...",
+      "noClientsFound": "Keine Clients gefunden",
+      "choosePlaceholder": "Channel wählen...",
+      "searchPermissionsPlaceholder": "Berechtigungen suchen...",
+      "overviewExplanation": "Jede Berechtigung, die dieser Client im gewählten Channel tatsächlich hat, und aus welcher Ebene sie jeweils stammt. Gewähren mehrere Ebenen dieselbe Berechtigung, wird die gewinnende hervorgehoben - gemäß der Rangfolge in TeamSpeaks eigener Berechtigungsdokumentation: Client-im-Channel schlägt Channel-Gruppe, schlägt Channel, schlägt Client, schlägt Servergruppe - wobei ein Skip-Flag auf einem Servergruppen- oder Client-Eintrag diesen vor den Channel- und Channel-Gruppen-Ebenen schützt. Die anderen Quellen bleiben aufgelistet, damit das Ergebnis immer per Augenschein geprüft werden kann.",
+      "selectClientHint": "Wähle einen Client aus dem linken Bereich",
+      "chooseChannelHint": "Wähle einen Channel, um die Berechtigungen darin zu sehen",
+      "noPermissionsApply": "Für diesen Client gelten in diesem Channel keine Berechtigungen",
+      "colPermission": "Berechtigung",
+      "colComesFrom": "Kommt von",
+      "colValue": "Wert",
+      "selectPermission": "Berechtigung auswählen",
+      "assignmentsOf": "Zuweisungen von {{label}}",
+      "findExplanation": "Wähle links eine Berechtigung, um jeden Ort zu sehen, an dem sie tatsächlich zugewiesen ist - über alle fünf Ebenen hinweg. Klicke auf ein Ergebnis, um es im Editor zu öffnen. TeamSpeaks eigene Abfrage meldet nur, wo eine Berechtigung gesetzt ist, nicht wie - jeder Wert unten wird anschließend pro Eintrag einzeln nachgelesen.",
+      "selectPermissionHint": "Wähle eine Berechtigung aus dem linken Bereich",
+      "notAssignedAnywhere": "Diese Berechtigung ist auf diesem Server nirgendwo zugewiesen",
+      "colTier": "Ebene",
+      "colAssignedTo": "Zugewiesen an",
+      "openInEditor": "Im Editor öffnen",
+      "addClientInChannel": "Client in Channel hinzufügen",
+      "channelLabel": "Channel",
+      "showOfflineClients": "Offline-Clients anzeigen",
+      "chooseChannelFirst": "Zuerst einen Channel wählen",
+      "addEntity": "{{name}} hinzufügen",
+      "addedCount": "Hinzugefügt ({{count}})",
+      "pickChannelThenClient": "Wähle einen Channel und klicke dann auf einen Client, um ihn hinzuzufügen.",
+      "selectLayer": "{{layer}} auswählen",
+      "iconAlt": "Icon für {{name}}",
+      "selectForBulkEdit": "Für Sammelbearbeitung auswählen",
+      "noEntitiesFound": "Keine Einträge gefunden",
+      "bulkApply": "Sammelanwendung",
+      "compare": "Vergleichen",
+      "permissionsTitle": "Berechtigungen",
+      "selectAnEntity": "Eintrag auswählen",
+      "labelModeHint": "Erweitert zeigt den technischen Berechtigungsnamen, Einfach zeigt TeamSpeaks eigene Klartextbeschreibung",
+      "advanced": "Erweitert",
+      "simple": "Einfach",
+      "onlyShowSet": "Nur gesetzte anzeigen",
+      "onlyShowDiffering": "Nur abweichende anzeigen",
+      "addRemovePerm": "Berechtigung hinzufügen/entfernen",
+      "addTarget": "Ziel hinzufügen",
+      "setMultipleHint": "Mehrere Berechtigungen ankreuzen und ihnen dann auf einmal einen Wert geben",
+      "setMultiple": "Mehrere setzen",
+      "importFileHint": "Eine zuvor exportierte Berechtigungsdatei auf die aktuelle Auswahl anwenden",
+      "importFile": "Datei importieren",
+      "bulkApplyHint": "Hier gesetzte Werte werden auf alle {{count}} ausgewählten Einträge angewendet - die aktuellen Werte pro Eintrag werden bei Mehrfachauswahl nicht angezeigt.",
+      "compareHintAutoRank": "Standardmäßig werden alle Berechtigungen angezeigt (\"Berechtigung hinzufügen/entfernen\" zum Eingrenzen, das × an einer Zeile zum Entfernen) - eine Zelle bearbeiten ändert nur diesen einen Eintrag. Bei 3 oder weniger Einträgen färbt sich jede Zeile automatisch nach Rang: Rot = höchster, Gelb = gleich/mittel, Grün = niedrigster, Pink = nicht gesetzt.",
+      "compareHintPivot": "Standardmäßig werden alle Berechtigungen angezeigt (\"Berechtigung hinzufügen/entfernen\" zum Eingrenzen, das × an einer Zeile zum Entfernen) - eine Zelle bearbeiten ändert nur diesen einen Eintrag. Eine Zelle anklicken heftet sie als Referenz an; der Rest dieser Zeile färbt sich relativ dazu (Türkis = niedriger, Limette = gleich, Rot = höher, Pink = nicht gesetzt).",
+      "compareHintSuffix": "\"Ziel hinzufügen\" lädt eine zuvor exportierte Gruppendatei als schreibgeschützte Extraspalte. Nutze stattdessen Sammelanwendung, um denselben Wert auf einmal an alle ausgewählten Einträge zu senden.",
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "selectAllShown": "Alle angezeigten auswählen ({{count}})",
+      "clear": "Leeren",
+      "setValuesEllipsis": "Werte setzen...",
+      "remove": "Entfernen",
+      "stagedEditHint": "Änderungen werden wie jede andere Bearbeitung vorgemerkt - Speichern schreibt sie.",
+      "selectEntityHint": "Wähle einen Eintrag aus dem linken Bereich",
+      "removeFileTarget": "Dieses Dateiziel entfernen",
+      "removeFromComparison": "Aus dem Vergleich entfernen",
+      "chooseIcon": "Icon wählen",
+      "skip": "Skip",
+      "negate": "Negate",
+      "colSkip": "Skip",
+      "colNegate": "Negate",
+      "removePermission": "Berechtigung entfernen",
+      "modified": "geändert",
+      "noPermissionsDiffer": "Keine Berechtigungen unterscheiden sich zwischen den ausgewählten Einträgen",
+      "noPermissionsSetAny": "Bei keinem ausgewählten Eintrag sind Berechtigungen gesetzt",
+      "noPermissionsMatchSearch": "Keine Berechtigungen entsprechen deiner Suche",
+      "noPermissionsSetEntity": "Bei diesem Eintrag sind keine Berechtigungen gesetzt",
+      "all": "Alle",
+      "selectAllCount": "Alle auswählen ({{count}})",
+      "shownInComparison": "{{count}} im Vergleich angezeigt",
+      "done": "Fertig",
+      "setCountPermissions": "{{count}} Berechtigung(en) setzen",
+      "setMultipleExplanation": "Boolesche Werte und Zahlen werden getrennt gesetzt, sodass eine gemischte Auswahl in einem Schritt erledigt werden kann.",
+      "booleanCount_one": "{{count}} Boolescher Wert",
+      "booleanCount_other": "{{count}} Boolesche Werte",
+      "booleanPermsHint": "b_…-Berechtigungen",
+      "integerCount_one": "{{count}} Zahlenwert",
+      "integerCount_other": "{{count}} Zahlenwerte",
+      "integerPermsHint": "i_…-Berechtigungen",
+      "valuePlaceholder": "Wert",
+      "leaveEmptySkipInt": "Leer lassen, um die Zahlenwerte zu überspringen und nur die Booleschen Werte zu setzen.",
+      "cancel": "Abbrechen",
+      "importPermissionFile": "Berechtigungsdatei importieren",
+      "groupInFile": "Gruppe in der Datei",
+      "groupPermissionsCount_one": "{{name}} ({{count}} Berechtigung)",
+      "groupPermissionsCount_other": "{{name}} ({{count}} Berechtigungen)",
+      "source": "Quelle",
+      "permissionsInFile": "Berechtigungen in der Datei",
+      "target": "Ziel",
+      "targetCount": "{{count}} {{layer}}",
+      "mode": "Modus",
+      "merge": "Zusammenführen",
+      "mergeDescription": "Nur das, was in der Datei steht, wird gesetzt. Alles andere bleibt bestehen.",
+      "replace": "Ersetzen",
+      "replaceDescription": "Das Ziel wird eine exakte Kopie. Zusätzliche Berechtigungen werden gelöscht.",
+      "replaceWarningPrefix": "Jede Berechtigung, die",
+      "replaceWarningTargetHas": "das Ziel hat",
+      "replaceWarningTargetsHave": "die Ziele haben",
+      "replaceWarningSuffix": "und nicht in dieser Datei enthalten ist, wird entfernt. Dies wird direkt auf den Server geschrieben und kann von hier aus nicht rückgängig gemacht werden.",
+      "importing": "Wird importiert...",
+      "clientFallback": "Client #{{id}}",
+      "channelFallback": "Channel #{{id}}",
+      "serverGroupFallback": "Servergruppe #{{id}}",
+      "channelGroupFallback": "Channel-Gruppe #{{id}}",
+      "notValidGroupExport": "Keine gültige Gruppen-Exportdatei",
+      "loadedFromFile_one": "{{count}} Gruppe aus Datei geladen",
+      "loadedFromFile_other": "{{count}} Gruppen aus Datei geladen",
+      "failedToReadFile": "Datei konnte nicht gelesen werden - prüfe, ob es sich um einen gültigen Export handelt",
+      "stagedForApply_one": "{{count}} Berechtigung vorgemerkt - Speichern zum Anwenden",
+      "stagedForApply_other": "{{count}} Berechtigungen vorgemerkt - Speichern zum Anwenden",
+      "stagedForRemoval_one": "{{count}} Berechtigung zum Entfernen vorgemerkt - Speichern zum Anwenden",
+      "stagedForRemoval_other": "{{count}} Berechtigungen zum Entfernen vorgemerkt - Speichern zum Anwenden",
+      "notValidPermissionExport": "Keine gültige Berechtigungs-Exportdatei",
+      "fileContainsNoGroups": "Die Datei enthält keine Gruppen",
+      "importedIntoTargets_one": "{{count}} Berechtigung(en) in {{targets}} Ziel importiert",
+      "importedIntoTargets_other": "{{count}} Berechtigung(en) in {{targets}} Ziele importiert",
+      "removedNotInFile_one": ", {{count}} nicht in der Datei enthaltene entfernt",
+      "removedNotInFile_other": ", {{count}} nicht in der Datei enthaltene entfernt",
+      "importFailed": "Import fehlgeschlagen - einige Berechtigungen wurden möglicherweise bereits geschrieben",
+      "appliedToEntities_one": "Berechtigungen auf {{count}} Eintrag angewendet",
+      "appliedToEntities_other": "Berechtigungen auf {{count}} Einträge angewendet",
+      "permissionsSaved": "Berechtigungen gespeichert",
+      "saveFailed": "Berechtigungen konnten nicht gespeichert werden",
+      "changesSavedAcross_one": "{{count}} Änderung über {{entities}} Eintrag gespeichert",
+      "changesSavedAcross_other": "{{count}} Änderungen über {{entities}} Einträge gespeichert",
+      "unnamed": "Unbenannt"
+    },
+    "musicBots": {
+      "title": "Musik-Bots",
+      "tabBots": "Bots",
+      "tabQueue": "Warteschlange",
+      "tabVideo": "Video",
+      "tabLibrary": "Bibliothek",
+      "tabPlaylists": "Playlists",
+      "tabRadio": "Radio",
+      "tabPermissions": "Berechtigungen",
+      "shared": {
+        "serverPlaceholder": "Server...",
+        "playOn": "Abspielen auf:",
+        "noRunningBots": "Keine laufenden Bots",
+        "selectBotPlaceholder": "Bot auswählen...",
+        "filterSongsPlaceholder": "Songs filtern...",
+        "cancel": "Abbrechen",
+        "create": "Erstellen",
+        "done": "Fertig",
+        "add": "Hinzufügen",
+        "name": "Name",
+        "title": "Titel",
+        "duration": "Dauer",
+        "source": "Quelle",
+        "noServerGroupsFound": "Keine Servergruppen gefunden.",
+        "songsCount_one": "{{count}} Song",
+        "songsCount_other": "{{count}} Songs"
+      },
+      "botPlayerCard": {
+        "playerWidget": "Player-Widget",
+        "playSongEllipsis": "Song abspielen...",
+        "live": "LIVE",
+        "stop": "Stopp",
+        "playEllipsis": "Abspielen...",
+        "stopAudio": "Audio stoppen",
+        "start": "Starten",
+        "botStopped": "Bot gestoppt",
+        "botStarted": "Bot gestartet",
+        "startFailed": "Bot konnte nicht gestartet werden",
+        "queueCount": "Warteschlange ({{count}})",
+        "moreCount": "+{{count}} weitere",
+        "widgetDescription": "Bette diese URLs in deine TeamSpeak-Channel-Beschreibung oder Website ein.",
+        "bbcodeUrlLabel": "BBCode-URL (für Channel-Beschreibung)",
+        "jsonUrlLabel": "JSON-URL (für Websites/Integrationen)",
+        "tokenLabel": "Token",
+        "copy": "Kopieren",
+        "copied": "Kopiert!"
+      },
+      "playSongDialog": {
+        "title": "Musik abspielen",
+        "description": "Wähle einen Song oder eine Playlist zum Abspielen auf diesem Bot.",
+        "tabSongs": "Songs",
+        "tabPlaylists": "Playlists",
+        "tabHistory": "Verlauf",
+        "noSongsFound": "Keine Songs gefunden. Lade zuerst Songs im Bibliothek-Tab hoch.",
+        "play": "Abspielen",
+        "queue": "Einreihen",
+        "noPlaylists": "Keine Playlists. Erstelle eine im Playlists-Tab.",
+        "loadAndPlay": "Laden & abspielen",
+        "noHistory": "Keine Musikanfragen gefunden. Nutze !play im Chat, um einen Verlauf aufzubauen.",
+        "playNowHint": "Jetzt abspielen und dabei das Laufende unterbrechen",
+        "queueAfterHint": "Nach dem Laufenden abspielen",
+        "close": "Schließen"
+      },
+      "avatarPicker": {
+        "alt": "Avatar",
+        "change": "Ändern",
+        "upload": "Hochladen",
+        "remove": "Entfernen",
+        "sizeHint": "PNG/JPEG/GIF/WebP (das Größenlimit deines TS-Servers gilt - bei Ablehnung der Datei erscheint eine Warnung)"
+      },
+      "botsTab": {
+        "botsCount_one": "{{count}} Musik-Bot",
+        "botsCount_other": "{{count}} Musik-Bots",
+        "newBot": "Neuer Bot",
+        "noBotsYetTitle": "Noch keine Musik-Bots",
+        "noBotsYetDescription": "Erstelle deinen ersten Voice-Bot, um Musik auf deinem TeamSpeak-Server abzuspielen.",
+        "selectServerError": "Bitte wähle einen Server aus",
+        "botCreated": "Musik-Bot erstellt",
+        "createFailed": "Bot konnte nicht erstellt werden",
+        "botUpdated": "Bot aktualisiert",
+        "updateFailed": "Bot konnte nicht aktualisiert werden",
+        "editBotTitle": "Musik-Bot bearbeiten",
+        "newBotTitle": "Neuer Musik-Bot",
+        "avatarBugNoticePrefix": "Ein von diesem Bot hochgeladener Avatar wird derzeit bei TS6-Clients korrekt angezeigt, bei TS3-Clients jedoch nicht — ein bestätigter TS6-Server-Bug, nicht dieser Fork.",
+        "reportedUpstream": "Upstream gemeldet",
+        "avatarLabel": "Avatar",
+        "serverLabel": "Server",
+        "selectServerPlaceholder": "Server auswählen...",
+        "voicePortLabel": "Voice-Port",
+        "nicknameLabel": "Nickname",
+        "serverPasswordLabel": "Serverpasswort",
+        "defaultChannelLabel": "Standard-Channel",
+        "defaultChannelPlaceholder": "Channel-Name oder -ID (optional)",
+        "channelPasswordLabel": "Channel-Passwort",
+        "leaveEmptyIfNone": "Leer lassen, falls keins",
+        "volumeLabel": "Lautstärke ({{percent}}%)",
+        "autoStartLabel": "Automatisch starten beim Serverstart",
+        "autoplayLabel": "Autoplay bei Verbindung",
+        "autoplayHint": "Startet von selbst, sobald sich dieser Bot verbindet (manueller Start, Serverneustart oder Neuverbindung) - nur solange er im Leerlauf hochfährt, unterbricht nie etwas bereits Eingereihtes.",
+        "autoplayOff": "Aus",
+        "autoplaySong": "Einen Song abspielen",
+        "autoplayRadio": "Einen Radiosender abspielen",
+        "chooseSongPlaceholder": "Song wählen...",
+        "chooseStationPlaceholder": "Sender wählen...",
+        "descriptionTemplateLabel": "Beschreibungsvorlage",
+        "descriptionTemplatePlaceholder": "z. B. Läuft gerade: {title} ({remaining} übrig)",
+        "save": "Speichern",
+        "deleteBotTitle": "Musik-Bot löschen?",
+        "deleteBotDescription": "Dies löscht diesen Musik-Bot dauerhaft und trennt ihn vom Server.",
+        "botDeleted": "Bot gelöscht",
+        "playing": "Spielt ab",
+        "playSongFailed": "Song konnte nicht abgespielt werden",
+        "playingUrl": "URL wird abgespielt",
+        "playUrlFailed": "URL konnte nicht abgespielt werden",
+        "addedToQueuePosition": "Zur Warteschlange hinzugefügt (Position #{{position}})",
+        "queueUrlFailed": "URL konnte nicht eingereiht werden",
+        "addedToQueue": "Zur Warteschlange hinzugefügt",
+        "enqueueFailed": "Einreihen fehlgeschlagen",
+        "playlistLoaded": "Playlist geladen",
+        "loadPlaylistFailed": "Playlist konnte nicht geladen werden",
+        "namePlaceholder": "Mein Musik-Bot"
+      },
+      "libraryTab": {
+        "selectServerTitle": "Server auswählen",
+        "selectServerDescription": "Wähle einen Server, um seine Musikbibliothek zu verwalten.",
+        "filterAll": "Alle",
+        "filterAudio": "Audio",
+        "filterVideo": "Video",
+        "uploading": "Wird hochgeladen...",
+        "upload": "Hochladen",
+        "scanHint": "Nach Audio-/Videodateien suchen, die bereits im Musikordner liegen (z. B. mit einer anderen App geteilt)",
+        "scanning": "Wird gescannt...",
+        "scanForNewFiles": "Nach neuen Dateien suchen",
+        "foundNewFiles_one": "{{count}} neue Datei gefunden",
+        "foundNewFiles_other": "{{count}} neue Dateien gefunden",
+        "fixedTitles_one": "{{count}} Titel korrigiert",
+        "fixedTitles_other": "{{count}} Titel korrigiert",
+        "noNewFilesFound": "Keine neuen Dateien gefunden",
+        "scanFailed": "Scan fehlgeschlagen",
+        "pasteUrlPlaceholder": "YouTube-URL oder Playlist-URL einfügen...",
+        "load": "Laden",
+        "playlistVideosCount": "Playlist ({{count}} Videos)",
+        "singleVideo": "Einzelnes Video",
+        "selectAll": "Alle auswählen",
+        "deselectAll": "Alle abwählen",
+        "downloading": "Wird heruntergeladen...",
+        "downloadSelectedCount": "{{count}} Ausgewählte herunterladen",
+        "downloadingProgress": "Lade {{done}}/{{total}} herunter...",
+        "downloadedCount": "{{done}}/{{total}} Songs heruntergeladen",
+        "failedCount": "{{count}} fehlgeschlagen",
+        "batchDownloadFailed": "Stapel-Download fehlgeschlagen",
+        "download": "Herunterladen",
+        "searchYoutubePlaceholder": "YouTube durchsuchen...",
+        "search": "Suchen",
+        "youtubeResultsCount": "YouTube-Ergebnisse ({{count}})",
+        "startBotToPlayHint": "Starte zuerst einen Musik-Bot, um Dateien aus der Bibliothek abzuspielen oder zu streamen.",
+        "noFilesYetTitle": "Noch keine Dateien",
+        "noFilesYetDescription": "Lade Audio-/Videodateien hoch oder lade sie von YouTube herunter, um deine Bibliothek aufzubauen.",
+        "colType": "Typ",
+        "colSize": "Größe",
+        "refreshing": "Wird aktualisiert...",
+        "noBotSelectedHint": "Kein laufender Bot ausgewählt",
+        "streamOptions": "Stream-Optionen",
+        "playOptions": "Abspiel-Optionen",
+        "stream": "Streamen",
+        "addToStreamQueue": "Zur Stream-Warteschlange hinzufügen",
+        "startStreamFirst": "Starte zuerst einen Stream",
+        "addToQueue": "Zur Warteschlange hinzufügen",
+        "deleteFileTitle": "Datei löschen?",
+        "deleteFileDescription": "Dies entfernt diese Datei dauerhaft aus der Bibliothek.",
+        "songDeleted": "Song gelöscht",
+        "playingTitle": "Spielt ab: {{title}}",
+        "addedToQueueTitle": "Zur Warteschlange hinzugefügt: {{title}}",
+        "addToQueueFailed": "Konnte nicht zur Warteschlange hinzugefügt werden",
+        "switchedStreamTo": "Stream gewechselt zu: {{title}}",
+        "switchStreamFailed": "Stream konnte nicht gewechselt werden",
+        "streamingTitle": "Streamt: {{title}}",
+        "startStreamFailed": "Stream konnte nicht gestartet werden",
+        "addedToStreamQueue": "Zur Stream-Warteschlange hinzugefügt: {{title}}",
+        "addToStreamQueueFailed": "Konnte nicht zur Stream-Warteschlange hinzugefügt werden",
+        "uploadedFile": "Hochgeladen: {{name}}",
+        "uploadFileFailed": "Hochladen fehlgeschlagen: {{name}}",
+        "youtubeSearchFailed": "YouTube-Suche fehlgeschlagen",
+        "downloadStarted": "Download gestartet",
+        "downloadFailed": "Download fehlgeschlagen",
+        "loadUrlInfoFailed": "URL-Informationen konnten nicht geladen werden"
+      },
+      "playlistsTab": {
+        "playlistsCount_one": "{{count}} Playlist",
+        "playlistsCount_other": "{{count}} Playlists",
+        "newPlaylist": "Neue Playlist",
+        "noPlaylistsTitle": "Keine Playlists",
+        "noPlaylistsDescription": "Erstelle eine Playlist, um deine Songs zu organisieren.",
+        "addSongs": "Songs hinzufügen",
+        "noSongsInPlaylist": "Keine Songs in dieser Playlist",
+        "songRemoved": "Song entfernt",
+        "selectPlaylistHint": "Wähle eine Playlist, um ihre Songs anzuzeigen",
+        "newPlaylistTitle": "Neue Playlist",
+        "namePlaceholder": "Meine Playlist",
+        "playlistCreated": "Playlist erstellt",
+        "createPlaylistFailed": "Playlist konnte nicht erstellt werden",
+        "addSongsToPlaylistTitle": "Songs zur Playlist hinzufügen",
+        "noSongsAvailable": "Keine Songs verfügbar. Lade zuerst Songs in die Bibliothek hoch.",
+        "songAdded": "Song hinzugefügt",
+        "deletePlaylistTitle": "Playlist löschen?",
+        "deletePlaylistDescription": "Dies löscht diese Playlist dauerhaft.",
+        "playlistDeleted": "Playlist gelöscht"
+      },
+      "radioTab": {
+        "selectServerTitle": "Server auswählen",
+        "selectServerDescription": "Wähle einen Server, um Radiosender zu verwalten.",
+        "presets": "Vorlagen",
+        "addStation": "Sender hinzufügen",
+        "startBotToPlayHint": "Starte zuerst einen Musik-Bot, um Radiosender abzuspielen.",
+        "noStationsTitle": "Keine Radiosender",
+        "noStationsDescription": "Füge Sender manuell oder aus Vorlagen hinzu, um mit dem Streamen zu beginnen.",
+        "selectRunningBotFirst": "Wähle zuerst einen laufenden Bot aus",
+        "playingRadio": "Radio wird abgespielt",
+        "playRadioFailed": "Radio konnte nicht abgespielt werden",
+        "stationAdded": "Sender hinzugefügt",
+        "addStationFailed": "Sender konnte nicht hinzugefügt werden",
+        "addedName": "Hinzugefügt: {{name}}",
+        "addFailedName": "Hinzufügen fehlgeschlagen: {{name}}",
+        "addStationTitle": "Radiosender hinzufügen",
+        "addStationDescription": "Füge einen eigenen Internetradiosender über seine Stream-URL hinzu.",
+        "streamUrlLabel": "Stream-URL",
+        "streamUrlPlaceholder": "https://stream.example.com/live",
+        "genreLabel": "Genre (optional)",
+        "genrePlaceholder": "Pop, Rock, Elektro...",
+        "stationNamePlaceholder": "Sendername",
+        "presetsTitle": "Radio-Vorlagen",
+        "presetsDescription": "Füge beliebte Radiosender mit einem Klick hinzu.",
+        "noPresetsAvailable": "Keine Vorlagen verfügbar.",
+        "deleteStationTitle": "Radiosender löschen?",
+        "deleteStationDescription": "Dies entfernt diesen Sender aus deiner Liste.",
+        "stationRemoved": "Sender entfernt"
+      },
+      "videoTab": {
+        "noBotsTitle": "Keine Bots verfügbar",
+        "noBotsDescription": "Erstelle zuerst einen Musik-Bot, um ihn dann für Video-Streaming zu nutzen.",
+        "selectBotLabel": "Bot auswählen:",
+        "chooseBotPlaceholder": "Bot wählen...",
+        "selectBotHint": "Wähle einen Bot, um das Video-Streaming zu verwalten."
+      },
+      "queueTab": {
+        "botLabel": "Bot:",
+        "selectBotPlaceholder": "Bot auswählen",
+        "tracksCount": "{{count}} Titel",
+        "clear": "Leeren",
+        "selectBotHint": "Wähle einen Bot, um seine Warteschlange zu verwalten",
+        "queueEmpty": "Warteschlange ist leer",
+        "clickToPlay": "Zum Abspielen klicken",
+        "moveUp": "Nach oben verschieben",
+        "moveDown": "Nach unten verschieben",
+        "removeFromQueue": "Aus Warteschlange entfernen"
+      },
+      "permissionsTab": {
+        "adminBypassGroups": "Admin-Umgehungsgruppen",
+        "adminBypassHint": "Mitglieder jeder hier angehakten Gruppe können jeden Chatbefehl unten unabhängig von seiner individuellen Einschränkung nutzen.",
+        "chatCommandPermissions": "Chatbefehl-Berechtigungen",
+        "everyone": "Jeder",
+        "noGroupAssigned": "Keine Gruppe zugewiesen - unbenutzbar",
+        "permissionUpdated": "Berechtigung aktualisiert",
+        "permissionUpdateFailed": "Berechtigung konnte nicht aktualisiert werden",
+        "adminGroupsUpdateFailed": "Admin-Gruppen konnten nicht aktualisiert werden",
+        "openByDefaultHint": "Lasse alles unangehakt, um jedem die Nutzung zu erlauben (Standard dieses Befehls). Andernfalls dürfen ihn nur die angehakten Gruppen (und jede Admin-Umgehungsgruppe oben) nutzen.",
+        "restrictedHint": "Dieser Befehl ist für niemanden benutzbar, bis hier mindestens eine Gruppe angehakt ist - unangehakt zu lassen entspricht noch keiner Aktivierung. Nur die angehakten Gruppen (und jede Admin-Umgehungsgruppe oben) dürfen ihn nutzen."
+      }
+    }
+  },
+  "components": {
+    "serverSelector": {
+      "selectServer": "Server auswählen...",
+      "selectVirtualServer": "Virtueller Server..."
+    },
+    "updateBanner": {
+      "updateAvailable": "Update verfügbar:",
+      "copyDeployCommand": "Deploy-Befehl kopieren",
+      "postpone": "Verschieben"
+    },
+    "ytCookieBanner": {
+      "message": "YouTube-Cookies funktionieren nicht mehr — altersbeschränkte/mitgliederexklusive Inhalte und Suchen können fehlschlagen, bis sie unter <1>Einstellungen → YouTube</1> aktualisiert wurden."
+    },
+    "confirmDialog": {
+      "processing": "Wird verarbeitet..."
+    },
+    "dataTable": {
+      "searchPlaceholder": "Suche...",
+      "selectRow": "Zeile auswählen",
+      "resultCount_one": "{{count}} Ergebnis",
+      "resultCount_other": "{{count}} Ergebnisse",
+      "previous": "Zurück",
+      "next": "Weiter"
+    },
+    "themeToggle": {
+      "switchTo": "Zu {{theme}} wechseln"
+    },
+    "iconImage": {
+      "builtinTitle": "Integriertes Client-Icon #{{id}}",
+      "couldNotLoad": "Icon {{id}} konnte nicht geladen werden",
+      "iconAlt": "Icon {{id}}"
+    },
+    "iconPickerDialog": {
+      "title": "Icon auswählen",
+      "searchPlaceholder": "Icon-ID suchen...",
+      "poolUnavailable": "Icon-Pool nicht verfügbar",
+      "sshRequired": "Das Auslesen des Icon-Pools benötigt SSH-Zugriff, da die WebQuery-HTTP-API von TeamSpeak keine Dateiübertragungsbefehle unterstützt. Konfiguriere SSH-Zugangsdaten in den Server-Einstellungen oder gib die Icon-ID direkt ein.",
+      "loadFailed": "Der Icon-Pool konnte nicht geladen werden - gib stattdessen die Icon-ID direkt ein.",
+      "noMatchingIcons": "Keine passenden Icons",
+      "noIconsUploaded": "Keine Icons hochgeladen",
+      "noMatchDescription": "Kein Icon in diesem Pool entspricht deiner Suche.",
+      "noIconsDescription": "Lade zuerst Icons auf der Icons-Seite hoch und wähle dann eins hier aus."
+    },
+    "widget": {
+      "away": "abwesend",
+      "muted": "stumm",
+      "clickToJoin": "Klicken, um dem Server beizutreten",
+      "online": "ONLINE",
+      "userCount": "{{count}} / {{max}} Nutzer",
+      "uptime": "{{uptime}} Laufzeit",
+      "footer": "TS6 WebUI-Widget"
+    },
+    "widgetManager": {
+      "title": {
+        "list": "Server-Widgets",
+        "create": "Widget erstellen",
+        "edit": "Widget bearbeiten",
+        "embed": "Einbettungscode"
+      },
+      "newWidget": "Neues Widget",
+      "noWidgets": "Noch keine Widgets. Erstelle eins, um deinen Serverstatus auf externen Seiten einzubetten.",
+      "serverLabel": "Server: {{name}} | VS {{vs}}",
+      "embed": "Einbetten",
+      "preview": "Vorschau",
+      "namePlaceholder": "Mein Server-Widget",
+      "server": "Server",
+      "virtualServerId": "Virtueller-Server-ID",
+      "theme": "Theme",
+      "showChannelTree": "Channel-Baum anzeigen",
+      "showClients": "Clients anzeigen",
+      "hideEmptyChannels": "Leere Channels ausblenden",
+      "maxChannelDepth": "Maximale Channel-Tiefe: {{depth}}",
+      "regenerateToken": "Token neu generieren",
+      "imageUrls": "Bild-URLs",
+      "pasteIntoHtml": "Füge dies in den HTML-Code deiner Website ein:",
+      "svgLabel": "SVG (skalierbar, beste Qualität):",
+      "pngLabel": "PNG (für Foren / Signaturen):",
+      "htmlImgLabel": "HTML-img-Tag:",
+      "bbcodeLabel": "Forum-BBCode (nutzt PNG):"
+    },
+    "videoPlayer": {
+      "failedToConnect": "Verbindung fehlgeschlagen",
+      "noActiveStream": "Kein aktiver Videostream",
+      "unmute": "Stummschaltung aufheben",
+      "mute": "Stummschalten",
+      "connecting": "Verbindung zum Stream wird hergestellt...",
+      "retry": "Erneut versuchen",
+      "live": "LIVE"
+    },
+    "videoStreamTab": {
+      "title": "Videostream",
+      "botMustBeConnected": "Der Bot muss verbunden sein, um Video-Streaming zu starten.",
+      "sourceUrl": "Quell-URL",
+      "sourceUrlPlaceholder": "https://youtube.com/watch?v=... oder direkte Video-URL",
+      "queue": "Einreihen",
+      "queueTitle": "Nach dem aktuellen Video abspielen",
+      "switchNow": "Jetzt wechseln",
+      "switchNowTitle": "Den laufenden Stream sofort umschalten",
+      "sourceHint": "YouTube, direkte Video-URLs (MP4, HLS) oder lokale Dateipfade",
+      "pickFromLibrary": "Oder aus der Bibliothek wählen:",
+      "chooseUploadedVideo": "Hochgeladenes Video wählen...",
+      "qualityPreset": "Qualitätsvoreinstellung",
+      "frameRate": "Bildrate (FPS)",
+      "videoBitrate": "Video-Bitrate",
+      "bitratePlaceholder": "z. B. 1500k, 4000k, 6000k",
+      "bitrateHint": "Höher benötigt mehr Upload-Bandbreite und CPU. Beispiele: 1500k, 4000k, 6000k, 8000k",
+      "starting": "Wird gestartet...",
+      "startStream": "Stream starten",
+      "stopping": "Wird gestoppt...",
+      "stopStream": "Stream stoppen",
+      "upNext": "Als Nächstes",
+      "playNextNow": "Nächstes Video jetzt abspielen",
+      "nothingQueuedStops": "Nichts in der Warteschlange - das stoppt den Stream",
+      "skip": "Überspringen",
+      "now": "Jetzt",
+      "nothingQueuedHint": "Nichts in der Warteschlange. Füge oben eine URL ein und wähle <1>Einreihen</1>, um eins einzureihen — <3>!stream &lt;url&gt;</3> im Chat macht dasselbe, während ein Stream läuft.",
+      "livePreview": "Live-Vorschau",
+      "volume": "Lautstärke",
+      "volumeHint": "Unter Einstellungen -> Streaming festgelegt; Zuschauer können ihren eigenen Player trotzdem lauter stellen",
+      "source": "Quelle",
+      "uptime": "Laufzeit",
+      "viewersCount": "Zuschauer ({{count}})",
+      "noViewers": "Keine Zuschauer verbunden",
+      "clientHash": "Client #{{id}}",
+      "kick": "Kicken"
+    },
+    "templateGallery": {
+      "title": "Flow-Vorlagen",
+      "configureTitle": "Konfigurieren: {{name}}",
+      "availableVariables": "Verfügbare Variablen",
+      "noConfigNeeded": "Keine Konfiguration nötig — bereit zum Erstellen.",
+      "createBot": "Bot erstellen"
+    },
+    "placeholderReference": {
+      "dialogTitle": "Platzhalter-Referenz",
+      "dialogIntro": "Verwende <1>{{placeholder}}</1> in jedem Textfeld. Werte werden zur Laufzeit aufgelöst.",
+      "tabs": {
+        "event": "Event",
+        "time": "Zeit",
+        "var": "Variablen",
+        "temp": "Temp",
+        "exec": "Exec",
+        "filter": "Filter",
+        "functions": "Funktionen",
+        "templates": "Vorlagen"
+      },
+      "event": {
+        "intro": "Felder aus dem auslösenden TS3-Event. Verfügbare Felder hängen vom Event-Typ ab.",
+        "h1": "Client verbunden — notifycliententerview",
+        "clid": {
+          "desc": "Client-ID",
+          "example": "Client #{{event.clid}} in Channel verschieben"
+        },
+        "clientNickname": {
+          "desc": "Nickname",
+          "example": "Willkommen {{event.client_nickname}}!"
+        },
+        "clientDatabaseId": {
+          "desc": "Datenbank-ID",
+          "example": "DB-ID: {{event.client_database_id}}"
+        },
+        "clientUid": {
+          "desc": "Eindeutige ID (UID)",
+          "example": "UID: {{event.client_unique_identifier}}"
+        },
+        "clientType": {
+          "desc": "Typ (0=Nutzer, 1=Query)",
+          "example": "Bedingung: event.client_type == 0"
+        },
+        "clientServergroups": {
+          "desc": "Servergruppen-IDs (kommagetrennt)",
+          "example": "contains(event.client_servergroups, '6')"
+        },
+        "connectionClientIp": {
+          "desc": "IP-Adresse",
+          "example": "VPN-Check: https://api.vpn.io/{{event.connection_client_ip}}"
+        },
+        "cidJoined": {
+          "desc": "Channel, den der Client betreten hat",
+          "example": "Bedingung: event.cid == 42"
+        },
+        "h2": "Client getrennt — notifyclientleftview",
+        "clidDisc": {
+          "desc": "Client-ID"
+        },
+        "cfidDisc": {
+          "desc": "Channel, in dem der Client war"
+        },
+        "reasonidDisc": {
+          "desc": "Grund (3=Verbindung verloren, 5=Kick, 6=Bann, 8=Verlassen)",
+          "example": "Bedingung: event.reasonid == 5"
+        },
+        "reasonmsg": {
+          "desc": "Grund-Nachricht",
+          "example": "Gekickt: {{event.reasonmsg}}"
+        },
+        "h3": "Client verschoben — notifyclientmoved",
+        "clidMoved": {
+          "desc": "Client-ID"
+        },
+        "ctid": {
+          "desc": "Ziel-Channel-ID",
+          "example": "Bedingung: event.ctid == 10"
+        },
+        "cfidMoved": {
+          "desc": "Quell-Channel-ID"
+        },
+        "reasonidMoved": {
+          "desc": "Grund (0=selbst, 1=von Admin verschoben)"
+        },
+        "h4": "Textnachricht — notifytextmessage",
+        "clidMsg": {
+          "desc": "Absender-Client-ID"
+        },
+        "clientNicknameMsg": {
+          "desc": "Absender-Nickname"
+        },
+        "msg": {
+          "desc": "Nachrichtentext",
+          "example": "Nutzer schrieb: {{event.msg}}"
+        },
+        "targetmode": {
+          "desc": "Ziel (1=privat, 2=Channel, 3=Server)"
+        },
+        "h5": "Chat-Befehl — trigger_command",
+        "commandName": {
+          "desc": "Befehlsname (ohne Präfix)",
+          "example": "Befehl: {{event.command_name}}"
+        },
+        "commandArgs": {
+          "desc": "Argumente nach dem Befehl",
+          "example": "Argumente: {{event.command_args}}"
+        },
+        "clidCmd": {
+          "desc": "Absender-Client-ID"
+        },
+        "clientNicknameCmd": {
+          "desc": "Absender-Nickname"
+        },
+        "h6": "Channel-Events — erstellt / bearbeitet / gelöscht",
+        "cidChannel": {
+          "desc": "Channel-ID"
+        },
+        "invokerid": {
+          "desc": "Client-ID der Person, die die Änderung vorgenommen hat"
+        },
+        "invokername": {
+          "desc": "Name der Person, die die Änderung vorgenommen hat"
+        },
+        "h7": "Webhook — trigger_webhook",
+        "webhookPath": {
+          "desc": "Anfragepfad"
+        },
+        "webhookMethod": {
+          "desc": "HTTP-Methode",
+          "example": "GET oder POST"
+        },
+        "webhookBody": {
+          "desc": "Anfragekörper (rohes JSON)"
+        },
+        "webhookBodyField": {
+          "desc": "Verschachteltes Feld aus dem JSON-Body",
+          "example": "Status: {{event.webhook_body.status}}"
+        },
+        "webhookQuery": {
+          "desc": "Query-Parameter (rohes JSON)"
+        }
+      },
+      "time": {
+        "intro": "Aktuelles Datum und aktuelle Uhrzeit. Berücksichtigt die am Cron-Trigger konfigurierte Zeitzone (Fallback auf UTC).",
+        "time": {
+          "desc": "Formatierte Uhrzeit HH:MM",
+          "example": "Channelname: Es ist {{time.time}} Uhr"
+        },
+        "date": {
+          "desc": "Formatiertes Datum TT.MM.JJJJ",
+          "example": "Datum: {{time.date}}"
+        },
+        "hours": {
+          "desc": "Stunde (00-23)",
+          "example": "Bedingung: time.hours >= 22"
+        },
+        "minutes": {
+          "desc": "Minute (00-59)"
+        },
+        "seconds": {
+          "desc": "Sekunde (00-59)"
+        },
+        "day": {
+          "desc": "Tag des Monats (01-31)"
+        },
+        "month": {
+          "desc": "Monat (01-12)",
+          "example": "Bedingung: time.month == 12"
+        },
+        "year": {
+          "desc": "Jahr (4-stellig)"
+        },
+        "dayOfWeek": {
+          "desc": "Wochentag (0=So, 1=Mo, ..., 6=Sa)",
+          "example": "Bedingung: time.dayOfWeek == 0"
+        },
+        "timestamp": {
+          "desc": "Unix-Zeitstempel (Sekunden)"
+        }
+      },
+      "var": {
+        "intro": "Persistente Variablen, in der Datenbank gespeichert. Überstehen Neustarts. Pro Flow gültig. Gesetzt über den Aktionsknoten <1>Variable setzen</1>.",
+        "name": {
+          "desc": "Variable per Name lesen",
+          "example": "Zähler: {{var.visit_count}}"
+        },
+        "h1": "Aktionen für Variablen",
+        "actionSet": "<0>Setzen</0> — Variable auf einen festen Wert oder ein Template setzen",
+        "actionIncrement": "<0>Erhöhen</0> — Eine Zahl zum aktuellen Wert addieren",
+        "actionAppend": "<0>Anhängen</0> — Text an den aktuellen Wert anhängen",
+        "h2": "Anwendungsbeispiele",
+        "example1": "Besucherzähler: <1>visit_count</1> bei jedem Beitritt um 1 erhöhen",
+        "example2": "Zuletzt gesehen: <1>lastseen_{{event.client_database_id}}</1> auf <3>{{time.timestamp}}</3> setzen",
+        "example3": "Online-Zeit-Tracking: <1>onlinetime_{{event.clid}}</1> erhöhen"
+      },
+      "temp": {
+        "intro": "Temporäre Variablen, die nur während einer einzelnen Flow-Ausführung existieren. Werden automatisch von bestimmten Aktionsknoten gesetzt. Unterstützt verschachtelten Zugriff über Punktnotation.",
+        "h1": "Automatisch gesetzt von Aktionen",
+        "lastCreatedChannelId": {
+          "desc": "CID des von \"Channel erstellen\" erstellten Channels",
+          "example": "Client nach {{temp.lastCreatedChannelId}} verschieben"
+        },
+        "lastResult": {
+          "desc": "Rohes JSON-Ergebnis der WebQuery-Aktion"
+        },
+        "afkMovedCount": {
+          "desc": "Anzahl der vom AFK Mover verschobenen Clients",
+          "example": "{{temp.afkMovedCount}} AFK-Nutzer verschoben"
+        },
+        "idleKickedCount": {
+          "desc": "Anzahl der vom Idle Kicker gekickten Clients"
+        },
+        "pokedCount": {
+          "desc": "Anzahl der von Poke Group angestupsten Clients"
+        },
+        "rankPromotedCount": {
+          "desc": "Anzahl der von Rank Check beförderten Clients"
+        },
+        "tempChannelsDeleted": {
+          "desc": "Anzahl der von Temp Cleanup gelöschten Channels"
+        },
+        "h2": "Benutzerdefiniert über \"Speichern als\"",
+        "storeAsIntro": "WebQuery- und HTTP-Request-Aktionen haben ein \"Speichern als\"-Feld. Die VOLLSTÄNDIGE Ergebnisliste wird als Temp-Variable gespeichert — selbst bei einzeiligen Befehlen wie clientinfo oder serverinfo, daher der explizite Zugriff über <1>.0.</1> für \"die erste (einzige) Zeile\".",
+        "serverOnline": {
+          "desc": "Online-Nutzer (nachdem serverinfo als \"server\" gespeichert wurde)",
+          "example": "Online: {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}"
+        },
+        "serverUptime": {
+          "desc": "Serverlaufzeit in Sekunden",
+          "example": "Laufzeit: {{temp.server.0.virtualserver_uptime|uptime}}"
+        },
+        "clientNickname": {
+          "desc": "Client-Name (nachdem clientinfo als \"client\" gespeichert wurde)"
+        },
+        "h3": "Loop-Knoten",
+        "loopIntro": "Ein Loop-Knoten liest eine bestehende Liste (z. B. ein \"Speichern als\"-Ergebnis einer clientlist-WebQuery) und führt seinen \"Body\"-Ausgang einmal pro Element aus, danach seinen \"After\"-Ausgang einmal, wenn fertig.",
+        "loopItem": {
+          "desc": "Aktuelles Element (unter dem Namen, der als Item-Variablenname des Loop-Knotens gesetzt ist), nur innerhalb seines Body-Zweigs"
+        },
+        "loopField": {
+          "desc": "Ein Feld des aktuellen Elements - Item-Variablenname + \".\" + Feld (kein .0 hier, anders als bei \"Speichern als\" oben - ein einzelnes Objekt pro Durchlauf, keine Liste)"
+        },
+        "loopIndex": {
+          "desc": "Position des aktuellen Elements in der Liste, beginnend bei 0"
+        }
+      },
+      "exec": {
+        "intro": "Nur lesbare Metadaten zur aktuellen Flow-Ausführung.",
+        "flowId": {
+          "desc": "ID des ausgeführten Flows"
+        },
+        "executionId": {
+          "desc": "Eindeutige ID der Ausführungsinstanz"
+        },
+        "configId": {
+          "desc": "Server-Konfigurations-ID"
+        },
+        "sid": {
+          "desc": "Virtuelle-Server-ID"
+        },
+        "triggerType": {
+          "desc": "Trigger-Typ (event, cron, webhook, command)",
+          "example": "Bedingung: exec.triggerType == \"cron\""
+        }
+      },
+      "filter": {
+        "intro": "Filter transformieren Werte. Anwendung mit Pipe-Syntax: <1>{{value|filter}}</1>",
+        "uptime": {
+          "desc": "Wandelt Sekunden in lesbare Laufzeit um"
+        },
+        "round": {
+          "desc": "Rundet auf die nächste Ganzzahl"
+        },
+        "floor": {
+          "desc": "Rundet ab auf Ganzzahl"
+        }
+      },
+      "functions": {
+        "intro": "Funktionen zur Verwendung in <1>Bedingung</1>-Knoten-Ausdrücken. Geben 0 oder 1 zurück (falsch/wahr).",
+        "contains": {
+          "desc": "String enthält Teilstring? (reiner Teilstring-Vergleich - siehe hasGroup unten für numerische ID-Listen)"
+        },
+        "startsWith": {
+          "desc": "String beginnt mit Präfix?"
+        },
+        "endsWith": {
+          "desc": "String endet mit Suffix?"
+        },
+        "lower": {
+          "desc": "In Kleinbuchstaben umwandeln"
+        },
+        "upper": {
+          "desc": "In Großbuchstaben umwandeln"
+        },
+        "length": {
+          "desc": "String-Länge"
+        },
+        "split": {
+          "desc": "String teilen und Element an Index abrufen"
+        },
+        "hasGroup": {
+          "desc": "Exakter Abgleich gegen eine kommagetrennte ID-Liste - dies für Servergruppen-IDs verwenden, nicht contains(), das Gruppe '1' fälschlich auch gegen '10' oder '21' matchen würde"
+        },
+        "count": {
+          "desc": "Zeilenanzahl eines gespeicherten WebQuery-Ergebnisses (Array), sonst String-Länge - zum Prüfen, ob eine Abfrage etwas gefunden hat"
+        },
+        "h1": "Bedingungsbeispiele",
+        "condition1": "Nur echte Nutzer (keine Query-Clients)",
+        "condition2": "Client ist in Servergruppe 7",
+        "condition3": "Nur nachts",
+        "condition4": "Client in bestimmten Channel verschoben",
+        "condition5": "VPN erkannt (nach HTTP-Anfrage)"
+      },
+      "templates": {
+        "intro": "Zusätzliche Platzhalter, die bestimmte Vorlagen aus der Vorlagen-Galerie automatisch auflösen, über die allgemeinen oben hinaus."
+      }
+    },
+    "editChannelDialog": {
+      "title": "Channel bearbeiten",
+      "loadFailed": "Vollständige Channel-Einstellungen konnten nicht geladen werden",
+      "updated": "Channel aktualisiert",
+      "updateFailed": "Channel konnte nicht aktualisiert werden",
+      "loadingSettings": "Vollständige Channel-Einstellungen werden geladen...",
+      "tabs": {
+        "general": "Allgemein",
+        "voice": "Audio",
+        "limits": "Limits & Typ",
+        "advanced": "Erweitert"
+      },
+      "channelName": "Channel-Name",
+      "topic": "Thema",
+      "leaveEmptyToKeep": "Leer lassen, um das aktuelle beizubehalten",
+      "codec": "Codec",
+      "codecQuality": "Codec-Qualität ({{quality}})",
+      "codecQualityHint": "0 = niedrigste, 10 = höchste. Höhere Qualität benötigt mehr Bandbreite.",
+      "encryptVoice": "Sprachdaten in diesem Channel verschlüsseln",
+      "type": {
+        "permanent": "Permanent",
+        "semipermanent": "Halbpermanent",
+        "temporary": "Temporär"
+      },
+      "deleteDelay": "Löschverzögerung (Sekunden, wenn leer)",
+      "defaultChannel": "Standard-Channel",
+      "defaultChannelHint": "Ein Server hat nur einen Standard-Channel — das Aktivieren entfernt das Flag vom Channel, der es aktuell hat.",
+      "maxClients": "Maximale Clients",
+      "limited": "Begrenzt",
+      "unlimited": "Unbegrenzt",
+      "maxFamilyClients": "Maximale Familien-Clients",
+      "inherited": "Geerbt",
+      "maxFamilyClientsHint": "Begrenzt Clients über diesen Channel und alle seine Unterchannels zusammen.",
+      "neededTalkPower": "Benötigte Sprechberechtigung",
+      "sortPosition": "Sortierposition",
+      "sortPositionHint": "Die Channel-ID, unter der dieser Channel unter seinen Geschwistern positioniert werden soll (0 = erster). Channel-IDs werden im Channel-Baum als \"#id\" angezeigt.",
+      "phoneticName": "Phonetischer Name",
+      "phoneticNamePlaceholder": "Wie Text-zu-Sprache den Namen dieses Channels aussprechen soll",
+      "bannerImageUrl": "Banner-Bild-URL",
+      "bannerMode": "Banner-Modus",
+      "bannerMode0": "Nicht anpassen",
+      "bannerMode1": "Anpassen, Seitenverhältnis ignorieren",
+      "bannerMode2": "Anpassen, Seitenverhältnis beibehalten"
+    }
+  },
+  "data": {
+    "botTemplates": {
+      "categories": {
+        "infoChannels": {
+          "label": "Info-Channels",
+          "description": "Dynamische Channel-Namen mit Live-Daten"
+        },
+        "moderation": {
+          "label": "Moderation",
+          "description": "Automatisierte Moderation und Schutz"
+        },
+        "automation": {
+          "label": "Automatisierung",
+          "description": "Willkommensnachrichten, temporäre Channels, Ranking"
+        },
+        "integration": {
+          "label": "Integration",
+          "description": "Externe APIs und Webhooks"
+        }
+      },
+      "items": {
+        "clockChannel": {
+          "name": "Uhr-Channel",
+          "description": "Aktualisiert einen Channel-Namen jede Minute mit der aktuellen Uhrzeit.",
+          "fields": {
+            "channelId": {
+              "label": "Channel-ID"
+            },
+            "timezone": {
+              "label": "Zeitzone"
+            }
+          }
+        },
+        "onlineCounter": {
+          "name": "Online-Zähler",
+          "description": "Zeigt die aktuelle Anzahl online befindlicher Clients in einem Channel-Namen.",
+          "fields": {
+            "channelId": {
+              "label": "Channel-ID"
+            }
+          }
+        },
+        "serverStats": {
+          "name": "Server-Statistiken",
+          "description": "Zeigt Laufzeit, Online-Clients und Channel-Anzahl in drei Info-Channels an.",
+          "fields": {
+            "uptimeChannelId": {
+              "label": "Laufzeit-Channel-ID"
+            },
+            "clientsChannelId": {
+              "label": "Clients-Channel-ID"
+            },
+            "channelCountChannelId": {
+              "label": "Channel-Anzahl-Channel-ID"
+            }
+          }
+        },
+        "animatedChannel": {
+          "name": "Animierter Channel-Name",
+          "description": "Animiert einen Channel-Namen mit visuellen Effekten wie Laufschrift, Schreibmaschine, Hüpfen und mehr. Aktualisiert alle 2-5 Sekunden.",
+          "fields": {
+            "channelId": {
+              "label": "Channel-ID"
+            },
+            "text": {
+              "label": "Anzeigetext"
+            },
+            "style": {
+              "label": "Animationsstil",
+              "options": {
+                "0": "Nach links scrollen (Laufschrift)",
+                "1": "Schreibmaschine",
+                "2": "Hüpfen",
+                "3": "Blinken",
+                "4": "Welle (dekorativ)",
+                "5": "Wechselnde Groß-/Kleinschreibung"
+              }
+            },
+            "intervalSeconds": {
+              "label": "Geschwindigkeit",
+              "options": {
+                "0": "Langsam (5s)",
+                "1": "Mittel (3s)",
+                "2": "Schnell (2s)",
+                "3": "Sehr schnell (1s)",
+                "4": "Ultra (0,5s)",
+                "5": "Wahnsinnig (0,25s)"
+              }
+            },
+            "prefix": {
+              "label": "Channel-Namen-Präfix"
+            }
+          }
+        },
+        "welcomeMessage": {
+          "name": "Willkommensnachricht",
+          "description": "Sendet eine Willkommensnachricht oder einen Poke, wenn ein Client den Server betritt, mit Opt-out-Befehl und Servergruppen-Ausschlüssen.",
+          "variablesHint": [
+            "{{event.client_nickname}} - Name des beitretenden Clients",
+            "{{temp.onlineCount}} - echte Nutzer, die gerade online sind (Query-/Bot-Verbindungen nicht mitgezählt)",
+            "{{temp.dbInfo.0.client_totalconnections}} - Anzahl der bisherigen Verbindungen dieses Clients",
+            "{{temp.teamOnline}} - Team-Mitglieder, die gerade online sind (löst nur auf, wenn unten Team-Gruppen gesetzt ist)"
+          ],
+          "fields": {
+            "message": {
+              "label": "Willkommensnachricht"
+            },
+            "usePokeInstead": {
+              "label": "Zustellmethode",
+              "options": {
+                "0": "Private Nachricht",
+                "1": "Poke"
+              }
+            },
+            "ignoreGroupIds": {
+              "label": "Ignorierte Gruppen (kommagetrennt, optional)"
+            },
+            "teamGroupIds": {
+              "label": "Team-Gruppen für {{temp.teamOnline}} (kommagetrennt, optional)"
+            }
+          }
+        },
+        "supportSystem": {
+          "name": "Support-System",
+          "description": "Benachrichtigt Admins, wenn ein Client den Support-Channel betritt.",
+          "fields": {
+            "supportChannelId": {
+              "label": "Support-Channel-ID"
+            },
+            "adminGroupId": {
+              "label": "Admin-Gruppen-ID"
+            },
+            "message": {
+              "label": "Benachrichtigungsnachricht"
+            }
+          }
+        },
+        "privateChannelCreator": {
+          "name": "Privater-Channel-Ersteller",
+          "description": "Erstellt einen dauerhaften privaten Channel für einen Client beim ersten Betreten einer Lobby und verschiebt ihn danach jedes Mal wieder dorthin - mit ihm als Channel-Besitzer.",
+          "variablesHint": [
+            "{{temp.joinerInfo.0.client_nickname}} - Name des beitretenden Clients (für Channel-Namens-/Beschreibungs-Template)"
+          ],
+          "fields": {
+            "lobbyChannelId": {
+              "label": "Lobby-Channel-ID"
+            },
+            "parentChannelId": {
+              "label": "Übergeordnete Channel-ID (optional - überschreibt, wo Channels erstellt werden)"
+            },
+            "channelPlacement": {
+              "label": "Channel-Platzierung",
+              "options": {
+                "0": "Standard-Channel (neben Lobby)",
+                "1": "Unterchannel der Lobby"
+              }
+            },
+            "channelAdminGroupId": {
+              "label": "Channel-Admin-Gruppen-ID (als Besitzer zugewiesen)"
+            },
+            "channelNameTemplate": {
+              "label": "Channel-Namens-Template"
+            },
+            "channelDescriptionTemplate": {
+              "label": "Channel-Beschreibungs-Template (optional)"
+            },
+            "privateChannelType": {
+              "label": "Typ des privaten Channels",
+              "options": {
+                "0": "Permanent",
+                "1": "Halbpermanent",
+                "2": "Temporär (TeamSpeak löscht ihn, sobald er leer ist)"
+              }
+            },
+            "autoGeneratePassword": {
+              "label": "Passwortschutz",
+              "options": {
+                "0": "Keiner",
+                "1": "Automatisch generieren"
+              }
+            },
+            "spamProtectionEnabled": {
+              "label": "Spam-Schutz (bannt Clients, die die Lobby wiederholt erneut betreten)",
+              "options": {
+                "0": "Nein",
+                "1": "Ja"
+              }
+            },
+            "spamProtectionMaxStrikes": {
+              "label": "Maximale Verstöße vor Bann"
+            },
+            "spamProtectionBanSeconds": {
+              "label": "Banndauer (Sekunden)"
+            },
+            "channelCreateMessage": {
+              "label": "Channel-Erstellungs-Nachricht"
+            },
+            "channelMoveMessage": {
+              "label": "Channel-Verschiebungs-Nachricht"
+            },
+            "channelErrorMessage": {
+              "label": "Channel-Fehler-Nachricht"
+            },
+            "channelPasswordMessage": {
+              "label": "Channel-Passwort-Nachricht"
+            },
+            "spamProtectionBanMessage": {
+              "label": "Spam-Schutz-Bann-Nachricht"
+            }
+          }
+        },
+        "autoRank": {
+          "name": "Auto-Rang",
+          "description": "Weist automatisch Servergruppen basierend auf kumulierter Online-Zeit zu.",
+          "fields": {
+            "ranks": {
+              "label": "Ränge (JSON)"
+            },
+            "mode": {
+              "label": "Stunden gemessen als",
+              "options": {
+                "0": "Tatsächliche Online-Zeit (über Sitzungen hinweg akkumuliert)",
+                "1": "Zeit seit erster Verbindung (Mitgliedsalter)"
+              }
+            },
+            "excludeGroupIds": {
+              "label": "Ausgeschlossene Gruppen-IDs (kommagetrennt, optional)"
+            },
+            "pollInterval": {
+              "label": "Prüfintervall",
+              "options": {
+                "0": "Alle 5 Min",
+                "1": "Alle 15 Min",
+                "2": "Jede Stunde"
+              }
+            }
+          }
+        },
+        "lastSeenTracker": {
+          "name": "Zuletzt-gesehen-Tracker",
+          "description": "Speichert den Zeitstempel des letzten Sehens, wenn ein Client die Verbindung trennt."
+        },
+        "afkMover": {
+          "name": "AFK-Mover",
+          "description": "Verschiebt inaktive Clients nach einer konfigurierbaren Zeitüberschreitung in einen AFK-Channel.",
+          "fields": {
+            "afkChannelId": {
+              "label": "AFK-Channel-ID"
+            },
+            "idleThresholdSeconds": {
+              "label": "Inaktivitäts-Schwelle (Sekunden)"
+            },
+            "exemptGroupIds": {
+              "label": "Ausgenommene Gruppen-IDs (kommagetrennt)"
+            },
+            "exemptChannelIds": {
+              "label": "Ausgenommene Channel-IDs (kommagetrennt)"
+            }
+          }
+        },
+        "idleKicker": {
+          "name": "Idle-Kicker",
+          "description": "Kickt Clients, die zu lange inaktiv waren.",
+          "fields": {
+            "idleThresholdSeconds": {
+              "label": "Inaktivitäts-Schwelle (Sekunden)"
+            },
+            "reason": {
+              "label": "Kick-Grund"
+            },
+            "exemptGroupIds": {
+              "label": "Ausgenommene Gruppen-IDs (kommagetrennt)"
+            }
+          }
+        },
+        "badNameChecker": {
+          "name": "Prüfung auf unerlaubte Namen",
+          "description": "Kickt Clients, deren Nickname verbotene Wörter enthält.",
+          "fields": {
+            "badWords": {
+              "label": "Verbotene Wörter (kommagetrennt)"
+            },
+            "reason": {
+              "label": "Kick-Grund"
+            }
+          }
+        },
+        "groupProtector": {
+          "name": "Gruppen-Schutz",
+          "description": "Kickt Clients, die eine geschützte Gruppe haben, aber der erforderlichen Berechtigungsgruppe nicht angehören.",
+          "fields": {
+            "protectedGroupId": {
+              "label": "Geschützte Gruppen-ID"
+            },
+            "allowedGroupId": {
+              "label": "Berechtigte Gruppen-ID"
+            },
+            "action": {
+              "label": "Aktion",
+              "options": {
+                "0": "Kicken",
+                "1": "Gruppe entfernen"
+              }
+            }
+          }
+        },
+        "webhookServerMessage": {
+          "name": "Webhook → Servernachricht",
+          "description": "Empfängt einen Webhook-POST und sendet die Nachricht an den TeamSpeak-Server. Ideal für Monitoring-Alarme, CI/CD-Benachrichtigungen oder Discord-Bridges.",
+          "fields": {
+            "path": {
+              "label": "Webhook-Pfad"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
+          }
+        },
+        "webhookGroupAssign": {
+          "name": "Webhook → Gruppe zuweisen",
+          "description": "Ein externes System (z. B. Website-Verifizierung) sendet einen Webhook mit einer Client-Datenbank-ID, um eine Servergruppe zuzuweisen. Für Website-zu-TS3-Nutzerverifizierung.",
+          "fields": {
+            "path": {
+              "label": "Webhook-Pfad"
+            },
+            "groupId": {
+              "label": "Zuzuweisende Servergruppen-ID"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
+          }
+        },
+        "webhookChannelRename": {
+          "name": "Webhook → Channel aktualisieren",
+          "description": "Empfängt einen Webhook und aktualisiert einen Channel-Namen. Für externe Statusanzeigen wie Gameserver-Status, Stream-Status oder Monitoring-Dashboards.",
+          "fields": {
+            "path": {
+              "label": "Webhook-Pfad"
+            },
+            "channelId": {
+              "label": "Zu aktualisierende Channel-ID"
+            },
+            "nameTemplate": {
+              "label": "Channel-Namens-Template"
+            },
+            "secret": {
+              "label": "Secret (optional)"
+            }
+          }
+        },
+        "antiVpn": {
+          "name": "Anti-VPN",
+          "description": "Prüft sich verbindende Clients gegen eine VPN-Erkennungs-API und kickt/bannt VPN-Nutzer.",
+          "fields": {
+            "apiUrl": {
+              "label": "API-URL (verwende den Platzhalter {{ip}})"
+            },
+            "action": {
+              "label": "Aktion bei VPN",
+              "options": {
+                "0": "Kicken",
+                "1": "Bannen (1h)"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "errors": {
+    "ts": {
+      "groupNameExists": "Eine Gruppe mit diesem Namen existiert bereits",
+      "invalidGroup": "Ungültige Gruppe - sie wurde möglicherweise gelöscht",
+      "permAlreadySet": "Diese Berechtigung ist bei dieser Gruppe bereits gesetzt",
+      "unknownPermission": "Dieser Server erkennt eine der Berechtigungen in der Datei nicht",
+      "cannotModifyDefaultGroup": "Berechtigungen einer Standard-/Vorlagengruppe können nicht geändert werden",
+      "invalidPermValueSize": "Ungültige Berechtigungswertgröße in der Datei",
+      "invalidPermValue": "Ungültiger Berechtigungswert in der Datei",
+      "insufficientModifyPower": "Unzureichende Berechtigungs-Änderungsmacht für einen der importierten Werte"
+    }
+  }
+}

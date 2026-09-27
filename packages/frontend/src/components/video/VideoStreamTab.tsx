@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Trans, useTranslation } from 'react-i18next';
 import { VideoPlayer } from './VideoPlayer';
 import { useSongs } from '@/hooks/use-music-library';
 import {
@@ -48,6 +49,7 @@ interface VideoStreamTabProps {
 }
 
 export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStreamTabProps) {
+  const { t } = useTranslation();
   const [sourceUrl, setSourceUrl] = useState('');
 
   // Starts from whatever an admin configured under Settings -> Streaming, so
@@ -132,11 +134,11 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
       <Card className="card-hero">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Video Stream</CardTitle>
+            <CardTitle className="text-base">{t('components.videoStreamTab.title')}</CardTitle>
             {isStreaming && (
               <Badge variant="destructive" className="gap-1">
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                LIVE
+                {t('components.videoPlayer.live')}
               </Badge>
             )}
           </div>
@@ -144,17 +146,17 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
         <CardContent className="space-y-4">
           {!isBotConnected && (
             <p className="text-sm text-muted-foreground">
-              Bot must be connected to start video streaming.
+              {t('components.videoStreamTab.botMustBeConnected')}
             </p>
           )}
 
           {isBotConnected && (
             <>
               <div className="space-y-2">
-                <Label>Source URL</Label>
+                <Label>{t('components.videoStreamTab.sourceUrl')}</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="https://youtube.com/watch?v=... or direct video URL"
+                    placeholder={t('components.videoStreamTab.sourceUrlPlaceholder')}
                     value={sourceUrl}
                     onChange={(e) => setSourceUrl(e.target.value)}
                     disabled={startStream.isPending}
@@ -166,35 +168,35 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                         disabled={!sourceUrl.trim() || queueVideo.isPending}
                         variant="outline"
                         className="shrink-0"
-                        title="Play it after the current video"
+                        title={t('components.videoStreamTab.queueTitle')}
                       >
-                        Queue
+                        {t('components.videoStreamTab.queue')}
                       </Button>
                       <Button
                         onClick={handleChangeSource}
                         disabled={!sourceUrl.trim() || setSource.isPending}
                         variant="outline"
                         className="shrink-0"
-                        title="Switch the running stream over right now"
+                        title={t('components.videoStreamTab.switchNowTitle')}
                       >
-                        Switch now
+                        {t('components.videoStreamTab.switchNow')}
                       </Button>
                     </>
                   ) : null}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  YouTube, direct video URLs (MP4, HLS), or local file paths
+                  {t('components.videoStreamTab.sourceHint')}
                 </p>
                 {videoLibrary && videoLibrary.length > 0 && (
                   <div className="flex items-center gap-2 pt-1">
-                    <Label className="text-xs text-muted-foreground shrink-0">Or pick from the library:</Label>
+                    <Label className="text-xs text-muted-foreground shrink-0">{t('components.videoStreamTab.pickFromLibrary')}</Label>
                     <Select
                       value=""
                       onValueChange={(name) => setSourceUrl(name)}
                       disabled={startStream.isPending}
                     >
                       <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Choose an uploaded video..." />
+                        <SelectValue placeholder={t('components.videoStreamTab.chooseUploadedVideo')} />
                       </SelectTrigger>
                       <SelectContent>
                         {(videoLibrary as SongInfo[]).map((song) => (
@@ -209,7 +211,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
               {!isStreaming && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Quality Preset</Label>
+                    <Label>{t('components.videoStreamTab.qualityPreset')}</Label>
                     <div className="flex gap-2">
                       {presets.map((p) => (
                         <Button
@@ -226,7 +228,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Frame Rate (FPS)</Label>
+                    <Label>{t('components.videoStreamTab.frameRate')}</Label>
                     <div className="flex gap-2">
                       {FPS_OPTIONS.map((fps) => (
                         <Button
@@ -241,14 +243,14 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Video Bitrate</Label>
+                    <Label>{t('components.videoStreamTab.videoBitrate')}</Label>
                     <Input
                       value={active.bitrate}
                       onChange={(e) => setQuality({ ...active, bitrate: e.target.value })}
-                      placeholder="e.g. 1500k, 4000k, 6000k"
+                      placeholder={t('components.videoStreamTab.bitratePlaceholder')}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Higher needs more upload bandwidth and CPU. Examples: 1500k, 4000k, 6000k, 8000k
+                      {t('components.videoStreamTab.bitrateHint')}
                     </p>
                   </div>
                 </div>
@@ -260,7 +262,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                     onClick={handleStart}
                     disabled={!sourceUrl.trim() || startStream.isPending}
                   >
-                    {startStream.isPending ? 'Starting...' : 'Start Stream'}
+                    {startStream.isPending ? t('components.videoStreamTab.starting') : t('components.videoStreamTab.startStream')}
                   </Button>
                 ) : (
                   <Button
@@ -268,7 +270,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                     variant="destructive"
                     disabled={stopStream.isPending}
                   >
-                    {stopStream.isPending ? 'Stopping...' : 'Stop Stream'}
+                    {stopStream.isPending ? t('components.videoStreamTab.stopping') : t('components.videoStreamTab.stopStream')}
                   </Button>
                 )}
               </div>
@@ -290,31 +292,33 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Up Next</CardTitle>
+              <CardTitle className="text-base">{t('components.videoStreamTab.upNext')}</CardTitle>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => skipVideo.mutate(botId)}
                 disabled={skipVideo.isPending}
-                title={queue.length > 0 ? 'Play the next video now' : 'Nothing queued - this stops the stream'}
+                title={queue.length > 0 ? t('components.videoStreamTab.playNextNow') : t('components.videoStreamTab.nothingQueuedStops')}
               >
-                Skip
+                {t('components.videoStreamTab.skip')}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex items-baseline gap-2">
-              <Badge variant="secondary" className="shrink-0">Now</Badge>
+              <Badge variant="secondary" className="shrink-0">{t('components.videoStreamTab.now')}</Badge>
               <span className="text-sm truncate" title={nowPlaying?.title}>
-                {nowPlaying?.title ?? streamStatus?.source ?? 'unknown'}
+                {nowPlaying?.title ?? streamStatus?.source ?? t('common.unknown')}
               </span>
             </div>
 
             {queue.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                Nothing queued. Paste a URL above and choose <strong>Queue</strong> to line one up —
-                <code className="mx-1 text-[11px]">!stream &lt;url&gt;</code> in chat does the same
-                while a stream is running.
+                <Trans i18nKey="components.videoStreamTab.nothingQueuedHint">
+                  Nothing queued. Paste a URL above and choose <strong>Queue</strong> to line one up —
+                  <code className="mx-1 text-[11px]">!stream &lt;url&gt;</code> in chat does the same
+                  while a stream is running.
+                </Trans>
               </p>
             ) : (
               <ul className="space-y-1">
@@ -334,7 +338,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                       onClick={() => dequeueVideo.mutate({ botId, itemId: item.id })}
                       disabled={dequeueVideo.isPending}
                     >
-                      Remove
+                      {t('common.remove')}
                     </Button>
                   </li>
                 ))}
@@ -348,26 +352,26 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
       {isBotConnected && (
         <Card className="card-hero">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Live Preview</CardTitle>
+            <CardTitle className="text-base">{t('components.videoStreamTab.livePreview')}</CardTitle>
           </CardHeader>
           <CardContent>
             <VideoPlayer botId={botId} streaming={isStreaming} />
             {isStreaming && streamStatus && (
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span>Preset: <strong>{streamStatus.preset}</strong></span>
+                <span>{t('components.videoStreamTab.qualityPreset')}: <strong>{streamStatus.preset}</strong></span>
                 <span>FPS: <strong>{streamStatus.framerate}</strong></span>
-                <span>Bitrate: <strong>{streamStatus.bitrate}</strong></span>
-                <span title="Set under Settings -> Streaming; viewers can still turn their own player up">
-                  Volume: <strong>{streamStatus.volume}%</strong>
+                <span>{t('components.videoStreamTab.videoBitrate')}: <strong>{streamStatus.bitrate}</strong></span>
+                <span title={t('components.videoStreamTab.volumeHint')}>
+                  {t('components.videoStreamTab.volume')}: <strong>{streamStatus.volume}%</strong>
                 </span>
                 {streamStatus.source && (
                   <span className="truncate max-w-xs">
-                    Source: <strong>{streamStatus.source}</strong>
+                    {t('components.videoStreamTab.source')}: <strong>{streamStatus.source}</strong>
                   </span>
                 )}
                 {streamStatus.startedAt && (
                   <span>
-                    Uptime: <strong>{formatDuration(Date.now() - streamStatus.startedAt)}</strong>
+                    {t('components.videoStreamTab.uptime')}: <strong>{formatDuration(Date.now() - streamStatus.startedAt)}</strong>
                   </span>
                 )}
               </div>
@@ -382,13 +386,13 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">
-                Viewers ({streamStatus.viewerCount})
+                {t('components.videoStreamTab.viewersCount', { count: streamStatus.viewerCount })}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             {streamStatus.viewers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No viewers connected</p>
+              <p className="text-sm text-muted-foreground">{t('components.videoStreamTab.noViewers')}</p>
             ) : (
               <div className="space-y-2">
                 {streamStatus.viewers.map((viewer: any) => {
@@ -404,7 +408,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                         <span className={`w-2 h-2 rounded-full ${
                           viewer.iceState === 'connected' ? 'bg-green-500' : 'bg-yellow-500'
                         }`} />
-                        <span className="text-sm">Client #{viewer.clid}</span>
+                        <span className="text-sm">{t('components.videoStreamTab.clientHash', { id: viewer.clid })}</span>
                         <span className="text-xs text-muted-foreground">
                           {mins > 0 ? `${mins}m ${secs}s` : `${secs}s`}
                         </span>
@@ -415,7 +419,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
                         className="h-7 text-xs text-red-500 hover:text-red-400"
                         onClick={() => kickViewer.mutate({ botId, clid: viewer.clid })}
                       >
-                        Kick
+                        {t('components.videoStreamTab.kick')}
                       </Button>
                     </div>
                   );

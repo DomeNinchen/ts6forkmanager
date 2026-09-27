@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { serversApi } from '@/api/servers.api';
 import { useServerStore } from '@/stores/server.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { MessageSquare, UserRound, Camera, AlertTriangle, Download, Upload } fro
 import { toast } from 'sonner';
 
 export default function Miscellaneous() {
+  const { t } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
   const qc = useQueryClient();
 
@@ -37,10 +39,10 @@ export default function Miscellaneous() {
   const setIdentity = useMutation({
     mutationFn: (n: string) => serversApi.setIdentity(selectedConfigId!, n, selectedSid),
     onSuccess: () => {
-      toast.success('Identity updated');
+      toast.success(t('pages.misc.identityUpdated'));
       qc.invalidateQueries({ queryKey: ['identity', selectedConfigId, selectedSid] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to update identity'),
+    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.misc.identityUpdateFailed')),
   });
 
 
@@ -57,22 +59,22 @@ export default function Miscellaneous() {
       a.download = `snapshot-server-${selectedSid}-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success('Snapshot created and downloaded');
+      toast.success(t('pages.misc.snapshotCreated'));
     },
-    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to create snapshot'),
+    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.misc.snapshotCreateFailed')),
   });
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const deploySnapshot = useMutation({
     mutationFn: (data: any) => serversApi.deploySnapshot(selectedConfigId!, selectedSid!, data),
     onSuccess: () => {
-      toast.success('Snapshot restored');
+      toast.success(t('pages.misc.snapshotRestored'));
       setShowRestoreConfirm(false);
       setRestoreFile(null);
       qc.invalidateQueries({ queryKey: ['virtual-server-info'] });
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to restore snapshot');
+      toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.misc.snapshotRestoreFailed'));
       setShowRestoreConfirm(false);
     },
   });
@@ -82,25 +84,25 @@ export default function Miscellaneous() {
   const resetPermissions = useMutation({
     mutationFn: () => serversApi.resetPermissions(selectedConfigId!, selectedSid!),
     onSuccess: () => {
-      toast.success('Permissions reset to defaults');
+      toast.success(t('pages.misc.permissionsReset'));
       setShowPermResetConfirm(false);
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to reset permissions');
+      toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.misc.permissionsResetFailed'));
       setShowPermResetConfirm(false);
     },
   });
 
   if (!selectedConfigId || !selectedSid) {
-    return <EmptyState icon={MessageSquare} title="No server selected" description="Select a server under Virtual Servers first." />;
+    return <EmptyState icon={MessageSquare} title={t('pages.noServerSelected')} description={t('pages.serverStats.selectServerFirst')} />;
   }
 
   const handleSend = () => {
     if (!msgText.trim()) return;
     const mutation = msgTarget === 'all' ? sendGlobal : sendToServer;
     mutation.mutate(msgText, {
-      onSuccess: () => { toast.success('Message sent'); setMsgText(''); },
-      onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to send message'),
+      onSuccess: () => { toast.success(t('pages.misc.messageSent')); setMsgText(''); },
+      onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.misc.messageSendFailed')),
     });
   };
 
@@ -117,25 +119,25 @@ export default function Miscellaneous() {
       const data = JSON.parse(text);
       deploySnapshot.mutate(data);
     } catch {
-      toast.error('Not a valid snapshot file');
+      toast.error(t('pages.misc.notValidSnapshot'));
       setShowRestoreConfirm(false);
     }
   };
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Miscellaneous</h1>
+      <h1 className="text-xl font-semibold">{t('nav.items.miscellaneous')}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Global Message</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> {t('pages.misc.globalMessage')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Textarea
               value={msgText}
               onChange={(e) => setMsgText(e.target.value)}
-              placeholder="Important announcement..."
+              placeholder={t('pages.misc.announcementPlaceholder')}
               rows={3}
               className="text-sm"
             />
@@ -143,37 +145,37 @@ export default function Miscellaneous() {
               <Select value={msgTarget} onValueChange={(v) => setMsgTarget(v as 'all' | 'this')}>
                 <SelectTrigger className="w-48 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Servers</SelectItem>
-                  <SelectItem value="this" disabled={!selectedSid}>This Server Only</SelectItem>
+                  <SelectItem value="all">{t('pages.misc.allServers')}</SelectItem>
+                  <SelectItem value="this" disabled={!selectedSid}>{t('pages.misc.thisServerOnly')}</SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex-1" />
               <Button size="sm" onClick={handleSend} disabled={!msgText.trim() || sendGlobal.isPending || sendToServer.isPending}>
-                Send
+                {t('pages.messages.send')}
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
               {msgTarget === 'all'
-                ? 'Sent anonymously as "server" to every virtual server on this instance.'
-                : 'Sent under your current query identity (see below) to this server only - not anonymous.'}
+                ? t('pages.misc.sentAnonymously')
+                : t('pages.misc.sentUnderIdentity')}
             </p>
           </CardContent>
         </Card>
 
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2"><UserRound className="h-4 w-4 text-primary" /> Identity</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><UserRound className="h-4 w-4 text-primary" /> {t('pages.misc.identity')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-[11px] text-muted-foreground">
-              The nickname your manual actions through this app (e.g. renaming a channel) show as in TeamSpeak's own logs. Separate from any per-server Bot Identity, which only covers bot-flow actions.
+              {t('pages.misc.identityDescription')}
             </p>
             <div>
-              <Label className="text-xs">Current: {identity?.client_nickname || '...'}</Label>
+              <Label className="text-xs">{t('pages.misc.current', { name: identity?.client_nickname || '...' })}</Label>
               <div className="flex gap-2 mt-1">
-                <Input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder={identity?.client_nickname || 'New nickname'} className="h-8 text-sm" />
+                <Input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder={identity?.client_nickname || t('pages.misc.newNickname')} className="h-8 text-sm" />
                 <Button size="sm" onClick={() => setIdentity.mutate(nickname, { onSuccess: () => setNickname('') })} disabled={!nickname.trim() || setIdentity.isPending}>
-                  Save
+                  {t('common.save')}
                 </Button>
               </div>
             </div>
@@ -182,35 +184,35 @@ export default function Miscellaneous() {
 
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2"><Camera className="h-4 w-4 text-primary" /> Snapshots</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Camera className="h-4 w-4 text-primary" /> {t('pages.misc.snapshots')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-[11px] text-muted-foreground">
-              Saves all settings, groups, and known client identities of the currently selected server. Files, icons, and avatars are not included.
+              {t('pages.misc.snapshotsDescription')}
             </p>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => createSnapshot.mutate()} disabled={!selectedSid || createSnapshot.isPending}>
-                <Download className="h-3.5 w-3.5 mr-1" /> {createSnapshot.isPending ? 'Creating...' : 'Create & Download'}
+                <Download className="h-3.5 w-3.5 mr-1" /> {createSnapshot.isPending ? t('pages.misc.creating') : t('pages.misc.createAndDownload')}
               </Button>
               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={!selectedSid}>
-                <Upload className="h-3.5 w-3.5 mr-1" /> Restore from File
+                <Upload className="h-3.5 w-3.5 mr-1" /> {t('pages.misc.restoreFromFile')}
               </Button>
               <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleRestoreFile} />
             </div>
-            <p className="text-[11px] text-muted-foreground">Restoring overwrites the currently selected server's settings, groups, and permissions.</p>
+            <p className="text-[11px] text-muted-foreground">{t('pages.misc.restoreWarning')}</p>
           </CardContent>
         </Card>
 
         <Card className="card-hero border-destructive/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive"><AlertTriangle className="h-4 w-4" /> Danger Zone</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive"><AlertTriangle className="h-4 w-4" /> {t('pages.misc.dangerZone')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-[11px] text-muted-foreground">
-              Deletes every group, client, and channel permission on the currently selected server, then recreates the default template groups. Cannot be undone.
+              {t('pages.misc.dangerZoneDescription')}
             </p>
             <Button variant="destructive" size="sm" onClick={() => setShowPermResetConfirm(true)} disabled={!selectedSid}>
-              Reset All Permissions
+              {t('pages.misc.resetAllPermissions')}
             </Button>
           </CardContent>
         </Card>
@@ -219,9 +221,9 @@ export default function Miscellaneous() {
       <ConfirmDialog
         open={showRestoreConfirm}
         onOpenChange={(v) => { if (!v) { setShowRestoreConfirm(false); setRestoreFile(null); } }}
-        title="Restore Snapshot?"
-        description={`This overwrites the currently selected server's settings, groups, and permissions with the contents of "${restoreFile?.name}". This cannot be undone.`}
-        confirmLabel="Restore"
+        title={t('pages.misc.restoreSnapshotTitle')}
+        description={t('pages.misc.restoreSnapshotDescription', { name: restoreFile?.name })}
+        confirmLabel={t('pages.misc.restore')}
         destructive
         onConfirm={confirmRestore}
         loading={deploySnapshot.isPending}
@@ -230,9 +232,9 @@ export default function Miscellaneous() {
       <ConfirmDialog
         open={showPermResetConfirm}
         onOpenChange={setShowPermResetConfirm}
-        title="Reset All Permissions?"
-        description="This permanently deletes every server group, channel group, client, and channel permission on the currently selected server, then recreates the default template groups. This cannot be undone."
-        confirmLabel="Reset Permissions"
+        title={t('pages.misc.resetAllPermissionsTitle')}
+        description={t('pages.misc.resetAllPermissionsDescription')}
+        confirmLabel={t('pages.misc.resetAllPermissions')}
         destructive
         onConfirm={() => resetPermissions.mutate()}
         loading={resetPermissions.isPending}

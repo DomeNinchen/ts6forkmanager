@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { channelsApi } from '@/api/channels.api';
 import { useEditChannel } from '@/hooks/use-channels';
 import { useServerStore } from '@/stores/server.store';
@@ -156,6 +157,7 @@ interface EditChannelDialogProps {
 }
 
 export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDialogProps) {
+  const { t } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
   const editChannel = useEditChannel();
   const [form, setForm] = useState<EditChannelForm>(EMPTY_FORM);
@@ -180,7 +182,7 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
       setLoaded(true);
     }).catch(() => {
       if (cancelled) return;
-      setLoadError('Failed to load full channel settings');
+      setLoadError(t('components.editChannelDialog.loadFailed'));
     });
 
     return () => { cancelled = true; };
@@ -196,8 +198,8 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
     // a real server. Only send it when it actually changed.
     if (form.channel_name === originalName) delete data.channel_name;
     editChannel.mutate({ cid, data }, {
-      onSuccess: () => { toast.success('Channel updated'); onClose(); },
-      onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to update channel'),
+      onSuccess: () => { toast.success(t('components.editChannelDialog.updated')); onClose(); },
+      onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('components.editChannelDialog.updateFailed')),
     });
   };
 
@@ -205,47 +207,47 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
     <Dialog open={cid !== null} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Edit Channel</DialogTitle>
+          <DialogTitle>{t('components.editChannelDialog.title')}</DialogTitle>
         </DialogHeader>
 
         {loadError && <p className="text-xs text-destructive">{loadError}</p>}
         {!loaded && !loadError && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading full channel settings...
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t('components.editChannelDialog.loadingSettings')}
           </div>
         )}
 
         <Tabs defaultValue="general" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="voice">Voice</TabsTrigger>
-            <TabsTrigger value="limits">Limits &amp; Type</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            <TabsTrigger value="general">{t('components.editChannelDialog.tabs.general')}</TabsTrigger>
+            <TabsTrigger value="voice">{t('components.editChannelDialog.tabs.voice')}</TabsTrigger>
+            <TabsTrigger value="limits">{t('components.editChannelDialog.tabs.limits')}</TabsTrigger>
+            <TabsTrigger value="advanced">{t('components.editChannelDialog.tabs.advanced')}</TabsTrigger>
           </TabsList>
 
           <div className="overflow-y-auto flex-1 mt-1 pr-1">
             <TabsContent value="general" className="space-y-3 mt-2">
               <div>
-                <Label className="text-xs">Channel Name</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.channelName')}</Label>
                 <Input value={form.channel_name} onChange={(e) => setForm({ ...form, channel_name: e.target.value })} />
               </div>
               <div>
-                <Label className="text-xs">Topic</Label>
-                <Input value={form.channel_topic} onChange={(e) => setForm({ ...form, channel_topic: e.target.value })} placeholder="Optional" />
+                <Label className="text-xs">{t('components.editChannelDialog.topic')}</Label>
+                <Input value={form.channel_topic} onChange={(e) => setForm({ ...form, channel_topic: e.target.value })} placeholder={t('common.optional')} />
               </div>
               <div>
-                <Label className="text-xs">Description</Label>
-                <Textarea value={form.channel_description} onChange={(e) => setForm({ ...form, channel_description: e.target.value })} placeholder="Optional" rows={3} />
+                <Label className="text-xs">{t('common.description')}</Label>
+                <Textarea value={form.channel_description} onChange={(e) => setForm({ ...form, channel_description: e.target.value })} placeholder={t('common.optional')} rows={3} />
               </div>
               <div>
-                <Label className="text-xs">Password</Label>
-                <Input type="password" value={form.channel_password} onChange={(e) => setForm({ ...form, channel_password: e.target.value })} placeholder="Leave empty to keep current" />
+                <Label className="text-xs">{t('common.password')}</Label>
+                <Input type="password" value={form.channel_password} onChange={(e) => setForm({ ...form, channel_password: e.target.value })} placeholder={t('components.editChannelDialog.leaveEmptyToKeep')} />
               </div>
             </TabsContent>
 
             <TabsContent value="voice" className="space-y-3 mt-2">
               <div>
-                <Label className="text-xs">Codec</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.codec')}</Label>
                 <Select value={form.channel_codec} onValueChange={(v) => setForm({ ...form, channel_codec: v })}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -255,51 +257,51 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Codec Quality ({form.channel_codec_quality})</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.codecQuality', { quality: form.channel_codec_quality })}</Label>
                 <Input type="number" min={0} max={10} value={form.channel_codec_quality} onChange={(e) => setForm({ ...form, channel_codec_quality: e.target.value })} />
-                <p className="text-[11px] text-muted-foreground mt-0.5">0 = lowest, 10 = highest. Higher quality uses more bandwidth.</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t('components.editChannelDialog.codecQualityHint')}</p>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <Switch checked={form.encrypted} onCheckedChange={(v) => setForm({ ...form, encrypted: v })} />
-                <Label className="text-xs">Encrypt voice data in this channel</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.encryptVoice')}</Label>
               </div>
             </TabsContent>
 
             <TabsContent value="limits" className="space-y-3 mt-2">
               <div>
-                <Label className="text-xs">Type</Label>
+                <Label className="text-xs">{t('common.type')}</Label>
                 <Select value={form.type} onValueChange={(v: ChannelType) => setForm({ ...form, type: v })}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="permanent">Permanent</SelectItem>
-                    <SelectItem value="semipermanent">Semi-Permanent</SelectItem>
-                    <SelectItem value="temporary">Temporary</SelectItem>
+                    <SelectItem value="permanent">{t('components.editChannelDialog.type.permanent')}</SelectItem>
+                    <SelectItem value="semipermanent">{t('components.editChannelDialog.type.semipermanent')}</SelectItem>
+                    <SelectItem value="temporary">{t('components.editChannelDialog.type.temporary')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {form.type === 'temporary' && (
                 <div>
-                  <Label className="text-xs">Delete Delay (seconds when empty)</Label>
+                  <Label className="text-xs">{t('components.editChannelDialog.deleteDelay')}</Label>
                   <Input type="number" min={0} value={form.channel_delete_delay} onChange={(e) => setForm({ ...form, channel_delete_delay: e.target.value })} />
                 </div>
               )}
 
               <div className="flex items-center gap-2 pt-1">
                 <Switch checked={form.channel_flag_default} onCheckedChange={(v) => setForm({ ...form, channel_flag_default: v })} />
-                <Label className="text-xs">Default channel</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.defaultChannel')}</Label>
               </div>
               <p className="text-[11px] text-muted-foreground -mt-2">
-                A server has only one default channel — enabling this removes the flag from whichever channel currently has it.
+                {t('components.editChannelDialog.defaultChannelHint')}
               </p>
 
               <div>
-                <Label className="text-xs">Max Clients</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.maxClients')}</Label>
                 <div className="flex items-center gap-2">
                   <Select value={form.clientsMode} onValueChange={(v: ClientsMode) => setForm({ ...form, clientsMode: v })}>
                     <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="limited">Limited</SelectItem>
-                      <SelectItem value="unlimited">Unlimited</SelectItem>
+                      <SelectItem value="limited">{t('components.editChannelDialog.limited')}</SelectItem>
+                      <SelectItem value="unlimited">{t('components.editChannelDialog.unlimited')}</SelectItem>
                     </SelectContent>
                   </Select>
                   {form.clientsMode === 'limited' && (
@@ -309,54 +311,54 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
               </div>
 
               <div>
-                <Label className="text-xs">Max Family Clients</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.maxFamilyClients')}</Label>
                 <div className="flex items-center gap-2">
                   <Select value={form.familyClientsMode} onValueChange={(v: FamilyClientsMode) => setForm({ ...form, familyClientsMode: v })}>
                     <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="inherited">Inherited</SelectItem>
-                      <SelectItem value="limited">Limited</SelectItem>
-                      <SelectItem value="unlimited">Unlimited</SelectItem>
+                      <SelectItem value="inherited">{t('components.editChannelDialog.inherited')}</SelectItem>
+                      <SelectItem value="limited">{t('components.editChannelDialog.limited')}</SelectItem>
+                      <SelectItem value="unlimited">{t('components.editChannelDialog.unlimited')}</SelectItem>
                     </SelectContent>
                   </Select>
                   {form.familyClientsMode === 'limited' && (
                     <Input type="number" min={0} className="flex-1" value={form.channel_maxfamilyclients} onChange={(e) => setForm({ ...form, channel_maxfamilyclients: e.target.value })} />
                   )}
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Limits clients across this channel and all its sub-channels combined.</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t('components.editChannelDialog.maxFamilyClientsHint')}</p>
               </div>
 
               <div>
-                <Label className="text-xs">Needed Talk Power</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.neededTalkPower')}</Label>
                 <Input type="number" min={0} value={form.channel_needed_talk_power} onChange={(e) => setForm({ ...form, channel_needed_talk_power: e.target.value })} />
               </div>
             </TabsContent>
 
             <TabsContent value="advanced" className="space-y-3 mt-2">
               <div>
-                <Label className="text-xs">Sort Position</Label>
+                <Label className="text-xs">{t('components.editChannelDialog.sortPosition')}</Label>
                 <Input type="number" min={0} value={form.channel_order} onChange={(e) => setForm({ ...form, channel_order: e.target.value })} />
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  The channel ID this one should be positioned directly below among its siblings (0 = first). Channel IDs are shown as "#id" in the channel tree.
+                  {t('components.editChannelDialog.sortPositionHint')}
                 </p>
               </div>
               <div>
-                <Label className="text-xs">Phonetic Name</Label>
-                <Input value={form.channel_name_phonetic} onChange={(e) => setForm({ ...form, channel_name_phonetic: e.target.value })} placeholder="How text-to-speech should pronounce this channel's name" />
+                <Label className="text-xs">{t('components.editChannelDialog.phoneticName')}</Label>
+                <Input value={form.channel_name_phonetic} onChange={(e) => setForm({ ...form, channel_name_phonetic: e.target.value })} placeholder={t('components.editChannelDialog.phoneticNamePlaceholder')} />
               </div>
               <div>
-                <Label className="text-xs">Banner Image URL</Label>
-                <Input value={form.channel_banner_gfx_url} onChange={(e) => setForm({ ...form, channel_banner_gfx_url: e.target.value })} placeholder="Optional" />
+                <Label className="text-xs">{t('components.editChannelDialog.bannerImageUrl')}</Label>
+                <Input value={form.channel_banner_gfx_url} onChange={(e) => setForm({ ...form, channel_banner_gfx_url: e.target.value })} placeholder={t('common.optional')} />
               </div>
               {form.channel_banner_gfx_url && (
                 <div>
-                  <Label className="text-xs">Banner Mode</Label>
+                  <Label className="text-xs">{t('components.editChannelDialog.bannerMode')}</Label>
                   <Select value={form.channel_banner_mode} onValueChange={(v) => setForm({ ...form, channel_banner_mode: v })}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0">Don't adjust</SelectItem>
-                      <SelectItem value="1">Adjust, ignore aspect ratio</SelectItem>
-                      <SelectItem value="2">Adjust, keep aspect ratio</SelectItem>
+                      <SelectItem value="0">{t('components.editChannelDialog.bannerMode0')}</SelectItem>
+                      <SelectItem value="1">{t('components.editChannelDialog.bannerMode1')}</SelectItem>
+                      <SelectItem value="2">{t('components.editChannelDialog.bannerMode2')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -366,9 +368,9 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
         </Tabs>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={handleSave} disabled={!form.channel_name.trim() || !loaded || editChannel.isPending}>
-            {editChannel.isPending ? 'Saving...' : 'Save'}
+            {editChannel.isPending ? t('common.saving') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

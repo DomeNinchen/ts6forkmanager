@@ -5,6 +5,7 @@
 
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { musicBotsApi } from '@/api/music.api';
 
 interface VideoPlayerProps {
@@ -13,6 +14,7 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [connected, setConnected] = useState(false);
@@ -82,7 +84,7 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
       await pc.setLocalDescription(answer);
       await musicBotsApi.webrtcAnswer(botId, answer.sdp!);
     } catch (err: any) {
-      setError(err.message || 'Failed to connect');
+      setError(err.message || t('components.videoPlayer.failedToConnect'));
       cleanup();
     }
   }, [botId, cleanup]);
@@ -103,7 +105,7 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
   if (!streaming) {
     return (
       <div className="flex items-center justify-center bg-black/50 rounded-lg aspect-video max-w-xl">
-        <p className="text-muted-foreground text-sm">No active video stream</p>
+        <p className="text-muted-foreground text-sm">{t('components.videoPlayer.noActiveStream')}</p>
       </div>
     );
   }
@@ -121,14 +123,14 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
         <button
           onClick={() => setMuted((m) => !m)}
           className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-sm"
-          title={muted ? 'Unmute' : 'Mute'}
+          title={muted ? t('components.videoPlayer.unmute') : t('components.videoPlayer.mute')}
         >
           {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
         </button>
       )}
       {!connected && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70">
-          <p className="text-white text-sm animate-pulse">Connecting to stream...</p>
+          <p className="text-white text-sm animate-pulse">{t('components.videoPlayer.connecting')}</p>
         </div>
       )}
       {error && (
@@ -138,14 +140,14 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
             onClick={connect}
             className="text-xs text-blue-400 hover:text-blue-300 underline"
           >
-            Retry
+            {t('components.videoPlayer.retry')}
           </button>
         </div>
       )}
       {connected && (
         <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-sm text-xs">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-white">LIVE</span>
+          <span className="text-white">{t('components.videoPlayer.live')}</span>
         </div>
       )}
     </div>

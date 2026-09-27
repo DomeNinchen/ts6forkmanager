@@ -1,4 +1,5 @@
 import { Clock, Users, Shield, Globe, Zap, MessageSquare, Moon, Timer, Megaphone, Award, FolderPlus, Eye, Webhook, Sparkles } from 'lucide-react';
+import type { TFunction } from 'i18next';
 
 export interface TemplateConfigField {
   key: string;
@@ -46,17 +47,22 @@ function makeEdge(id: string, source: string, target: string, sourcePort = 'out'
 
 const DEFAULT_WELCOME_MESSAGE = 'Welcome {{event.client_nickname}}!\nOnline: {{temp.onlineCount}} | Team online: {{temp.teamOnline}}\nThis is your {{temp.dbInfo.0.client_totalconnections}}. visit.';
 
-export const BOT_TEMPLATES: BotTemplate[] = [
+// Names, descriptions and config field labels below are the only translated
+// parts of a template - node labels and config values inside flowDataFactory
+// become the actual bot flow the admin can freely rename/edit afterward, and
+// message/channel-name defaults are TeamSpeak-facing bot output (same class
+// as music-command-handler's replies), so both stay English like those do.
+export function getBotTemplates(t: TFunction): BotTemplate[] { return [
   // ===== INFO CHANNELS =====
   {
     id: 'clock-channel',
-    name: 'Clock Channel',
-    description: 'Updates a channel name with the current time every minute.',
+    name: t('data.botTemplates.items.clockChannel.name'),
+    description: t('data.botTemplates.items.clockChannel.description'),
     category: 'info-channels',
     icon: Clock,
     configFields: [
-      { key: 'channelId', label: 'Channel ID', type: 'number', placeholder: '42', required: true },
-      { key: 'timezone', label: 'Timezone', type: 'select', defaultValue: 'Europe/Berlin', options: [
+      { key: 'channelId', label: t('data.botTemplates.items.clockChannel.fields.channelId.label'), type: 'number', placeholder: '42', required: true },
+      { key: 'timezone', label: t('data.botTemplates.items.clockChannel.fields.timezone.label'), type: 'select', defaultValue: 'Europe/Berlin', options: [
         { label: 'Europe/Berlin (CET/CEST)', value: 'Europe/Berlin' },
         { label: 'Europe/London (GMT/BST)', value: 'Europe/London' },
         { label: 'Europe/Paris (CET/CEST)', value: 'Europe/Paris' },
@@ -82,12 +88,12 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'online-counter',
-    name: 'Online Counter',
-    description: 'Shows the current online client count in a channel name.',
+    name: t('data.botTemplates.items.onlineCounter.name'),
+    description: t('data.botTemplates.items.onlineCounter.description'),
     category: 'info-channels',
     icon: Users,
     configFields: [
-      { key: 'channelId', label: 'Channel ID', type: 'number', placeholder: '43', required: true },
+      { key: 'channelId', label: t('data.botTemplates.items.onlineCounter.fields.channelId.label'), type: 'number', placeholder: '43', required: true },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -104,14 +110,14 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'server-stats',
-    name: 'Server Stats',
-    description: 'Displays uptime, online clients, and channel count in three info channels.',
+    name: t('data.botTemplates.items.serverStats.name'),
+    description: t('data.botTemplates.items.serverStats.description'),
     category: 'info-channels',
     icon: Eye,
     configFields: [
-      { key: 'uptimeChannelId', label: 'Uptime Channel ID', type: 'number', placeholder: '44', required: true },
-      { key: 'clientsChannelId', label: 'Clients Channel ID', type: 'number', placeholder: '45', required: true },
-      { key: 'channelCountChannelId', label: 'Channel Count Channel ID', type: 'number', placeholder: '46', required: true },
+      { key: 'uptimeChannelId', label: t('data.botTemplates.items.serverStats.fields.uptimeChannelId.label'), type: 'number', placeholder: '44', required: true },
+      { key: 'clientsChannelId', label: t('data.botTemplates.items.serverStats.fields.clientsChannelId.label'), type: 'number', placeholder: '45', required: true },
+      { key: 'channelCountChannelId', label: t('data.botTemplates.items.serverStats.fields.channelCountChannelId.label'), type: 'number', placeholder: '46', required: true },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -136,30 +142,30 @@ export const BOT_TEMPLATES: BotTemplate[] = [
 
   {
     id: 'animated-channel',
-    name: 'Animated Channel Name',
-    description: 'Animates a channel name with visual effects like scrolling marquee, typewriter, bounce, and more. Updates every 2-5 seconds.',
+    name: t('data.botTemplates.items.animatedChannel.name'),
+    description: t('data.botTemplates.items.animatedChannel.description'),
     category: 'info-channels',
     icon: Sparkles,
     configFields: [
-      { key: 'channelId', label: 'Channel ID', type: 'number', placeholder: '42', required: true },
-      { key: 'text', label: 'Display Text', type: 'text', placeholder: 'Welcome to MyServer', required: true },
-      { key: 'style', label: 'Animation Style', type: 'select', defaultValue: 'scroll', options: [
-        { label: 'Scroll Left (Marquee)', value: 'scroll' },
-        { label: 'Typewriter', value: 'typewriter' },
-        { label: 'Bounce', value: 'bounce' },
-        { label: 'Blink', value: 'blink' },
-        { label: 'Wave (Decorative)', value: 'wave' },
-        { label: 'Alternate Case', value: 'alternateCase' },
+      { key: 'channelId', label: t('data.botTemplates.items.animatedChannel.fields.channelId.label'), type: 'number', placeholder: '42', required: true },
+      { key: 'text', label: t('data.botTemplates.items.animatedChannel.fields.text.label'), type: 'text', placeholder: 'Welcome to MyServer', required: true },
+      { key: 'style', label: t('data.botTemplates.items.animatedChannel.fields.style.label'), type: 'select', defaultValue: 'scroll', options: [
+        { label: t('data.botTemplates.items.animatedChannel.fields.style.options.0'), value: 'scroll' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.style.options.1'), value: 'typewriter' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.style.options.2'), value: 'bounce' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.style.options.3'), value: 'blink' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.style.options.4'), value: 'wave' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.style.options.5'), value: 'alternateCase' },
       ] },
-      { key: 'intervalSeconds', label: 'Speed', type: 'select', defaultValue: '3', options: [
-        { label: 'Slow (5s)', value: '5' },
-        { label: 'Medium (3s)', value: '3' },
-        { label: 'Fast (2s)', value: '2' },
-        { label: 'Very Fast (1s)', value: '1' },
-        { label: 'Ultra (0.5s)', value: '0.5' },
-        { label: 'Insane (0.25s)', value: '0.25' },
+      { key: 'intervalSeconds', label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.label'), type: 'select', defaultValue: '3', options: [
+        { label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.options.0'), value: '5' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.options.1'), value: '3' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.options.2'), value: '2' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.options.3'), value: '1' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.options.4'), value: '0.5' },
+        { label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.options.5'), value: '0.25' },
       ] },
-      { key: 'prefix', label: 'Channel Name Prefix', type: 'text', placeholder: '[cspacer]', defaultValue: '[cspacer]' },
+      { key: 'prefix', label: t('data.botTemplates.items.animatedChannel.fields.prefix.label'), type: 'text', placeholder: '[cspacer]', defaultValue: '[cspacer]' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -182,21 +188,16 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   // ===== AUTOMATION =====
   {
     id: 'welcome-message',
-    name: 'Welcome Message',
-    description: 'Sends a welcome message or poke when a client joins the server, with an opt-out command and server-group exclusions.',
+    name: t('data.botTemplates.items.welcomeMessage.name'),
+    description: t('data.botTemplates.items.welcomeMessage.description'),
     category: 'automation',
     icon: MessageSquare,
-    variablesHint: [
-      '{{event.client_nickname}} - joining client\'s name',
-      '{{temp.onlineCount}} - real users online right now (query/bot connections not counted)',
-      '{{temp.dbInfo.0.client_totalconnections}} - this client\'s lifetime connection count',
-      '{{temp.teamOnline}} - team members online right now (only resolves if Team Groups is set below)',
-    ],
+    variablesHint: t('data.botTemplates.items.welcomeMessage.variablesHint', { returnObjects: true }) as string[],
     configFields: [
-      { key: 'message', label: 'Welcome Message', type: 'textarea', placeholder: DEFAULT_WELCOME_MESSAGE },
-      { key: 'usePokeInstead', label: 'Delivery Method', type: 'select', defaultValue: 'message', options: [{ label: 'Private Message', value: 'message' }, { label: 'Poke', value: 'poke' }] },
-      { key: 'ignoreGroupIds', label: 'Ignore Groups (comma-separated, optional)', type: 'text', placeholder: 'e.g. Music Bot / Team server group IDs - these clients never get a welcome message' },
-      { key: 'teamGroupIds', label: 'Team Groups for {{temp.teamOnline}} (comma-separated, optional)', type: 'text', placeholder: 'e.g. 6,7' },
+      { key: 'message', label: t('data.botTemplates.items.welcomeMessage.fields.message.label'), type: 'textarea', placeholder: DEFAULT_WELCOME_MESSAGE },
+      { key: 'usePokeInstead', label: t('data.botTemplates.items.welcomeMessage.fields.usePokeInstead.label'), type: 'select', defaultValue: 'message', options: [{ label: t('data.botTemplates.items.welcomeMessage.fields.usePokeInstead.options.0'), value: 'message' }, { label: t('data.botTemplates.items.welcomeMessage.fields.usePokeInstead.options.1'), value: 'poke' }] },
+      { key: 'ignoreGroupIds', label: t('data.botTemplates.items.welcomeMessage.fields.ignoreGroupIds.label'), type: 'text', placeholder: 'e.g. Music Bot / Team server group IDs - these clients never get a welcome message' },
+      { key: 'teamGroupIds', label: t('data.botTemplates.items.welcomeMessage.fields.teamGroupIds.label'), type: 'text', placeholder: 'e.g. 6,7' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -293,14 +294,14 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'support-system',
-    name: 'Support System',
-    description: 'Notifies admins when a client joins the support channel.',
+    name: t('data.botTemplates.items.supportSystem.name'),
+    description: t('data.botTemplates.items.supportSystem.description'),
     category: 'automation',
     icon: Megaphone,
     configFields: [
-      { key: 'supportChannelId', label: 'Support Channel ID', type: 'number', placeholder: '15', required: true },
-      { key: 'adminGroupId', label: 'Admin Group ID', type: 'number', placeholder: '6', required: true },
-      { key: 'message', label: 'Notification Message', type: 'text', placeholder: 'Support needed by {{event.client_nickname}}!' },
+      { key: 'supportChannelId', label: t('data.botTemplates.items.supportSystem.fields.supportChannelId.label'), type: 'number', placeholder: '15', required: true },
+      { key: 'adminGroupId', label: t('data.botTemplates.items.supportSystem.fields.adminGroupId.label'), type: 'number', placeholder: '6', required: true },
+      { key: 'message', label: t('data.botTemplates.items.supportSystem.fields.message.label'), type: 'text', placeholder: 'Support needed by {{event.client_nickname}}!' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -326,30 +327,28 @@ export const BOT_TEMPLATES: BotTemplate[] = [
     // Smorrebrod / Cedrik Paetz <cedrik.paetz@gmail.com> - credit to the
     // original design this template's shape and field set is based on.
     id: 'private-channel-creator',
-    name: 'Private Channel Creator',
-    description: 'Creates a persistent private channel for a client on first joining a lobby, and moves them back to it every time after - with them set as its channel owner.',
+    name: t('data.botTemplates.items.privateChannelCreator.name'),
+    description: t('data.botTemplates.items.privateChannelCreator.description'),
     category: 'automation',
     icon: FolderPlus,
-    variablesHint: [
-      '{{temp.joinerInfo.0.client_nickname}} - joining client\'s name (for the channel name/description template)',
-    ],
+    variablesHint: t('data.botTemplates.items.privateChannelCreator.variablesHint', { returnObjects: true }) as string[],
     configFields: [
-      { key: 'lobbyChannelId', label: 'Lobby Channel ID', type: 'number', placeholder: '20', required: true },
-      { key: 'parentChannelId', label: 'Parent Channel ID (optional - overrides where channels are created)', type: 'number', placeholder: 'e.g. 19' },
-      { key: 'channelPlacement', label: 'Channel Placement', type: 'select', defaultValue: 'sibling', options: [{ label: 'Standard Channel (next to Lobby)', value: 'sibling' }, { label: 'Subchannel of Lobby', value: 'sub' }] },
-      { key: 'channelAdminGroupId', label: 'Channel Admin Group ID (assigned as owner)', type: 'number', placeholder: '5', required: true },
-      { key: 'channelNameTemplate', label: 'Channel Name Template', type: 'text', defaultValue: "{{temp.joinerInfo.0.client_nickname}}'s Private Channel" },
-      { key: 'channelDescriptionTemplate', label: 'Channel Description Template (optional)', type: 'textarea', placeholder: 'e.g. Private channel of {{temp.joinerInfo.0.client_nickname}}, created {{time.date}}' },
-      { key: 'privateChannelType', label: 'Private Channel Type', type: 'select', defaultValue: 'semipermanent', options: [{ label: 'Permanent', value: 'permanent' }, { label: 'Semi-Permanent', value: 'semipermanent' }, { label: 'Temporary (TeamSpeak deletes it once empty)', value: 'temporary' }] },
-      { key: 'autoGeneratePassword', label: 'Password Protection', type: 'select', defaultValue: 'no', options: [{ label: 'None', value: 'no' }, { label: 'Auto-generate', value: 'yes' }] },
-      { key: 'spamProtectionEnabled', label: 'Spam Protection (ban clients who repeatedly rejoin the lobby)', type: 'select', defaultValue: 'no', options: [{ label: 'No', value: 'no' }, { label: 'Yes', value: 'yes' }] },
-      { key: 'spamProtectionMaxStrikes', label: 'Max Strikes Before Ban', type: 'number', defaultValue: '10', indent: 1, conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
-      { key: 'spamProtectionBanSeconds', label: 'Ban Duration (seconds)', type: 'number', defaultValue: '600', indent: 1, conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
-      { key: 'channelCreateMessage', label: 'Channel Create Message', type: 'text', defaultValue: 'Your private channel has been created!' },
-      { key: 'channelMoveMessage', label: 'Channel Move Message', type: 'text', defaultValue: 'You have been moved to your private channel.' },
-      { key: 'channelErrorMessage', label: 'Channel Error Message', type: 'text', defaultValue: 'Your channel could not be created. Please try again, or contact an admin if this keeps happening.' },
-      { key: 'channelPasswordMessage', label: 'Channel Password Message', type: 'text', defaultValue: 'Your channel was created with a password. The password is:', conditions: [{ field: 'autoGeneratePassword', value: 'yes' }] },
-      { key: 'spamProtectionBanMessage', label: 'Spam Protection Ban Message', type: 'text', defaultValue: 'You have been banned for spamming the lobby.', conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
+      { key: 'lobbyChannelId', label: t('data.botTemplates.items.privateChannelCreator.fields.lobbyChannelId.label'), type: 'number', placeholder: '20', required: true },
+      { key: 'parentChannelId', label: t('data.botTemplates.items.privateChannelCreator.fields.parentChannelId.label'), type: 'number', placeholder: 'e.g. 19' },
+      { key: 'channelPlacement', label: t('data.botTemplates.items.privateChannelCreator.fields.channelPlacement.label'), type: 'select', defaultValue: 'sibling', options: [{ label: t('data.botTemplates.items.privateChannelCreator.fields.channelPlacement.options.0'), value: 'sibling' }, { label: t('data.botTemplates.items.privateChannelCreator.fields.channelPlacement.options.1'), value: 'sub' }] },
+      { key: 'channelAdminGroupId', label: t('data.botTemplates.items.privateChannelCreator.fields.channelAdminGroupId.label'), type: 'number', placeholder: '5', required: true },
+      { key: 'channelNameTemplate', label: t('data.botTemplates.items.privateChannelCreator.fields.channelNameTemplate.label'), type: 'text', defaultValue: "{{temp.joinerInfo.0.client_nickname}}'s Private Channel" },
+      { key: 'channelDescriptionTemplate', label: t('data.botTemplates.items.privateChannelCreator.fields.channelDescriptionTemplate.label'), type: 'textarea', placeholder: 'e.g. Private channel of {{temp.joinerInfo.0.client_nickname}}, created {{time.date}}' },
+      { key: 'privateChannelType', label: t('data.botTemplates.items.privateChannelCreator.fields.privateChannelType.label'), type: 'select', defaultValue: 'semipermanent', options: [{ label: t('data.botTemplates.items.privateChannelCreator.fields.privateChannelType.options.0'), value: 'permanent' }, { label: t('data.botTemplates.items.privateChannelCreator.fields.privateChannelType.options.1'), value: 'semipermanent' }, { label: t('data.botTemplates.items.privateChannelCreator.fields.privateChannelType.options.2'), value: 'temporary' }] },
+      { key: 'autoGeneratePassword', label: t('data.botTemplates.items.privateChannelCreator.fields.autoGeneratePassword.label'), type: 'select', defaultValue: 'no', options: [{ label: t('data.botTemplates.items.privateChannelCreator.fields.autoGeneratePassword.options.0'), value: 'no' }, { label: t('data.botTemplates.items.privateChannelCreator.fields.autoGeneratePassword.options.1'), value: 'yes' }] },
+      { key: 'spamProtectionEnabled', label: t('data.botTemplates.items.privateChannelCreator.fields.spamProtectionEnabled.label'), type: 'select', defaultValue: 'no', options: [{ label: t('data.botTemplates.items.privateChannelCreator.fields.spamProtectionEnabled.options.0'), value: 'no' }, { label: t('data.botTemplates.items.privateChannelCreator.fields.spamProtectionEnabled.options.1'), value: 'yes' }] },
+      { key: 'spamProtectionMaxStrikes', label: t('data.botTemplates.items.privateChannelCreator.fields.spamProtectionMaxStrikes.label'), type: 'number', defaultValue: '10', indent: 1, conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
+      { key: 'spamProtectionBanSeconds', label: t('data.botTemplates.items.privateChannelCreator.fields.spamProtectionBanSeconds.label'), type: 'number', defaultValue: '600', indent: 1, conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
+      { key: 'channelCreateMessage', label: t('data.botTemplates.items.privateChannelCreator.fields.channelCreateMessage.label'), type: 'text', defaultValue: 'Your private channel has been created!' },
+      { key: 'channelMoveMessage', label: t('data.botTemplates.items.privateChannelCreator.fields.channelMoveMessage.label'), type: 'text', defaultValue: 'You have been moved to your private channel.' },
+      { key: 'channelErrorMessage', label: t('data.botTemplates.items.privateChannelCreator.fields.channelErrorMessage.label'), type: 'text', defaultValue: 'Your channel could not be created. Please try again, or contact an admin if this keeps happening.' },
+      { key: 'channelPasswordMessage', label: t('data.botTemplates.items.privateChannelCreator.fields.channelPasswordMessage.label'), type: 'text', defaultValue: 'Your channel was created with a password. The password is:', conditions: [{ field: 'autoGeneratePassword', value: 'yes' }] },
+      { key: 'spamProtectionBanMessage', label: t('data.botTemplates.items.privateChannelCreator.fields.spamProtectionBanMessage.label'), type: 'text', defaultValue: 'You have been banned for spamming the lobby.', conditions: [{ field: 'spamProtectionEnabled', value: 'yes' }] },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -507,15 +506,15 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'auto-rank',
-    name: 'Auto-Rank',
-    description: 'Automatically assigns server groups based on cumulative online time.',
+    name: t('data.botTemplates.items.autoRank.name'),
+    description: t('data.botTemplates.items.autoRank.description'),
     category: 'automation',
     icon: Award,
     configFields: [
-      { key: 'ranks', label: 'Ranks (JSON)', type: 'text', placeholder: '[{"hours":10,"groupId":"7"},{"hours":50,"groupId":"8"}]', required: true },
-      { key: 'mode', label: 'Hours measured as', type: 'select', defaultValue: 'accumulatedTime', options: [{ label: 'Actual online time (accumulated across sessions)', value: 'accumulatedTime' }, { label: 'Time since first connection (member age)', value: 'firstConnectionAge' }] },
-      { key: 'excludeGroupIds', label: 'Exclude Group IDs (comma-separated, optional)', type: 'text', placeholder: 'e.g. Bot group ID' },
-      { key: 'pollInterval', label: 'Check Interval', type: 'select', defaultValue: '*/5 * * * *', options: [{ label: 'Every 5 min', value: '*/5 * * * *' }, { label: 'Every 15 min', value: '*/15 * * * *' }, { label: 'Every hour', value: '0 * * * *' }] },
+      { key: 'ranks', label: t('data.botTemplates.items.autoRank.fields.ranks.label'), type: 'text', placeholder: '[{"hours":10,"groupId":"7"},{"hours":50,"groupId":"8"}]', required: true },
+      { key: 'mode', label: t('data.botTemplates.items.autoRank.fields.mode.label'), type: 'select', defaultValue: 'accumulatedTime', options: [{ label: t('data.botTemplates.items.autoRank.fields.mode.options.0'), value: 'accumulatedTime' }, { label: t('data.botTemplates.items.autoRank.fields.mode.options.1'), value: 'firstConnectionAge' }] },
+      { key: 'excludeGroupIds', label: t('data.botTemplates.items.autoRank.fields.excludeGroupIds.label'), type: 'text', placeholder: 'e.g. Bot group ID' },
+      { key: 'pollInterval', label: t('data.botTemplates.items.autoRank.fields.pollInterval.label'), type: 'select', defaultValue: '*/5 * * * *', options: [{ label: t('data.botTemplates.items.autoRank.fields.pollInterval.options.0'), value: '*/5 * * * *' }, { label: t('data.botTemplates.items.autoRank.fields.pollInterval.options.1'), value: '*/15 * * * *' }, { label: t('data.botTemplates.items.autoRank.fields.pollInterval.options.2'), value: '0 * * * *' }] },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -531,8 +530,8 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'last-seen-tracker',
-    name: 'Last-Seen Tracker',
-    description: 'Records the last-seen timestamp when a client disconnects.',
+    name: t('data.botTemplates.items.lastSeenTracker.name'),
+    description: t('data.botTemplates.items.lastSeenTracker.description'),
     category: 'automation',
     icon: Clock,
     configFields: [],
@@ -553,15 +552,15 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   // ===== MODERATION =====
   {
     id: 'afk-mover',
-    name: 'AFK Mover',
-    description: 'Moves idle clients to an AFK channel after a configurable timeout.',
+    name: t('data.botTemplates.items.afkMover.name'),
+    description: t('data.botTemplates.items.afkMover.description'),
     category: 'moderation',
     icon: Moon,
     configFields: [
-      { key: 'afkChannelId', label: 'AFK Channel ID', type: 'number', placeholder: '10', required: true },
-      { key: 'idleThresholdSeconds', label: 'Idle Threshold (seconds)', type: 'number', placeholder: '300', required: true },
-      { key: 'exemptGroupIds', label: 'Exempt Group IDs (comma-separated)', type: 'text', placeholder: '6,7' },
-      { key: 'exemptChannelIds', label: 'Exempt Channel IDs (comma-separated)', type: 'text', placeholder: '12,15' },
+      { key: 'afkChannelId', label: t('data.botTemplates.items.afkMover.fields.afkChannelId.label'), type: 'number', placeholder: '10', required: true },
+      { key: 'idleThresholdSeconds', label: t('data.botTemplates.items.afkMover.fields.idleThresholdSeconds.label'), type: 'number', placeholder: '300', required: true },
+      { key: 'exemptGroupIds', label: t('data.botTemplates.items.afkMover.fields.exemptGroupIds.label'), type: 'text', placeholder: '6,7' },
+      { key: 'exemptChannelIds', label: t('data.botTemplates.items.afkMover.fields.exemptChannelIds.label'), type: 'text', placeholder: '12,15' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -577,14 +576,14 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'idle-kicker',
-    name: 'Idle Kicker',
-    description: 'Kicks clients that have been idle for too long.',
+    name: t('data.botTemplates.items.idleKicker.name'),
+    description: t('data.botTemplates.items.idleKicker.description'),
     category: 'moderation',
     icon: Timer,
     configFields: [
-      { key: 'idleThresholdSeconds', label: 'Idle Threshold (seconds)', type: 'number', placeholder: '1800', required: true },
-      { key: 'reason', label: 'Kick Reason', type: 'text', placeholder: 'Idle timeout' },
-      { key: 'exemptGroupIds', label: 'Exempt Group IDs (comma-separated)', type: 'text', placeholder: '6,7' },
+      { key: 'idleThresholdSeconds', label: t('data.botTemplates.items.idleKicker.fields.idleThresholdSeconds.label'), type: 'number', placeholder: '1800', required: true },
+      { key: 'reason', label: t('data.botTemplates.items.idleKicker.fields.reason.label'), type: 'text', placeholder: 'Idle timeout' },
+      { key: 'exemptGroupIds', label: t('data.botTemplates.items.idleKicker.fields.exemptGroupIds.label'), type: 'text', placeholder: '6,7' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -600,13 +599,13 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'bad-name-checker',
-    name: 'Bad Name Checker',
-    description: 'Kicks clients whose nickname contains forbidden words.',
+    name: t('data.botTemplates.items.badNameChecker.name'),
+    description: t('data.botTemplates.items.badNameChecker.description'),
     category: 'moderation',
     icon: Shield,
     configFields: [
-      { key: 'badWords', label: 'Bad Words (comma-separated)', type: 'text', placeholder: 'admin,moderator,test', required: true },
-      { key: 'reason', label: 'Kick Reason', type: 'text', placeholder: 'Forbidden nickname' },
+      { key: 'badWords', label: t('data.botTemplates.items.badNameChecker.fields.badWords.label'), type: 'text', placeholder: 'admin,moderator,test', required: true },
+      { key: 'reason', label: t('data.botTemplates.items.badNameChecker.fields.reason.label'), type: 'text', placeholder: 'Forbidden nickname' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -634,14 +633,14 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'group-protector',
-    name: 'Group Protector',
-    description: 'Kicks clients who have a protected group but lack the required authorization group.',
+    name: t('data.botTemplates.items.groupProtector.name'),
+    description: t('data.botTemplates.items.groupProtector.description'),
     category: 'moderation',
     icon: Shield,
     configFields: [
-      { key: 'protectedGroupId', label: 'Protected Group ID', type: 'number', placeholder: '8', required: true },
-      { key: 'allowedGroupId', label: 'Authorized Group ID', type: 'number', placeholder: '10', required: true },
-      { key: 'action', label: 'Action', type: 'select', defaultValue: 'kick', options: [{ label: 'Kick', value: 'kick' }, { label: 'Remove Group', value: 'remove' }] },
+      { key: 'protectedGroupId', label: t('data.botTemplates.items.groupProtector.fields.protectedGroupId.label'), type: 'number', placeholder: '8', required: true },
+      { key: 'allowedGroupId', label: t('data.botTemplates.items.groupProtector.fields.allowedGroupId.label'), type: 'number', placeholder: '10', required: true },
+      { key: 'action', label: t('data.botTemplates.items.groupProtector.fields.action.label'), type: 'select', defaultValue: 'kick', options: [{ label: t('data.botTemplates.items.groupProtector.fields.action.options.0'), value: 'kick' }, { label: t('data.botTemplates.items.groupProtector.fields.action.options.1'), value: 'remove' }] },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -669,13 +668,13 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   // ===== INTEGRATION =====
   {
     id: 'webhook-server-message',
-    name: 'Webhook → Server Message',
-    description: 'Receives a webhook POST and broadcasts the message to the TeamSpeak server. Great for monitoring alerts, CI/CD notifications, or Discord bridges.',
+    name: t('data.botTemplates.items.webhookServerMessage.name'),
+    description: t('data.botTemplates.items.webhookServerMessage.description'),
     category: 'integration',
     icon: Webhook,
     configFields: [
-      { key: 'path', label: 'Webhook Path', type: 'text', placeholder: 'server-notify', required: true },
-      { key: 'secret', label: 'Secret (optional)', type: 'text', placeholder: 'my-secret-key' },
+      { key: 'path', label: t('data.botTemplates.items.webhookServerMessage.fields.path.label'), type: 'text', placeholder: 'server-notify', required: true },
+      { key: 'secret', label: t('data.botTemplates.items.webhookServerMessage.fields.secret.label'), type: 'text', placeholder: 'my-secret-key' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -691,14 +690,14 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'webhook-group-assign',
-    name: 'Webhook → Assign Group',
-    description: 'External system (e.g. website verification) sends a webhook with a client database ID to assign a server group. Use for website-to-TS3 user verification.',
+    name: t('data.botTemplates.items.webhookGroupAssign.name'),
+    description: t('data.botTemplates.items.webhookGroupAssign.description'),
     category: 'integration',
     icon: Webhook,
     configFields: [
-      { key: 'path', label: 'Webhook Path', type: 'text', placeholder: 'verify-user', required: true },
-      { key: 'groupId', label: 'Server Group ID to assign', type: 'text', placeholder: '42', required: true },
-      { key: 'secret', label: 'Secret (optional)', type: 'text', placeholder: 'my-secret-key' },
+      { key: 'path', label: t('data.botTemplates.items.webhookGroupAssign.fields.path.label'), type: 'text', placeholder: 'verify-user', required: true },
+      { key: 'groupId', label: t('data.botTemplates.items.webhookGroupAssign.fields.groupId.label'), type: 'text', placeholder: '42', required: true },
+      { key: 'secret', label: t('data.botTemplates.items.webhookGroupAssign.fields.secret.label'), type: 'text', placeholder: 'my-secret-key' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -715,15 +714,15 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'webhook-channel-rename',
-    name: 'Webhook → Update Channel',
-    description: 'Receives a webhook and updates a channel name. Use for external status displays like game server status, stream status, or monitoring dashboards.',
+    name: t('data.botTemplates.items.webhookChannelRename.name'),
+    description: t('data.botTemplates.items.webhookChannelRename.description'),
     category: 'integration',
     icon: Webhook,
     configFields: [
-      { key: 'path', label: 'Webhook Path', type: 'text', placeholder: 'update-status', required: true },
-      { key: 'channelId', label: 'Channel ID to update', type: 'text', placeholder: '42', required: true },
-      { key: 'nameTemplate', label: 'Channel Name Template', type: 'text', placeholder: '[STATUS] {{event.webhook_body.status}}', required: true },
-      { key: 'secret', label: 'Secret (optional)', type: 'text', placeholder: 'my-secret-key' },
+      { key: 'path', label: t('data.botTemplates.items.webhookChannelRename.fields.path.label'), type: 'text', placeholder: 'update-status', required: true },
+      { key: 'channelId', label: t('data.botTemplates.items.webhookChannelRename.fields.channelId.label'), type: 'text', placeholder: '42', required: true },
+      { key: 'nameTemplate', label: t('data.botTemplates.items.webhookChannelRename.fields.nameTemplate.label'), type: 'text', placeholder: '[STATUS] {{event.webhook_body.status}}', required: true },
+      { key: 'secret', label: t('data.botTemplates.items.webhookChannelRename.fields.secret.label'), type: 'text', placeholder: 'my-secret-key' },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -739,13 +738,13 @@ export const BOT_TEMPLATES: BotTemplate[] = [
   },
   {
     id: 'anti-vpn',
-    name: 'Anti-VPN',
-    description: 'Checks connecting clients against a VPN detection API and kicks/bans VPN users.',
+    name: t('data.botTemplates.items.antiVpn.name'),
+    description: t('data.botTemplates.items.antiVpn.description'),
     category: 'integration',
     icon: Globe,
     configFields: [
-      { key: 'apiUrl', label: 'API URL (use {{ip}} placeholder)', type: 'text', placeholder: 'https://vpnapi.io/api/{{ip}}?key=YOUR_KEY', required: true },
-      { key: 'action', label: 'Action for VPN', type: 'select', defaultValue: 'kick', options: [{ label: 'Kick', value: 'kick' }, { label: 'Ban (1h)', value: 'ban' }] },
+      { key: 'apiUrl', label: t('data.botTemplates.items.antiVpn.fields.apiUrl.label'), type: 'text', placeholder: 'https://vpnapi.io/api/{{ip}}?key=YOUR_KEY', required: true },
+      { key: 'action', label: t('data.botTemplates.items.antiVpn.fields.action.label'), type: 'select', defaultValue: 'kick', options: [{ label: t('data.botTemplates.items.antiVpn.fields.action.options.0'), value: 'kick' }, { label: t('data.botTemplates.items.antiVpn.fields.action.options.1'), value: 'ban' }] },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -772,11 +771,13 @@ export const BOT_TEMPLATES: BotTemplate[] = [
       };
     },
   },
-];
+]; }
 
-export const TEMPLATE_CATEGORIES = [
-  { id: 'info-channels', label: 'Info Channels', description: 'Dynamic channel names with live data' },
-  { id: 'moderation', label: 'Moderation', description: 'Automated moderation and protection' },
-  { id: 'automation', label: 'Automation', description: 'Welcome messages, temp channels, ranking' },
-  { id: 'integration', label: 'Integration', description: 'External APIs and webhooks' },
-] as const;
+export function getTemplateCategories(t: TFunction) {
+  return [
+    { id: 'info-channels', label: t('data.botTemplates.categories.infoChannels.label'), description: t('data.botTemplates.categories.infoChannels.description') },
+    { id: 'moderation', label: t('data.botTemplates.categories.moderation.label'), description: t('data.botTemplates.categories.moderation.description') },
+    { id: 'automation', label: t('data.botTemplates.categories.automation.label'), description: t('data.botTemplates.categories.automation.description') },
+    { id: 'integration', label: t('data.botTemplates.categories.integration.label'), description: t('data.botTemplates.categories.integration.description') },
+  ];
+}

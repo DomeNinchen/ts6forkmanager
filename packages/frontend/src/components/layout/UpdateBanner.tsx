@@ -1,6 +1,7 @@
 import { compareVersions } from '@ts6/common';
 import { Download, Copy, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { useUpdateCheck } from '@/hooks/use-update-check';
 import { useUpdateBannerStore, type UpdateComponent } from '@/stores/update-banner.store';
 
@@ -14,6 +15,7 @@ interface OutdatedComponent {
 }
 
 export function UpdateBanner() {
+  const { t } = useTranslation();
   const { data } = useUpdateCheck();
   const dismissedFor = useUpdateBannerStore((s) => s.dismissedFor);
   const dismiss = useUpdateBannerStore((s) => s.dismiss);
@@ -46,7 +48,7 @@ export function UpdateBanner() {
       <div className="flex items-center gap-2 flex-wrap">
         <Download className="h-3.5 w-3.5 text-primary shrink-0" />
         <span>
-          Update available:{' '}
+          {t('components.updateBanner.updateAvailable')}{' '}
           {outdated.map((c, i) => (
             <span key={c.component} className="font-mono-data">
               {i > 0 && ', '}
@@ -57,16 +59,16 @@ export function UpdateBanner() {
         <button
           onClick={() => {
             navigator.clipboard.writeText(DEPLOY_COMMAND);
-            toast.success('Copied');
+            toast.success(t('common.copied'));
           }}
           className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-2 py-0.5 font-mono-data hover:bg-muted"
-          title="Copy deploy command"
+          title={t('components.updateBanner.copyDeployCommand')}
         >
           <Copy className="h-3 w-3" />
           {DEPLOY_COMMAND}
         </button>
       </div>
-      <button onClick={dismissAll} className="p-1 hover:bg-muted rounded-sm shrink-0" title="Postpone">
+      <button onClick={dismissAll} className="p-1 hover:bg-muted rounded-sm shrink-0" title={t('components.updateBanner.postpone')}>
         <X className="h-3.5 w-3.5" />
       </button>
     </div>

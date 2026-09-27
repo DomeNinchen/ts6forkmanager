@@ -53,6 +53,7 @@ import { groupsApi } from '@/api/groups.api';
 import {
   useCommandPermissions, useSetCommandPermission, useClearCommandPermission, useSetAdminGroups,
 } from '@/hooks/use-command-permissions';
+import { useTranslation } from 'react-i18next';
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   onDelete: () => void;
   onPlay: () => void;
 }) {
+  const { t } = useTranslation();
   const startBot = useStartMusicBot();
   const stopBot = useStopMusicBot();
   const { data: state } = useMusicBotState(
@@ -131,7 +133,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
             </CardTitle>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" title="Player Widget"
+            <Button variant="ghost" size="icon" className="h-7 w-7" title={t('pages.musicBots.botPlayerCard.playerWidget')}
               onClick={() => {
                 musicBotsApi.playerWidgetToken(bot.id).then(setWidgetData);
                 setShowWidget(true);
@@ -161,7 +163,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
         {/* Play button when connected but idle */}
         {isRunning && !state?.nowPlaying && (
           <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={onPlay}>
-            <Play className="h-3.5 w-3.5 mr-1.5" /> Play Song...
+            <Play className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.botPlayerCard.playSongEllipsis')}
           </Button>
         )}
 
@@ -177,7 +179,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
                 )}
               </div>
               {isStreaming && (
-                <Badge variant="destructive" className="text-[9px] shrink-0 animate-pulse">LIVE</Badge>
+                <Badge variant="destructive" className="text-[9px] shrink-0 animate-pulse">{t('pages.musicBots.botPlayerCard.live')}</Badge>
               )}
             </div>
             {/* Progress bar (hidden for streams) */}
@@ -269,7 +271,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
           const upcoming = state.queue.slice(state.currentIndex + 1);
           return (
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground font-medium">Queue ({upcoming.length})</p>
+              <p className="text-[10px] text-muted-foreground font-medium">{t('pages.musicBots.botPlayerCard.queueCount', { count: upcoming.length })}</p>
               <div className="space-y-0.5 max-h-24 overflow-y-auto">
                 {upcoming.slice(0, 5).map((item, i) => (
                   <div key={item.id} className="flex items-center gap-2 text-[10px] py-0.5">
@@ -279,7 +281,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
                   </div>
                 ))}
                 {upcoming.length > 5 && (
-                  <p className="text-[10px] text-muted-foreground text-center">+{upcoming.length - 5} more</p>
+                  <p className="text-[10px] text-muted-foreground text-center">{t('pages.musicBots.botPlayerCard.moreCount', { count: upcoming.length - 5 })}</p>
                 )}
               </div>
             </div>
@@ -291,33 +293,33 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
           {isRunning ? (
             <>
               <Button variant="outline" size="sm" className="h-7 text-xs flex-1"
-                onClick={() => stopBot.mutate(bot.id, { onSuccess: () => toast.success('Bot stopped') })}
+                onClick={() => stopBot.mutate(bot.id, { onSuccess: () => toast.success(t('pages.musicBots.botPlayerCard.botStopped')) })}
                 disabled={stopBot.isPending}
               >
-                <PowerOff className="h-3 w-3 mr-1" /> Stop
+                <PowerOff className="h-3 w-3 mr-1" /> {t('pages.musicBots.botPlayerCard.stop')}
               </Button>
               <Button variant="ghost" size="sm" className="h-7 text-xs"
                 onClick={onPlay}
               >
-                <Music2 className="h-3 w-3 mr-1" /> Play...
+                <Music2 className="h-3 w-3 mr-1" /> {t('pages.musicBots.botPlayerCard.playEllipsis')}
               </Button>
               {state?.nowPlaying && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs"
                   onClick={() => stopPlayback.mutate(bot.id)}
                 >
-                  <Square className="h-3 w-3 mr-1" /> Stop Audio
+                  <Square className="h-3 w-3 mr-1" /> {t('pages.musicBots.botPlayerCard.stopAudio')}
                 </Button>
               )}
             </>
           ) : (
             <Button variant="default" size="sm" className="h-7 text-xs flex-1"
               onClick={() => startBot.mutate(bot.id, {
-                onSuccess: () => toast.success('Bot started'),
-                onError: () => toast.error('Failed to start bot'),
+                onSuccess: () => toast.success(t('pages.musicBots.botPlayerCard.botStarted')),
+                onError: () => toast.error(t('pages.musicBots.botPlayerCard.startFailed')),
               })}
               disabled={startBot.isPending}
             >
-              <Power className="h-3 w-3 mr-1" /> Start
+              <Power className="h-3 w-3 mr-1" /> {t('pages.musicBots.botPlayerCard.start')}
             </Button>
           )}
         </div>
@@ -327,33 +329,33 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
       <Dialog open={showWidget} onOpenChange={setShowWidget}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-sm">Player Widget</DialogTitle>
+            <DialogTitle className="text-sm">{t('pages.musicBots.botPlayerCard.playerWidget')}</DialogTitle>
             <DialogDescription className="text-xs">
-              Embed these URLs in your TeamSpeak channel description or website.
+              {t('pages.musicBots.botPlayerCard.widgetDescription')}
             </DialogDescription>
           </DialogHeader>
           {widgetData && (
             <div className="space-y-3">
               <div>
-                <Label className="text-[10px] text-muted-foreground">BBCode URL (for channel description)</Label>
+                <Label className="text-[10px] text-muted-foreground">{t('pages.musicBots.botPlayerCard.bbcodeUrlLabel')}</Label>
                 <div className="flex gap-1.5 mt-1">
                   <Input readOnly className="h-7 text-[11px] font-mono-data" value={widgetData.bbcodeUrl} />
                   <Button variant="outline" size="sm" className="h-7 text-xs shrink-0"
-                    onClick={() => { navigator.clipboard.writeText(widgetData.bbcodeUrl); toast.success('Copied!'); }}
-                  >Copy</Button>
+                    onClick={() => { navigator.clipboard.writeText(widgetData.bbcodeUrl); toast.success(t('pages.musicBots.botPlayerCard.copied')); }}
+                  >{t('pages.musicBots.botPlayerCard.copy')}</Button>
                 </div>
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground">JSON URL (for websites/integrations)</Label>
+                <Label className="text-[10px] text-muted-foreground">{t('pages.musicBots.botPlayerCard.jsonUrlLabel')}</Label>
                 <div className="flex gap-1.5 mt-1">
                   <Input readOnly className="h-7 text-[11px] font-mono-data" value={widgetData.jsonUrl} />
                   <Button variant="outline" size="sm" className="h-7 text-xs shrink-0"
-                    onClick={() => { navigator.clipboard.writeText(widgetData.jsonUrl); toast.success('Copied!'); }}
-                  >Copy</Button>
+                    onClick={() => { navigator.clipboard.writeText(widgetData.jsonUrl); toast.success(t('pages.musicBots.botPlayerCard.copied')); }}
+                  >{t('pages.musicBots.botPlayerCard.copy')}</Button>
                 </div>
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground">Token</Label>
+                <Label className="text-[10px] text-muted-foreground">{t('pages.musicBots.botPlayerCard.tokenLabel')}</Label>
                 <Input readOnly className="h-7 text-[11px] font-mono-data mt-1" value={widgetData.token} />
               </div>
             </div>
@@ -375,6 +377,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
   onEnqueue: (songId: number) => void;
   onLoadPlaylist: (playlistId: number) => void;
 }) {
+  const { t } = useTranslation();
   const { selectedConfigId } = useServerStore();
   const { data: servers } = useServers();
   const [serverId, setServerId] = useState<number | null>(selectedConfigId);
@@ -401,30 +404,30 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
     <Dialog open={botId !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Play Music</DialogTitle>
-          <DialogDescription>Select a song or playlist to play on this bot.</DialogDescription>
+          <DialogTitle>{t('pages.musicBots.playSongDialog.title')}</DialogTitle>
+          <DialogDescription>{t('pages.musicBots.playSongDialog.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2 mb-2">
           <Button variant={tab === 'songs' ? 'default' : 'outline'} size="sm" className="h-7 text-xs"
             onClick={() => setTab('songs')}
           >
-            <FileAudio className="h-3 w-3 mr-1" /> Songs
+            <FileAudio className="h-3 w-3 mr-1" /> {t('pages.musicBots.playSongDialog.tabSongs')}
           </Button>
           <Button variant={tab === 'playlists' ? 'default' : 'outline'} size="sm" className="h-7 text-xs"
             onClick={() => setTab('playlists')}
           >
-            <ListMusic className="h-3 w-3 mr-1" /> Playlists
+            <ListMusic className="h-3 w-3 mr-1" /> {t('pages.musicBots.playSongDialog.tabPlaylists')}
           </Button>
           <Button variant={tab === 'history' ? 'default' : 'outline'} size="sm" className="h-7 text-xs"
             onClick={() => setTab('history')}
           >
-            <Clock className="h-3 w-3 mr-1" /> History
+            <Clock className="h-3 w-3 mr-1" /> {t('pages.musicBots.playSongDialog.tabHistory')}
           </Button>
           <div className="flex-1" />
           {tab === 'songs' && (
             <Select value={String(configId || '')} onValueChange={(v) => setServerId(parseInt(v))}>
-              <SelectTrigger className="w-36 h-7 text-xs"><SelectValue placeholder="Server..." /></SelectTrigger>
+              <SelectTrigger className="w-36 h-7 text-xs"><SelectValue placeholder={t('pages.musicBots.shared.serverPlaceholder')} /></SelectTrigger>
               <SelectContent>
                 {serverList.map((s: any) => (
                   <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
@@ -439,12 +442,12 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
             <Input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Filter songs..."
+              placeholder={t('pages.musicBots.shared.filterSongsPlaceholder')}
               className="h-8 text-xs"
             />
             <div className="flex-1 max-h-[400px] mt-2 overflow-y-auto">
               {filtered.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-8">No songs found. Upload songs in the Library tab first.</p>
+                <p className="text-xs text-muted-foreground text-center py-8">{t('pages.musicBots.playSongDialog.noSongsFound')}</p>
               ) : filtered.map((song) => (
                 <div key={song.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 transition-colors rounded-sm group">
                   <div className="min-w-0 flex-1">
@@ -456,12 +459,12 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
                     <Button variant="default" size="sm" className="h-6 text-[10px] px-2"
                       onClick={() => onPlaySong(song.id)}
                     >
-                      <Play className="h-3 w-3 mr-0.5" /> Play
+                      <Play className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.playSongDialog.play')}
                     </Button>
                     <Button variant="outline" size="sm" className="h-6 text-[10px] px-2"
                       onClick={() => onEnqueue(song.id)}
                     >
-                      <Plus className="h-3 w-3 mr-0.5" /> Queue
+                      <Plus className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.playSongDialog.queue')}
                     </Button>
                   </div>
                 </div>
@@ -473,18 +476,18 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
         {tab === 'playlists' && (
           <div className="flex-1 max-h-[400px] overflow-y-auto">
             {playlistList.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No playlists. Create one in the Playlists tab.</p>
+              <p className="text-xs text-muted-foreground text-center py-8">{t('pages.musicBots.playSongDialog.noPlaylists')}</p>
             ) : playlistList.map((pl) => (
               <div key={pl.id} className="flex items-center gap-2 py-2 px-2 hover:bg-muted/30 transition-colors rounded-sm group">
                 <ListMusic className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate">{pl.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{pl.songCount} song{pl.songCount !== 1 ? 's' : ''}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('pages.musicBots.shared.songsCount', { count: pl.songCount })}</p>
                 </div>
                 <Button variant="default" size="sm" className="h-6 text-[10px] px-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => onLoadPlaylist(pl.id)}
                 >
-                  <Play className="h-3 w-3 mr-0.5" /> Load & Play
+                  <Play className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.playSongDialog.loadAndPlay')}
                 </Button>
               </div>
             ))}
@@ -494,7 +497,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
         {tab === 'history' && (
           <div className="flex-1 max-h-[400px] overflow-y-auto">
             {history.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No music requests found. Use !play in chat to build history.</p>
+              <p className="text-xs text-muted-foreground text-center py-8">{t('pages.musicBots.playSongDialog.noHistory')}</p>
             ) : history.map((req: any) => (
               <div key={req.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 transition-colors rounded-sm group">
                 <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -504,15 +507,15 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
                 <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button variant="default" size="sm" className="h-6 text-[10px] px-2"
                     onClick={() => onPlayUrl(req.url)}
-                    title="Play this now, interrupting whatever is running"
+                    title={t('pages.musicBots.playSongDialog.playNowHint')}
                   >
-                    <Play className="h-3 w-3 mr-0.5" /> Play
+                    <Play className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.playSongDialog.play')}
                   </Button>
                   <Button variant="outline" size="sm" className="h-6 text-[10px] px-2"
                     onClick={() => onQueueUrl(req.url)}
-                    title="Play this after whatever is running"
+                    title={t('pages.musicBots.playSongDialog.queueAfterHint')}
                   >
-                    <Plus className="h-3 w-3 mr-0.5" /> Queue
+                    <Plus className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.playSongDialog.queue')}
                   </Button>
                 </div>
               </div>
@@ -521,7 +524,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
         )}
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+          <Button variant="outline" size="sm" onClick={onClose}>{t('pages.musicBots.playSongDialog.close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -540,6 +543,7 @@ function AvatarPicker({ botId, hasAvatar, localFile, onPick, onRemove }: {
   onPick: (file: File | null) => void;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [remoteUrl, setRemoteUrl] = useState<string | null>(null);
   const localUrl = localFile ? URL.createObjectURL(localFile) : null;
@@ -563,7 +567,7 @@ function AvatarPicker({ botId, hasAvatar, localFile, onPick, onRemove }: {
     <div className="flex items-center gap-3">
       <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
         {previewUrl ? (
-          <img src={previewUrl} alt="Avatar" className="h-full w-full object-cover" />
+          <img src={previewUrl} alt={t('pages.musicBots.avatarPicker.alt')} className="h-full w-full object-cover" />
         ) : (
           <UserRound className="h-6 w-6 text-muted-foreground" />
         )}
@@ -571,15 +575,15 @@ function AvatarPicker({ botId, hasAvatar, localFile, onPick, onRemove }: {
       <div className="flex flex-col gap-1">
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-            <ImageIcon className="h-3.5 w-3.5 mr-1" /> {previewUrl ? 'Change' : 'Upload'}
+            <ImageIcon className="h-3.5 w-3.5 mr-1" /> {previewUrl ? t('pages.musicBots.avatarPicker.change') : t('pages.musicBots.avatarPicker.upload')}
           </Button>
           {previewUrl && (
             <Button type="button" variant="ghost" size="sm" onClick={() => { onRemove(); onPick(null); }}>
-              <X className="h-3.5 w-3.5 mr-1" /> Remove
+              <X className="h-3.5 w-3.5 mr-1" /> {t('pages.musicBots.avatarPicker.remove')}
             </Button>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground">PNG/JPEG/GIF/WebP (your TS server's own size limit applies - you'll see a warning if it rejects the file)</p>
+        <p className="text-[11px] text-muted-foreground">{t('pages.musicBots.avatarPicker.sizeHint')}</p>
       </div>
       <input
         ref={fileInputRef}
@@ -595,6 +599,7 @@ function AvatarPicker({ botId, hasAvatar, localFile, onPick, onRemove }: {
 // ─── Bots Tab ────────────────────────────────────────────────────────────────
 
 function BotsTab() {
+  const { t } = useTranslation();
   const { data, isLoading } = useMusicBots();
   const { data: servers } = useServers();
   const { selectedConfigId } = useServerStore();
@@ -635,7 +640,7 @@ function BotsTab() {
 
   const handleCreate = () => {
     const configId = parseInt(form.serverConfigId);
-    if (!configId) { toast.error('Please select a server'); return; }
+    if (!configId) { toast.error(t('pages.musicBots.botsTab.selectServerError')); return; }
     createBot.mutate({
       name: form.name,
       serverConfigId: configId,
@@ -652,7 +657,7 @@ function BotsTab() {
       autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
     }, {
       onSuccess: (result: { id: number }) => {
-        toast.success('Music bot created');
+        toast.success(t('pages.musicBots.botsTab.botCreated'));
         if (avatarFile) {
           uploadAvatar.mutate({ id: result.id, file: avatarFile }, {
             onSuccess: (r: { warning?: string }) => { if (r?.warning) toast.warning(r.warning); },
@@ -661,7 +666,7 @@ function BotsTab() {
         setShowCreate(false);
         resetForm();
       },
-      onError: () => toast.error('Failed to create bot'),
+      onError: () => toast.error(t('pages.musicBots.botsTab.createFailed')),
     });
   };
 
@@ -682,7 +687,7 @@ function BotsTab() {
       autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
     }}, {
       onSuccess: () => {
-        toast.success('Bot updated');
+        toast.success(t('pages.musicBots.botsTab.botUpdated'));
         if (avatarFile) {
           uploadAvatar.mutate({ id: editBot.id, file: avatarFile }, {
             onSuccess: (r: { warning?: string }) => { if (r?.warning) toast.warning(r.warning); },
@@ -691,7 +696,7 @@ function BotsTab() {
         else if (avatarRemoved) deleteAvatar.mutate(editBot.id);
         setEditBot(null);
       },
-      onError: () => toast.error('Failed to update bot'),
+      onError: () => toast.error(t('pages.musicBots.botsTab.updateFailed')),
     });
   };
 
@@ -707,14 +712,14 @@ function BotsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{bots.length} music bot{bots.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-muted-foreground">{t('pages.musicBots.botsTab.botsCount', { count: bots.length })}</p>
         <Button size="sm" onClick={() => { resetForm(); setShowCreate(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> New Bot
+          <Plus className="h-4 w-4 mr-1" /> {t('pages.musicBots.botsTab.newBot')}
         </Button>
       </div>
 
       {bots.length === 0 ? (
-        <EmptyState icon={Music} title="No music bots yet" description="Create your first voice bot to play music on your TeamSpeak server." />
+        <EmptyState icon={Music} title={t('pages.musicBots.botsTab.noBotsYetTitle')} description={t('pages.musicBots.botsTab.noBotsYetDescription')} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {bots.map((bot: MusicBotSummary) => (
@@ -751,16 +756,16 @@ function BotsTab() {
       {/* Create / Edit Dialog */}
       <Dialog open={showCreate || editBot !== null} onOpenChange={(open) => { if (!open) { setShowCreate(false); setEditBot(null); } }}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editBot ? 'Edit Music Bot' : 'New Music Bot'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editBot ? t('pages.musicBots.botsTab.editBotTitle') : t('pages.musicBots.botsTab.newBotTitle')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
               <p className="text-xs text-amber-500">
-                An avatar this bot uploads currently shows correctly to TS6 clients, but not TS3 clients — a confirmed TS6 server bug, not this fork.{' '}
-                <a href="https://github.com/teamspeak/teamspeak6-server/issues/122" target="_blank" rel="noreferrer" className="underline">Reported upstream</a>.
+                {t('pages.musicBots.botsTab.avatarBugNoticePrefix')}{' '}
+                <a href="https://github.com/teamspeak/teamspeak6-server/issues/122" target="_blank" rel="noreferrer" className="underline">{t('pages.musicBots.botsTab.reportedUpstream')}</a>.
               </p>
             </div>
             <div>
-              <Label className="text-xs mb-1.5 block">Avatar</Label>
+              <Label className="text-xs mb-1.5 block">{t('pages.musicBots.botsTab.avatarLabel')}</Label>
               <AvatarPicker
                 botId={editBot?.id ?? null}
                 hasAvatar={!!editBot?.hasAvatar && !avatarRemoved}
@@ -770,14 +775,14 @@ function BotsTab() {
               />
             </div>
             <div>
-              <Label className="text-xs">Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My Music Bot" />
+              <Label className="text-xs">{t('pages.musicBots.shared.name')}</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('pages.musicBots.botsTab.namePlaceholder')} />
             </div>
             {!editBot && (
               <div>
-                <Label className="text-xs">Server</Label>
+                <Label className="text-xs">{t('pages.musicBots.botsTab.serverLabel')}</Label>
                 <Select value={form.serverConfigId} onValueChange={(v) => setForm({ ...form, serverConfigId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select server..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('pages.musicBots.botsTab.selectServerPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {serverList.map((s: any) => (
                       <SelectItem key={s.id} value={String(s.id)}>{s.name} ({s.host})</SelectItem>
@@ -787,37 +792,37 @@ function BotsTab() {
               </div>
             )}
             <div>
-              <Label className="text-xs">Voice Port</Label>
+              <Label className="text-xs">{t('pages.musicBots.botsTab.voicePortLabel')}</Label>
               <Input type="number" value={form.voicePort} onChange={(e) => setForm({ ...form, voicePort: parseInt(e.target.value) || 9987 })} placeholder="9987" />
             </div>
             <div>
-              <Label className="text-xs">Nickname</Label>
+              <Label className="text-xs">{t('pages.musicBots.botsTab.nicknameLabel')}</Label>
               <Input value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} placeholder="MusicBot" />
             </div>
             <div>
-              <Label className="text-xs">Server Password</Label>
-              <Input type="password" value={form.serverPassword} onChange={(e) => setForm({ ...form, serverPassword: e.target.value })} placeholder="Leave empty if none" />
+              <Label className="text-xs">{t('pages.musicBots.botsTab.serverPasswordLabel')}</Label>
+              <Input type="password" value={form.serverPassword} onChange={(e) => setForm({ ...form, serverPassword: e.target.value })} placeholder={t('pages.musicBots.botsTab.leaveEmptyIfNone')} />
             </div>
             <div>
-              <Label className="text-xs">Default Channel</Label>
-              <Input value={form.defaultChannel} onChange={(e) => setForm({ ...form, defaultChannel: e.target.value })} placeholder="Channel name or ID (optional)" />
+              <Label className="text-xs">{t('pages.musicBots.botsTab.defaultChannelLabel')}</Label>
+              <Input value={form.defaultChannel} onChange={(e) => setForm({ ...form, defaultChannel: e.target.value })} placeholder={t('pages.musicBots.botsTab.defaultChannelPlaceholder')} />
             </div>
             <div>
-              <Label className="text-xs">Channel Password</Label>
-              <Input type="password" value={form.channelPassword} onChange={(e) => setForm({ ...form, channelPassword: e.target.value })} placeholder="Leave empty if none" />
+              <Label className="text-xs">{t('pages.musicBots.botsTab.channelPasswordLabel')}</Label>
+              <Input type="password" value={form.channelPassword} onChange={(e) => setForm({ ...form, channelPassword: e.target.value })} placeholder={t('pages.musicBots.botsTab.leaveEmptyIfNone')} />
             </div>
             <div>
-              <Label className="text-xs">Volume ({form.volume}%)</Label>
+              <Label className="text-xs">{t('pages.musicBots.botsTab.volumeLabel', { percent: form.volume })}</Label>
               <Slider value={[form.volume]} max={100} step={1} onValueChange={([v]) => setForm({ ...form, volume: v })} />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.autoStart} onCheckedChange={(v) => setForm({ ...form, autoStart: v })} />
-              <Label className="text-xs">Auto-start on server startup</Label>
+              <Label className="text-xs">{t('pages.musicBots.botsTab.autoStartLabel')}</Label>
             </div>
             <div>
-              <Label className="text-xs">Autoplay on Connect</Label>
+              <Label className="text-xs">{t('pages.musicBots.botsTab.autoplayLabel')}</Label>
               <p className="text-[11px] text-muted-foreground mb-1.5">
-                Starts on its own every time this bot connects (manual start, server restart, or a reconnect) - only while it's coming up idle, never interrupting something already queued.
+                {t('pages.musicBots.botsTab.autoplayHint')}
               </p>
               <Select
                 value={form.autoplayMode}
@@ -825,14 +830,14 @@ function BotsTab() {
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Off</SelectItem>
-                  <SelectItem value="song">Play a song</SelectItem>
-                  <SelectItem value="radio">Play a radio station</SelectItem>
+                  <SelectItem value="none">{t('pages.musicBots.botsTab.autoplayOff')}</SelectItem>
+                  <SelectItem value="song">{t('pages.musicBots.botsTab.autoplaySong')}</SelectItem>
+                  <SelectItem value="radio">{t('pages.musicBots.botsTab.autoplayRadio')}</SelectItem>
                 </SelectContent>
               </Select>
               {form.autoplayMode === 'song' && (
                 <Select value={form.autoplaySongId} onValueChange={(v) => setForm({ ...form, autoplaySongId: v })}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a song..." /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder={t('pages.musicBots.botsTab.chooseSongPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {((autoplaySongs as SongInfo[] | undefined) ?? [])
                       .filter((s) => s.mediaType === 'audio')
@@ -844,7 +849,7 @@ function BotsTab() {
               )}
               {form.autoplayMode === 'radio' && (
                 <Select value={form.autoplayRadioStationId} onValueChange={(v) => setForm({ ...form, autoplayRadioStationId: v })}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a station..." /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder={t('pages.musicBots.botsTab.chooseStationPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {((autoplayStations as RadioStationInfo[] | undefined) ?? []).map((s) => (
                       <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
@@ -854,11 +859,11 @@ function BotsTab() {
               )}
             </div>
             <div>
-              <Label className="text-xs">Description Template</Label>
+              <Label className="text-xs">{t('pages.musicBots.botsTab.descriptionTemplateLabel')}</Label>
               <Textarea
                 value={form.descriptionTemplate}
                 onChange={(e) => setForm({ ...form, descriptionTemplate: e.target.value })}
-                placeholder="e.g. Now playing: {title} ({remaining} left)"
+                placeholder={t('pages.musicBots.botsTab.descriptionTemplatePlaceholder')}
                 rows={2}
                 className="text-sm"
               />
@@ -874,7 +879,7 @@ function BotsTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowCreate(false); setEditBot(null); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setShowCreate(false); setEditBot(null); }}>{t('pages.musicBots.shared.cancel')}</Button>
             <Button
               onClick={editBot ? handleUpdate : handleCreate}
               disabled={
@@ -883,7 +888,7 @@ function BotsTab() {
                 || (form.autoplayMode === 'radio' && !form.autoplayRadioStationId)
               }
             >
-              {editBot ? 'Save' : 'Create'}
+              {editBot ? t('pages.musicBots.botsTab.save') : t('pages.musicBots.shared.create')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -893,10 +898,10 @@ function BotsTab() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete Music Bot?"
-        description="This will permanently delete this music bot and disconnect it from the server."
+        title={t('pages.musicBots.botsTab.deleteBotTitle')}
+        description={t('pages.musicBots.botsTab.deleteBotDescription')}
         onConfirm={() => {
-          if (deleteId) deleteBot.mutate(deleteId, { onSuccess: () => { toast.success('Bot deleted'); setDeleteId(null); } });
+          if (deleteId) deleteBot.mutate(deleteId, { onSuccess: () => { toast.success(t('pages.musicBots.botsTab.botDeleted')); setDeleteId(null); } });
         }}
         destructive
       />
@@ -908,16 +913,16 @@ function BotsTab() {
         onPlaySong={(songId) => {
           if (showPlayDialog) {
             playSong.mutate({ botId: showPlayDialog, songId }, {
-              onSuccess: () => { toast.success('Playing'); setShowPlayDialog(null); },
-              onError: () => toast.error('Failed to play song'),
+              onSuccess: () => { toast.success(t('pages.musicBots.botsTab.playing')); setShowPlayDialog(null); },
+              onError: () => toast.error(t('pages.musicBots.botsTab.playSongFailed')),
             });
           }
         }}
         onPlayUrl={(url) => {
           if (showPlayDialog) {
             playUrl.mutate({ botId: showPlayDialog, url, mode: 'now' }, {
-              onSuccess: () => { toast.success('Playing URL'); setShowPlayDialog(null); },
-              onError: () => toast.error('Failed to play URL'),
+              onSuccess: () => { toast.success(t('pages.musicBots.botsTab.playingUrl')); setShowPlayDialog(null); },
+              onError: () => toast.error(t('pages.musicBots.botsTab.playUrlFailed')),
             });
           }
         }}
@@ -927,25 +932,25 @@ function BotsTab() {
               // Queueing into silence starts playback instead, so say which
               // of the two actually happened rather than always claiming one.
               onSuccess: (res) => toast.success(
-                res?.queued ? `Added to queue (position #${res.position})` : 'Playing URL',
+                res?.queued ? t('pages.musicBots.botsTab.addedToQueuePosition', { position: res.position }) : t('pages.musicBots.botsTab.playingUrl'),
               ),
-              onError: () => toast.error('Failed to queue URL'),
+              onError: () => toast.error(t('pages.musicBots.botsTab.queueUrlFailed')),
             });
           }
         }}
         onEnqueue={(songId) => {
           if (showPlayDialog) {
             enqueueSong.mutate({ botId: showPlayDialog, songId }, {
-              onSuccess: () => toast.success('Added to queue'),
-              onError: () => toast.error('Failed to enqueue'),
+              onSuccess: () => toast.success(t('pages.musicBots.botsTab.addedToQueue')),
+              onError: () => toast.error(t('pages.musicBots.botsTab.enqueueFailed')),
             });
           }
         }}
         onLoadPlaylist={(playlistId) => {
           if (showPlayDialog) {
             loadPlaylist.mutate({ botId: showPlayDialog, playlistId, clearFirst: true }, {
-              onSuccess: () => { toast.success('Playlist loaded'); setShowPlayDialog(null); },
-              onError: () => toast.error('Failed to load playlist'),
+              onSuccess: () => { toast.success(t('pages.musicBots.botsTab.playlistLoaded')); setShowPlayDialog(null); },
+              onError: () => toast.error(t('pages.musicBots.botsTab.loadPlaylistFailed')),
             });
           }
         }}
@@ -957,6 +962,7 @@ function BotsTab() {
 // ─── Library Tab ─────────────────────────────────────────────────────────────
 
 function LibraryTab() {
+  const { t } = useTranslation();
   const { selectedConfigId } = useServerStore();
   const { data: servers } = useServers();
   const [libServerId, setLibServerId] = useState<number | null>(selectedConfigId);
@@ -1002,16 +1008,16 @@ function LibraryTab() {
   const handlePlaySong = (song: SongInfo) => {
     if (!selectedBotId) return;
     playSong.mutate({ botId: selectedBotId, songId: song.id }, {
-      onSuccess: () => toast.success(`Playing: ${song.title}`),
-      onError: () => toast.error('Failed to play song'),
+      onSuccess: () => toast.success(t('pages.musicBots.libraryTab.playingTitle', { title: song.title })),
+      onError: () => toast.error(t('pages.musicBots.botsTab.playSongFailed')),
     });
   };
 
   const handleEnqueueSong = (song: SongInfo) => {
     if (!selectedBotId) return;
     enqueueSong.mutate({ botId: selectedBotId, songId: song.id }, {
-      onSuccess: () => toast.success(`Added to queue: ${song.title}`),
-      onError: () => toast.error('Failed to add to queue'),
+      onSuccess: () => toast.success(t('pages.musicBots.libraryTab.addedToQueueTitle', { title: song.title })),
+      onError: () => toast.error(t('pages.musicBots.libraryTab.addToQueueFailed')),
     });
   };
 
@@ -1023,8 +1029,8 @@ function LibraryTab() {
     const source = fileBasename(song.filePath);
     if (isStreaming) {
       setStreamSource.mutate({ botId: selectedBotId, source }, {
-        onSuccess: () => toast.success(`Switched stream to: ${song.title}`),
-        onError: () => toast.error('Failed to switch stream'),
+        onSuccess: () => toast.success(t('pages.musicBots.libraryTab.switchedStreamTo', { title: song.title })),
+        onError: () => toast.error(t('pages.musicBots.libraryTab.switchStreamFailed')),
       });
     } else {
       startStream.mutate({
@@ -1034,8 +1040,8 @@ function LibraryTab() {
         framerate: streamDefaults?.framerate,
         bitrate: streamDefaults?.bitrate,
       }, {
-        onSuccess: () => toast.success(`Streaming: ${song.title}`),
-        onError: () => toast.error('Failed to start stream'),
+        onSuccess: () => toast.success(t('pages.musicBots.libraryTab.streamingTitle', { title: song.title })),
+        onError: () => toast.error(t('pages.musicBots.libraryTab.startStreamFailed')),
       });
     }
   };
@@ -1043,8 +1049,8 @@ function LibraryTab() {
   const handleQueueVideo = (song: SongInfo) => {
     if (!selectedBotId) return;
     queueVideo.mutate({ botId: selectedBotId, source: fileBasename(song.filePath), title: song.title }, {
-      onSuccess: () => toast.success(`Added to stream queue: ${song.title}`),
-      onError: () => toast.error('Failed to add to stream queue'),
+      onSuccess: () => toast.success(t('pages.musicBots.libraryTab.addedToStreamQueue', { title: song.title })),
+      onError: () => toast.error(t('pages.musicBots.libraryTab.addToStreamQueueFailed')),
     });
   };
 
@@ -1099,8 +1105,8 @@ function LibraryTab() {
       formData.append('file', file);
       formData.append('mediaType', mediaType);
       uploadSong.mutate({ configId, formData }, {
-        onSuccess: () => toast.success(`Uploaded: ${file.name}`),
-        onError: () => toast.error(`Failed to upload: ${file.name}`),
+        onSuccess: () => toast.success(t('pages.musicBots.libraryTab.uploadedFile', { name: file.name })),
+        onError: () => toast.error(t('pages.musicBots.libraryTab.uploadFileFailed', { name: file.name })),
       });
     });
     e.target.value = '';
@@ -1113,15 +1119,15 @@ function LibraryTab() {
         setYtResults(Array.isArray(data) ? data : data?.results || []);
         setShowYt(true);
       },
-      onError: () => toast.error('YouTube search failed'),
+      onError: () => toast.error(t('pages.musicBots.libraryTab.youtubeSearchFailed')),
     });
   };
 
   const handleYtDownload = (url: string) => {
     if (!configId) return;
     ytDownload.mutate({ configId, url }, {
-      onSuccess: () => toast.success('Download started'),
-      onError: () => toast.error('Download failed'),
+      onSuccess: () => toast.success(t('pages.musicBots.libraryTab.downloadStarted')),
+      onError: () => toast.error(t('pages.musicBots.libraryTab.downloadFailed')),
     });
   };
 
@@ -1142,7 +1148,7 @@ function LibraryTab() {
           setSelectedUrlIds(new Set(data.items.map((i: any) => i.id)));
         }
       },
-      onError: () => toast.error('Failed to load URL info'),
+      onError: () => toast.error(t('pages.musicBots.libraryTab.loadUrlInfoFailed')),
     });
   };
 
@@ -1150,16 +1156,16 @@ function LibraryTab() {
     if (!configId || !urlInfo) return;
     const ids = Array.from(selectedUrlIds);
     const urls = ids.map((id) => `https://youtube.com/watch?v=${id}`);
-    setBatchProgress(`Downloading 0/${urls.length}...`);
+    setBatchProgress(t('pages.musicBots.libraryTab.downloadingProgress', { done: 0, total: urls.length }));
     ytBatchDownload.mutate({ configId, urls }, {
       onSuccess: (data: any) => {
         setBatchProgress(null);
-        toast.success(`Downloaded ${data.downloaded}/${data.total} songs`);
-        if (data.errors?.length) toast.error(`${data.errors.length} failed`);
+        toast.success(t('pages.musicBots.libraryTab.downloadedCount', { done: data.downloaded, total: data.total }));
+        if (data.errors?.length) toast.error(t('pages.musicBots.libraryTab.failedCount', { count: data.errors.length }));
         setUrlInfo(null);
         setYtUrl('');
       },
-      onError: () => { setBatchProgress(null); toast.error('Batch download failed'); },
+      onError: () => { setBatchProgress(null); toast.error(t('pages.musicBots.libraryTab.batchDownloadFailed')); },
     });
   };
 
@@ -1172,15 +1178,21 @@ function LibraryTab() {
   };
 
   if (!configId) {
-    return <EmptyState icon={Music} title="Select a server" description="Choose a server to manage its music library." />;
+    return <EmptyState icon={Music} title={t('pages.musicBots.libraryTab.selectServerTitle')} description={t('pages.musicBots.libraryTab.selectServerDescription')} />;
   }
+
+  const typeFilterLabels: Record<'all' | 'audio' | 'video', string> = {
+    all: t('pages.musicBots.libraryTab.filterAll'),
+    audio: t('pages.musicBots.libraryTab.filterAudio'),
+    video: t('pages.musicBots.libraryTab.filterVideo'),
+  };
 
   return (
     <div className="space-y-4">
       {/* Server selector + actions */}
       <div className="flex items-center gap-2 flex-wrap">
         <Select value={String(configId)} onValueChange={(v) => setLibServerId(parseInt(v))}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Server..." /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue placeholder={t('pages.musicBots.shared.serverPlaceholder')} /></SelectTrigger>
           <SelectContent>
             {serverList.map((s: any) => (
               <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
@@ -1188,30 +1200,30 @@ function LibraryTab() {
           </SelectContent>
         </Select>
         <div className="flex items-center gap-1 rounded-md border p-0.5">
-          {(['all', 'audio', 'video'] as const).map((t) => (
+          {(['all', 'audio', 'video'] as const).map((typeKey) => (
             <Button
-              key={t}
-              variant={typeFilter === t ? 'default' : 'ghost'}
+              key={typeKey}
+              variant={typeFilter === typeKey ? 'default' : 'ghost'}
               size="sm"
               className="h-7 px-2 text-xs capitalize"
-              onClick={() => setTypeFilter(t)}
+              onClick={() => setTypeFilter(typeKey)}
             >
-              {t === 'audio' && <FileAudio className="h-3 w-3 mr-1" />}
-              {t === 'video' && <Video className="h-3 w-3 mr-1" />}
-              {t}
+              {typeKey === 'audio' && <FileAudio className="h-3 w-3 mr-1" />}
+              {typeKey === 'video' && <Video className="h-3 w-3 mr-1" />}
+              {typeFilterLabels[typeKey]}
             </Button>
           ))}
         </div>
 
         <Separator orientation="vertical" className="h-6" />
 
-        <Label className="text-xs text-muted-foreground">Play on:</Label>
+        <Label className="text-xs text-muted-foreground">{t('pages.musicBots.shared.playOn')}</Label>
         <Select
           value={selectedBotId ? String(selectedBotId) : ''}
           onValueChange={(v) => setSelectedBotId(parseInt(v))}
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder={runningBots.length === 0 ? 'No running bots' : 'Select bot...'} />
+            <SelectValue placeholder={runningBots.length === 0 ? t('pages.musicBots.shared.noRunningBots') : t('pages.musicBots.shared.selectBotPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             {runningBots.map((b: MusicBotSummary) => (
@@ -1224,12 +1236,12 @@ function LibraryTab() {
         <Input
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Filter songs..."
+          placeholder={t('pages.musicBots.shared.filterSongsPlaceholder')}
           className="w-48"
         />
         <input ref={fileInputRef} type="file" accept="audio/*,video/*" multiple hidden onChange={handleUpload} />
         <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadSong.isPending}>
-          <Upload className="h-4 w-4 mr-1" /> {uploadSong.isPending ? 'Uploading...' : 'Upload'}
+          <Upload className="h-4 w-4 mr-1" /> {uploadSong.isPending ? t('pages.musicBots.libraryTab.uploading') : t('pages.musicBots.libraryTab.upload')}
         </Button>
         <Button
           variant="outline"
@@ -1240,16 +1252,16 @@ function LibraryTab() {
             scanLibrary.mutate(configId, {
               onSuccess: (result) => {
                 const parts: string[] = [];
-                if (result.added > 0) parts.push(`found ${result.added} new file(s)`);
-                if (result.healed > 0) parts.push(`fixed ${result.healed} title(s)`);
-                toast.success(parts.length > 0 ? parts.join(', ') : 'No new files found');
+                if (result.added > 0) parts.push(t('pages.musicBots.libraryTab.foundNewFiles', { count: result.added }));
+                if (result.healed > 0) parts.push(t('pages.musicBots.libraryTab.fixedTitles', { count: result.healed }));
+                toast.success(parts.length > 0 ? parts.join(', ') : t('pages.musicBots.libraryTab.noNewFilesFound'));
               },
-              onError: () => toast.error('Scan failed'),
+              onError: () => toast.error(t('pages.musicBots.libraryTab.scanFailed')),
             });
           }}
-          title="Scan for audio/video files already in the music folder (e.g. shared with another app)"
+          title={t('pages.musicBots.libraryTab.scanHint')}
         >
-          <RefreshCw className={`h-4 w-4 mr-1 ${scanLibrary.isPending ? 'animate-spin' : ''}`} /> {scanLibrary.isPending ? 'Scanning...' : 'Scan for New Files'}
+          <RefreshCw className={`h-4 w-4 mr-1 ${scanLibrary.isPending ? 'animate-spin' : ''}`} /> {scanLibrary.isPending ? t('pages.musicBots.libraryTab.scanning') : t('pages.musicBots.libraryTab.scanForNewFiles')}
         </Button>
       </div>
 
@@ -1263,13 +1275,13 @@ function LibraryTab() {
                 value={ytUrl}
                 onChange={(e) => setYtUrl(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleLoadUrl()}
-                placeholder="Paste YouTube URL or Playlist URL..."
+                placeholder={t('pages.musicBots.libraryTab.pasteUrlPlaceholder')}
                 className="pl-9"
               />
             </div>
             <Button variant="outline" size="sm" onClick={handleLoadUrl} disabled={ytInfo.isPending || !ytUrl.trim()}>
               {ytInfo.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Film className="h-4 w-4 mr-1" />}
-              Load
+              {t('pages.musicBots.libraryTab.load')}
             </Button>
             {urlInfo && (
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setUrlInfo(null); setYtUrl(''); }}>
@@ -1283,28 +1295,28 @@ function LibraryTab() {
             <div className="space-y-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {urlInfo.type === 'playlist' ? `Playlist (${urlInfo.items.length} videos)` : 'Single Video'}
+                  {urlInfo.type === 'playlist' ? t('pages.musicBots.libraryTab.playlistVideosCount', { count: urlInfo.items.length }) : t('pages.musicBots.libraryTab.singleVideo')}
                 </Badge>
                 {urlInfo.type === 'playlist' && (
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="h-6 text-[10px]"
                       onClick={() => setSelectedUrlIds(new Set(urlInfo.items.map((i) => i.id)))}
                     >
-                      Select All
+                      {t('pages.musicBots.libraryTab.selectAll')}
                     </Button>
                     <Button variant="ghost" size="sm" className="h-6 text-[10px]"
                       onClick={() => setSelectedUrlIds(new Set())}
                     >
-                      Deselect All
+                      {t('pages.musicBots.libraryTab.deselectAll')}
                     </Button>
                     <Button variant="default" size="sm" className="h-7 text-xs"
                       onClick={handleBatchDownload}
                       disabled={selectedUrlIds.size === 0 || ytBatchDownload.isPending}
                     >
                       {ytBatchDownload.isPending ? (
-                        <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {batchProgress || 'Downloading...'}</>
+                        <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {batchProgress || t('pages.musicBots.libraryTab.downloading')}</>
                       ) : (
-                        <><Download className="h-3 w-3 mr-1" /> Download {selectedUrlIds.size} Selected</>
+                        <><Download className="h-3 w-3 mr-1" /> {t('pages.musicBots.libraryTab.downloadSelectedCount', { count: selectedUrlIds.size })}</>
                       )}
                     </Button>
                   </div>
@@ -1341,7 +1353,7 @@ function LibraryTab() {
                         onClick={(e) => { e.stopPropagation(); handleYtDownload(`https://youtube.com/watch?v=${item.id}`); }}
                         disabled={ytDownload.isPending}
                       >
-                        <Download className="h-3 w-3 mr-1" /> Download
+                        <Download className="h-3 w-3 mr-1" /> {t('pages.musicBots.libraryTab.download')}
                       </Button>
                     )}
                   </div>
@@ -1360,13 +1372,13 @@ function LibraryTab() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleYtSearch()}
-            placeholder="Search YouTube..."
+            placeholder={t('pages.musicBots.libraryTab.searchYoutubePlaceholder')}
             className="pl-9"
           />
         </div>
         <Button variant="outline" size="sm" onClick={handleYtSearch} disabled={ytSearch.isPending || !searchQuery.trim()}>
           {ytSearch.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Film className="h-4 w-4 mr-1" />}
-          Search
+          {t('pages.musicBots.libraryTab.search')}
         </Button>
       </div>
 
@@ -1375,7 +1387,7 @@ function LibraryTab() {
         <Card className="card-hero">
           <CardHeader className="py-2 px-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xs">YouTube Results ({ytResults.length})</CardTitle>
+              <CardTitle className="text-xs">{t('pages.musicBots.libraryTab.youtubeResultsCount', { count: ytResults.length })}</CardTitle>
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowYt(false)}>
                 <X className="h-3.5 w-3.5" />
               </Button>
@@ -1396,7 +1408,7 @@ function LibraryTab() {
                     onClick={() => handleYtDownload(`https://youtube.com/watch?v=${r.id}`)}
                     disabled={ytDownload.isPending}
                   >
-                    <Download className="h-3 w-3 mr-1" /> Download
+                    <Download className="h-3 w-3 mr-1" /> {t('pages.musicBots.libraryTab.download')}
                   </Button>
                 </div>
               ))}
@@ -1407,13 +1419,13 @@ function LibraryTab() {
 
       {runningBots.length === 0 && (
         <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
-          <p className="text-xs text-amber-500">Start a music bot first to play or stream files from the library.</p>
+          <p className="text-xs text-amber-500">{t('pages.musicBots.libraryTab.startBotToPlayHint')}</p>
         </div>
       )}
 
       {/* Song List */}
       {isLoading ? <PageLoader /> : filtered.length === 0 ? (
-        <EmptyState icon={Music} title="No files yet" description="Upload audio/video files or download from YouTube to build your library." />
+        <EmptyState icon={Music} title={t('pages.musicBots.libraryTab.noFilesYetTitle')} description={t('pages.musicBots.libraryTab.noFilesYetDescription')} />
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto] gap-2 px-3 py-2 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -1422,10 +1434,10 @@ function LibraryTab() {
               className="flex items-center gap-1.5 text-left hover:text-foreground transition-colors"
               onClick={() => toggleSort('title')}
             >
-              Title <SortIcon active={sortBy === 'title'} dir={sortDir} />
+              {t('pages.musicBots.shared.title')} <SortIcon active={sortBy === 'title'} dir={sortDir} />
               {isFetching && (
                 <span className="flex items-center gap-1 normal-case font-normal text-muted-foreground/80">
-                  <RefreshCw className="h-3 w-3 animate-spin" /> Refreshing...
+                  <RefreshCw className="h-3 w-3 animate-spin" /> {t('pages.musicBots.libraryTab.refreshing')}
                 </span>
               )}
             </button>
@@ -1434,17 +1446,17 @@ function LibraryTab() {
               className="w-14 flex items-center justify-center gap-1 hover:text-foreground transition-colors"
               onClick={() => toggleSort('type')}
             >
-              Type <SortIcon active={sortBy === 'type'} dir={sortDir} />
+              {t('pages.musicBots.libraryTab.colType')} <SortIcon active={sortBy === 'type'} dir={sortDir} />
             </button>
             <button
               type="button"
               className="w-20 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
               onClick={() => toggleSort('duration')}
             >
-              Duration <SortIcon active={sortBy === 'duration'} dir={sortDir} />
+              {t('pages.musicBots.shared.duration')} <SortIcon active={sortBy === 'duration'} dir={sortDir} />
             </button>
-            <span className="w-16 text-center">Source</span>
-            <span className="w-16 text-right">Size</span>
+            <span className="w-16 text-center">{t('pages.musicBots.shared.source')}</span>
+            <span className="w-16 text-right">{t('pages.musicBots.libraryTab.colSize')}</span>
             <span className="w-20" />
           </div>
           <div className="max-h-[400px] overflow-y-auto">
@@ -1473,7 +1485,7 @@ function LibraryTab() {
                         size="icon"
                         className="h-6 w-6"
                         disabled={!selectedBotId}
-                        title={!selectedBotId ? 'No running bot selected' : song.mediaType === 'video' ? 'Stream options' : 'Play options'}
+                        title={!selectedBotId ? t('pages.musicBots.libraryTab.noBotSelectedHint') : song.mediaType === 'video' ? t('pages.musicBots.libraryTab.streamOptions') : t('pages.musicBots.libraryTab.playOptions')}
                       >
                         {song.mediaType === 'video' ? <Video className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                       </Button>
@@ -1482,23 +1494,23 @@ function LibraryTab() {
                       {song.mediaType === 'video' ? (
                         <>
                           <DropdownMenuItem onClick={() => handleStreamVideo(song)}>
-                            <Video className="mr-2 h-3.5 w-3.5" /> Stream
+                            <Video className="mr-2 h-3.5 w-3.5" /> {t('pages.musicBots.libraryTab.stream')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             disabled={!isStreaming}
-                            title={!isStreaming ? 'Start a stream first' : undefined}
+                            title={!isStreaming ? t('pages.musicBots.libraryTab.startStreamFirst') : undefined}
                             onClick={() => handleQueueVideo(song)}
                           >
-                            <ListMusic className="mr-2 h-3.5 w-3.5" /> Add to Stream Queue
+                            <ListMusic className="mr-2 h-3.5 w-3.5" /> {t('pages.musicBots.libraryTab.addToStreamQueue')}
                           </DropdownMenuItem>
                         </>
                       ) : (
                         <>
                           <DropdownMenuItem onClick={() => handlePlaySong(song)}>
-                            <Play className="mr-2 h-3.5 w-3.5" /> Play
+                            <Play className="mr-2 h-3.5 w-3.5" /> {t('pages.musicBots.playSongDialog.play')}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEnqueueSong(song)}>
-                            <ListMusic className="mr-2 h-3.5 w-3.5" /> Add to Queue
+                            <ListMusic className="mr-2 h-3.5 w-3.5" /> {t('pages.musicBots.libraryTab.addToQueue')}
                           </DropdownMenuItem>
                         </>
                       )}
@@ -1519,11 +1531,11 @@ function LibraryTab() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete File?"
-        description="This will permanently remove this file from the library."
+        title={t('pages.musicBots.libraryTab.deleteFileTitle')}
+        description={t('pages.musicBots.libraryTab.deleteFileDescription')}
         onConfirm={() => {
           if (deleteId && configId) deleteSong.mutate({ configId, songId: deleteId }, {
-            onSuccess: () => { toast.success('Song deleted'); setDeleteId(null); },
+            onSuccess: () => { toast.success(t('pages.musicBots.libraryTab.songDeleted')); setDeleteId(null); },
           });
         }}
         destructive
@@ -1535,6 +1547,7 @@ function LibraryTab() {
 // ─── Playlists Tab ───────────────────────────────────────────────────────────
 
 function PlaylistsTab() {
+  const { t } = useTranslation();
   const { selectedConfigId } = useServerStore();
   const { data, isLoading } = usePlaylists();
   const createPlaylist = useCreatePlaylist();
@@ -1560,8 +1573,8 @@ function PlaylistsTab() {
 
   const handleCreate = () => {
     createPlaylist.mutate({ name: newName }, {
-      onSuccess: () => { toast.success('Playlist created'); setShowCreate(false); setNewName(''); },
-      onError: () => toast.error('Failed to create playlist'),
+      onSuccess: () => { toast.success(t('pages.musicBots.playlistsTab.playlistCreated')); setShowCreate(false); setNewName(''); },
+      onError: () => toast.error(t('pages.musicBots.playlistsTab.createPlaylistFailed')),
     });
   };
 
@@ -1570,9 +1583,9 @@ function PlaylistsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{playlists.length} playlist{playlists.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-muted-foreground">{t('pages.musicBots.playlistsTab.playlistsCount', { count: playlists.length })}</p>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New Playlist
+          <Plus className="h-4 w-4 mr-1" /> {t('pages.musicBots.playlistsTab.newPlaylist')}
         </Button>
       </div>
 
@@ -1580,7 +1593,7 @@ function PlaylistsTab() {
         {/* Playlist list */}
         <div className="space-y-1.5">
           {playlists.length === 0 ? (
-            <EmptyState icon={ListMusic} title="No playlists" description="Create a playlist to organize your songs." />
+            <EmptyState icon={ListMusic} title={t('pages.musicBots.playlistsTab.noPlaylistsTitle')} description={t('pages.musicBots.playlistsTab.noPlaylistsDescription')} />
           ) : playlists.map((pl) => (
             <div
               key={pl.id}
@@ -1592,7 +1605,7 @@ function PlaylistsTab() {
               <ListMusic className={`h-4 w-4 shrink-0 ${selectedId === pl.id ? 'text-primary' : 'text-muted-foreground'}`} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{pl.name}</p>
-                <p className="text-[10px] text-muted-foreground">{pl.songCount} song{pl.songCount !== 1 ? 's' : ''}</p>
+                <p className="text-[10px] text-muted-foreground">{t('pages.musicBots.shared.songsCount', { count: pl.songCount })}</p>
               </div>
               <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive shrink-0"
                 onClick={(e) => { e.stopPropagation(); setDeleteId(pl.id); }}
@@ -1610,13 +1623,13 @@ function PlaylistsTab() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">{detail.name}</CardTitle>
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setShowAddSong(true)}>
-                  <Plus className="h-3 w-3 mr-1" /> Add Songs
+                  <Plus className="h-3 w-3 mr-1" /> {t('pages.musicBots.playlistsTab.addSongs')}
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {detail.songs.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground">No songs in this playlist</div>
+                <div className="py-8 text-center text-xs text-muted-foreground">{t('pages.musicBots.playlistsTab.noSongsInPlaylist')}</div>
               ) : (
                 <div className="max-h-[400px] overflow-y-auto">
                   {detail.songs.map((song: any, i: number) => (
@@ -1629,7 +1642,7 @@ function PlaylistsTab() {
                       <span className="text-[10px] text-muted-foreground">{formatTime(song.duration)}</span>
                       <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive"
                         onClick={() => removeSong.mutate({ playlistId: selectedId, songId: song.id }, {
-                          onSuccess: () => toast.success('Song removed'),
+                          onSuccess: () => toast.success(t('pages.musicBots.playlistsTab.songRemoved')),
                         })}
                       >
                         <X className="h-3 w-3" />
@@ -1642,7 +1655,7 @@ function PlaylistsTab() {
           </Card>
         ) : (
           <div className="flex items-center justify-center text-xs text-muted-foreground py-16">
-            Select a playlist to view its songs
+            {t('pages.musicBots.playlistsTab.selectPlaylistHint')}
           </div>
         )}
       </div>
@@ -1650,16 +1663,16 @@ function PlaylistsTab() {
       {/* Create Playlist Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
-          <DialogHeader><DialogTitle>New Playlist</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.musicBots.playlistsTab.newPlaylistTitle')}</DialogTitle></DialogHeader>
           <div>
-            <Label className="text-xs">Name</Label>
-            <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="My Playlist"
+            <Label className="text-xs">{t('pages.musicBots.shared.name')}</Label>
+            <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('pages.musicBots.playlistsTab.namePlaceholder')}
               onKeyDown={(e) => e.key === 'Enter' && newName && handleCreate()}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newName || createPlaylist.isPending}>Create</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>{t('pages.musicBots.shared.cancel')}</Button>
+            <Button onClick={handleCreate} disabled={!newName || createPlaylist.isPending}>{t('pages.musicBots.shared.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1667,15 +1680,15 @@ function PlaylistsTab() {
       {/* Add Song Dialog */}
       <Dialog open={showAddSong} onOpenChange={setShowAddSong}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Add Songs to Playlist</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.musicBots.playlistsTab.addSongsToPlaylistTitle')}</DialogTitle></DialogHeader>
           <Input
             value={songFilter}
             onChange={(e) => setSongFilter(e.target.value)}
-            placeholder="Filter songs..."
+            placeholder={t('pages.musicBots.shared.filterSongsPlaceholder')}
           />
           <ScrollArea className="max-h-72">
             {availableSongs.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No songs available. Upload songs to the library first.</p>
+              <p className="text-xs text-muted-foreground text-center py-8">{t('pages.musicBots.playlistsTab.noSongsAvailable')}</p>
             ) : availableSongs.map((song) => (
               <div key={song.id} className="flex items-center gap-2 py-1.5 hover:bg-muted/30 transition-colors rounded-sm px-2">
                 <div className="min-w-0 flex-1">
@@ -1685,17 +1698,17 @@ function PlaylistsTab() {
                 <Button variant="outline" size="sm" className="h-6 text-[10px] shrink-0"
                   onClick={() => {
                     if (selectedId) addSong.mutate({ playlistId: selectedId, songId: song.id }, {
-                      onSuccess: () => toast.success('Song added'),
+                      onSuccess: () => toast.success(t('pages.musicBots.playlistsTab.songAdded')),
                     });
                   }}
                 >
-                  <Plus className="h-3 w-3 mr-0.5" /> Add
+                  <Plus className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.shared.add')}
                 </Button>
               </div>
             ))}
           </ScrollArea>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAddSong(false); setSongFilter(''); }}>Done</Button>
+            <Button variant="outline" onClick={() => { setShowAddSong(false); setSongFilter(''); }}>{t('pages.musicBots.shared.done')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1704,12 +1717,12 @@ function PlaylistsTab() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete Playlist?"
-        description="This will permanently delete this playlist."
+        title={t('pages.musicBots.playlistsTab.deletePlaylistTitle')}
+        description={t('pages.musicBots.playlistsTab.deletePlaylistDescription')}
         onConfirm={() => {
           if (deleteId) deletePlaylist.mutate(deleteId, {
             onSuccess: () => {
-              toast.success('Playlist deleted');
+              toast.success(t('pages.musicBots.playlistsTab.playlistDeleted'));
               if (selectedId === deleteId) setSelectedId(null);
               setDeleteId(null);
             },
@@ -1724,6 +1737,7 @@ function PlaylistsTab() {
 // ─── Radio Tab ───────────────────────────────────────────────────────────────
 
 function RadioTab() {
+  const { t } = useTranslation();
   const { selectedConfigId } = useServerStore();
   const { data: servers } = useServers();
   const [serverId, setServerId] = useState<number | null>(selectedConfigId);
@@ -1763,8 +1777,8 @@ function RadioTab() {
       configId,
       data: { name: addForm.name, url: addForm.url, genre: addForm.genre || undefined },
     }, {
-      onSuccess: () => { toast.success('Station added'); setShowAdd(false); setAddForm({ name: '', url: '', genre: '' }); },
-      onError: () => toast.error('Failed to add station'),
+      onSuccess: () => { toast.success(t('pages.musicBots.radioTab.stationAdded')); setShowAdd(false); setAddForm({ name: '', url: '', genre: '' }); },
+      onError: () => toast.error(t('pages.musicBots.radioTab.addStationFailed')),
     });
   };
 
@@ -1774,24 +1788,24 @@ function RadioTab() {
       configId,
       data: { name: preset.name, url: preset.url, genre: preset.genre },
     }, {
-      onSuccess: () => toast.success(`Added: ${preset.name}`),
-      onError: () => toast.error(`Failed to add: ${preset.name}`),
+      onSuccess: () => toast.success(t('pages.musicBots.radioTab.addedName', { name: preset.name })),
+      onError: () => toast.error(t('pages.musicBots.radioTab.addFailedName', { name: preset.name })),
     });
   };
 
   const handlePlay = (stationId: number) => {
     if (!selectedBotId) {
-      toast.error('Select a running bot first');
+      toast.error(t('pages.musicBots.radioTab.selectRunningBotFirst'));
       return;
     }
     playRadio.mutate({ botId: selectedBotId, stationId }, {
-      onSuccess: () => toast.success('Playing radio'),
-      onError: () => toast.error('Failed to play radio'),
+      onSuccess: () => toast.success(t('pages.musicBots.radioTab.playingRadio')),
+      onError: () => toast.error(t('pages.musicBots.radioTab.playRadioFailed')),
     });
   };
 
   if (!configId) {
-    return <EmptyState icon={Radio} title="Select a server" description="Choose a server to manage radio stations." />;
+    return <EmptyState icon={Radio} title={t('pages.musicBots.radioTab.selectServerTitle')} description={t('pages.musicBots.radioTab.selectServerDescription')} />;
   }
 
   return (
@@ -1799,7 +1813,7 @@ function RadioTab() {
       {/* Server + Bot selector */}
       <div className="flex items-center gap-2 flex-wrap">
         <Select value={String(configId)} onValueChange={(v) => setServerId(parseInt(v))}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Server..." /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue placeholder={t('pages.musicBots.shared.serverPlaceholder')} /></SelectTrigger>
           <SelectContent>
             {serverList.map((s: any) => (
               <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
@@ -1809,13 +1823,13 @@ function RadioTab() {
 
         <Separator orientation="vertical" className="h-6" />
 
-        <Label className="text-xs text-muted-foreground">Play on:</Label>
+        <Label className="text-xs text-muted-foreground">{t('pages.musicBots.shared.playOn')}</Label>
         <Select
           value={selectedBotId ? String(selectedBotId) : ''}
           onValueChange={(v) => setSelectedBotId(parseInt(v))}
         >
           <SelectTrigger className="w-48">
-            <SelectValue placeholder={runningBots.length === 0 ? 'No running bots' : 'Select bot...'} />
+            <SelectValue placeholder={runningBots.length === 0 ? t('pages.musicBots.shared.noRunningBots') : t('pages.musicBots.shared.selectBotPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             {runningBots.map((b: MusicBotSummary) => (
@@ -1827,22 +1841,22 @@ function RadioTab() {
         <div className="flex-1" />
 
         <Button variant="outline" size="sm" onClick={() => setShowPresets(true)}>
-          <Radio className="h-4 w-4 mr-1" /> Presets
+          <Radio className="h-4 w-4 mr-1" /> {t('pages.musicBots.radioTab.presets')}
         </Button>
         <Button size="sm" onClick={() => setShowAdd(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Add Station
+          <Plus className="h-4 w-4 mr-1" /> {t('pages.musicBots.radioTab.addStation')}
         </Button>
       </div>
 
       {runningBots.length === 0 && (
         <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
-          <p className="text-xs text-amber-500">Start a music bot first to play radio stations.</p>
+          <p className="text-xs text-amber-500">{t('pages.musicBots.radioTab.startBotToPlayHint')}</p>
         </div>
       )}
 
       {/* Station List */}
       {isLoading ? <PageLoader /> : stationList.length === 0 ? (
-        <EmptyState icon={Radio} title="No radio stations" description="Add stations manually or from presets to start streaming." />
+        <EmptyState icon={Radio} title={t('pages.musicBots.radioTab.noStationsTitle')} description={t('pages.musicBots.radioTab.noStationsDescription')} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {stationList.map((station) => (
@@ -1888,27 +1902,27 @@ function RadioTab() {
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Radio Station</DialogTitle>
-            <DialogDescription>Add a custom internet radio station by providing its stream URL.</DialogDescription>
+            <DialogTitle>{t('pages.musicBots.radioTab.addStationTitle')}</DialogTitle>
+            <DialogDescription>{t('pages.musicBots.radioTab.addStationDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Name</Label>
-              <Input value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="Station name" />
+              <Label className="text-xs">{t('pages.musicBots.shared.name')}</Label>
+              <Input value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder={t('pages.musicBots.radioTab.stationNamePlaceholder')} />
             </div>
             <div>
-              <Label className="text-xs">Stream URL</Label>
-              <Input value={addForm.url} onChange={(e) => setAddForm({ ...addForm, url: e.target.value })} placeholder="https://stream.example.com/live" />
+              <Label className="text-xs">{t('pages.musicBots.radioTab.streamUrlLabel')}</Label>
+              <Input value={addForm.url} onChange={(e) => setAddForm({ ...addForm, url: e.target.value })} placeholder={t('pages.musicBots.radioTab.streamUrlPlaceholder')} />
             </div>
             <div>
-              <Label className="text-xs">Genre (optional)</Label>
-              <Input value={addForm.genre} onChange={(e) => setAddForm({ ...addForm, genre: e.target.value })} placeholder="Pop, Rock, Electronic..." />
+              <Label className="text-xs">{t('pages.musicBots.radioTab.genreLabel')}</Label>
+              <Input value={addForm.genre} onChange={(e) => setAddForm({ ...addForm, genre: e.target.value })} placeholder={t('pages.musicBots.radioTab.genrePlaceholder')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowAdd(false)}>{t('pages.musicBots.shared.cancel')}</Button>
             <Button onClick={handleAddStation} disabled={!addForm.name || !addForm.url || createStation.isPending}>
-              Add Station
+              {t('pages.musicBots.radioTab.addStation')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1918,12 +1932,12 @@ function RadioTab() {
       <Dialog open={showPresets} onOpenChange={setShowPresets}>
         <DialogContent className="max-w-lg max-h-[80vh] flex flex-col overflow-auto">
           <DialogHeader>
-            <DialogTitle>Radio Presets</DialogTitle>
-            <DialogDescription>Add popular radio stations with one click.</DialogDescription>
+            <DialogTitle>{t('pages.musicBots.radioTab.presetsTitle')}</DialogTitle>
+            <DialogDescription>{t('pages.musicBots.radioTab.presetsDescription')}</DialogDescription>
           </DialogHeader>
           <div className="flex-1 max-h-[400px] overflow-y-auto">
             {presetList.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No presets available.</p>
+              <p className="text-xs text-muted-foreground text-center py-8">{t('pages.musicBots.radioTab.noPresetsAvailable')}</p>
             ) : presetList.map((preset, i) => (
               <div key={i} className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 transition-colors rounded-sm">
                 <Radio className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -1935,13 +1949,13 @@ function RadioTab() {
                   onClick={() => handleAddPreset(preset)}
                   disabled={createStation.isPending}
                 >
-                  <Plus className="h-3 w-3 mr-1" /> Add
+                  <Plus className="h-3 w-3 mr-1" /> {t('pages.musicBots.shared.add')}
                 </Button>
               </div>
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPresets(false)}>Done</Button>
+            <Button variant="outline" onClick={() => setShowPresets(false)}>{t('pages.musicBots.shared.done')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1950,11 +1964,11 @@ function RadioTab() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete Radio Station?"
-        description="This will remove this station from your list."
+        title={t('pages.musicBots.radioTab.deleteStationTitle')}
+        description={t('pages.musicBots.radioTab.deleteStationDescription')}
         onConfirm={() => {
           if (deleteId && configId) deleteStation.mutate({ configId, id: deleteId }, {
-            onSuccess: () => { toast.success('Station removed'); setDeleteId(null); },
+            onSuccess: () => { toast.success(t('pages.musicBots.radioTab.stationRemoved')); setDeleteId(null); },
           });
         }}
         destructive
@@ -1966,6 +1980,7 @@ function RadioTab() {
 // ─── Video Streaming Tab ─────────────────────────────────────────────────────
 
 function VideoTab() {
+  const { t } = useTranslation();
   const { data } = useMusicBots();
   const bots = Array.isArray(data) ? data : [];
   const [selectedBotId, setSelectedBotId] = useState<number | null>(null);
@@ -1983,18 +1998,18 @@ function VideoTab() {
   return (
     <div className="space-y-4">
       {bots.length === 0 ? (
-        <EmptyState icon={Video} title="No bots available" description="Create a music bot first, then use it for video streaming." />
+        <EmptyState icon={Video} title={t('pages.musicBots.videoTab.noBotsTitle')} description={t('pages.musicBots.videoTab.noBotsDescription')} />
       ) : (
         <>
           {/* Bot selector */}
           <div className="flex items-center gap-3">
-            <Label className="shrink-0">Select Bot:</Label>
+            <Label className="shrink-0">{t('pages.musicBots.videoTab.selectBotLabel')}</Label>
             <Select
               value={selectedBotId ? String(selectedBotId) : ''}
               onValueChange={(v) => setSelectedBotId(parseInt(v))}
             >
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Choose a bot..." />
+                <SelectValue placeholder={t('pages.musicBots.videoTab.chooseBotPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {bots.map((b: MusicBotSummary) => (
@@ -2009,7 +2024,7 @@ function VideoTab() {
           {selectedBot ? (
             <VideoStreamTab botId={selectedBot.id} botStatus={selectedBot.status} serverConfigId={selectedBot.serverConfigId} />
           ) : (
-            <p className="text-sm text-muted-foreground">Select a bot to manage video streaming.</p>
+            <p className="text-sm text-muted-foreground">{t('pages.musicBots.videoTab.selectBotHint')}</p>
           )}
         </>
       )}
@@ -2020,6 +2035,7 @@ function VideoTab() {
 // ─── Queue Tab ───────────────────────────────────────────────────────────────
 
 function QueueTab() {
+  const { t } = useTranslation();
   const { data: bots } = useMusicBots();
   const [selectedBot, setSelectedBot] = useState<number | null>(null);
   const { data: state } = useMusicBotState(selectedBot);
@@ -2044,9 +2060,9 @@ function QueueTab() {
     <div className="space-y-4">
       {/* Bot selector */}
       <div className="flex items-center gap-3">
-        <Label className="text-xs text-muted-foreground">Bot:</Label>
+        <Label className="text-xs text-muted-foreground">{t('pages.musicBots.queueTab.botLabel')}</Label>
         <Select value={selectedBot ? String(selectedBot) : ''} onValueChange={(v) => setSelectedBot(parseInt(v))}>
-          <SelectTrigger className="w-48 h-8 text-xs"><SelectValue placeholder="Select bot" /></SelectTrigger>
+          <SelectTrigger className="w-48 h-8 text-xs"><SelectValue placeholder={t('pages.musicBots.queueTab.selectBotPlaceholder')} /></SelectTrigger>
           <SelectContent>
             {botList.map((b: any) => (
               <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
@@ -2055,27 +2071,27 @@ function QueueTab() {
         </Select>
         {queue.length > 0 && (
           <div className="flex items-center gap-2 ml-auto">
-            <Badge variant="secondary" className="text-[10px]">{queue.length} tracks</Badge>
+            <Badge variant="secondary" className="text-[10px]">{t('pages.musicBots.queueTab.tracksCount', { count: queue.length })}</Badge>
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => selectedBot && clearQueue.mutate(selectedBot)}>
-              <Trash2 className="h-3 w-3 mr-1" /> Clear
+              <Trash2 className="h-3 w-3 mr-1" /> {t('pages.musicBots.queueTab.clear')}
             </Button>
           </div>
         )}
       </div>
 
       {!selectedBot ? (
-        <EmptyState icon={Music} title="Select a bot to manage its queue" />
+        <EmptyState icon={Music} title={t('pages.musicBots.queueTab.selectBotHint')} />
       ) : queue.length === 0 ? (
-        <EmptyState icon={ListMusic} title="Queue is empty" />
+        <EmptyState icon={ListMusic} title={t('pages.musicBots.queueTab.queueEmpty')} />
       ) : (
         <Card className="card-hero">
           <CardContent className="p-0">
             {/* Header */}
             <div className="grid grid-cols-[2rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-2 px-3 py-2 text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border/50">
               <div>#</div>
-              <div>Title</div>
-              <div className="text-right">Duration</div>
-              <div className="text-right">Source</div>
+              <div>{t('pages.musicBots.shared.title')}</div>
+              <div className="text-right">{t('pages.musicBots.shared.duration')}</div>
+              <div className="text-right">{t('pages.musicBots.shared.source')}</div>
               <div />
               <div />
             </div>
@@ -2094,7 +2110,7 @@ function QueueTab() {
                       <button
                         className="text-xs truncate block text-left hover:text-primary transition-colors w-full"
                         onClick={() => selectedBot && playFromQueue.mutate({ botId: selectedBot, index: i })}
-                        title="Click to play"
+                        title={t('pages.musicBots.queueTab.clickToPlay')}
                       >
                         {item.title}
                       </button>
@@ -2111,7 +2127,7 @@ function QueueTab() {
                         <button
                           className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i - 1 })}
-                          title="Move up"
+                          title={t('pages.musicBots.queueTab.moveUp')}
                         >
                           <GripVertical className="h-3 w-3 rotate-180" />
                         </button>
@@ -2120,7 +2136,7 @@ function QueueTab() {
                         <button
                           className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i + 1 })}
-                          title="Move down"
+                          title={t('pages.musicBots.queueTab.moveDown')}
                         >
                           <GripVertical className="h-3 w-3" />
                         </button>
@@ -2130,7 +2146,7 @@ function QueueTab() {
                       <button
                         className="p-0.5 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                         onClick={() => selectedBot && removeFromQueue.mutate({ botId: selectedBot, index: i })}
-                        title="Remove from queue"
+                        title={t('pages.musicBots.queueTab.removeFromQueue')}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -2147,6 +2163,7 @@ function QueueTab() {
 }
 
 function PermissionsTab() {
+  const { t } = useTranslation();
   const { selectedConfigId } = useServerStore();
   const { data: servers } = useServers();
   const [serverId, setServerId] = useState<number | null>(selectedConfigId);
@@ -2194,18 +2211,18 @@ function PermissionsTab() {
       ? clearCommandPerm.mutateAsync(editingCommand)
       : setCommandPerm.mutateAsync({ command: editingCommand, allowedGroupIds: ids.join(',') });
     mutation.then(
-      () => { toast.success('Permission updated'); setEditingCommand(null); },
-      () => toast.error('Failed to update permission'),
+      () => { toast.success(t('pages.musicBots.permissionsTab.permissionUpdated')); setEditingCommand(null); },
+      () => toast.error(t('pages.musicBots.permissionsTab.permissionUpdateFailed')),
     );
   };
 
   const toggleAdminGroup = (sgid: string) => {
     const next = new Set(adminGroupIds);
     next.has(sgid) ? next.delete(sgid) : next.add(sgid);
-    setAdminGroups.mutate([...next], { onError: () => toast.error('Failed to update admin groups') });
+    setAdminGroups.mutate([...next], { onError: () => toast.error(t('pages.musicBots.permissionsTab.adminGroupsUpdateFailed')) });
   };
 
-  if (!configId) return <EmptyState icon={ShieldCheck} title="No server selected" />;
+  if (!configId) return <EmptyState icon={ShieldCheck} title={t('pages.noServerSelected')} />;
 
   return (
     <div className="space-y-4">
@@ -2223,15 +2240,15 @@ function PermissionsTab() {
       <Card className="card-hero">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-primary" /> Admin Bypass Groups
+            <ShieldCheck className="h-4 w-4 text-primary" /> {t('pages.musicBots.permissionsTab.adminBypassGroups')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground mb-3">
-            Members of any group checked here can use every chat command below, regardless of its individual restriction.
+            {t('pages.musicBots.permissionsTab.adminBypassHint')}
           </p>
           {groups.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No server groups found.</p>
+            <p className="text-sm text-muted-foreground">{t('pages.musicBots.shared.noServerGroupsFound')}</p>
           ) : (
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {groups.map((g: any) => (
@@ -2250,7 +2267,7 @@ function PermissionsTab() {
 
       <Card className="card-hero">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Chat Command Permissions</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('pages.musicBots.permissionsTab.chatCommandPermissions')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? <PageLoader /> : (
@@ -2265,9 +2282,9 @@ function PermissionsTab() {
                       <div className="flex flex-wrap gap-1 mt-1">
                         {ids.length === 0 ? (
                           OPEN_BY_DEFAULT_COMMANDS.has(command) ? (
-                            <Badge variant="secondary" className="text-[10px]">Everyone</Badge>
+                            <Badge variant="secondary" className="text-[10px]">{t('pages.musicBots.permissionsTab.everyone')}</Badge>
                           ) : (
-                            <Badge variant="warning" className="text-[10px]">No group assigned - unusable</Badge>
+                            <Badge variant="warning" className="text-[10px]">{t('pages.musicBots.permissionsTab.noGroupAssigned')}</Badge>
                           )
                         ) : (
                           ids.map((id) => (
@@ -2277,7 +2294,7 @@ function PermissionsTab() {
                       </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => openEdit(command)}>
-                      <Pencil className="h-3 w-3 mr-1" /> Edit
+                      <Pencil className="h-3 w-3 mr-1" /> {t('common.edit')}
                     </Button>
                   </div>
                 );
@@ -2293,8 +2310,8 @@ function PermissionsTab() {
             <DialogTitle>{RESTRICTABLE_COMMANDS.find((c) => c.command === editingCommand)?.label}</DialogTitle>
             <DialogDescription>
               {editingCommand && OPEN_BY_DEFAULT_COMMANDS.has(editingCommand)
-                ? 'Leave everything unchecked to allow everyone (this command\'s default). Otherwise only the checked groups (and any admin bypass group above) may use it.'
-                : 'This command is unusable by anyone until at least one group is checked here - leaving it unchecked is the same as not enabling it yet. Only the checked groups (and any admin bypass group above) may use it.'}
+                ? t('pages.musicBots.permissionsTab.openByDefaultHint')
+                : t('pages.musicBots.permissionsTab.restrictedHint')}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="h-[280px]">
@@ -2315,12 +2332,12 @@ function PermissionsTab() {
                   {g.name}
                 </label>
               ))}
-              {groups.length === 0 && <p className="text-sm text-muted-foreground">No server groups found.</p>}
+              {groups.length === 0 && <p className="text-sm text-muted-foreground">{t('pages.musicBots.shared.noServerGroupsFound')}</p>}
             </div>
           </ScrollArea>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingCommand(null)}>Cancel</Button>
-            <Button onClick={saveEdit} disabled={setCommandPerm.isPending || clearCommandPerm.isPending}>Save</Button>
+            <Button variant="outline" onClick={() => setEditingCommand(null)}>{t('pages.musicBots.shared.cancel')}</Button>
+            <Button onClick={saveEdit} disabled={setCommandPerm.isPending || clearCommandPerm.isPending}>{t('pages.musicBots.botsTab.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2331,24 +2348,25 @@ function PermissionsTab() {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function MusicBots() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Music className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold">Music Bots</h1>
+          <h1 className="text-xl font-semibold">{t('pages.musicBots.title')}</h1>
         </div>
       </div>
 
       <Tabs defaultValue="bots" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="bots"><Music2 className="h-3.5 w-3.5 mr-1.5" /> Bots</TabsTrigger>
-          <TabsTrigger value="queue"><ListMusic className="h-3.5 w-3.5 mr-1.5" /> Queue</TabsTrigger>
-          <TabsTrigger value="video"><Video className="h-3.5 w-3.5 mr-1.5" /> Video</TabsTrigger>
-          <TabsTrigger value="library"><FileAudio className="h-3.5 w-3.5 mr-1.5" /> Library</TabsTrigger>
-          <TabsTrigger value="playlists"><ListMusic className="h-3.5 w-3.5 mr-1.5" /> Playlists</TabsTrigger>
-          <TabsTrigger value="radio"><Radio className="h-3.5 w-3.5 mr-1.5" /> Radio</TabsTrigger>
-          <TabsTrigger value="permissions"><ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Permissions</TabsTrigger>
+          <TabsTrigger value="bots"><Music2 className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabBots')}</TabsTrigger>
+          <TabsTrigger value="queue"><ListMusic className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabQueue')}</TabsTrigger>
+          <TabsTrigger value="video"><Video className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabVideo')}</TabsTrigger>
+          <TabsTrigger value="library"><FileAudio className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabLibrary')}</TabsTrigger>
+          <TabsTrigger value="playlists"><ListMusic className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabPlaylists')}</TabsTrigger>
+          <TabsTrigger value="radio"><Radio className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabRadio')}</TabsTrigger>
+          <TabsTrigger value="permissions"><ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabPermissions')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="bots"><BotsTab /></TabsContent>

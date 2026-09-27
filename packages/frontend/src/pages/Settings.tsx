@@ -24,28 +24,31 @@ import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { useSetWebguiTheme, useSetWebguiBaseTheme } from '@/hooks/use-webgui-theme';
 import { useUiStore } from '@/stores/ui.store';
+import { useLanguagePreference } from '@/hooks/use-language';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Settings</h1>
+      <h1 className="text-xl font-semibold">{t('pages.settings.title')}</h1>
 
       <Tabs defaultValue="account">
         <TabsList>
-          {isAdmin && <TabsTrigger value="connections"><Server className="h-3.5 w-3.5 mr-1" /> Connections</TabsTrigger>}
-          <TabsTrigger value="account"><Lock className="h-3.5 w-3.5 mr-1" /> Account</TabsTrigger>
-          <TabsTrigger value="webgui"><Palette className="h-3.5 w-3.5 mr-1" /> WebGui</TabsTrigger>
-          {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> Users</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> YouTube</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="streaming"><Video className="h-3.5 w-3.5 mr-1" /> Streaming</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> Debug</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> Restart</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="sso"><ShieldCheck className="h-3.5 w-3.5 mr-1" /> SSO</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="update-status"><RefreshCw className="h-3.5 w-3.5 mr-1" /> Update Status</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="connections"><Server className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.connections')}</TabsTrigger>}
+          <TabsTrigger value="account"><Lock className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.account')}</TabsTrigger>
+          <TabsTrigger value="webgui"><Palette className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.webgui')}</TabsTrigger>
+          {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.users')}</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.youtube')}</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="streaming"><Video className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.streaming')}</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.debug')}</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.restart')}</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="sso"><ShieldCheck className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.sso')}</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="update-status"><RefreshCw className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.updateStatus')}</TabsTrigger>}
         </TabsList>
 
         {isAdmin && (
@@ -107,6 +110,7 @@ export default function Settings() {
 }
 
 function AccountTab() {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -117,22 +121,22 @@ function AccountTab() {
 
   const handleSubmit = () => {
     if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters');
+      toast.error(t('pages.settings.account.passwordMinLength'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(t('pages.settings.account.passwordMismatch'));
       return;
     }
     changePassword.mutate(undefined, {
       onSuccess: () => {
-        toast.success('Password changed successfully');
+        toast.success(t('pages.settings.account.passwordChangedSuccess'));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       },
       onError: (err: any) => {
-        const msg = err?.response?.data?.error || 'Failed to change password';
+        const msg = err?.response?.data?.error || t('pages.settings.account.passwordChangeFailed');
         toast.error(msg);
       },
     });
@@ -142,27 +146,27 @@ function AccountTab() {
     <div className="max-w-md">
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Change Password</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.account.changePasswordTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <Label className="text-xs">Current Password</Label>
-            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password" />
+            <Label className="text-xs">{t('pages.settings.account.currentPasswordLabel')}</Label>
+            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('pages.settings.account.currentPasswordPlaceholder')} />
           </div>
           <div>
-            <Label className="text-xs">New Password</Label>
-            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 6 characters" />
+            <Label className="text-xs">{t('pages.settings.account.newPasswordLabel')}</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('pages.settings.account.newPasswordPlaceholder')} />
           </div>
           <div>
-            <Label className="text-xs">Confirm New Password</Label>
-            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat new password" />
+            <Label className="text-xs">{t('pages.settings.account.confirmNewPasswordLabel')}</Label>
+            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('pages.settings.account.confirmNewPasswordPlaceholder')} />
           </div>
           <Button
             onClick={handleSubmit}
             disabled={!currentPassword || !newPassword || !confirmPassword || changePassword.isPending}
             className="w-full mt-1"
           >
-            {changePassword.isPending ? 'Changing...' : 'Change Password'}
+            {changePassword.isPending ? t('pages.settings.account.changing') : t('pages.settings.account.changePasswordTitle')}
           </Button>
         </CardContent>
       </Card>
@@ -173,6 +177,7 @@ function AccountTab() {
 }
 
 function TwoFactorCard() {
+  const { t } = useTranslation();
   const { user, updateUser } = useAuthStore();
   const [step, setStep] = useState<'idle' | 'setup' | 'codes'>('idle');
   const [qrData, setQrData] = useState<{ secret: string; qrCodeDataUrl: string } | null>(null);
@@ -184,7 +189,7 @@ function TwoFactorCard() {
   const setup = useMutation({
     mutationFn: authApi.totpSetup,
     onSuccess: (data) => { setQrData(data); setStep('setup'); },
-    onError: () => toast.error('Failed to start 2FA setup'),
+    onError: () => toast.error(t('pages.settings.twoFactor.setupFailed')),
   });
 
   const verifySetup = useMutation({
@@ -194,18 +199,18 @@ function TwoFactorCard() {
       setRecoveryCodes(data.recoveryCodes);
       setStep('codes');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || 'Invalid code'),
+    onError: (err: any) => toast.error(err?.response?.data?.error || t('pages.settings.twoFactor.invalidCode')),
   });
 
   const disable = useMutation({
     mutationFn: () => authApi.totpDisable(disablePassword),
     onSuccess: () => {
       updateUser({ totpEnabled: false });
-      toast.success('2FA disabled');
+      toast.success(t('pages.settings.twoFactor.twoFaDisabledToast'));
       setShowDisable(false);
       setDisablePassword('');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to disable 2FA'),
+    onError: (err: any) => toast.error(err?.response?.data?.error || t('pages.settings.twoFactor.disableFailed')),
   });
 
   const closeSetup = () => {
@@ -219,22 +224,22 @@ function TwoFactorCard() {
     <>
       <Card className="card-hero mt-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm font-medium">Two-Factor Authentication</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.twoFactor.title')}</CardTitle>
           <Badge variant={user?.totpEnabled ? 'default' : 'secondary'} className="text-[10px]">
-            {user?.totpEnabled ? 'Enabled' : 'Disabled'}
+            {user?.totpEnabled ? t('common.enabled') : t('common.disabled')}
           </Badge>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Adds a one-time code from an authenticator app (Google Authenticator, Authy, ...) on top of your password.
+            {t('pages.settings.twoFactor.description')}
           </p>
           {user?.totpEnabled ? (
             <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setShowDisable(true)}>
-              Disable 2FA
+              {t('pages.settings.twoFactor.disable2fa')}
             </Button>
           ) : (
             <Button onClick={() => setup.mutate()} disabled={setup.isPending}>
-              {setup.isPending ? 'Starting...' : 'Enable 2FA'}
+              {setup.isPending ? t('pages.settings.twoFactor.starting') : t('pages.settings.twoFactor.enable2fa')}
             </Button>
           )}
         </CardContent>
@@ -242,25 +247,25 @@ function TwoFactorCard() {
 
       <Dialog open={step !== 'idle'} onOpenChange={(v) => { if (!v) closeSetup(); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle className="text-sm">Set Up Two-Factor Authentication</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-sm">{t('pages.settings.twoFactor.setupTitle')}</DialogTitle></DialogHeader>
 
           {step === 'setup' && qrData && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Scan this with your authenticator app, then enter the 6-digit code it shows to confirm.
+                {t('pages.settings.twoFactor.scanInstructions')}
               </p>
-              <img src={qrData.qrCodeDataUrl} alt="2FA QR code" className="mx-auto rounded-md border border-border bg-white p-2" />
+              <img src={qrData.qrCodeDataUrl} alt={t('pages.settings.twoFactor.qrAlt')} className="mx-auto rounded-md border border-border bg-white p-2" />
               <p className="text-[11px] text-muted-foreground text-center break-all">
-                Can't scan? Enter manually: <span className="font-mono-data">{qrData.secret}</span>
+                {t('pages.settings.twoFactor.manualEntryLabel')} <span className="font-mono-data">{qrData.secret}</span>
               </p>
               <div>
-                <Label className="text-xs">Confirmation Code</Label>
+                <Label className="text-xs">{t('pages.settings.twoFactor.confirmationCodeLabel')}</Label>
                 <Input value={confirmCode} onChange={(e) => setConfirmCode(e.target.value)} placeholder="123456" autoFocus />
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={closeSetup}>Cancel</Button>
+                <Button variant="outline" onClick={closeSetup}>{t('common.cancel')}</Button>
                 <Button onClick={() => verifySetup.mutate()} disabled={!confirmCode || verifySetup.isPending}>
-                  {verifySetup.isPending ? 'Verifying...' : 'Verify & Enable'}
+                  {verifySetup.isPending ? t('pages.settings.twoFactor.verifying') : t('pages.settings.twoFactor.verifyAndEnable')}
                 </Button>
               </DialogFooter>
             </div>
@@ -269,13 +274,13 @@ function TwoFactorCard() {
           {step === 'codes' && recoveryCodes && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Save these recovery codes somewhere safe. Each one can be used once to log in if you lose access to your authenticator app - they won't be shown again.
+                {t('pages.settings.twoFactor.recoveryCodesHint')}
               </p>
               <div className="grid grid-cols-2 gap-2 rounded-md border border-border bg-muted/30 p-3 font-mono-data text-xs">
                 {recoveryCodes.map((c) => <span key={c}>{c}</span>)}
               </div>
               <DialogFooter>
-                <Button onClick={() => { toast.success('2FA enabled'); closeSetup(); }}>I've saved these codes</Button>
+                <Button onClick={() => { toast.success(t('pages.settings.twoFactor.twoFaEnabledToast')); closeSetup(); }}>{t('pages.settings.twoFactor.savedCodesConfirm')}</Button>
               </DialogFooter>
             </div>
           )}
@@ -284,15 +289,15 @@ function TwoFactorCard() {
 
       <Dialog open={showDisable} onOpenChange={setShowDisable}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="text-sm">Disable Two-Factor Authentication</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-sm">{t('pages.settings.twoFactor.disableTitle')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">Enter your current password to confirm.</p>
-            <Input type="password" value={disablePassword} onChange={(e) => setDisablePassword(e.target.value)} placeholder="Current password" autoFocus />
+            <p className="text-xs text-muted-foreground">{t('pages.settings.twoFactor.disableConfirmHint')}</p>
+            <Input type="password" value={disablePassword} onChange={(e) => setDisablePassword(e.target.value)} placeholder={t('pages.settings.twoFactor.disablePasswordPlaceholder')} autoFocus />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDisable(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowDisable(false)}>{t('common.cancel')}</Button>
             <Button variant="destructive" onClick={() => disable.mutate()} disabled={!disablePassword || disable.isPending}>
-              {disable.isPending ? 'Disabling...' : 'Disable'}
+              {disable.isPending ? t('pages.settings.twoFactor.disabling') : t('pages.settings.twoFactor.disableAction')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -325,9 +330,10 @@ function AccentSwatchPicker({ value, onChange, disabled }: { value: AccentPreset
 }
 
 function BaseThemeSwatchPicker({ value, onChange, disabled }: { value: BaseTheme | null; onChange: (theme: BaseTheme) => void; disabled?: boolean }) {
+  const { t } = useTranslation();
   const groups = [
-    { title: 'Dark', items: DARK_THEME_PRESETS },
-    { title: 'Light', items: LIGHT_THEME_PRESETS },
+    { title: t('pages.settings.webgui.darkGroup'), items: DARK_THEME_PRESETS },
+    { title: t('pages.settings.webgui.lightGroup'), items: LIGHT_THEME_PRESETS },
   ];
   return (
     <div className="space-y-3">
@@ -360,6 +366,8 @@ function BaseThemeSwatchPicker({ value, onChange, disabled }: { value: BaseTheme
 }
 
 function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
+  const { t } = useTranslation();
+  const { language, setLanguage, isSaving: isSavingLanguage } = useLanguagePreference();
   const { data: installTheme, isLoading } = useQuery({
     queryKey: ['webgui-theme'],
     queryFn: settingsApi.getWebguiTheme,
@@ -385,8 +393,8 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
     setBaseThemeOverride(theme === installBaseTheme?.theme ? null : theme);
     const recommended = RECOMMENDED_ACCENT[theme];
     if (recommended !== (accentOverride ?? installTheme?.preset ?? 'violet')) {
-      toast(`${baseThemeLabel(theme)} goes well with the ${accentLabel(recommended)} accent.`, {
-        action: { label: 'Apply', onClick: () => pickAccent(recommended) },
+      toast(t('pages.settings.webgui.pairingHint', { theme: baseThemeLabel(theme), accent: accentLabel(recommended) }), {
+        action: { label: t('common.apply'), onClick: () => pickAccent(recommended) },
       });
     }
   };
@@ -395,12 +403,31 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
     <div className="max-w-lg space-y-4">
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">My Base Theme</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.language.title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            The background and surface palette, which also decides whether the app is light or dark.
-            Overrides the installation default below, just for you - stored in this browser only.
+            {t('pages.settings.webgui.language.description')}
+          </p>
+          <Select value={language} onValueChange={(v) => setLanguage(v as 'en' | 'de')} disabled={isSavingLanguage}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="de">Deutsch</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.myBaseTheme')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {t('pages.settings.webgui.baseThemeDescription')}
           </p>
           <BaseThemeSwatchPicker
             value={baseThemeOverride ?? installBaseTheme?.theme ?? 'command-deck'}
@@ -408,7 +435,7 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
           />
           {baseThemeOverride && (
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setBaseThemeOverride(null)}>
-              Reset to installation default
+              {t('pages.settings.webgui.resetToInstallDefault')}
             </Button>
           )}
         </CardContent>
@@ -416,11 +443,11 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
 
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">My Accent</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.myAccent')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Buttons, links and highlights - independent of the base theme above, every combination works.
+            {t('pages.settings.webgui.accentDescription')}
           </p>
           <AccentSwatchPicker
             value={accentOverride ?? installTheme?.preset ?? 'violet'}
@@ -428,7 +455,7 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
           />
           {accentOverride && (
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setAccentOverride(null)}>
-              Reset to installation default
+              {t('pages.settings.webgui.resetToInstallDefault')}
             </Button>
           )}
         </CardContent>
@@ -437,17 +464,17 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
       {isAdmin && (
         <Card className="card-hero">
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Installation Default Base Theme</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.installDefaultBaseTheme')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Applies to every user who hasn't set their own base theme preference above.
+              {t('pages.settings.webgui.installDefaultBaseThemeDescription')}
             </p>
             <BaseThemeSwatchPicker
               value={installBaseTheme?.theme ?? 'command-deck'}
               onChange={(theme) => setInstallBaseTheme.mutate(theme, {
-                onSuccess: () => toast.success(`Installation base theme set to ${baseThemeLabel(theme)}`),
-                onError: () => toast.error('Failed to update installation base theme'),
+                onSuccess: () => toast.success(t('pages.settings.webgui.baseThemeSetToast', { theme: baseThemeLabel(theme) })),
+                onError: () => toast.error(t('pages.settings.webgui.baseThemeSetFailed')),
               })}
               disabled={setInstallBaseTheme.isPending}
             />
@@ -458,17 +485,17 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
       {isAdmin && (
         <Card className="card-hero">
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Installation Default Accent</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.installDefaultAccent')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Applies to every user who hasn't set their own accent preference above.
+              {t('pages.settings.webgui.installDefaultAccentDescription')}
             </p>
             <AccentSwatchPicker
               value={installTheme?.preset ?? 'violet'}
               onChange={(preset) => setInstallTheme.mutate(preset, {
-                onSuccess: () => toast.success(`Installation accent set to ${accentLabel(preset)}`),
-                onError: () => toast.error('Failed to update installation accent'),
+                onSuccess: () => toast.success(t('pages.settings.webgui.accentSetToast', { accent: accentLabel(preset) })),
+                onError: () => toast.error(t('pages.settings.webgui.accentSetFailed')),
               })}
               disabled={setInstallTheme.isPending}
             />
@@ -480,6 +507,7 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
 }
 
 function ConnectionsTab() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data: servers, isLoading } = useQuery({ queryKey: ['servers'], queryFn: serversApi.list });
   const createServer = useMutation({ mutationFn: (data: any) => serversApi.create(data), onSuccess: () => qc.invalidateQueries({ queryKey: ['servers'] }) });
@@ -504,13 +532,13 @@ function ConnectionsTab() {
     const payload = { ...form, webqueryPort: parseInt(form.webqueryPort), sshPort: parseInt(form.sshPort) };
     if (editId) {
       updateServer.mutate({ id: editId, data: payload }, {
-        onSuccess: () => { toast.success('Connection updated'); setEditId(null); setShowAdd(false); resetForm(); },
-        onError: () => toast.error('Failed to update'),
+        onSuccess: () => { toast.success(t('pages.settings.connections.connectionUpdated')); setEditId(null); setShowAdd(false); resetForm(); },
+        onError: () => toast.error(t('pages.settings.connections.updateFailed')),
       });
     } else {
       createServer.mutate(payload, {
-        onSuccess: () => { toast.success('Connection added'); setShowAdd(false); resetForm(); },
-        onError: () => toast.error('Failed to create'),
+        onSuccess: () => { toast.success(t('pages.settings.connections.connectionAdded')); setShowAdd(false); resetForm(); },
+        onError: () => toast.error(t('pages.settings.connections.createFailed')),
       });
     }
   };
@@ -534,8 +562,8 @@ function ConnectionsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Manage TeamSpeak server connections</p>
-        <Button size="sm" onClick={() => { resetForm(); setEditId(null); setShowAdd(true); }}><Plus className="h-4 w-4 mr-1" /> Add Connection</Button>
+        <p className="text-sm text-muted-foreground">{t('pages.settings.connections.manageDescription')}</p>
+        <Button size="sm" onClick={() => { resetForm(); setEditId(null); setShowAdd(true); }}><Plus className="h-4 w-4 mr-1" /> {t('pages.settings.connections.addConnection')}</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -545,31 +573,31 @@ function ConnectionsTab() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">{server.name}</CardTitle>
                 <Badge variant={server.enabled ? 'default' : 'secondary'} className="text-[10px]">
-                  {server.enabled ? 'Enabled' : 'Disabled'}
+                  {server.enabled ? t('common.enabled') : t('common.disabled')}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <span className="text-muted-foreground">Host</span>
+                <span className="text-muted-foreground">{t('pages.settings.connections.host')}</span>
                 <span className="font-mono-data">{server.host}:{server.webqueryPort}</span>
-                <span className="text-muted-foreground">Protocol</span>
+                <span className="text-muted-foreground">{t('pages.settings.connections.protocol')}</span>
                 <span>{server.useHttps ? 'HTTPS' : 'HTTP'}</span>
-                <span className="text-muted-foreground">SSH</span>
+                <span className="text-muted-foreground">{t('pages.settings.connections.ssh')}</span>
                 <span className="font-mono-data">{server.sshPort || '-'}</span>
               </div>
               <div className="flex items-center gap-1 pt-2">
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => testServer.mutate(server.id, {
-                  onSuccess: (data: any) => data?.success ? toast.success('Connection successful') : toast.error(data?.error ? `Connection failed: ${data.error}` : 'Connection failed'),
-                  onError: () => toast.error('Connection failed'),
+                  onSuccess: (data: any) => data?.success ? toast.success(t('pages.settings.connections.connectionSuccessful')) : toast.error(data?.error ? t('pages.settings.connections.connectionFailedWithError', { error: data.error }) : t('pages.settings.connections.connectionFailed')),
+                  onError: () => toast.error(t('pages.settings.connections.connectionFailed')),
                 })}>
-                  <TestTube className="h-3 w-3 mr-1" /> Test
+                  <TestTube className="h-3 w-3 mr-1" /> {t('pages.settings.connections.test')}
                 </Button>
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(server)}>
-                  <Pencil className="h-3 w-3 mr-1" /> Edit
+                  <Pencil className="h-3 w-3 mr-1" /> {t('common.edit')}
                 </Button>
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setBotIdentityServerId(server.id)}>
-                  <Bot className="h-3 w-3 mr-1" /> {server.hasBotIdentity ? server.botQueryName : 'Bot Identity'}
+                  <Bot className="h-3 w-3 mr-1" /> {server.hasBotIdentity ? server.botQueryName : t('pages.settings.connections.botIdentityFallback')}
                 </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(server.id)}>
                   <Trash2 className="h-3.5 w-3.5" />
@@ -583,37 +611,37 @@ function ConnectionsTab() {
       {/* Add/Edit Dialog */}
       <Dialog open={showAdd} onOpenChange={(v) => { if (!v) { setShowAdd(false); setEditId(null); resetForm(); } else setShowAdd(true); }}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{editId ? 'Edit Connection' : 'Add Connection'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? t('pages.settings.connections.editConnectionTitle') : t('pages.settings.connections.addConnection')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label className="text-xs">Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My TS Server" /></div>
+            <div><Label className="text-xs">{t('common.name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('pages.settings.connections.namePlaceholder')} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs">Host</Label><Input value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} placeholder="127.0.0.1" /></div>
-              <div><Label className="text-xs">WebQuery Port</Label><Input type="number" value={form.webqueryPort} onChange={(e) => setForm({ ...form, webqueryPort: e.target.value })} /></div>
+              <div><Label className="text-xs">{t('pages.settings.connections.host')}</Label><Input value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} placeholder={t('pages.settings.connections.hostPlaceholder')} /></div>
+              <div><Label className="text-xs">{t('pages.settings.connections.webqueryPortLabel')}</Label><Input type="number" value={form.webqueryPort} onChange={(e) => setForm({ ...form, webqueryPort: e.target.value })} /></div>
             </div>
             <div>
-              <Label className="text-xs">API Key</Label>
-              <Input value={form.apiKey} onChange={(e) => setForm({ ...form, apiKey: e.target.value })} placeholder={editId ? '(unchanged — enter new key to update)' : 'WebQuery API Key'} type="password" />
+              <Label className="text-xs">{t('pages.settings.connections.apiKeyLabel')}</Label>
+              <Input value={form.apiKey} onChange={(e) => setForm({ ...form, apiKey: e.target.value })} placeholder={editId ? t('pages.settings.connections.apiKeyUnchangedPlaceholder') : t('pages.settings.connections.apiKeyPlaceholder')} type="password" />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.useHttps} onCheckedChange={(v) => setForm({ ...form, useHttps: v })} />
-              <Label className="text-xs">Use HTTPS</Label>
+              <Label className="text-xs">{t('pages.settings.connections.useHttps')}</Label>
             </div>
             <div>
-              <Label className="text-xs">Dashboard Ping Target (optional)</Label>
-              <Input value={form.pingHost} onChange={(e) => setForm({ ...form, pingHost: e.target.value })} placeholder={`Defaults to Host above (${form.host || '...'})`} />
+              <Label className="text-xs">{t('pages.settings.connections.pingTargetLabel')}</Label>
+              <Input value={form.pingHost} onChange={(e) => setForm({ ...form, pingHost: e.target.value })} placeholder={t('pages.settings.connections.pingTargetPlaceholder', { host: form.host || '...' })} />
               <p className="text-[11px] text-muted-foreground mt-1">
-                Only affects the Dashboard's Ping reading - useful if Host above is an internal address but the public domain is what should actually be tested. Bot flows always use Host, never this.
+                {t('pages.settings.connections.pingTargetHint')}
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div><Label className="text-xs">SSH Port</Label><Input type="number" value={form.sshPort} onChange={(e) => setForm({ ...form, sshPort: e.target.value })} /></div>
-              <div><Label className="text-xs">SSH User</Label><Input value={form.sshUsername} onChange={(e) => setForm({ ...form, sshUsername: e.target.value })} placeholder={editingServer?.hasSshCredentials ? '(unchanged)' : 'serveradmin'} /></div>
-              <div><Label className="text-xs">SSH Password</Label><Input type="password" value={form.sshPassword} onChange={(e) => setForm({ ...form, sshPassword: e.target.value })} placeholder={editingServer?.hasSshCredentials ? '(unchanged)' : ''} /></div>
+              <div><Label className="text-xs">{t('pages.settings.connections.sshPortLabel')}</Label><Input type="number" value={form.sshPort} onChange={(e) => setForm({ ...form, sshPort: e.target.value })} /></div>
+              <div><Label className="text-xs">{t('pages.settings.connections.sshUserLabel')}</Label><Input value={form.sshUsername} onChange={(e) => setForm({ ...form, sshUsername: e.target.value })} placeholder={editingServer?.hasSshCredentials ? t('pages.settings.connections.unchanged') : t('pages.settings.connections.sshUserPlaceholder')} /></div>
+              <div><Label className="text-xs">{t('pages.settings.connections.sshPasswordLabel')}</Label><Input type="password" value={form.sshPassword} onChange={(e) => setForm({ ...form, sshPassword: e.target.value })} placeholder={editingServer?.hasSshCredentials ? t('pages.settings.connections.unchanged') : ''} /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAdd(false); setEditId(null); resetForm(); }}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.name || !form.host || (!editId && !form.apiKey)}>{editId ? 'Update' : 'Add'}</Button>
+            <Button variant="outline" onClick={() => { setShowAdd(false); setEditId(null); resetForm(); }}>{t('common.cancel')}</Button>
+            <Button onClick={handleSave} disabled={!form.name || !form.host || (!editId && !form.apiKey)}>{editId ? t('pages.settings.connections.update') : t('common.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -621,9 +649,9 @@ function ConnectionsTab() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete Connection?"
-        description="This will remove the server connection. Bots linked to this server will stop working."
-        onConfirm={() => { if (deleteId) deleteServer.mutate(deleteId, { onSuccess: () => { toast.success('Connection deleted'); setDeleteId(null); } }); }}
+        title={t('pages.settings.connections.deleteConnectionTitle')}
+        description={t('pages.settings.connections.deleteConnectionDescription')}
+        onConfirm={() => { if (deleteId) deleteServer.mutate(deleteId, { onSuccess: () => { toast.success(t('pages.settings.connections.connectionDeleted')); setDeleteId(null); } }); }}
         destructive
       />
 
@@ -638,6 +666,7 @@ function ConnectionsTab() {
 }
 
 function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [name, setName] = useState(server?.botQueryName || '');
 
@@ -645,20 +674,20 @@ function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => vo
     mutationFn: () => serversApi.createBotIdentity(server.id, name),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['servers'] });
-      toast.success(server?.hasBotIdentity ? 'API key reissued' : 'Bot identity created');
+      toast.success(server?.hasBotIdentity ? t('pages.settings.botIdentity.apiKeyReissued') : t('pages.settings.botIdentity.createdToast'));
       onClose();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to create bot identity'),
+    onError: (err: any) => toast.error(err?.response?.data?.error || t('pages.settings.botIdentity.createFailed')),
   });
 
   const rename = useMutation({
     mutationFn: () => serversApi.update(server.id, { botQueryName: name }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['servers'] });
-      toast.success('Bot identity renamed');
+      toast.success(t('pages.settings.botIdentity.renamedToast'));
       onClose();
     },
-    onError: () => toast.error('Failed to rename bot identity'),
+    onError: () => toast.error(t('pages.settings.botIdentity.renameFailed')),
   });
 
   const pending = create.isPending || rename.isPending;
@@ -666,37 +695,37 @@ function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => vo
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle className="text-sm">Bot Identity — {server?.name}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-sm">{t('pages.settings.botIdentity.dialogTitle', { name: server?.name })}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">
             {server?.hasBotIdentity
-              ? "Bot flow actions on this server are attributed to this name in TeamSpeak's own logs and notifications, instead of the same identity your own manual actions in this app use."
-              : "Optional: give bot flows their own separate ServerQuery identity, so their actions (e.g. renaming a channel) show up under this name in TeamSpeak's own logs instead of blurring together with your own manual actions in this app. Nothing changes for bot flows until you create one."}
+              ? t('pages.settings.botIdentity.hasIdentityDescription')
+              : t('pages.settings.botIdentity.noIdentityDescription')}
           </p>
           {server?.hasBotIdentity && (
             <p className="text-xs text-muted-foreground">
-              Bot flow actions failing with a permission or "out of scope" error? This identity may have been created before a scope fix - use "Fix Permissions" below to reissue its key without changing anything else.
+              {t('pages.settings.botIdentity.scopeFixHint')}
             </p>
           )}
           <div>
-            <Label className="text-xs">Display Name</Label>
+            <Label className="text-xs">{t('pages.settings.botIdentity.displayNameLabel')}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Hausmeister" autoFocus />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           {server?.hasBotIdentity ? (
             <>
               <Button variant="outline" onClick={() => create.mutate()} disabled={!name || pending}>
-                {create.isPending ? 'Fixing...' : 'Fix Permissions'}
+                {create.isPending ? t('pages.settings.botIdentity.fixing') : t('pages.settings.botIdentity.fixPermissions')}
               </Button>
               <Button onClick={() => rename.mutate()} disabled={!name || pending}>
-                {rename.isPending ? 'Saving...' : 'Save'}
+                {rename.isPending ? t('common.saving') : t('common.save')}
               </Button>
             </>
           ) : (
             <Button onClick={() => create.mutate()} disabled={!name || pending}>
-              {pending ? 'Creating...' : 'Create Bot Identity'}
+              {pending ? t('common.creating') : t('pages.settings.botIdentity.createBotIdentityButton')}
             </Button>
           )}
         </DialogFooter>
@@ -706,6 +735,7 @@ function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => vo
 }
 
 function UsersTab() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
   const { data: users, isLoading } = useQuery({ queryKey: ['users'], queryFn: usersApi.list });
@@ -738,54 +768,54 @@ function UsersTab() {
 
   const handleCreate = () => {
     createUser.mutate(form, {
-      onSuccess: () => { toast.success('User created'); setShowAdd(false); setForm({ username: '', password: '', displayName: '', role: 'viewer' }); },
-      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to create user')),
+      onSuccess: () => { toast.success(t('pages.settings.users.userCreated')); setShowAdd(false); setForm({ username: '', password: '', displayName: '', role: 'viewer' }); },
+      onError: (err) => toast.error(apiErrorMessage(err, t('pages.settings.users.createUserFailed'))),
     });
   };
 
   const handleRoleChange = (userId: number, role: string) => {
     updateUser.mutate({ id: userId, data: { role } }, {
-      onSuccess: () => toast.success('Role updated'),
-      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to update role')),
+      onSuccess: () => toast.success(t('pages.settings.users.roleUpdated')),
+      onError: (err) => toast.error(apiErrorMessage(err, t('pages.settings.users.roleUpdateFailed'))),
     });
   };
 
   const handleToggleEnabled = (userId: number, enabled: boolean) => {
     updateUser.mutate({ id: userId, data: { enabled } }, {
-      onSuccess: () => toast.success(enabled ? 'User enabled' : 'User disabled'),
-      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to update status')),
+      onSuccess: () => toast.success(enabled ? t('pages.settings.users.userEnabledToast') : t('pages.settings.users.userDisabledToast')),
+      onError: (err) => toast.error(apiErrorMessage(err, t('pages.settings.users.statusUpdateFailed'))),
     });
   };
 
   const handleResetPassword = () => {
     if (!resetPwUserId || resetPwValue.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error(t('pages.settings.users.resetPasswordMinLength'));
       return;
     }
     updateUser.mutate({ id: resetPwUserId, data: { password: resetPwValue } }, {
-      onSuccess: () => { toast.success('Password reset successfully'); setResetPwUserId(null); setResetPwValue(''); },
-      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to reset password')),
+      onSuccess: () => { toast.success(t('pages.settings.users.passwordResetSuccess')); setResetPwUserId(null); setResetPwValue(''); },
+      onError: (err) => toast.error(apiErrorMessage(err, t('pages.settings.users.resetPasswordFailed'))),
     });
   };
 
   const handleSaveEdit = () => {
     if (!editUser) return;
     updateUser.mutate({ id: editUser.id, data: { username: editUser.username, displayName: editUser.displayName } }, {
-      onSuccess: () => { toast.success('User updated'); setEditUser(null); },
-      onError: (err) => toast.error(apiErrorMessage(err, 'Failed to update user')),
+      onSuccess: () => { toast.success(t('pages.settings.users.userUpdated')); setEditUser(null); },
+      onError: (err) => toast.error(apiErrorMessage(err, t('pages.settings.users.updateUserFailed'))),
     });
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground shrink-0">Manage webapp users and roles</p>
+        <p className="text-sm text-muted-foreground shrink-0">{t('pages.settings.users.manageDescription')}</p>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." className="h-8 w-48 pl-7 text-xs" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('pages.settings.users.searchPlaceholder')} className="h-8 w-48 pl-7 text-xs" />
           </div>
-          <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> Add User</Button>
+          <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.settings.users.addUser')}</Button>
         </div>
       </div>
 
@@ -793,17 +823,17 @@ function UsersTab() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Username</th>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Display Name</th>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Role</th>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Status</th>
-              <th className="h-10 px-3 text-left font-medium text-muted-foreground">Last Login</th>
-              <th className="h-10 px-3 text-right font-medium text-muted-foreground">Actions</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('pages.settings.users.colUsername')}</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('pages.settings.users.colDisplayName')}</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('common.role')}</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('common.status')}</th>
+              <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('pages.settings.users.colLastLogin')}</th>
+              <th className="h-10 px-3 text-right font-medium text-muted-foreground">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {filteredList.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">No users match "{search}"</td></tr>
+              <tr><td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">{t('pages.settings.users.noUsersMatch', { search })}</td></tr>
             )}
             {filteredList.map((u: any) => {
               const isSelf = u.id === currentUser?.id;
@@ -812,20 +842,20 @@ function UsersTab() {
                   <td className="px-3 py-2.5 font-mono-data text-xs">
                     <div className="flex items-center gap-1.5">
                       {u.username}
-                      {u.authProvider === 'oidc' && <Badge variant="outline" className="text-[9px]">SSO</Badge>}
+                      {u.authProvider === 'oidc' && <Badge variant="outline" className="text-[9px]">{t('pages.settings.users.ssoBadge')}</Badge>}
                     </div>
                   </td>
                   <td className="px-3 py-2.5">{u.displayName}</td>
                   <td className="px-3 py-2.5">
                     <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v)} disabled={isSelf}>
-                      <SelectTrigger className="h-7 w-[130px] text-xs" title={isSelf ? "You can't change your own role" : undefined}>
+                      <SelectTrigger className="h-7 w-[130px] text-xs" title={isSelf ? t('pages.settings.users.cantChangeOwnRole') : undefined}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
-                        <SelectItem value="bot-operator">Bot Operator</SelectItem>
-                        <SelectItem value="music-operator">Music Operator</SelectItem>
+                        <SelectItem value="admin">{t('common.roles.admin')}</SelectItem>
+                        <SelectItem value="viewer">{t('common.roles.viewer')}</SelectItem>
+                        <SelectItem value="bot-operator">{t('common.roles.botOperator')}</SelectItem>
+                        <SelectItem value="music-operator">{t('common.roles.musicOperator')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </td>
@@ -834,29 +864,29 @@ function UsersTab() {
                       checked={u.enabled}
                       onCheckedChange={(v) => handleToggleEnabled(u.id, v)}
                       disabled={isSelf}
-                      title={isSelf ? "You can't disable your own account" : undefined}
+                      title={isSelf ? t('pages.settings.users.cantDisableOwnAccount') : undefined}
                     />
                   </td>
                   <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                    {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}
+                    {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : t('pages.settings.users.never')}
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="inline-flex items-center gap-0.5">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Edit" onClick={() => setEditUser({ id: u.id, username: u.username, displayName: u.displayName })}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title={t('common.edit')} onClick={() => setEditUser({ id: u.id, username: u.username, displayName: u.displayName })}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       {u.role !== 'admin' && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Server Access" onClick={() => setAccessUserId(u.id)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title={t('pages.settings.users.serverAccessTitle')} onClick={() => setAccessUserId(u.id)}>
                           <Server className="h-3.5 w-3.5" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Sessions" onClick={() => setSessionsUserId(u.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title={t('pages.settings.users.sessionsTitle')} onClick={() => setSessionsUserId(u.id)}>
                         <Monitor className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Reset Password" onClick={() => { setResetPwUserId(u.id); setResetPwValue(''); }}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title={t('pages.settings.users.resetPasswordTitle')} onClick={() => { setResetPwUserId(u.id); setResetPwValue(''); }}>
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(u.id)} disabled={isSelf} title={isSelf ? "You can't delete your own account" : undefined}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(u.id)} disabled={isSelf} title={isSelf ? t('pages.settings.users.cantDeleteOwnAccount') : undefined}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -871,27 +901,27 @@ function UsersTab() {
       {/* Add User Dialog */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add User</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.settings.users.addUser')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label className="text-xs">Username</Label><Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="johndoe" /></div>
-            <div><Label className="text-xs">Display Name</Label><Input value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} placeholder="John Doe" /></div>
-            <div><Label className="text-xs">Password</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="********" /></div>
+            <div><Label className="text-xs">{t('common.username')}</Label><Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder={t('pages.settings.users.usernamePlaceholder')} /></div>
+            <div><Label className="text-xs">{t('pages.settings.users.colDisplayName')}</Label><Input value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} placeholder={t('pages.settings.users.displayNamePlaceholder')} /></div>
+            <div><Label className="text-xs">{t('common.password')}</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t('pages.settings.users.passwordPlaceholder')} /></div>
             <div>
-              <Label className="text-xs">Role</Label>
+              <Label className="text-xs">{t('common.role')}</Label>
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="bot-operator">Bot Operator</SelectItem>
-                  <SelectItem value="music-operator">Music Operator</SelectItem>
+                  <SelectItem value="admin">{t('common.roles.admin')}</SelectItem>
+                  <SelectItem value="viewer">{t('common.roles.viewer')}</SelectItem>
+                  <SelectItem value="bot-operator">{t('common.roles.botOperator')}</SelectItem>
+                  <SelectItem value="music-operator">{t('common.roles.musicOperator')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!form.username || !form.password}>Create</Button>
+            <Button variant="outline" onClick={() => setShowAdd(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleCreate} disabled={!form.username || !form.password}>{t('common.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -900,21 +930,21 @@ function UsersTab() {
       <Dialog open={resetPwUserId !== null} onOpenChange={(v) => { if (!v) { setResetPwUserId(null); setResetPwValue(''); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-sm">Reset Password</DialogTitle>
+            <DialogTitle className="text-sm">{t('pages.settings.users.resetPasswordTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Set a new password for <span className="font-medium text-foreground">{userList.find((u: any) => u.id === resetPwUserId)?.username}</span>
+              {t('pages.settings.users.setNewPasswordFor', { username: userList.find((u: any) => u.id === resetPwUserId)?.username })}
             </p>
             <div>
-              <Label className="text-xs">New Password</Label>
-              <Input type="password" value={resetPwValue} onChange={(e) => setResetPwValue(e.target.value)} placeholder="Min. 6 characters" />
+              <Label className="text-xs">{t('pages.settings.account.newPasswordLabel')}</Label>
+              <Input type="password" value={resetPwValue} onChange={(e) => setResetPwValue(e.target.value)} placeholder={t('pages.settings.account.newPasswordPlaceholder')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setResetPwUserId(null); setResetPwValue(''); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setResetPwUserId(null); setResetPwValue(''); }}>{t('common.cancel')}</Button>
             <Button onClick={handleResetPassword} disabled={resetPwValue.length < 6 || updateUser.isPending}>
-              {updateUser.isPending ? 'Resetting...' : 'Reset Password'}
+              {updateUser.isPending ? t('pages.settings.users.resetting') : t('pages.settings.users.resetPasswordTitle')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -923,13 +953,13 @@ function UsersTab() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete User?"
-        description="This user will be permanently deleted."
+        title={t('pages.settings.users.deleteUserTitle')}
+        description={t('pages.settings.users.deleteUserDescription')}
         onConfirm={() => {
           if (!deleteId) return;
           deleteUser.mutate(deleteId, {
-            onSuccess: () => { toast.success('User deleted'); setDeleteId(null); },
-            onError: (err) => { toast.error(apiErrorMessage(err, 'Failed to delete user')); setDeleteId(null); },
+            onSuccess: () => { toast.success(t('pages.settings.users.userDeleted')); setDeleteId(null); },
+            onError: (err) => { toast.error(apiErrorMessage(err, t('pages.settings.users.deleteUserFailed'))); setDeleteId(null); },
           });
         }}
         destructive
@@ -938,17 +968,17 @@ function UsersTab() {
       {/* Edit User Dialog */}
       <Dialog open={editUser !== null} onOpenChange={(v) => { if (!v) setEditUser(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="text-sm">Edit User</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-sm">{t('pages.settings.users.editUserTitle')}</DialogTitle></DialogHeader>
           {editUser && (
             <div className="space-y-3">
-              <div><Label className="text-xs">Username</Label><Input value={editUser.username} onChange={(e) => setEditUser({ ...editUser, username: e.target.value })} /></div>
-              <div><Label className="text-xs">Display Name</Label><Input value={editUser.displayName} onChange={(e) => setEditUser({ ...editUser, displayName: e.target.value })} /></div>
+              <div><Label className="text-xs">{t('common.username')}</Label><Input value={editUser.username} onChange={(e) => setEditUser({ ...editUser, username: e.target.value })} /></div>
+              <div><Label className="text-xs">{t('pages.settings.users.colDisplayName')}</Label><Input value={editUser.displayName} onChange={(e) => setEditUser({ ...editUser, displayName: e.target.value })} /></div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditUser(null)}>{t('common.cancel')}</Button>
             <Button onClick={handleSaveEdit} disabled={!editUser?.username || !editUser?.displayName || updateUser.isPending}>
-              {updateUser.isPending ? 'Saving...' : 'Save'}
+              {updateUser.isPending ? t('common.saving') : t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -976,6 +1006,7 @@ function UsersTab() {
 }
 
 function ServerAccessDialog({ userId, username, servers, onClose }: { userId: number; username: string; servers: any[]; onClose: () => void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['user-server-access', userId], queryFn: () => usersApi.getServerAccess(userId) });
   const [selected, setSelected] = useState<Set<number> | null>(null);
@@ -983,10 +1014,10 @@ function ServerAccessDialog({ userId, username, servers, onClose }: { userId: nu
     mutationFn: (serverConfigIds: number[]) => usersApi.setServerAccess(userId, serverConfigIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['user-server-access', userId] });
-      toast.success('Server access updated');
+      toast.success(t('pages.settings.serverAccess.updated'));
       onClose();
     },
-    onError: () => toast.error('Failed to update server access'),
+    onError: () => toast.error(t('pages.settings.serverAccess.updateFailed')),
   });
 
   const active = selected ?? new Set(data?.serverConfigIds ?? []);
@@ -1000,13 +1031,13 @@ function ServerAccessDialog({ userId, username, servers, onClose }: { userId: nu
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Server Access — {username}</DialogTitle>
+          <DialogTitle>{t('pages.settings.serverAccess.title', { username })}</DialogTitle>
         </DialogHeader>
         {isLoading ? (
           <PageLoader />
         ) : (
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {servers.length === 0 && <p className="text-xs text-muted-foreground">No server connections configured yet.</p>}
+            {servers.length === 0 && <p className="text-xs text-muted-foreground">{t('pages.settings.serverAccess.noConnections')}</p>}
             {servers.map((s) => (
               <div key={s.id} className="flex items-center justify-between gap-4 py-1.5">
                 <div>
@@ -1019,9 +1050,9 @@ function ServerAccessDialog({ userId, username, servers, onClose }: { userId: nu
           </div>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button disabled={save.isPending} onClick={() => save.mutate(Array.from(active))}>
-            {save.isPending ? 'Saving...' : 'Save'}
+            {save.isPending ? t('common.saving') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1030,48 +1061,49 @@ function ServerAccessDialog({ userId, username, servers, onClose }: { userId: nu
 }
 
 function SessionsDialog({ userId, username, isSelf, onClose }: { userId: number; username: string; isSelf: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['user-sessions', userId], queryFn: () => usersApi.getSessions(userId) });
   const sessions = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
   const revokeOne = useMutation({
     mutationFn: (sessionId: number) => usersApi.revokeSession(userId, sessionId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user-sessions', userId] }); toast.success('Session revoked'); },
-    onError: () => toast.error('Failed to revoke session'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['user-sessions', userId] }); toast.success(t('pages.settings.sessions.revoked')); },
+    onError: () => toast.error(t('pages.settings.sessions.revokeFailed')),
   });
 
   const revokeAll = useMutation({
     mutationFn: () => usersApi.revokeAllSessions(userId),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['user-sessions', userId] });
-      toast.success(`Revoked ${result.revoked} session(s)`);
+      toast.success(t('pages.settings.sessions.revokedAllToast', { count: result.revoked }));
     },
-    onError: () => toast.error('Failed to revoke sessions'),
+    onError: () => toast.error(t('pages.settings.sessions.revokeAllFailed')),
   });
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Sessions — {username}</DialogTitle>
+          <DialogTitle>{t('pages.settings.sessions.title', { username })}</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-2">
-          One entry per logged-in device/browser. Revoking a session forces that device to log in again.
-          {isSelf && ' Revoking your own current session will log you out too.'}
+          {t('pages.settings.sessions.description')}
+          {isSelf && t('pages.settings.sessions.selfWarning')}
         </p>
         {isLoading ? (
           <PageLoader />
         ) : (
           <div className="space-y-2 max-h-80 overflow-y-auto">
-            {sessions.length === 0 && <p className="text-xs text-muted-foreground">No active sessions.</p>}
+            {sessions.length === 0 && <p className="text-xs text-muted-foreground">{t('pages.settings.sessions.noActiveSessions')}</p>}
             {sessions.map((s) => (
               <div key={s.id} className="flex items-center justify-between gap-4 py-1.5 border-b border-border last:border-0">
                 <div>
-                  <p className="text-xs">Signed in {new Date(s.createdAt).toLocaleString()}</p>
-                  <p className="text-[11px] text-muted-foreground">Expires {new Date(s.expiresAt).toLocaleString()}</p>
+                  <p className="text-xs">{t('pages.settings.sessions.signedIn', { date: new Date(s.createdAt).toLocaleString() })}</p>
+                  <p className="text-[11px] text-muted-foreground">{t('pages.settings.sessions.expires', { date: new Date(s.expiresAt).toLocaleString() })}</p>
                 </div>
                 <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" disabled={revokeOne.isPending} onClick={() => revokeOne.mutate(s.id)}>
-                  Revoke
+                  {t('pages.settings.sessions.revoke')}
                 </Button>
               </div>
             ))}
@@ -1084,9 +1116,9 @@ function SessionsDialog({ userId, username, isSelf, onClose }: { userId: number;
             disabled={sessions.length === 0 || revokeAll.isPending}
             onClick={() => revokeAll.mutate()}
           >
-            {revokeAll.isPending ? 'Revoking...' : 'Revoke All'}
+            {revokeAll.isPending ? t('pages.settings.sessions.revoking') : t('pages.settings.sessions.revokeAll')}
           </Button>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{t('common.close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1094,6 +1126,7 @@ function SessionsDialog({ userId, username, isSelf, onClose }: { userId: number;
 }
 
 function YouTubeTab() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [pasteMode, setPasteMode] = useState(false);
   const [cookieText, setCookieText] = useState('');
@@ -1115,45 +1148,45 @@ function YouTubeTab() {
     mutationFn: (config: MusicCacheSettings) => settingsApi.setMusicCacheSettings(config),
     onSuccess: (saved) => {
       qc.setQueryData(['music-cache-settings'], saved);
-      toast.success('Setting saved');
+      toast.success(t('pages.settings.youtube.settingSaved'));
     },
-    onError: () => toast.error('Failed to save setting'),
+    onError: () => toast.error(t('pages.settings.youtube.settingSaveFailed')),
   });
 
   const uploadFile = useMutation({
     mutationFn: (file: File) => settingsApi.uploadYtCookieFile(file),
     onSuccess: (result) => {
       toast[result.valid === false ? 'error' : 'success'](
-        result.valid === false ? 'Uploaded, but YouTube rejected these cookies' : 'Cookie file uploaded',
+        result.valid === false ? t('pages.settings.youtube.uploadedButRejected') : t('pages.settings.youtube.cookieFileUploaded'),
       );
       qc.invalidateQueries({ queryKey: ['yt-cookie-status'] });
       qc.invalidateQueries({ queryKey: ['yt-cookie-check'] });
     },
-    onError: () => toast.error('Failed to upload cookie file'),
+    onError: () => toast.error(t('pages.settings.youtube.uploadFailed')),
   });
 
   const uploadText = useMutation({
     mutationFn: (text: string) => settingsApi.uploadYtCookieText(text),
     onSuccess: (result) => {
       toast[result.valid === false ? 'error' : 'success'](
-        result.valid === false ? 'Saved, but YouTube rejected these cookies' : 'Cookies saved',
+        result.valid === false ? t('pages.settings.youtube.savedButRejected') : t('pages.settings.youtube.cookiesSaved'),
       );
       setCookieText('');
       setPasteMode(false);
       qc.invalidateQueries({ queryKey: ['yt-cookie-status'] });
       qc.invalidateQueries({ queryKey: ['yt-cookie-check'] });
     },
-    onError: () => toast.error('Failed to save cookies'),
+    onError: () => toast.error(t('pages.settings.youtube.saveCookiesFailed')),
   });
 
   const deleteCookies = useMutation({
     mutationFn: () => settingsApi.deleteYtCookies(),
     onSuccess: () => {
-      toast.success('Cookie file removed');
+      toast.success(t('pages.settings.youtube.cookieFileRemoved'));
       qc.invalidateQueries({ queryKey: ['yt-cookie-status'] });
       qc.invalidateQueries({ queryKey: ['yt-cookie-check'] });
     },
-    onError: () => toast.error('Failed to remove cookies'),
+    onError: () => toast.error(t('pages.settings.youtube.removeCookiesFailed')),
   });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1171,13 +1204,12 @@ function YouTubeTab() {
     <div className="max-w-lg space-y-4">
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">YouTube Cookies</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.youtube.title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Upload a cookies.txt file to access age-restricted or member-only YouTube content.
-            You can export cookies from your browser using extensions like
-            {' '}<span className="font-medium">Get cookies.txt LOCALLY</span> (Chrome/Firefox).
+            {t('pages.settings.youtube.description')}
+            {' '}<span className="font-medium">{t('pages.settings.youtube.extensionName')}</span>{t('pages.settings.youtube.extensionSuffix')}
           </p>
 
           {/* Status */}
@@ -1188,17 +1220,17 @@ function YouTubeTab() {
               }`}
             />
             <span className="text-sm">
-              {isLoading ? 'Loading...' : !status?.active
-                ? 'No cookies configured'
+              {isLoading ? t('common.loading') : !status?.active
+                ? t('pages.settings.youtube.noCookiesConfigured')
                 : cookieCheck?.valid === false
-                  ? `YouTube rejected these cookies (${formatSize(status.size)}) — re-export and re-upload`
+                  ? t('pages.settings.youtube.cookiesRejected', { size: formatSize(status.size) })
                   : cookieCheck?.valid === true
-                    ? `Cookies active and working (${formatSize(status.size)})`
-                    : `Cookies active (${formatSize(status.size)}) — not yet checked`}
+                    ? t('pages.settings.youtube.cookiesWorking', { size: formatSize(status.size) })
+                    : t('pages.settings.youtube.cookiesNotChecked', { size: formatSize(status.size) })}
             </span>
             {status?.active && (
               <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => recheckCookies.mutate()} disabled={recheckCookies.isPending}>
-                {recheckCookies.isPending ? 'Checking...' : 'Recheck'}
+                {recheckCookies.isPending ? t('pages.settings.youtube.checking') : t('pages.settings.youtube.recheck')}
               </Button>
             )}
           </div>
@@ -1219,7 +1251,7 @@ function YouTubeTab() {
               disabled={uploadFile.isPending}
             >
               <Upload className="h-3.5 w-3.5 mr-1" />
-              {uploadFile.isPending ? 'Uploading...' : 'Upload cookies.txt'}
+              {uploadFile.isPending ? t('pages.settings.youtube.uploading') : t('pages.settings.youtube.uploadCookiesFile')}
             </Button>
             <Button
               variant="outline"
@@ -1227,7 +1259,7 @@ function YouTubeTab() {
               onClick={() => setPasteMode(!pasteMode)}
             >
               <FileText className="h-3.5 w-3.5 mr-1" />
-              Paste cookies
+              {t('pages.settings.youtube.pasteCookies')}
             </Button>
             {status?.active && (
               <Button
@@ -1238,7 +1270,7 @@ function YouTubeTab() {
                 disabled={deleteCookies.isPending}
               >
                 <Trash2 className="h-3.5 w-3.5 mr-1" />
-                Remove
+                {t('common.remove')}
               </Button>
             )}
           </div>
@@ -1258,10 +1290,10 @@ function YouTubeTab() {
                   onClick={() => uploadText.mutate(cookieText)}
                   disabled={!cookieText.trim() || uploadText.isPending}
                 >
-                  {uploadText.isPending ? 'Saving...' : 'Save'}
+                  {uploadText.isPending ? t('common.saving') : t('common.save')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => { setPasteMode(false); setCookieText(''); }}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>
@@ -1271,20 +1303,19 @@ function YouTubeTab() {
 
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Played Song Storage</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.youtube.playedSongStorageTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Controls what happens to songs downloaded via chat commands (<code>!play</code>/<code>!queue</code>/<code>!stream</code>).
-            This does not affect songs added deliberately through the Library tab (upload or "download by URL") — those are always kept.
+            {t('pages.settings.youtube.playedSongStorageDescriptionPart1')}<code>!play</code>/<code>!queue</code>/<code>!stream</code>{t('pages.settings.youtube.playedSongStorageDescriptionPart2')}
           </p>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Keep played songs</Label>
+              <Label className="text-xs">{t('pages.settings.youtube.keepPlayedSongsLabel')}</Label>
               <p className="text-[11px] text-muted-foreground">
                 {cacheSettings?.keepPlayedSongs !== false
-                  ? 'On: chat-played songs can be picked up into the library by "Scan for New Files" and kept indefinitely (default).'
-                  : 'Off: chat-played songs are never added to the library and are deleted automatically about an hour after playing, to save disk space.'}
+                  ? t('pages.settings.youtube.keepOnDescription')
+                  : t('pages.settings.youtube.keepOffDescription')}
               </p>
             </div>
             <Switch
@@ -1300,6 +1331,7 @@ function YouTubeTab() {
 }
 
 function StreamingTab() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['stream-defaults'],
@@ -1315,9 +1347,9 @@ function StreamingTab() {
     onSuccess: (saved) => {
       qc.setQueryData(['stream-defaults'], saved);
       setDraft(null);
-      toast.success('Stream defaults saved');
+      toast.success(t('pages.settings.streaming.streamDefaultsSaved'));
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to save stream defaults'),
+    onError: (err: any) => toast.error(err?.response?.data?.error || t('pages.settings.streaming.streamDefaultsSaveFailed')),
   });
 
   if (isLoading || !data || !active) return <PageLoader />;
@@ -1339,18 +1371,15 @@ function StreamingTab() {
     <div className="max-w-lg space-y-4">
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Stream Defaults</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.streaming.title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            What <code className="text-[11px]">!stream &lt;url&gt;</code> uses when nobody names a
-            quality. Naming one in the chat ({data.presets.map((p) => p.name).join(', ')}) still wins
-            for that stream. Higher values need more upload bandwidth and more CPU on this machine,
-            so if viewers report stuttering, come back here and lower them.
+            What <code className="text-[11px]">!stream &lt;url&gt;</code> {t('pages.settings.streaming.descriptionUsage', { names: data.presets.map((p) => p.name).join(', ') })}
           </p>
 
           <div className="space-y-2">
-            <Label className="text-xs">Resolution</Label>
+            <Label className="text-xs">{t('pages.settings.streaming.resolutionLabel')}</Label>
             <div className="flex gap-2">
               {data.presets.map((p) => (
                 <Button
@@ -1365,14 +1394,14 @@ function StreamingTab() {
             </div>
             {selected && (
               <p className="text-[11px] text-muted-foreground">
-                {selected.width}x{selected.height} pixels
+                {t('pages.settings.streaming.pixelsSuffix', { width: selected.width, height: selected.height })}
               </p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs" htmlFor="stream-framerate">Frame Rate</Label>
+              <Label className="text-xs" htmlFor="stream-framerate">{t('pages.settings.streaming.frameRateLabel')}</Label>
               <Input
                 id="stream-framerate"
                 type="number"
@@ -1381,11 +1410,11 @@ function StreamingTab() {
                 value={active.framerate}
                 onChange={(e) => setDraft({ ...active, framerate: Number(e.target.value) })}
               />
-              <p className="text-[11px] text-muted-foreground">Frames per second, 1-120.</p>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.streaming.frameRateHint')}</p>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs" htmlFor="stream-bitrate">Bitrate</Label>
+              <Label className="text-xs" htmlFor="stream-bitrate">{t('pages.settings.streaming.bitrateLabel')}</Label>
               <Input
                 id="stream-bitrate"
                 value={active.bitrate}
@@ -1393,13 +1422,13 @@ function StreamingTab() {
                 placeholder={data.builtIn.bitrate}
               />
               <p className="text-[11px] text-muted-foreground">
-                As ffmpeg writes it, e.g. <code className="text-[11px]">6000k</code>.
+                {t('pages.settings.streaming.bitrateHintPrefix')} <code className="text-[11px]">6000k</code>.
               </p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs" htmlFor="stream-volume">Volume</Label>
+            <Label className="text-xs" htmlFor="stream-volume">{t('pages.settings.streaming.volumeLabel')}</Label>
             <Input
               id="stream-volume"
               type="number"
@@ -1410,16 +1439,13 @@ function StreamingTab() {
               onChange={(e) => setDraft({ ...active, volume: Number(e.target.value) })}
             />
             <p className="text-[11px] text-muted-foreground">
-              Percent of the video's own loudness, 0-100. Videos are mastered far
-              louder than people speak, so a stream at its own level arrives as a
-              shout — hence the low default. Viewers can still turn their own
-              player up. Takes effect on the next stream, not the running one.
+              {t('pages.settings.streaming.volumeHint')}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={() => save.mutate(active)} disabled={save.isPending || !draft}>
-              Save
+              {t('common.save')}
             </Button>
             <Button
               size="sm"
@@ -1427,9 +1453,9 @@ function StreamingTab() {
               onClick={() => setDraft({ ...data.builtIn })}
               disabled={matchesBuiltIn}
             >
-              Restore shipped values
+              {t('pages.settings.streaming.restoreShippedValues')}
             </Button>
-            {draft && <span className="text-[11px] text-muted-foreground">Unsaved changes</span>}
+            {draft && <span className="text-[11px] text-muted-foreground">{t('pages.settings.streaming.unsavedChanges')}</span>}
           </div>
         </CardContent>
       </Card>
@@ -1438,6 +1464,7 @@ function StreamingTab() {
 }
 
 function DebugTab() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [confirmReset, setConfirmReset] = useState<'radio' | 'bots' | null>(null);
 
@@ -1450,27 +1477,27 @@ function DebugTab() {
     mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck' | 'query'; enabled: boolean }) =>
       settingsApi.setDebugFlag(name, enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['debug-flags'] }),
-    onError: () => toast.error('Failed to update debug flag'),
+    onError: () => toast.error(t('pages.settings.debug.debugFlagUpdateFailed')),
   });
 
   const resetRadioIds = useMutation({
     mutationFn: settingsApi.resetRadioStationIds,
     onSuccess: ({ deletedCount }) => {
       qc.invalidateQueries({ queryKey: ['radio-stations'] });
-      toast.success(`Deleted ${deletedCount} radio station(s), IDs reset`);
+      toast.success(t('pages.settings.debug.radioIdsResetToast', { count: deletedCount }));
       setConfirmReset(null);
     },
-    onError: () => toast.error('Failed to reset radio station IDs'),
+    onError: () => toast.error(t('pages.settings.debug.radioIdsResetFailed')),
   });
 
   const resetBotIds = useMutation({
     mutationFn: settingsApi.resetMusicBotIds,
     onSuccess: ({ deletedCount }) => {
       qc.invalidateQueries({ queryKey: ['music-bots'] });
-      toast.success(`Deleted ${deletedCount} music bot(s), IDs reset`);
+      toast.success(t('pages.settings.debug.botIdsResetToast', { count: deletedCount }));
       setConfirmReset(null);
     },
-    onError: () => toast.error('Failed to reset music bot IDs'),
+    onError: () => toast.error(t('pages.settings.debug.botIdsResetFailed')),
   });
 
   if (isLoading) return <PageLoader />;
@@ -1479,18 +1506,17 @@ function DebugTab() {
     <div className="max-w-lg space-y-4">
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Debug Logging</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.debug.loggingTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Extra verbose logging for diagnosing issues. Leave these off during normal
-            operation — they can produce a lot of log output. Changes take effect immediately.
+            {t('pages.settings.debug.loggingDescription')}
           </p>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Voice Bot Debug</Label>
-              <p className="text-[11px] text-muted-foreground">Per-second audio streaming stats (jitter, frame timing) for music/stream bots.</p>
+              <Label className="text-xs">{t('pages.settings.debug.voiceBotDebugLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.debug.voiceBotDebugHint')}</p>
             </div>
             <Switch
               checked={!!flags?.voice}
@@ -1500,8 +1526,8 @@ function DebugTab() {
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Rank Check Debug</Label>
-              <p className="text-[11px] text-muted-foreground">Per-client detail (computed hours, group membership) for the Rank Check bot-flow action.</p>
+              <Label className="text-xs">{t('pages.settings.debug.rankCheckDebugLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.debug.rankCheckDebugHint')}</p>
             </div>
             <Switch
               checked={!!flags?.rankCheck}
@@ -1511,8 +1537,8 @@ function DebugTab() {
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">ServerQuery Debug</Label>
-              <p className="text-[11px] text-muted-foreground">Every WebQuery/SSH command sent to a TeamSpeak server and its raw response, including errors (e.g. insufficient permissions) - useful when a bot flow action silently doesn't do what's expected.</p>
+              <Label className="text-xs">{t('pages.settings.debug.serverQueryDebugLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.debug.serverQueryDebugHint')}</p>
             </div>
             <Switch
               checked={!!flags?.query}
@@ -1525,33 +1551,31 @@ function DebugTab() {
       <Card className="card-hero border-destructive/50">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-destructive flex items-center gap-1.5">
-            <AlertTriangle className="h-4 w-4" /> Danger Zone
+            <AlertTriangle className="h-4 w-4" /> {t('pages.settings.debug.dangerZone')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            SQLite's id counters never go back down on their own, even after deleting everything -
-            these wipe a table entirely (across every server, not just the one selected above) so its
-            next entry starts back at #1.
+            {t('pages.settings.debug.idResetHint')}
           </p>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Reset Radio Station IDs</Label>
-              <p className="text-[11px] text-muted-foreground">Deletes every radio station on every server.</p>
+              <Label className="text-xs">{t('pages.settings.debug.resetRadioIdsLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.debug.resetRadioIdsHint')}</p>
             </div>
             <Button variant="destructive" size="sm" onClick={() => setConfirmReset('radio')}>
-              Reset
+              {t('pages.settings.debug.reset')}
             </Button>
           </div>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Reset Music Bot IDs</Label>
-              <p className="text-[11px] text-muted-foreground">Stops and deletes every music bot on every server.</p>
+              <Label className="text-xs">{t('pages.settings.debug.resetBotIdsLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.debug.resetBotIdsHint')}</p>
             </div>
             <Button variant="destructive" size="sm" onClick={() => setConfirmReset('bots')}>
-              Reset
+              {t('pages.settings.debug.reset')}
             </Button>
           </div>
         </CardContent>
@@ -1560,11 +1584,11 @@ function DebugTab() {
       <ConfirmDialog
         open={confirmReset !== null}
         onOpenChange={(open) => !open && setConfirmReset(null)}
-        title={confirmReset === 'radio' ? 'Reset Radio Station IDs?' : 'Reset Music Bot IDs?'}
+        title={confirmReset === 'radio' ? t('pages.settings.debug.resetRadioTitle') : t('pages.settings.debug.resetBotsTitle')}
         description={
           confirmReset === 'radio'
-            ? 'This permanently deletes every radio station on every server. They will need to be re-added.'
-            : 'This stops and permanently deletes every music bot on every server. They will need to be re-created.'
+            ? t('pages.settings.debug.resetRadioDescription')
+            : t('pages.settings.debug.resetBotsDescription')
         }
         onConfirm={() => {
           if (confirmReset === 'radio') resetRadioIds.mutate();
@@ -1576,9 +1600,10 @@ function DebugTab() {
   );
 }
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 function RestartTab() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data: config, isLoading } = useQuery({
     queryKey: ['scheduled-restart'],
@@ -1593,9 +1618,9 @@ function RestartTab() {
     onSuccess: (saved) => {
       qc.setQueryData(['scheduled-restart'], saved);
       setDraft(null);
-      toast.success('Restart schedule saved');
+      toast.success(t('pages.settings.restart.restartScheduleSaved'));
     },
-    onError: () => toast.error('Failed to save restart schedule'),
+    onError: () => toast.error(t('pages.settings.restart.restartScheduleSaveFailed')),
   });
 
   if (isLoading || !active) return <PageLoader />;
@@ -1612,33 +1637,31 @@ function RestartTab() {
     <div className="max-w-lg space-y-4">
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Scheduled Restart</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.restart.title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Periodically restart ts6-manager's own containers to clear memory and ensure a clean
-            runtime state. This does <strong>not</strong> restart your TeamSpeak server — only
-            ts6-manager itself. Pick at least one container below to enable it.
+            {t('pages.settings.restart.descriptionPart1')} <strong>{t('pages.settings.restart.notEmphasis')}</strong> {t('pages.settings.restart.descriptionPart2')}
           </p>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Restart Backend</Label>
-              <p className="text-[11px] text-muted-foreground">Bot connections, EventBridge, WebSocket state.</p>
+              <Label className="text-xs">{t('pages.settings.restart.restartBackendLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.restart.restartBackendHint')}</p>
             </div>
             <Switch checked={active.backendEnabled} onCheckedChange={(v) => update({ backendEnabled: v })} />
           </div>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Restart Sidecar</Label>
-              <p className="text-[11px] text-muted-foreground">The video-streaming (WebRTC/RTP) process.</p>
+              <Label className="text-xs">{t('pages.settings.restart.restartSidecarLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.restart.restartSidecarHint')}</p>
             </div>
             <Switch checked={active.sidecarEnabled} onCheckedChange={(v) => update({ sidecarEnabled: v })} />
           </div>
 
           <div>
-            <Label className="text-xs">Time (24h, server-local)</Label>
+            <Label className="text-xs">{t('pages.settings.restart.timeLabel')}</Label>
             <Input
               type="time"
               className="h-8 mt-1 w-32 font-mono-data text-xs"
@@ -1648,9 +1671,9 @@ function RestartTab() {
           </div>
 
           <div>
-            <Label className="text-xs">Days</Label>
+            <Label className="text-xs">{t('pages.settings.restart.daysLabel')}</Label>
             <div className="flex gap-1 mt-1">
-              {DAY_LABELS.map((label, i) => (
+              {DAY_KEYS.map((key, i) => (
                 <Button
                   key={i}
                   type="button"
@@ -1659,7 +1682,7 @@ function RestartTab() {
                   className="h-7 w-11 px-0 text-xs"
                   onClick={() => toggleDay(i)}
                 >
-                  {label}
+                  {t(`pages.settings.restart.days.${key}`)}
                 </Button>
               ))}
             </div>
@@ -1670,7 +1693,7 @@ function RestartTab() {
             disabled={!draft || save.isPending}
             onClick={() => draft && save.mutate(draft)}
           >
-            {save.isPending ? 'Saving...' : 'Save'}
+            {save.isPending ? t('common.saving') : t('common.save')}
           </Button>
         </CardContent>
       </Card>
@@ -1679,6 +1702,7 @@ function RestartTab() {
 }
 
 function SsoTab() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data: oidc, isLoading } = useQuery({ queryKey: ['oidc-settings'], queryFn: settingsApi.getOidc });
   const [draft, setDraft] = useState<OidcSettingsInput | null>(null);
@@ -1688,9 +1712,9 @@ function SsoTab() {
     onSuccess: (saved) => {
       qc.setQueryData(['oidc-settings'], saved);
       setDraft(null);
-      toast.success('SSO settings saved');
+      toast.success(t('pages.settings.sso.ssoSettingsSaved'));
     },
-    onError: () => toast.error('Failed to save SSO settings'),
+    onError: () => toast.error(t('pages.settings.sso.ssoSettingsSaveFailed')),
   });
 
   if (isLoading || !oidc) return <PageLoader />;
@@ -1702,60 +1726,60 @@ function SsoTab() {
     <div className="max-w-lg space-y-4">
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Single Sign-On (OIDC)</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.sso.title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Let users log in via an external OpenID Connect provider (Authentik, Keycloak, Authelia, Zitadel, ...). A brand-new user is created as a <strong>viewer</strong> on their first SSO login — promote them to admin afterward from the Users tab if needed. Local username/password login stays available alongside this.
+            {t('pages.settings.sso.descriptionPart1')} <strong>{t('pages.settings.sso.viewerEmphasis')}</strong> {t('pages.settings.sso.descriptionPart2')}
           </p>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Label className="text-xs">Enabled</Label>
-              <p className="text-[11px] text-muted-foreground">Shows a "Sign in with SSO" button on the login page.</p>
+              <Label className="text-xs">{t('common.enabled')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.sso.enabledHint')}</p>
             </div>
             <Switch checked={active.enabled} onCheckedChange={(v) => update({ enabled: v })} />
           </div>
 
           <div>
-            <Label className="text-xs">Issuer URL</Label>
+            <Label className="text-xs">{t('pages.settings.sso.issuerUrlLabel')}</Label>
             <Input
               className="h-8 mt-1 font-mono-data text-xs"
               placeholder="https://auth.example.com/application/o/ts6-manager/"
               value={active.issuer}
               onChange={(e) => update({ issuer: e.target.value })}
             />
-            <p className="text-[11px] text-muted-foreground mt-1">The provider's OIDC discovery document must be reachable at <code>{'{issuer}'}/.well-known/openid-configuration</code>.</p>
+            <p className="text-[11px] text-muted-foreground mt-1">{t('pages.settings.sso.issuerUrlHint')} <code>{'{issuer}'}/.well-known/openid-configuration</code>.</p>
           </div>
 
           <div>
-            <Label className="text-xs">Client ID</Label>
+            <Label className="text-xs">{t('pages.settings.sso.clientIdLabel')}</Label>
             <Input className="h-8 mt-1 font-mono-data text-xs" value={active.clientId} onChange={(e) => update({ clientId: e.target.value })} />
           </div>
 
           <div>
-            <Label className="text-xs">Client Secret</Label>
+            <Label className="text-xs">{t('pages.settings.sso.clientSecretLabel')}</Label>
             <Input
               type="password"
               className="h-8 mt-1 font-mono-data text-xs"
-              placeholder={oidc.hasClientSecret ? 'Leave blank to keep the existing secret' : 'Client secret'}
+              placeholder={oidc.hasClientSecret ? t('pages.settings.sso.clientSecretPlaceholderExisting') : t('pages.settings.sso.clientSecretPlaceholder')}
               value={active.clientSecret}
               onChange={(e) => update({ clientSecret: e.target.value })}
             />
           </div>
 
           <div>
-            <Label className="text-xs">Button Label</Label>
+            <Label className="text-xs">{t('pages.settings.sso.buttonLabelLabel')}</Label>
             <Input className="h-8 mt-1 text-xs" value={active.buttonLabel} onChange={(e) => update({ buttonLabel: e.target.value })} />
           </div>
 
           <div className="rounded-md border border-border bg-muted/30 p-2.5">
-            <p className="text-[11px] text-muted-foreground">Redirect URI to register at your provider:</p>
+            <p className="text-[11px] text-muted-foreground">{t('pages.settings.sso.redirectUriHint')}</p>
             <p className="text-[11px] font-mono-data mt-0.5 break-all">{window.location.origin}/api/auth/oidc/callback</p>
           </div>
 
           <Button size="sm" disabled={!draft || save.isPending} onClick={() => draft && save.mutate(draft)}>
-            {save.isPending ? 'Saving...' : 'Save'}
+            {save.isPending ? t('common.saving') : t('common.save')}
           </Button>
         </CardContent>
       </Card>
@@ -1764,6 +1788,7 @@ function SsoTab() {
 }
 
 function UpdateStatusTab() {
+  const { t } = useTranslation();
   const { data, isLoading } = useUpdateCheck();
   const recheck = useRecheckUpdate();
 
@@ -1776,18 +1801,18 @@ function UpdateStatusTab() {
     onSuccess: (saved) => {
       qc.setQueryData(['github-token'], saved);
       setTokenDraft('');
-      toast.success('GitHub token saved');
+      toast.success(t('pages.settings.updateStatus.tokenSaved'));
     },
-    onError: () => toast.error('Failed to save GitHub token'),
+    onError: () => toast.error(t('pages.settings.updateStatus.tokenSaveFailed')),
   });
 
   const removeToken = useMutation({
     mutationFn: () => settingsApi.deleteGithubToken(),
     onSuccess: (saved) => {
       qc.setQueryData(['github-token'], saved);
-      toast.success('GitHub token removed');
+      toast.success(t('pages.settings.updateStatus.tokenRemoved'));
     },
-    onError: () => toast.error('Failed to remove GitHub token'),
+    onError: () => toast.error(t('pages.settings.updateStatus.tokenRemoveFailed')),
   });
 
   if (isLoading || !data) return <PageLoader />;
@@ -1795,40 +1820,40 @@ function UpdateStatusTab() {
   const frontendUpdateAvailable = !!(data.frontendLatest && compareVersions(data.frontendLatest, __APP_VERSION__) > 0);
 
   const rows = [
-    { label: 'Backend', current: data.backend.current, latest: data.backend.latest, updateAvailable: data.backend.updateAvailable },
-    { label: 'Sidecar', current: data.sidecar.current, latest: data.sidecar.latest, updateAvailable: data.sidecar.updateAvailable },
-    { label: 'Frontend', current: __APP_VERSION__ as string | null, latest: data.frontendLatest, updateAvailable: frontendUpdateAvailable },
+    { label: t('pages.settings.updateStatus.backend'), current: data.backend.current, latest: data.backend.latest, updateAvailable: data.backend.updateAvailable },
+    { label: t('pages.settings.updateStatus.sidecar'), current: data.sidecar.current, latest: data.sidecar.latest, updateAvailable: data.sidecar.updateAvailable },
+    { label: t('pages.settings.updateStatus.frontend'), current: __APP_VERSION__ as string | null, latest: data.frontendLatest, updateAvailable: frontendUpdateAvailable },
   ];
 
   return (
     <div className="max-w-lg space-y-4">
       <Card className="card-hero">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm font-medium">Update Status</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.updateStatus.title')}</CardTitle>
           <Button
             size="sm"
             variant="outline"
             disabled={recheck.isPending}
             onClick={() => {
               toast.promise(recheck.mutateAsync(), {
-                loading: 'Checking for updates...',
+                loading: t('pages.settings.updateStatus.checkingForUpdates'),
                 success: (result) => {
                   const frontendBehind = !!(result.frontendLatest && compareVersions(result.frontendLatest, __APP_VERSION__) > 0);
                   return result.backend.updateAvailable || result.sidecar.updateAvailable || frontendBehind
-                    ? 'Update available'
-                    : 'All up to date';
+                    ? t('pages.settings.updateStatus.updateAvailable')
+                    : t('pages.settings.updateStatus.allUpToDate');
                 },
-                error: 'Failed to check for updates',
+                error: t('pages.settings.updateStatus.checkFailed'),
               });
             }}
           >
             <RefreshCw className={cn('h-3.5 w-3.5 mr-1', recheck.isPending && 'animate-spin')} />
-            Recheck Now
+            {t('pages.settings.updateStatus.recheckNow')}
           </Button>
         </CardHeader>
         <CardContent className="space-y-1">
           <p className="text-xs text-muted-foreground mb-3">
-            Compares this deployment against GitHub's <code className="font-mono-data">main</code> branch. Notify-only — nothing here runs an update automatically.
+            {t('pages.settings.updateStatus.comparisonHintPrefix')} <code className="font-mono-data">main</code> {t('pages.settings.updateStatus.comparisonHintSuffix')}
           </p>
 
           {rows.map((row) => {
@@ -1838,45 +1863,45 @@ function UpdateStatusTab() {
                 <span className="text-xs font-medium w-16 shrink-0">{row.label}</span>
                 <div className="flex items-center gap-4 flex-1">
                   <div>
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Installed</p>
-                    <p className="font-mono-data text-xs">{row.current ?? 'unreachable'}</p>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{t('pages.settings.updateStatus.installed')}</p>
+                    <p className="font-mono-data text-xs">{row.current ?? t('pages.settings.updateStatus.unreachable')}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Latest (main)</p>
-                    <p className={cn('font-mono-data text-xs', row.updateAvailable && 'text-primary')}>{row.latest ?? 'unknown'}</p>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{t('pages.settings.updateStatus.latestMain')}</p>
+                    <p className={cn('font-mono-data text-xs', row.updateAvailable && 'text-primary')}>{row.latest ?? t('pages.settings.updateStatus.unknown')}</p>
                   </div>
                 </div>
                 <Badge
                   variant={!known ? 'secondary' : row.updateAvailable ? 'default' : 'outline'}
                   className="text-[10px] shrink-0"
                 >
-                  {!known ? 'unknown' : row.updateAvailable ? 'update available' : 'up to date'}
+                  {!known ? t('pages.settings.updateStatus.unknown') : row.updateAvailable ? t('pages.settings.updateStatus.updateAvailableBadge') : t('pages.settings.updateStatus.upToDate')}
                 </Badge>
               </div>
             );
           })}
 
           <p className="text-[11px] text-muted-foreground pt-3">
-            {data.checkedAt ? `Last checked: ${new Date(data.checkedAt).toLocaleString()}` : 'Not checked yet'}
+            {data.checkedAt ? t('pages.settings.updateStatus.lastChecked', { date: new Date(data.checkedAt).toLocaleString() }) : t('pages.settings.updateStatus.notCheckedYet')}
           </p>
         </CardContent>
       </Card>
 
       <Card className="card-hero">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">GitHub API Token</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.updateStatus.githubTokenTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Optional. This check reads three small files from GitHub per run, which is fine within GitHub's unauthenticated limit of 60 requests/hour — but that budget is shared with anything else on this server calling GitHub's API, and "Recheck Now" is throttled to 20/hour without a token to stay inside it. Add a token (a plain <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noreferrer" className="underline">fine-grained personal access token</a> with no repository access needed, since it only reads public files) to raise that to 5,000 requests/hour.
+            {t('pages.settings.updateStatus.githubTokenDescriptionPrefix')} <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noreferrer" className="underline">{t('pages.settings.updateStatus.githubTokenLinkText')}</a> {t('pages.settings.updateStatus.githubTokenDescriptionSuffix')}
           </p>
 
           <div>
-            <Label className="text-xs">Token</Label>
+            <Label className="text-xs">{t('pages.settings.updateStatus.tokenLabel')}</Label>
             <Input
               type="password"
               className="h-8 mt-1 font-mono-data text-xs"
-              placeholder={githubToken?.hasToken ? 'Configured — leave blank and Save does nothing' : 'ghp_... or github_pat_...'}
+              placeholder={githubToken?.hasToken ? t('pages.settings.updateStatus.tokenConfiguredPlaceholder') : t('pages.settings.updateStatus.tokenPlaceholder')}
               value={tokenDraft}
               onChange={(e) => setTokenDraft(e.target.value)}
             />
@@ -1888,7 +1913,7 @@ function UpdateStatusTab() {
               disabled={!tokenDraft.trim() || saveToken.isPending}
               onClick={() => saveToken.mutate(tokenDraft.trim())}
             >
-              {saveToken.isPending ? 'Saving...' : 'Save'}
+              {saveToken.isPending ? t('common.saving') : t('common.save')}
             </Button>
             {githubToken?.hasToken && (
               <Button
@@ -1897,11 +1922,11 @@ function UpdateStatusTab() {
                 disabled={removeToken.isPending}
                 onClick={() => removeToken.mutate()}
               >
-                {removeToken.isPending ? 'Removing...' : 'Remove'}
+                {removeToken.isPending ? t('pages.settings.updateStatus.removing') : t('common.remove')}
               </Button>
             )}
             <span className="text-[11px] text-muted-foreground">
-              {githubToken?.hasToken ? 'A token is configured.' : 'No token configured — using the unauthenticated limit.'}
+              {githubToken?.hasToken ? t('pages.settings.updateStatus.tokenConfiguredHint') : t('pages.settings.updateStatus.noTokenConfiguredHint')}
             </span>
           </div>
         </CardContent>

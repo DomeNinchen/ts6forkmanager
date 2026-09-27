@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import type { WidgetData } from '@ts6/common';
 import { WidgetRenderer } from '@/components/widget/WidgetRenderer';
 
 export default function WidgetPage() {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
 
   useEffect(() => {
-    document.title = 'TS Server Widget';
+    document.title = t('pages.widgetPage.title');
     const meta = document.createElement('meta');
     meta.name = 'robots';
     meta.content = 'noindex';
@@ -32,7 +34,7 @@ export default function WidgetPage() {
         height: '100vh', background: '#0f1117', color: '#8b949e',
         fontFamily: "'Segoe UI', sans-serif", fontSize: '13px',
       }}>
-        Loading...
+        {t('common.loading')}
       </div>
     );
   }
@@ -44,7 +46,7 @@ export default function WidgetPage() {
         height: '100vh', background: '#0f1117', color: '#8b949e',
         fontFamily: "'Segoe UI', sans-serif", fontSize: '13px',
       }}>
-        Widget not available
+        {t('pages.widgetPage.notAvailable')}
       </div>
     );
   }

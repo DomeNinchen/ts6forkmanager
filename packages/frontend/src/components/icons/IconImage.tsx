@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { ImageOff } from 'lucide-react';
 import { isBuiltinIconId } from '@ts6/common';
 import { iconsApi } from '@/api/icons.api';
@@ -46,6 +47,7 @@ interface IconImageProps {
 }
 
 export function IconImage({ iconId, size = 16, className, alt }: IconImageProps) {
+  const { t } = useTranslation();
   const { data: blob, isLoading, isError } = useIconBlob(iconId);
   const [url, setUrl] = useState<string | null>(null);
 
@@ -67,7 +69,7 @@ export function IconImage({ iconId, size = 16, className, alt }: IconImageProps)
     return (
       <span
         style={box}
-        title={`Built-in client icon #${iconId}`}
+        title={t('components.iconImage.builtinTitle', { id: iconId })}
         className={cn('inline-flex items-center justify-center rounded-sm bg-muted/60 text-[8px] font-mono-data text-muted-foreground', className)}
       >
         {iconId}
@@ -83,7 +85,7 @@ export function IconImage({ iconId, size = 16, className, alt }: IconImageProps)
     return (
       <span
         style={box}
-        title={alt || `Icon ${iconId} could not be loaded`}
+        title={alt || t('components.iconImage.couldNotLoad', { id: iconId })}
         className={cn('inline-flex items-center justify-center rounded-sm bg-muted/40 text-muted-foreground', className)}
       >
         <ImageOff style={{ width: size * 0.7, height: size * 0.7 }} />
@@ -94,7 +96,7 @@ export function IconImage({ iconId, size = 16, className, alt }: IconImageProps)
   return (
     <img
       src={url}
-      alt={alt || `Icon ${iconId}`}
+      alt={alt || t('components.iconImage.iconAlt', { id: iconId })}
       style={box}
       className={cn('object-contain', className)}
     />

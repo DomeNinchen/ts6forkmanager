@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { useAuthStore } from '@/stores/auth.store';
+import { useLanguageSync } from '@/hooks/use-language';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const isAdmin = useAuthStore((s) => s.isAdmin());
@@ -61,6 +62,8 @@ const SetupPage = lazy(() => import('@/pages/SetupPage'));
 const AuthCallback = lazy(() => import('@/pages/AuthCallback'));
 
 export function App() {
+  useLanguageSync();
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

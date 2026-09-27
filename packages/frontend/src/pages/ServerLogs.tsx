@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { logsApi } from '@/api/bans.api';
 import { useServerStore } from '@/stores/server.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
@@ -31,6 +32,7 @@ function parseLevel(line: string): string {
 }
 
 export default function ServerLogs() {
+  const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const qc = useQueryClient();
   const [lines, setLines] = useState('100');
@@ -52,12 +54,12 @@ export default function ServerLogs() {
   const addEntry = useMutation({
     mutationFn: () => logsApi.add(c!, s!, parseInt(addLevel), addMsg.trim()),
     onSuccess: () => {
-      toast.success('Log entry added');
+      toast.success(t('pages.serverLogs.entryAdded'));
       setShowAddEntry(false);
       setAddMsg('');
       qc.invalidateQueries({ queryKey: ['logs', c, s] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || 'Failed to add log entry'),
+    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.serverLogs.addFailed')),
   });
 
   const rawEntries = Array.isArray(data) ? data : [];
@@ -91,26 +93,26 @@ export default function ServerLogs() {
     URL.revokeObjectURL(url);
   };
 
-  if (!c || !s) return <EmptyState icon={ScrollText} title="No server selected" />;
+  if (!c || !s) return <EmptyState icon={ScrollText} title={t('pages.noServerSelected')} />;
   if (isLoading) return <PageLoader />;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Server Logs</h1>
+        <h1 className="text-xl font-semibold">{t('nav.items.serverLogs')}</h1>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setShowAddEntry(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Add Entry
+            <Plus className="h-4 w-4 mr-1" /> {t('pages.serverLogs.addEntry')}
           </Button>
           <Select onValueChange={(v) => handleExport(v as 'txt' | 'html')}>
-            <SelectTrigger className="h-9 text-xs w-[110px]"><Download className="h-3.5 w-3.5 mr-1" /><SelectValue placeholder="Export" /></SelectTrigger>
+            <SelectTrigger className="h-9 text-xs w-[110px]"><Download className="h-3.5 w-3.5 mr-1" /><SelectValue placeholder={t('pages.serverLogs.export')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="txt">as .txt</SelectItem>
-              <SelectItem value="html">as .html</SelectItem>
+              <SelectItem value="txt">{t('pages.serverLogs.asTxt')}</SelectItem>
+              <SelectItem value="html">{t('pages.serverLogs.asHtml')}</SelectItem>
             </SelectContent>
           </Select>
           <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={cn('h-4 w-4 mr-1', isFetching && 'animate-spin')} /> Refresh
+            <RefreshCw className={cn('h-4 w-4 mr-1', isFetching && 'animate-spin')} /> {t('common.refresh')}
           </Button>
         </div>
       </div>
@@ -118,31 +120,31 @@ export default function ServerLogs() {
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Filter logs..." value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-8 h-9" />
+          <Input placeholder={t('pages.serverLogs.filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-8 h-9" />
         </div>
         <Select value={instance ? 'instance' : 'server'} onValueChange={(v) => { setInstance(v === 'instance'); setBeginPos(0); }}>
           <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="server">This Server</SelectItem>
-            <SelectItem value="instance">Instance Log</SelectItem>
+            <SelectItem value="server">{t('pages.serverLogs.thisServer')}</SelectItem>
+            <SelectItem value="instance">{t('pages.serverLogs.instanceLog')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={levelFilter} onValueChange={setLevelFilter}>
           <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Levels</SelectItem>
-            <SelectItem value="ERROR">Error</SelectItem>
-            <SelectItem value="WARNING">Warning</SelectItem>
-            <SelectItem value="INFO">Info</SelectItem>
-            <SelectItem value="DEBUG">Debug</SelectItem>
+            <SelectItem value="ALL">{t('pages.serverLogs.allLevels')}</SelectItem>
+            <SelectItem value="ERROR">{t('pages.serverLogs.levelError')}</SelectItem>
+            <SelectItem value="WARNING">{t('pages.serverLogs.levelWarning')}</SelectItem>
+            <SelectItem value="INFO">{t('pages.serverLogs.levelInfo')}</SelectItem>
+            <SelectItem value="DEBUG">{t('pages.serverLogs.levelDebug')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={lines} onValueChange={(v) => { setLines(v); setBeginPos(0); }}>
           <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="25">25 lines</SelectItem>
-            <SelectItem value="50">50 lines</SelectItem>
-            <SelectItem value="100">100 lines</SelectItem>
+            <SelectItem value="25">{t('pages.serverLogs.nLines', { count: 25 })}</SelectItem>
+            <SelectItem value="50">{t('pages.serverLogs.nLines', { count: 50 })}</SelectItem>
+            <SelectItem value="100">{t('pages.serverLogs.nLines', { count: 100 })}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -151,7 +153,7 @@ export default function ServerLogs() {
         <ScrollArea className="h-[calc(100vh-260px)]">
           <div className="p-3 space-y-0.5">
             {logs.length === 0 ? (
-              <p className="text-center text-muted-foreground text-sm py-10">No log entries found.</p>
+              <p className="text-center text-muted-foreground text-sm py-10">{t('pages.serverLogs.noEntriesFound')}</p>
             ) : (
               logs.map((entry, i) => (
                 <div key={i} className="flex items-start gap-2 py-0.5 group hover:bg-muted/10 rounded-sm px-1">
@@ -169,13 +171,16 @@ export default function ServerLogs() {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">{logs.length} entries shown{beginPos > 0 && ` · skipping first ${beginPos}`}</p>
+        <p className="text-xs text-muted-foreground">
+          {t('pages.serverLogs.entriesShown', { count: logs.length })}
+          {beginPos > 0 && ` · ${t('pages.serverLogs.skippingFirst', { count: beginPos })}`}
+        </p>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setBeginPos((p) => Math.max(0, p - linesNum))} disabled={beginPos === 0}>
-            <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Newer
+            <ChevronLeft className="h-3.5 w-3.5 mr-1" /> {t('pages.serverLogs.newer')}
           </Button>
           <Button size="sm" variant="outline" onClick={() => setBeginPos((p) => p + linesNum)} disabled={rawEntries.length < linesNum}>
-            Older <ChevronRight className="h-3.5 w-3.5 ml-1" />
+            {t('pages.serverLogs.older')} <ChevronRight className="h-3.5 w-3.5 ml-1" />
           </Button>
         </div>
       </div>
@@ -184,29 +189,29 @@ export default function ServerLogs() {
       <Dialog open={showAddEntry} onOpenChange={setShowAddEntry}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Log Entry</DialogTitle>
+            <DialogTitle>{t('pages.serverLogs.addEntry')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Level</Label>
+              <Label className="text-xs">{t('pages.serverLogs.level')}</Label>
               <Select value={addLevel} onValueChange={setAddLevel}>
                 <SelectTrigger className="h-9 text-xs mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Error</SelectItem>
-                  <SelectItem value="2">Warning</SelectItem>
-                  <SelectItem value="3">Debug</SelectItem>
-                  <SelectItem value="4">Info</SelectItem>
+                  <SelectItem value="1">{t('pages.serverLogs.levelError')}</SelectItem>
+                  <SelectItem value="2">{t('pages.serverLogs.levelWarning')}</SelectItem>
+                  <SelectItem value="3">{t('pages.serverLogs.levelDebug')}</SelectItem>
+                  <SelectItem value="4">{t('pages.serverLogs.levelInfo')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Message</Label>
+              <Label className="text-xs">{t('pages.messages.message')}</Label>
               <Textarea value={addMsg} onChange={(e) => setAddMsg(e.target.value)} rows={2} className="mt-1" autoFocus />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddEntry(false)}>Cancel</Button>
-            <Button onClick={() => addEntry.mutate()} disabled={!addMsg.trim() || addEntry.isPending}>Add</Button>
+            <Button variant="outline" onClick={() => setShowAddEntry(false)}>{t('common.cancel')}</Button>
+            <Button onClick={() => addEntry.mutate()} disabled={!addMsg.trim() || addEntry.isPending}>{t('common.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

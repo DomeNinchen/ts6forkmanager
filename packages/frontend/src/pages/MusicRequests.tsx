@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Trans, useTranslation } from 'react-i18next';
 import { musicRequestsApi } from '@/api/music-requests.api';
 import { useServerStore } from '@/stores/server.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
@@ -7,8 +8,10 @@ import { Music, ExternalLink, Clock } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { getDateFnsLocale } from '@/lib/date-fns-locale';
 
 export default function MusicRequests() {
+    const { t } = useTranslation();
     const { selectedConfigId: c } = useServerStore();
 
     const { data: requests = [], isLoading } = useQuery({
@@ -17,7 +20,7 @@ export default function MusicRequests() {
         enabled: !!c,
     });
 
-    if (!c) return <EmptyState icon={Music} title="No server selected" />;
+    if (!c) return <EmptyState icon={Music} title={t('pages.noServerSelected')} />;
     if (isLoading) return <PageLoader />;
 
     return (
@@ -25,10 +28,12 @@ export default function MusicRequests() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-semibold flex items-center gap-2">
-                        <Music className="w-5 h-5 text-primary" /> Music Request History
+                        <Music className="w-5 h-5 text-primary" /> {t('nav.items.musicRequestHistory')}
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        History of songs requested via the <code className="text-xs bg-muted px-1 rounded-sm text-primary">!play</code> command on this server.
+                        <Trans i18nKey="pages.musicRequests.description">
+                            History of songs requested via the <code className="text-xs bg-muted px-1 rounded-sm text-primary">!play</code> command on this server.
+                        </Trans>
                     </p>
                 </div>
             </div>
@@ -38,8 +43,8 @@ export default function MusicRequests() {
                     <div className="absolute inset-0 flex items-center justify-center">
                         <EmptyState
                             icon={Music}
-                            title="No music requests yet"
-                            description="When users request songs using the !play command, they will appear here as a history log."
+                            title={t('pages.musicRequests.noneYetTitle')}
+                            description={t('pages.musicRequests.noneYetDescription')}
                         />
                     </div>
                 ) : (
@@ -71,7 +76,7 @@ export default function MusicRequests() {
                                         <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
                                             <span className="flex items-center gap-1.5 font-mono-data">
                                                 <Clock className="w-3.5 h-3.5" />
-                                                Requested {formatDistanceToNow(new Date(req.requestedAt), { addSuffix: true })}
+                                                {t('pages.musicRequests.requested', { time: formatDistanceToNow(new Date(req.requestedAt), { addSuffix: true, locale: getDateFnsLocale() }) })}
                                             </span>
                                         </div>
                                     </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Image as ImageIcon, Search } from 'lucide-react';
 import { iconsApi } from '@/api/icons.api';
 import { useServerStore } from '@/stores/server.store';
@@ -24,6 +25,7 @@ interface IconPickerDialogProps {
  * s] query key with the Icon Browser page, so switching between them doesn't
  * refetch. Read-only - uploading new icons stays the Icon Browser's job. */
 export function IconPickerDialog({ open, onOpenChange, onSelect, currentIconId }: IconPickerDialogProps) {
+  const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const [search, setSearch] = useState('');
 
@@ -47,14 +49,14 @@ export function IconPickerDialog({ open, onOpenChange, onSelect, currentIconId }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Choose an icon</DialogTitle>
+          <DialogTitle>{t('components.iconPickerDialog.title')}</DialogTitle>
         </DialogHeader>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search icon ID..."
+            placeholder={t('components.iconPickerDialog.searchPlaceholder')}
             className="pl-8 h-9"
             autoFocus
           />
@@ -66,19 +68,19 @@ export function IconPickerDialog({ open, onOpenChange, onSelect, currentIconId }
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-[320px] gap-3 px-8">
             <AlertTriangle className="h-8 w-8 text-amber-400" />
-            <p className="text-sm font-medium text-foreground">Icon pool unavailable</p>
+            <p className="text-sm font-medium text-foreground">{t('components.iconPickerDialog.poolUnavailable')}</p>
             <p className="text-xs text-muted-foreground text-center max-w-md">
               {errorMessage?.includes('SSH')
-                ? 'Reading the icon pool requires SSH access, because the TeamSpeak WebQuery HTTP API does not support file transfer commands. Configure SSH credentials in the server settings, or type the icon ID directly.'
-                : errorMessage || 'Failed to load the icon pool - type the icon ID directly instead.'}
+                ? t('components.iconPickerDialog.sshRequired')
+                : errorMessage || t('components.iconPickerDialog.loadFailed')}
             </p>
           </div>
         ) : icons.length === 0 ? (
           <div className="flex items-center justify-center h-[320px]">
             <EmptyState
               icon={ImageIcon}
-              title={search ? 'No matching icons' : 'No icons uploaded'}
-              description={search ? 'No icon in this pool matches your search.' : 'Upload icons on the Icons page first, then pick one here.'}
+              title={search ? t('components.iconPickerDialog.noMatchingIcons') : t('components.iconPickerDialog.noIconsUploaded')}
+              description={search ? t('components.iconPickerDialog.noMatchDescription') : t('components.iconPickerDialog.noIconsDescription')}
             />
           </div>
         ) : (
@@ -105,7 +107,7 @@ export function IconPickerDialog({ open, onOpenChange, onSelect, currentIconId }
           </ScrollArea>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

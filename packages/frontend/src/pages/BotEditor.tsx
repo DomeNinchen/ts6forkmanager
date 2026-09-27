@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { PlaceholderReference, PlaceholderReferenceContent } from '@/components/bots/PlaceholderReference';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 // --- Node type definitions ---
 type HandleConfig = {
@@ -37,73 +39,92 @@ interface NodeTypeDef {
   handles: HandleConfig;
 }
 
-const TRIGGER_NODES: NodeTypeDef[] = [
-  { type: 'trigger_event', label: 'TS Event', icon: Zap, color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', handles: { inputs: [], outputs: ['out'] } },
-  { type: 'trigger_cron', label: 'Cron Timer', icon: Clock, color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', handles: { inputs: [], outputs: ['out'] } },
-  { type: 'trigger_webhook', label: 'Webhook', icon: Webhook, color: 'bg-violet-500/20 text-violet-400 border-violet-500/30', handles: { inputs: [], outputs: ['out'] } },
-  { type: 'trigger_command', label: 'Chat Command', icon: Terminal, color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', handles: { inputs: [], outputs: ['out'] } },
-];
+function getTriggerNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'trigger_event', label: l('trigger_event'), icon: Zap, color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', handles: { inputs: [], outputs: ['out'] } },
+    { type: 'trigger_cron', label: l('trigger_cron'), icon: Clock, color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', handles: { inputs: [], outputs: ['out'] } },
+    { type: 'trigger_webhook', label: l('trigger_webhook'), icon: Webhook, color: 'bg-violet-500/20 text-violet-400 border-violet-500/30', handles: { inputs: [], outputs: ['out'] } },
+    { type: 'trigger_command', label: l('trigger_command'), icon: Terminal, color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', handles: { inputs: [], outputs: ['out'] } },
+  ];
+}
 
-const ACTION_NODES: NodeTypeDef[] = [
-  { type: 'action_message', label: 'Send Message', icon: MessageSquare, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_poke', label: 'Poke Client', icon: Bell, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_kick', label: 'Kick Client', icon: UserX, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_ban', label: 'Ban Client', icon: Ban, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_move', label: 'Move Client', icon: ArrowRightLeft, color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_channelCreate', label: 'Create Channel', icon: FolderPlus, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_channelEdit', label: 'Edit Channel', icon: PenLine, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_channelDelete', label: 'Delete Channel', icon: FolderMinus, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_groupAdd', label: 'Add to Group', icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_groupRemove', label: 'Remove from Group', icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_webquery', label: 'WebQuery', icon: Terminal, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_webhook', label: 'Webhook', icon: Send, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_httpRequest', label: 'HTTP Request', icon: Globe, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-];
+function getActionNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'action_message', label: l('action_message'), icon: MessageSquare, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_poke', label: l('action_poke'), icon: Bell, color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_kick', label: l('action_kick'), icon: UserX, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_ban', label: l('action_ban'), icon: Ban, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_move', label: l('action_move'), icon: ArrowRightLeft, color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_channelCreate', label: l('action_channelCreate'), icon: FolderPlus, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_channelEdit', label: l('action_channelEdit'), icon: PenLine, color: 'bg-green-500/20 text-green-400 border-green-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_channelDelete', label: l('action_channelDelete'), icon: FolderMinus, color: 'bg-red-500/20 text-red-400 border-red-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_groupAdd', label: l('action_groupAdd'), icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_groupRemove', label: l('action_groupRemove'), icon: Users, color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_webquery', label: l('action_webquery'), icon: Terminal, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_webhook', label: l('action_webhook'), icon: Send, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_httpRequest', label: l('action_httpRequest'), icon: Globe, color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  ];
+}
 
-const VOICE_ACTION_NODES: NodeTypeDef[] = [
-  { type: 'action_voicePlay', label: 'Voice Play', icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceStop', label: 'Voice Stop', icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceJoinChannel', label: 'Voice Join', icon: LogIn, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceLeaveChannel', label: 'Voice Leave', icon: LogOut, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceVolume', label: 'Voice Volume', icon: Volume2, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voicePauseResume', label: 'Voice Pause/Resume', icon: Pause, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceSkip', label: 'Voice Skip', icon: SkipForward, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceSeek', label: 'Voice Seek', icon: Navigation, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_voiceTts', label: 'Voice TTS', icon: Mic, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-];
+function getVoiceActionNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'action_voicePlay', label: l('action_voicePlay'), icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceStop', label: l('action_voiceStop'), icon: Music, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceJoinChannel', label: l('action_voiceJoinChannel'), icon: LogIn, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceLeaveChannel', label: l('action_voiceLeaveChannel'), icon: LogOut, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceVolume', label: l('action_voiceVolume'), icon: Volume2, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voicePauseResume', label: l('action_voicePauseResume'), icon: Pause, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceSkip', label: l('action_voiceSkip'), icon: SkipForward, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceSeek', label: l('action_voiceSeek'), icon: Navigation, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_voiceTts', label: l('action_voiceTts'), icon: Mic, color: 'bg-pink-500/20 text-pink-400 border-pink-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  ];
+}
 
-const SMART_ACTION_NODES: NodeTypeDef[] = [
-  { type: 'action_afkMover', label: 'AFK Mover', icon: Moon, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_idleKicker', label: 'Idle Kicker', icon: Timer, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_pokeGroup', label: 'Poke Group', icon: Megaphone, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_rankCheck', label: 'Rank Check', icon: Award, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_tempChannelCleanup', label: 'Temp Cleanup', icon: Trash2, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_animatedChannel', label: 'Animated Channel', icon: Sparkles, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: [], outputs: [] } },
-];
+function getSmartActionNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'action_afkMover', label: l('action_afkMover'), icon: Moon, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_idleKicker', label: l('action_idleKicker'), icon: Timer, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_pokeGroup', label: l('action_pokeGroup'), icon: Megaphone, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_rankCheck', label: l('action_rankCheck'), icon: Award, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_tempChannelCleanup', label: l('action_tempChannelCleanup'), icon: Trash2, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_animatedChannel', label: l('action_animatedChannel'), icon: Sparkles, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: [], outputs: [] } },
+  ];
+}
 
-const LOGIC_NODES: NodeTypeDef[] = [
-  { type: 'condition', label: 'Condition', icon: GitBranch, color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', handles: { inputs: ['in'], outputs: ['true', 'false'] } },
-  { type: 'loop', label: 'Loop', icon: Repeat, color: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', handles: { inputs: ['in'], outputs: ['body', 'after'] } },
-  { type: 'delay', label: 'Delay', icon: Clock, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'variable', label: 'Set Variable', icon: Variable, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'log', label: 'Log', icon: FileText, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_generateCode', label: 'Generate Code', icon: Sparkles, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_countOnlineInGroups', label: 'Count Online in Groups', icon: Users, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-  { type: 'action_listMembership', label: 'List Add/Remove', icon: ListChecks, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
-];
+function getLogicNodes(t: TFunction): NodeTypeDef[] {
+  const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
+  return [
+    { type: 'condition', label: l('condition'), icon: GitBranch, color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', handles: { inputs: ['in'], outputs: ['true', 'false'] } },
+    { type: 'loop', label: l('loop'), icon: Repeat, color: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', handles: { inputs: ['in'], outputs: ['body', 'after'] } },
+    { type: 'delay', label: l('delay'), icon: Clock, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'variable', label: l('variable'), icon: Variable, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'log', label: l('log'), icon: FileText, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_generateCode', label: l('action_generateCode'), icon: Sparkles, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_countOnlineInGroups', label: l('action_countOnlineInGroups'), icon: Users, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_listMembership', label: l('action_listMembership'), icon: ListChecks, color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+  ];
+}
 
-const ALL_NODE_TYPES: NodeTypeDef[] = [...TRIGGER_NODES, ...ACTION_NODES, ...VOICE_ACTION_NODES, ...SMART_ACTION_NODES, ...LOGIC_NODES];
+function getAllNodeTypes(t: TFunction): NodeTypeDef[] {
+  return [...getTriggerNodes(t), ...getActionNodes(t), ...getVoiceActionNodes(t), ...getSmartActionNodes(t), ...getLogicNodes(t)];
+}
 
-const NODE_CATEGORIES = [
-  { label: 'Triggers', nodes: TRIGGER_NODES },
-  { label: 'Actions', nodes: ACTION_NODES },
-  { label: 'Voice', nodes: VOICE_ACTION_NODES },
-  { label: 'Smart Actions', nodes: SMART_ACTION_NODES },
-  { label: 'Logic', nodes: LOGIC_NODES },
-];
+function getNodeCategories(t: TFunction) {
+  return [
+    { label: t('pages.botEditor.categories.triggers'), nodes: getTriggerNodes(t) },
+    { label: t('pages.botEditor.categories.actions'), nodes: getActionNodes(t) },
+    { label: t('pages.botEditor.categories.voice'), nodes: getVoiceActionNodes(t) },
+    { label: t('pages.botEditor.categories.smartActions'), nodes: getSmartActionNodes(t) },
+    { label: t('pages.botEditor.categories.logic'), nodes: getLogicNodes(t) },
+  ];
+}
 
-function getNodeMeta(type: string): NodeTypeDef | undefined {
-  const meta = ALL_NODE_TYPES.find((n) => n.type === type);
+function getNodeMeta(type: string, t: TFunction): NodeTypeDef | undefined {
+  const meta = getAllNodeTypes(t).find((n) => n.type === type);
   if (!meta) return meta;
   // Every action node the backend dispatches through its generic 'action'
   // case can optionally have an 'error' edge wired - followed instead of
@@ -507,6 +528,7 @@ function ExpandableTextarea({
   className?: string;
   dialogTitle: string;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [showReference, setShowReference] = useState(false);
   return (
@@ -518,7 +540,7 @@ function ExpandableTextarea({
           size="icon"
           className="h-5 w-5 -mr-1 text-muted-foreground hover:text-foreground"
           onClick={() => setExpanded(true)}
-          title="Groß bearbeiten"
+          title={t('pages.botEditor.editFullscreen')}
         >
           <Maximize2 className="h-3 w-3" />
         </Button>
@@ -541,7 +563,7 @@ function ExpandableTextarea({
                 className="h-7 text-xs mr-6"
                 onClick={() => setShowReference((v) => !v)}
               >
-                <BookOpen className="h-3.5 w-3.5 mr-1" /> {showReference ? 'Hide' : 'Show'} Placeholders
+                <BookOpen className="h-3.5 w-3.5 mr-1" /> {showReference ? t('pages.botEditor.hidePlaceholders') : t('pages.botEditor.showPlaceholders')}
               </Button>
             </div>
           </DialogHeader>
@@ -582,18 +604,20 @@ function hasSeenEditorHelp(): boolean {
   }
 }
 
-const EDITOR_GESTURES: { what: string; how: string }[] = [
-  { what: 'Add a step', how: 'Click one in the list on the left' },
-  { what: 'Move a step', how: 'Drag it' },
-  { what: 'Configure a step', how: 'Click it — the settings open on the right' },
-  { what: 'Connect two steps', how: 'Drag from an output dot onto an input dot' },
-  { what: 'Delete a connection', how: 'Click the line' },
-  { what: 'Bend a connection', how: 'Hover it, then click the ring that appears' },
-  { what: 'Add another bend', how: 'Click a bend point — the next one appears after it' },
-  { what: 'Move a bend', how: 'Drag the point' },
-  { what: 'Remove a bend', how: 'Right-click the point' },
-  { what: 'Keep your changes', how: 'Press Save — nothing is stored until you do' },
-];
+function getEditorGestures(t: TFunction): { what: string; how: string }[] {
+  return [
+    { what: t('pages.botEditor.gestureAddStep'), how: t('pages.botEditor.gestureAddStepHow') },
+    { what: t('pages.botEditor.gestureMoveStep'), how: t('pages.botEditor.gestureMoveStepHow') },
+    { what: t('pages.botEditor.gestureConfigureStep'), how: t('pages.botEditor.gestureConfigureStepHow') },
+    { what: t('pages.botEditor.gestureConnectSteps'), how: t('pages.botEditor.gestureConnectStepsHow') },
+    { what: t('pages.botEditor.gestureDeleteConnection'), how: t('pages.botEditor.gestureDeleteConnectionHow') },
+    { what: t('pages.botEditor.gestureBendConnection'), how: t('pages.botEditor.gestureBendConnectionHow') },
+    { what: t('pages.botEditor.gestureAddBend'), how: t('pages.botEditor.gestureAddBendHow') },
+    { what: t('pages.botEditor.gestureMoveBend'), how: t('pages.botEditor.gestureMoveBendHow') },
+    { what: t('pages.botEditor.gestureRemoveBend'), how: t('pages.botEditor.gestureRemoveBendHow') },
+    { what: t('pages.botEditor.gestureKeepChanges'), how: t('pages.botEditor.gestureKeepChangesHow') },
+  ];
+}
 
 function EditorHelpDialog({
   open,
@@ -604,7 +628,9 @@ function EditorHelpDialog({
   onOpenChange: (open: boolean) => void;
   showDismiss: boolean;
 }) {
+  const { t } = useTranslation();
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const gestures = useMemo(() => getEditorGestures(t), [t]);
 
   const close = () => {
     if (dontShowAgain) {
@@ -617,11 +643,11 @@ function EditorHelpDialog({
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Using the flow editor</DialogTitle>
+          <DialogTitle>{t('pages.botEditor.usingTheFlowEditor')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-1.5">
-          {EDITOR_GESTURES.map((g) => (
+          {gestures.map((g) => (
             <div key={g.what} className="flex items-baseline gap-3 text-sm">
               <span className="w-44 shrink-0 text-muted-foreground">{g.what}</span>
               <span>{g.how}</span>
@@ -630,9 +656,7 @@ function EditorHelpDialog({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Connections route themselves at right angles, passing below both ends when
-          they have to run backwards. Bend points are only for the cases where you
-          want a line somewhere specific — a flow works exactly the same without them.
+          {t('pages.botEditor.routingExplanation')}
         </p>
 
         <div className="flex items-center justify-between gap-4 pt-1">
@@ -644,10 +668,10 @@ function EditorHelpDialog({
                 checked={dontShowAgain}
                 onChange={(e) => setDontShowAgain(e.target.checked)}
               />
-              Don't show this when opening a flow
+              {t('pages.botEditor.dontShowAgain')}
             </label>
           ) : <span />}
-          <Button size="sm" onClick={close}>Got it</Button>
+          <Button size="sm" onClick={close}>{t('pages.botEditor.gotIt')}</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -655,6 +679,7 @@ function EditorHelpDialog({
 }
 
 export default function BotEditor() {
+  const { t } = useTranslation();
   const { botId } = useParams();
   const navigate = useNavigate();
   const { data: bot, isLoading } = useBot(botId ? parseInt(botId) : null);
@@ -722,8 +747,8 @@ export default function BotEditor() {
       id: parseInt(botId),
       data: { name: botName, flowData: { nodes, edges } },
     }, {
-      onSuccess: () => toast.success('Flow saved'),
-      onError: () => toast.error('Failed to save flow'),
+      onSuccess: () => toast.success(t('pages.botEditor.flowSaved')),
+      onError: () => toast.error(t('pages.botEditor.flowSaveFailed')),
     });
   };
 
@@ -836,7 +861,7 @@ export default function BotEditor() {
         // Released on a node body — connect to first input if available
         const nodeId = targetNode.getAttribute('data-node-id');
         if (nodeId && connectFrom.nodeId !== nodeId) {
-          const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '');
+          const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '', t);
           if (targetMeta && targetMeta.handles.inputs.length > 0) {
             const targetPort = targetMeta.handles.inputs[0];
             const exists = edges.some((ed) => ed.source === connectFrom.nodeId && ed.sourcePort === connectFrom.port && ed.target === nodeId);
@@ -857,7 +882,7 @@ export default function BotEditor() {
         setConnectFrom(null);
       }
     }
-  }, [connectFrom, nodes, edges]);
+  }, [connectFrom, nodes, edges, t]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     // Only deselect if we clicked directly on the canvas (not on a node)
@@ -889,7 +914,7 @@ export default function BotEditor() {
 
     // If connecting, complete the connection to this node's input
     if (connectFrom) {
-      const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '');
+      const targetMeta = getNodeMeta(nodes.find((n) => n.id === nodeId)?.type || '', t);
       if (connectFrom.nodeId !== nodeId && targetMeta && targetMeta.handles.inputs.length > 0) {
         const targetPort = targetMeta.handles.inputs[0];
         // Don't allow duplicate edges
@@ -912,7 +937,7 @@ export default function BotEditor() {
     if (!didDragRef.current) {
       setSelectedNode(nodeId);
     }
-  }, [connectFrom, nodes, edges]);
+  }, [connectFrom, nodes, edges, t]);
 
   // --- Output handle click: start connection ---
   const handleOutputClick = useCallback((e: React.MouseEvent, nodeId: string, port: string) => {
@@ -947,7 +972,8 @@ export default function BotEditor() {
   }, [connectFrom, edges]);
 
   const selectedNodeData = useMemo(() => nodes.find((n) => n.id === selectedNode), [nodes, selectedNode]);
-  const nodeTypeMeta = useMemo(() => getNodeMeta(selectedNodeData?.type || ''), [selectedNodeData]);
+  const nodeTypeMeta = useMemo(() => getNodeMeta(selectedNodeData?.type || '', t), [selectedNodeData, t]);
+  const nodeCategories = useMemo(() => getNodeCategories(t), [t]);
 
   // The edges are drawn in one SVG layered over the canvas, and an SVG clips
   // whatever reaches past its own viewport. Sizing that layer to the visible
@@ -986,8 +1012,8 @@ export default function BotEditor() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Input value={botName} onChange={(e) => setBotName(e.target.value)} className="h-8 w-60 text-sm font-medium" />
-          <Badge variant="outline" className="text-[10px]">{nodes.length} nodes</Badge>
-          <Badge variant="outline" className="text-[10px]">{edges.length} edges</Badge>
+          <Badge variant="outline" className="text-[10px]">{t('pages.botEditor.nodesCount', { count: nodes.length })}</Badge>
+          <Badge variant="outline" className="text-[10px]">{t('pages.botEditor.edgesCount', { count: edges.length })}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -995,15 +1021,15 @@ export default function BotEditor() {
             size="icon"
             className="h-8 w-8"
             onClick={() => { setHelpWasRequested(true); setShowEditorHelp(true); }}
-            title="Using the flow editor"
+            title={t('pages.botEditor.usingTheFlowEditor')}
           >
             <Info className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)} title="Placeholder Reference">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)} title={t('pages.botEditor.placeholderReference')}>
             <HelpCircle className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" className="h-8" onClick={handleSave} disabled={updateBot.isPending}>
-            <Save className="h-4 w-4 mr-1" /> Save
+            <Save className="h-4 w-4 mr-1" /> {t('pages.botEditor.save')}
           </Button>
         </div>
       </div>
@@ -1013,7 +1039,7 @@ export default function BotEditor() {
         <div className="w-52 border-r border-border bg-card/50 shrink-0">
           <ScrollArea className="h-full">
             <div className="p-3 space-y-4">
-              {NODE_CATEGORIES.map((cat) => (
+              {nodeCategories.map((cat) => (
                 <div key={cat.label}>
                   <p className="font-display text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{cat.label}</p>
                   <div className="space-y-1">
@@ -1058,8 +1084,8 @@ export default function BotEditor() {
               const tgtNode = nodes.find((n) => n.id === edge.target);
               if (!srcNode || !tgtNode) return null;
 
-              const srcMeta = getNodeMeta(srcNode.type);
-              const tgtMeta = getNodeMeta(tgtNode.type);
+              const srcMeta = getNodeMeta(srcNode.type, t);
+              const tgtMeta = getNodeMeta(tgtNode.type, t);
               if (!srcMeta || !tgtMeta) return null;
 
               const srcPortIdx = srcMeta.handles.outputs.indexOf(edge.sourcePort);
@@ -1126,7 +1152,7 @@ export default function BotEditor() {
                       onMouseDown={(ev) => ev.stopPropagation()}
                       onClick={(ev) => { ev.stopPropagation(); seedWaypoints(edge.id, ghost.seed); }}
                     >
-                      <title>Click to bend this connection here</title>
+                      <title>{t('pages.botEditor.clickToBend')}</title>
                     </circle>
                   )}
 
@@ -1156,7 +1182,7 @@ export default function BotEditor() {
                         }}
                         onContextMenu={(ev) => { ev.preventDefault(); ev.stopPropagation(); removeWaypoint(edge.id, i); }}
                       >
-                        <title>Drag to move, click to add another point, right-click to remove</title>
+                        <title>{t('pages.botEditor.dragBendPoint')}</title>
                       </circle>
                     );
                   })}
@@ -1167,7 +1193,7 @@ export default function BotEditor() {
             {/* Connection drag preview */}
             {connectFrom && (() => {
               const srcNode = nodes.find((n) => n.id === connectFrom.nodeId);
-              const srcMeta = srcNode ? getNodeMeta(srcNode.type) : null;
+              const srcMeta = srcNode ? getNodeMeta(srcNode.type, t) : null;
               if (!srcNode || !srcMeta) return null;
               const idx = srcMeta.handles.outputs.indexOf(connectFrom.port);
               if (idx < 0) return null;
@@ -1188,7 +1214,7 @@ export default function BotEditor() {
 
           {/* Nodes */}
           {nodes.map((node) => {
-            const meta = getNodeMeta(node.type);
+            const meta = getNodeMeta(node.type, t);
             if (!meta) return null;
             const Icon = meta.icon;
             const hasInputs = meta.handles.inputs.length > 0;
@@ -1236,7 +1262,7 @@ export default function BotEditor() {
                         height: HANDLE_R * 2,
                       }}
                       onClick={(e) => handleInputClick(e, node.id, port)}
-                      title={`Input: ${port}`}
+                      title={t('pages.botEditor.inputPortTitle', { port })}
                     />
                   );
                 })}
@@ -1266,7 +1292,7 @@ export default function BotEditor() {
                         )}
                         style={{ width: HANDLE_R * 2, height: HANDLE_R * 2 }}
                         onMouseDown={(e) => handleOutputClick(e, node.id, port)}
-                        title={`Output: ${port}`}
+                        title={t('pages.botEditor.outputPortTitle', { port })}
                       />
                       {outputs.length > 1 && (
                         <span className={cn(
@@ -1286,7 +1312,7 @@ export default function BotEditor() {
           {/* Connection hint */}
           {connectFrom && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-primary/20 border border-primary/30 text-primary text-xs px-3 py-1.5 rounded-full backdrop-blur-xs">
-              Click an input port or node to connect — ESC to cancel
+              {t('pages.botEditor.connectHint')}
             </div>
           )}
         </div>
@@ -1295,7 +1321,7 @@ export default function BotEditor() {
             flow is scrolled. Click-through, so it never swallows a drag. */}
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-40 flex justify-center pb-2">
           <span className="rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[10px] text-muted-foreground backdrop-blur-xs">
-            Drag from an output dot to connect · click a line to delete it · hover a line and click the ring to bend it
+            {t('pages.botEditor.canvasHint')}
           </span>
         </div>
         </div>
@@ -1306,7 +1332,7 @@ export default function BotEditor() {
             <ScrollArea className="h-full">
               <div className="p-3 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="font-display text-xs font-semibold tracking-wide">Node Properties</p>
+                  <p className="font-display text-xs font-semibold tracking-wide">{t('pages.botEditor.nodeProperties')}</p>
                   <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteNode(selectedNodeData.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -1315,7 +1341,7 @@ export default function BotEditor() {
                 <Separator />
 
                 <div>
-                  <Label className="text-[10px] text-muted-foreground">Label</Label>
+                  <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.labelField')}</Label>
                   <Input
                     className="h-7 text-xs mt-1"
                     value={selectedNodeData.label}
@@ -1324,7 +1350,7 @@ export default function BotEditor() {
                 </div>
 
                 <div>
-                  <Label className="text-[10px] text-muted-foreground">Type</Label>
+                  <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.typeField')}</Label>
                   <div className={cn('mt-1 text-xs px-2 py-1 rounded-sm border', nodeTypeMeta?.color || 'bg-muted/30')}>
                     {selectedNodeData.type.replace(/_/g, ' ')}
                   </div>
@@ -1334,32 +1360,32 @@ export default function BotEditor() {
                 {nodeTypeMeta && (
                   <div className="flex gap-2 text-[10px]">
                     {nodeTypeMeta.handles.inputs.length > 0 && (
-                      <Badge variant="secondary" className="text-[9px]">IN: {nodeTypeMeta.handles.inputs.join(', ')}</Badge>
+                      <Badge variant="secondary" className="text-[9px]">{t('pages.botEditor.inPorts', { ports: nodeTypeMeta.handles.inputs.join(', ') })}</Badge>
                     )}
-                    <Badge variant="secondary" className="text-[9px]">OUT: {nodeTypeMeta.handles.outputs.join(', ')}</Badge>
+                    <Badge variant="secondary" className="text-[9px]">{t('pages.botEditor.outPorts', { ports: nodeTypeMeta.handles.outputs.join(', ') })}</Badge>
                   </div>
                 )}
 
                 <Separator />
 
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground mb-2">CONFIGURATION</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground mb-2">{t('pages.botEditor.configuration')}</p>
 
                   {selectedNodeData.type === 'trigger_event' && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Event Name</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerEvent.eventNameLabel')}</Label>
                       <Select
                         value={selectedNodeData.config.eventName || ''}
                         onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, eventName: v } } : n))}
                       >
-                        <SelectTrigger className="h-7 text-xs mt-1"><SelectValue placeholder="Select event..." /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-xs mt-1"><SelectValue placeholder={t('pages.botEditor.config.triggerEvent.selectEventPlaceholder')} /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="notifycliententerview">Client Enter</SelectItem>
-                          <SelectItem value="notifyclientleftview">Client Leave</SelectItem>
-                          <SelectItem value="notifytextmessage">Text Message</SelectItem>
-                          <SelectItem value="notifyclientmoved">Client Moved</SelectItem>
-                          <SelectItem value="notifyserveredited">Server Edited</SelectItem>
-                          <SelectItem value="notifychanneldescriptionchanged">Channel Desc Changed</SelectItem>
+                          <SelectItem value="notifycliententerview">{t('pages.botEditor.config.triggerEvent.clientEnter')}</SelectItem>
+                          <SelectItem value="notifyclientleftview">{t('pages.botEditor.config.triggerEvent.clientLeave')}</SelectItem>
+                          <SelectItem value="notifytextmessage">{t('pages.botEditor.config.triggerEvent.textMessage')}</SelectItem>
+                          <SelectItem value="notifyclientmoved">{t('pages.botEditor.config.triggerEvent.clientMoved')}</SelectItem>
+                          <SelectItem value="notifyserveredited">{t('pages.botEditor.config.triggerEvent.serverEdited')}</SelectItem>
+                          <SelectItem value="notifychanneldescriptionchanged">{t('pages.botEditor.config.triggerEvent.channelDescChanged')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1368,7 +1394,7 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'trigger_cron' && (
                     <>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Cron Expression</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerCron.cronExpressionLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
                           placeholder="*/5 * * * *"
@@ -1377,7 +1403,7 @@ export default function BotEditor() {
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Timezone</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerCron.timezoneLabel')}</Label>
                         <Select
                           value={selectedNodeData.config.timezone || 'UTC'}
                           onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, timezone: v } } : n))}
@@ -1402,7 +1428,7 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'trigger_webhook' && (
                     <>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Webhook Path</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerWebhook.webhookPathLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
                           placeholder="my-hook"
@@ -1411,7 +1437,7 @@ export default function BotEditor() {
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">HTTP Method</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerWebhook.httpMethodLabel')}</Label>
                         <Select
                           value={selectedNodeData.config.method || 'POST'}
                           onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, method: v } } : n))}
@@ -1424,15 +1450,15 @@ export default function BotEditor() {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Secret (optional)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerWebhook.secretLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
-                          placeholder="Leave empty for no auth"
+                          placeholder={t('pages.botEditor.config.triggerWebhook.secretPlaceholder')}
                           type="password"
                           value={selectedNodeData.config.secret || ''}
                           onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, secret: e.target.value } } : n))}
                         />
-                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">Validated via X-Webhook-Secret header or ?secret= query param</p>
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">{t('pages.botEditor.config.triggerWebhook.secretHint')}</p>
                       </div>
                     </>
                   )}
@@ -1440,7 +1466,7 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'trigger_command' && (
                   <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Command</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.commandLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
                           placeholder="!help"
@@ -1458,7 +1484,7 @@ export default function BotEditor() {
                       </div>
 
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Listen Channel ID (optional)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerCommand.listenChannelIdLabel')}</Label>
                         <Input
                           type="number"
                           className="h-7 text-xs mt-1 font-mono-data"
@@ -1475,7 +1501,7 @@ export default function BotEditor() {
                           }
                         />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          Commands are only received while a ServerQuery client is in that channel.
+                          {t('pages.botEditor.config.triggerCommand.listenChannelHint')}
                         </p>
                       </div>
                     </div>
@@ -1484,37 +1510,37 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_message' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Target Mode</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionMessage.targetModeLabel')}</Label>
                         <Select
                           value={selectedNodeData.config.targetMode || 'client'}
                           onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, targetMode: v } } : n))}
                         >
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="client">Client</SelectItem>
-                            <SelectItem value="channel">Channel</SelectItem>
-                            <SelectItem value="server">Server</SelectItem>
+                            <SelectItem value="client">{t('pages.botEditor.config.shared.clientOption')}</SelectItem>
+                            <SelectItem value="channel">{t('pages.botEditor.config.shared.channelOption')}</SelectItem>
+                            <SelectItem value="server">{t('pages.botEditor.config.shared.serverOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       {selectedNodeData.config.targetMode !== 'server' && (
                         <div>
                           <Label className="text-[10px] text-muted-foreground">
-                            {selectedNodeData.config.targetMode === 'channel' ? 'Channel ID' : 'Client ID'}
+                            {selectedNodeData.config.targetMode === 'channel' ? t('pages.botEditor.config.shared.channelIdLabel') : t('pages.botEditor.config.shared.clientIdLabel')}
                           </Label>
                           <Input
                             className="h-7 text-xs mt-1 font-mono-data"
-                            placeholder={selectedNodeData.config.targetMode === 'channel' ? 'Channel ID or {{event.ctid}}' : 'Client ID or {{event.clid}}'}
+                            placeholder={selectedNodeData.config.targetMode === 'channel' ? t('pages.botEditor.config.shared.channelIdOrTemplatePlaceholder') : t('pages.botEditor.config.shared.clientIdOrTemplatePlaceholder')}
                             value={selectedNodeData.config.target || ''}
                             onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, target: e.target.value } } : n))}
                           />
                         </div>
                       )}
                       <ExpandableTextarea
-                        label="Message"
-                        dialogTitle="Nachricht bearbeiten"
+                        label={t('pages.botEditor.config.shared.messageLabel')}
+                        dialogTitle={t('pages.botEditor.config.actionMessage.editMessageDialogTitle')}
                         className="min-h-[120px]"
-                        placeholder={"Dies ist die HelpList:\n\n!create - erstellt einen Channel\n!delete - löscht deinen Channel\n!help - zeigt diese Liste"}
+                        placeholder={t('pages.botEditor.config.actionMessage.messagePlaceholder')}
                         value={selectedNodeData.config.message || ''}
                         onChange={(value) =>
                           setNodes((prev) =>
@@ -1525,7 +1551,7 @@ export default function BotEditor() {
                             )
                           )
                         }
-                        hint="Tipp: Zeilenumbrüche werden übernommen."
+                        hint={t('pages.botEditor.config.actionMessage.messageHint')}
                       />
                     </div>
                   )}
@@ -1533,21 +1559,21 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_kick' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Kick From</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionKick.kickFromLabel')}</Label>
                         <Select
                           value={selectedNodeData.config.reasonid || '5'}
                           onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, reasonid: v } } : n))}
                         >
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="4">Channel</SelectItem>
-                            <SelectItem value="5">Server</SelectItem>
+                            <SelectItem value="4">{t('pages.botEditor.config.shared.channelOption')}</SelectItem>
+                            <SelectItem value="5">{t('pages.botEditor.config.shared.serverOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Reason</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Kicked by bot" value={selectedNodeData.config.reason || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, reason: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.reasonLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.actionKick.reasonPlaceholder')} value={selectedNodeData.config.reason || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, reason: e.target.value } } : n))} />
                       </div>
                     </div>
                   )}
@@ -1555,19 +1581,19 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_ban' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Duration (seconds, 0=permanent)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionBan.durationLabel')}</Label>
                         <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="3600" value={selectedNodeData.config.time || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, time: parseInt(e.target.value) || 0 } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Reason</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Banned by bot" value={selectedNodeData.config.reason || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, reason: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.reasonLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.actionBan.reasonPlaceholder')} value={selectedNodeData.config.reason || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, reason: e.target.value } } : n))} />
                       </div>
                     </div>
                   )}
 
                   {selectedNodeData.type === 'action_move' && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Target Channel ID (or template)</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionMove.targetChannelIdLabel')}</Label>
                       <Input
                         className="h-7 text-xs mt-1 font-mono-data"
                         placeholder="94  or  {{temp.lastCreatedChannelId}}"
@@ -1583,33 +1609,33 @@ export default function BotEditor() {
                         }
                       />
                       <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                        Example: 94 or {"{{temp.lastCreatedChannelId}}"}
+                        {t('pages.botEditor.config.actionMove.exampleHint')}
                       </p>
                     </div>
                   )}
 
                   {selectedNodeData.type === 'action_poke' && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Message</Label>
-                      <Input className="h-7 text-xs mt-1" placeholder="Hey {{event.client_nickname}}!" value={selectedNodeData.config.message || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, message: e.target.value } } : n))} />
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.messageLabel')}</Label>
+                      <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.actionPoke.messagePlaceholder')} value={selectedNodeData.config.message || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, message: e.target.value } } : n))} />
                     </div>
                   )}
 
                   {selectedNodeData.type === 'action_channelCreate' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel Name</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelNameLabel')}</Label>
                         <Input className="h-7 text-xs mt-1" placeholder="[cspacer]Info" value={selectedNodeData.config.channel_name || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_name: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Parent Channel ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.parentChannelIdLabel')}</Label>
                         <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="0" value={selectedNodeData.config.cpid || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, cpid: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel Password (optional)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelPasswordLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
-                          placeholder="secret or {{temp.channelPassword}}"
+                          placeholder={t('pages.botEditor.config.shared.channelPasswordExamplePlaceholder')}
                           value={selectedNodeData.config.channel_password || ''}
                           onChange={(e) =>
                             setNodes((prev) =>
@@ -1623,12 +1649,12 @@ export default function BotEditor() {
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Temporary</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionChannelCreate.temporaryLabel')}</Label>
                         <Select value={selectedNodeData.config.channel_flag_temporary || '0'} onValueChange={(v) => setNodes((prev) => prev.map((n) => { if (n.id !== selectedNode) return n; const cfg: any = { ...n.config }; if (v === '1') { cfg.channel_flag_temporary = '1'; delete cfg.channel_flag_semi_permanent; } else { cfg.channel_flag_temporary = '0'; cfg.channel_flag_semi_permanent = '1'; } return { ...n, config: cfg }; }) ) }>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="0">Permanent</SelectItem>
-                            <SelectItem value="1">Temporary</SelectItem>
+                            <SelectItem value="0">{t('pages.botEditor.config.actionChannelCreate.permanentOption')}</SelectItem>
+                            <SelectItem value="1">{t('pages.botEditor.config.actionChannelCreate.temporaryOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1638,30 +1664,30 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_channelEdit' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="42" value={selectedNodeData.config.channelId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channelId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel Name</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelNameLabel')}</Label>
                         <Input className="h-7 text-xs mt-1" placeholder="[cspacer]{{time.time}}" value={selectedNodeData.config.channel_name || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_name: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel Topic</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Optional" value={selectedNodeData.config.channel_topic || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_topic: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionChannelEdit.channelTopicLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.shared.optionalPlaceholder')} value={selectedNodeData.config.channel_topic || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_topic: e.target.value } } : n))} />
                       </div>
                       <ExpandableTextarea
-                        label="Channel Description"
-                        dialogTitle="Channel-Beschreibung bearbeiten"
+                        label={t('pages.botEditor.config.actionChannelEdit.channelDescriptionLabel')}
+                        dialogTitle={t('pages.botEditor.config.actionChannelEdit.editDescriptionDialogTitle')}
                         className="min-h-[60px]"
                         placeholder="{{temp.apiResult}}"
                         value={selectedNodeData.config.channel_description || ''}
                         onChange={(value) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channel_description: value } } : n))}
                       />
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel Password (optional)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelPasswordLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
-                          placeholder="secret or {{temp.channelPassword}}"
+                          placeholder={t('pages.botEditor.config.shared.channelPasswordExamplePlaceholder')}
                           value={selectedNodeData.config.channel_password || ''}
                           onChange={(e) =>
                             setNodes((prev) =>
@@ -1674,7 +1700,7 @@ export default function BotEditor() {
                           }
                         />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          Leave empty to keep unchanged.
+                          {t('pages.botEditor.config.actionChannelEdit.passwordHint')}
                         </p>
                       </div>
                     </div>
@@ -1683,16 +1709,16 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_channelDelete' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="42" value={selectedNodeData.config.channelId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channelId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Force Delete</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionChannelDelete.forceDeleteLabel')}</Label>
                         <Select value={selectedNodeData.config.force ? '1' : '0'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, force: v === '1' } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="0">No</SelectItem>
-                            <SelectItem value="1">Yes (delete sub-channels)</SelectItem>
+                            <SelectItem value="0">{t('pages.botEditor.config.actionChannelDelete.forceNoOption')}</SelectItem>
+                            <SelectItem value="1">{t('pages.botEditor.config.actionChannelDelete.forceYesOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1701,7 +1727,7 @@ export default function BotEditor() {
 
                   {(selectedNodeData.type === 'action_groupAdd' || selectedNodeData.type === 'action_groupRemove') && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Server Group ID</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.serverGroupIdLabel')}</Label>
                       <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="6" value={selectedNodeData.config.groupId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, groupId: e.target.value } } : n))} />
                     </div>
                   )}
@@ -1709,13 +1735,13 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_webquery' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Command</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.commandLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="serverinfo" value={selectedNodeData.config.command || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, command: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Store As (temp variable)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsTempLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="server" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
-                        <p className="text-[9px] text-muted-foreground mt-1">Access via {'{{temp.server.virtualserver_name}}'}</p>
+                        <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.actionWebquery.accessHintPrefix')} {'{{temp.server.virtualserver_name}}'}</p>
                       </div>
                     </div>
                   )}
@@ -1723,11 +1749,11 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_webhook' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">URL</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.urlLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="https://example.com/hook" value={selectedNodeData.config.url || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, url: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Method</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.methodLabel')}</Label>
                         <Select value={selectedNodeData.config.method || 'POST'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, method: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -1738,11 +1764,11 @@ export default function BotEditor() {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Body (JSON)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.bodyJsonLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='{"key":"value"}' value={selectedNodeData.config.body || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, body: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Store As (temp variable)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsTempLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="response" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
                       </div>
                     </div>
@@ -1751,11 +1777,11 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_httpRequest' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">URL</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.urlLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="https://api.example.com/check" value={selectedNodeData.config.url || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, url: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Method</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.methodLabel')}</Label>
                         <Select value={selectedNodeData.config.method || 'GET'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, method: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -1767,7 +1793,7 @@ export default function BotEditor() {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Headers (JSON)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionHttpRequest.headersLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
                           placeholder='{"Authorization":"Bearer xxx"}'
@@ -1779,14 +1805,14 @@ export default function BotEditor() {
                             setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, headersRaw: raw, headers: parsed ?? n.config.headers } } : n));
                           }}
                         />
-                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">Key-value pairs as JSON object. Supports {'{{placeholders}}'}.</p>
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">{t('pages.botEditor.config.actionHttpRequest.headersHint')}</p>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Body (JSON)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.bodyJsonLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='{"ip":"{{event.connection_client_ip}}"}' value={selectedNodeData.config.body || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, body: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Store As (temp variable)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsTempLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="apiResult" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
                       </div>
                     </div>
@@ -1795,19 +1821,19 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_afkMover' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">AFK Channel ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionAfkMover.afkChannelIdLabel')}</Label>
                         <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="10" value={selectedNodeData.config.afkChannelId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, afkChannelId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Idle Threshold (seconds)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.idleThresholdLabel')}</Label>
                         <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="300" value={selectedNodeData.config.idleThresholdSeconds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, idleThresholdSeconds: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Exempt Group IDs (comma-separated)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.exemptGroupIdsLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="6,7" value={selectedNodeData.config.exemptGroupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, exemptGroupIds: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Exempt Channel IDs (comma-separated)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionAfkMover.exemptChannelIdsLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="12,15" value={selectedNodeData.config.exemptChannelIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, exemptChannelIds: e.target.value } } : n))} />
                       </div>
                     </div>
@@ -1816,15 +1842,15 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_idleKicker' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Idle Threshold (seconds)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.idleThresholdLabel')}</Label>
                         <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="1800" value={selectedNodeData.config.idleThresholdSeconds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, idleThresholdSeconds: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Kick Reason</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Idle timeout" value={selectedNodeData.config.reason || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, reason: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionIdleKicker.kickReasonLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.actionIdleKicker.kickReasonPlaceholder')} value={selectedNodeData.config.reason || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, reason: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Exempt Group IDs (comma-separated)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.exemptGroupIdsLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="6,7" value={selectedNodeData.config.exemptGroupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, exemptGroupIds: e.target.value } } : n))} />
                       </div>
                     </div>
@@ -1833,12 +1859,12 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_pokeGroup' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Server Group ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.serverGroupIdLabel')}</Label>
                         <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="6" value={selectedNodeData.config.groupId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, groupId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Message</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Support needed!" value={selectedNodeData.config.message || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, message: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.messageLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.actionPokeGroup.messagePlaceholder')} value={selectedNodeData.config.message || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, message: e.target.value } } : n))} />
                       </div>
                     </div>
                   )}
@@ -1846,24 +1872,24 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_rankCheck' && (
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Ranks (JSON)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionRankCheck.ranksLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='[{"hours":10,"groupId":"7"},{"hours":50,"groupId":"8"}]' value={selectedNodeData.config.ranks || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, ranks: e.target.value } } : n))} />
-                        <p className="text-[9px] text-muted-foreground mt-1">Array of {'{hours, groupId}'} — highest eligible rank is assigned</p>
+                        <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.actionRankCheck.ranksHint')}</p>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Hours measured as</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionRankCheck.hoursMeasuredAsLabel')}</Label>
                         <Select value={selectedNodeData.config.mode || 'accumulatedTime'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, mode: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="accumulatedTime">Actual online time (accumulated across sessions)</SelectItem>
-                            <SelectItem value="firstConnectionAge">Time since first connection (member age)</SelectItem>
+                            <SelectItem value="accumulatedTime">{t('pages.botEditor.config.actionRankCheck.accumulatedTimeOption')}</SelectItem>
+                            <SelectItem value="firstConnectionAge">{t('pages.botEditor.config.actionRankCheck.firstConnectionAgeOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Exclude Group IDs (comma-separated)</Label>
-                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="e.g. Bot group ID" value={selectedNodeData.config.excludeGroupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, excludeGroupIds: e.target.value } } : n))} />
-                        <p className="text-[9px] text-muted-foreground mt-1">Clients in any of these groups are skipped entirely. ServerQuery clients are always skipped.</p>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionRankCheck.excludeGroupIdsLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder={t('pages.botEditor.config.actionRankCheck.excludeGroupIdsPlaceholder')} value={selectedNodeData.config.excludeGroupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, excludeGroupIds: e.target.value } } : n))} />
+                        <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.actionRankCheck.excludeGroupIdsHint')}</p>
                       </div>
                     </div>
                   )}
@@ -1871,13 +1897,13 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_tempChannelCleanup' && (
                     <>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Parent Channel ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.parentChannelIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="19" value={selectedNodeData.config.parentChannelId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, parentChannelId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Protected Channel IDs (comma-separated)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionTempChannelCleanup.protectedChannelIdsLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="20,21" value={selectedNodeData.config.protectedChannelIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, protectedChannelIds: e.target.value } } : n))} />
-                        <p className="text-[9px] text-muted-foreground mt-1">Channels under the parent that should NOT be deleted (e.g. the lobby)</p>
+                        <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.actionTempChannelCleanup.protectedChannelIdsHint')}</p>
                       </div>
                     </>
                   )}
@@ -1885,46 +1911,46 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_animatedChannel' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="42" value={selectedNodeData.config.channelId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channelId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Display Text</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Welcome to MyServer" value={selectedNodeData.config.text || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, text: e.target.value } } : n))} />
-                        <p className="text-[9px] text-muted-foreground mt-1">Supports {'{{time.time}}'}, {'{{time.date}}'}, etc.</p>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionAnimatedChannel.displayTextLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.actionAnimatedChannel.displayTextPlaceholder')} value={selectedNodeData.config.text || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, text: e.target.value } } : n))} />
+                        <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.actionAnimatedChannel.displayTextHint')}</p>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Animation Style</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionAnimatedChannel.animationStyleLabel')}</Label>
                         <Select value={selectedNodeData.config.style || 'scroll'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, style: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="scroll">Scroll Left (Marquee)</SelectItem>
-                            <SelectItem value="typewriter">Typewriter</SelectItem>
-                            <SelectItem value="bounce">Bounce</SelectItem>
-                            <SelectItem value="blink">Blink</SelectItem>
-                            <SelectItem value="wave">Wave (Decorative)</SelectItem>
-                            <SelectItem value="alternateCase">Alternate Case</SelectItem>
+                            <SelectItem value="scroll">{t('pages.botEditor.config.actionAnimatedChannel.styleScroll')}</SelectItem>
+                            <SelectItem value="typewriter">{t('pages.botEditor.config.actionAnimatedChannel.styleTypewriter')}</SelectItem>
+                            <SelectItem value="bounce">{t('pages.botEditor.config.actionAnimatedChannel.styleBounce')}</SelectItem>
+                            <SelectItem value="blink">{t('pages.botEditor.config.actionAnimatedChannel.styleBlink')}</SelectItem>
+                            <SelectItem value="wave">{t('pages.botEditor.config.actionAnimatedChannel.styleWave')}</SelectItem>
+                            <SelectItem value="alternateCase">{t('pages.botEditor.config.actionAnimatedChannel.styleAlternateCase')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Speed</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionAnimatedChannel.speedLabel')}</Label>
                         <Select value={selectedNodeData.config.intervalSeconds || '3'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, intervalSeconds: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="0.25">Insane (0.25s)</SelectItem>
-                            <SelectItem value="0.5">Ultra (0.5s)</SelectItem>
-                            <SelectItem value="1">Very Fast (1s)</SelectItem>
-                            <SelectItem value="2">Fast (2s)</SelectItem>
-                            <SelectItem value="3">Medium (3s)</SelectItem>
-                            <SelectItem value="5">Slow (5s)</SelectItem>
+                            <SelectItem value="0.25">{t('pages.botEditor.config.actionAnimatedChannel.speedInsane')}</SelectItem>
+                            <SelectItem value="0.5">{t('pages.botEditor.config.actionAnimatedChannel.speedUltra')}</SelectItem>
+                            <SelectItem value="1">{t('pages.botEditor.config.actionAnimatedChannel.speedVeryFast')}</SelectItem>
+                            <SelectItem value="2">{t('pages.botEditor.config.actionAnimatedChannel.speedFast')}</SelectItem>
+                            <SelectItem value="3">{t('pages.botEditor.config.actionAnimatedChannel.speedMedium')}</SelectItem>
+                            <SelectItem value="5">{t('pages.botEditor.config.actionAnimatedChannel.speedSlow')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Prefix</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionAnimatedChannel.prefixLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="[cspacer]" value={selectedNodeData.config.prefix ?? '[cspacer]'} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, prefix: e.target.value } } : n))} />
-                        <p className="text-[9px] text-muted-foreground mt-1">TS3 channel name prefix (e.g. [cspacer] for centered spacer)</p>
+                        <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.actionAnimatedChannel.prefixHint')}</p>
                       </div>
                     </div>
                   )}
@@ -1933,23 +1959,23 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_voicePlay' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1 or {{var.botId}}" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Song ID</Label>
-                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="Song ID to play" value={selectedNodeData.config.songId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, songId: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionVoicePlay.songIdLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder={t('pages.botEditor.config.actionVoicePlay.songIdPlaceholder')} value={selectedNodeData.config.songId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, songId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Playlist ID (alternative)</Label>
-                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="Load playlist instead" value={selectedNodeData.config.playlistId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, playlistId: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionVoicePlay.playlistIdLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder={t('pages.botEditor.config.actionVoicePlay.playlistIdPlaceholder')} value={selectedNodeData.config.playlistId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, playlistId: e.target.value } } : n))} />
                       </div>
                     </div>
                   )}
 
                   {selectedNodeData.type === 'action_voiceStop' && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                       <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1 or {{var.botId}}" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                     </div>
                   )}
@@ -1957,23 +1983,23 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_voiceJoinChannel' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel ID</Label>
-                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="Channel ID or {{event.ctid}}" value={selectedNodeData.config.channelId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channelId: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelIdLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder={t('pages.botEditor.config.shared.channelIdOrTemplatePlaceholder')} value={selectedNodeData.config.channelId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channelId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Channel Password (optional)</Label>
-                        <Input className="h-7 text-xs mt-1" type="password" placeholder="Optional" value={selectedNodeData.config.channelPassword || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channelPassword: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.channelPasswordLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" type="password" placeholder={t('pages.botEditor.config.shared.optionalPlaceholder')} value={selectedNodeData.config.channelPassword || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, channelPassword: e.target.value } } : n))} />
                       </div>
                     </div>
                   )}
 
                   {selectedNodeData.type === 'action_voiceLeaveChannel' && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                       <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                     </div>
                   )}
@@ -1981,11 +2007,11 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_voiceVolume' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Volume (0-100)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionVoiceVolume.volumeLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="50 or {{event.volume}}" value={selectedNodeData.config.volume || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, volume: e.target.value } } : n))} />
                       </div>
                     </div>
@@ -1994,17 +2020,17 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_voicePauseResume' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Action</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionVoicePauseResume.actionLabel')}</Label>
                         <Select value={selectedNodeData.config.action || 'toggle'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, action: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pause">Pause</SelectItem>
-                            <SelectItem value="resume">Resume</SelectItem>
-                            <SelectItem value="toggle">Toggle</SelectItem>
+                            <SelectItem value="pause">{t('pages.botEditor.config.actionVoicePauseResume.pauseOption')}</SelectItem>
+                            <SelectItem value="resume">{t('pages.botEditor.config.actionVoicePauseResume.resumeOption')}</SelectItem>
+                            <SelectItem value="toggle">{t('pages.botEditor.config.actionVoicePauseResume.toggleOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -2014,16 +2040,16 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_voiceSkip' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Direction</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionVoiceSkip.directionLabel')}</Label>
                         <Select value={selectedNodeData.config.direction || 'next'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, direction: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="next">Next</SelectItem>
-                            <SelectItem value="previous">Previous</SelectItem>
+                            <SelectItem value="next">{t('pages.botEditor.config.actionVoiceSkip.nextOption')}</SelectItem>
+                            <SelectItem value="previous">{t('pages.botEditor.config.actionVoiceSkip.previousOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -2033,11 +2059,11 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_voiceSeek' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Position (seconds)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionVoiceSeek.positionLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="30" value={selectedNodeData.config.position || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, position: e.target.value } } : n))} />
                       </div>
                     </div>
@@ -2046,38 +2072,38 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_voiceTts' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Bot ID</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.botIdLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="1" value={selectedNodeData.config.botId || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, botId: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Text</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Hello {{event.client_nickname}}" value={selectedNodeData.config.text || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, text: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.textLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.actionVoiceTts.textPlaceholder')} value={selectedNodeData.config.text || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, text: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Language (optional)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionVoiceTts.languageLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="en" value={selectedNodeData.config.language || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, language: e.target.value } } : n))} />
                       </div>
-                      <p className="text-[9px] text-muted-foreground/60">TTS engine not yet configured — placeholder only</p>
+                      <p className="text-[9px] text-muted-foreground/60">{t('pages.botEditor.config.actionVoiceTts.notConfiguredHint')}</p>
                     </div>
                   )}
 
                   {selectedNodeData.type === 'condition' && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Expression</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.condition.expressionLabel')}</Label>
                       <Input
                         className="h-7 text-xs mt-1 font-mono-data"
                         placeholder='event.client_type == 0'
                         value={selectedNodeData.config.expression || ''}
                         onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, expression: e.target.value } } : n))}
                       />
-                      <p className="text-[9px] text-muted-foreground mt-1">True → green output, False → red output</p>
+                      <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.condition.expressionHint')}</p>
                     </div>
                   )}
 
                   {selectedNodeData.type === 'loop' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Array Variable</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.loop.arrayVariableLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
                           placeholder="clients"
@@ -2085,11 +2111,11 @@ export default function BotEditor() {
                           onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, arrayVariable: e.target.value } } : n))}
                         />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          Name of an existing temp variable holding a list, e.g. a WebQuery node's "Store As" result — without {'{{temp.'}...{'}}'}
+                          {t('pages.botEditor.config.loop.arrayVariableHint')}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Item Variable Name</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.loop.itemVariableLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
                           placeholder="client"
@@ -2097,11 +2123,11 @@ export default function BotEditor() {
                           onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, itemVariable: e.target.value } } : n))}
                         />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          In the loop body: {'{{temp.'}{(selectedNodeData.config.itemVariable || 'client')}{'}}'}, index: {'{{temp.'}{(selectedNodeData.config.itemVariable || 'client')}_index{'}}'}
+                          {t('pages.botEditor.config.loop.inLoopBodyPrefix')} {'{{temp.'}{(selectedNodeData.config.itemVariable || 'client')}{'}}'}, {t('pages.botEditor.config.loop.indexLabel')} {'{{temp.'}{(selectedNodeData.config.itemVariable || 'client')}_index{'}}'}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Max Iterations (optional)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.loop.maxIterationsLabel')}</Label>
                         <Input
                           type="number"
                           className="h-7 text-xs mt-1 font-mono-data"
@@ -2109,15 +2135,15 @@ export default function BotEditor() {
                           value={selectedNodeData.config.maxIterations ?? ''}
                           onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, maxIterations: e.target.value } } : n))}
                         />
-                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">Default 50, hard ceiling 500 regardless of this value</p>
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">{t('pages.botEditor.config.loop.maxIterationsHint')}</p>
                       </div>
-                      <p className="text-[9px] text-muted-foreground mt-1">Body → runs once per item. After → runs once when the loop finishes.</p>
+                      <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.loop.bodyAfterHint')}</p>
                     </div>
                   )}
 
                   {selectedNodeData.type === 'delay' && (
                     <div>
-                      <Label className="text-[10px] text-muted-foreground">Delay (ms)</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.delay.delayLabel')}</Label>
                       <Input type="number" className="h-7 text-xs mt-1 font-mono-data" placeholder="5000" value={selectedNodeData.config.delayMs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, delayMs: parseInt(e.target.value) || 0 } } : n))} />
                     </div>
                   )}
@@ -2125,29 +2151,29 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'variable' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Operation</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.operationLabel')}</Label>
                         <Select value={selectedNodeData.config.operation || 'set'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, operation: v } } : n))}>
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="set">Set</SelectItem>
-                            <SelectItem value="increment">Increment</SelectItem>
-                            <SelectItem value="append">Append</SelectItem>
-                            <SelectItem value="get">Get (read into temp.*)</SelectItem>
+                            <SelectItem value="set">{t('pages.botEditor.config.variable.setOption')}</SelectItem>
+                            <SelectItem value="increment">{t('pages.botEditor.config.variable.incrementOption')}</SelectItem>
+                            <SelectItem value="append">{t('pages.botEditor.config.variable.appendOption')}</SelectItem>
+                            <SelectItem value="get">{t('pages.botEditor.config.variable.getOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Variable Name</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.variable.variableNameLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="myVar" value={selectedNodeData.config.name || selectedNodeData.config.varName || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, name: e.target.value } } : n))} />
                       </div>
                       {selectedNodeData.config.operation === 'get' ? (
                         <div>
-                          <Label className="text-[10px] text-muted-foreground">Store As</Label>
+                          <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsLabel')}</Label>
                           <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="variableValue" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
                         </div>
                       ) : (
                         <div>
-                          <Label className="text-[10px] text-muted-foreground">Value (Expression)</Label>
+                          <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.variable.valueExpressionLabel')}</Label>
                           <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="event.clid" value={selectedNodeData.config.value || selectedNodeData.config.varValue || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, value: e.target.value } } : n))} />
                         </div>
                       )}
@@ -2157,7 +2183,7 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_generateCode' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Length</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionGenerateCode.lengthLabel')}</Label>
                         <Input
                           type="number"
                           className="h-7 text-xs mt-1 font-mono-data"
@@ -2176,7 +2202,7 @@ export default function BotEditor() {
                       </div>
 
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Store As</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsLabel')}</Label>
                         <Input
                           className="h-7 text-xs mt-1 font-mono-data"
                           placeholder="code"
@@ -2192,12 +2218,12 @@ export default function BotEditor() {
                           }
                         />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          Use as: {'{{temp.'}{(selectedNodeData.config.storeAs ?? 'code')}{'}}'}
+                          {t('pages.botEditor.config.shared.useAsHintPrefix')} {'{{temp.'}{(selectedNodeData.config.storeAs ?? 'code')}{'}}'}
                         </p>
                       </div>
 
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Characters</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionGenerateCode.charactersLabel')}</Label>
                         <Select
                           value={(selectedNodeData.config.numericOnly ?? true) ? 'digits' : 'alnum'}
                           onValueChange={(v) =>
@@ -2214,8 +2240,8 @@ export default function BotEditor() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="digits">Digits only</SelectItem>
-                            <SelectItem value="alnum">Alphanumeric</SelectItem>
+                            <SelectItem value="digits">{t('pages.botEditor.config.actionGenerateCode.digitsOnlyOption')}</SelectItem>
+                            <SelectItem value="alnum">{t('pages.botEditor.config.actionGenerateCode.alphanumericOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -2225,14 +2251,14 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_countOnlineInGroups' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Server Group IDs (comma-separated)</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionCountOnlineInGroups.groupIdsLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="6,7" value={selectedNodeData.config.groupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, groupIds: e.target.value } } : n))} />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Store As</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="teamOnline" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          Use as: {'{{temp.'}{(selectedNodeData.config.storeAs || 'teamOnline')}{'}}'}
+                          {t('pages.botEditor.config.shared.useAsHintPrefix')} {'{{temp.'}{(selectedNodeData.config.storeAs || 'teamOnline')}{'}}'}
                         </p>
                       </div>
                     </div>
@@ -2241,27 +2267,27 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'action_listMembership' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">List Name</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionListMembership.listNameLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="ignoredClients" value={selectedNodeData.config.listName || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, listName: e.target.value } } : n))} />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                          Persists across restarts. Check membership elsewhere with: contains(var.{(selectedNodeData.config.listName || 'ignoredClients')}, ...)
+                          {t('pages.botEditor.config.actionListMembership.listNameHintPrefix')}{(selectedNodeData.config.listName || 'ignoredClients')}{t('pages.botEditor.config.actionListMembership.listNameHintSuffix')}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Operation</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.operationLabel')}</Label>
                         <Select
                           value={selectedNodeData.config.operation || 'add'}
                           onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, operation: v } } : n))}
                         >
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="add">Add</SelectItem>
-                            <SelectItem value="remove">Remove</SelectItem>
+                            <SelectItem value="add">{t('pages.botEditor.config.actionListMembership.addOption')}</SelectItem>
+                            <SelectItem value="remove">{t('pages.botEditor.config.actionListMembership.removeOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Value</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.valueLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="{{event.client_unique_identifier}}" value={selectedNodeData.config.value || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, value: e.target.value } } : n))} />
                       </div>
                     </div>
@@ -2270,23 +2296,23 @@ export default function BotEditor() {
                   {selectedNodeData.type === 'log' && (
                     <div className="space-y-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Log Level</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.log.logLevelLabel')}</Label>
                         <Select
                           value={selectedNodeData.config.level || 'info'}
                           onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, level: v } } : n))}
                         >
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="debug">Debug</SelectItem>
-                            <SelectItem value="info">Info</SelectItem>
-                            <SelectItem value="warn">Warning</SelectItem>
-                            <SelectItem value="error">Error</SelectItem>
+                            <SelectItem value="debug">{t('pages.botEditor.config.log.debugOption')}</SelectItem>
+                            <SelectItem value="info">{t('pages.botEditor.config.log.infoOption')}</SelectItem>
+                            <SelectItem value="warn">{t('pages.botEditor.config.log.warnOption')}</SelectItem>
+                            <SelectItem value="error">{t('pages.botEditor.config.log.errorOption')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Message</Label>
-                        <Input className="h-7 text-xs mt-1" placeholder="Client joined: {{event.client_nickname}}" value={selectedNodeData.config.message || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, message: e.target.value } } : n))} />
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.messageLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1" placeholder={t('pages.botEditor.config.log.messagePlaceholder')} value={selectedNodeData.config.message || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, message: e.target.value } } : n))} />
                       </div>
                     </div>
                   )}
@@ -2296,7 +2322,7 @@ export default function BotEditor() {
 
                 {/* Connections overview */}
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground mb-1">CONNECTIONS</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground mb-1">{t('pages.botEditor.connections')}</p>
                   <div className="space-y-1">
                     {edges.filter((e) => e.source === selectedNodeData.id).map((edge) => {
                       const target = nodes.find((n) => n.id === edge.target);
@@ -2325,7 +2351,7 @@ export default function BotEditor() {
                       );
                     })}
                     {edges.filter((e) => e.source === selectedNodeData.id || e.target === selectedNodeData.id).length === 0 && (
-                      <p className="text-[10px] text-muted-foreground/50">No connections</p>
+                      <p className="text-[10px] text-muted-foreground/50">{t('pages.botEditor.noConnections')}</p>
                     )}
                   </div>
                 </div>

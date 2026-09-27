@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { serversApi } from '@/api/servers.api';
 import { useServerStore } from '@/stores/server.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
@@ -14,6 +15,7 @@ import { formatBytes, formatUptime } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function Instance() {
+  const { t } = useTranslation();
   const { selectedConfigId: c } = useServerStore();
   const qc = useQueryClient();
   const [editFields, setEditFields] = useState<Record<string, string>>({});
@@ -41,11 +43,11 @@ export default function Instance() {
 
   const editMutation = useMutation({
     mutationFn: (data: any) => serversApi.instanceEdit(c!, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instance-info', c] }); toast.success('Instance settings updated'); setEditFields({}); },
-    onError: () => toast.error('Failed to update instance settings'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instance-info', c] }); toast.success(t('pages.instance.updated')); setEditFields({}); },
+    onError: () => toast.error(t('pages.instance.updateFailed')),
   });
 
-  if (!c) return <EmptyState icon={Cpu} title="No server selected" />;
+  if (!c) return <EmptyState icon={Cpu} title={t('pages.noServerSelected')} />;
   if (loadingInfo || loadingHost) return <PageLoader />;
 
   const instanceData = Array.isArray(info) ? info[0] : info;
@@ -53,15 +55,15 @@ export default function Instance() {
   const versionData = Array.isArray(version) ? version[0] : version;
 
   const editableFields = [
-    { key: 'serverinstance_guest_serverquery_group', label: 'Guest ServerQuery Group', type: 'number' },
-    { key: 'serverinstance_template_serveradmin_group', label: 'Template Server Admin Group', type: 'number' },
-    { key: 'serverinstance_template_serverdefault_group', label: 'Template Server Default Group', type: 'number' },
-    { key: 'serverinstance_template_channeldefault_group', label: 'Template Channel Default Group', type: 'number' },
-    { key: 'serverinstance_template_channeladmin_group', label: 'Template Channel Admin Group', type: 'number' },
-    { key: 'serverinstance_filetransfer_port', label: 'File Transfer Port', type: 'number' },
-    { key: 'serverinstance_serverquery_flood_commands', label: 'Flood Commands', type: 'number' },
-    { key: 'serverinstance_serverquery_flood_time', label: 'Flood Time (sec)', type: 'number' },
-    { key: 'serverinstance_serverquery_flood_ban_time', label: 'Flood Ban Time (sec)', type: 'number' },
+    { key: 'serverinstance_guest_serverquery_group', label: t('pages.instance.fields.guestServerqueryGroup'), type: 'number' },
+    { key: 'serverinstance_template_serveradmin_group', label: t('pages.instance.fields.templateServerAdminGroup'), type: 'number' },
+    { key: 'serverinstance_template_serverdefault_group', label: t('pages.instance.fields.templateServerDefaultGroup'), type: 'number' },
+    { key: 'serverinstance_template_channeldefault_group', label: t('pages.instance.fields.templateChannelDefaultGroup'), type: 'number' },
+    { key: 'serverinstance_template_channeladmin_group', label: t('pages.instance.fields.templateChannelAdminGroup'), type: 'number' },
+    { key: 'serverinstance_filetransfer_port', label: t('pages.instance.fields.filetransferPort'), type: 'number' },
+    { key: 'serverinstance_serverquery_flood_commands', label: t('pages.instance.fields.floodCommands'), type: 'number' },
+    { key: 'serverinstance_serverquery_flood_time', label: t('pages.instance.fields.floodTime'), type: 'number' },
+    { key: 'serverinstance_serverquery_flood_ban_time', label: t('pages.instance.fields.floodBanTime'), type: 'number' },
   ];
 
   const handleSave = () => {
@@ -73,43 +75,43 @@ export default function Instance() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Instance</h1>
+      <h1 className="text-xl font-semibold">{t('nav.items.instance')}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Version Card */}
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2"><Server className="h-4 w-4 text-primary" /> Version</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Server className="h-4 w-4 text-primary" /> {t('pages.instance.version')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <InfoRow label="Version" value={versionData?.version} />
-            <InfoRow label="Build" value={versionData?.build} />
-            <InfoRow label="Platform" value={versionData?.platform} />
+            <InfoRow label={t('pages.instance.version')} value={versionData?.version} />
+            <InfoRow label={t('pages.instance.build')} value={versionData?.build} />
+            <InfoRow label={t('pages.instance.platform')} value={versionData?.platform} />
           </CardContent>
         </Card>
 
         {/* Host Info Card */}
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> Host</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> {t('pages.instance.host')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <InfoRow label="Uptime" value={hostData?.instance_uptime ? formatUptime(hostData.instance_uptime) : '-'} />
-            <InfoRow label="Bytes Sent" value={hostData?.connection_bytes_sent_total ? formatBytes(hostData.connection_bytes_sent_total) : '-'} />
-            <InfoRow label="Bytes Received" value={hostData?.connection_bytes_received_total ? formatBytes(hostData.connection_bytes_received_total) : '-'} />
-            <InfoRow label="Virtual Servers" value={hostData?.virtualservers_total_maxclients ? `${hostData.virtualservers_total_clients_online || 0} / ${hostData.virtualservers_total_maxclients}` : '-'} />
+            <InfoRow label={t('pages.instance.uptime')} value={hostData?.instance_uptime ? formatUptime(hostData.instance_uptime) : '-'} />
+            <InfoRow label={t('pages.instance.bytesSent')} value={hostData?.connection_bytes_sent_total ? formatBytes(hostData.connection_bytes_sent_total) : '-'} />
+            <InfoRow label={t('pages.instance.bytesReceived')} value={hostData?.connection_bytes_received_total ? formatBytes(hostData.connection_bytes_received_total) : '-'} />
+            <InfoRow label={t('nav.items.virtualServers')} value={hostData?.virtualservers_total_maxclients ? `${hostData.virtualservers_total_clients_online || 0} / ${hostData.virtualservers_total_maxclients}` : '-'} />
           </CardContent>
         </Card>
 
         {/* Database Info Card */}
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2"><Cpu className="h-4 w-4 text-primary" /> Database</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Cpu className="h-4 w-4 text-primary" /> {t('pages.instance.database')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <InfoRow label="DB Plugin" value={instanceData?.serverinstance_database_version} />
-            <InfoRow label="FT Port" value={instanceData?.serverinstance_filetransfer_port} />
-            <InfoRow label="Permissions Version" value={instanceData?.serverinstance_permissions_version} />
+            <InfoRow label={t('pages.instance.dbPlugin')} value={instanceData?.serverinstance_database_version} />
+            <InfoRow label={t('pages.instance.ftPort')} value={instanceData?.serverinstance_filetransfer_port} />
+            <InfoRow label={t('pages.instance.permissionsVersion')} value={instanceData?.serverinstance_permissions_version} />
           </CardContent>
         </Card>
       </div>
@@ -118,9 +120,9 @@ export default function Instance() {
       <Card className="card-hero">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Instance Settings</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pages.instance.instanceSettings')}</CardTitle>
             <Button size="sm" onClick={handleSave} disabled={Object.keys(editFields).length === 0 || editMutation.isPending}>
-              <Save className="h-4 w-4 mr-1" /> Save Changes
+              <Save className="h-4 w-4 mr-1" /> {t('pages.instance.saveChanges')}
             </Button>
           </div>
         </CardHeader>
@@ -147,7 +149,7 @@ export default function Instance() {
       {/* IP Bindings */}
       <Card className="card-hero">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2"><Network className="h-4 w-4 text-primary" /> IP Bindings</CardTitle>
+          <CardTitle className="text-sm font-medium flex items-center gap-2"><Network className="h-4 w-4 text-primary" /> {t('pages.instance.ipBindings')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -155,7 +157,7 @@ export default function Instance() {
               const list = Array.isArray(bindings?.[subsystem]) ? bindings[subsystem] : bindings?.[subsystem] ? [bindings[subsystem]] : [];
               return (
                 <div key={subsystem}>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{subsystem === 'filetransfer' ? 'File Transfer' : subsystem}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{t(`pages.instance.subsystem.${subsystem}`)}</p>
                   <div className="space-y-1">
                     {list.length > 0
                       ? list.map((b: any, i: number) => <p key={i} className="text-xs font-mono-data">{b.ip}</p>)

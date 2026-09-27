@@ -43,7 +43,7 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
           const { accessToken, refreshToken } = await issueTokensForUser(prisma, user);
           res.json({
             accessToken, refreshToken,
-            user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, authProvider: user.authProvider, totpEnabled: user.totpEnabled },
+            user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, authProvider: user.authProvider, totpEnabled: user.totpEnabled, language: user.language },
           });
           return;
         }
@@ -68,6 +68,7 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
         role: user.role,
         authProvider: user.authProvider,
         totpEnabled: user.totpEnabled,
+        language: user.language,
       },
     });
   } catch (err) { next(err); }
@@ -118,7 +119,7 @@ authRoutes.post('/login/verify-totp', async (req: Request, res: Response, next) 
       accessToken,
       refreshToken,
       deviceToken,
-      user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, totpEnabled: user.totpEnabled },
+      user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, totpEnabled: user.totpEnabled, language: user.language },
     });
   } catch (err) { next(err); }
 });
@@ -210,8 +211,23 @@ authRoutes.get('/me', authMiddleware, async (req: Request, res: Response, next) 
         role: user.role,
         authProvider: user.authProvider,
         totpEnabled: user.totpEnabled,
+        language: user.language,
       },
     });
+  } catch (err) { next(err); }
+});
+
+authRoutes.put('/language', authMiddleware, async (req: Request, res: Response, next) => {
+  try {
+    const { language } = req.body;
+    if (language !== null && language !== 'en' && language !== 'de') {
+      throw new AppError(400, 'Language must be "en", "de", or null');
+    }
+
+    const prisma = req.app.locals.prisma;
+    const user = await prisma.user.update({ where: { id: req.user!.id }, data: { language } });
+
+    res.json({ language: user.language });
   } catch (err) { next(err); }
 });
 

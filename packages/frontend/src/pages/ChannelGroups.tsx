@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { normalizeIconId } from '@ts6/common';
 import { IconImage } from '@/components/icons/IconImage';
 import { useChannelGroups, useCreateChannelGroup, useDeleteChannelGroup } from '@/hooks/use-groups';
@@ -27,6 +28,7 @@ import { ShieldCheck, Search, User, Plus, Trash2, Download, Upload } from 'lucid
 import { toast } from 'sonner';
 
 export default function ChannelGroups() {
+  const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const qc = useQueryClient();
   const { data, isLoading } = useChannelGroups();
@@ -61,8 +63,8 @@ export default function ChannelGroups() {
     const failed = results.filter((r) => r.status === 'rejected').length;
     setBulkDeleting(false);
     setShowBulkDelete(false);
-    if (failed > 0) toast.error(`Deleted ${results.length - failed}, failed ${failed}`);
-    else toast.success(`${results.length} group(s) deleted`);
+    if (failed > 0) toast.error(t('pages.channelGroups.bulkDeletePartial', { succeeded: results.length - failed, failed }));
+    else toast.success(t('pages.channelGroups.bulkDeleteSuccess', { count: results.length }));
     setCheckedIds(new Set());
   };
 
@@ -94,9 +96,9 @@ export default function ChannelGroups() {
       a.download = `channel-groups-export-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success(`Exported ${exported.length} group(s)`);
+      toast.success(t('pages.channelGroups.exportedCount', { count: exported.length }));
     } catch {
-      toast.error('Export failed');
+      toast.error(t('pages.channelGroups.exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -110,21 +112,21 @@ export default function ChannelGroups() {
       try {
         payload = JSON.parse(await file.text());
       } catch {
-        toast.error("This file isn't valid JSON");
+        toast.error(t('pages.channelGroups.invalidJson'));
         return;
       }
       if (payload.format !== 'ts6manager-group-export' || !Array.isArray(payload.groups)) {
-        toast.error('Not a valid group export file');
+        toast.error(t('pages.channelGroups.notValidGroupExport'));
         return;
       }
       if (payload.groupType !== 'channel') {
         toast.error(payload.groupType === 'server'
-          ? 'This is a server group export - import it on the Server Groups page instead'
-          : 'Not a valid channel group export file');
+          ? t('pages.channelGroups.wrongExportTypeServer')
+          : t('pages.channelGroups.notValidChannelExport'));
         return;
       }
       if (payload.groups.length === 0) {
-        toast.error('The file contains no groups to import');
+        toast.error(t('pages.channelGroups.emptyExportFile'));
         return;
       }
 
@@ -138,7 +140,7 @@ export default function ChannelGroups() {
           const created = await createGroup.mutateAsync(g.name);
           cgid = Number(created?.[0]?.cgid ?? created?.cgid);
         } catch (err) {
-          skipped.push(`"${g.name}" (${tsErrorMessage(err, 'failed to create')})`);
+          skipped.push(`"${g.name}" (${tsErrorMessage(err, t('pages.channelGroups.createFailedFallback'), t)})`);
           continue;
         }
         imported++;
@@ -153,12 +155,12 @@ export default function ChannelGroups() {
       }
 
       if (imported === 0) {
-        toast.error(`Import failed - ${skipped[0] || 'no groups could be created'}`);
+        toast.error(t('pages.channelGroups.importFailed', { reason: skipped[0] || t('pages.channelGroups.importFailedNoGroups') }));
         return;
       }
-      let msg = `Imported ${imported} of ${payload.groups.length} group(s), ${permCount} permission(s)`;
-      if (permFailed > 0) msg += `, ${permFailed} permission(s) skipped`;
-      if (skipped.length > 0) msg += ` - skipped: ${skipped.join(', ')}`;
+      let msg = t('pages.channelGroups.importSummary', { imported, total: payload.groups.length, permCount });
+      if (permFailed > 0) msg += t('pages.channelGroups.importPermSkipped', { count: permFailed });
+      if (skipped.length > 0) msg += t('pages.channelGroups.importSkippedList', { list: skipped.join(', ') });
       if (skipped.length > 0 || permFailed > 0) toast.warning(msg);
       else toast.success(msg);
     } finally {
@@ -190,10 +192,10 @@ export default function ChannelGroups() {
   const assignMutation = useMutation({
     mutationFn: ({ cgid, cid }: { cgid: number; cid: number }) => groupsApi.assignChannelGroup(c!, s!, cgid, cid, selectedClient!.cldbid),
     onSuccess: () => {
-      toast.success('Channel group updated');
+      toast.success(t('pages.channelGroups.channelGroupUpdated'));
       qc.invalidateQueries({ queryKey: ['channel-groups-by-client'] });
     },
-    onError: () => toast.error('Failed to update channel group'),
+    onError: () => toast.error(t('pages.channelGroups.channelGroupUpdateFailed')),
   });
 
   // Bulk-assign: put several of this client's channels on the same group at
@@ -205,12 +207,12 @@ export default function ChannelGroups() {
       return cids.length;
     },
     onSuccess: (n) => {
-      toast.success(`Channel group updated for ${n} channel(s)`);
+      toast.success(t('pages.channelGroups.channelGroupsUpdatedForCount', { count: n }));
       setCheckedChannels(new Set());
       setBulkCgid('');
       qc.invalidateQueries({ queryKey: ['channel-groups-by-client'] });
     },
-    onError: () => toast.error('Failed to update channel groups'),
+    onError: () => toast.error(t('pages.channelGroups.channelGroupsUpdateFailed')),
   });
 
   const clientCandidates = useMemo(() => {
@@ -221,7 +223,7 @@ export default function ChannelGroups() {
     const onlineIds = new Set(online.map((o) => o.cldbid));
     const offline = (Array.isArray(offlineClients) ? offlineClients : [])
       .filter((cl: any) => !onlineIds.has(Number(cl.cldbid)))
-      .map((cl: any) => ({ cldbid: Number(cl.cldbid), name: cl.client_nickname || `Client #${cl.cldbid}`, online: false }));
+      .map((cl: any) => ({ cldbid: Number(cl.cldbid), name: cl.client_nickname || t('pages.channelGroups.clientFallback', { id: cl.cldbid }), online: false }));
     return [...online, ...offline].sort((a, b) =>
       a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1);
   }, [onlineClients, offlineClients, showOffline])
@@ -239,28 +241,28 @@ export default function ChannelGroups() {
   // ID" (2560), confirmed live - so they have no business being offered here.
   const assignableGroups = groups.filter((g: any) => Number(g.type) === 1);
 
-  if (!c || !s) return <EmptyState icon={ShieldCheck} title="No server selected" />;
+  if (!c || !s) return <EmptyState icon={ShieldCheck} title={t('pages.noServerSelected')} />;
   if (isLoading) return <PageLoader />;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Channel Groups</h1>
+        <h1 className="text-xl font-semibold">{t('nav.items.channelGroups')}</h1>
         {tab === 'groups' && (
           <div className="flex items-center gap-2">
             {checkedIds.size > 0 && (
               <>
-                <Badge variant="secondary" className="font-mono-data">{checkedIds.size} selected</Badge>
+                <Badge variant="secondary" className="font-mono-data">{t('pages.channelGroups.selectedCount', { count: checkedIds.size })}</Badge>
                 <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
-                  <Download className="h-3.5 w-3.5 mr-1" /> Export Selected
+                  <Download className="h-3.5 w-3.5 mr-1" /> {t('pages.channelGroups.exportSelected')}
                 </Button>
                 <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowBulkDelete(true)}>
-                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Selected
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> {t('pages.channelGroups.deleteSelected')}
                 </Button>
               </>
             )}
             <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-              <Upload className="h-3.5 w-3.5 mr-1" /> Import
+              <Upload className="h-3.5 w-3.5 mr-1" /> {t('pages.channelGroups.import')}
             </Button>
             <input
               ref={fileInputRef}
@@ -270,7 +272,7 @@ export default function ChannelGroups() {
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
             />
             <Button size="sm" onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Create Group
+              <Plus className="h-4 w-4 mr-1" /> {t('pages.channelGroups.createGroup')}
             </Button>
           </div>
         )}
@@ -281,20 +283,20 @@ export default function ChannelGroups() {
           onClick={() => setTab('groups')}
           className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', tab === 'groups' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground')}
         >
-          Groups
+          {t('pages.channelGroups.tabGroups')}
         </button>
         <button
           onClick={() => setTab('by-client')}
           className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', tab === 'by-client' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground')}
         >
-          By Client
+          {t('pages.channelGroups.tabByClient')}
         </button>
       </div>
 
       {tab === 'groups' ? (
         <Card className="card-hero">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Groups ({groups.length})</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('pages.channelGroups.groupsHeading', { count: groups.length })}</CardTitle>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[500px]">
@@ -305,15 +307,15 @@ export default function ChannelGroups() {
                       <Checkbox
                         checked={checkedIds.has(g.cgid)}
                         onCheckedChange={() => toggleChecked(g.cgid)}
-                        aria-label="Select for bulk delete"
+                        aria-label={t('pages.channelGroups.selectForBulkDelete')}
                       />
                       <ShieldCheck className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium">{g.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <IconImage iconId={normalizeIconId(g.iconid)} size={16} alt={`Icon for ${g.name}`} />
-                      <Badge variant="secondary" className="text-[10px] font-mono-data">CGID: {g.cgid}</Badge>
-                      <Badge variant="outline" className="text-[10px] font-mono-data">Type: {g.type}</Badge>
+                      <IconImage iconId={normalizeIconId(g.iconid)} size={16} alt={t('pages.channelGroups.iconAlt', { name: g.name })} />
+                      <Badge variant="secondary" className="text-[10px] font-mono-data">{t('pages.channelGroups.cgidLabel', { id: g.cgid })}</Badge>
+                      <Badge variant="outline" className="text-[10px] font-mono-data">{t('pages.channelGroups.typeLabel', { type: g.type })}</Badge>
                     </div>
                   </div>
                 ))}
@@ -325,14 +327,14 @@ export default function ChannelGroups() {
         <div className="grid grid-cols-12 gap-4">
           <Card className="card-hero col-span-4">
             <CardHeader className="pb-2 space-y-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Select Client</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('pages.channelGroups.selectClient')}</CardTitle>
               <div className="relative">
                 <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} placeholder="Search clients..." className="h-7 pl-7 text-xs" />
+                <Input value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} placeholder={t('pages.channelGroups.searchClientsPlaceholder')} className="h-7 pl-7 text-xs" />
               </div>
               <div className="flex items-center gap-1.5">
                 <Switch id="cg-show-offline" checked={showOffline} onCheckedChange={setShowOffline} />
-                <Label htmlFor="cg-show-offline" className="text-xs text-muted-foreground cursor-pointer">Show offline clients</Label>
+                <Label htmlFor="cg-show-offline" className="text-xs text-muted-foreground cursor-pointer">{t('pages.channelGroups.showOfflineClients')}</Label>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -348,12 +350,12 @@ export default function ChannelGroups() {
                       )}
                     >
                       {showOffline && (
-                        <span className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', cl.online ? 'bg-emerald-500' : 'bg-zinc-500')} title={cl.online ? 'Online' : 'Offline'} />
+                        <span className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', cl.online ? 'bg-emerald-500' : 'bg-zinc-500')} title={cl.online ? t('common.online') : t('common.offline')} />
                       )}
                       <span className="truncate">{cl.name}</span>
                     </button>
                   ))}
-                  {clientCandidates.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No clients found</p>}
+                  {clientCandidates.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">{t('pages.channelGroups.noClientsFound')}</p>}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -362,34 +364,34 @@ export default function ChannelGroups() {
           <Card className="card-hero col-span-8">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {selectedClient ? `${selectedClient.name}'s Channel Groups` : 'Select a client'}
+                {selectedClient ? t('pages.channelGroups.clientChannelGroupsHeading', { name: selectedClient.name }) : t('pages.channelGroups.selectAClient')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {!selectedClient ? (
                 <div className="flex items-center justify-center h-[400px]">
-                  <p className="text-sm text-muted-foreground">Select a client from the left panel</p>
+                  <p className="text-sm text-muted-foreground">{t('pages.channelGroups.selectClientHint')}</p>
                 </div>
               ) : loadingClientGroups ? (
                 <div className="flex items-center justify-center h-[400px]"><PageLoader /></div>
               ) : assignments.length === 0 ? (
                 <div className="flex items-center justify-center h-[400px]">
-                  <EmptyState icon={User} title="No channel group assignments" description="This client has no non-default channel group in any channel." />
+                  <EmptyState icon={User} title={t('pages.channelGroups.noAssignmentsTitle')} description={t('pages.channelGroups.noAssignmentsDescription')} />
                 </div>
               ) : (
                 <div className="px-3 pb-3">
                   {checkedChannels.size > 0 && (
                     <div className="flex items-center gap-2 px-2 py-2 mb-1 rounded-md bg-muted/30">
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {checkedChannels.size} channel(s) selected
+                        {t('pages.channelGroups.channelsSelectedCount', { count: checkedChannels.size })}
                       </span>
                       <Select value={bulkCgid} onValueChange={setBulkCgid}>
-                        <SelectTrigger className="h-8 text-xs w-56"><SelectValue placeholder="Move all to..." /></SelectTrigger>
+                        <SelectTrigger className="h-8 text-xs w-56"><SelectValue placeholder={t('pages.channelGroups.moveAllToPlaceholder')} /></SelectTrigger>
                         <SelectContent>
                           {assignableGroups.map((g: any) => (
                             <SelectItem key={g.cgid} value={String(g.cgid)}>
                               <span className="flex items-center gap-1.5">
-                                <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                                <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={t('pages.channelGroups.iconAlt', { name: g.name })} />
                                 {g.name}
                               </span>
                             </SelectItem>
@@ -402,10 +404,10 @@ export default function ChannelGroups() {
                         disabled={!bulkCgid || bulkAssignMutation.isPending}
                         onClick={() => bulkAssignMutation.mutate({ cgid: Number(bulkCgid), cids: [...checkedChannels] })}
                       >
-                        Apply to {checkedChannels.size}
+                        {t('pages.channelGroups.applyToCount', { count: checkedChannels.size })}
                       </Button>
                       <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setCheckedChannels(new Set())}>
-                        Clear
+                        {t('common.clear')}
                       </Button>
                     </div>
                   )}
@@ -416,11 +418,11 @@ export default function ChannelGroups() {
                         onCheckedChange={(v) =>
                           setCheckedChannels(v ? new Set(assignments.map((a: any) => Number(a.cid))) : new Set())
                         }
-                        aria-label="Select all channels"
+                        aria-label={t('pages.channelGroups.selectAllChannels')}
                       />
                     </div>
-                    <div className="col-span-5">Channel</div>
-                    <div className="col-span-6">Channel Group</div>
+                    <div className="col-span-5">{t('pages.channelGroups.colChannel')}</div>
+                    <div className="col-span-6">{t('pages.channelGroups.colChannelGroup')}</div>
                   </div>
                   {assignments.map((a: any) => {
                     const cid = Number(a.cid);
@@ -437,7 +439,7 @@ export default function ChannelGroups() {
                                 return next;
                               })
                             }
-                            aria-label="Select channel for bulk change"
+                            aria-label={t('pages.channelGroups.selectChannelForBulk')}
                           />
                         </div>
                         <div className="col-span-5 truncate">{channels.find((ch) => ch.cid === cid)?.name || `#${cid}`}</div>
@@ -451,7 +453,7 @@ export default function ChannelGroups() {
                               {assignableGroups.map((g: any) => (
                                 <SelectItem key={g.cgid} value={String(g.cgid)}>
                                   <span className="flex items-center gap-1.5">
-                                    <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={`Icon for ${g.name}`} />
+                                    <IconImage iconId={normalizeIconId(g.iconid)} size={14} alt={t('pages.channelGroups.iconAlt', { name: g.name })} />
                                     {g.name}
                                   </span>
                                 </SelectItem>
@@ -471,18 +473,18 @@ export default function ChannelGroups() {
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Channel Group</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.channelGroups.createChannelGroupTitle')}</DialogTitle></DialogHeader>
           <div>
-            <Label className="text-xs">Group Name</Label>
-            <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New Group" autoFocus />
+            <Label className="text-xs">{t('pages.channelGroups.groupNameLabel')}</Label>
+            <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('pages.channelGroups.newGroupPlaceholder')} autoFocus />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
             <Button
-              onClick={() => createGroup.mutate(newName, { onSuccess: () => { toast.success('Group created'); setShowCreate(false); setNewName(''); } })}
+              onClick={() => createGroup.mutate(newName, { onSuccess: () => { toast.success(t('pages.channelGroups.groupCreated')); setShowCreate(false); setNewName(''); } })}
               disabled={!newName.trim() || createGroup.isPending}
             >
-              Create
+              {t('common.create')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -491,9 +493,9 @@ export default function ChannelGroups() {
       <ConfirmDialog
         open={showBulkDelete}
         onOpenChange={setShowBulkDelete}
-        title="Delete Channel Groups"
-        description={`Delete ${checkedIds.size} selected group(s)? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('pages.channelGroups.deleteChannelGroupsTitle')}
+        description={t('pages.channelGroups.bulkDeleteDescription', { count: checkedIds.size })}
+        confirmLabel={t('common.delete')}
         destructive
         onConfirm={handleBulkDelete}
         loading={bulkDeleting}
