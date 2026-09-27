@@ -18,7 +18,7 @@ export const authApi = {
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put('/auth/password', { currentPassword, newPassword }),
 
-  updateLanguage: (language: 'en' | 'de' | null): Promise<{ language: 'en' | 'de' | null }> =>
+  updateLanguage: (language: string | null): Promise<{ language: string | null }> =>
     api.put('/auth/language', { language }).then((r) => r.data),
 
   oidcStatus: (): Promise<{ enabled: boolean; buttonLabel: string }> =>

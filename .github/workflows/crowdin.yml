@@ -1,0 +1,42 @@
+name: Crowdin
+
+# Keeps the WebGui's translations in sync with Crowdin in both directions:
+# uploads the English source strings whenever they change on main, and pulls
+# back whatever the community has translated since - either on the weekly
+# schedule below or on demand via "Run workflow". Needs CROWDIN_PROJECT_ID
+# and CROWDIN_PERSONAL_TOKEN configured as repo secrets (Settings -> Secrets
+# and variables -> Actions) before this can do anything.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/frontend/src/locales/en/translation.json"
+  schedule:
+    - cron: "0 3 * * 1" # Monday 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  synchronize-with-crowdin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: crowdin action
+        uses: crowdin/github-action@v2
+        with:
+          upload_sources: true
+          upload_translations: false
+          download_translations: true
+          localization_branch_name: l10n_crowdin_translations
+          create_pull_request: true
+          pull_request_title: "New Crowdin translations"
+          pull_request_body: "New and updated translations pulled from Crowdin."
+          pull_request_base_branch_name: "main"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}

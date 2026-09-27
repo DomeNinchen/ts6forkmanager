@@ -220,8 +220,11 @@ authRoutes.get('/me', authMiddleware, async (req: Request, res: Response, next) 
 authRoutes.put('/language', authMiddleware, async (req: Request, res: Response, next) => {
   try {
     const { language } = req.body;
-    if (language !== null && language !== 'en' && language !== 'de') {
-      throw new AppError(400, 'Language must be "en", "de", or null');
+    // Not an exact whitelist: the set of shipped locales grows independently
+    // of the backend (a Crowdin sync PR can add one without touching this
+    // file), so this only checks the shape of a language tag.
+    if (language !== null && !/^[a-z]{2,3}(-[A-Z]{2})?$/.test(language)) {
+      throw new AppError(400, 'Language must be a language code (e.g. "en", "de", "pt-BR") or null');
     }
 
     const prisma = req.app.locals.prisma;
