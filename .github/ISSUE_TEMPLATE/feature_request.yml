@@ -1,0 +1,48 @@
+name: Feature Request
+description: Suggest something this fork doesn't do yet
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Not sure yet whether this is fully baked, or want to sanity-check the idea first? [Discussions Ideas](https://github.com/DomeNinchen/ts6forkmanager/discussions/categories/ideas) is a good place to think it through before opening a formal request here - it usually ends up better-scoped that way.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that the app doesn't support today? Concrete situations help more than an abstract ask.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: Your proposed solution, as specific as you can make it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you're using today, or other approaches you thought about.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which part of the app is this mainly about?
+      options:
+        - Frontend (WebGui)
+        - Backend
+        - Sidecar (video streaming)
+        - Not sure / spans multiple
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this hasn't already been requested
+          required: true

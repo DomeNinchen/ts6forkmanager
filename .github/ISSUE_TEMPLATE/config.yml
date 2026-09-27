@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/DomeNinchen/ts6forkmanager/discussions/categories/q-a
+    about: Not sure it's a bug, or just need help? Ask here instead of opening an issue.
+  - name: Discuss an idea first
+    url: https://github.com/DomeNinchen/ts6forkmanager/discussions/categories/ideas
+    about: Want to sanity-check a feature idea before writing up a full request?
