@@ -1,6 +1,7 @@
 "files": [
   {
     "source": "/packages/frontend/src/locales/en/translation.json",
-    "translation": "/packages/frontend/src/locales/%two_letters_code%/translation.json"
+    "translation": "/packages/frontend/src/locales/%two_letters_code%/translation.json",
+    "type": "i18next_json"
   }
 ]
