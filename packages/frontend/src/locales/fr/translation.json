@@ -1,0 +1,2802 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement en cours...",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "deleting": "Suppression en cours...",
+    "edit": "Modifier",
+    "create": "Créer",
+    "creating": "Création en cours...",
+    "add": "Ajouter",
+    "remove": "Retirer",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "search": "Recherche",
+    "loading": "Chargement en cours...",
+    "refresh": "Actualiser",
+    "actions": "Actions",
+    "name": "Nom",
+    "description": "Description",
+    "status": "Statut",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "yes": "Oui",
+    "no": "Non",
+    "none": "Aucun",
+    "unknown": "Inconnu",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "copy": "Copier",
+    "copied": "Copié",
+    "download": "Télécharger",
+    "upload": "Téléverser",
+    "submit": "Envoyer",
+    "reset": "Réinitialiser",
+    "apply": "Appliquer",
+    "select": "Sélectionner",
+    "selectAll": "Tout sélectionner",
+    "clear": "Effacer",
+    "clearAll": "Tout effacer",
+    "noResults": "Aucun résultat trouvé",
+    "noData": "Aucune donnée disponible",
+    "somethingWentWrong": "Une erreur est survenue",
+    "areYouSure": "Êtes-vous sûr ?",
+    "actionCannotBeUndone": "Cette action ne peut pas être annulée.",
+    "optional": "facultatif",
+    "required": "Obligatoire",
+    "on": "Activé",
+    "off": "Désactivé",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "id": "Identifiant",
+    "type": "Type",
+    "date": "Date",
+    "time": "Heure",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "email": "E-mail",
+    "role": "Rôle",
+    "logout": "Se déconnecter",
+    "settings": "Paramètres",
+    "language": "Langue",
+    "duration": {
+      "permanent": "Permanent",
+      "justNow": "À l'instant",
+      "minutesAgo": "il y a {{count}} min",
+      "hoursAgo": "il y a {{count}} h",
+      "daysAgo": "il y a {{count}} j"
+    },
+    "roles": {
+      "admin": "Administrateur",
+      "viewer": "Lecteur",
+      "botOperator": "Opérateur de bot",
+      "musicOperator": "Opérateur musique"
+    }
+  },
+  "nav": {
+    "collapse": "Réduire",
+    "sections": {
+      "overview": "Vue d'ensemble",
+      "management": "Gestion",
+      "security": "Sécurité",
+      "content": "Contenu",
+      "system": "Système",
+      "automation": "Automatisation"
+    },
+    "items": {
+      "dashboard": "Tableau de bord",
+      "virtualServers": "Serveurs virtuels",
+      "statistics": "Statistiques",
+      "channels": "Salons",
+      "clients": "Utilisateurs",
+      "serverGroups": "Groupes serveur",
+      "channelGroups": "Groupes de salon",
+      "permissions": "Autorisations",
+      "bans": "Bannissements",
+      "tokens": "Jetons",
+      "files": "Fichiers",
+      "icons": "Icônes",
+      "complaints": "Plaintes",
+      "messages": "Messages",
+      "serverLogs": "Logs serveur",
+      "instance": "Instance",
+      "miscellaneous": "Divers",
+      "advancedSettings": "Paramètres avancés",
+      "musicRequestHistory": "Historique des demandes musicales",
+      "botFlows": "Flux de bots",
+      "musicBots": "Bots musique"
+    }
+  },
+  "layout": {},
+  "pages": {
+    "noServerSelected": "Aucun serveur sélectionné",
+    "bans": {
+      "lastNickname": "Dernier pseudo",
+      "reason": "Raison",
+      "duration": "Durée",
+      "created": "Créé",
+      "by": "Par",
+      "removed": "Bannissement supprimé",
+      "added": "Bannissement ajouté",
+      "addFailed": "Échec de l'ajout du bannissement",
+      "addBan": "Ajouter un bannissement",
+      "searchPlaceholder": "Rechercher des bannissements...",
+      "banType": "Type de bannissement",
+      "ipAddress": "Adresse IP",
+      "nameRegex": "Nom (regex)",
+      "uniqueId": "ID unique",
+      "value": "Valeur",
+      "reasonPlaceholder": "Raison du bannissement",
+      "oneHour": "1 heure",
+      "oneDay": "1 jour",
+      "oneWeek": "1 semaine",
+      "thirtyDays": "30 jours"
+    },
+    "messages": {
+      "title": "Messages hors ligne",
+      "compose": "Rédiger",
+      "searchPlaceholder": "Rechercher des messages...",
+      "from": "De",
+      "subject": "Sujet",
+      "date": "Date",
+      "read": "Lu",
+      "unread": "Non lu",
+      "deleted": "Message supprimé",
+      "sent": "Message envoyé",
+      "sendFailed": "Échec de l'envoi du message",
+      "message": "Message",
+      "noContent": "Aucun contenu",
+      "composeTitle": "Rédiger un message",
+      "recipientUid": "UID du client destinataire",
+      "recipientUidPlaceholder": "ID unique du client",
+      "subjectPlaceholder": "Sujet du message",
+      "bodyPlaceholder": "Corps du message...",
+      "send": "Envoyer"
+    },
+    "setup": {
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "setupFailed": "Échec de la configuration",
+      "title": "Configuration initiale",
+      "subtitle": "Créez votre compte administrateur",
+      "intro": "C'est la première configuration. Créez un compte admin pour commencer.",
+      "displayName": "Nom affiché",
+      "displayNamePlaceholder": "Administrateur",
+      "passwordHint": "Min. 8 caractères, majuscule, minuscule, chiffre",
+      "confirmPassword": "Confirmer le mot de passe",
+      "repeatPassword": "Répéter le mot de passe",
+      "creatingAccount": "Création du compte...",
+      "createAdminAccount": "Créer le compte admin"
+    },
+    "botList": {
+      "selectServerFirst": "Veuillez d'abord sélectionner un serveur",
+      "created": "Bot créé",
+      "createFailed": "Échec de la création du bot",
+      "fromTemplate": "Depuis un modèle",
+      "newBot": "Nouveau bot",
+      "noneYetTitle": "Aucun flux de bot pour le moment",
+      "noneYetDescription": "Créez votre premier flux d'automatisation pour commencer.",
+      "enabled": "Bot activé",
+      "disabled": "Bot désactivé",
+      "noDescription": "Aucune description",
+      "serverHash": "Serveur n° {{id}}",
+      "updated": "Mis à jour {{time}}",
+      "editFlow": "Modifier le flux",
+      "newBotFlow": "Nouveau flux de bot",
+      "namePlaceholder": "Mon automatisation",
+      "descriptionPlaceholder": "Que fait ce bot ?",
+      "createdFromTemplate": "Bot '{{name}}' créé depuis un modèle",
+      "createFromTemplateFailed": "Échec de la création du bot depuis le modèle",
+      "deleteTitle": "Supprimer le bot ?",
+      "deleteDescription": "Cela supprimera définitivement ce flux de bot et tout son historique d'exécution.",
+      "deleted": "Bot supprimé"
+    },
+    "instance": {
+      "updated": "Paramètres de l'instance mis à jour",
+      "updateFailed": "Échec de la mise à jour des paramètres de l'instance",
+      "fields": {
+        "guestServerqueryGroup": "Groupe ServerQuery invité",
+        "templateServerAdminGroup": "Groupe modèle admin serveur",
+        "templateServerDefaultGroup": "Groupe modèle par défaut serveur",
+        "templateChannelDefaultGroup": "Groupe modèle par défaut de salon",
+        "templateChannelAdminGroup": "Groupe modèle admin de salon",
+        "filetransferPort": "Port de transfert de fichiers",
+        "floodCommands": "Commandes anti-flood",
+        "floodTime": "Temps anti-flood (s)",
+        "floodBanTime": "Durée de bannissement anti-flood (s)"
+      },
+      "version": "Version",
+      "build": "Build",
+      "platform": "Plateforme",
+      "host": "Hôte",
+      "uptime": "Temps de fonctionnement",
+      "bytesSent": "Octets envoyés",
+      "bytesReceived": "Octets reçus",
+      "database": "Base de données",
+      "dbPlugin": "Plugin BD",
+      "ftPort": "Port FT",
+      "permissionsVersion": "Version des permissions",
+      "instanceSettings": "Paramètres de l'instance",
+      "saveChanges": "Enregistrer les modifications",
+      "ipBindings": "Liaisons IP",
+      "subsystem": {
+        "voice": "Voix",
+        "query": "Requête",
+        "filetransfer": "Transfert de fichiers"
+      }
+    },
+    "serverStats": {
+      "noConnectionSelected": "Aucune connexion serveur sélectionnée",
+      "serversOnline": "Serveurs en ligne",
+      "users": "Utilisateurs",
+      "instanceUptime": "Temps de fonctionnement de l'instance",
+      "currentBandwidth": "Bande passante actuelle",
+      "uploadSecond": "Envoi (cette seconde)",
+      "uploadMinute": "Envoi (cette minute)",
+      "downloadSecond": "Téléchargement (cette seconde)",
+      "downloadMinute": "Téléchargement (cette minute)",
+      "transferredSinceStart": "Transféré depuis le démarrage",
+      "dataSent": "Données envoyées",
+      "dataReceived": "Données reçues",
+      "packetsSent": "Paquets envoyés",
+      "packetsReceived": "Paquets reçus",
+      "fileTransfersSinceStart": "Transferts de fichiers depuis le démarrage",
+      "filesSent": "Fichiers envoyés",
+      "filesReceived": "Fichiers reçus",
+      "selectServerFirst": "Sélectionnez d'abord un serveur sous Serveurs virtuels.",
+      "noData": "Aucune donnée",
+      "couldNotLoad": "Impossible de charger les statistiques de ce serveur.",
+      "general": "Général",
+      "port": "Port",
+      "autostart": "Démarrage automatique",
+      "uptime": "Temps de fonctionnement",
+      "created": "Créé",
+      "connections": "Connexions",
+      "regularClients": "Clients réguliers",
+      "queryClients": "Clients Query",
+      "slots": "Places",
+      "network": "Réseau",
+      "packetLoss": "Perte de paquets",
+      "ping": "Ping",
+      "currentUpload": "Upload actuel",
+      "currentDownload": "Download actuel",
+      "trafficSinceStart": "Trafic depuis le démarrage",
+      "sent": "Envoyé",
+      "received": "Reçu",
+      "total": "Total",
+      "overview": "Vue d'ensemble",
+      "selectedServer": "Serveur sélectionné"
+    },
+    "login": {
+      "ssoErrors": {
+        "notConfigured": "Le SSO n'est pas configuré.",
+        "failed": "Échec de la connexion SSO. Veuillez réessayer.",
+        "invalidState": "La connexion SSO a expiré ou a été altérée. Veuillez réessayer.",
+        "noSubject": "Le fournisseur SSO n'a pas renvoyé d'identité valide.",
+        "accountDisabled": "Ce compte a été désactivé.",
+        "generic": "Échec de la connexion SSO."
+      },
+      "twoFactorAuth": "Authentification à deux facteurs",
+      "enterCode": "Saisissez le code de votre application d'authentification",
+      "codeOrRecovery": "Code (ou code de récupération)",
+      "rememberDevice": "Mémoriser cet appareil pendant 15 jours",
+      "invalidCode": "Code invalide. Veuillez réessayer.",
+      "verifying": "Vérification...",
+      "verify": "Vérifier",
+      "backToLogin": "Retour à la connexion",
+      "subtitle": "Panneau d'administration du serveur",
+      "signInToContinue": "Connectez-vous pour continuer",
+      "invalidCredentials": "Identifiants invalides. Veuillez réessayer.",
+      "signingIn": "Connexion...",
+      "signIn": "Se connecter",
+      "or": "ou"
+    },
+    "serverLogs": {
+      "entryAdded": "Entrée de log ajoutée",
+      "addFailed": "Échec de l'ajout de l'entrée de log",
+      "addEntry": "Ajouter une entrée",
+      "export": "Exporter",
+      "asTxt": "en .txt",
+      "asHtml": "en .html",
+      "filterPlaceholder": "Filtrer les logs...",
+      "thisServer": "Ce serveur",
+      "instanceLog": "Log de l'instance",
+      "allLevels": "Tous les niveaux",
+      "levelError": "Erreur",
+      "levelWarning": "Avertissement",
+      "levelInfo": "Informations",
+      "levelDebug": "Débogage",
+      "noEntriesFound": "Aucune entrée de log trouvée.",
+      "skippingFirst": "ignore les {{count}} premières",
+      "newer": "Plus récent",
+      "older": "Plus ancien",
+      "level": "Niveau",
+      "nLines_one": "{{count}} ligne",
+      "nLines_other": "{{count}} lignes",
+      "entriesShown_one": "{{count}} entrée affichée",
+      "entriesShown_other": "{{count}} entrées affichées"
+    },
+    "virtualServers": {
+      "started": "Serveur démarré",
+      "startFailed": "Échec du démarrage du serveur",
+      "stopped": "Serveur arrêté",
+      "stopFailed": "Échec de l'arrêt du serveur",
+      "created": "Serveur virtuel créé",
+      "createFailed": "Échec de la création du serveur virtuel",
+      "createServer": "Créer un serveur",
+      "servers": "Serveurs",
+      "onlineOffline": "en ligne+hors ligne",
+      "autostarting": "Démarrage auto",
+      "slots": "Places",
+      "autostartSlots": "Slots en démarrage auto",
+      "selected": "SÉLECTIONNÉ",
+      "deselect": "Désélectionner",
+      "stop": "Arrêter",
+      "start": "Démarrer",
+      "createDialogTitle": "Créer un serveur virtuel",
+      "createDialogDescription": "Crée un nouveau serveur virtuel sur cette instance TeamSpeak.",
+      "namePlaceholder": "Mon serveur TeamSpeak",
+      "portOptional": "Port (facultatif)",
+      "portPlaceholder": "Laisser vide pour le premier port libre",
+      "autostartWithInstance": "Démarrer automatiquement avec l'instance"
+    },
+    "misc": {
+      "identityUpdated": "Identité mise à jour",
+      "identityUpdateFailed": "Échec de la mise à jour de l'identité",
+      "snapshotCreated": "Snapshot créé et téléchargé",
+      "snapshotCreateFailed": "Échec de la création du snapshot",
+      "snapshotRestored": "Snapshot restauré",
+      "snapshotRestoreFailed": "Échec de la restauration du snapshot",
+      "permissionsReset": "Permissions réinitialisées par défaut",
+      "permissionsResetFailed": "Échec de la réinitialisation des permissions",
+      "messageSent": "Message envoyé",
+      "messageSendFailed": "Échec de l'envoi du message",
+      "notValidSnapshot": "Fichier snapshot non valide",
+      "globalMessage": "Message global",
+      "announcementPlaceholder": "Annonce importante...",
+      "allServers": "Tous les serveurs",
+      "thisServerOnly": "Ce serveur uniquement",
+      "sentAnonymously": "Envoyé anonymement en tant que \"server\" à chaque serveur virtuel de cette instance.",
+      "sentUnderIdentity": "Envoyé sous votre identité Query actuelle (voir ci-dessous) à ce serveur uniquement — non anonyme.",
+      "identity": "Identité",
+      "identityDescription": "Le pseudo sous lequel vos actions manuelles via cette appli (p. ex. renommer un salon) apparaissent dans les logs TeamSpeak. Distinct de toute identité de bot par serveur, qui ne concerne que les actions des flux de bot.",
+      "current": "Actuel : {{name}}",
+      "newNickname": "Nouveau pseudo",
+      "snapshots": "Instantanés",
+      "snapshotsDescription": "Enregistre tous les paramètres, groupes et identités client connues du serveur actuellement sélectionné. Les fichiers, icônes et avatars ne sont pas inclus.",
+      "creating": "Création en cours...",
+      "createAndDownload": "Créer et télécharger",
+      "restoreFromFile": "Restaurer depuis un fichier",
+      "restoreWarning": "La restauration écrase les paramètres, groupes et permissions du serveur actuellement sélectionné.",
+      "dangerZone": "Zone de danger",
+      "dangerZoneDescription": "Supprime toutes les permissions de groupe, client et salon du serveur actuellement sélectionné, puis recrée les groupes modèles par défaut. Impossible à annuler.",
+      "resetAllPermissions": "Réinitialiser toutes les permissions",
+      "restoreSnapshotTitle": "Restaurer le snapshot ?",
+      "restoreSnapshotDescription": "Cela écrase les paramètres, groupes et permissions du serveur actuellement sélectionné avec le contenu de \"{{name}}\". Impossible à annuler.",
+      "restore": "Restaurer",
+      "resetAllPermissionsTitle": "Réinitialiser toutes les permissions ?",
+      "resetAllPermissionsDescription": "Cela supprime définitivement chaque groupe serveur, groupe de salon, client et permission de salon sur le serveur actuellement sélectionné, puis recrée les groupes modèles par défaut. Impossible à annuler."
+    },
+    "clients": {
+      "nickname": "Pseudo",
+      "country": "Pays",
+      "idle": "Inactif",
+      "away": "Absent",
+      "muted": "Muet",
+      "poke": "Envoyer un poke",
+      "kickedName": "{{name}} expulsé",
+      "kickFromServer": "Expulser du serveur",
+      "bannedName": "{{name}} banni",
+      "banOneHour": "Bannir (1 heure)",
+      "move": "Déplacer",
+      "kick": "Expulser",
+      "ban": "Bannir",
+      "describe": "Décrire",
+      "searchPlaceholder": "Rechercher des clients...",
+      "pokeName": "Envoyer un poke à {{name}}",
+      "pokePlaceholder": "Salut !",
+      "pokedName": "Poke envoyé à {{name}}",
+      "targetChannel": "Salon cible",
+      "chooseChannel": "Choisir un salon...",
+      "moveFailed": "Échec du déplacement des clients",
+      "reasonOptional": "Raison (facultative, affichée aux clients expulsés)",
+      "kickedByAdmin": "Expulsé par un admin",
+      "kickFailed": "Échec de l'expulsion des clients",
+      "durationSeconds": "Durée (secondes, 0 = permanent)",
+      "bannedByAdmin": "Banni par un admin",
+      "banFailed": "Échec du bannissement des clients",
+      "descriptionApplied": "Description (appliquée à tous les clients sélectionnés)",
+      "descriptionUpdateFailed": "Échec de la mise à jour des descriptions",
+      "onlineCount_one": "{{count}} en ligne",
+      "onlineCount_other": "{{count}} en ligne",
+      "selectedCount_one": "{{count}} sélectionné",
+      "selectedCount_other": "{{count}} sélectionnés",
+      "moveCount_one": "Déplacer {{count}} client",
+      "moveCount_other": "Déplacer {{count}} clients",
+      "movedCount_one": "{{count}} client déplacé",
+      "movedCount_other": "{{count}} clients déplacés",
+      "kickCount_one": "Expulser {{count}} client",
+      "kickCount_other": "Expulser {{count}} clients",
+      "kickedCount_one": "{{count}} client expulsé",
+      "kickedCount_other": "{{count}} clients expulsés",
+      "banCount_one": "Bannir {{count}} client",
+      "banCount_other": "Bannir {{count}} clients",
+      "bannedCount_one": "{{count}} client banni",
+      "bannedCount_other": "{{count}} clients bannis",
+      "describeCount_one": "Décrire {{count}} client",
+      "describeCount_other": "Décrire {{count}} clients",
+      "descriptionUpdated_one": "Description mise à jour pour {{count}} client",
+      "descriptionUpdated_other": "Description mise à jour pour {{count}} clients"
+    },
+    "tokens": {
+      "createdAndCopied": "Token créé et copié dans le presse-papiers",
+      "created": "Token créé",
+      "createFailed": "Échec de la création du token",
+      "tempCreated": "Mot de passe temporaire créé",
+      "tempCreateFailed": "Échec de la création du mot de passe temporaire",
+      "tempDeleted": "Mot de passe temporaire supprimé",
+      "defaultChannel": "Salon par défaut",
+      "token": "Jeton",
+      "serverGroup": "Groupe serveur",
+      "channelGroup": "Groupe de salon",
+      "groupId": "ID du groupe",
+      "tokenDeleted": "Token supprimé",
+      "targetChannel": "Salon cible",
+      "expires": "Expire",
+      "expired": "Expiré",
+      "createdBy": "Créé par",
+      "title": "Clés de privilège",
+      "createToken": "Créer un token",
+      "searchTokens": "Rechercher des tokens...",
+      "temporaryPasswords": "Mots de passe temporaires",
+      "noTempPasswords": "Aucun mot de passe temporaire défini",
+      "searchTempPasswords": "Rechercher des mots de passe temporaires...",
+      "groupType": "Type de groupe",
+      "group": "Groupe",
+      "chooseGroup": "Choisir un groupe...",
+      "iconForGroup": "Icône pour {{name}}",
+      "createTempPassword": "Créer un mot de passe temporaire",
+      "enterOrGenerate": "Saisir ou générer un mot de passe",
+      "generateRandom": "Générer un mot de passe aléatoire",
+      "validFor": "Valide pendant",
+      "unit": "Unité",
+      "minutes": "Minutes",
+      "hours": "Heures",
+      "days": "Jours"
+    },
+    "advancedSettings": {
+      "title": "Paramètres avancés",
+      "saveFailed": "Échec de l'enregistrement",
+      "saved": "Enregistré",
+      "tabs": {
+        "appearance": "Apparence",
+        "access": "Accès et groupes",
+        "moderation": "Modération et logs",
+        "limits": "Limites de transfert de fichiers"
+      },
+      "welcomeHostMessage": "Message d'accueil et d'hôte",
+      "welcomeMessage": "Message d'accueil",
+      "welcomeMessagePlaceholder": "Affiché aux clients juste après leur connexion",
+      "hostMessage": "Message d'hôte",
+      "hostMessageMode": "Mode du message d'hôte",
+      "dontShow": "Ne pas afficher",
+      "showInChatLog": "Afficher dans le chat",
+      "showAsModal": "Afficher en fenêtre modale",
+      "showAsModalThenQuit": "Afficher en fenêtre modale, puis quitter",
+      "hostBanner": "Bannière d'hôte",
+      "linkUrl": "URL du lien",
+      "imageUrl": "URL de l'image",
+      "rotationInterval": "Intervalle de rotation (s)",
+      "displayMode": "Mode d'affichage",
+      "noAdjust": "Aucun ajustement",
+      "stretchIgnoreAspect": "Étirer (ignorer les proportions)",
+      "keepAspectRatio": "Conserver les proportions",
+      "hostButton": "Bouton d'hôte",
+      "linkUrlOnClick": "URL du lien (ouverte au clic)",
+      "tooltip": "Infobulle",
+      "defaultGroups": "Groupes par défaut",
+      "defaultServerGroup": "Groupe serveur par défaut",
+      "defaultChannelGroup": "Groupe de salon par défaut",
+      "defaultChannelAdminGroup": "Groupe admin de salon par défaut",
+      "accessSecurity": "Accès et sécurité",
+      "serverPassword": "Mot de passe du serveur",
+      "minIdentitySecurityLevel": "Niveau de sécurité d'identité minimal",
+      "minClientBuild": "Build client minimal",
+      "reservedSlots": "Slots réservés",
+      "codecEncryption": "Chiffrement du codec",
+      "perChannelSetting": "Paramètre par salon",
+      "forcedOff": "Forcé désactivé",
+      "forcedOn": "Forcé activé",
+      "showOnGlobalWeblist": "Afficher dans la Weblist globale",
+      "complaintsBeforeBan": "Plaintes avant bannissement",
+      "banDurationSeconds": "Durée du bannissement (s)",
+      "complaintRemovedAfter": "Plainte supprimée après (s)",
+      "prioritySilence": "Priorité et silence",
+      "clientsBeforeForcedSilence": "Clients dans le salon avant silence forcé",
+      "prioritySpeakerReduction": "Réduction du volume du haut-parleur prioritaire (dB)",
+      "antiFlood": "Anti-flood",
+      "pointsReducedGood": "Points réduits en cas de bon comportement",
+      "pointsToBlockCommands": "Points pour bloquer les commandes",
+      "pointsToBlockConnections": "Points pour bloquer les connexions",
+      "eventLogging": "Journalisation des événements",
+      "serverqueryClients": "Clients ServerQuery",
+      "serverChanges": "Modifications du serveur",
+      "fileTransfers": "Transferts de fichiers",
+      "fileTransferLimitsPerUser": "Limites de transfert de fichiers (par utilisateur)",
+      "uploadQuotaMb": "Quota d'upload (Mo)",
+      "downloadQuotaMb": "Quota de download (Mo)",
+      "uploadBandwidth": "Bande passante d'upload (octets/s)",
+      "downloadBandwidth": "Bande passante de download (octets/s)",
+      "zeroUnlimited": "0 = illimité"
+    },
+    "notFound": {
+      "title": "Page introuvable",
+      "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
+      "backToDashboard": "Retour au tableau de bord"
+    },
+    "complaints": {
+      "from": "De",
+      "about": "À propos de",
+      "when": "Quand",
+      "searchPlaceholder": "Rechercher des plaintes..."
+    },
+    "widgetPage": {
+      "title": "Widget serveur TS",
+      "notAvailable": "Widget non disponible"
+    },
+    "musicRequests": {
+      "description": "Historique des morceaux demandés via la commande <1>!play</1> sur ce serveur.",
+      "noneYetTitle": "Aucune demande musicale pour le moment",
+      "noneYetDescription": "Quand des utilisateurs demandent des morceaux avec la commande !play, ils apparaîtront ici comme historique.",
+      "requested": "Demandé {{time}}"
+    },
+    "settings": {
+      "webgui": {
+        "language": {
+          "title": "Ma langue",
+          "description": "La langue d'affichage du WebGUI, uniquement pour vous — enregistrée sur votre compte afin de vous suivre sur n'importe quel navigateur."
+        },
+        "darkGroup": "Sombre",
+        "lightGroup": "Clair",
+        "myBaseTheme": "Mon thème de base",
+        "baseThemeDescription": "La palette d'arrière-plan et de surface, qui détermine aussi si l'appli est claire ou sombre. Remplace le défaut d'installation ci-dessous, uniquement pour vous — enregistré dans ce navigateur seulement.",
+        "resetToInstallDefault": "Rétablir le défaut d'installation",
+        "myAccent": "Mon accent",
+        "accentDescription": "Boutons, liens et surlignages — indépendant du thème de base ci-dessus, toutes les combinaisons fonctionnent.",
+        "installDefaultBaseTheme": "Thème de base par défaut de l'installation",
+        "installDefaultBaseThemeDescription": "S'applique à chaque utilisateur qui n'a pas défini sa propre préférence de thème de base ci-dessus.",
+        "installDefaultAccent": "Accent par défaut de l'installation",
+        "installDefaultAccentDescription": "S'applique à chaque utilisateur qui n'a pas défini sa propre préférence d'accent ci-dessus.",
+        "baseThemeSetToast": "Thème de base de l'installation défini sur {{theme}}",
+        "baseThemeSetFailed": "Échec de la mise à jour du thème de base de l'installation",
+        "accentSetToast": "Accent de l'installation défini sur {{accent}}",
+        "accentSetFailed": "Échec de la mise à jour de l'accent de l'installation",
+        "pairingHint": "{{theme}} va bien avec l'accent {{accent}}."
+      },
+      "title": "Paramètres",
+      "tabs": {
+        "connections": "Connexions",
+        "account": "Compte",
+        "webgui": "WebGUI",
+        "users": "Utilisateurs",
+        "youtube": "YouTube",
+        "streaming": "Diffusion",
+        "debug": "Débogage",
+        "restart": "Redémarrage",
+        "sso": "SSO",
+        "updateStatus": "Statut des mises à jour"
+      },
+      "account": {
+        "passwordMinLength": "Le nouveau mot de passe doit contenir au moins 6 caractères",
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "passwordChangedSuccess": "Mot de passe modifié avec succès",
+        "passwordChangeFailed": "Échec de la modification du mot de passe",
+        "changePasswordTitle": "Changer le mot de passe",
+        "currentPasswordLabel": "Mot de passe actuel",
+        "currentPasswordPlaceholder": "Saisir le mot de passe actuel",
+        "newPasswordLabel": "Nouveau mot de passe",
+        "newPasswordPlaceholder": "Min. 6 caractères",
+        "confirmNewPasswordLabel": "Confirmer le nouveau mot de passe",
+        "confirmNewPasswordPlaceholder": "Répéter le nouveau mot de passe",
+        "changing": "Modification..."
+      },
+      "twoFactor": {
+        "title": "Authentification à deux facteurs",
+        "description": "Ajoute un code à usage unique depuis une application d'authentification (Google Authenticator, Authy, ...) en plus de votre mot de passe.",
+        "disable2fa": "Désactiver la 2FA",
+        "starting": "Démarrage...",
+        "enable2fa": "Activer la 2FA",
+        "setupTitle": "Configurer l'authentification à deux facteurs",
+        "scanInstructions": "Scannez ceci avec votre application d'authentification, puis saisissez le code à 6 chiffres affiché pour confirmer.",
+        "qrAlt": "Code QR 2FA",
+        "manualEntryLabel": "Impossible de scanner ? Saisissez manuellement :",
+        "confirmationCodeLabel": "Code de confirmation",
+        "verifying": "Vérification...",
+        "verifyAndEnable": "Vérifier et activer",
+        "recoveryCodesHint": "Enregistrez ces codes de récupération dans un endroit sûr. Chacun peut être utilisé une fois pour vous connecter si vous perdez l'accès à votre application d'authentification — ils ne seront plus affichés.",
+        "savedCodesConfirm": "J'ai enregistré ces codes",
+        "twoFaEnabledToast": "2FA activée",
+        "disableTitle": "Désactiver l'authentification à deux facteurs",
+        "disableConfirmHint": "Saisissez votre mot de passe actuel pour confirmer.",
+        "disablePasswordPlaceholder": "Mot de passe actuel",
+        "disabling": "Désactivation...",
+        "setupFailed": "Échec du démarrage de la configuration 2FA",
+        "invalidCode": "Code invalide",
+        "twoFaDisabledToast": "2FA désactivée",
+        "disableFailed": "Échec de la désactivation de la 2FA",
+        "disableAction": "Désactiver"
+      },
+      "connections": {
+        "manageDescription": "Gérer les connexions aux serveurs TeamSpeak",
+        "addConnection": "Ajouter une connexion",
+        "host": "Hôte",
+        "protocol": "Protocole",
+        "ssh": "SSH",
+        "test": "Tester",
+        "botIdentityFallback": "Identité de bot",
+        "connectionSuccessful": "Connexion réussie",
+        "connectionFailedWithError": "Échec de la connexion : {{error}}",
+        "connectionFailed": "Échec de la connexion",
+        "editConnectionTitle": "Modifier la connexion",
+        "namePlaceholder": "Mon serveur TS",
+        "hostPlaceholder": "127.0.0.1",
+        "webqueryPortLabel": "Port WebQuery",
+        "apiKeyLabel": "Clé API",
+        "apiKeyUnchangedPlaceholder": "(inchangée — saisissez une nouvelle clé pour mettre à jour)",
+        "apiKeyPlaceholder": "Clé API WebQuery",
+        "useHttps": "Utiliser HTTPS",
+        "pingTargetLabel": "Cible du ping du tableau de bord (facultatif)",
+        "pingTargetPlaceholder": "Par défaut, l'hôte ci-dessus ({{host}})",
+        "pingTargetHint": "Affecte uniquement la mesure du ping du tableau de bord — utile si l'hôte ci-dessus est une adresse interne mais que le domaine public doit réellement être testé. Les flux de bot utilisent toujours l'hôte, jamais ceci.",
+        "sshPortLabel": "Port SSH",
+        "sshUserLabel": "Utilisateur SSH",
+        "sshUserPlaceholder": "serveradmin",
+        "unchanged": "(inchangé)",
+        "sshPasswordLabel": "Mot de passe SSH",
+        "update": "Mettre à jour",
+        "connectionUpdated": "Connexion mise à jour",
+        "updateFailed": "Échec de la mise à jour",
+        "connectionAdded": "Connexion ajoutée",
+        "createFailed": "Échec de la création",
+        "deleteConnectionTitle": "Supprimer la connexion ?",
+        "deleteConnectionDescription": "Cela supprimera la connexion serveur. Les bots liés à ce serveur cesseront de fonctionner.",
+        "connectionDeleted": "Connexion supprimée"
+      },
+      "botIdentity": {
+        "apiKeyReissued": "Clé API réémise",
+        "createdToast": "Identité de bot créée",
+        "createFailed": "Échec de la création de l'identité de bot",
+        "renamedToast": "Identité de bot renommée",
+        "renameFailed": "Échec du renommage de l'identité de bot",
+        "dialogTitle": "Identité de bot — {{name}}",
+        "hasIdentityDescription": "Les actions de flux de bot sur ce serveur sont attribuées à ce nom dans les logs et notifications TeamSpeak, au lieu d'utiliser la même identité que vos actions manuelles dans cette appli.",
+        "noIdentityDescription": "Facultatif : donnez aux flux de bot leur propre identité ServerQuery séparée, afin que leurs actions (p. ex. renommer un salon) apparaissent sous ce nom dans les logs TeamSpeak au lieu d'être mélangées avec vos actions manuelles dans cette appli. Rien ne change pour les flux de bot tant que vous n'en créez pas une.",
+        "scopeFixHint": "Les actions de flux de bot échouent avec une erreur de permission ou \"out of scope\" ? Cette identité a peut-être été créée avant un correctif de portée — utilisez \"Corriger les permissions\" ci-dessous pour réémettre sa clé sans rien changer d'autre.",
+        "displayNameLabel": "Nom affiché",
+        "fixing": "Correction...",
+        "fixPermissions": "Corriger les permissions",
+        "createBotIdentityButton": "Créer une identité de bot"
+      },
+      "users": {
+        "manageDescription": "Gérer les utilisateurs et rôles de la webapp",
+        "searchPlaceholder": "Rechercher des utilisateurs...",
+        "addUser": "Ajouter un utilisateur",
+        "colUsername": "Nom d'utilisateur",
+        "colDisplayName": "Nom affiché",
+        "colLastLogin": "Dernière connexion",
+        "noUsersMatch": "Aucun utilisateur ne correspond à \"{{search}}\"",
+        "ssoBadge": "SSO",
+        "cantChangeOwnRole": "Vous ne pouvez pas modifier votre propre rôle",
+        "cantDisableOwnAccount": "Vous ne pouvez pas désactiver votre propre compte",
+        "never": "Jamais",
+        "serverAccessTitle": "Accès serveur",
+        "sessionsTitle": "Sessions",
+        "resetPasswordTitle": "Réinitialiser le mot de passe",
+        "cantDeleteOwnAccount": "Vous ne pouvez pas supprimer votre propre compte",
+        "usernamePlaceholder": "johndoe",
+        "displayNamePlaceholder": "John Doe",
+        "passwordPlaceholder": "********",
+        "userCreated": "Utilisateur créé",
+        "createUserFailed": "Échec de la création de l'utilisateur",
+        "roleUpdated": "Rôle mis à jour",
+        "roleUpdateFailed": "Échec de la mise à jour du rôle",
+        "userEnabledToast": "Utilisateur activé",
+        "userDisabledToast": "Utilisateur désactivé",
+        "statusUpdateFailed": "Échec de la mise à jour du statut",
+        "resetPasswordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
+        "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
+        "resetPasswordFailed": "Échec de la réinitialisation du mot de passe",
+        "userUpdated": "Utilisateur mis à jour",
+        "updateUserFailed": "Échec de la mise à jour de l'utilisateur",
+        "setNewPasswordFor": "Définir un nouveau mot de passe pour {{username}}",
+        "deleteUserTitle": "Supprimer l'utilisateur ?",
+        "deleteUserDescription": "Cet utilisateur sera définitivement supprimé.",
+        "userDeleted": "Utilisateur supprimé",
+        "deleteUserFailed": "Échec de la suppression de l'utilisateur",
+        "resetting": "Réinitialisation...",
+        "editUserTitle": "Modifier l'utilisateur"
+      },
+      "serverAccess": {
+        "updated": "Accès serveur mis à jour",
+        "updateFailed": "Échec de la mise à jour de l'accès serveur",
+        "title": "Accès serveur — {{username}}",
+        "noConnections": "Aucune connexion serveur configurée pour le moment."
+      },
+      "sessions": {
+        "title": "Sessions — {{username}}",
+        "description": "Une entrée par appareil/navigateur connecté. Révoquer une session force cet appareil à se reconnecter.",
+        "selfWarning": " Révoquer votre propre session actuelle vous déconnectera aussi.",
+        "noActiveSessions": "Aucune session active.",
+        "signedIn": "Connecté le {{date}}",
+        "expires": "Expire le {{date}}",
+        "revoke": "Révoquer",
+        "revoked": "Session révoquée",
+        "revokeFailed": "Échec de la révocation de la session",
+        "revokedAllToast": "Sessions révoquées : {{count}}",
+        "revokeAllFailed": "Échec de la révocation des sessions",
+        "revoking": "Révocation...",
+        "revokeAll": "Tout révoquer"
+      },
+      "youtube": {
+        "title": "Cookies YouTube",
+        "description": "Téléversez un fichier cookies.txt pour accéder au contenu YouTube réservé par âge ou aux membres. Vous pouvez exporter les cookies depuis votre navigateur avec des extensions comme",
+        "extensionName": "Obtenir cookies.txt LOCALEMENT",
+        "extensionSuffix": " (Chrome/Firefox).",
+        "noCookiesConfigured": "Aucun cookie configuré",
+        "cookiesRejected": "YouTube a rejeté ces cookies ({{size}}) — réexportez-les et téléversez-les à nouveau",
+        "cookiesWorking": "Cookies actifs et fonctionnels ({{size}})",
+        "cookiesNotChecked": "Cookies actifs ({{size}}) — pas encore vérifiés",
+        "checking": "Vérification...",
+        "recheck": "Revérifier",
+        "uploading": "Téléversement...",
+        "uploadCookiesFile": "Téléverser cookies.txt",
+        "pasteCookies": "Coller des cookies",
+        "settingSaved": "Paramètre enregistré",
+        "settingSaveFailed": "Échec de l'enregistrement du paramètre",
+        "uploadedButRejected": "Téléversé, mais YouTube a rejeté ces cookies",
+        "cookieFileUploaded": "Fichier de cookies téléversé",
+        "uploadFailed": "Échec du téléversement du fichier de cookies",
+        "savedButRejected": "Enregistré, mais YouTube a rejeté ces cookies",
+        "cookiesSaved": "Cookies enregistrés",
+        "saveCookiesFailed": "Échec de l'enregistrement des cookies",
+        "cookieFileRemoved": "Fichier de cookies supprimé",
+        "removeCookiesFailed": "Échec de la suppression des cookies",
+        "playedSongStorageTitle": "Stockage des morceaux lus",
+        "playedSongStorageDescriptionPart1": "Contrôle ce qui arrive aux morceaux téléchargés via les commandes de chat (",
+        "playedSongStorageDescriptionPart2": "). Cela n'affecte pas les morceaux ajoutés volontairement via l'onglet Bibliothèque (upload ou \"télécharger par URL\") — ceux-ci sont toujours conservés.",
+        "keepPlayedSongsLabel": "Conserver les morceaux lus",
+        "keepOnDescription": "Activé : les morceaux lancés depuis le chat peuvent être intégrés à la bibliothèque par \"Rechercher de nouveaux fichiers\" et conservés indéfiniment (par défaut).",
+        "keepOffDescription": "Désactivé : les morceaux lancés depuis le chat ne sont jamais ajoutés à la bibliothèque et sont supprimés automatiquement environ une heure après la lecture, pour économiser de l'espace disque."
+      },
+      "streaming": {
+        "title": "Paramètres par défaut du stream",
+        "descriptionUsage": "utilise quand personne ne précise de qualité. En nommer une dans le chat ({{names}}) reste prioritaire pour ce stream. Des valeurs plus élevées nécessitent plus de bande passante d'upload et plus de CPU sur cette machine ; si les spectateurs signalent des saccades, revenez ici et baissez-les.",
+        "resolutionLabel": "Résolution",
+        "pixelsSuffix": "{{width}}x{{height}} pixels",
+        "frameRateLabel": "Fréquence d'images",
+        "frameRateHint": "Images par seconde, 1-120.",
+        "bitrateLabel": "Débit",
+        "bitrateHintPrefix": "Comme ffmpeg l'écrit, p. ex.",
+        "volumeLabel": "Volume",
+        "volumeHint": "Pourcentage du volume propre de la vidéo, 0-100. Les vidéos sont masterisées bien plus fort que la voix humaine ; un stream à son niveau d'origine arrive donc comme un cri — d'où le faible défaut. Les spectateurs peuvent toujours augmenter leur propre lecteur. Prend effet au prochain stream, pas sur celui en cours.",
+        "restoreShippedValues": "Restaurer les valeurs fournies",
+        "unsavedChanges": "Modifications non enregistrées",
+        "streamDefaultsSaved": "Paramètres par défaut du stream enregistrés",
+        "streamDefaultsSaveFailed": "Échec de l'enregistrement des paramètres par défaut du stream"
+      },
+      "debug": {
+        "loggingTitle": "Logs de debug",
+        "loggingDescription": "Logs très détaillés pour diagnostiquer les problèmes. Laissez-les désactivés en fonctionnement normal — ils peuvent produire beaucoup de logs. Les modifications prennent effet immédiatement.",
+        "voiceBotDebugLabel": "Debug du bot vocal",
+        "voiceBotDebugHint": "Stats de streaming audio par seconde (jitter, timing des frames) pour les bots musique/stream.",
+        "rankCheckDebugLabel": "Debug de vérification de rang",
+        "rankCheckDebugHint": "Détail par client (heures calculées, appartenance aux groupes) pour l'action de flux de bot Rank Check.",
+        "serverQueryDebugLabel": "Debug ServerQuery",
+        "serverQueryDebugHint": "Chaque commande WebQuery/SSH envoyée à un serveur TeamSpeak et sa réponse brute, erreurs incluses (p. ex. permissions insuffisantes) — utile quand une action de flux de bot ne fait silencieusement pas ce qui est attendu.",
+        "debugFlagUpdateFailed": "Échec de la mise à jour du flag de debug",
+        "dangerZone": "Zone de danger",
+        "idResetHint": "Les compteurs d'ID de SQLite ne redescendent jamais seuls, même après avoir tout supprimé — ceci efface entièrement une table (sur tous les serveurs, pas seulement celui sélectionné ci-dessus) afin que sa prochaine entrée reparte à #1.",
+        "resetRadioIdsLabel": "Réinitialiser les ID de stations radio",
+        "resetRadioIdsHint": "Supprime chaque station radio sur tous les serveurs.",
+        "reset": "Réinitialiser",
+        "resetBotIdsLabel": "Réinitialiser les ID des bots musique",
+        "resetBotIdsHint": "Arrête et supprime chaque bot musique sur tous les serveurs.",
+        "radioIdsResetFailed": "Échec de la réinitialisation des ID de stations radio",
+        "botIdsResetFailed": "Échec de la réinitialisation des ID des bots musique",
+        "resetRadioTitle": "Réinitialiser les ID de stations radio ?",
+        "resetBotsTitle": "Réinitialiser les ID des bots musique ?",
+        "resetRadioDescription": "Cela supprime définitivement chaque station radio sur tous les serveurs. Elles devront être ajoutées à nouveau.",
+        "resetBotsDescription": "Cela arrête et supprime définitivement chaque bot musique sur tous les serveurs. Ils devront être recréés.",
+        "radioIdsResetToast_one": "{{count}} station radio supprimée, ID réinitialisés",
+        "radioIdsResetToast_other": "{{count}} stations radio supprimées, ID réinitialisés",
+        "botIdsResetToast_one": "{{count}} bot musique supprimé, ID réinitialisés",
+        "botIdsResetToast_other": "{{count}} bots musique supprimés, ID réinitialisés"
+      },
+      "restart": {
+        "title": "Redémarrage planifié",
+        "descriptionPart1": "Redémarre périodiquement les propres conteneurs de ts6-manager pour libérer la mémoire et garantir un état d'exécution propre. Cela ne",
+        "descriptionPart2": "redémarre pas votre serveur TeamSpeak — seulement ts6-manager lui-même. Choisissez au moins un conteneur ci-dessous pour l'activer.",
+        "restartBackendLabel": "Redémarrer le backend",
+        "restartBackendHint": "Connexions de bots, EventBridge, état WebSocket.",
+        "restartSidecarLabel": "Redémarrer le sidecar",
+        "restartSidecarHint": "Le processus de streaming vidéo (WebRTC/RTP).",
+        "timeLabel": "Heure (24 h, locale serveur)",
+        "daysLabel": "Jours",
+        "restartScheduleSaved": "Planning de redémarrage enregistré",
+        "restartScheduleSaveFailed": "Échec de l'enregistrement du planning de redémarrage",
+        "days": {
+          "sun": "Dim",
+          "mon": "Lun",
+          "tue": "Mar",
+          "wed": "Mer",
+          "thu": "Jeu",
+          "fri": "Ven",
+          "sat": "Sam"
+        },
+        "notEmphasis": "pas"
+      },
+      "sso": {
+        "title": "Authentification unique (OIDC)",
+        "descriptionPart1": "Permet aux utilisateurs de se connecter via un fournisseur OpenID Connect externe (Authentik, Keycloak, Authelia, Zitadel, ...). Un tout nouvel utilisateur est créé comme",
+        "descriptionPart2": "lors de sa première connexion SSO — promouvez-le admin ensuite depuis l'onglet Utilisateurs si nécessaire. La connexion locale par nom d'utilisateur/mot de passe reste disponible en parallèle.",
+        "viewerEmphasis": "lecteur",
+        "enabledHint": "Affiche un bouton \"Se connecter avec SSO\" sur la page de connexion.",
+        "issuerUrlLabel": "URL de l'émetteur",
+        "issuerUrlHint": "Le document de découverte OIDC du fournisseur doit être accessible à",
+        "clientIdLabel": "ID client",
+        "clientSecretLabel": "Secret client",
+        "clientSecretPlaceholderExisting": "Laisser vide pour conserver le secret existant",
+        "clientSecretPlaceholder": "Secret client",
+        "buttonLabelLabel": "Libellé du bouton",
+        "redirectUriHint": "URI de redirection à enregistrer chez votre fournisseur :",
+        "ssoSettingsSaved": "Paramètres SSO enregistrés",
+        "ssoSettingsSaveFailed": "Échec de l'enregistrement des paramètres SSO"
+      },
+      "updateStatus": {
+        "title": "Statut des mises à jour",
+        "recheckNow": "Revérifier maintenant",
+        "checkingForUpdates": "Recherche de mises à jour...",
+        "updateAvailable": "Mise à jour disponible",
+        "allUpToDate": "Tout est à jour",
+        "checkFailed": "Échec de la recherche de mises à jour",
+        "comparisonHintPrefix": "Compare ce déploiement avec la branche",
+        "comparisonHintSuffix": "de GitHub. Notification uniquement — rien ici ne lance automatiquement une mise à jour.",
+        "backend": "Backend",
+        "sidecar": "Sidecar",
+        "frontend": "Frontend",
+        "installed": "Installé",
+        "latestMain": "Dernière (main)",
+        "unreachable": "injoignable",
+        "unknown": "inconnu",
+        "updateAvailableBadge": "mise à jour disponible",
+        "upToDate": "à jour",
+        "lastChecked": "Dernière vérification : {{date}}",
+        "notCheckedYet": "Pas encore vérifié",
+        "githubTokenTitle": "Token d'API GitHub",
+        "githubTokenDescriptionPrefix": "Facultatif. Cette vérification lit trois petits fichiers depuis GitHub à chaque exécution, ce qui reste dans la limite non authentifiée de GitHub de 60 requêtes/heure — mais ce quota est partagé avec tout autre élément de ce serveur appelant l'API GitHub, et \"Revérifier maintenant\" est limité à 20/heure sans token pour rester dans cette limite. Ajoutez un token (un simple",
+        "githubTokenLinkText": "token d'accès personnel à portée fine",
+        "githubTokenDescriptionSuffix": "sans accès à un dépôt requis, puisqu'il ne lit que des fichiers publics) pour monter à 5 000 requêtes/heure.",
+        "tokenLabel": "Jeton",
+        "tokenConfiguredPlaceholder": "Configuré — laisser vide et Enregistrer ne fait rien",
+        "tokenPlaceholder": "ghp_... ou github_pat_...",
+        "tokenConfiguredHint": "Un token est configuré.",
+        "noTokenConfiguredHint": "Aucun token configuré — utilisation de la limite non authentifiée.",
+        "tokenSaved": "Token GitHub enregistré",
+        "tokenSaveFailed": "Échec de l'enregistrement du token GitHub",
+        "tokenRemoved": "Token GitHub supprimé",
+        "tokenRemoveFailed": "Échec de la suppression du token GitHub",
+        "removing": "Suppression..."
+      }
+    },
+    "icons": {
+      "title": "Navigateur d'icônes",
+      "searchPlaceholder": "Rechercher un ID d'icône...",
+      "uploading": "Téléversement...",
+      "uploadIcons": "Téléverser des icônes",
+      "iconPool": "Pool d'icônes",
+      "maxSize": "{{size}} max",
+      "clear": "Effacer",
+      "deleteSelected": "Supprimer la sélection",
+      "unavailableTitle": "Navigateur d'icônes indisponible",
+      "unavailableSsh": "La lecture du pool d'icônes nécessite un accès SSH, car l'API HTTP WebQuery de TeamSpeak ne prend pas en charge les commandes de transfert de fichiers. Veuillez configurer les identifiants SSH (nom d'utilisateur et mot de passe) dans les paramètres du serveur.",
+      "loadFailed": "Échec du chargement du pool d'icônes.",
+      "noMatching": "Aucune icône correspondante",
+      "noIcons": "Aucune icône téléversée",
+      "noMatchingDescription": "Aucune icône de ce pool ne correspond à votre recherche.",
+      "uploadHintAdmin": "Téléversez un fichier PNG, JPEG, GIF, WebP ou SVG — ou déposez-en un ici — pour l'ajouter au pool d'icônes de ce serveur.",
+      "uploadHintViewer": "Ce serveur n'a encore aucune icône dans son pool d'icônes.",
+      "inUse": "utilisée",
+      "poolFooter": "Les icônes sont stockées dans le propre pool d'icônes du serveur virtuel. L'ID de l'icône est la somme de contrôle CRC32 du fichier ; téléverser deux fois la même image donne donc toujours le même ID.",
+      "poolFooterMaxSize": " Ce serveur accepte les icônes jusqu'à {{size}} (i_max_icon_filesize).",
+      "poolFooterNoPermission": " Remarque : il manque à l'identité Query la permission b_icon_manage.",
+      "deleteDescription": "Cela supprime l'icône du pool d'icônes du serveur. Impossible à annuler.",
+      "uploadFailed": "Échec du téléversement",
+      "deleteFailed": "Échec de la suppression",
+      "usage": {
+        "virtualserver": "Serveur virtuel",
+        "servergroup": "Groupe serveur",
+        "channelgroup": "Groupe de salon",
+        "channel": "Salon"
+      },
+      "iconCount_one": "{{count}} icône",
+      "iconCount_other": "{{count}} icônes",
+      "selectedCount_one": "{{count}} sélectionnée",
+      "selectedCount_other": "{{count}} sélectionnées",
+      "deleteTitle_one": "Supprimer l'icône ?",
+      "deleteTitle_other": "Supprimer {{count}} icônes ?",
+      "deleteWarning_one": "Avertissement : {{count}} de l'icône sélectionnée est encore attribuée — {{list}}. La supprimer laissera cette attribution pointer vers une icône manquante.",
+      "deleteWarning_other": "Avertissement : {{count}} icônes sélectionnées sont encore attribuées — {{list}}. Les supprimer laissera ces attributions pointer vers une icône manquante.",
+      "uploadedToast_one": "{{count}} icône téléversée",
+      "uploadedToast_other": "{{count}} icônes téléversées",
+      "duplicateToast_one": "{{count}} icône était déjà dans le pool",
+      "duplicateToast_other": "{{count}} icônes étaient déjà dans le pool",
+      "deletedToast_one": "{{count}} icône supprimée",
+      "deletedToast_other": "{{count}} icônes supprimées",
+      "deleteFailedToast_one": "{{count}} icône n'a pas pu être supprimée",
+      "deleteFailedToast_other": "{{count}} icônes n'ont pas pu être supprimées",
+      "tooLargeToast_one": "{{count}} fichier dépasse la limite de taille d'icône de ce serveur de {{size}} (i_max_icon_filesize).",
+      "tooLargeToast_other": "{{count}} fichiers dépassent la limite de taille d'icône de ce serveur de {{size}} (i_max_icon_filesize)."
+    },
+    "files": {
+      "title": "Navigateur de fichiers",
+      "newFolder": "Nouveau dossier",
+      "channels": "Salons",
+      "noChannels": "Aucun salon",
+      "selectChannelHint": "Sélectionnez un salon pour parcourir les fichiers",
+      "unavailableTitle": "Navigateur de fichiers indisponible",
+      "unavailableSsh": "La navigation dans les fichiers nécessite un accès SSH, car l'API HTTP WebQuery de TeamSpeak ne prend pas en charge les commandes de transfert de fichiers. Veuillez configurer les identifiants SSH (nom d'utilisateur et mot de passe) dans les paramètres du serveur.",
+      "sshConnectFailed": "Impossible de se connecter au serveur TeamSpeak via SSH. Vérifiez les identifiants et le port SSH dans les paramètres du serveur.",
+      "loadFailed": "Échec du chargement des fichiers. Assurez-vous que les identifiants SSH sont configurés dans les paramètres du serveur.",
+      "ts3ErrorCode": "Code d'erreur TS3 : {{code}}",
+      "colName": "Nom",
+      "colSize": "Taille",
+      "colModified": "Modifié",
+      "emptyDirectory": "Répertoire vide",
+      "emptyDirectoryDescription": "Aucun fichier dans ce répertoire.",
+      "moveToAnotherChannel": "Déplacer vers un autre salon",
+      "uploadDownloadNotice": "L'upload/download de fichiers n'est pas disponible via l'API WebQuery. Utilisez le client TS3 pour les transferts de fichiers.",
+      "createDirectory": "Créer un répertoire",
+      "directoryName": "Nom du répertoire",
+      "newFolderPlaceholder": "Nouveau dossier",
+      "moveTitle": "Déplacer \"{{name}}\"",
+      "moveHint": "Déplacé entièrement sur le serveur — les octets du fichier ne passent jamais par cette appli.",
+      "targetChannel": "Salon cible",
+      "chooseChannelPlaceholder": "Choisir un salon...",
+      "move": "Déplacer",
+      "deleteFileTitle": "Supprimer le fichier",
+      "deleteFileDescription": "Voulez-vous vraiment supprimer \"{{name}}\" ? Impossible à annuler.",
+      "directoryCreated": "Répertoire créé",
+      "directoryCreateFailed": "Échec de la création du répertoire",
+      "fileDeleted": "Fichier supprimé",
+      "fileDeleteFailed": "Échec de la suppression du fichier",
+      "fileMoved": "Fichier déplacé",
+      "fileMoveFailed": "Échec du déplacement du fichier",
+      "itemCount_one": "{{count}} élément",
+      "itemCount_other": "{{count}} éléments"
+    },
+    "dashboard": {
+      "noAccessTitle": "Aucun accès à ce serveur",
+      "noAccessDescription": "Votre compte n'a pas accès à cette connexion serveur. Demandez à un admin de l'accorder dans Paramètres → Utilisateurs.",
+      "noServerDescription": "Sélectionnez une connexion serveur dans l'en-tête pour afficher le tableau de bord.",
+      "connectionFailedTitle": "Échec de la connexion",
+      "connectionFailedDescription": "Impossible de se connecter au serveur TeamSpeak. Vérifiez vos paramètres de connexion.",
+      "widgets": "Widgets",
+      "liveMonitoring": "Surveillance en direct",
+      "onlineUsers": "Utilisateurs en ligne",
+      "ofSlots": "sur {{max}} slots",
+      "channels": "Salons",
+      "uptime": "Temps de fonctionnement",
+      "ping": "Ping",
+      "timeout": "délai expiré",
+      "bandwidth": "Bande passante",
+      "last20Minutes": "20 dernières minutes",
+      "download": "Téléchargement",
+      "upload": "Téléversement",
+      "collectingData": "Collecte des données...",
+      "in": "Entrant :",
+      "out": "Sortant :",
+      "serverCapacity": "Capacité du serveur",
+      "userSlots": "Slots utilisateur",
+      "utilized": "{{percent}} % utilisés",
+      "serverVersion": "Version du serveur",
+      "platform": "Plateforme",
+      "botFlows": "Flux de bots"
+    },
+    "serverGroups": {
+      "exportSelected": "Exporter la sélection",
+      "deleteSelected": "Supprimer la sélection",
+      "import": "Importer",
+      "createGroup": "Créer un groupe",
+      "groupsHeading": "Groupes ({{count}})",
+      "selectForBulkDelete": "Sélectionner pour suppression en masse",
+      "iconAlt": "Icône de {{name}}",
+      "members": "Membres",
+      "sgidLabel": "SGID : {{id}}",
+      "addMember": "Ajouter un membre",
+      "deleteGroup": "Supprimer le groupe",
+      "selectGroupHint": "Sélectionnez un groupe pour voir ses membres",
+      "noMembers": "Aucun membre dans ce groupe",
+      "dbidLabel": "DBID : {{id}}",
+      "removeFromGroup": "Retirer du groupe",
+      "memberRemoved": "Membre retiré",
+      "memberRemoveFailed": "Échec du retrait du membre",
+      "searchClientsPlaceholder": "Rechercher des clients...",
+      "noMatchingClients": "Aucun client correspondant",
+      "added": "{{name}} ajouté",
+      "genericClient": "client",
+      "addMemberFailed": "Échec de l’ajout du membre",
+      "createServerGroupTitle": "Créer un groupe serveur",
+      "groupNameLabel": "Nom du groupe",
+      "newGroupPlaceholder": "Nouveau groupe",
+      "groupCreated": "Groupe créé",
+      "deleteServerGroupTitle": "Supprimer le groupe serveur",
+      "deleteGroupDescription": "Supprimer « {{name}} » ?",
+      "groupDeleted": "Groupe supprimé",
+      "deleteServerGroupsTitle": "Supprimer des groupes serveur",
+      "bulkDeletePartial": "{{succeeded}} supprimés, {{failed}} échecs",
+      "invalidJson": "Ce fichier n’est pas un JSON valide",
+      "notValidGroupExport": "Fichier d’export de groupe non valide",
+      "wrongExportTypeChannel": "Ceci est un export de groupe de salon - importez-le plutôt sur la page Groupes de salons",
+      "notValidServerExport": "Fichier d’export de groupe serveur non valide",
+      "emptyExportFile": "Le fichier ne contient aucun groupe à importer",
+      "createFailedFallback": "échec de création",
+      "importFailedNoGroups": "aucun groupe n’a pu être créé",
+      "importFailed": "Échec de l’importation - {{reason}}",
+      "importSummary": "Groupes importés : {{imported}}/{{total}}, autorisations : {{permCount}}",
+      "importPermSkipped": ", autorisations ignorées : {{count}}",
+      "importSkippedList": " - ignorés : {{list}}",
+      "exportFailed": "Échec de l’exportation",
+      "selectedCount_one": "{{count}} sélectionné",
+      "selectedCount_other": "{{count}} sélectionnés",
+      "bulkDeleteDescription_one": "Supprimer {{count}} groupe sélectionné ? Cette action est irréversible.",
+      "bulkDeleteDescription_other": "Supprimer {{count}} groupes sélectionnés ? Cette action est irréversible.",
+      "bulkDeleteSuccess_one": "{{count}} groupe supprimé",
+      "bulkDeleteSuccess_other": "{{count}} groupes supprimés",
+      "exportedCount_one": "{{count}} groupe exporté",
+      "exportedCount_other": "{{count}} groupes exportés"
+    },
+    "channelGroups": {
+      "exportSelected": "Exporter la sélection",
+      "deleteSelected": "Supprimer la sélection",
+      "import": "Importer",
+      "createGroup": "Créer un groupe",
+      "tabGroups": "Groupes",
+      "tabByClient": "Par client",
+      "groupsHeading": "Groupes ({{count}})",
+      "selectForBulkDelete": "Sélectionner pour suppression en masse",
+      "iconAlt": "Icône de {{name}}",
+      "cgidLabel": "CGID : {{id}}",
+      "typeLabel": "Type : {{type}}",
+      "selectClient": "Sélectionner un client",
+      "searchClientsPlaceholder": "Rechercher des clients...",
+      "showOfflineClients": "Afficher les clients hors ligne",
+      "noClientsFound": "Aucun client trouvé",
+      "clientChannelGroupsHeading": "Groupes de salons de {{name}}",
+      "selectAClient": "Sélectionnez un client",
+      "selectClientHint": "Sélectionnez un client dans le panneau de gauche",
+      "noAssignmentsTitle": "Aucune attribution de groupe de salon",
+      "noAssignmentsDescription": "Ce client n’a aucun groupe de salon non par défaut dans aucun salon.",
+      "moveAllToPlaceholder": "Tout déplacer vers...",
+      "applyToCount": "Appliquer à {{count}}",
+      "selectAllChannels": "Sélectionner tous les salons",
+      "selectChannelForBulk": "Sélectionner le salon pour modification en masse",
+      "colChannel": "Salon",
+      "colChannelGroup": "Groupe de salon",
+      "clientFallback": "Client n° {{id}}",
+      "createChannelGroupTitle": "Créer un groupe de salon",
+      "groupNameLabel": "Nom du groupe",
+      "newGroupPlaceholder": "Nouveau groupe",
+      "groupCreated": "Groupe créé",
+      "deleteChannelGroupsTitle": "Supprimer des groupes de salons",
+      "bulkDeletePartial": "{{succeeded}} supprimés, {{failed}} échecs",
+      "channelGroupUpdated": "Groupe de salon mis à jour",
+      "channelGroupUpdateFailed": "Échec de la mise à jour du groupe de salon",
+      "channelGroupsUpdateFailed": "Échec de la mise à jour des groupes de salons",
+      "invalidJson": "Ce fichier n’est pas un JSON valide",
+      "notValidGroupExport": "Fichier d’export de groupe non valide",
+      "wrongExportTypeServer": "Ceci est un export de groupe serveur - importez-le plutôt sur la page Groupes serveur",
+      "notValidChannelExport": "Fichier d’export de groupe de salon non valide",
+      "emptyExportFile": "Le fichier ne contient aucun groupe à importer",
+      "createFailedFallback": "échec de création",
+      "importFailedNoGroups": "aucun groupe n’a pu être créé",
+      "importFailed": "Échec de l’importation - {{reason}}",
+      "importSummary": "Groupes importés : {{imported}}/{{total}}, autorisations : {{permCount}}",
+      "importPermSkipped": ", autorisations ignorées : {{count}}",
+      "importSkippedList": " - ignorés : {{list}}",
+      "exportFailed": "Échec de l’exportation",
+      "selectedCount_one": "{{count}} sélectionné",
+      "selectedCount_other": "{{count}} sélectionnés",
+      "channelsSelectedCount_one": "{{count}} salon sélectionné",
+      "channelsSelectedCount_other": "{{count}} salons sélectionnés",
+      "bulkDeleteDescription_one": "Supprimer {{count}} groupe sélectionné ? Cette action est irréversible.",
+      "bulkDeleteDescription_other": "Supprimer {{count}} groupes sélectionnés ? Cette action est irréversible.",
+      "bulkDeleteSuccess_one": "{{count}} groupe supprimé",
+      "bulkDeleteSuccess_other": "{{count}} groupes supprimés",
+      "channelGroupsUpdatedForCount_one": "Groupe de salon mis à jour pour {{count}} salon",
+      "channelGroupsUpdatedForCount_other": "Groupes de salons mis à jour pour {{count}} salons",
+      "exportedCount_one": "{{count}} groupe exporté",
+      "exportedCount_other": "{{count}} groupes exportés"
+    },
+    "channels": {
+      "selectChannel": "Sélectionner un salon",
+      "useAsTemplate": "Utiliser comme modèle",
+      "query": "Requête",
+      "away": "Absent",
+      "muted": "Muet",
+      "createChannel": "Créer un salon",
+      "editSelected": "Modifier la sélection",
+      "channelTree": "Arborescence des salons",
+      "channelNamesLabel": "Nom(s) de salon",
+      "channelNamesPlaceholder": "Nouveau salon\nUn nom par ligne pour en créer plusieurs à la fois",
+      "bulkEditHint": "Seuls les champs cochés sont appliqués - les autres restent inchangés sur chaque salon sélectionné.",
+      "codec": "Codec",
+      "opusVoice": "Voix Opus",
+      "opusMusic": "Musique Opus",
+      "codecQuality": "Qualité du codec",
+      "neededTalkPower": "Talk Power requis",
+      "permanent": "Permanent",
+      "duplicateTitle": "Dupliquer « {{name}} »",
+      "duplicateHint": "Crée un nouveau salon avec les mêmes paramètres (sujet, codec, limites, talk power) que celui-ci.",
+      "newChannelNameLabel": "Nouveau nom du salon",
+      "duplicateNamePlaceholder": "Copie de {{name}}",
+      "duplicate": "Dupliquer",
+      "deleteChannelTitle": "Supprimer le salon",
+      "deleteChannelDescription": "Voulez-vous vraiment supprimer « {{name}} » ? Cette action est irréversible.",
+      "createPartialFailure": "{{succeeded}}/{{total}} créés, {{failed}} échecs",
+      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} mis à jour, {{failed}} échecs",
+      "duplicateCreated": "« {{newName}} » créé à partir de « {{sourceName}} »",
+      "duplicateFailed": "Échec de la duplication du salon",
+      "channelDeleted": "Salon supprimé",
+      "channelDeleteFailed": "Échec de la suppression du salon",
+      "channelMoved": "Salon déplacé",
+      "channelMoveFailed": "Échec du déplacement du salon",
+      "channelCount_one": "{{count}} salon",
+      "channelCount_other": "{{count}} salons",
+      "clientsOnlineCount_one": "{{count}} client en ligne",
+      "clientsOnlineCount_other": "{{count}} clients en ligne",
+      "selectedCount_one": "{{count}} sélectionné",
+      "selectedCount_other": "{{count}} sélectionnés",
+      "editCountTitle_one": "Modifier {{count}} salon",
+      "editCountTitle_other": "Modifier {{count}} salons",
+      "channelsCreated_one": "Salon créé",
+      "channelsCreated_other": "{{count}} salons créés",
+      "bulkUpdatedCount_one": "{{count}} salon mis à jour",
+      "bulkUpdatedCount_other": "{{count}} salons mis à jour"
+    },
+    "botEditor": {
+      "nodeLabels": {
+        "trigger_event": "Événement TS",
+        "trigger_cron": "Timer Cron",
+        "trigger_webhook": "Webhook",
+        "trigger_command": "Commande de chat",
+        "action_message": "Envoyer un message",
+        "action_poke": "Poke le client",
+        "action_kick": "Kick le client",
+        "action_ban": "Bannir le client",
+        "action_move": "Déplacer le client",
+        "action_channelCreate": "Créer un salon",
+        "action_channelEdit": "Modifier le salon",
+        "action_channelDelete": "Supprimer le salon",
+        "action_groupAdd": "Ajouter au groupe",
+        "action_groupRemove": "Retirer du groupe",
+        "action_webquery": "WebQuery",
+        "action_webhook": "Webhook",
+        "action_httpRequest": "Requête HTTP",
+        "action_voicePlay": "Lecture vocale",
+        "action_voiceStop": "Arrêt vocal",
+        "action_voiceJoinChannel": "Rejoindre en vocal",
+        "action_voiceLeaveChannel": "Quitter le vocal",
+        "action_voiceVolume": "Volume vocal",
+        "action_voicePauseResume": "Pause/reprise vocale",
+        "action_voiceSkip": "Passer en vocal",
+        "action_voiceSeek": "Avance vocale",
+        "action_voiceTts": "TTS vocal",
+        "action_afkMover": "Déplaceur AFK",
+        "action_idleKicker": "Kick d’inactifs",
+        "action_pokeGroup": "Poke un groupe",
+        "action_rankCheck": "Vérification de rang",
+        "action_tempChannelCleanup": "Nettoyage temporaire",
+        "action_animatedChannel": "Salon animé",
+        "condition": "Condition",
+        "loop": "Boucle",
+        "delay": "Délai",
+        "variable": "Définir une variable",
+        "log": "Journal",
+        "action_generateCode": "Générer du code",
+        "action_countOnlineInGroups": "Compter les connectés dans les groupes",
+        "action_listMembership": "Ajouter/retirer d’une liste"
+      },
+      "categories": {
+        "triggers": "Déclencheurs",
+        "actions": "Actions",
+        "voice": "Voix",
+        "smartActions": "Actions intelligentes",
+        "logic": "Logique"
+      },
+      "editFullscreen": "Modifier en plein écran",
+      "hidePlaceholders": "Masquer les placeholders",
+      "showPlaceholders": "Afficher les placeholders",
+      "gestureAddStep": "Ajouter une étape",
+      "gestureAddStepHow": "Cliquez sur un élément dans la liste à gauche",
+      "gestureMoveStep": "Déplacer une étape",
+      "gestureMoveStepHow": "Faites-la glisser",
+      "gestureConfigureStep": "Configurer une étape",
+      "gestureConfigureStepHow": "Cliquez dessus — les paramètres s’ouvrent à droite",
+      "gestureConnectSteps": "Connecter deux étapes",
+      "gestureConnectStepsHow": "Faites glisser depuis un point de sortie vers un point d’entrée",
+      "gestureDeleteConnection": "Supprimer une connexion",
+      "gestureDeleteConnectionHow": "Cliquez sur la ligne",
+      "gestureBendConnection": "Courber une connexion",
+      "gestureBendConnectionHow": "Survolez-la, puis cliquez sur l’anneau qui apparaît",
+      "gestureAddBend": "Ajouter une autre courbure",
+      "gestureAddBendHow": "Cliquez sur un point de courbure — le suivant apparaît après lui",
+      "gestureMoveBend": "Déplacer une courbure",
+      "gestureMoveBendHow": "Faites glisser le point",
+      "gestureRemoveBend": "Supprimer une courbure",
+      "gestureRemoveBendHow": "Faites un clic droit sur le point",
+      "gestureKeepChanges": "Conserver vos modifications",
+      "gestureKeepChangesHow": "Appuyez sur Enregistrer — rien n’est stocké avant cela",
+      "usingTheFlowEditor": "Utiliser l’éditeur de flux",
+      "routingExplanation": "Les connexions se routent elles-mêmes à angle droit, en passant sous les deux extrémités lorsqu’elles doivent revenir en arrière. Les points de courbure ne servent que lorsque vous voulez placer une ligne à un endroit précis — un flux fonctionne exactement pareil sans eux.",
+      "dontShowAgain": "Ne pas afficher ceci à l’ouverture d’un flux",
+      "gotIt": "Compris",
+      "flowSaved": "Flux enregistré",
+      "flowSaveFailed": "Échec de l’enregistrement du flux",
+      "placeholderReference": "Référence des placeholders",
+      "save": "Enregistrer",
+      "connectHint": "Cliquez sur un port d’entrée ou un nœud pour connecter — Échap pour annuler",
+      "canvasHint": "Faites glisser depuis un point de sortie pour connecter · cliquez sur une ligne pour la supprimer · survolez une ligne et cliquez sur l’anneau pour la courber",
+      "inputPortTitle": "Entrée : {{port}}",
+      "outputPortTitle": "Sortie : {{port}}",
+      "clickToBend": "Cliquez pour courber cette connexion ici",
+      "dragBendPoint": "Faites glisser pour déplacer, cliquez pour ajouter un autre point, clic droit pour supprimer",
+      "nodeProperties": "Propriétés du nœud",
+      "labelField": "Libellé",
+      "typeField": "Type",
+      "inPorts": "ENTRÉE : {{ports}}",
+      "outPorts": "SORTIE : {{ports}}",
+      "configuration": "CONFIGURATION",
+      "connections": "CONNEXIONS",
+      "noConnections": "Aucune connexion",
+      "config": {
+        "shared": {
+          "commandLabel": "Commande",
+          "channelIdLabel": "ID du salon",
+          "channelIdOrTemplatePlaceholder": "ID du salon ou {{event.ctid}}",
+          "clientIdLabel": "ID du client",
+          "clientIdOrTemplatePlaceholder": "ID du client ou {{event.clid}}",
+          "clientOption": "Client",
+          "channelOption": "Salon",
+          "serverOption": "Serveur",
+          "messageLabel": "Message",
+          "reasonLabel": "Raison",
+          "channelNameLabel": "Nom du salon",
+          "parentChannelIdLabel": "ID du salon parent",
+          "channelPasswordLabel": "Mot de passe du salon (facultatif)",
+          "optionalPlaceholder": "Facultatif",
+          "serverGroupIdLabel": "ID du groupe serveur",
+          "storeAsTempLabel": "Stocker comme (variable temporaire)",
+          "storeAsLabel": "Stocker comme",
+          "urlLabel": "URL",
+          "methodLabel": "Méthode",
+          "bodyJsonLabel": "Corps (JSON)",
+          "idleThresholdLabel": "Seuil d’inactivité (secondes)",
+          "exemptGroupIdsLabel": "ID de groupes exemptés (séparés par des virgules)",
+          "textLabel": "Texte",
+          "operationLabel": "Opération",
+          "valueLabel": "Valeur",
+          "useAsHintPrefix": "Utiliser comme :",
+          "botIdLabel": "ID du bot",
+          "channelPasswordExamplePlaceholder": "secret ou {{temp.channelPassword}}"
+        },
+        "triggerEvent": {
+          "eventNameLabel": "Nom de l’événement",
+          "selectEventPlaceholder": "Sélectionner un événement...",
+          "clientEnter": "Entrée du client",
+          "clientLeave": "Départ du client",
+          "textMessage": "Message texte",
+          "clientMoved": "Client déplacé",
+          "serverEdited": "Serveur modifié",
+          "channelDescChanged": "Description du salon modifiée"
+        },
+        "triggerCron": {
+          "cronExpressionLabel": "Expression Cron",
+          "timezoneLabel": "Fuseau horaire"
+        },
+        "triggerWebhook": {
+          "webhookPathLabel": "Chemin du webhook",
+          "httpMethodLabel": "Méthode HTTP",
+          "secretLabel": "Secret (facultatif)",
+          "secretPlaceholder": "Laissez vide pour aucune auth",
+          "secretHint": "Validé via l’en-tête X-Webhook-Secret ou le paramètre de requête ?secret="
+        },
+        "triggerCommand": {
+          "listenChannelIdLabel": "ID du salon d’écoute (facultatif)",
+          "listenChannelHint": "Les commandes ne sont reçues que lorsqu’un client ServerQuery est dans ce salon."
+        },
+        "actionMessage": {
+          "targetModeLabel": "Mode cible",
+          "editMessageDialogTitle": "Modifier le message",
+          "messagePlaceholder": "Voici la HelpList :\n\n!create - crée un salon\n!delete - supprime votre salon\n!help - affiche cette liste",
+          "messageHint": "Astuce : les retours à la ligne sont conservés."
+        },
+        "actionKick": {
+          "kickFromLabel": "Kick depuis",
+          "reasonPlaceholder": "Kické par le bot"
+        },
+        "actionBan": {
+          "durationLabel": "Durée (secondes, 0=permanent)",
+          "reasonPlaceholder": "Banni par le bot"
+        },
+        "actionMove": {
+          "targetChannelIdLabel": "ID du salon cible (ou modèle)",
+          "exampleHint": "Exemple : 94 ou {{temp.lastCreatedChannelId}}"
+        },
+        "actionPoke": {
+          "messagePlaceholder": "Salut {{event.client_nickname}} !"
+        },
+        "actionChannelCreate": {
+          "temporaryLabel": "Temporaire",
+          "permanentOption": "Permanent",
+          "temporaryOption": "Temporaire"
+        },
+        "actionChannelEdit": {
+          "channelTopicLabel": "Sujet du salon",
+          "channelDescriptionLabel": "Description du salon",
+          "editDescriptionDialogTitle": "Modifier la description du salon",
+          "passwordHint": "Laissez vide pour conserver inchangé."
+        },
+        "actionChannelDelete": {
+          "forceDeleteLabel": "Forcer la suppression",
+          "forceNoOption": "Non",
+          "forceYesOption": "Oui (supprimer les sous-salons)"
+        },
+        "actionWebquery": {
+          "accessHintPrefix": "Accès via"
+        },
+        "actionHttpRequest": {
+          "headersLabel": "En-têtes (JSON)",
+          "headersHint": "Paires clé-valeur sous forme d’objet JSON. Prend en charge {{placeholders}}."
+        },
+        "actionAfkMover": {
+          "afkChannelIdLabel": "ID du salon AFK",
+          "exemptChannelIdsLabel": "ID de salons exemptés (séparés par des virgules)"
+        },
+        "actionIdleKicker": {
+          "kickReasonLabel": "Raison du kick",
+          "kickReasonPlaceholder": "Délai d’inactivité"
+        },
+        "actionPokeGroup": {
+          "messagePlaceholder": "Besoin d’aide !"
+        },
+        "actionRankCheck": {
+          "ranksLabel": "Rangs (JSON)",
+          "ranksHint": "Tableau de {hours, groupId} — le rang éligible le plus élevé est attribué",
+          "hoursMeasuredAsLabel": "Heures mesurées comme",
+          "accumulatedTimeOption": "Temps réel en ligne (cumulé sur les sessions)",
+          "firstConnectionAgeOption": "Temps depuis la première connexion (ancienneté du membre)",
+          "excludeGroupIdsLabel": "ID de groupes à exclure (séparés par des virgules)",
+          "excludeGroupIdsPlaceholder": "p. ex. ID du groupe Bot",
+          "excludeGroupIdsHint": "Les clients dans l’un de ces groupes sont entièrement ignorés. Les clients ServerQuery sont toujours ignorés."
+        },
+        "actionTempChannelCleanup": {
+          "protectedChannelIdsLabel": "ID de salons protégés (séparés par des virgules)",
+          "protectedChannelIdsHint": "Salons sous le parent qui ne doivent PAS être supprimés (p. ex. le lobby)"
+        },
+        "actionAnimatedChannel": {
+          "displayTextLabel": "Texte affiché",
+          "displayTextPlaceholder": "Bienvenue sur MyServer",
+          "displayTextHint": "Prend en charge {{time.time}}, {{time.date}}, etc.",
+          "animationStyleLabel": "Style d’animation",
+          "styleScroll": "Défilement à gauche (marquee)",
+          "styleTypewriter": "Machine à écrire",
+          "styleBounce": "Rebond",
+          "styleBlink": "Clignotement",
+          "styleWave": "Vague (décoratif)",
+          "styleAlternateCase": "Casse alternée",
+          "speedLabel": "Vitesse",
+          "speedInsane": "Folie (0,25 s)",
+          "speedUltra": "Ultra (0,5 s)",
+          "speedVeryFast": "Très rapide (1 s)",
+          "speedFast": "Rapide (2 s)",
+          "speedMedium": "Moyen (3 s)",
+          "speedSlow": "Lent (5 s)",
+          "prefixLabel": "Préfixe",
+          "prefixHint": "Préfixe du nom de salon TS3 (p. ex. [cspacer] pour un séparateur centré)"
+        },
+        "actionVoicePlay": {
+          "songIdLabel": "ID du morceau",
+          "songIdPlaceholder": "ID du morceau à lire",
+          "playlistIdLabel": "ID de playlist (alternative)",
+          "playlistIdPlaceholder": "Charger plutôt la playlist"
+        },
+        "actionVoiceVolume": {
+          "volumeLabel": "Volume (0-100)"
+        },
+        "actionVoicePauseResume": {
+          "actionLabel": "Action",
+          "pauseOption": "Pause",
+          "resumeOption": "Reprendre",
+          "toggleOption": "Basculer"
+        },
+        "actionVoiceSkip": {
+          "directionLabel": "Direction",
+          "nextOption": "Suivant",
+          "previousOption": "Précédent"
+        },
+        "actionVoiceSeek": {
+          "positionLabel": "Position (secondes)"
+        },
+        "actionVoiceTts": {
+          "textPlaceholder": "Bonjour {{event.client_nickname}}",
+          "languageLabel": "Langue (facultatif)",
+          "notConfiguredHint": "Moteur TTS pas encore configuré — placeholder uniquement"
+        },
+        "condition": {
+          "expressionLabel": "Expression",
+          "expressionHint": "Vrai → sortie verte, Faux → sortie rouge"
+        },
+        "loop": {
+          "arrayVariableLabel": "Variable tableau",
+          "arrayVariableHint": "Nom d’une variable temporaire existante contenant une liste, p. ex. le résultat « Stocker comme » d’un nœud WebQuery — sans {{temp....}}",
+          "itemVariableLabel": "Nom de la variable d’élément",
+          "inLoopBodyPrefix": "Dans le corps de la boucle :",
+          "indexLabel": "index :",
+          "maxIterationsLabel": "Nombre max d’itérations (facultatif)",
+          "maxIterationsHint": "50 par défaut, plafond strict de 500 quelle que soit cette valeur",
+          "bodyAfterHint": "Corps → s’exécute une fois par élément. Après → s’exécute une fois quand la boucle se termine."
+        },
+        "delay": {
+          "delayLabel": "Délai (ms)"
+        },
+        "variable": {
+          "setOption": "Définir",
+          "incrementOption": "Incrémenter",
+          "appendOption": "Ajouter",
+          "getOption": "Obtenir (lire dans temp.*)",
+          "variableNameLabel": "Nom de la variable",
+          "valueExpressionLabel": "Valeur (expression)"
+        },
+        "actionGenerateCode": {
+          "lengthLabel": "Longueur",
+          "charactersLabel": "Caractères",
+          "digitsOnlyOption": "Chiffres uniquement",
+          "alphanumericOption": "Alphanumérique"
+        },
+        "actionCountOnlineInGroups": {
+          "groupIdsLabel": "ID de groupes serveur (séparés par des virgules)"
+        },
+        "actionListMembership": {
+          "listNameLabel": "Nom de la liste",
+          "listNameHintPrefix": "Persiste après les redémarrages. Vérifiez l’appartenance ailleurs avec : contains(var.",
+          "listNameHintSuffix": ", ...)",
+          "addOption": "Ajouter",
+          "removeOption": "Retirer"
+        },
+        "log": {
+          "logLevelLabel": "Niveau de journalisation",
+          "debugOption": "Débogage",
+          "infoOption": "Informations",
+          "warnOption": "Avertissement",
+          "errorOption": "Erreur",
+          "messagePlaceholder": "Client rejoint : {{event.client_nickname}}"
+        }
+      },
+      "nodesCount_one": "{{count}} nœud",
+      "nodesCount_other": "{{count}} nœuds",
+      "edgesCount_one": "{{count}} arête",
+      "edgesCount_other": "{{count}} arêtes"
+    },
+    "permissions": {
+      "categories": {
+        "b_virtualserver": "Serveur virtuel",
+        "b_serverinstance": "Instance serveur",
+        "b_serverquery": "Requête serveur",
+        "b_channel": "Salon",
+        "b_client": "Client",
+        "b_group": "Groupe",
+        "b_ft": "Transfert de fichiers",
+        "i_channel": "Salon (valeurs)",
+        "i_group": "Groupe (valeurs)",
+        "i_client": "Client (valeurs)",
+        "i_ft": "Transfert de fichiers (valeurs)",
+        "i_max": "Limites",
+        "i_needed": "Pouvoirs requis",
+        "other": "Autre"
+      },
+      "layers": {
+        "serverGroups": "Groupes serveur",
+        "serverGroup": "Groupe serveur",
+        "channelGroups": "Groupes de salons",
+        "channelGroup": "Groupe de salon",
+        "channel": "Salon",
+        "client": "Client",
+        "clientInChannel": "Client dans le salon"
+      },
+      "title": "Autorisations",
+      "discard": "Annuler",
+      "save": "Enregistrer",
+      "applyToCount": "Appliquer à {{count}}",
+      "findPermission": "Rechercher une permission",
+      "permissionOverview": "Vue d’ensemble des permissions",
+      "selectClient": "Sélectionner un client",
+      "searchClientsPlaceholder": "Rechercher des clients...",
+      "noClientsFound": "Aucun client trouvé",
+      "choosePlaceholder": "Choisir un salon...",
+      "searchPermissionsPlaceholder": "Rechercher des permissions...",
+      "overviewExplanation": "Chaque permission que ce client possède réellement dans le salon choisi, et la couche dont elle provient. Quand plusieurs couches accordent la même permission, celle qui gagne est mise en évidence, selon l’ordre de priorité de la documentation des permissions TeamSpeak : client-dans-le-salon bat groupe de salon, bat salon, bat client, bat groupe serveur - avec un flag Skip sur un groupe serveur ou une entrée client qui la protège des couches salon et groupe de salon. Les autres sources restent listées afin que le résultat puisse toujours être vérifié visuellement.",
+      "selectClientHint": "Sélectionnez un client dans le panneau de gauche",
+      "chooseChannelHint": "Choisissez un salon pour voir ses permissions dedans",
+      "noPermissionsApply": "Aucune permission ne s’applique à ce client dans ce salon",
+      "colPermission": "Autorisation",
+      "colComesFrom": "Provient de",
+      "colValue": "Valeur",
+      "selectPermission": "Sélectionner une permission",
+      "assignmentsOf": "Attributions de {{label}}",
+      "findExplanation": "Choisissez une permission à gauche pour voir tous les endroits où elle est réellement attribuée, sur les cinq niveaux. Cliquez sur un résultat pour l’ouvrir dans l’éditeur. La recherche native de TeamSpeak indique seulement où une permission est définie, pas à quelle valeur - chaque valeur ci-dessous est relue ensuite par entité.",
+      "selectPermissionHint": "Sélectionnez une permission dans le panneau de gauche",
+      "notAssignedAnywhere": "Cette permission n’est attribuée nulle part sur ce serveur",
+      "colTier": "Niveau",
+      "colAssignedTo": "Attribué à",
+      "openInEditor": "Ouvrir dans l’éditeur",
+      "addClientInChannel": "Ajouter un client dans le salon",
+      "channelLabel": "Salon",
+      "showOfflineClients": "Afficher les clients hors ligne",
+      "chooseChannelFirst": "Choisissez d’abord un salon",
+      "addEntity": "Ajouter {{name}}",
+      "addedCount": "Ajoutés ({{count}})",
+      "pickChannelThenClient": "Choisissez un salon, puis cliquez sur un client pour l’ajouter.",
+      "selectLayer": "Sélectionner {{layer}}",
+      "iconAlt": "Icône de {{name}}",
+      "selectForBulkEdit": "Sélectionner pour modification en masse",
+      "noEntitiesFound": "Aucune entité trouvée",
+      "bulkApply": "Application en masse",
+      "compare": "Comparer",
+      "permissionsTitle": "Autorisations",
+      "selectAnEntity": "Sélectionnez une entité",
+      "labelModeHint": "Avancé affiche le nom brut de la permission, Simple affiche la description en langage clair de TeamSpeak",
+      "advanced": "Avancé",
+      "simple": "Simple",
+      "onlyShowSet": "Afficher uniquement définies",
+      "onlyShowDiffering": "Afficher uniquement différentes",
+      "addRemovePerm": "Ajouter/retirer une perm",
+      "addTarget": "Ajouter une cible",
+      "setMultipleHint": "Cochez plusieurs permissions, puis donnez-leur une valeur à toutes en une seule fois",
+      "setMultiple": "Définir plusieurs",
+      "importFileHint": "Appliquer un fichier de permissions précédemment exporté à la sélection actuelle",
+      "importFile": "Importer un fichier",
+      "bulkApplyHint": "Définissez ici les valeurs à appliquer aux {{count}} entités sélectionnées - les valeurs par entité actuelles ne sont pas affichées quand plusieurs sont sélectionnées.",
+      "compareHintAutoRank": "Toutes les permissions sont affichées par défaut (« Ajouter/retirer une perm » pour réduire, le × sur une ligne pour la retirer) - modifiez une cellule pour changer uniquement cette entité. Avec 3 entités ou moins, chaque ligne est colorée automatiquement par rang : rouge = plus élevé, jaune = égal/milieu, vert = plus bas, rose = non défini.",
+      "compareHintPivot": "Toutes les permissions sont affichées par défaut (« Ajouter/retirer une perm » pour réduire, le × sur une ligne pour la retirer) - modifiez une cellule pour changer uniquement cette entité. Cliquez sur une cellule pour l’épingler comme référence ; le reste de cette ligne est coloré par rapport à elle (turquoise = plus bas, vert citron = identique, rouge = plus élevé, rose = non défini).",
+      "compareHintSuffix": "« Ajouter une cible » charge un fichier de groupe précédemment exporté comme colonne supplémentaire en lecture seule. Utilisez plutôt Application en masse pour pousser la même valeur à toutes les entités sélectionnées en une fois.",
+      "selectAllShown": "Sélectionner tout ce qui est affiché ({{count}})",
+      "clear": "Effacer",
+      "setValuesEllipsis": "Définir les valeurs...",
+      "remove": "Retirer",
+      "stagedEditHint": "Les modifications sont préparées comme toute autre édition - appuyez sur Enregistrer pour les écrire.",
+      "selectEntityHint": "Sélectionnez une entité dans le panneau de gauche",
+      "removeFileTarget": "Retirer cette cible de fichier",
+      "removeFromComparison": "Retirer de la comparaison",
+      "chooseIcon": "Choisir une icône",
+      "skip": "Ignorer",
+      "negate": "Négation",
+      "colSkip": "Ignorer",
+      "colNegate": "Négation",
+      "removePermission": "Retirer la permission",
+      "modified": "modifié",
+      "noPermissionsDiffer": "Aucune permission ne diffère entre les entités sélectionnées",
+      "noPermissionsSetAny": "Aucune permission n’est définie sur les entités sélectionnées",
+      "noPermissionsMatchSearch": "Aucune permission ne correspond à votre recherche",
+      "noPermissionsSetEntity": "Aucune permission n’est définie sur cette entité",
+      "all": "Tout",
+      "selectAllCount": "Tout sélectionner ({{count}})",
+      "shownInComparison": "{{count}} affichés en comparaison",
+      "done": "Terminé",
+      "setCountPermissions": "Définir {{count}} permission(s)",
+      "setMultipleExplanation": "Les booléens et les entiers sont définis séparément, donc une sélection mixte peut être traitée en une seule étape.",
+      "booleanPermsHint": "Autorisations b_… booléennes",
+      "integerPermsHint": "Autorisations i_… entières",
+      "valuePlaceholder": "Valeur",
+      "leaveEmptySkipInt": "Laissez vide pour ignorer les entiers et ne définir que les booléens.",
+      "cancel": "Annuler",
+      "importPermissionFile": "Importer un fichier de permissions",
+      "groupInFile": "Groupe dans le fichier",
+      "source": "Source",
+      "permissionsInFile": "Permissions dans le fichier",
+      "target": "Cible",
+      "targetCount": "{{count}} {{layer}}",
+      "mode": "Mode",
+      "merge": "Fusionner",
+      "mergeDescription": "Seul ce que le fichier contient est défini. Tout le reste est conservé.",
+      "replace": "Remplacer",
+      "replaceDescription": "La cible devient une copie exacte. Les permissions supplémentaires sont supprimées.",
+      "replaceWarningPrefix": "Chaque permission que",
+      "replaceWarningTargetHas": "la cible possède",
+      "replaceWarningTargetsHave": "les cibles possèdent",
+      "replaceWarningSuffix": "et qui n’est pas dans ce fichier sera supprimée. Ceci est écrit directement sur le serveur et ne peut pas être annulé depuis ici.",
+      "importing": "Importation...",
+      "clientFallback": "Client n° {{id}}",
+      "channelFallback": "Salon n° {{id}}",
+      "serverGroupFallback": "Groupe serveur n° {{id}}",
+      "channelGroupFallback": "Groupe de salon n° {{id}}",
+      "notValidGroupExport": "Fichier d’export de groupe non valide",
+      "failedToReadFile": "Échec de lecture du fichier - vérifiez qu’il s’agit d’un export valide",
+      "notValidPermissionExport": "Fichier d’export de permissions non valide",
+      "fileContainsNoGroups": "Le fichier ne contient aucun groupe",
+      "importFailed": "Échec de l’importation - certaines permissions ont peut-être déjà été écrites",
+      "permissionsSaved": "Permissions enregistrées",
+      "saveFailed": "Échec de l’enregistrement des permissions",
+      "unnamed": "Sans nom",
+      "entitiesSelected_one": "{{count}} entité sélectionnée",
+      "entitiesSelected_other": "{{count}} entités sélectionnées",
+      "changesCount_one": "{{count}} modification",
+      "changesCount_other": "{{count}} modifications",
+      "selectedCount_one": "{{count}} sélectionné",
+      "selectedCount_other": "{{count}} sélectionnés",
+      "booleanCount_one": "{{count}} booléen",
+      "booleanCount_other": "{{count}} booléens",
+      "integerCount_one": "{{count}} entier",
+      "integerCount_other": "{{count}} entiers",
+      "groupPermissionsCount_one": "{{name}} ({{count}} autorisation)",
+      "groupPermissionsCount_other": "{{name}} ({{count}} permissions)",
+      "loadedFromFile_one": "{{count}} groupe chargé depuis le fichier",
+      "loadedFromFile_other": "{{count}} groupes chargés depuis le fichier",
+      "stagedForApply_one": "{{count}} permission préparée - appuyez sur Enregistrer pour appliquer",
+      "stagedForApply_other": "{{count}} permissions préparées - appuyez sur Enregistrer pour appliquer",
+      "stagedForRemoval_one": "{{count}} permission préparée pour suppression - appuyez sur Enregistrer pour appliquer",
+      "stagedForRemoval_other": "{{count}} permissions préparées pour suppression - appuyez sur Enregistrer pour appliquer",
+      "importedIntoTargets_one": "Autorisations importées dans {{targets}} cible : {{count}}",
+      "importedIntoTargets_other": "Autorisations importées dans {{targets}} cibles : {{count}}",
+      "removedNotInFile_one": ", {{count}} supprimée car absente du fichier",
+      "removedNotInFile_other": ", {{count}} supprimées car absentes du fichier",
+      "appliedToEntities_one": "Permissions appliquées à {{count}} entité",
+      "appliedToEntities_other": "Permissions appliquées à {{count}} entités",
+      "changesSavedAcross_one": "{{count}} modification enregistrée sur {{entities}} entité",
+      "changesSavedAcross_other": "{{count}} modifications enregistrées sur {{entities}} entités"
+    },
+    "musicBots": {
+      "title": "Bots musicaux",
+      "tabBots": "Bots",
+      "tabQueue": "File d’attente",
+      "tabVideo": "Vidéo",
+      "tabLibrary": "Bibliothèque",
+      "tabPlaylists": "Listes de lecture",
+      "tabRadio": "Radio",
+      "tabPermissions": "Autorisations",
+      "shared": {
+        "serverPlaceholder": "Serveur...",
+        "playOn": "Lire sur :",
+        "noRunningBots": "Aucun bot en cours d’exécution",
+        "selectBotPlaceholder": "Sélectionner un bot...",
+        "filterSongsPlaceholder": "Filtrer les morceaux...",
+        "cancel": "Annuler",
+        "create": "Créer",
+        "done": "Terminé",
+        "add": "Ajouter",
+        "name": "Nom",
+        "title": "Titre",
+        "duration": "Durée",
+        "source": "Source",
+        "noServerGroupsFound": "Aucun groupe serveur trouvé.",
+        "songsCount_one": "{{count}} morceau",
+        "songsCount_other": "{{count}} morceaux"
+      },
+      "botPlayerCard": {
+        "playerWidget": "Widget lecteur",
+        "playSongEllipsis": "Lire un morceau...",
+        "live": "EN DIRECT",
+        "stop": "Arrêter",
+        "playEllipsis": "Lire...",
+        "stopAudio": "Arrêter l’audio",
+        "start": "Démarrer",
+        "botStopped": "Bot arrêté",
+        "botStarted": "Bot démarré",
+        "startFailed": "Échec du démarrage du bot",
+        "queueCount": "File d’attente ({{count}})",
+        "moreCount": "+{{count}} de plus",
+        "widgetDescription": "Intégrez ces URL dans la description de votre salon TeamSpeak ou sur votre site web.",
+        "bbcodeUrlLabel": "URL BBCode (pour la description du salon)",
+        "jsonUrlLabel": "URL JSON (pour sites web/intégrations)",
+        "tokenLabel": "Jeton",
+        "copy": "Copier",
+        "copied": "Copié !"
+      },
+      "playSongDialog": {
+        "title": "Lire de la musique",
+        "description": "Sélectionnez un morceau ou une playlist à lire sur ce bot.",
+        "tabSongs": "Morceaux",
+        "tabPlaylists": "Listes de lecture",
+        "tabHistory": "Historique",
+        "noSongsFound": "Aucun morceau trouvé. Téléversez d’abord des morceaux dans l’onglet Bibliothèque.",
+        "play": "Lire",
+        "queue": "Mettre en file",
+        "noPlaylists": "Aucune playlist. Créez-en une dans l’onglet Playlists.",
+        "loadAndPlay": "Charger et lire",
+        "noHistory": "Aucune demande de musique trouvée. Utilisez !play dans le chat pour créer un historique.",
+        "playNowHint": "Lire ceci maintenant, en interrompant ce qui est en cours",
+        "queueAfterHint": "Lire ceci après ce qui est en cours",
+        "close": "Fermer"
+      },
+      "avatarPicker": {
+        "alt": "Avatar",
+        "change": "Changer",
+        "upload": "Téléverser",
+        "remove": "Retirer",
+        "sizeHint": "PNG/JPEG/GIF/WebP (la limite de taille propre à votre serveur TS s’applique - vous verrez un avertissement s’il rejette le fichier)"
+      },
+      "botsTab": {
+        "newBot": "Nouveau bot",
+        "noBotsYetTitle": "Aucun bot musical pour l’instant",
+        "noBotsYetDescription": "Créez votre premier bot vocal pour lire de la musique sur votre serveur TeamSpeak.",
+        "selectServerError": "Veuillez sélectionner un serveur",
+        "botCreated": "Bot musical créé",
+        "createFailed": "Échec de la création du bot",
+        "botUpdated": "Bot mis à jour",
+        "updateFailed": "Échec de la mise à jour du bot",
+        "editBotTitle": "Modifier le bot musical",
+        "newBotTitle": "Nouveau bot musical",
+        "avatarBugNoticePrefix": "Un avatar téléversé par ce bot s’affiche actuellement correctement pour les clients TS6, mais pas pour les clients TS3 — un bug confirmé du serveur TS6, pas de ce fork.",
+        "reportedUpstream": "Signalé en amont",
+        "avatarLabel": "Avatar",
+        "serverLabel": "Serveur",
+        "selectServerPlaceholder": "Sélectionner un serveur...",
+        "voicePortLabel": "Port vocal",
+        "nicknameLabel": "Pseudo",
+        "serverPasswordLabel": "Mot de passe du serveur",
+        "defaultChannelLabel": "Salon par défaut",
+        "defaultChannelPlaceholder": "Nom ou ID du salon (facultatif)",
+        "channelPasswordLabel": "Mot de passe du salon",
+        "leaveEmptyIfNone": "Laissez vide s’il n’y en a pas",
+        "volumeLabel": "Volume ({{percent}} %)",
+        "autoStartLabel": "Démarrage auto au démarrage du serveur",
+        "autoplayLabel": "Lecture auto à la connexion",
+        "autoplayHint": "Démarre tout seul chaque fois que ce bot se connecte (démarrage manuel, redémarrage du serveur ou reconnexion) - uniquement quand il démarre inactif, sans jamais interrompre ce qui est déjà en file.",
+        "autoplayOff": "Désactivé",
+        "autoplaySong": "Lire un morceau",
+        "autoplayRadio": "Lire une station radio",
+        "chooseSongPlaceholder": "Choisir un morceau...",
+        "chooseStationPlaceholder": "Choisir une station...",
+        "descriptionTemplateLabel": "Modèle de description",
+        "descriptionTemplatePlaceholder": "p. ex. En cours : {title} ({remaining} restantes)",
+        "save": "Enregistrer",
+        "deleteBotTitle": "Supprimer le bot musical ?",
+        "deleteBotDescription": "Cela supprimera définitivement ce bot musical et le déconnectera du serveur.",
+        "botDeleted": "Bot supprimé",
+        "playing": "Lecture en cours",
+        "playSongFailed": "Échec de la lecture du morceau",
+        "playingUrl": "Lecture de l’URL",
+        "playUrlFailed": "Échec de la lecture de l’URL",
+        "addedToQueuePosition": "Ajouté à la file (position n° {{position}})",
+        "queueUrlFailed": "Échec de la mise en file de l’URL",
+        "addedToQueue": "Ajouté à la file",
+        "enqueueFailed": "Échec de l’ajout à la file",
+        "playlistLoaded": "Playlist chargée",
+        "loadPlaylistFailed": "Échec du chargement de la playlist",
+        "namePlaceholder": "Mon bot musical",
+        "botsCount_one": "{{count}} bot musical",
+        "botsCount_other": "{{count}} bots musicaux"
+      },
+      "libraryTab": {
+        "selectServerTitle": "Sélectionnez un serveur",
+        "selectServerDescription": "Choisissez un serveur pour gérer sa bibliothèque musicale.",
+        "filterAll": "Tout",
+        "filterAudio": "Audio",
+        "filterVideo": "Vidéo",
+        "uploading": "Téléversement...",
+        "upload": "Téléverser",
+        "scanHint": "Rechercher les fichiers audio/vidéo déjà présents dans le dossier musique (p. ex. partagés avec une autre appli)",
+        "scanning": "Analyse...",
+        "scanForNewFiles": "Rechercher de nouveaux fichiers",
+        "noNewFilesFound": "Aucun nouveau fichier trouvé",
+        "scanFailed": "Échec de l’analyse",
+        "pasteUrlPlaceholder": "Coller l’URL YouTube ou l’URL de playlist...",
+        "load": "Charger",
+        "playlistVideosCount": "Playlist ({{count}} vidéos)",
+        "singleVideo": "Vidéo unique",
+        "selectAll": "Tout sélectionner",
+        "deselectAll": "Tout désélectionner",
+        "downloading": "Téléchargement...",
+        "downloadSelectedCount": "Télécharger {{count}} sélectionnés",
+        "downloadingProgress": "Téléchargement {{done}}/{{total}}...",
+        "downloadedCount": "{{done}}/{{total}} morceaux téléchargés",
+        "failedCount": "{{count}} échecs",
+        "batchDownloadFailed": "Échec du téléchargement par lot",
+        "download": "Télécharger",
+        "searchYoutubePlaceholder": "Rechercher sur YouTube...",
+        "search": "Rechercher",
+        "youtubeResultsCount": "Résultats YouTube ({{count}})",
+        "startBotToPlayHint": "Démarrez d’abord un bot musical pour lire ou streamer des fichiers depuis la bibliothèque.",
+        "noFilesYetTitle": "Aucun fichier pour l’instant",
+        "noFilesYetDescription": "Téléversez des fichiers audio/vidéo ou téléchargez depuis YouTube pour créer votre bibliothèque.",
+        "colType": "Type",
+        "colSize": "Taille",
+        "refreshing": "Actualisation...",
+        "noBotSelectedHint": "Aucun bot en cours sélectionné",
+        "streamOptions": "Options de stream",
+        "playOptions": "Options de lecture",
+        "stream": "Streamer",
+        "addToStreamQueue": "Ajouter à la file de stream",
+        "startStreamFirst": "Démarrez d’abord un stream",
+        "addToQueue": "Ajouter à la file",
+        "deleteFileTitle": "Supprimer le fichier ?",
+        "deleteFileDescription": "Cela retirera définitivement ce fichier de la bibliothèque.",
+        "songDeleted": "Morceau supprimé",
+        "playingTitle": "Lecture : {{title}}",
+        "addedToQueueTitle": "Ajouté à la file : {{title}}",
+        "addToQueueFailed": "Échec de l’ajout à la file",
+        "switchedStreamTo": "Stream basculé vers : {{title}}",
+        "switchStreamFailed": "Échec du changement de stream",
+        "streamingTitle": "Streaming : {{title}}",
+        "startStreamFailed": "Échec du démarrage du stream",
+        "addedToStreamQueue": "Ajouté à la file de stream : {{title}}",
+        "addToStreamQueueFailed": "Échec de l’ajout à la file de stream",
+        "uploadedFile": "Téléversé : {{name}}",
+        "uploadFileFailed": "Échec du téléversement : {{name}}",
+        "youtubeSearchFailed": "Échec de la recherche YouTube",
+        "downloadStarted": "Téléchargement démarré",
+        "downloadFailed": "Échec du téléchargement",
+        "loadUrlInfoFailed": "Échec du chargement des infos de l’URL",
+        "foundNewFiles_one": "{{count}} nouveau fichier trouvé",
+        "foundNewFiles_other": "{{count}} nouveaux fichiers trouvés",
+        "fixedTitles_one": "{{count}} titre corrigé",
+        "fixedTitles_other": "{{count}} titres corrigés"
+      },
+      "playlistsTab": {
+        "newPlaylist": "Nouvelle playlist",
+        "noPlaylistsTitle": "Aucune playlist",
+        "noPlaylistsDescription": "Créez une playlist pour organiser vos morceaux.",
+        "addSongs": "Ajouter des morceaux",
+        "noSongsInPlaylist": "Aucun morceau dans cette playlist",
+        "songRemoved": "Morceau retiré",
+        "selectPlaylistHint": "Sélectionnez une playlist pour voir ses morceaux",
+        "newPlaylistTitle": "Nouvelle playlist",
+        "namePlaceholder": "Ma playlist",
+        "playlistCreated": "Playlist créée",
+        "createPlaylistFailed": "Échec de la création de la playlist",
+        "addSongsToPlaylistTitle": "Ajouter des morceaux à la playlist",
+        "noSongsAvailable": "Aucun morceau disponible. Téléversez d’abord des morceaux dans la bibliothèque.",
+        "songAdded": "Morceau ajouté",
+        "deletePlaylistTitle": "Supprimer la playlist ?",
+        "deletePlaylistDescription": "Cela supprimera définitivement cette playlist.",
+        "playlistDeleted": "Playlist supprimée",
+        "playlistsCount_one": "{{count}} liste de lecture",
+        "playlistsCount_other": "{{count}} playlists"
+      },
+      "radioTab": {
+        "selectServerTitle": "Sélectionnez un serveur",
+        "selectServerDescription": "Choisissez un serveur pour gérer les stations radio.",
+        "presets": "Préréglages",
+        "addStation": "Ajouter une station",
+        "startBotToPlayHint": "Démarrez d’abord un bot musical pour lire des stations radio.",
+        "noStationsTitle": "Aucune station radio",
+        "noStationsDescription": "Ajoutez des stations manuellement ou depuis les préréglages pour commencer à streamer.",
+        "selectRunningBotFirst": "Sélectionnez d’abord un bot en cours d’exécution",
+        "playingRadio": "Lecture de la radio",
+        "playRadioFailed": "Échec de la lecture de la radio",
+        "stationAdded": "Station ajoutée",
+        "addStationFailed": "Échec de l’ajout de la station",
+        "addedName": "Ajouté : {{name}}",
+        "addFailedName": "Échec de l’ajout : {{name}}",
+        "addStationTitle": "Ajouter une station radio",
+        "addStationDescription": "Ajoutez une station de radio Internet personnalisée en fournissant son URL de stream.",
+        "streamUrlLabel": "URL du flux radio",
+        "streamUrlPlaceholder": "https://stream.example.com/live",
+        "genreLabel": "Genre (facultatif)",
+        "genrePlaceholder": "Pop, rock, électronique...",
+        "stationNamePlaceholder": "Nom de la station",
+        "presetsTitle": "Préréglages radio",
+        "presetsDescription": "Ajoutez des stations de radio populaires en un clic.",
+        "noPresetsAvailable": "Aucun préréglage disponible.",
+        "deleteStationTitle": "Supprimer la station radio ?",
+        "deleteStationDescription": "Cela retirera cette station de votre liste.",
+        "stationRemoved": "Station supprimée"
+      },
+      "videoTab": {
+        "noBotsTitle": "Aucun bot disponible",
+        "noBotsDescription": "Créez d’abord un bot musical, puis utilisez-le pour le streaming vidéo.",
+        "selectBotLabel": "Sélectionner un bot :",
+        "chooseBotPlaceholder": "Choisir un bot...",
+        "selectBotHint": "Sélectionnez un bot pour gérer le streaming vidéo."
+      },
+      "queueTab": {
+        "botLabel": "Bot :",
+        "selectBotPlaceholder": "Sélectionner un bot",
+        "tracksCount": "{{count}} pistes",
+        "clear": "Effacer",
+        "selectBotHint": "Sélectionnez un bot pour gérer sa file d’attente",
+        "queueEmpty": "La file d’attente est vide",
+        "clickToPlay": "Cliquer pour lire",
+        "moveUp": "Déplacer vers le haut",
+        "moveDown": "Déplacer vers le bas",
+        "removeFromQueue": "Retirer de la file d’attente"
+      },
+      "permissionsTab": {
+        "adminBypassGroups": "Groupes de contournement admin",
+        "adminBypassHint": "Les membres de tout groupe coché ici peuvent utiliser toutes les commandes de chat ci-dessous, quelle que soit leur restriction individuelle.",
+        "chatCommandPermissions": "Permissions des commandes de chat",
+        "everyone": "Tout le monde",
+        "noGroupAssigned": "Aucun groupe attribué - inutilisable",
+        "permissionUpdated": "Permission mise à jour",
+        "permissionUpdateFailed": "Échec de la mise à jour de la permission",
+        "adminGroupsUpdateFailed": "Échec de la mise à jour des groupes admin",
+        "openByDefaultHint": "Ne cochez rien pour autoriser tout le monde (valeur par défaut de cette commande). Sinon, seuls les groupes cochés (et tout groupe de contournement admin ci-dessus) peuvent l’utiliser.",
+        "restrictedHint": "Cette commande est inutilisable par quiconque tant qu’au moins un groupe n’est pas coché ici ; la laisser décochée revient à ne pas encore l’activer. Seuls les groupes cochés (et tout groupe de contournement admin ci-dessus) peuvent l’utiliser."
+      }
+    }
+  },
+  "components": {
+    "serverSelector": {
+      "selectServer": "Sélectionner un serveur...",
+      "selectVirtualServer": "Serveur virtuel..."
+    },
+    "updateBanner": {
+      "updateAvailable": "Mise à jour disponible :",
+      "copyDeployCommand": "Copier la commande de déploiement",
+      "postpone": "Reporter"
+    },
+    "ytCookieBanner": {
+      "message": "Les cookies YouTube ne fonctionnent plus — le contenu réservé aux adultes/aux membres et les recherches peuvent échouer jusqu’à leur actualisation dans <1>Paramètres → YouTube</1>."
+    },
+    "confirmDialog": {
+      "processing": "Traitement..."
+    },
+    "dataTable": {
+      "searchPlaceholder": "Recherche...",
+      "selectRow": "Sélectionner la ligne",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "resultCount_one": "{{count}} résultat",
+      "resultCount_other": "{{count}} résultats"
+    },
+    "themeToggle": {
+      "switchTo": "Passer au thème {{theme}}"
+    },
+    "iconImage": {
+      "builtinTitle": "Icône client intégrée n° {{id}}",
+      "couldNotLoad": "L’icône {{id}} n’a pas pu être chargée",
+      "iconAlt": "Icône {{id}}"
+    },
+    "iconPickerDialog": {
+      "title": "Choisir une icône",
+      "searchPlaceholder": "Rechercher un ID d’icône...",
+      "poolUnavailable": "Pool d’icônes indisponible",
+      "sshRequired": "La lecture du pool d’icônes nécessite un accès SSH, car l’API HTTP WebQuery de TeamSpeak ne prend pas en charge les commandes de transfert de fichiers. Configurez les identifiants SSH dans les paramètres du serveur, ou saisissez directement l’ID de l’icône.",
+      "loadFailed": "Échec du chargement du pool d’icônes ; saisissez directement l’ID de l’icône à la place.",
+      "noMatchingIcons": "Aucune icône correspondante",
+      "noIconsUploaded": "Aucune icône importée",
+      "noMatchDescription": "Aucune icône de ce pool ne correspond à votre recherche.",
+      "noIconsDescription": "Importez d’abord des icônes sur la page Icônes, puis choisissez-en une ici."
+    },
+    "widget": {
+      "away": "absent",
+      "muted": "muet",
+      "clickToJoin": "Cliquer pour rejoindre le serveur",
+      "online": "EN LIGNE",
+      "userCount": "{{count}} / {{max}} utilisateurs",
+      "uptime": "{{uptime}} de disponibilité",
+      "footer": "Widget WebUI TS6"
+    },
+    "widgetManager": {
+      "title": {
+        "list": "Widgets serveur",
+        "create": "Créer un widget",
+        "edit": "Modifier le widget",
+        "embed": "Code d’intégration"
+      },
+      "newWidget": "Nouveau widget",
+      "noWidgets": "Aucun widget pour le moment. Créez-en un pour intégrer l’état de votre serveur sur des sites externes.",
+      "serverLabel": "Serveur : {{name}} | VS {{vs}}",
+      "embed": "Intégrer",
+      "preview": "Aperçu",
+      "namePlaceholder": "Mon widget serveur",
+      "server": "Serveur",
+      "virtualServerId": "ID du serveur virtuel",
+      "theme": "Thème",
+      "showChannelTree": "Afficher l’arborescence des salons",
+      "showClients": "Afficher les clients",
+      "hideEmptyChannels": "Masquer les salons vides",
+      "maxChannelDepth": "Profondeur max. des salons : {{depth}}",
+      "regenerateToken": "Régénérer le token",
+      "imageUrls": "URL des images",
+      "pasteIntoHtml": "Collez ceci dans le HTML de votre site :",
+      "svgLabel": "SVG (redimensionnable, meilleure qualité) :",
+      "pngLabel": "PNG (pour forums / signatures) :",
+      "htmlImgLabel": "Balise HTML img :",
+      "bbcodeLabel": "BBCode de forum (utilise PNG) :"
+    },
+    "videoPlayer": {
+      "failedToConnect": "Échec de la connexion",
+      "noActiveStream": "Aucun flux vidéo actif",
+      "unmute": "Réactiver le son",
+      "mute": "Couper le son",
+      "connecting": "Connexion au flux...",
+      "retry": "Réessayer",
+      "live": "EN DIRECT"
+    },
+    "videoStreamTab": {
+      "title": "Flux vidéo",
+      "botMustBeConnected": "Le bot doit être connecté pour démarrer le streaming vidéo.",
+      "sourceUrl": "URL source",
+      "sourceUrlPlaceholder": "https://youtube.com/watch?v=... ou URL vidéo directe",
+      "queue": "File d’attente",
+      "queueTitle": "Lire après la vidéo en cours",
+      "switchNow": "Basculer maintenant",
+      "switchNowTitle": "Basculer immédiatement le flux en cours",
+      "sourceHint": "YouTube, URL vidéo directes (MP4, HLS) ou chemins de fichiers locaux",
+      "pickFromLibrary": "Ou choisissez dans la bibliothèque :",
+      "chooseUploadedVideo": "Choisir une vidéo importée...",
+      "qualityPreset": "Préréglage de qualité",
+      "frameRate": "Fréquence d’images (FPS)",
+      "videoBitrate": "Débit vidéo",
+      "bitratePlaceholder": "p. ex. 1500k, 4000k, 6000k",
+      "bitrateHint": "Plus élevé nécessite davantage de bande passante montante et de CPU. Exemples : 1500k, 4000k, 6000k, 8000k",
+      "starting": "Démarrage...",
+      "startStream": "Démarrer le flux",
+      "stopping": "Arrêt...",
+      "stopStream": "Arrêter le flux",
+      "upNext": "À suivre",
+      "playNextNow": "Lire la prochaine vidéo maintenant",
+      "nothingQueuedStops": "Rien en file d’attente - cela arrête le flux",
+      "skip": "Passer",
+      "now": "Maintenant",
+      "nothingQueuedHint": "Rien en file d’attente. Collez une URL ci-dessus et choisissez <1>File d’attente</1> pour l’ajouter — <3>!stream &lt;url&gt;</3> dans le chat fait la même chose pendant qu’un flux est en cours.",
+      "livePreview": "Aperçu en direct",
+      "volume": "Volume",
+      "volumeHint": "Défini dans Paramètres -> Streaming ; les spectateurs peuvent toujours augmenter leur propre lecteur",
+      "source": "Source",
+      "uptime": "Disponibilité",
+      "viewersCount": "Spectateurs ({{count}})",
+      "noViewers": "Aucun spectateur connecté",
+      "clientHash": "Client n° {{id}}",
+      "kick": "Expulser"
+    },
+    "templateGallery": {
+      "title": "Modèles de flux",
+      "configureTitle": "Configurer : {{name}}",
+      "availableVariables": "Variables disponibles",
+      "noConfigNeeded": "Aucune configuration nécessaire — prêt à créer.",
+      "createBot": "Créer un bot"
+    },
+    "placeholderReference": {
+      "dialogTitle": "Référence des placeholders",
+      "dialogIntro": "Utilisez <1>{{placeholder}}</1> dans n’importe quel champ de texte. Les valeurs sont résolues à l’exécution.",
+      "tabs": {
+        "event": "Événement",
+        "time": "Heure",
+        "var": "Variables",
+        "temp": "Temporaire",
+        "exec": "Exéc",
+        "filter": "Filtre",
+        "functions": "Fonctions",
+        "templates": "Modèles"
+      },
+      "event": {
+        "intro": "Champs de l’événement TS3 déclencheur. Les champs disponibles dépendent du type d’événement.",
+        "h1": "Client connecté — notifycliententerview",
+        "clid": {
+          "desc": "ID client",
+          "example": "Déplacer le client n° {{event.clid}} vers le salon"
+        },
+        "clientNickname": {
+          "desc": "Pseudo",
+          "example": "Bienvenue {{event.client_nickname}} !"
+        },
+        "clientDatabaseId": {
+          "desc": "ID base de données",
+          "example": "ID DB : {{event.client_database_id}}"
+        },
+        "clientUid": {
+          "desc": "ID unique (UID)",
+          "example": "UID : {{event.client_unique_identifier}}"
+        },
+        "clientType": {
+          "desc": "Type (0=Utilisateur, 1=Query)",
+          "example": "Condition : event.client_type == 0"
+        },
+        "clientServergroups": {
+          "desc": "ID des groupes serveur (séparés par des virgules)",
+          "example": "contains(event.client_servergroups, '6')"
+        },
+        "connectionClientIp": {
+          "desc": "Adresse IP",
+          "example": "Vérification VPN : https://api.vpn.io/{{event.connection_client_ip}}"
+        },
+        "cidJoined": {
+          "desc": "Salon rejoint par le client",
+          "example": "Condition : event.cid == 42"
+        },
+        "h2": "Client déconnecté — notifyclientleftview",
+        "clidDisc": {
+          "desc": "ID client"
+        },
+        "cfidDisc": {
+          "desc": "Salon dans lequel était le client"
+        },
+        "reasonidDisc": {
+          "desc": "Raison (3=perdu, 5=kick, 6=ban, 8=départ)",
+          "example": "Condition : event.reasonid == 5"
+        },
+        "reasonmsg": {
+          "desc": "Message de raison",
+          "example": "Kick : {{event.reasonmsg}}"
+        },
+        "h3": "Client déplacé — notifyclientmoved",
+        "clidMoved": {
+          "desc": "ID client"
+        },
+        "ctid": {
+          "desc": "ID du salon cible",
+          "example": "Condition : event.ctid == 10"
+        },
+        "cfidMoved": {
+          "desc": "ID du salon source"
+        },
+        "reasonidMoved": {
+          "desc": "Raison (0=soi-même, 1=déplacé par un admin)"
+        },
+        "h4": "Message texte — notifytextmessage",
+        "clidMsg": {
+          "desc": "ID client de l’expéditeur"
+        },
+        "clientNicknameMsg": {
+          "desc": "Pseudo de l’expéditeur"
+        },
+        "msg": {
+          "desc": "Texte du message",
+          "example": "L’utilisateur a écrit : {{event.msg}}"
+        },
+        "targetmode": {
+          "desc": "Cible (1=privé, 2=salon, 3=serveur)"
+        },
+        "h5": "Commande de chat — trigger_command",
+        "commandName": {
+          "desc": "Nom de la commande (sans préfixe)",
+          "example": "Commande : {{event.command_name}}"
+        },
+        "commandArgs": {
+          "desc": "Arguments après la commande",
+          "example": "Args : {{event.command_args}}"
+        },
+        "clidCmd": {
+          "desc": "ID client de l’expéditeur"
+        },
+        "clientNicknameCmd": {
+          "desc": "Pseudo de l’expéditeur"
+        },
+        "h6": "Événements de salon — créé / modifié / supprimé",
+        "cidChannel": {
+          "desc": "ID du salon"
+        },
+        "invokerid": {
+          "desc": "ID client de la personne ayant effectué le changement"
+        },
+        "invokername": {
+          "desc": "Nom de la personne ayant effectué le changement"
+        },
+        "h7": "Webhook — déclencheur trigger_webhook",
+        "webhookPath": {
+          "desc": "Chemin de la requête"
+        },
+        "webhookMethod": {
+          "desc": "Méthode HTTP",
+          "example": "GET ou POST"
+        },
+        "webhookBody": {
+          "desc": "Corps de la requête (JSON brut)"
+        },
+        "webhookBodyField": {
+          "desc": "Champ imbriqué du corps JSON",
+          "example": "Statut : {{event.webhook_body.status}}"
+        },
+        "webhookQuery": {
+          "desc": "Paramètres de requête (JSON brut)"
+        }
+      },
+      "time": {
+        "intro": "Date et heure actuelles. Respecte le fuseau horaire configuré sur le déclencheur Cron (UTC par défaut).",
+        "time": {
+          "desc": "Heure formatée HH:MM",
+          "example": "Nom du salon : il est {{time.time}}"
+        },
+        "date": {
+          "desc": "Date formatée JJ.MM.AAAA",
+          "example": "Date : {{time.date}}"
+        },
+        "hours": {
+          "desc": "Heure (00-23)",
+          "example": "Condition : time.hours >= 22"
+        },
+        "minutes": {
+          "desc": "Minute (00-59)"
+        },
+        "seconds": {
+          "desc": "Seconde (00-59)"
+        },
+        "day": {
+          "desc": "Jour du mois (01-31)"
+        },
+        "month": {
+          "desc": "Mois (01-12)",
+          "example": "Condition : time.month == 12"
+        },
+        "year": {
+          "desc": "Année (4 chiffres)"
+        },
+        "dayOfWeek": {
+          "desc": "Jour de la semaine (0=dim, 1=lun, ..., 6=sam)",
+          "example": "Condition : time.dayOfWeek == 0"
+        },
+        "timestamp": {
+          "desc": "Timestamp Unix (secondes)"
+        }
+      },
+      "var": {
+        "intro": "Variables persistantes stockées dans la base de données. Survivent aux redémarrages. Portée par flux. Définies via le nœud d’action <1>Définir une variable</1>.",
+        "name": {
+          "desc": "Lire une variable par nom",
+          "example": "Compteur : {{var.visit_count}}"
+        },
+        "h1": "Actions pour les variables",
+        "actionSet": "<0>Définir</0> — Définir une variable sur une valeur fixe ou un modèle",
+        "actionIncrement": "<0>Incrémenter</0> — Ajouter un nombre à la valeur actuelle",
+        "actionAppend": "<0>Ajouter</0> — Ajouter du texte à la valeur actuelle",
+        "h2": "Exemples de cas d’utilisation",
+        "example1": "Compteur de visites : incrémenter <1>visit_count</1> de 1 à chaque arrivée",
+        "example2": "Dernière vue : définir <1>lastseen_{{event.client_database_id}}</1> sur <3>{{time.timestamp}}</3>",
+        "example3": "Suivi du temps en ligne : incrémenter <1>onlinetime_{{event.clid}}</1>"
+      },
+      "temp": {
+        "intro": "Variables temporaires qui n’existent que pendant une seule exécution de flux. Définies automatiquement par certains nœuds d’action. Prend en charge l’accès imbriqué via la notation par points.",
+        "h1": "Définies automatiquement par les actions",
+        "lastCreatedChannelId": {
+          "desc": "CID du salon créé par Créer un salon",
+          "example": "Déplacer le client vers {{temp.lastCreatedChannelId}}"
+        },
+        "lastResult": {
+          "desc": "Résultat JSON brut de l’action WebQuery"
+        },
+        "afkMovedCount": {
+          "desc": "Nombre de clients déplacés par AFK Mover",
+          "example": "{{temp.afkMovedCount}} utilisateurs AFK déplacés"
+        },
+        "idleKickedCount": {
+          "desc": "Nombre de clients expulsés par Idle Kicker"
+        },
+        "pokedCount": {
+          "desc": "Nombre de clients pokés par Poke Group"
+        },
+        "rankPromotedCount": {
+          "desc": "Nombre de clients promus par Rank Check"
+        },
+        "tempChannelsDeleted": {
+          "desc": "Nombre de salons supprimés par Temp Cleanup"
+        },
+        "h2": "Personnalisé via \"Stocker sous\"",
+        "storeAsIntro": "Les actions WebQuery et Requête HTTP ont un champ \"Stocker sous\". La liste COMPLÈTE des résultats est enregistrée comme variable temp — même une commande à ligne unique comme clientinfo ou serverinfo ; accédez-y donc avec un <1>.0.</1> explicite pour \"la première (et seule) ligne\".",
+        "serverOnline": {
+          "desc": "Utilisateurs en ligne (après serverinfo stocké sous \"server\")",
+          "example": "En ligne : {{temp.server.0.virtualserver_clientsonline}}/{{temp.server.0.virtualserver_maxclients}}"
+        },
+        "serverUptime": {
+          "desc": "Disponibilité du serveur en secondes",
+          "example": "Disponibilité : {{temp.server.0.virtualserver_uptime|uptime}}"
+        },
+        "clientNickname": {
+          "desc": "Nom du client (après clientinfo stocké sous \"client\")"
+        },
+        "h3": "Nœud de boucle",
+        "loopIntro": "Un nœud de boucle lit une liste existante (p. ex. un résultat \"Stocker sous\" d’un WebQuery clientlist) et exécute sa sortie \"Corps\" une fois par élément, puis sa sortie \"Après\" une fois terminé.",
+        "loopItem": {
+          "desc": "Élément actuel (quel que soit le nom défini comme nom de variable d’élément du nœud de boucle), uniquement dans sa branche Corps"
+        },
+        "loopField": {
+          "desc": "Un champ de l’élément actuel - nom de la variable d’élément + \".\" + champ (pas de .0 ici, contrairement à Stocker sous ci-dessus - un seul objet par itération, pas une liste)"
+        },
+        "loopIndex": {
+          "desc": "Position de l’élément actuel dans la liste, en commençant à 0"
+        }
+      },
+      "exec": {
+        "intro": "Métadonnées en lecture seule sur l’exécution du flux actuel.",
+        "flowId": {
+          "desc": "ID du flux en cours d’exécution"
+        },
+        "executionId": {
+          "desc": "ID unique de l’instance d’exécution"
+        },
+        "configId": {
+          "desc": "ID de configuration du serveur"
+        },
+        "sid": {
+          "desc": "ID du serveur virtuel"
+        },
+        "triggerType": {
+          "desc": "Type de déclencheur (événement, cron, webhook, commande)",
+          "example": "Condition : exec.triggerType == \"cron\""
+        }
+      },
+      "filter": {
+        "intro": "Les filtres transforment les valeurs. Appliquez-les avec la syntaxe pipe : <1>{{value|filter}}</1>",
+        "uptime": {
+          "desc": "Convertit les secondes en disponibilité lisible"
+        },
+        "round": {
+          "desc": "Arrondit à l’entier le plus proche"
+        },
+        "floor": {
+          "desc": "Arrondit à l’entier inférieur"
+        }
+      },
+      "functions": {
+        "intro": "Fonctions à utiliser dans les expressions des nœuds <1>Condition</1>. Renvoient 0 ou 1 (faux/vrai).",
+        "contains": {
+          "desc": "La chaîne contient-elle une sous-chaîne ? (correspondance de sous-chaîne simple - voir hasGroup ci-dessous pour les listes d’ID numériques)"
+        },
+        "startsWith": {
+          "desc": "La chaîne commence-t-elle par un préfixe ?"
+        },
+        "endsWith": {
+          "desc": "La chaîne se termine-t-elle par un suffixe ?"
+        },
+        "lower": {
+          "desc": "Convertir en minuscules"
+        },
+        "upper": {
+          "desc": "Convertir en majuscules"
+        },
+        "length": {
+          "desc": "Longueur de la chaîne"
+        },
+        "split": {
+          "desc": "Diviser la chaîne et obtenir l’élément à l’index"
+        },
+        "hasGroup": {
+          "desc": "Correspondance exacte avec une liste d’ID séparés par des virgules - utilisez ceci pour les ID de groupes serveur, pas contains(), qui ferait aussi correspondre à tort le groupe '1' avec '10' ou '21'"
+        },
+        "count": {
+          "desc": "Nombre de lignes d’un résultat WebQuery stocké (tableau), ou longueur de chaîne sinon - à utiliser pour vérifier si une recherche a trouvé quelque chose"
+        },
+        "h1": "Exemples de conditions",
+        "condition1": "Uniquement les vrais utilisateurs (pas de clients Query)",
+        "condition2": "Le client est dans le groupe serveur 7",
+        "condition3": "Seulement la nuit",
+        "condition4": "Client déplacé vers un salon spécifique",
+        "condition5": "VPN détecté (après requête HTTP)"
+      },
+      "templates": {
+        "intro": "Les placeholders supplémentaires propres aux modèles de la Galerie de modèles se résolvent automatiquement, en plus des généraux ci-dessus."
+      }
+    },
+    "editChannelDialog": {
+      "title": "Modifier le salon",
+      "loadFailed": "Échec du chargement des paramètres complets du salon",
+      "updated": "Salon mis à jour",
+      "updateFailed": "Échec de la mise à jour du salon",
+      "loadingSettings": "Chargement des paramètres complets du salon...",
+      "tabs": {
+        "general": "Général",
+        "voice": "Voix",
+        "limits": "Limites et type",
+        "advanced": "Avancé"
+      },
+      "channelName": "Nom du salon",
+      "topic": "Sujet",
+      "leaveEmptyToKeep": "Laisser vide pour conserver l’actuel",
+      "codec": "Codec",
+      "codecQuality": "Qualité du codec ({{quality}})",
+      "codecQualityHint": "0 = la plus basse, 10 = la plus élevée. Une qualité plus élevée utilise plus de bande passante.",
+      "encryptVoice": "Chiffrer les données vocales dans ce salon",
+      "type": {
+        "permanent": "Permanent",
+        "semipermanent": "Semi-permanent",
+        "temporary": "Temporaire"
+      },
+      "deleteDelay": "Délai de suppression (secondes si vide)",
+      "defaultChannel": "Salon par défaut",
+      "defaultChannelHint": "Un serveur n’a qu’un seul salon par défaut — l’activer retire le drapeau du salon qui le possède actuellement.",
+      "maxClients": "Clients max",
+      "limited": "Limité",
+      "unlimited": "Illimité",
+      "maxFamilyClients": "Clients max. de la famille",
+      "inherited": "Hérité",
+      "maxFamilyClientsHint": "Limite les clients sur ce salon et tous ses sous-salons combinés.",
+      "neededTalkPower": "Talk Power requis",
+      "sortPosition": "Position de tri",
+      "sortPositionHint": "L’ID du salon sous lequel celui-ci doit être placé directement parmi ses salons frères (0 = premier). Les ID de salon sont affichés sous la forme \"#id\" dans l’arborescence des salons.",
+      "phoneticName": "Nom phonétique",
+      "phoneticNamePlaceholder": "Comment la synthèse vocale doit prononcer le nom de ce salon",
+      "bannerImageUrl": "URL de l’image de bannière",
+      "bannerMode": "Mode de bannière",
+      "bannerMode0": "Ne pas ajuster",
+      "bannerMode1": "Ajuster, ignorer les proportions",
+      "bannerMode2": "Ajuster, conserver les proportions"
+    }
+  },
+  "data": {
+    "botTemplates": {
+      "categories": {
+        "infoChannels": {
+          "label": "Salons d’info",
+          "description": "Noms de salons dynamiques avec données en direct"
+        },
+        "moderation": {
+          "label": "Modération",
+          "description": "Modération et protection automatisées"
+        },
+        "automation": {
+          "label": "Automatisation",
+          "description": "Messages de bienvenue, salons temporaires, classement"
+        },
+        "integration": {
+          "label": "Intégration",
+          "description": "API externes et webhooks"
+        }
+      },
+      "items": {
+        "clockChannel": {
+          "name": "Salon horloge",
+          "description": "Met à jour le nom d’un salon avec l’heure actuelle chaque minute.",
+          "fields": {
+            "channelId": {
+              "label": "ID du salon"
+            },
+            "timezone": {
+              "label": "Fuseau horaire"
+            }
+          }
+        },
+        "onlineCounter": {
+          "name": "Compteur en ligne",
+          "description": "Affiche le nombre actuel de clients en ligne dans le nom d’un salon.",
+          "fields": {
+            "channelId": {
+              "label": "ID du salon"
+            }
+          }
+        },
+        "serverStats": {
+          "name": "Stats serveur",
+          "description": "Affiche la disponibilité, les clients en ligne et le nombre de salons dans trois salons d’info.",
+          "fields": {
+            "uptimeChannelId": {
+              "label": "ID du salon de disponibilité"
+            },
+            "clientsChannelId": {
+              "label": "ID du salon des clients"
+            },
+            "channelCountChannelId": {
+              "label": "ID du salon du nombre de salons"
+            }
+          }
+        },
+        "animatedChannel": {
+          "name": "Nom de salon animé",
+          "description": "Anime le nom d’un salon avec des effets visuels comme le bandeau défilant, la machine à écrire, le rebond, et plus encore. Mise à jour toutes les 2 à 5 secondes.",
+          "fields": {
+            "channelId": {
+              "label": "ID du salon"
+            },
+            "text": {
+              "label": "Texte affiché"
+            },
+            "style": {
+              "label": "Style d’animation",
+              "options": {
+                "0": "Défilement vers la gauche (bandeau)",
+                "1": "Machine à écrire",
+                "2": "Rebond",
+                "3": "Clignotement",
+                "4": "Vague (décoratif)",
+                "5": "Casse alternée"
+              }
+            },
+            "intervalSeconds": {
+              "label": "Vitesse",
+              "options": {
+                "0": "Lent (5 s)",
+                "1": "Moyen (3 s)",
+                "2": "Rapide (2 s)",
+                "3": "Très rapide (1 s)",
+                "4": "Ultra (0,5 s)",
+                "5": "Dément (0,25 s)"
+              }
+            },
+            "prefix": {
+              "label": "Préfixe du nom de salon"
+            }
+          }
+        },
+        "welcomeMessage": {
+          "name": "Message de bienvenue",
+          "description": "Envoie un message de bienvenue ou un poke lorsqu’un client rejoint le serveur, avec une commande de désinscription et des exclusions de groupes serveur.",
+          "variablesHint": [
+            "{{event.client_nickname}} - nom du client qui rejoint",
+            "{{temp.onlineCount}} - vrais utilisateurs en ligne actuellement (connexions query/bot non comptées)",
+            "{{temp.dbInfo.0.client_totalconnections}} - nombre total de connexions de ce client",
+            "{{temp.teamOnline}} - membres de l’équipe en ligne actuellement (résolu uniquement si Groupes d’équipe est défini ci-dessous)"
+          ],
+          "fields": {
+            "message": {
+              "label": "Message de bienvenue"
+            },
+            "usePokeInstead": {
+              "label": "Méthode d’envoi",
+              "options": {
+                "0": "Message privé",
+                "1": "Poke"
+              }
+            },
+            "ignoreGroupIds": {
+              "label": "Groupes à ignorer (séparés par des virgules, facultatif)"
+            },
+            "teamGroupIds": {
+              "label": "Groupes d’équipe pour {{temp.teamOnline}} (séparés par des virgules, facultatif)"
+            }
+          }
+        },
+        "supportSystem": {
+          "name": "Système de support",
+          "description": "Notifie les admins lorsqu’un client rejoint le salon de support.",
+          "fields": {
+            "supportChannelId": {
+              "label": "ID du salon de support"
+            },
+            "adminGroupId": {
+              "label": "ID du groupe admin"
+            },
+            "message": {
+              "label": "Message de notification"
+            }
+          }
+        },
+        "privateChannelCreator": {
+          "name": "Créateur de salon privé",
+          "description": "Crée un salon privé persistant pour un client lors de sa première arrivée dans un lobby, puis l’y ramène à chaque fois ensuite, avec ce client défini comme propriétaire du salon.",
+          "variablesHint": [
+            "{{temp.joinerInfo.0.client_nickname}} - nom du client qui rejoint (pour le modèle de nom/description du salon)"
+          ],
+          "fields": {
+            "lobbyChannelId": {
+              "label": "ID du salon lobby"
+            },
+            "parentChannelId": {
+              "label": "ID du salon parent (facultatif — remplace l’emplacement de création des salons)"
+            },
+            "channelPlacement": {
+              "label": "Emplacement du salon",
+              "options": {
+                "0": "Salon standard (à côté du Lobby)",
+                "1": "Sous-salon du Lobby"
+              }
+            },
+            "channelAdminGroupId": {
+              "label": "ID du groupe admin du salon (attribué comme propriétaire)"
+            },
+            "channelNameTemplate": {
+              "label": "Modèle de nom de salon"
+            },
+            "channelDescriptionTemplate": {
+              "label": "Modèle de description du salon (facultatif)"
+            },
+            "privateChannelType": {
+              "label": "Type de salon privé",
+              "options": {
+                "0": "Permanent",
+                "1": "Semi-permanent",
+                "2": "Temporaire (TeamSpeak le supprime une fois vide)"
+              }
+            },
+            "autoGeneratePassword": {
+              "label": "Protection par mot de passe",
+              "options": {
+                "0": "Aucun",
+                "1": "Générer automatiquement"
+              }
+            },
+            "spamProtectionEnabled": {
+              "label": "Protection anti-spam (bannir les clients qui rejoignent le lobby à plusieurs reprises)",
+              "options": {
+                "0": "Non",
+                "1": "Oui"
+              }
+            },
+            "spamProtectionMaxStrikes": {
+              "label": "Nombre max. d’infractions avant bannissement"
+            },
+            "spamProtectionBanSeconds": {
+              "label": "Durée du bannissement (secondes)"
+            },
+            "channelCreateMessage": {
+              "label": "Message de création du salon"
+            },
+            "channelMoveMessage": {
+              "label": "Message de déplacement du salon"
+            },
+            "channelErrorMessage": {
+              "label": "Message d’erreur du salon"
+            },
+            "channelPasswordMessage": {
+              "label": "Message du mot de passe du salon"
+            },
+            "spamProtectionBanMessage": {
+              "label": "Message de bannissement anti-spam"
+            }
+          }
+        },
+        "autoRank": {
+          "name": "Auto-rang",
+          "description": "Attribue automatiquement des groupes de serveur selon le temps cumulé en ligne.",
+          "fields": {
+            "ranks": {
+              "label": "Rangs (JSON)"
+            },
+            "mode": {
+              "label": "Heures calculées selon",
+              "options": {
+                "0": "Temps réel en ligne (cumulé sur toutes les sessions)",
+                "1": "Temps depuis la première connexion (ancienneté du membre)"
+              }
+            },
+            "excludeGroupIds": {
+              "label": "ID de groupes à exclure (séparés par des virgules, facultatif)"
+            },
+            "pollInterval": {
+              "label": "Intervalle de vérification",
+              "options": {
+                "0": "Toutes les 5 min",
+                "1": "Toutes les 15 min",
+                "2": "Toutes les heures"
+              }
+            }
+          }
+        },
+        "lastSeenTracker": {
+          "name": "Suivi de dernière présence",
+          "description": "Enregistre l’horodatage de dernière présence lorsqu’un client se déconnecte."
+        },
+        "afkMover": {
+          "name": "Déplaceur AFK",
+          "description": "Déplace les clients inactifs vers un salon AFK après un délai configurable.",
+          "fields": {
+            "afkChannelId": {
+              "label": "ID du salon AFK"
+            },
+            "idleThresholdSeconds": {
+              "label": "Seuil d’inactivité (secondes)"
+            },
+            "exemptGroupIds": {
+              "label": "ID de groupes exemptés (séparés par des virgules)"
+            },
+            "exemptChannelIds": {
+              "label": "ID de salons exemptés (séparés par des virgules)"
+            }
+          }
+        },
+        "idleKicker": {
+          "name": "Expulseur d’inactifs",
+          "description": "Expulse les clients inactifs depuis trop longtemps.",
+          "fields": {
+            "idleThresholdSeconds": {
+              "label": "Seuil d’inactivité (secondes)"
+            },
+            "reason": {
+              "label": "Motif d’expulsion"
+            },
+            "exemptGroupIds": {
+              "label": "ID de groupes exemptés (séparés par des virgules)"
+            }
+          }
+        },
+        "badNameChecker": {
+          "name": "Vérificateur de pseudos interdits",
+          "description": "Expulse les clients dont le pseudo contient des mots interdits.",
+          "fields": {
+            "badWords": {
+              "label": "Mots interdits (séparés par des virgules)"
+            },
+            "reason": {
+              "label": "Motif d’expulsion"
+            }
+          }
+        },
+        "groupProtector": {
+          "name": "Protecteur de groupe",
+          "description": "Expulse les clients qui ont un groupe protégé mais pas le groupe d’autorisation requis.",
+          "fields": {
+            "protectedGroupId": {
+              "label": "ID du groupe protégé"
+            },
+            "allowedGroupId": {
+              "label": "ID du groupe autorisé"
+            },
+            "action": {
+              "label": "Action",
+              "options": {
+                "0": "Expulser",
+                "1": "Retirer le groupe"
+              }
+            }
+          }
+        },
+        "webhookServerMessage": {
+          "name": "Webhook → Message serveur",
+          "description": "Reçoit un POST webhook et diffuse le message sur le serveur TeamSpeak. Idéal pour les alertes de surveillance, les notifications CI/CD ou les passerelles Discord.",
+          "fields": {
+            "path": {
+              "label": "Chemin du webhook"
+            },
+            "secret": {
+              "label": "Secret (facultatif)"
+            }
+          }
+        },
+        "webhookGroupAssign": {
+          "name": "Webhook → Attribuer un groupe",
+          "description": "Un système externe (p. ex. vérification sur un site web) envoie un webhook avec un ID de base de données client pour attribuer un groupe serveur. À utiliser pour la vérification des utilisateurs d’un site vers TS3.",
+          "fields": {
+            "path": {
+              "label": "Chemin du webhook"
+            },
+            "groupId": {
+              "label": "ID du groupe serveur à attribuer"
+            },
+            "secret": {
+              "label": "Secret (facultatif)"
+            }
+          }
+        },
+        "webhookChannelRename": {
+          "name": "Webhook → Mettre à jour le salon",
+          "description": "Reçoit un webhook et met à jour le nom d’un salon. À utiliser pour des affichages de statut externes comme le statut d’un serveur de jeu, d’un stream ou des tableaux de bord de surveillance.",
+          "fields": {
+            "path": {
+              "label": "Chemin du webhook"
+            },
+            "channelId": {
+              "label": "ID du salon à mettre à jour"
+            },
+            "nameTemplate": {
+              "label": "Modèle de nom du salon"
+            },
+            "secret": {
+              "label": "Secret (facultatif)"
+            }
+          }
+        },
+        "antiVpn": {
+          "name": "Anti-VPN",
+          "description": "Vérifie les clients qui se connectent auprès d’une API de détection de VPN et expulse/bannit les utilisateurs de VPN.",
+          "fields": {
+            "apiUrl": {
+              "label": "URL de l’API (utiliser le placeholder {{ip}})"
+            },
+            "action": {
+              "label": "Action pour VPN",
+              "options": {
+                "0": "Expulser",
+                "1": "Bannir (1 h)"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "errors": {
+    "ts": {
+      "groupNameExists": "Un groupe portant ce nom existe déjà",
+      "invalidGroup": "Groupe invalide : il a peut-être été supprimé",
+      "permAlreadySet": "Cette permission est déjà définie pour ce groupe",
+      "unknownPermission": "Ce serveur ne reconnaît pas l’une des permissions du fichier",
+      "cannotModifyDefaultGroup": "Impossible de modifier les permissions d’un groupe par défaut/modèle",
+      "invalidPermValueSize": "Taille de valeur de permission invalide dans le fichier",
+      "invalidPermValue": "Valeur de permission invalide dans le fichier",
+      "insufficientModifyPower": "Pouvoir de modification des permissions insuffisant pour l’une des valeurs importées"
+    }
+  }
+}
