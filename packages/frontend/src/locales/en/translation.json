@@ -1266,7 +1266,231 @@
       "outPorts": "OUT: {{ports}}",
       "configuration": "CONFIGURATION",
       "connections": "CONNECTIONS",
-      "noConnections": "No connections"
+      "noConnections": "No connections",
+      "config": {
+        "shared": {
+          "commandLabel": "Command",
+          "channelIdLabel": "Channel ID",
+          "channelIdOrTemplatePlaceholder": "Channel ID or {{event.ctid}}",
+          "clientIdLabel": "Client ID",
+          "clientIdOrTemplatePlaceholder": "Client ID or {{event.clid}}",
+          "clientOption": "Client",
+          "channelOption": "Channel",
+          "serverOption": "Server",
+          "messageLabel": "Message",
+          "reasonLabel": "Reason",
+          "channelNameLabel": "Channel Name",
+          "parentChannelIdLabel": "Parent Channel ID",
+          "channelPasswordLabel": "Channel Password (optional)",
+          "optionalPlaceholder": "Optional",
+          "serverGroupIdLabel": "Server Group ID",
+          "storeAsTempLabel": "Store As (temp variable)",
+          "storeAsLabel": "Store As",
+          "urlLabel": "URL",
+          "methodLabel": "Method",
+          "bodyJsonLabel": "Body (JSON)",
+          "idleThresholdLabel": "Idle Threshold (seconds)",
+          "exemptGroupIdsLabel": "Exempt Group IDs (comma-separated)",
+          "textLabel": "Text",
+          "operationLabel": "Operation",
+          "valueLabel": "Value",
+          "useAsHintPrefix": "Use as:",
+          "botIdLabel": "Bot ID",
+          "channelPasswordExamplePlaceholder": "secret or {{temp.channelPassword}}"
+        },
+        "triggerEvent": {
+          "eventNameLabel": "Event Name",
+          "selectEventPlaceholder": "Select event...",
+          "clientEnter": "Client Enter",
+          "clientLeave": "Client Leave",
+          "textMessage": "Text Message",
+          "clientMoved": "Client Moved",
+          "serverEdited": "Server Edited",
+          "channelDescChanged": "Channel Desc Changed"
+        },
+        "triggerCron": {
+          "cronExpressionLabel": "Cron Expression",
+          "timezoneLabel": "Timezone"
+        },
+        "triggerWebhook": {
+          "webhookPathLabel": "Webhook Path",
+          "httpMethodLabel": "HTTP Method",
+          "secretLabel": "Secret (optional)",
+          "secretPlaceholder": "Leave empty for no auth",
+          "secretHint": "Validated via X-Webhook-Secret header or ?secret= query param"
+        },
+        "triggerCommand": {
+          "listenChannelIdLabel": "Listen Channel ID (optional)",
+          "listenChannelHint": "Commands are only received while a ServerQuery client is in that channel."
+        },
+        "actionMessage": {
+          "targetModeLabel": "Target Mode",
+          "editMessageDialogTitle": "Edit Message",
+          "messagePlaceholder": "This is the HelpList:\n\n!create - creates a channel\n!delete - deletes your channel\n!help - shows this list",
+          "messageHint": "Tip: line breaks are preserved."
+        },
+        "actionKick": {
+          "kickFromLabel": "Kick From",
+          "reasonPlaceholder": "Kicked by bot"
+        },
+        "actionBan": {
+          "durationLabel": "Duration (seconds, 0=permanent)",
+          "reasonPlaceholder": "Banned by bot"
+        },
+        "actionMove": {
+          "targetChannelIdLabel": "Target Channel ID (or template)",
+          "exampleHint": "Example: 94 or {{temp.lastCreatedChannelId}}"
+        },
+        "actionPoke": {
+          "messagePlaceholder": "Hey {{event.client_nickname}}!"
+        },
+        "actionChannelCreate": {
+          "temporaryLabel": "Temporary",
+          "permanentOption": "Permanent",
+          "temporaryOption": "Temporary"
+        },
+        "actionChannelEdit": {
+          "channelTopicLabel": "Channel Topic",
+          "channelDescriptionLabel": "Channel Description",
+          "editDescriptionDialogTitle": "Edit Channel Description",
+          "passwordHint": "Leave empty to keep unchanged."
+        },
+        "actionChannelDelete": {
+          "forceDeleteLabel": "Force Delete",
+          "forceNoOption": "No",
+          "forceYesOption": "Yes (delete sub-channels)"
+        },
+        "actionWebquery": {
+          "accessHintPrefix": "Access via"
+        },
+        "actionHttpRequest": {
+          "headersLabel": "Headers (JSON)",
+          "headersHint": "Key-value pairs as JSON object. Supports {{placeholders}}."
+        },
+        "actionAfkMover": {
+          "afkChannelIdLabel": "AFK Channel ID",
+          "exemptChannelIdsLabel": "Exempt Channel IDs (comma-separated)"
+        },
+        "actionIdleKicker": {
+          "kickReasonLabel": "Kick Reason",
+          "kickReasonPlaceholder": "Idle timeout"
+        },
+        "actionPokeGroup": {
+          "messagePlaceholder": "Support needed!"
+        },
+        "actionRankCheck": {
+          "ranksLabel": "Ranks (JSON)",
+          "ranksHint": "Array of {hours, groupId} — highest eligible rank is assigned",
+          "hoursMeasuredAsLabel": "Hours measured as",
+          "accumulatedTimeOption": "Actual online time (accumulated across sessions)",
+          "firstConnectionAgeOption": "Time since first connection (member age)",
+          "excludeGroupIdsLabel": "Exclude Group IDs (comma-separated)",
+          "excludeGroupIdsPlaceholder": "e.g. Bot group ID",
+          "excludeGroupIdsHint": "Clients in any of these groups are skipped entirely. ServerQuery clients are always skipped."
+        },
+        "actionTempChannelCleanup": {
+          "protectedChannelIdsLabel": "Protected Channel IDs (comma-separated)",
+          "protectedChannelIdsHint": "Channels under the parent that should NOT be deleted (e.g. the lobby)"
+        },
+        "actionAnimatedChannel": {
+          "displayTextLabel": "Display Text",
+          "displayTextPlaceholder": "Welcome to MyServer",
+          "displayTextHint": "Supports {{time.time}}, {{time.date}}, etc.",
+          "animationStyleLabel": "Animation Style",
+          "styleScroll": "Scroll Left (Marquee)",
+          "styleTypewriter": "Typewriter",
+          "styleBounce": "Bounce",
+          "styleBlink": "Blink",
+          "styleWave": "Wave (Decorative)",
+          "styleAlternateCase": "Alternate Case",
+          "speedLabel": "Speed",
+          "speedInsane": "Insane (0.25s)",
+          "speedUltra": "Ultra (0.5s)",
+          "speedVeryFast": "Very Fast (1s)",
+          "speedFast": "Fast (2s)",
+          "speedMedium": "Medium (3s)",
+          "speedSlow": "Slow (5s)",
+          "prefixLabel": "Prefix",
+          "prefixHint": "TS3 channel name prefix (e.g. [cspacer] for centered spacer)"
+        },
+        "actionVoicePlay": {
+          "songIdLabel": "Song ID",
+          "songIdPlaceholder": "Song ID to play",
+          "playlistIdLabel": "Playlist ID (alternative)",
+          "playlistIdPlaceholder": "Load playlist instead"
+        },
+        "actionVoiceVolume": {
+          "volumeLabel": "Volume (0-100)"
+        },
+        "actionVoicePauseResume": {
+          "actionLabel": "Action",
+          "pauseOption": "Pause",
+          "resumeOption": "Resume",
+          "toggleOption": "Toggle"
+        },
+        "actionVoiceSkip": {
+          "directionLabel": "Direction",
+          "nextOption": "Next",
+          "previousOption": "Previous"
+        },
+        "actionVoiceSeek": {
+          "positionLabel": "Position (seconds)"
+        },
+        "actionVoiceTts": {
+          "textPlaceholder": "Hello {{event.client_nickname}}",
+          "languageLabel": "Language (optional)",
+          "notConfiguredHint": "TTS engine not yet configured — placeholder only"
+        },
+        "condition": {
+          "expressionLabel": "Expression",
+          "expressionHint": "True → green output, False → red output"
+        },
+        "loop": {
+          "arrayVariableLabel": "Array Variable",
+          "arrayVariableHint": "Name of an existing temp variable holding a list, e.g. a WebQuery node's \"Store As\" result — without {{temp....}}",
+          "itemVariableLabel": "Item Variable Name",
+          "inLoopBodyPrefix": "In the loop body:",
+          "indexLabel": "index:",
+          "maxIterationsLabel": "Max Iterations (optional)",
+          "maxIterationsHint": "Default 50, hard ceiling 500 regardless of this value",
+          "bodyAfterHint": "Body → runs once per item. After → runs once when the loop finishes."
+        },
+        "delay": {
+          "delayLabel": "Delay (ms)"
+        },
+        "variable": {
+          "setOption": "Set",
+          "incrementOption": "Increment",
+          "appendOption": "Append",
+          "getOption": "Get (read into temp.*)",
+          "variableNameLabel": "Variable Name",
+          "valueExpressionLabel": "Value (Expression)"
+        },
+        "actionGenerateCode": {
+          "lengthLabel": "Length",
+          "charactersLabel": "Characters",
+          "digitsOnlyOption": "Digits only",
+          "alphanumericOption": "Alphanumeric"
+        },
+        "actionCountOnlineInGroups": {
+          "groupIdsLabel": "Server Group IDs (comma-separated)"
+        },
+        "actionListMembership": {
+          "listNameLabel": "List Name",
+          "listNameHintPrefix": "Persists across restarts. Check membership elsewhere with: contains(var.",
+          "listNameHintSuffix": ", ...)",
+          "addOption": "Add",
+          "removeOption": "Remove"
+        },
+        "log": {
+          "logLevelLabel": "Log Level",
+          "debugOption": "Debug",
+          "infoOption": "Info",
+          "warnOption": "Warning",
+          "errorOption": "Error",
+          "messagePlaceholder": "Client joined: {{event.client_nickname}}"
+        }
+      }
     }
   },
   "components": {

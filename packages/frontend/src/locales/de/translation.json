@@ -1266,7 +1266,231 @@
       "outPorts": "AUS: {{ports}}",
       "configuration": "KONFIGURATION",
       "connections": "VERBINDUNGEN",
-      "noConnections": "Keine Verbindungen"
+      "noConnections": "Keine Verbindungen",
+      "config": {
+        "shared": {
+          "commandLabel": "Befehl",
+          "channelIdLabel": "Channel-ID",
+          "channelIdOrTemplatePlaceholder": "Channel-ID oder {{event.ctid}}",
+          "clientIdLabel": "Client-ID",
+          "clientIdOrTemplatePlaceholder": "Client-ID oder {{event.clid}}",
+          "clientOption": "Client",
+          "channelOption": "Channel",
+          "serverOption": "Server",
+          "messageLabel": "Nachricht",
+          "reasonLabel": "Grund",
+          "channelNameLabel": "Channel-Name",
+          "parentChannelIdLabel": "Übergeordnete Channel-ID",
+          "channelPasswordLabel": "Channel-Passwort (optional)",
+          "optionalPlaceholder": "Optional",
+          "serverGroupIdLabel": "Servergruppen-ID",
+          "storeAsTempLabel": "Speichern als (temp-Variable)",
+          "storeAsLabel": "Speichern als",
+          "urlLabel": "URL",
+          "methodLabel": "Methode",
+          "bodyJsonLabel": "Body (JSON)",
+          "idleThresholdLabel": "Inaktivitätsschwelle (Sekunden)",
+          "exemptGroupIdsLabel": "Ausgenommene Gruppen-IDs (kommagetrennt)",
+          "textLabel": "Text",
+          "operationLabel": "Operation",
+          "valueLabel": "Wert",
+          "useAsHintPrefix": "Verwenden als:",
+          "botIdLabel": "Bot-ID",
+          "channelPasswordExamplePlaceholder": "geheim oder {{temp.channelPassword}}"
+        },
+        "triggerEvent": {
+          "eventNameLabel": "Ereignisname",
+          "selectEventPlaceholder": "Ereignis auswählen...",
+          "clientEnter": "Client betritt",
+          "clientLeave": "Client verlässt",
+          "textMessage": "Textnachricht",
+          "clientMoved": "Client verschoben",
+          "serverEdited": "Server bearbeitet",
+          "channelDescChanged": "Channel-Beschr. geändert"
+        },
+        "triggerCron": {
+          "cronExpressionLabel": "Cron-Ausdruck",
+          "timezoneLabel": "Zeitzone"
+        },
+        "triggerWebhook": {
+          "webhookPathLabel": "Webhook-Pfad",
+          "httpMethodLabel": "HTTP-Methode",
+          "secretLabel": "Secret (optional)",
+          "secretPlaceholder": "Leer lassen für keine Authentifizierung",
+          "secretHint": "Wird über den X-Webhook-Secret-Header oder den ?secret=-Query-Parameter geprüft"
+        },
+        "triggerCommand": {
+          "listenChannelIdLabel": "Channel-ID zum Abhören (optional)",
+          "listenChannelHint": "Befehle werden nur empfangen, während ein ServerQuery-Client in diesem Channel ist."
+        },
+        "actionMessage": {
+          "targetModeLabel": "Zielmodus",
+          "editMessageDialogTitle": "Nachricht bearbeiten",
+          "messagePlaceholder": "Dies ist die HelpList:\n\n!create - erstellt einen Channel\n!delete - löscht deinen Channel\n!help - zeigt diese Liste",
+          "messageHint": "Tipp: Zeilenumbrüche werden übernommen."
+        },
+        "actionKick": {
+          "kickFromLabel": "Kicken aus",
+          "reasonPlaceholder": "Vom Bot gekickt"
+        },
+        "actionBan": {
+          "durationLabel": "Dauer (Sekunden, 0=dauerhaft)",
+          "reasonPlaceholder": "Vom Bot gebannt"
+        },
+        "actionMove": {
+          "targetChannelIdLabel": "Ziel-Channel-ID (oder Vorlage)",
+          "exampleHint": "Beispiel: 94 oder {{temp.lastCreatedChannelId}}"
+        },
+        "actionPoke": {
+          "messagePlaceholder": "Hey {{event.client_nickname}}!"
+        },
+        "actionChannelCreate": {
+          "temporaryLabel": "Temporär",
+          "permanentOption": "Dauerhaft",
+          "temporaryOption": "Temporär"
+        },
+        "actionChannelEdit": {
+          "channelTopicLabel": "Channel-Thema",
+          "channelDescriptionLabel": "Channel-Beschreibung",
+          "editDescriptionDialogTitle": "Channel-Beschreibung bearbeiten",
+          "passwordHint": "Leer lassen, um es unverändert zu lassen."
+        },
+        "actionChannelDelete": {
+          "forceDeleteLabel": "Erzwungenes Löschen",
+          "forceNoOption": "Nein",
+          "forceYesOption": "Ja (Unterchannel löschen)"
+        },
+        "actionWebquery": {
+          "accessHintPrefix": "Zugriff über"
+        },
+        "actionHttpRequest": {
+          "headersLabel": "Header (JSON)",
+          "headersHint": "Schlüssel-Wert-Paare als JSON-Objekt. Unterstützt {{placeholders}}."
+        },
+        "actionAfkMover": {
+          "afkChannelIdLabel": "AFK-Channel-ID",
+          "exemptChannelIdsLabel": "Ausgenommene Channel-IDs (kommagetrennt)"
+        },
+        "actionIdleKicker": {
+          "kickReasonLabel": "Kick-Grund",
+          "kickReasonPlaceholder": "Inaktivitäts-Timeout"
+        },
+        "actionPokeGroup": {
+          "messagePlaceholder": "Unterstützung benötigt!"
+        },
+        "actionRankCheck": {
+          "ranksLabel": "Ränge (JSON)",
+          "ranksHint": "Array aus {hours, groupId} — der höchste erreichte Rang wird zugewiesen",
+          "hoursMeasuredAsLabel": "Stunden gemessen als",
+          "accumulatedTimeOption": "Tatsächliche Online-Zeit (über Sitzungen summiert)",
+          "firstConnectionAgeOption": "Zeit seit erster Verbindung (Mitgliedsalter)",
+          "excludeGroupIdsLabel": "Ausgeschlossene Gruppen-IDs (kommagetrennt)",
+          "excludeGroupIdsPlaceholder": "z. B. Bot-Gruppen-ID",
+          "excludeGroupIdsHint": "Clients in einer dieser Gruppen werden vollständig übersprungen. ServerQuery-Clients werden immer übersprungen."
+        },
+        "actionTempChannelCleanup": {
+          "protectedChannelIdsLabel": "Geschützte Channel-IDs (kommagetrennt)",
+          "protectedChannelIdsHint": "Channels unter dem übergeordneten Channel, die NICHT gelöscht werden sollen (z. B. die Lobby)"
+        },
+        "actionAnimatedChannel": {
+          "displayTextLabel": "Anzeigetext",
+          "displayTextPlaceholder": "Willkommen auf MeinServer",
+          "displayTextHint": "Unterstützt {{time.time}}, {{time.date}}, usw.",
+          "animationStyleLabel": "Animationsstil",
+          "styleScroll": "Nach links scrollen (Laufband)",
+          "styleTypewriter": "Schreibmaschine",
+          "styleBounce": "Springen",
+          "styleBlink": "Blinken",
+          "styleWave": "Welle (dekorativ)",
+          "styleAlternateCase": "Abwechselnde Groß-/Kleinschreibung",
+          "speedLabel": "Geschwindigkeit",
+          "speedInsane": "Wahnsinnig (0,25s)",
+          "speedUltra": "Ultra (0,5s)",
+          "speedVeryFast": "Sehr schnell (1s)",
+          "speedFast": "Schnell (2s)",
+          "speedMedium": "Mittel (3s)",
+          "speedSlow": "Langsam (5s)",
+          "prefixLabel": "Präfix",
+          "prefixHint": "TS3-Channel-Namenspräfix (z. B. [cspacer] für zentrierten Spacer)"
+        },
+        "actionVoicePlay": {
+          "songIdLabel": "Song-ID",
+          "songIdPlaceholder": "Abzuspielende Song-ID",
+          "playlistIdLabel": "Playlist-ID (Alternative)",
+          "playlistIdPlaceholder": "Stattdessen Playlist laden"
+        },
+        "actionVoiceVolume": {
+          "volumeLabel": "Lautstärke (0-100)"
+        },
+        "actionVoicePauseResume": {
+          "actionLabel": "Aktion",
+          "pauseOption": "Pausieren",
+          "resumeOption": "Fortsetzen",
+          "toggleOption": "Umschalten"
+        },
+        "actionVoiceSkip": {
+          "directionLabel": "Richtung",
+          "nextOption": "Nächster",
+          "previousOption": "Vorheriger"
+        },
+        "actionVoiceSeek": {
+          "positionLabel": "Position (Sekunden)"
+        },
+        "actionVoiceTts": {
+          "textPlaceholder": "Hallo {{event.client_nickname}}",
+          "languageLabel": "Sprache (optional)",
+          "notConfiguredHint": "TTS-Engine noch nicht konfiguriert — nur Platzhalter"
+        },
+        "condition": {
+          "expressionLabel": "Ausdruck",
+          "expressionHint": "Wahr → grüner Ausgang, Falsch → roter Ausgang"
+        },
+        "loop": {
+          "arrayVariableLabel": "Array-Variable",
+          "arrayVariableHint": "Name einer vorhandenen temp-Variable mit einer Liste, z. B. das \"Speichern als\"-Ergebnis eines WebQuery-Nodes — ohne {{temp....}}",
+          "itemVariableLabel": "Name der Element-Variable",
+          "inLoopBodyPrefix": "Im Schleifenkörper:",
+          "indexLabel": "Index:",
+          "maxIterationsLabel": "Max. Durchläufe (optional)",
+          "maxIterationsHint": "Standard 50, harte Obergrenze 500 unabhängig von diesem Wert",
+          "bodyAfterHint": "Body → läuft einmal pro Element. After → läuft einmal, wenn die Schleife fertig ist."
+        },
+        "delay": {
+          "delayLabel": "Verzögerung (ms)"
+        },
+        "variable": {
+          "setOption": "Setzen",
+          "incrementOption": "Erhöhen",
+          "appendOption": "Anhängen",
+          "getOption": "Lesen (in temp.* einlesen)",
+          "variableNameLabel": "Variablenname",
+          "valueExpressionLabel": "Wert (Ausdruck)"
+        },
+        "actionGenerateCode": {
+          "lengthLabel": "Länge",
+          "charactersLabel": "Zeichen",
+          "digitsOnlyOption": "Nur Ziffern",
+          "alphanumericOption": "Alphanumerisch"
+        },
+        "actionCountOnlineInGroups": {
+          "groupIdsLabel": "Servergruppen-IDs (kommagetrennt)"
+        },
+        "actionListMembership": {
+          "listNameLabel": "Listenname",
+          "listNameHintPrefix": "Bleibt über Neustarts erhalten. Mitgliedschaft anderswo prüfen mit: contains(var.",
+          "listNameHintSuffix": ", ...)",
+          "addOption": "Hinzufügen",
+          "removeOption": "Entfernen"
+        },
+        "log": {
+          "logLevelLabel": "Log-Level",
+          "debugOption": "Debug",
+          "infoOption": "Info",
+          "warnOption": "Warnung",
+          "errorOption": "Fehler",
+          "messagePlaceholder": "Client beigetreten: {{event.client_nickname}}"
+        }
+      }
     }
   },
   "components": {
