@@ -21,7 +21,8 @@
   },
   "pnpm": {
     "overrides": {
-      "qs": "^6.16.0"
+      "qs": "^6.16.0",
+      "mysql2": "^3.23.1"
     },
     "onlyBuiltDependencies": [
       "@prisma/engines",
