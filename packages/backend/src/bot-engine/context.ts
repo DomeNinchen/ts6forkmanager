@@ -1,4 +1,4 @@
-import { Parser } from 'expr-eval';
+import { Parser } from 'expr-eval-fork';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { commaListHasExact } from '../utils/group-match.js';
 
