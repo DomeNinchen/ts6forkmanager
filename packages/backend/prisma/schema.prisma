@@ -112,6 +112,13 @@ model TsServerConfig {
   // means "whatever TS assigns by default" (usually "serveradmin").
   queryNickname String?
   enabled      Boolean  @default(true)
+  // Whether UserHistorySampler records this connection's virtual servers in
+  // the long-term user-count history (Statistics -> History). On by default so
+  // a new connection has history from its first minute; the switch exists for
+  // admins who would rather not poll a particular (remote, metered, or simply
+  // uninteresting) connection every interval. Turning it off keeps whatever
+  // was already recorded and only stops adding to it.
+  recordUserHistory Boolean @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -142,6 +149,7 @@ model TsServerConfig {
   commandPermissions  BotCommandPermission[]
   commandAdminGroups  BotCommandAdminGroup[]
   metricSamples       ServerMetricSample[]
+  userSamples         ServerUserSample[]
 }
 
 model BotFlow {
@@ -410,5 +418,47 @@ model ServerMetricSample {
 
   // Every read is "this server's samples in time order" and every prune is
   // "everything older than X" - one composite index serves both.
+  @@index([serverConfigId, virtualServerId, measuredAt])
+}
+
+// === Long-term user-count history (Statistics -> History) ===
+// One row per virtual server per UserHistorySampler tick. Unlike
+// ServerMetricSample above (a 20-minute window for the dashboard's live
+// charts), this is a deliberate archive: the retention is an admin setting
+// (default 32 days, enough for the chart's longest window plus a day of
+// lead-in for its 24-hour average) and a tick is ~90 bytes, so a month at the
+// default 60s interval is about 44,000 rows / 4 MB per virtual server.
+//
+// A row is written for every tick whether or not anyone could be counted,
+// with `state` saying why - that is what lets the chart tell "nobody was
+// online" (users = 0) apart from "we could not look" (no number at all).
+// Stretches with no rows at all mean the backend itself was not running.
+model ServerUserSample {
+  id              Int      @id @default(autoincrement())
+  serverConfigId  Int
+  serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  // TeamSpeak's own virtual server id (sid) - not a row in this database,
+  // same as ServerMetricSample.virtualServerId.
+  virtualServerId Int
+  measuredAt      DateTime @default(now())
+  // "online"      - the virtual server answered and `users` is a real count
+  // "stopped"     - the instance answered but this virtual server is not
+  //                 running (offline, booting up, shutting down, virtual online)
+  // "unreachable" - the instance itself could not be reached (network error or
+  //                 timeout), so nothing is known about this virtual server
+  state           String
+  // Real users only: virtualserver_clientsonline minus
+  // virtualserver_queryclientsonline, the same figure the Virtual Servers page
+  // shows. Null unless state is "online" - never 0 as a stand-in for unknown.
+  users           Int?
+  // The sampling interval in force when this row was written, in seconds. It
+  // is stored per row because the interval is an admin setting: the chart
+  // decides whether two neighbouring rows are "one sample apart" or "a gap"
+  // from the interval that applied at the time, which stays correct after the
+  // setting has been changed.
+  intervalSec     Int
+
+  // Reads are "this virtual server's rows in time order" and the periodic
+  // prune is "everything older than X" - one composite index serves both.
   @@index([serverConfigId, virtualServerId, measuredAt])
 }

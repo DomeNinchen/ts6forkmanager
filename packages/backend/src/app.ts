@@ -23,6 +23,7 @@ import { messageRoutes } from './routes/messages.routes.js';
 import { logRoutes } from './routes/logs.routes.js';
 import { instanceRoutes } from './routes/instance.routes.js';
 import { dashboardRoutes } from './routes/dashboard.routes.js';
+import { statisticsRoutes } from './routes/statistics.routes.js';
 import { botRoutes } from './routes/bots.routes.js';
 import { userRoutes } from './routes/users.routes.js';
 import { musicBotRoutes } from './routes/music-bots.routes.js';
@@ -102,6 +103,7 @@ export function createApp(): Express {
   app.use('/api/servers/:configId/instance', serverAccess, instanceRoutes);
   app.use('/api/servers/:configId/command-permissions', serverAccess, commandPermissionRoutes);
   app.use('/api/servers/:configId/vs/:sid/dashboard', serverAccess, dashboardRoutes);
+  app.use('/api/servers/:configId/vs/:sid/statistics', serverAccess, statisticsRoutes);
   app.use('/api/bots', botRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/music-bots', musicBotRoutes);

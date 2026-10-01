@@ -24,6 +24,7 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
         id: true, name: true, host: true, webqueryPort: true,
         useHttps: true, sshPort: true, enabled: true,
         createdAt: true, sshUsername: true, pingHost: true,
+        recordUserHistory: true,
         botQueryName: true, botApiKey: true,
       },
       orderBy: { id: 'asc' },
@@ -42,7 +43,7 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
 // Add new TS server connection
 serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
-    const { name, host, webqueryPort, apiKey, useHttps, sshPort, sshUsername, sshPassword } = req.body;
+    const { name, host, webqueryPort, apiKey, useHttps, sshPort, sshUsername, sshPassword, recordUserHistory } = req.body;
     if (!name || !host || !apiKey) throw new AppError(400, 'Name, host, and API key are required');
 
     const prisma = req.app.locals.prisma;
@@ -57,6 +58,9 @@ serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response,
         sshPort: sshPort || 10022,
         sshUsername: sshUsername || null,
         sshPassword: sshPassword ? encrypt(sshPassword) : null,
+        // Only an explicit false switches it off; a client that doesn't know
+        // about the option gets the default, which is on.
+        recordUserHistory: recordUserHistory !== false,
       },
     });
 
@@ -85,6 +89,7 @@ serverRoutes.get('/:configId', async (req: Request, res: Response, next) => {
       botQueryName: server.botQueryName, hasBotIdentity: !!server.botApiKey,
       pingHost: server.pingHost,
       queryNickname: server.queryNickname,
+      recordUserHistory: server.recordUserHistory,
     });
   } catch (err) { next(err); }
 });
@@ -96,7 +101,10 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const id = parseInt(String(req.params.configId));
     const data: any = {};
 
-    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname'];
+    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname', 'recordUserHistory'];
+    if (req.body.recordUserHistory !== undefined && typeof req.body.recordUserHistory !== 'boolean') {
+      throw new AppError(400, 'recordUserHistory must be a boolean');
+    }
     for (const field of fields) {
       if (req.body[field] !== undefined) {
         // Don't overwrite API key, SSH username, or SSH password with empty
