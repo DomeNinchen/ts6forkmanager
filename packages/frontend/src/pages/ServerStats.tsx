@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { UserHistoryTab } from '@/components/statistics/UserHistoryTab';
 import { formatUptime, formatBytes } from '@/lib/utils';
 import { BarChart3, Info, Users, Activity, ArrowUpDown, Server, LayoutGrid } from 'lucide-react';
 
@@ -172,12 +173,16 @@ export default function ServerStats() {
         <TabsList>
           <TabsTrigger value="overview">{t('pages.serverStats.overview')}</TabsTrigger>
           <TabsTrigger value="selected">{t('pages.serverStats.selectedServer')}</TabsTrigger>
+          <TabsTrigger value="history">{t('pages.serverStats.history.tab')}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4">
           <OverviewTab />
         </TabsContent>
         <TabsContent value="selected" className="mt-4">
           <SelectedServerTab />
+        </TabsContent>
+        <TabsContent value="history" className="mt-4">
+          <UserHistoryTab />
         </TabsContent>
       </Tabs>
     </div>

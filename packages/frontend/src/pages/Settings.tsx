@@ -521,14 +521,14 @@ function ConnectionsTab() {
   const [editId, setEditId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [botIdentityServerId, setBotIdentityServerId] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '' });
+  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
 
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
   const editingServer = editId ? serverList.find((s: any) => s.id === editId) : null;
 
   if (isLoading) return <PageLoader />;
 
-  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '' });
+  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
 
   const handleSave = () => {
     const payload = { ...form, webqueryPort: parseInt(form.webqueryPort), sshPort: parseInt(form.sshPort) };
@@ -556,6 +556,9 @@ function ConnectionsTab() {
       sshUsername: server.sshUsername || '',
       sshPassword: server.sshPassword || '',
       pingHost: server.pingHost || '',
+      // Only an explicit false is off; anything else (including a server
+      // that predates the field) is the default, which is on.
+      recordUserHistory: server.recordUserHistory !== false,
     });
     setEditId(server.id);
     setShowAdd(true);
@@ -634,6 +637,15 @@ function ConnectionsTab() {
               <p className="text-[11px] text-muted-foreground mt-1">
                 {t('pages.settings.connections.pingTargetHint')}
               </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <Switch className="mt-0.5" checked={form.recordUserHistory} onCheckedChange={(v) => setForm({ ...form, recordUserHistory: v })} />
+              <div>
+                <Label className="text-xs">{t('pages.settings.connections.recordUserHistory')}</Label>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {t('pages.settings.connections.recordUserHistoryHint')}
+                </p>
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div><Label className="text-xs">{t('pages.settings.connections.sshPortLabel')}</Label><Input type="number" value={form.sshPort} onChange={(e) => setForm({ ...form, sshPort: e.target.value })} /></div>
