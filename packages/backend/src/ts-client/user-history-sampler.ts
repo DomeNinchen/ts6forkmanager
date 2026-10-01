@@ -81,14 +81,17 @@ export class UserHistorySampler {
   }
 
   /**
-   * Picks up changed interval / retention settings: restarts the timer at the
-   * new interval and prunes right away, so lowering the retention takes effect
-   * now instead of at the next hourly pass.
+   * Picks up changed interval / retention settings: restarts the timer when
+   * the interval changed, and prunes right away so lowering the retention
+   * takes effect now instead of at the next hourly pass.
    */
   async applySettings(): Promise<void> {
+    const previousInterval = this.settings.intervalSeconds;
     await this.loadSettings();
     if (this.destroyed) return;
-    this.schedule();
+    // Left alone when only the retention changed: restarting the timer would
+    // push the next measurement back by up to a whole interval for no reason.
+    if (this.settings.intervalSeconds !== previousInterval) this.schedule();
     void this.cleanup();
   }
 
