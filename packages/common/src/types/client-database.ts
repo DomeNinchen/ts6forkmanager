@@ -113,6 +113,24 @@ export interface ClientDbBanResult {
   outcomes: ClientDbBanOutcome[];
 }
 
+/**
+ * A server group whose membership the Client Database page can change: a regular group that is not the
+ * server's default group (TeamSpeak neither lists nor changes members of default and template groups).
+ */
+export interface ClientDbAssignableGroup {
+  sgid: number;
+  name: string;
+  sortid: number;
+}
+
+export interface ClientDbGroupsOverview {
+  groups: ClientDbAssignableGroup[];
+  /** Database ids of every member, by group id. */
+  members: Record<number, number[]>;
+  /** Groups whose member list TeamSpeak refused to give (usually a missing permission). */
+  failed: number[];
+}
+
 export interface ClientDbDeleteResult {
   deleted: number[];
   /** TeamSpeak refuses to delete the profile of a client that is connected right now (error 523). */

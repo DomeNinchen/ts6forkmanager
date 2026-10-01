@@ -66,12 +66,14 @@ interface DataTableProps<TData extends RowData> {
   onRowClick?: (row: TData) => void;
   /** Let a table that is wider than its container scroll sideways instead of cutting off its last columns. */
   horizontalScroll?: boolean;
+  /** Reports every row the table shows across all its pages, in display order (after the text filter and the sort), whenever that changes. */
+  onVisibleRowsChange?: (rows: TData[]) => void;
 }
 
 export function DataTable<TData extends RowData>({
   columns, data, searchKey, searchPlaceholder, pageSize = 20,
   enableRowSelection = false, getRowId, onSelectionChange,
-  selectionResetKey, rowClassName, onRowClick, horizontalScroll = false,
+  selectionResetKey, rowClassName, onRowClick, horizontalScroll = false, onVisibleRowsChange,
 }: DataTableProps<TData>) {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -125,6 +127,11 @@ export function DataTable<TData extends RowData>({
     if (enableRowSelection) onSelectionChange?.(table.getSelectedRowModel().rows.map((r) => r.original));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection]);
+
+  useEffect(() => {
+    onVisibleRowsChange?.(table.getPrePaginatedRowModel().rows.map((r) => r.original));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, globalFilter, sorting]);
 
   return (
     <div className="space-y-3">

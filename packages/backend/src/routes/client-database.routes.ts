@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import {
   banRuleValue,
+  type ClientDbAssignableGroup,
   type ClientDbBanOutcome,
   type ClientDbBanRequest,
   type ClientDbBanResult,
@@ -10,6 +11,7 @@ import {
   type ClientDbDeleteResult,
   type ClientDbDetailSection,
   type ClientDbDetails,
+  type ClientDbGroupsOverview,
   type ClientDbListPage,
   type ClientDbProfile,
   type ClientDbSearchResult,
@@ -238,6 +240,33 @@ clientDatabaseRoutes.get('/search', async (req: Request, res: Response, next) =>
     }
 
     res.json(result);
+  } catch (err) { next(err); }
+});
+
+// Group mode: the server groups a profile can be put into or taken out of, with who is in each. One
+// request per group rather than per profile, so the cost does not grow with the size of the database.
+clientDatabaseRoutes.get('/groups', async (req: Request, res: Response, next) => {
+  try {
+    const client = getClient(req);
+    const sid = getSid(req);
+    const defaultSgid = toNumber(rows(await client.execute(sid, 'serverinfo'))[0]?.virtualserver_default_server_group);
+    const groups: ClientDbAssignableGroup[] = rows(await client.execute(sid, 'servergrouplist'))
+      // type 1 = regular group (0 = template, 2 = ServerQuery); the default group cannot be listed or changed
+      .filter((g) => toNumber(g.type) === 1 && toNumber(g.sgid) !== defaultSgid)
+      .map((g) => ({ sgid: toNumber(g.sgid), name: g.name ?? '', sortid: toNumber(g.sortid) }))
+      .sort((a, b) => a.sortid - b.sortid || a.name.localeCompare(b.name));
+
+    const members: Record<number, number[]> = {};
+    const failed: number[] = [];
+    for (const group of groups) {
+      try {
+        members[group.sgid] = rows(await client.execute(sid, 'servergroupclientlist', { sgid: group.sgid })).map((r) => toNumber(r.cldbid));
+      } catch (err) {
+        if (!isTsRefusal(err)) throw err;
+        failed.push(group.sgid);
+      }
+    }
+    res.json({ groups, members, failed } satisfies ClientDbGroupsOverview);
   } catch (err) { next(err); }
 });
 
