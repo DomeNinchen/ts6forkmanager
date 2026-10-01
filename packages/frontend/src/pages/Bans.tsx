@@ -33,6 +33,7 @@ export default function Bans() {
     { accessorKey: 'lastnickname', header: t('pages.bans.lastNickname'), cell: ({ getValue }) => <span className="font-medium">{(getValue() as string) || '-'}</span> },
     { accessorKey: 'ip', header: 'IP', cell: ({ getValue }) => <span className="font-mono-data text-xs">{(getValue() as string) || '-'}</span> },
     { accessorKey: 'uid', header: 'UID', cell: ({ getValue }) => <span className="font-mono-data text-xs truncate max-w-[120px] block">{(getValue() as string) || '-'}</span> },
+    { accessorKey: 'name', header: t('pages.bans.nameRegex'), cell: ({ getValue }) => <span className="font-mono-data text-xs truncate max-w-[160px] block" title={getValue() as string}>{(getValue() as string) || '-'}</span> },
     { accessorKey: 'reason', header: t('pages.bans.reason'), cell: ({ getValue }) => <span className="text-xs">{(getValue() as string) || '-'}</span> },
     { accessorKey: 'duration', header: t('pages.bans.duration'), cell: ({ getValue }) => <span className="font-mono-data text-xs">{formatDuration(getValue() as number)}</span> },
     { accessorKey: 'created', header: t('pages.bans.created'), cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{timeAgo(getValue() as number)}</span> },

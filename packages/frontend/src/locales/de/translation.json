@@ -95,6 +95,7 @@
       "statistics": "Statistiken",
       "channels": "Channels",
       "clients": "Clients",
+      "clientDatabase": "Client-Datenbank",
       "serverGroups": "Servergruppen",
       "channelGroups": "Channel-Gruppen",
       "permissions": "Berechtigungen",
@@ -432,6 +433,152 @@
       "describeCount_other": "{{count}} Clients beschreiben",
       "descriptionUpdated_one": "Beschreibung für {{count}} Client aktualisiert",
       "descriptionUpdated_other": "Beschreibung für {{count}} Clients aktualisiert"
+    },
+    "clientDatabase": {
+      "subtitle": "Alle Profile, die dieser Server je gesehen hat, auch von Clients, die gerade offline sind.",
+      "filterPlaceholder": "Geladene Profile filtern...",
+      "loadedCount": "{{loaded}} von {{total}} Profilen geladen",
+      "loadMore": "{{count}} weitere laden",
+      "loadAll": "Alle laden",
+      "loadingAll": "Lade... {{loaded}} von {{total}}",
+      "stop": "Stopp",
+      "loadFailed": "Die Client-Datenbank konnte nicht geladen werden",
+      "searchResults_one": "{{count}} Profil gefunden",
+      "searchResults_other": "{{count}} Profile gefunden",
+      "truncatedCap": "TeamSpeak liefert höchstens 50 Treffer, es kann also mehr geben. Suche eingrenzen.",
+      "truncatedList": "Zeige die ersten {{shown}} von {{total}} Treffern. Suche eingrenzen.",
+      "selectedCount_one": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
+      "bannedBy_one": "Von {{count}} aktiven Sperre erfasst",
+      "bannedBy_other": "Von {{count}} aktiven Sperren erfasst",
+      "onlineNow": "Gerade verbunden",
+      "andMore_one": "und {{count}} weiteres",
+      "andMore_other": "und {{count}} weitere",
+      "columns": {
+        "nickname": "Nickname",
+        "dbId": "DB-ID",
+        "uid": "Eindeutige ID",
+        "lastSeen": "Zuletzt gesehen",
+        "connections": "Verbindungen",
+        "lastIp": "Letzte IP",
+        "description": "Beschreibung",
+        "match": "Treffer bei"
+      },
+      "actions": {
+        "details": "Details",
+        "ban": "Sperren",
+        "delete": "Löschen"
+      },
+      "search": {
+        "mode": "Ganze Datenbank durchsuchen nach",
+        "modes": {
+          "name": "Nickname",
+          "uid": "Eindeutige ID",
+          "dbid": "Datenbank-ID",
+          "custom": "Custominfo",
+          "channelgroup": "Channel-Gruppe"
+        },
+        "query": "Suchtext",
+        "value": "Wert",
+        "identifier": "Identifier",
+        "placeholders": {
+          "name": "Nickname, % = beliebige Zeichen",
+          "uid": "Eindeutige ID oder ein Teil davon",
+          "dbid": "Datenbank-ID",
+          "custom": "Wert, % = beliebige Zeichen (leer = jeder Wert)",
+          "ident": "Identifier, exakt"
+        },
+        "channel": "In Channel",
+        "group": "Channel-Gruppe",
+        "allChannels": "Alle Channels",
+        "anyGroup": "Jede Gruppe außer der Standardgruppe",
+        "run": "Suchen",
+        "clear": "Zurück zur Liste",
+        "failed": "Die Suche ist fehlgeschlagen",
+        "hints": {
+          "name": "Text ohne % wird an beliebiger Stelle im Nickname gesucht. TeamSpeak liefert höchstens 50 Treffer; das Filterfeld darunter durchsucht alles, was schon geladen ist.",
+          "uid": "Text ohne % wird an beliebiger Stelle in der Eindeutigen ID gesucht. TeamSpeak liefert höchstens 50 Treffer.",
+          "dbid": "Schlägt genau diese Datenbank-ID nach.",
+          "custom": "TeamSpeak braucht den Identifier exakt; nur der Wert akzeptiert % als Platzhalter, Text ohne % wird an beliebiger Stelle im Wert gesucht.",
+          "channelgroup": "Listet Profile, die eine andere als die Standard-Channel-Gruppe halten, in einem Channel oder in allen. TeamSpeak kennt keinen Channel-Besitzer; das ist der nächstliegende Ersatz."
+        }
+      },
+      "detail": {
+        "title": "Profil",
+        "subtitle": "Datenbank-ID {{id}}",
+        "loadFailed": "Das Profil konnte nicht geladen werden",
+        "banned": "Gesperrt",
+        "identity": "Profil",
+        "firstSeen": "Erstmals gesehen",
+        "avatar": "Hat einen Avatar",
+        "onlineIn": "Gerade verbunden als Client {{clid}} in {{channel}}.",
+        "traffic": "Datenverkehr",
+        "monthUp": "Hochgeladen diesen Monat",
+        "monthDown": "Heruntergeladen diesen Monat",
+        "totalUp": "Hochgeladen insgesamt",
+        "totalDown": "Heruntergeladen insgesamt",
+        "serverGroups": "Servergruppen",
+        "channelGroups": "Channel-Gruppen",
+        "customInfo": "Custominfo",
+        "bans": "Sperren",
+        "noBans": "Keine aktive Sperre erfasst dieses Profil.",
+        "banRule": "Sperre #{{id}}",
+        "banUntil": "bis {{date}}",
+        "banName": "Name",
+        "unavailable": "Nicht verfügbar (TeamSpeak hat den Zugriff verweigert).",
+        "uidCopied": "Eindeutige ID kopiert",
+        "copyFailed": "Kopieren nicht möglich"
+      },
+      "ban": {
+        "title_one": "{{count}} Profil sperren",
+        "title_other": "{{count}} Profile sperren",
+        "banBy": "Für jedes davon eine Sperre anlegen",
+        "targets": {
+          "uid": {
+            "label": "Eindeutige ID",
+            "hint": "Sperrt nur diese Identität. Mit einer neuen Identität lässt sich das umgehen.",
+            "short": "UID"
+          },
+          "name": {
+            "label": "Nickname",
+            "hint": "Sperrt genau diesen Nickname, unabhängig von Groß- und Kleinschreibung.",
+            "short": "Name"
+          },
+          "ip": {
+            "label": "IP-Adresse",
+            "hint": "Sperrt die zuletzt bekannte Adresse. Das trifft auch alle anderen, die sich von dort verbinden.",
+            "short": "IP"
+          }
+        },
+        "nothingToBan": "Keines der ausgewählten Profile hat dafür einen Wert.",
+        "someMissing_one": "{{count}} ausgewähltes Profil hat keinen und bekommt keine Sperre.",
+        "someMissing_other": "{{count}} ausgewählte Profile haben keinen und bekommen keine Sperre.",
+        "done_one": "{{count}} Sperre angelegt.",
+        "done_other": "{{count}} Sperren angelegt.",
+        "skipped_one": "{{count}} übersprungen (nichts zu sperren).",
+        "skipped_other": "{{count}} übersprungen (nichts zu sperren).",
+        "partial": "{{created}} Sperren angelegt, {{failed}} fehlgeschlagen: {{message}}",
+        "failedAll": "Es wurde keine Sperre angelegt: {{message}}",
+        "failed": "Sperre konnte nicht angelegt werden"
+      },
+      "delete": {
+        "title_one": "{{count}} Profil löschen?",
+        "title_other": "{{count}} Profile löschen?",
+        "consequences_one": "Das Profil wird samt Custominfo, Avatar, Servergruppen-Mitgliedschaften, Channel-Gruppen-Zuweisungen und Client-Berechtigungen aus der Client-Datenbank des Servers entfernt.",
+        "consequences_other": "Die Profile werden samt Custominfo, Avataren, Servergruppen-Mitgliedschaften, Channel-Gruppen-Zuweisungen und Client-Berechtigungen aus der Client-Datenbank des Servers entfernt.",
+        "newProfile": "Ein Client, der sich erneut verbindet, gilt als neu und bekommt eine neue Datenbank-ID. Das lässt sich nicht rückgängig machen.",
+        "connectedSkipped_one": "{{count}} der ausgewählten Profile ist gerade verbunden und wird übersprungen.",
+        "connectedSkipped_other": "{{count}} der ausgewählten Profile sind gerade verbunden und werden übersprungen.",
+        "confirm_one": "{{count}} Profil löschen",
+        "confirm_other": "{{count}} Profile löschen",
+        "done_one": "{{count}} Profil gelöscht",
+        "done_other": "{{count}} Profile gelöscht",
+        "skippedOnline_one": "{{count}} Profil übersprungen, weil der Client verbunden ist.",
+        "skippedOnline_other": "{{count}} Profile übersprungen, weil die Clients verbunden sind.",
+        "failedSome_one": "{{count}} Profil konnte nicht gelöscht werden: {{message}}",
+        "failedSome_other": "{{count}} Profile konnten nicht gelöscht werden: {{message}}",
+        "failed": "Profile konnten nicht gelöscht werden"
+      }
     },
     "tokens": {
       "createdAndCopied": "Token erstellt und in Zwischenablage kopiert",
