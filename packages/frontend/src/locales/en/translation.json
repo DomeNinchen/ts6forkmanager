@@ -271,7 +271,89 @@
       "received": "Received",
       "total": "Total",
       "overview": "Overview",
-      "selectedServer": "Selected Server"
+      "selectedServer": "Selected Server",
+      "history": {
+        "tab": "History",
+        "rangeLabel": "Time range",
+        "ranges": {
+          "24h": "24 hours",
+          "3d": "3 days",
+          "7d": "7 days",
+          "14d": "14 days",
+          "31d": "31 days"
+        },
+        "timeZone": {
+          "label": "Time zone",
+          "local": "Local ({{zone}})",
+          "utc": "UTC"
+        },
+        "chartTitle": "Users online",
+        "pointSize": "1 point = {{size}}",
+        "chartAria": "Users online, last {{range}}: peak {{peak}}, average {{average}}",
+        "chartAriaEmpty": "Users online: no measurements in this time range",
+        "kpi": {
+          "current": "Now",
+          "peak": "Peak",
+          "average": "Average",
+          "averageHint": "in the selected range",
+          "availability": "Availability",
+          "availabilityHint": "of measured time",
+          "lastSample": "Last measurement"
+        },
+        "states": {
+          "online": "Online",
+          "stopped": "Stopped",
+          "unreachable": "Unreachable",
+          "nodata": "No measurement"
+        },
+        "tooltip": {
+          "mean": "Average",
+          "peak": "Peak",
+          "min": "Minimum",
+          "avg24h": "24 h average",
+          "unreachable": "Server was not reachable",
+          "stopped": "Virtual server was stopped",
+          "nodata": "No measurement (backend not running, or recording off)"
+        },
+        "legend": {
+          "mean": "Users (average)",
+          "peak": "Peak",
+          "avg24h": "24 h average",
+          "saturday": "Saturday",
+          "sunday": "Sunday",
+          "unreachable": "Server unreachable",
+          "stopped": "Virtual server stopped",
+          "nodata": "No measurement"
+        },
+        "recordingSince": "Recording since {{time}}, measured every {{interval}}",
+        "recordingOff": "Recording is turned off for this connection",
+        "recordingOffHint": "No new data points are added. Turn it on under Settings → Connections (edit the connection).",
+        "noDataYet": "No measurements yet",
+        "noDataYetHint": "The backend stores one data point every {{interval}} while the connection is reachable. The chart appears as soon as the first one is saved.",
+        "loadFailed": "Could not load the history",
+        "loadFailedHint": "Check that the connection is enabled and the backend is running.",
+        "settings": {
+          "title": "Recording",
+          "description": "How often the user count is measured and how long it is kept. Applies to every connection that has recording turned on (Settings → Connections).",
+          "intervalLabel": "Measure every",
+          "intervalOptions": {
+            "30": "30 seconds",
+            "60": "1 minute",
+            "120": "2 minutes",
+            "300": "5 minutes"
+          },
+          "retentionLabel": "Keep history for (days)",
+          "retentionHint": "{{min}} to {{max}} days. The longest chart range is 31 days.",
+          "estimate": "Roughly {{size}} per virtual server at these values.",
+          "restoreDefaults": "Restore defaults",
+          "unsaved": "Unsaved changes",
+          "saved": "Recording settings saved",
+          "saveFailed": "Could not save the recording settings",
+          "confirmShorterTitle": "Shorten the retention?",
+          "confirmShorterDescription": "History older than {{days}} days is deleted right away and cannot be restored.",
+          "confirmShorterAction": "Delete older history"
+        }
+      }
     },
     "login": {
       "ssoErrors": {
@@ -800,6 +882,8 @@
         "pingTargetLabel": "Dashboard Ping Target (optional)",
         "pingTargetPlaceholder": "Defaults to Host above ({{host}})",
         "pingTargetHint": "Only affects the Dashboard's Ping reading - useful if Host above is an internal address but the public domain is what should actually be tested. Bot flows always use Host, never this.",
+        "recordUserHistory": "Record user history",
+        "recordUserHistoryHint": "Measures this connection's user counts in the background for Statistics → History. Turning it off keeps what was already recorded and stops adding to it. Interval and retention are set under Statistics → History.",
         "sshPortLabel": "SSH Port",
         "sshUserLabel": "SSH User",
         "sshUserPlaceholder": "serveradmin",

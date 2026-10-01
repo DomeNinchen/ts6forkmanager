@@ -271,7 +271,89 @@
       "received": "Empfangen",
       "total": "Gesamt",
       "overview": "Übersicht",
-      "selectedServer": "Ausgewählter Server"
+      "selectedServer": "Ausgewählter Server",
+      "history": {
+        "tab": "Verlauf",
+        "rangeLabel": "Zeitraum",
+        "ranges": {
+          "24h": "24 Stunden",
+          "3d": "3 Tage",
+          "7d": "7 Tage",
+          "14d": "14 Tage",
+          "31d": "31 Tage"
+        },
+        "timeZone": {
+          "label": "Zeitzone",
+          "local": "Lokal ({{zone}})",
+          "utc": "UTC"
+        },
+        "chartTitle": "Nutzer online",
+        "pointSize": "1 Punkt = {{size}}",
+        "chartAria": "Nutzer online, letzte {{range}}: Spitze {{peak}}, Durchschnitt {{average}}",
+        "chartAriaEmpty": "Nutzer online: keine Messwerte in diesem Zeitraum",
+        "kpi": {
+          "current": "Aktuell",
+          "peak": "Spitze",
+          "average": "Durchschnitt",
+          "averageHint": "im gewählten Zeitraum",
+          "availability": "Verfügbarkeit",
+          "availabilityHint": "der gemessenen Zeit",
+          "lastSample": "Letzte Messung"
+        },
+        "states": {
+          "online": "Online",
+          "stopped": "Gestoppt",
+          "unreachable": "Nicht erreichbar",
+          "nodata": "Keine Messung"
+        },
+        "tooltip": {
+          "mean": "Durchschnitt",
+          "peak": "Spitze",
+          "min": "Minimum",
+          "avg24h": "24-h-Durchschnitt",
+          "unreachable": "Server war nicht erreichbar",
+          "stopped": "Virtueller Server war gestoppt",
+          "nodata": "Keine Messung (Backend lief nicht oder Aufzeichnung war aus)"
+        },
+        "legend": {
+          "mean": "Nutzer (Durchschnitt)",
+          "peak": "Spitze",
+          "avg24h": "24-h-Durchschnitt",
+          "saturday": "Samstag",
+          "sunday": "Sonntag",
+          "unreachable": "Server nicht erreichbar",
+          "stopped": "Virtueller Server gestoppt",
+          "nodata": "Keine Messung"
+        },
+        "recordingSince": "Aufzeichnung seit {{time}}, Messintervall {{interval}}",
+        "recordingOff": "Die Aufzeichnung ist für diese Verbindung ausgeschaltet",
+        "recordingOffHint": "Es kommen keine neuen Messpunkte dazu. Einschalten unter Einstellungen → Verbindungen (Verbindung bearbeiten).",
+        "noDataYet": "Noch keine Messwerte",
+        "noDataYetHint": "Das Backend speichert alle {{interval}} einen Messpunkt, solange die Verbindung erreichbar ist. Das Diagramm erscheint, sobald der erste gespeichert ist.",
+        "loadFailed": "Der Verlauf konnte nicht geladen werden",
+        "loadFailedHint": "Prüfe, ob die Verbindung aktiviert ist und das Backend läuft.",
+        "settings": {
+          "title": "Aufzeichnung",
+          "description": "Wie oft die Nutzerzahl gemessen und wie lange sie aufbewahrt wird. Gilt für jede Verbindung, bei der die Aufzeichnung eingeschaltet ist (Einstellungen → Verbindungen).",
+          "intervalLabel": "Messen alle",
+          "intervalOptions": {
+            "30": "30 Sekunden",
+            "60": "1 Minute",
+            "120": "2 Minuten",
+            "300": "5 Minuten"
+          },
+          "retentionLabel": "Verlauf aufbewahren (Tage)",
+          "retentionHint": "{{min}} bis {{max}} Tage. Der längste Diagramm-Zeitraum sind 31 Tage.",
+          "estimate": "Bei diesen Werten etwa {{size}} pro virtuellem Server.",
+          "restoreDefaults": "Standardwerte",
+          "unsaved": "Ungespeicherte Änderungen",
+          "saved": "Aufzeichnungs-Einstellungen gespeichert",
+          "saveFailed": "Die Aufzeichnungs-Einstellungen konnten nicht gespeichert werden",
+          "confirmShorterTitle": "Aufbewahrung verkürzen?",
+          "confirmShorterDescription": "Verlauf, der älter als {{days}} Tage ist, wird sofort gelöscht und lässt sich nicht wiederherstellen.",
+          "confirmShorterAction": "Älteren Verlauf löschen"
+        }
+      }
     },
     "login": {
       "ssoErrors": {
@@ -800,6 +882,8 @@
         "pingTargetLabel": "Dashboard-Ping-Ziel (optional)",
         "pingTargetPlaceholder": "Standardmäßig obiger Host ({{host}})",
         "pingTargetHint": "Betrifft nur die Ping-Anzeige des Dashboards - nützlich, wenn der Host oben eine interne Adresse ist, aber eigentlich die öffentliche Domain getestet werden soll. Bot-Flows verwenden immer den Host, niemals dies.",
+        "recordUserHistory": "Nutzerverlauf aufzeichnen",
+        "recordUserHistoryHint": "Misst die Nutzerzahlen dieser Verbindung im Hintergrund für Statistiken → Verlauf. Ausschalten behält das bisher Aufgezeichnete und fügt nichts mehr hinzu. Takt und Aufbewahrung werden unter Statistiken → Verlauf eingestellt.",
         "sshPortLabel": "SSH-Port",
         "sshUserLabel": "SSH-Benutzer",
         "sshUserPlaceholder": "serveradmin",

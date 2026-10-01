@@ -5,6 +5,7 @@ import { PrismaClient } from './generated/prisma/client.js';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { ConnectionPool } from './ts-client/connection-pool.js';
 import { BandwidthSampler } from './ts-client/bandwidth-sampler.js';
+import { UserHistorySampler } from './ts-client/user-history-sampler.js';
 import { BotEngine } from './bot-engine/engine.js';
 import { VoiceBotManager } from './voice/voice-bot-manager.js';
 import { MusicCommandHandler } from './voice/music-command-handler.js';
@@ -101,6 +102,8 @@ async function main() {
   app.locals.connectionPool = connectionPool;
   const bandwidthSampler = new BandwidthSampler(connectionPool, prisma);
   app.locals.bandwidthSampler = bandwidthSampler;
+  const userHistorySampler = new UserHistorySampler(connectionPool, prisma);
+  app.locals.userHistorySampler = userHistorySampler;
   app.locals.wss = wss;
 
   // Initialize Bot Engine
@@ -128,6 +131,10 @@ async function main() {
   // otherwise hold up the HTTP listener. Failures are handled inside.
   void bandwidthSampler.start();
 
+  // The long-term user-count history for Statistics -> History. Same reasoning
+  // for not awaiting it: its first tick asks every configured server.
+  void userHistorySampler.start();
+
   server.listen(config.port, () => {
     console.log(`[TS6 WebUI] Backend running on http://localhost:${config.port}`);
     console.log(`[TS6 WebUI] WebSocket available at ws://localhost:${config.port}/ws`);
@@ -140,6 +147,7 @@ async function main() {
     await voiceBotManager.stopAll();
     await botEngine.destroy();
     (app.locals.bandwidthSampler as BandwidthSampler).destroy();
+    (app.locals.userHistorySampler as UserHistorySampler).destroy();
     connectionPool.destroy();
     wss.close();
     server.close();
