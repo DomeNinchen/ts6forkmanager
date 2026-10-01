@@ -95,6 +95,7 @@
       "statistics": "Statistics",
       "channels": "Channels",
       "clients": "Clients",
+      "clientDatabase": "Client Database",
       "serverGroups": "Server Groups",
       "channelGroups": "Channel Groups",
       "permissions": "Permissions",
@@ -432,6 +433,152 @@
       "describeCount_other": "Describe {{count}} clients",
       "descriptionUpdated_one": "Updated description for {{count}} client",
       "descriptionUpdated_other": "Updated description for {{count}} clients"
+    },
+    "clientDatabase": {
+      "subtitle": "Every profile this server has ever seen, including clients that are offline.",
+      "filterPlaceholder": "Filter the loaded profiles...",
+      "loadedCount": "{{loaded}} of {{total}} profiles loaded",
+      "loadMore": "Load {{count}} more",
+      "loadAll": "Load all",
+      "loadingAll": "Loading... {{loaded}} of {{total}}",
+      "stop": "Stop",
+      "loadFailed": "Could not load the client database",
+      "searchResults_one": "{{count}} profile found",
+      "searchResults_other": "{{count}} profiles found",
+      "truncatedCap": "TeamSpeak returns at most 50 matches, so there may be more. Narrow the search.",
+      "truncatedList": "Showing the first {{shown}} of {{total}} matches. Narrow the search.",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "bannedBy_one": "Covered by {{count}} active ban rule",
+      "bannedBy_other": "Covered by {{count}} active ban rules",
+      "onlineNow": "Connected right now",
+      "andMore_one": "and {{count}} more",
+      "andMore_other": "and {{count}} more",
+      "columns": {
+        "nickname": "Nickname",
+        "dbId": "DB ID",
+        "uid": "Unique ID",
+        "lastSeen": "Last seen",
+        "connections": "Connections",
+        "lastIp": "Last IP",
+        "description": "Description",
+        "match": "Matched on"
+      },
+      "actions": {
+        "details": "Details",
+        "ban": "Ban",
+        "delete": "Delete"
+      },
+      "search": {
+        "mode": "Search the whole database by",
+        "modes": {
+          "name": "Nickname",
+          "uid": "Unique ID",
+          "dbid": "Database ID",
+          "custom": "Custom info",
+          "channelgroup": "Channel group"
+        },
+        "query": "Search text",
+        "value": "Value",
+        "identifier": "Identifier",
+        "placeholders": {
+          "name": "Nickname, % = any characters",
+          "uid": "Unique ID or a part of it",
+          "dbid": "Database ID",
+          "custom": "Value, % = any characters (empty = any value)",
+          "ident": "Identifier, exactly"
+        },
+        "channel": "In channel",
+        "group": "Channel group",
+        "allChannels": "All channels",
+        "anyGroup": "Any group except the default",
+        "run": "Search",
+        "clear": "Back to the list",
+        "failed": "The search failed",
+        "hints": {
+          "name": "Text without % matches anywhere in the nickname. TeamSpeak returns at most 50 matches; the filter field below searches everything that is already loaded.",
+          "uid": "Text without % matches anywhere in the unique ID. TeamSpeak returns at most 50 matches.",
+          "dbid": "Looks up exactly this database ID.",
+          "custom": "TeamSpeak needs the identifier exactly; only the value accepts % as a wildcard, and text without % matches anywhere in the value.",
+          "channelgroup": "Lists profiles that hold a channel group other than the default one, in one channel or in all of them. TeamSpeak has no channel owner; this is the closest equivalent."
+        }
+      },
+      "detail": {
+        "title": "Profile",
+        "subtitle": "Database ID {{id}}",
+        "loadFailed": "Could not load the profile",
+        "banned": "Banned",
+        "identity": "Profile",
+        "firstSeen": "First seen",
+        "avatar": "Has an avatar",
+        "onlineIn": "Connected right now as client {{clid}} in {{channel}}.",
+        "traffic": "Traffic",
+        "monthUp": "Uploaded this month",
+        "monthDown": "Downloaded this month",
+        "totalUp": "Uploaded in total",
+        "totalDown": "Downloaded in total",
+        "serverGroups": "Server groups",
+        "channelGroups": "Channel groups",
+        "customInfo": "Custom info",
+        "bans": "Bans",
+        "noBans": "No active ban rule covers this profile.",
+        "banRule": "Ban rule #{{id}}",
+        "banUntil": "until {{date}}",
+        "banName": "Name",
+        "unavailable": "Not available (TeamSpeak refused access).",
+        "uidCopied": "Unique ID copied",
+        "copyFailed": "Could not copy"
+      },
+      "ban": {
+        "title_one": "Ban {{count}} profile",
+        "title_other": "Ban {{count}} profiles",
+        "banBy": "Create a ban rule for each",
+        "targets": {
+          "uid": {
+            "label": "Unique ID",
+            "hint": "Bans this identity only. Anyone can get around it by creating a new identity.",
+            "short": "UID"
+          },
+          "name": {
+            "label": "Nickname",
+            "hint": "Bans exactly this nickname, in any capitalisation.",
+            "short": "Name"
+          },
+          "ip": {
+            "label": "IP address",
+            "hint": "Bans the last known address. This also affects everyone else who connects from it.",
+            "short": "IP"
+          }
+        },
+        "nothingToBan": "None of the selected profiles has a value for this.",
+        "someMissing_one": "{{count}} selected profile has none and gets no rule.",
+        "someMissing_other": "{{count}} selected profiles have none and get no rule.",
+        "done_one": "Created {{count}} ban rule.",
+        "done_other": "Created {{count}} ban rules.",
+        "skipped_one": "{{count}} skipped (nothing to ban).",
+        "skipped_other": "{{count}} skipped (nothing to ban).",
+        "partial": "Created {{created}} ban rules, {{failed}} failed: {{message}}",
+        "failedAll": "No ban rule was created: {{message}}",
+        "failed": "Failed to create the ban"
+      },
+      "delete": {
+        "title_one": "Delete {{count}} profile?",
+        "title_other": "Delete {{count}} profiles?",
+        "consequences_one": "This removes the profile from the server's client database together with its custom info, avatar, server group memberships, channel group assignments and client permissions.",
+        "consequences_other": "This removes the profiles from the server's client database together with their custom info, avatars, server group memberships, channel group assignments and client permissions.",
+        "newProfile": "A client that connects again is treated as new and gets a new database ID. This cannot be undone.",
+        "connectedSkipped_one": "{{count}} of the selected profiles is connected right now and will be skipped.",
+        "connectedSkipped_other": "{{count}} of the selected profiles are connected right now and will be skipped.",
+        "confirm_one": "Delete {{count}} profile",
+        "confirm_other": "Delete {{count}} profiles",
+        "done_one": "Deleted {{count}} profile",
+        "done_other": "Deleted {{count}} profiles",
+        "skippedOnline_one": "{{count}} profile was skipped because its client is connected.",
+        "skippedOnline_other": "{{count}} profiles were skipped because their clients are connected.",
+        "failedSome_one": "{{count}} profile could not be deleted: {{message}}",
+        "failedSome_other": "{{count}} profiles could not be deleted: {{message}}",
+        "failed": "Failed to delete the profiles"
+      }
     },
     "tokens": {
       "createdAndCopied": "Token created and copied to clipboard",

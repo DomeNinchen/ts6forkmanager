@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { TSApiError, AppError } from '../middleware/error-handler.js';
+import { clientDatabaseRoutes } from './client-database.routes.js';
 
 export const clientRoutes: Router = Router({ mergeParams: true });
 
@@ -25,21 +26,9 @@ clientRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-clientRoutes.get('/database', async (req: Request, res: Response, next) => {
-  try {
-    const result = await getClient(req).execute(getSid(req), 'clientdblist', {
-      start: req.query.start || 0, duration: req.query.duration || 100,
-    });
-    res.json(result);
-  } catch (err) { next(err); }
-});
-
-clientRoutes.get('/database/:cldbid', async (req: Request, res: Response, next) => {
-  try {
-    const result = await getClient(req).execute(getSid(req), 'clientdbinfo', { cldbid: String(req.params.cldbid) });
-    res.json(result);
-  } catch (err) { next(err); }
-});
+// The client database (every profile the server has ever seen) - admin-only, see its own file.
+// Mounted before the generic /:clid routes below so "database" is never read as a client id.
+clientRoutes.use('/database', clientDatabaseRoutes);
 
 // Bulk routes - registered before the generic /:clid routes below, since
 // Express would otherwise match e.g. "/bulk/move" as "/:clid/move" with

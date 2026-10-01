@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench, SlidersHorizontal,
+  BarChart3, Wrench, SlidersHorizontal, Database,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
@@ -44,6 +44,7 @@ function getNavSections(t: TFunction) {
       items: [
         { to: '/channels', icon: Hash, label: t('nav.items.channels') },
         { to: '/clients', icon: Users, label: t('nav.items.clients') },
+        { to: '/client-database', icon: Database, label: t('nav.items.clientDatabase'), visible: adminOnly },
         { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: adminOnly },
         { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: adminOnly },
         { to: '/permissions', icon: Lock, label: t('nav.items.permissions'), visible: adminOnly },
