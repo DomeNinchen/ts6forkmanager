@@ -325,7 +325,7 @@
           "stopped": "Virtual server stopped",
           "nodata": "No measurement"
         },
-        "recordingSince": "Recording since {{time}}, one measurement every {{interval}}",
+        "recordingSince": "Recording since {{time}}, measured every {{interval}}",
         "recordingOff": "Recording is turned off for this connection",
         "recordingOffHint": "No new data points are added. Turn it on under Settings → Connections (edit the connection).",
         "noDataYet": "No measurements yet",

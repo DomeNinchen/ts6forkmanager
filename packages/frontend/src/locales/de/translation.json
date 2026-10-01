@@ -325,7 +325,7 @@
           "stopped": "Virtueller Server gestoppt",
           "nodata": "Keine Messung"
         },
-        "recordingSince": "Aufzeichnung seit {{time}}, eine Messung alle {{interval}}",
+        "recordingSince": "Aufzeichnung seit {{time}}, Messintervall {{interval}}",
         "recordingOff": "Die Aufzeichnung ist für diese Verbindung ausgeschaltet",
         "recordingOffHint": "Es kommen keine neuen Messpunkte dazu. Einschalten unter Einstellungen → Verbindungen (Verbindung bearbeiten).",
         "noDataYet": "Noch keine Messwerte",
