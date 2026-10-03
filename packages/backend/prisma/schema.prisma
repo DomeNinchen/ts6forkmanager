@@ -451,6 +451,12 @@ model ServerUserSample {
   // virtualserver_queryclientsonline, the same figure the Virtual Servers page
   // shows. Null unless state is "online" - never 0 as a stand-in for unknown.
   users           Int?
+  // The virtual server's slot limit (virtualserver_maxclients) when this row
+  // was written, so the chart can show how close the user count came to it
+  // even after an admin has changed the limit. Null for rows recorded before
+  // this column existed (they get no limit line), and for "stopped" and
+  // "unreachable" rows, where serverlist does not report it.
+  maxClients      Int?
   // The sampling interval in force when this row was written, in seconds. It
   // is stored per row because the interval is an admin setting: the chart
   // decides whether two neighbouring rows are "one sample apart" or "a gap"

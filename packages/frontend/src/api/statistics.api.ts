@@ -22,6 +22,8 @@ export interface UserHistoryPoint {
   min: number | null;
   /** Mean of every online sample in the 24 hours up to the end of this bucket. */
   avg24h: number | null;
+  /** The slot limit in force at the end of the bucket; null when unknown (older rows, empty bucket). */
+  slots: number | null;
 }
 
 export interface UserHistoryEvent {
@@ -34,7 +36,8 @@ export interface UserHistoryEvent {
 export interface UserHistoryStats {
   current: number | null;
   currentState: UserSampleState | 'nodata' | null;
-  peak: { users: number; at: number } | null;
+  /** `slots` is the limit that applied when the peak was reached, or null when unknown. */
+  peak: { users: number; at: number; slots: number | null } | null;
   average: number | null;
   /** Percent of measured time the virtual server was online. */
   availability: number | null;

@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
+import { AppError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { BandwidthSampler } from '../ts-client/bandwidth-sampler.js';
+import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
 
 export const dashboardRoutes: Router = Router({ mergeParams: true });
 
@@ -71,5 +73,24 @@ dashboardRoutes.get('/bandwidth-history', async (req: Request, res: Response, ne
     const sid = parseInt(String(req.params.sid));
     const sampler: BandwidthSampler = req.app.locals.bandwidthSampler;
     res.json(await sampler.getHistory(configId, sid));
+  } catch (err) { next(err); }
+});
+
+// GET /user-history — the last 24 hours of the recorded user count, for the
+// dashboard's history card. Open to every role with access to this server,
+// like the rest of the dashboard (the live count is on this page already).
+// Deliberately takes no range: the longer windows and the recording settings
+// stay on the admin-only Statistics -> History tab.
+dashboardRoutes.get('/user-history', async (req: Request, res: Response, next) => {
+  try {
+    const configId = parseInt(String(req.params.configId));
+    const sid = parseInt(String(req.params.sid));
+    if (!Number.isInteger(configId) || !Number.isInteger(sid)) {
+      throw new AppError(400, 'Invalid server or virtual server id');
+    }
+    const sampler: UserHistorySampler = req.app.locals.userHistorySampler;
+    const history = await sampler.getHistory(configId, sid, '24h');
+    if (!history) throw new AppError(404, 'Server config not found');
+    res.json(history);
   } catch (err) { next(err); }
 });
