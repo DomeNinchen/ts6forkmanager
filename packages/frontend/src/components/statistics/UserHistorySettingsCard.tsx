@@ -15,15 +15,17 @@ import { formatBytes } from '@/lib/utils';
 import { formatSeconds } from '@/lib/user-history-time';
 
 /**
- * Measured, not guessed: a row of the history table takes about 90 bytes
- * including its index entry. Only used for the size estimate under the form.
+ * Measured, not guessed: at every interval a virtual server gets one row in
+ * the user-count table (96 bytes including its index entry) and one in the
+ * bandwidth/ping table (109), taken from a month of real rows in a VACUUMed
+ * copy of each table. Only used for the size estimate under the form.
  */
-const BYTES_PER_ROW = 90;
+const BYTES_PER_INTERVAL = 96 + 109;
 
 /**
- * How often the user count is measured and how long it is kept. Admin-only
- * because the whole Statistics page is; lives here rather than in Settings so
- * the values sit next to the chart they shape.
+ * How often user count, bandwidth and ping are recorded and how long they are
+ * kept. Admin-only because the whole Statistics page is; lives here rather than
+ * in Settings so the values sit next to the charts they shape.
  */
 export function UserHistorySettingsCard() {
   const { t } = useTranslation();
@@ -40,8 +42,9 @@ export function UserHistorySettingsCard() {
     mutationFn: (config: UserHistorySettings) => settingsApi.setUserHistorySettings(config),
     onSuccess: (saved) => {
       qc.setQueryData(['user-history-settings'], saved);
-      // The chart reports the interval and retention it was drawn with.
+      // The charts report the interval and retention they were drawn with.
       qc.invalidateQueries({ queryKey: ['user-history'] });
+      qc.invalidateQueries({ queryKey: ['metric-history'] });
       setDraft(null);
       setConfirmShorter(false);
       toast.success(t('pages.serverStats.history.settings.saved'));
@@ -66,7 +69,7 @@ export function UserHistorySettingsCard() {
     active.intervalSeconds === data.defaults.intervalSeconds && active.retentionDays === data.defaults.retentionDays;
 
   // One virtual server's worth at the values in the form.
-  const estimatedBytes = valid ? ((active.retentionDays * 86_400) / active.intervalSeconds) * BYTES_PER_ROW : null;
+  const estimatedBytes = valid ? ((active.retentionDays * 86_400) / active.intervalSeconds) * BYTES_PER_INTERVAL : null;
 
   const submit = () => (shortens ? setConfirmShorter(true) : save.mutate(active));
 
