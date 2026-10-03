@@ -150,6 +150,7 @@ model TsServerConfig {
   commandAdminGroups  BotCommandAdminGroup[]
   metricSamples       ServerMetricSample[]
   userSamples         ServerUserSample[]
+  metricRollups       ServerMetricRollup[]
 }
 
 model BotFlow {
@@ -466,5 +467,54 @@ model ServerUserSample {
 
   // Reads are "this virtual server's rows in time order" and the periodic
   // prune is "everything older than X" - one composite index serves both.
+  @@index([serverConfigId, virtualServerId, measuredAt])
+}
+
+// === Long-term bandwidth and ping history (Statistics -> History) ===
+// One row per virtual server per history interval, rolled up from the
+// measurements BandwidthSampler already takes every 30 seconds for the
+// dashboard's 20-minute charts. Recording this therefore adds no requests to
+// TeamSpeak and does not contact the ping target any more often than before.
+// Interval and retention are the same admin settings as for ServerUserSample.
+//
+// Whether a stretch was unreachable or stopped is not repeated here: the chart
+// takes that from ServerUserSample, which records it per tick.
+model ServerMetricRollup {
+  id              Int      @id @default(autoincrement())
+  serverConfigId  Int
+  serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  // TeamSpeak's own virtual server id (sid), as on ServerUserSample.
+  virtualServerId Int
+  // Start of the window this row covers.
+  measuredAt      DateTime
+  // The history interval in force when the window was recorded, in seconds
+  // (stored per row for the same reason as ServerUserSample.intervalSec).
+  intervalSec     Int
+
+  // Bytes moved during the window, taken from the difference of the server's
+  // own running totals (connection_bytes_*_total) rather than estimated from
+  // sampled rates - so the average rate over any stretch is exact, whatever the
+  // measuring interval. `spanSec` is the number of seconds that difference
+  // covers. All three are null when no difference could be taken: the first
+  // reading after the backend started, or a total that went backwards because
+  // the virtual server restarted (a wrong number is worse than none).
+  bytesIn         BigInt?
+  bytesOut        BigInt?
+  spanSec         Int?
+  // The highest "last second" rate any of the window's samples saw, in bytes per
+  // second. Only about one second in thirty is sampled, so this is a floor for
+  // the real peak, not the peak itself.
+  peakIn          Int?
+  peakOut         Int?
+
+  // Ping in milliseconds (a timed TCP connect to the ping target). Average,
+  // lowest and highest are over the successful pings only; a failed ping is
+  // counted in pingFailed and never enters them as a number.
+  pingOk          Int
+  pingFailed      Int
+  pingAvg         Int?
+  pingMin         Int?
+  pingMax         Int?
+
   @@index([serverConfigId, virtualServerId, measuredAt])
 }

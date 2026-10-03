@@ -34,7 +34,7 @@ export const DAY_MS = 86_400_000;
  * few seconds late (a slow WebQuery answer, a busy event loop) is not an
  * outage; fewer than three, so a real gap is not smoothed over.
  */
-const GAP_FACTOR = 2.5;
+export const GAP_FACTOR = 2.5;
 
 export type UserSampleState = 'online' | 'stopped' | 'unreachable';
 
@@ -217,14 +217,18 @@ export function buildUserHistory(rows: UserSampleRow[], range: UserHistoryRange,
  * Time before the very first row is not reported - a virtual server that has
  * only just started being recorded was not "missing" before that.
  */
-function buildEvents(rows: UserSampleRow[], from: number, to: number): UserHistoryEvent[] {
+export function buildEvents(rows: UserSampleRow[], from: number, to: number): UserHistoryEvent[] {
   const spans: UserHistoryEvent[] = [];
-  const push = (kind: UserHistoryEventKind, start: number, end: number) => {
+  const push = (kind: UserHistoryEventKind, start: number, end: number, intervalMs: number) => {
     if (end <= start) return;
     const last = spans[spans.length - 1];
     // Touching stretches of the same kind are one event: a server that was
-    // down for an hour produces sixty rows, not sixty markers.
-    if (last && last.kind === kind && start <= last.to + 1) {
+    // down for an hour produces sixty rows, not sixty markers. "Touching"
+    // has to allow for the milliseconds by which one tick runs later than the
+    // one before - consecutive rows are routinely 2 to 10 ms further apart
+    // than the interval, and with no allowance every such row would start an
+    // event of its own.
+    if (last && last.kind === kind && start <= last.to + Math.max(1000, intervalMs / 10)) {
       last.to = Math.max(last.to, end);
     } else {
       spans.push({ kind, from: start, to: end });
@@ -236,8 +240,8 @@ function buildEvents(rows: UserSampleRow[], from: number, to: number): UserHisto
     const intervalMs = row.intervalSec * 1000;
     const nextAt = i + 1 < rows.length ? rows[i + 1].t : to;
 
-    if (row.state !== 'online') push(row.state, row.t, Math.min(row.t + intervalMs, nextAt));
-    if (nextAt - row.t > GAP_FACTOR * intervalMs) push('nodata', row.t + intervalMs, nextAt);
+    if (row.state !== 'online') push(row.state, row.t, Math.min(row.t + intervalMs, nextAt), intervalMs);
+    if (nextAt - row.t > GAP_FACTOR * intervalMs) push('nodata', row.t + intervalMs, nextAt, intervalMs);
   }
 
   return spans

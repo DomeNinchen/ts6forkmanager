@@ -3,6 +3,7 @@ import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
 import { isUserHistoryRange } from '../utils/user-history-series.js';
+import { isMetricKind } from '../utils/metric-history-series.js';
 
 export const statisticsRoutes: Router = Router({ mergeParams: true });
 
@@ -26,6 +27,34 @@ statisticsRoutes.get('/user-history', requireRole('admin'), async (req: Request,
 
     const sampler: UserHistorySampler = req.app.locals.userHistorySampler;
     const history = await sampler.getHistory(configId, sid, range);
+    if (!history) throw new AppError(404, 'Server config not found');
+    res.json(history);
+  } catch (err) { next(err); }
+});
+
+// GET /metric-history?metric=bandwidth|ping&range=24h|3d|7d|14d|31d — the
+// rolled-up bandwidth or ping of one virtual server for the same chart, on the
+// same buckets, ranges and marks as /user-history. Admin only, for the same reason.
+statisticsRoutes.get('/metric-history', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const configId = parseInt(String(req.params.configId));
+    const sid = parseInt(String(req.params.sid));
+    if (!Number.isInteger(configId) || !Number.isInteger(sid)) {
+      throw new AppError(400, 'Invalid server or virtual server id');
+    }
+
+    const metric = req.query.metric;
+    if (!isMetricKind(metric)) {
+      throw new AppError(400, 'metric must be one of: bandwidth, ping');
+    }
+
+    const range = req.query.range === undefined ? '24h' : req.query.range;
+    if (!isUserHistoryRange(range)) {
+      throw new AppError(400, 'range must be one of: 24h, 3d, 7d, 14d, 31d');
+    }
+
+    const sampler: UserHistorySampler = req.app.locals.userHistorySampler;
+    const history = await sampler.getMetricHistory(configId, sid, metric, range);
     if (!history) throw new AppError(404, 'Server config not found');
     res.json(history);
   } catch (err) { next(err); }

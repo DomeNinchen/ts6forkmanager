@@ -104,6 +104,10 @@ async function main() {
   app.locals.bandwidthSampler = bandwidthSampler;
   const userHistorySampler = new UserHistorySampler(connectionPool, prisma);
   app.locals.userHistorySampler = userHistorySampler;
+  // The long-term bandwidth and ping history is rolled up from the readings
+  // BandwidthSampler already takes; wired before either sampler starts, so no
+  // reading of the first pass is missed.
+  bandwidthSampler.setMetricSink(userHistorySampler);
   app.locals.wss = wss;
 
   // Initialize Bot Engine
@@ -147,7 +151,11 @@ async function main() {
     await voiceBotManager.stopAll();
     await botEngine.destroy();
     (app.locals.bandwidthSampler as BandwidthSampler).destroy();
-    (app.locals.userHistorySampler as UserHistorySampler).destroy();
+    const history = app.locals.userHistorySampler as UserHistorySampler;
+    history.destroy();
+    // The bandwidth/ping windows still being filled are written out now;
+    // after the database connection is closed there would be no way to.
+    await history.flush();
     connectionPool.destroy();
     wss.close();
     server.close();
