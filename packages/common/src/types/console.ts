@@ -92,3 +92,11 @@ export interface ConsoleSettings {
   /** Hold console commands back when they would eat into TeamSpeak's query flood limit. */
   floodGuardEnabled: boolean;
 }
+
+export const CONSOLE_SETTINGS_DEFAULTS: ConsoleSettings = {
+  auditRetentionDays: 90,
+  floodGuardEnabled: true,
+};
+
+/** What the retention setting may be, in days. */
+export const CONSOLE_AUDIT_RETENTION_BOUNDS = { min: 1, max: 3650 } as const;

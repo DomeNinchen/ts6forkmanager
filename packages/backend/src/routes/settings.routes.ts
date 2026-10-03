@@ -27,7 +27,8 @@ import {
   type UserHistorySettings,
 } from '../utils/user-history-settings.js';
 import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
-import { getConsoleSettings, setConsoleSettings, MIN_AUDIT_RETENTION_DAYS, MAX_AUDIT_RETENTION_DAYS } from '../utils/console-settings.js';
+import { CONSOLE_AUDIT_RETENTION_BOUNDS } from '@ts6/common';
+import { getConsoleSettings, setConsoleSettings } from '../utils/console-settings.js';
 import { STREAM_PRESETS } from '../voice/streaming/types.js';
 import { forceCookieCheck } from '../utils/yt-cookie-check.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
@@ -449,8 +450,8 @@ settingsRoutes.put('/console', requireAdmin, async (req: Request, res: Response,
   try {
     const { auditRetentionDays, floodGuardEnabled } = req.body ?? {};
 
-    if (!Number.isInteger(auditRetentionDays) || auditRetentionDays < MIN_AUDIT_RETENTION_DAYS || auditRetentionDays > MAX_AUDIT_RETENTION_DAYS) {
-      throw new AppError(400, `auditRetentionDays must be a whole number between ${MIN_AUDIT_RETENTION_DAYS} and ${MAX_AUDIT_RETENTION_DAYS}`);
+    if (!Number.isInteger(auditRetentionDays) || auditRetentionDays < CONSOLE_AUDIT_RETENTION_BOUNDS.min || auditRetentionDays > CONSOLE_AUDIT_RETENTION_BOUNDS.max) {
+      throw new AppError(400, `auditRetentionDays must be a whole number between ${CONSOLE_AUDIT_RETENTION_BOUNDS.min} and ${CONSOLE_AUDIT_RETENTION_BOUNDS.max}`);
     }
     if (typeof floodGuardEnabled !== 'boolean') {
       throw new AppError(400, 'floodGuardEnabled must be a boolean');

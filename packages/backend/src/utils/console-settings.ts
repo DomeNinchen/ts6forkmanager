@@ -1,19 +1,11 @@
-import type { ConsoleSettings } from '@ts6/common';
+import { CONSOLE_AUDIT_RETENTION_BOUNDS, CONSOLE_SETTINGS_DEFAULTS, type ConsoleSettings } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
 
 const KEY_RETENTION_DAYS = 'console_audit_retention_days';
 const KEY_FLOOD_GUARD = 'console_flood_guard';
 
-export const DEFAULT_CONSOLE_SETTINGS: ConsoleSettings = {
-  auditRetentionDays: 90,
-  floodGuardEnabled: true,
-};
-
-export const MIN_AUDIT_RETENTION_DAYS = 1;
-export const MAX_AUDIT_RETENTION_DAYS = 3650;
-
 /**
- * App-wide settings of the admin query console (Settings -> Query console):
+ * App-wide settings of the admin query console (Query console -> Settings tab):
  * how long the audit trail is kept, and whether the console holds commands back
  * to stay clear of TeamSpeak's query flood limit. Stored in AppSetting like the
  * other installation-wide settings; a missing or unusable value falls back to
@@ -30,10 +22,10 @@ export async function getConsoleSettings(prisma: PrismaClient): Promise<ConsoleS
 
   return {
     auditRetentionDays:
-      Number.isInteger(days) && days >= MIN_AUDIT_RETENTION_DAYS && days <= MAX_AUDIT_RETENTION_DAYS
+      Number.isInteger(days) && days >= CONSOLE_AUDIT_RETENTION_BOUNDS.min && days <= CONSOLE_AUDIT_RETENTION_BOUNDS.max
         ? days
-        : DEFAULT_CONSOLE_SETTINGS.auditRetentionDays,
-    floodGuardEnabled: guard === undefined ? DEFAULT_CONSOLE_SETTINGS.floodGuardEnabled : guard === 'true',
+        : CONSOLE_SETTINGS_DEFAULTS.auditRetentionDays,
+    floodGuardEnabled: guard === undefined ? CONSOLE_SETTINGS_DEFAULTS.floodGuardEnabled : guard === 'true',
   };
 }
 
