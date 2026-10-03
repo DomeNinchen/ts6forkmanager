@@ -298,6 +298,7 @@
           "averageHint": "in the selected range",
           "availability": "Availability",
           "availabilityHint": "of measured time",
+          "peakOfSlots": "of {{slots}} slots ({{percent}} %)",
           "lastSample": "Last measurement"
         },
         "states": {
@@ -311,6 +312,7 @@
           "peak": "Peak",
           "min": "Minimum",
           "avg24h": "24 h average",
+          "slots": "Slot limit",
           "unreachable": "Server was not reachable",
           "stopped": "Virtual server was stopped",
           "nodata": "No measurement (backend not running, or recording off)"
@@ -319,6 +321,7 @@
           "mean": "Users (average)",
           "peak": "Peak",
           "avg24h": "24 h average",
+          "slots": "Slot limit",
           "saturday": "Saturday",
           "sunday": "Sunday",
           "unreachable": "Server unreachable",
@@ -326,6 +329,10 @@
           "nodata": "No measurement"
         },
         "recordingSince": "Recording since {{time}}, measured every {{interval}}",
+        "slots": {
+          "toggle": "Slot limit",
+          "unavailable": "No slot limit was recorded in this time range."
+        },
         "recordingOff": "Recording is turned off for this connection",
         "recordingOffHint": "No new data points are added. Turn it on under Settings → Connections (edit the connection).",
         "noDataYet": "No measurements yet",
@@ -1301,6 +1308,16 @@
       "download": "Download",
       "upload": "Upload",
       "collectingData": "Collecting data...",
+      "userHistory": {
+        "title": "Users, last 24 hours",
+        "peak": "Peak {{value}}",
+        "average": "Avg {{value}}",
+        "moreInHistory": "More in History",
+        "noData": "No measurements yet.",
+        "recordingOff": "Recording is turned off for this connection.",
+        "recordingOffNote": "Recording is turned off for this connection, so no new points are added.",
+        "loadFailed": "Could not load the user history."
+      },
       "in": "In:",
       "out": "Out:",
       "serverCapacity": "Server Capacity",

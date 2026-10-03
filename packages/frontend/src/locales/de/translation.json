@@ -298,6 +298,7 @@
           "averageHint": "im gewählten Zeitraum",
           "availability": "Verfügbarkeit",
           "availabilityHint": "der gemessenen Zeit",
+          "peakOfSlots": "von {{slots}} Plätzen ({{percent}} %)",
           "lastSample": "Letzte Messung"
         },
         "states": {
@@ -311,6 +312,7 @@
           "peak": "Spitze",
           "min": "Minimum",
           "avg24h": "24-h-Durchschnitt",
+          "slots": "Slot-Limit",
           "unreachable": "Server war nicht erreichbar",
           "stopped": "Virtueller Server war gestoppt",
           "nodata": "Keine Messung (Backend lief nicht oder Aufzeichnung war aus)"
@@ -319,6 +321,7 @@
           "mean": "Nutzer (Durchschnitt)",
           "peak": "Spitze",
           "avg24h": "24-h-Durchschnitt",
+          "slots": "Slot-Limit",
           "saturday": "Samstag",
           "sunday": "Sonntag",
           "unreachable": "Server nicht erreichbar",
@@ -326,6 +329,10 @@
           "nodata": "Keine Messung"
         },
         "recordingSince": "Aufzeichnung seit {{time}}, Messintervall {{interval}}",
+        "slots": {
+          "toggle": "Slot-Limit",
+          "unavailable": "In diesem Zeitraum wurde kein Slot-Limit aufgezeichnet."
+        },
         "recordingOff": "Die Aufzeichnung ist für diese Verbindung ausgeschaltet",
         "recordingOffHint": "Es kommen keine neuen Messpunkte dazu. Einschalten unter Einstellungen → Verbindungen (Verbindung bearbeiten).",
         "noDataYet": "Noch keine Messwerte",
@@ -1301,6 +1308,16 @@
       "download": "Download",
       "upload": "Upload",
       "collectingData": "Daten werden gesammelt...",
+      "userHistory": {
+        "title": "Nutzer, letzte 24 Stunden",
+        "peak": "Spitze {{value}}",
+        "average": "Ø {{value}}",
+        "moreInHistory": "Mehr im Verlauf",
+        "noData": "Noch keine Messwerte.",
+        "recordingOff": "Die Aufzeichnung ist für diese Verbindung ausgeschaltet.",
+        "recordingOffNote": "Die Aufzeichnung ist für diese Verbindung ausgeschaltet, es kommen keine neuen Punkte dazu.",
+        "loadFailed": "Der Nutzerverlauf konnte nicht geladen werden."
+      },
       "in": "Rein:",
       "out": "Raus:",
       "serverCapacity": "Serverkapazität",

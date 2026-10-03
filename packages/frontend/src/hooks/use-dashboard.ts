@@ -12,6 +12,20 @@ export function useDashboard() {
   });
 }
 
+// The last 24 hours of the recorded user count, for the dashboard's history
+// card. Recorded by the backend around the clock, so it is already full on first
+// render; a new point exists once per sampling interval (a minute by default),
+// so polling faster would only re-download the same picture.
+export function useDashboardUserHistory() {
+  const { selectedConfigId, selectedSid } = useServerStore();
+  return useQuery({
+    queryKey: ['dashboard-user-history', selectedConfigId, selectedSid],
+    queryFn: () => dashboardApi.userHistory(selectedConfigId!, selectedSid!),
+    enabled: !!selectedConfigId && !!selectedSid,
+    refetchInterval: 60_000,
+  });
+}
+
 // The last 20 minutes of bandwidth and ping, measured by the backend
 // continuously rather than only while a dashboard is open - so the charts show
 // a full window on the very first render. This is their only data source: the

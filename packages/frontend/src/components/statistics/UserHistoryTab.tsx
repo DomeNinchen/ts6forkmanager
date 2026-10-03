@@ -6,6 +6,7 @@ import { useUserHistory } from '@/hooks/use-user-history';
 import { useServerStore } from '@/stores/server.store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { UserHistoryChart } from '@/components/statistics/UserHistoryChart';
@@ -18,6 +19,7 @@ import {
   storeTimeZone,
   type HistoryTimeZone,
 } from '@/lib/user-history-time';
+import { readStoredShowSlots, storeShowSlots } from '@/lib/user-history-prefs';
 import { cn, timeAgo } from '@/lib/utils';
 
 const STATE_COLOR: Record<string, string> = {
@@ -27,12 +29,13 @@ const STATE_COLOR: Record<string, string> = {
   nodata: 'text-muted-foreground',
 };
 
-function Kpi({ label, value, sub, subClassName }: { label: string; value: string; sub?: string; subClassName?: string }) {
+function Kpi({ label, value, sub, sub2, subClassName }: { label: string; value: string; sub?: string; sub2?: string; subClassName?: string }) {
   return (
     <div className="min-w-0 p-4">
       <p className="font-display text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className="font-mono-data text-lg font-bold leading-tight">{value}</p>
       {sub && <p className={cn('truncate text-[11px] text-muted-foreground', subClassName)}>{sub}</p>}
+      {sub2 && <p className="truncate text-[11px] text-muted-foreground">{sub2}</p>}
     </div>
   );
 }
@@ -42,11 +45,17 @@ export function UserHistoryTab() {
   const { selectedConfigId, selectedSid } = useServerStore();
   const [range, setRange] = useState<UserHistoryRange>('24h');
   const [tz, setTz] = useState<HistoryTimeZone>(readStoredTimeZone);
+  const [showSlots, setShowSlots] = useState<boolean>(readStoredShowSlots);
   const { data, isLoading, isError } = useUserHistory(range);
 
   const chooseTimeZone = (next: HistoryTimeZone) => {
     setTz(next);
     storeTimeZone(next);
+  };
+
+  const chooseShowSlots = (next: boolean) => {
+    setShowSlots(next);
+    storeShowSlots(next);
   };
 
   if (!selectedConfigId) return <EmptyState icon={Server} title={t('pages.serverStats.noConnectionSelected')} />;
@@ -63,6 +72,10 @@ export function UserHistoryTab() {
       />
     );
   }
+
+  // Older rows were recorded before the slot limit was stored, so a window can
+  // have no limit at all; the switch then has nothing to draw and says so.
+  const hasSlots = data.points.some((p) => p.slots !== null);
 
   return (
     <div className="space-y-4">
@@ -103,7 +116,14 @@ export function UserHistoryTab() {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
             <LineChart className="h-4 w-4 text-primary" /> {t('pages.serverStats.history.chartTitle')}
-            <span className="ml-auto text-[11px] font-normal text-muted-foreground">
+            <span className="ml-auto flex items-center gap-4 text-[11px] font-normal text-muted-foreground">
+              <label
+                className={cn('flex items-center gap-2', hasSlots ? 'cursor-pointer' : 'cursor-not-allowed opacity-60')}
+                title={hasSlots ? undefined : t('pages.serverStats.history.slots.unavailable')}
+              >
+                <Switch checked={showSlots && hasSlots} disabled={!hasSlots} onCheckedChange={chooseShowSlots} />
+                {t('pages.serverStats.history.slots.toggle')}
+              </label>
               {t('pages.serverStats.history.pointSize', { size: formatSeconds(data.bucketSeconds) })}
             </span>
           </CardTitle>
@@ -118,7 +138,7 @@ export function UserHistoryTab() {
             />
           ) : (
             <>
-              <UserHistoryChart data={data} tz={tz} />
+              <UserHistoryChart data={data} tz={tz} showSlots={showSlots && hasSlots} />
               <p className="mt-3 text-[11px] text-muted-foreground">
                 {t('pages.serverStats.history.recordingSince', {
                   time: formatDateTime(data.firstSampleAt, tz, i18n.language),
@@ -153,7 +173,19 @@ function Kpis({ data, tz, locale }: { data: UserHistoryResponse; tz: HistoryTime
         <Kpi
           label={t('pages.serverStats.history.kpi.peak')}
           value={stats.peak ? String(stats.peak.users) : dash}
-          sub={stats.peak ? formatDateTime(stats.peak.at, tz, locale) : undefined}
+          // "13 of 32 slots (41 %)" when the limit at that moment is known; the
+          // time of the peak always follows, on its own line.
+          sub={
+            stats.peak?.slots
+              ? t('pages.serverStats.history.kpi.peakOfSlots', {
+                  slots: stats.peak.slots,
+                  percent: Math.round((stats.peak.users / stats.peak.slots) * 100),
+                })
+              : stats.peak
+                ? formatDateTime(stats.peak.at, tz, locale)
+                : undefined
+          }
+          sub2={stats.peak?.slots ? formatDateTime(stats.peak.at, tz, locale) : undefined}
         />
         <Kpi
           label={t('pages.serverStats.history.kpi.average')}
