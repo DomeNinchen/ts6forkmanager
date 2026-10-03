@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback, type DragEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { checkFileName, joinRepositoryPath, type ServerFileEntry } from '@ts6/common';
 import { filesApi } from '@/api/files.api';
 import { channelsApi } from '@/api/channels.api';
 import { useServerStore } from '@/stores/server.store';
+import { useTransfers } from '@/stores/transfers.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,19 +16,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { TransferPanel } from '@/components/files/TransferPanel';
+import { UploadConflictDialog } from '@/components/files/UploadConflictDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn, formatBytes } from '@/lib/utils';
+import { fileErrorMessage, pathProblemMessage } from '@/lib/file-errors';
 import {
-  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput,
+  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput, Upload, Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface FileEntry {
-  name: string;
-  size: number;
-  datetime: number;
-  type: number; // 0 = file, 1 = directory
-}
+/** Something a drag carries that can be uploaded, as opposed to a dragged piece of text or a link. */
+const dragCarriesFiles = (event: DragEvent) => Array.from(event.dataTransfer.types).includes('Files');
 
 export default function Files() {
   const { t, i18n } = useTranslation();
@@ -37,9 +38,12 @@ export default function Files() {
   const [currentPath, setCurrentPath] = useState('/');
   const [showMkdir, setShowMkdir] = useState(false);
   const [newDirName, setNewDirName] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<FileEntry | null>(null);
-  const [moveTarget, setMoveTarget] = useState<FileEntry | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ServerFileEntry | null>(null);
+  const [moveTarget, setMoveTarget] = useState<ServerFileEntry | null>(null);
   const [moveTargetCid, setMoveTargetCid] = useState('');
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch channel list for selector
   const { data: channelData } = useQuery({
@@ -56,24 +60,28 @@ export default function Files() {
     }));
   }, [channelData]);
 
-  // Fetch files in selected channel + path
+  // Fetch files in selected channel + path. Never served from cache: an upload
+  // that finished while another page was open has to show up on return.
   const { data: fileData, isLoading: loadingFiles, error: filesError } = useQuery({
     queryKey: ['files', c, s, selectedCid, currentPath],
     queryFn: () => filesApi.list(c!, s!, selectedCid!, currentPath),
     enabled: !!c && !!s && !!selectedCid,
     retry: false,
+    staleTime: 0,
   });
 
-  const files: FileEntry[] = useMemo(() => {
+  const { data: limits } = useQuery({
+    queryKey: ['files-limits', c, s],
+    queryFn: () => filesApi.limits(c!, s!),
+    enabled: !!c && !!s,
+    staleTime: 5 * 60_000,
+  });
+
+  const files: ServerFileEntry[] = useMemo(() => {
     if (!fileData || !Array.isArray(fileData)) return [];
-    return fileData.map((f: any) => ({
-      name: f.name,
-      size: Number(f.size) || 0,
-      datetime: Number(f.datetime) || 0,
-      type: Number(f.type),
-    })).sort((a: FileEntry, b: FileEntry) => {
-      // Directories first, then alphabetical
-      if (a.type !== b.type) return b.type - a.type;
+    // Directories first, then alphabetical
+    return [...fileData].sort((a, b) => {
+      if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
   }, [fileData]);
@@ -110,11 +118,44 @@ export default function Files() {
     onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.files.fileMoveFailed')),
   });
 
-  const navigateTo = (entry: FileEntry) => {
-    if (entry.type === 1) {
-      const newPath = currentPath === '/' ? `/${entry.name}` : `${currentPath}/${entry.name}`;
-      setCurrentPath(newPath);
-    }
+  // A download is a link the browser opens itself, so the file streams straight
+  // to disk and the browser's own download list shows the progress
+  const downloadMutation = useMutation({
+    mutationFn: (entry: ServerFileEntry) =>
+      filesApi.createDownloadLink(c!, s!, selectedCid!, joinRepositoryPath(currentPath, entry.name)),
+    onSuccess: (link) => {
+      const anchor = document.createElement('a');
+      anchor.href = link.url;
+      anchor.download = link.name;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      toast.success(t('pages.files.downloadStarted', { name: link.name }));
+    },
+    onError: (err, entry) => toast.error(fileErrorMessage(err, t, entry.name)),
+  });
+
+  const enqueueUploads = useTransfers((state) => state.enqueueUploads);
+  const uploadFiles = useCallback(
+    (list: File[]) => {
+      if (!c || !s || !selectedCid || list.length === 0) return;
+      enqueueUploads({ configId: c, sid: s, cid: selectedCid, directory: currentPath }, list, limits?.maxUploadBytes);
+    },
+    [c, s, selectedCid, currentPath, limits, enqueueUploads],
+  );
+
+  // The listing is refreshed whenever another upload into it completes
+  const uploadsDoneHere = useTransfers(
+    (state) => state.uploads.filter((item) => (
+      item.status === 'done' && item.configId === c && item.sid === s && item.cid === selectedCid && item.directory === currentPath
+    )).length,
+  );
+  useEffect(() => {
+    if (uploadsDoneHere > 0) qc.invalidateQueries({ queryKey: ['files', c, s, selectedCid, currentPath] });
+  }, [uploadsDoneHere]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const navigateTo = (entry: ServerFileEntry) => {
+    if (entry.isDirectory) setCurrentPath(joinRepositoryPath(currentPath, entry.name));
   };
 
   const goUp = () => {
@@ -124,27 +165,50 @@ export default function Files() {
     setCurrentPath(parts.length === 0 ? '/' : '/' + parts.join('/'));
   };
 
+  const dirNameProblem = newDirName.trim() ? checkFileName(newDirName.trim()) : null;
+
   const handleMkdir = () => {
-    if (!newDirName.trim()) return;
-    const dirname = currentPath === '/' ? `/${newDirName}` : `${currentPath}/${newDirName}`;
-    mkdirMutation.mutate(dirname);
+    const name = newDirName.trim();
+    if (!name || checkFileName(name)) return;
+    mkdirMutation.mutate(joinRepositoryPath(currentPath, name));
   };
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    const fullPath = currentPath === '/' ? `/${deleteTarget.name}` : `${currentPath}/${deleteTarget.name}`;
-    deleteMutation.mutate(fullPath);
+    deleteMutation.mutate(joinRepositoryPath(currentPath, deleteTarget.name));
   };
 
   const handleMove = () => {
     if (!moveTarget || !moveTargetCid) return;
-    const fullPath = currentPath === '/' ? `/${moveTarget.name}` : `${currentPath}/${moveTarget.name}`;
-    moveMutation.mutate({ name: fullPath, targetCid: Number(moveTargetCid) });
+    moveMutation.mutate({ name: joinRepositoryPath(currentPath, moveTarget.name), targetCid: Number(moveTargetCid) });
   };
 
-  const formatDate = (ts: number) => {
-    if (!ts) return '-';
-    return new Date(ts * 1000).toLocaleDateString(i18n.language, {
+  const handleDrop = (event: DragEvent) => {
+    if (!dragCarriesFiles(event)) return;
+    event.preventDefault();
+    dragDepth.current = 0;
+    setDragging(false);
+    if (!selectedCid) return;
+
+    // The items have to be read right now, inside the event
+    const dropped: File[] = [];
+    let folders = 0;
+    for (const item of Array.from(event.dataTransfer.items)) {
+      if (item.kind !== 'file') continue;
+      if (item.webkitGetAsEntry?.()?.isDirectory) {
+        folders++;
+        continue;
+      }
+      const file = item.getAsFile();
+      if (file) dropped.push(file);
+    }
+    if (folders > 0) toast.info(t('pages.files.foldersNotSupported'));
+    uploadFiles(dropped);
+  };
+
+  const formatDate = (ms: number) => {
+    if (!ms) return '-';
+    return new Date(ms).toLocaleDateString(i18n.language, {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
@@ -160,11 +224,27 @@ export default function Files() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t('pages.files.title')}</h1>
         {selectedCid && (
-          <Button size="sm" onClick={() => setShowMkdir(true)}>
-            <FolderPlus className="h-4 w-4 mr-1" /> {t('pages.files.newFolder')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setShowMkdir(true)}>
+              <FolderPlus className="h-4 w-4 mr-1" /> {t('pages.files.newFolder')}
+            </Button>
+            <Button size="sm" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="h-4 w-4 mr-1" /> {t('pages.files.uploadFiles')}
+            </Button>
+          </div>
         )}
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          uploadFiles(Array.from(e.target.files ?? []));
+          e.target.value = '';
+        }}
+      />
 
       <div className="grid grid-cols-12 gap-4">
         {/* Channel Selector */}
@@ -200,7 +280,31 @@ export default function Files() {
         </Card>
 
         {/* File List */}
-        <Card className="card-hero col-span-9">
+        <Card
+          className={cn('card-hero col-span-9 relative', dragging && 'border-primary')}
+          onDragEnter={(e) => {
+            if (!selectedCid || !dragCarriesFiles(e)) return;
+            e.preventDefault();
+            dragDepth.current++;
+            setDragging(true);
+          }}
+          onDragOver={(e) => {
+            if (!selectedCid || !dragCarriesFiles(e)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+          }}
+          onDragLeave={(e) => {
+            if (!selectedCid || !dragCarriesFiles(e)) return;
+            dragDepth.current = Math.max(0, dragDepth.current - 1);
+            if (dragDepth.current === 0) setDragging(false);
+          }}
+          onDrop={handleDrop}
+        >
+          {dragging && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-primary/10 border-2 border-dashed border-primary text-sm font-medium text-primary pointer-events-none">
+              <Upload className="h-5 w-5" /> {t('pages.files.dropToUpload')}
+            </div>
+          )}
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -277,12 +381,12 @@ export default function Files() {
                         key={file.name}
                         className={cn(
                           'grid grid-cols-12 gap-2 px-4 py-2 text-sm items-center group hover:bg-muted/20 transition-colors',
-                          file.type === 1 && 'cursor-pointer',
+                          file.isDirectory && 'cursor-pointer',
                         )}
                         onClick={() => navigateTo(file)}
                       >
                         <div className="col-span-6 flex items-center gap-2 truncate">
-                          {file.type === 1 ? (
+                          {file.isDirectory ? (
                             <Folder className="h-4 w-4 text-primary/70 shrink-0" />
                           ) : (
                             <File className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -290,13 +394,22 @@ export default function Files() {
                           <span className="truncate">{file.name}</span>
                         </div>
                         <div className="col-span-2 text-right text-xs text-muted-foreground font-mono-data">
-                          {file.type === 0 ? formatBytes(file.size) : '-'}
+                          {file.isDirectory ? '-' : formatBytes(file.size)}
                         </div>
                         <div className="col-span-3 text-xs text-muted-foreground font-mono-data">
-                          {formatDate(file.datetime)}
+                          {formatDate(file.modified)}
                         </div>
                         <div className="col-span-1 flex justify-end gap-0.5">
-                          {file.type === 0 && (
+                          {!file.isDirectory && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); downloadMutation.mutate(file); }}
+                              className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                              title={t('pages.files.download')}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {!file.isDirectory && (
                             <button
                               onClick={(e) => { e.stopPropagation(); setMoveTarget(file); setMoveTargetCid(''); }}
                               className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
@@ -322,10 +435,16 @@ export default function Files() {
         </Card>
       </div>
 
-      {/* Info notice */}
-      <p className="text-xs text-muted-foreground text-center">
-        {t('pages.files.uploadDownloadNotice')}
-      </p>
+      <TransferPanel configId={c} sid={s} />
+
+      {/* Limits notice */}
+      {limits && (
+        <p className="text-xs text-muted-foreground text-center">
+          {t('pages.files.uploadLimitNotice', { size: formatBytes(limits.maxUploadBytes) })}
+        </p>
+      )}
+
+      <UploadConflictDialog />
 
       {/* Create Directory Dialog */}
       <Dialog open={showMkdir} onOpenChange={setShowMkdir}>
@@ -334,10 +453,11 @@ export default function Files() {
           <div>
             <Label className="text-xs">{t('pages.files.directoryName')}</Label>
             <Input value={newDirName} onChange={(e) => setNewDirName(e.target.value)} placeholder={t('pages.files.newFolderPlaceholder')} autoFocus />
+            {dirNameProblem && <p className="text-xs text-destructive mt-1">{pathProblemMessage(dirNameProblem, t)}</p>}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowMkdir(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleMkdir} disabled={mkdirMutation.isPending || !newDirName.trim()}>{t('common.create')}</Button>
+            <Button onClick={handleMkdir} disabled={mkdirMutation.isPending || !newDirName.trim() || !!dirNameProblem}>{t('common.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
