@@ -95,6 +95,7 @@
       "statistics": "Statistics",
       "channels": "Channels",
       "clients": "Clients",
+      "clientDatabase": "Client Database",
       "serverGroups": "Server Groups",
       "channelGroups": "Channel Groups",
       "permissions": "Permissions",
@@ -105,6 +106,7 @@
       "complaints": "Complaints",
       "messages": "Messages",
       "serverLogs": "Server Logs",
+      "queryConsole": "Query Console",
       "instance": "Instance",
       "miscellaneous": "Miscellaneous",
       "advancedSettings": "Advanced Settings",
@@ -270,7 +272,156 @@
       "received": "Received",
       "total": "Total",
       "overview": "Overview",
-      "selectedServer": "Selected Server"
+      "selectedServer": "Selected Server",
+      "history": {
+        "tab": "History",
+        "rangeLabel": "Time range",
+        "ranges": {
+          "24h": "24 hours",
+          "3d": "3 days",
+          "7d": "7 days",
+          "14d": "14 days",
+          "31d": "31 days"
+        },
+        "timeZone": {
+          "label": "Time zone",
+          "local": "Local ({{zone}})",
+          "utc": "UTC"
+        },
+        "chartTitle": "Users online",
+        "pointSize": "1 point = {{size}}",
+        "chartAria": "Users online, last {{range}}: peak {{peak}}, average {{average}}",
+        "chartAriaEmpty": "Users online: no measurements in this time range",
+        "kpi": {
+          "current": "Now",
+          "peak": "Peak",
+          "average": "Average",
+          "averageHint": "in the selected range",
+          "availability": "Availability",
+          "availabilityHint": "of measured time",
+          "peakOfSlots": "of {{slots}} slots ({{percent}} %)",
+          "lastSample": "Last measurement"
+        },
+        "states": {
+          "online": "Online",
+          "stopped": "Stopped",
+          "unreachable": "Unreachable",
+          "nodata": "No measurement"
+        },
+        "tooltip": {
+          "mean": "Average",
+          "peak": "Peak",
+          "min": "Minimum",
+          "avg24h": "24 h average",
+          "slots": "Slot limit",
+          "unreachable": "Server was not reachable",
+          "stopped": "Virtual server was stopped",
+          "nodata": "No measurement (backend not running, or recording off)"
+        },
+        "legend": {
+          "mean": "Users (average)",
+          "peak": "Peak",
+          "avg24h": "24 h average",
+          "slots": "Slot limit",
+          "saturday": "Saturday",
+          "sunday": "Sunday",
+          "unreachable": "Server unreachable",
+          "stopped": "Virtual server stopped",
+          "nodata": "No measurement"
+        },
+        "metric": {
+          "label": "Metric",
+          "users": "Users",
+          "bandwidth": "Bandwidth",
+          "ping": "Ping"
+        },
+        "metricNoDataYetHint": "The backend rolls bandwidth and ping up into one value every {{interval}} while the virtual server is running and the connection is reachable. The chart appears as soon as the first one is saved.",
+        "metricRecordingSince": "Recorded since {{time}}, one value per {{interval}}",
+        "bandwidth": {
+          "chartTitle": "Bandwidth",
+          "chartAria": "Bandwidth, last {{range}}: download averaging {{down}}, upload averaging {{up}}",
+          "chartAriaEmpty": "Bandwidth: no measurements in this time range",
+          "kpi": {
+            "current": "Latest",
+            "peak": "Peak",
+            "average": "Average",
+            "volume": "Data volume"
+          },
+          "tooltip": {
+            "avgIn": "Download avg",
+            "peakIn": "Download peak",
+            "avgOut": "Upload avg",
+            "peakOut": "Upload peak",
+            "avg24hIn": "Download 24 h avg",
+            "avg24hOut": "Upload 24 h avg"
+          },
+          "legend": {
+            "down": "Download (average)",
+            "up": "Upload (average)",
+            "peak": "Peak"
+          },
+          "note": "The average is exact: it is calculated from the server's byte counters (the server counts file transfers separately, so they are not included). The peak is the highest single reading; short spikes in between are not captured."
+        },
+        "ping": {
+          "chartTitle": "Ping to {{target}}",
+          "chartAria": "Ping, last {{range}}: average {{average}}, peak {{peak}}, {{timeouts}} timeouts",
+          "chartAriaEmpty": "Ping: no measurements in this time range",
+          "kpi": {
+            "current": "Latest",
+            "peak": "Peak",
+            "average": "Average",
+            "timeouts": "Timeouts",
+            "timeoutsCount_one": "{{count}} unanswered ping",
+            "timeoutsCount_other": "{{count}} unanswered pings"
+          },
+          "tooltip": {
+            "mean": "Average",
+            "peak": "Peak",
+            "min": "Minimum",
+            "avg24h": "24 h average",
+            "timeouts_one": "{{count}} ping timeout",
+            "timeouts_other": "{{count}} ping timeouts"
+          },
+          "legend": {
+            "mean": "Ping (average)",
+            "peak": "Peak",
+            "timeout": "Ping timeout"
+          },
+          "note": "What is measured is how long a TCP connection to this connection's ping target takes to open. No answer counts as a timeout: marked red, never counted as 0 ms."
+        },
+        "recordingSince": "Recording since {{time}}, measured every {{interval}}",
+        "slots": {
+          "toggle": "Slot limit",
+          "unavailable": "No slot limit was recorded in this time range."
+        },
+        "recordingOff": "Recording is turned off for this connection",
+        "recordingOffHint": "No new data points are added. Turn it on under Settings → Connections (edit the connection).",
+        "noDataYet": "No measurements yet",
+        "noDataYetHint": "The backend stores one data point every {{interval}} while the connection is reachable. The chart appears as soon as the first one is saved.",
+        "loadFailed": "Could not load the history",
+        "loadFailedHint": "Check that the connection is enabled and the backend is running.",
+        "settings": {
+          "title": "Recording",
+          "description": "How often user count, bandwidth and ping are recorded and how long they are kept. Applies to every connection that has recording turned on (Settings → Connections).",
+          "intervalLabel": "Record every",
+          "intervalOptions": {
+            "30": "30 seconds",
+            "60": "1 minute",
+            "120": "2 minutes",
+            "300": "5 minutes"
+          },
+          "retentionLabel": "Keep history for (days)",
+          "retentionHint": "{{min}} to {{max}} days. The longest chart range is 31 days.",
+          "estimate": "Roughly {{size}} per virtual server at these values (user count, bandwidth and ping together).",
+          "restoreDefaults": "Restore defaults",
+          "unsaved": "Unsaved changes",
+          "saved": "Recording settings saved",
+          "saveFailed": "Could not save the recording settings",
+          "confirmShorterTitle": "Shorten the retention?",
+          "confirmShorterDescription": "History older than {{days}} days is deleted right away and cannot be restored.",
+          "confirmShorterAction": "Delete older history"
+        }
+      }
     },
     "login": {
       "ssoErrors": {
@@ -295,6 +446,168 @@
       "signingIn": "Signing in...",
       "signIn": "Sign In",
       "or": "or"
+    },
+    "console": {
+      "tabs": {
+        "console": "Console",
+        "log": "Audit log",
+        "settings": "Settings"
+      },
+      "virtualServer": "Virtual server",
+      "instance": "Instance (no virtual server)",
+      "clearScreen": "Clear screen",
+      "empty": "Type a command and press Enter. Start with \"help\" for an overview, or type a few letters and press Tab.",
+      "mode": {
+        "label": "Send as",
+        "command": "Command",
+        "server": "Message to the server",
+        "channel": "Message to a channel",
+        "private": "Message to a client",
+        "client": "Client",
+        "pickClient": "Pick a client",
+        "noClients": "No voice clients online (query clients can not receive messages)",
+        "channelHint": "Goes to channel {{cid}}, where the query connection currently is"
+      },
+      "history": {
+        "menu": "History ({{count}})",
+        "clear": "Clear command history",
+        "cleared": "Command history cleared"
+      },
+      "input": {
+        "label": "ServerQuery command",
+        "placeholder": "clientlist -uid -away",
+        "messagePlaceholder": "Message text",
+        "shortcuts": "Tab: complete · Ctrl+Space: suggestions and values · ↑ ↓: history · Ctrl+E: escape or unescape the selection"
+      },
+      "suggest": {
+        "danger": "confirm",
+        "hidden": "hidden",
+        "alias": "alias",
+        "required": "required"
+      },
+      "notice": {
+        "using": "Now running commands on: {{name}}",
+        "useUsage": "Usage: use sid=<id> (or use <id>, or use port=<port>). Use sid=0 for the instance itself.",
+        "unknownVirtualServer": "There is no virtual server with the id {{sid}}.",
+        "pickClient": "Pick the client to send the message to first.",
+        "noChannel": "Could not find out which channel the query connection is in."
+      },
+      "errors": {
+        "rateLimited": "Too many commands in a short time - TeamSpeak would block this app's address. Try again in {{seconds}} s.",
+        "noConnection": "This server has no active WebQuery connection.",
+        "generic": "The command could not be sent."
+      },
+      "parse": {
+        "empty": "Nothing to run.",
+        "invalid_command": "\"{{detail}}\" is not a valid command name (lowercase letters, digits and underscores).",
+        "invalid_option": "\"{{detail}}\" is not a valid option (a dash and a name, like -uid).",
+        "invalid_key": "\"{{detail}}\" is not a valid parameter name.",
+        "empty_block": "A list item is empty: there has to be something on both sides of every |."
+      },
+      "help": {
+        "required": "Required",
+        "optional": "Optional",
+        "repeatable": "Can be given several times (a=1|a=2)",
+        "aliasOf": "= {{name}}",
+        "hidden": "not in help",
+        "hiddenHint": "TeamSpeak's own help overview does not list this command",
+        "needsConfirmation": "needs confirmation",
+        "readOnly": "only reads",
+        "properties": "{{group}} properties…",
+        "noParameters": "No parameters",
+        "integer": "whole number",
+        "range": "{{min}} to {{max}}",
+        "defaultValue": "default {{value}}",
+        "orOther": "or other values",
+        "permissions": "Permissions it checks",
+        "unknownTopic": "There is no command called \"{{name}}\".",
+        "intro": "{{count}} ServerQuery commands are known. Type \"help <command>\" for the usage of one, or click one below to start typing it.",
+        "introHelp": "help and use are the console's own: WebQuery has neither.",
+        "introUse": "use sid=<id> switches the virtual server the commands run on; use sid=0 is the instance itself.",
+        "introKeys": "Ctrl+Space lists what fits at the caret: parameters, fixed values, and the channels, clients or groups an id can stand for.",
+        "introEscapes": "Values use ServerQuery escapes: \\s for a space, \\p for a pipe, \\\\ for a backslash.",
+        "legend": "Red: asks for confirmation before it runs. Dashed outline: not listed by TeamSpeak's own help."
+      },
+      "result": {
+        "emptyResult": "no entries",
+        "records": "{{count}} records",
+        "loggedToTeamSpeak": "written to the TeamSpeak log",
+        "truncated": "Only the first {{shown}} of {{total}} records are shown.",
+        "tableView": "Table",
+        "rawView": "Raw",
+        "revealSecrets": "Show secrets",
+        "hideSecrets": "Hide secrets",
+        "copyRaw": "Copy raw",
+        "copyJson": "Copy JSON",
+        "copyFailed": "Could not copy - the browser only allows this on https or on localhost",
+        "showAll": "Show all {{count}} rows"
+      },
+      "hints": {
+        "outOfScope": "TeamSpeak does not offer this command over WebQuery (use, login, logout, quit, help, ft* and servernotifyregister are among those), or the API key's scope does not cover it.",
+        "noAnswer": "TeamSpeak did not give a usable answer: the server may be unreachable, or the request was refused before it got there.",
+        "unknownCommand": "This TeamSpeak server does not have this command. The documentation can list commands that a particular server version does not implement."
+      },
+      "explain": {
+        "none": "none",
+        "notFound": "not found (not online, or not in the list)",
+        "empty": "(empty)",
+        "nothingToExplain": "Nothing to explain about this value.",
+        "queryClient": "ServerQuery client",
+        "voiceClient": "Voice client"
+      },
+      "danger": {
+        "title": "Run {{command}}?",
+        "generic": "This command can not be undone.",
+        "willRun": "Will run on {{target}}:",
+        "typeToConfirm": "Type {{command}} to confirm.",
+        "run": "Run {{command}}",
+        "reasons": {
+          "processStop": "Shuts down the whole TeamSpeak server process: every virtual server on this instance goes offline, and this app can not start it again.",
+          "serverStop": "Stops this virtual server and disconnects everyone on it.",
+          "serverDelete": "Deletes the virtual server together with its channels, groups and permissions. This can not be undone.",
+          "instanceEdit": "Changes settings of the whole instance, such as the query flood limits and the default groups. A wrong value can lock this app out.",
+          "snapshotDeploy": "Replaces the complete configuration of the virtual server with the contents of the snapshot.",
+          "permReset": "Deletes every group and permission on the virtual server and restores the defaults. If it fails halfway, TeamSpeak may delete the virtual server instead.",
+          "massDelete": "Deletes all entries at once.",
+          "dataDelete": "Deletes data for good: a channel, a client's stored data or a group. This can not be undone.",
+          "credentialsRevoke": "Revokes an API key, query login or privilege key. If this app uses it to reach TeamSpeak, it is locked out.",
+          "credentialsReset": "Gives a query login a new password. Anything still using the old one stops working."
+        }
+      },
+      "log": {
+        "ok": "ok",
+        "pending": "pending",
+        "pendingHint": "No answer was recorded - the backend may have been stopped while the command was running.",
+        "error": "error",
+        "search": "Search",
+        "searchPlaceholder": "Command or user name",
+        "allStatuses": "All results",
+        "dangerOnly": "Only dangerous commands",
+        "thisServerOnly": "Only this server",
+        "empty": "Nothing in the audit trail yet",
+        "emptyHint": "Every command the console sends to TeamSpeak is recorded here, with who ran it.",
+        "time": "Time",
+        "where": "Where",
+        "command": "Command",
+        "result": "Result",
+        "duration": "Duration",
+        "teamSpeakLog": "TS log",
+        "teamSpeakLogHint": "A line was also written to the TeamSpeak server log (only commands that change something are)",
+        "instance": "instance",
+        "danger": "dangerous",
+        "loadMore": "Load older entries"
+      },
+      "settings": {
+        "title": "Query console",
+        "retentionLabel": "Keep the audit trail for (days)",
+        "retentionHint": "{{min}} to {{max}} days. Older entries are removed automatically.",
+        "floodGuardLabel": "Protect TeamSpeak's query flood limit",
+        "floodGuardHint": "TeamSpeak blocks the address of anything that sends too many commands too quickly - for this app that would mean every page stops working for a while. With this on, the console only uses half of the limit (read from the instance) and asks you to wait when you go past it. Turn it off if this app's address is on the server's query_ip_allowlist, which the flood protection ignores.",
+        "restoreDefaults": "Restore defaults",
+        "unsaved": "Unsaved changes",
+        "saved": "Console settings saved",
+        "saveFailed": "Could not save the console settings"
+      }
     },
     "serverLogs": {
       "entryAdded": "Log entry added",
@@ -432,6 +745,224 @@
       "describeCount_other": "Describe {{count}} clients",
       "descriptionUpdated_one": "Updated description for {{count}} client",
       "descriptionUpdated_other": "Updated description for {{count}} clients"
+    },
+    "clientDatabase": {
+      "subtitle": "Every profile this server has ever seen, including clients that are offline.",
+      "filterPlaceholder": "Filter the loaded profiles...",
+      "loadedCount": "{{loaded}} of {{total}} profiles loaded",
+      "loadMore": "Load {{count}} more",
+      "loadAll": "Load all",
+      "loadingAll": "Loading... {{loaded}} of {{total}}",
+      "stop": "Stop",
+      "loadFailed": "Could not load the client database",
+      "searchResults_one": "{{count}} profile found",
+      "searchResults_other": "{{count}} profiles found",
+      "truncatedCap": "TeamSpeak returns at most 50 matches, so there may be more. Narrow the search.",
+      "truncatedList": "Showing the first {{shown}} of {{total}} matches. Narrow the search.",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
+      "bannedBy_one": "Covered by {{count}} active ban rule",
+      "bannedBy_other": "Covered by {{count}} active ban rules",
+      "onlineNow": "Connected right now",
+      "andMore_one": "and {{count}} more",
+      "andMore_other": "and {{count}} more",
+      "columns": {
+        "nickname": "Nickname",
+        "dbId": "DB ID",
+        "uid": "Unique ID",
+        "lastSeen": "Last seen",
+        "connections": "Connections",
+        "lastIp": "Last IP",
+        "description": "Description",
+        "match": "Matched on",
+        "status": "Status",
+        "created": "First seen",
+        "loginName": "Login name"
+      },
+      "actions": {
+        "details": "Details",
+        "ban": "Ban",
+        "delete": "Delete"
+      },
+      "groupMode": {
+        "label": "Group mode",
+        "loadFailed": "Could not load the server groups"
+      },
+      "groups": {
+        "unavailable": "TeamSpeak refused to list this group's members (missing permission).",
+        "added": "{{name}} added to {{group}}",
+        "removed": "{{name}} removed from {{group}}",
+        "undo": "Undo",
+        "changeFailed": "Could not change {{name}}'s membership in {{group}}"
+      },
+      "columnsMenu": {
+        "title": "Columns",
+        "columns": "Columns",
+        "reset": "Reset to default",
+        "groups": "Server groups (group mode)",
+        "groupsOff": "Switch on group mode to choose which server groups appear as columns.",
+        "noGroups": "This server has no server group that can be changed here.",
+        "showAll": "Show all",
+        "hideAll": "Hide all"
+      },
+      "export": {
+        "button": "Export",
+        "title": "Export client database",
+        "columnsHint": "Columns: {{columns}}",
+        "format": "Format",
+        "formats": {
+          "csv": "CSV",
+          "html": "HTML table",
+          "json": "JSON"
+        },
+        "encoding": "Encoding",
+        "encodings": {
+          "utf8-bom": "UTF-8 with BOM (for Excel)",
+          "utf8": "UTF-8 without BOM",
+          "utf16le": "UTF-16LE with BOM"
+        },
+        "delimiter": "CSV delimiter",
+        "delimiters": {
+          "comma": "Comma",
+          "semicolon": "Semicolon",
+          "tab": "Tab"
+        },
+        "dateFormat": "Date format",
+        "dateFormats": {
+          "iso-local": "ISO 8601, local time",
+          "iso-utc": "ISO 8601, UTC",
+          "locale": "Interface format",
+          "unix": "Unix seconds"
+        },
+        "scope": "What to export",
+        "scopes": {
+          "selected": "Selected profiles ({{count}})",
+          "visible": "Current view ({{count}})",
+          "loaded": "Everything loaded ({{count}})",
+          "database": "Whole database ({{count}})"
+        },
+        "databaseHint": "Loads all remaining blocks first.",
+        "jsonNote": "JSON is always UTF-8 without a BOM.",
+        "loading": "Loading... {{loaded}} of {{total}}",
+        "run": "Export",
+        "done_one": "Exported {{count}} profile",
+        "done_other": "Exported {{count}} profiles",
+        "failed": "The export failed",
+        "htmlTitle": "Client database",
+        "htmlSubtitle": "Server {{sid}} - {{count}} profiles - exported {{date}}",
+        "online": "Online",
+        "banned": "Banned"
+      },
+      "search": {
+        "mode": "Search the whole database by",
+        "modes": {
+          "name": "Nickname",
+          "uid": "Unique ID",
+          "dbid": "Database ID",
+          "custom": "Custom info",
+          "channelgroup": "Channel group"
+        },
+        "query": "Search text",
+        "value": "Value",
+        "identifier": "Identifier",
+        "placeholders": {
+          "name": "Nickname, % = any characters",
+          "uid": "Unique ID or a part of it",
+          "dbid": "Database ID",
+          "custom": "Value, % = any characters (empty = any value)",
+          "ident": "Identifier, exactly"
+        },
+        "channel": "In channel",
+        "group": "Channel group",
+        "allChannels": "All channels",
+        "anyGroup": "Any group except the default",
+        "run": "Search",
+        "clear": "Back to the list",
+        "failed": "The search failed",
+        "hints": {
+          "name": "Text without % matches anywhere in the nickname. TeamSpeak returns at most 50 matches; the filter field below searches everything that is already loaded.",
+          "uid": "Text without % matches anywhere in the unique ID. TeamSpeak returns at most 50 matches.",
+          "dbid": "Looks up exactly this database ID.",
+          "custom": "TeamSpeak needs the identifier exactly; only the value accepts % as a wildcard, and text without % matches anywhere in the value.",
+          "channelgroup": "Lists profiles that hold a channel group other than the default one, in one channel or in all of them. TeamSpeak has no channel owner; this is the closest equivalent."
+        }
+      },
+      "detail": {
+        "title": "Profile",
+        "subtitle": "Database ID {{id}}",
+        "loadFailed": "Could not load the profile",
+        "banned": "Banned",
+        "identity": "Profile",
+        "firstSeen": "First seen",
+        "avatar": "Has an avatar",
+        "onlineIn": "Connected right now as client {{clid}} in {{channel}}.",
+        "traffic": "Traffic",
+        "monthUp": "Uploaded this month",
+        "monthDown": "Downloaded this month",
+        "totalUp": "Uploaded in total",
+        "totalDown": "Downloaded in total",
+        "serverGroups": "Server groups",
+        "channelGroups": "Channel groups",
+        "customInfo": "Custom info",
+        "bans": "Bans",
+        "noBans": "No active ban rule covers this profile.",
+        "banRule": "Ban rule #{{id}}",
+        "banUntil": "until {{date}}",
+        "banName": "Name",
+        "unavailable": "Not available (TeamSpeak refused access).",
+        "uidCopied": "Unique ID copied",
+        "copyFailed": "Could not copy"
+      },
+      "ban": {
+        "title_one": "Ban {{count}} profile",
+        "title_other": "Ban {{count}} profiles",
+        "banBy": "Create a ban rule for each",
+        "targets": {
+          "uid": {
+            "label": "Unique ID",
+            "hint": "Bans this identity only. Anyone can get around it by creating a new identity.",
+            "short": "UID"
+          },
+          "name": {
+            "label": "Nickname",
+            "hint": "Bans exactly this nickname, in any capitalisation.",
+            "short": "Name"
+          },
+          "ip": {
+            "label": "IP address",
+            "hint": "Bans the last known address. This also affects everyone else who connects from it.",
+            "short": "IP"
+          }
+        },
+        "nothingToBan": "None of the selected profiles has a value for this.",
+        "someMissing_one": "{{count}} selected profile has none and gets no rule.",
+        "someMissing_other": "{{count}} selected profiles have none and get no rule.",
+        "done_one": "Created {{count}} ban rule.",
+        "done_other": "Created {{count}} ban rules.",
+        "skipped_one": "{{count}} skipped (nothing to ban).",
+        "skipped_other": "{{count}} skipped (nothing to ban).",
+        "partial": "Created {{created}} ban rules, {{failed}} failed: {{message}}",
+        "failedAll": "No ban rule was created: {{message}}",
+        "failed": "Failed to create the ban"
+      },
+      "delete": {
+        "title_one": "Delete {{count}} profile?",
+        "title_other": "Delete {{count}} profiles?",
+        "consequences_one": "This removes the profile from the server's client database together with its custom info, avatar, server group memberships, channel group assignments and client permissions.",
+        "consequences_other": "This removes the profiles from the server's client database together with their custom info, avatars, server group memberships, channel group assignments and client permissions.",
+        "newProfile": "A client that connects again is treated as new and gets a new database ID. This cannot be undone.",
+        "connectedSkipped_one": "{{count}} of the selected profiles is connected right now and will be skipped.",
+        "connectedSkipped_other": "{{count}} of the selected profiles are connected right now and will be skipped.",
+        "confirm_one": "Delete {{count}} profile",
+        "confirm_other": "Delete {{count}} profiles",
+        "done_one": "Deleted {{count}} profile",
+        "done_other": "Deleted {{count}} profiles",
+        "skippedOnline_one": "{{count}} profile was skipped because its client is connected.",
+        "skippedOnline_other": "{{count}} profiles were skipped because their clients are connected.",
+        "failedSome_one": "{{count}} profile could not be deleted: {{message}}",
+        "failedSome_other": "{{count}} profiles could not be deleted: {{message}}",
+        "failed": "Failed to delete the profiles"
+      }
     },
     "tokens": {
       "createdAndCopied": "Token created and copied to clipboard",
@@ -653,6 +1184,8 @@
         "pingTargetLabel": "Dashboard Ping Target (optional)",
         "pingTargetPlaceholder": "Defaults to Host above ({{host}})",
         "pingTargetHint": "Only affects the Dashboard's Ping reading - useful if Host above is an internal address but the public domain is what should actually be tested. Bot flows always use Host, never this.",
+        "recordUserHistory": "Record history",
+        "recordUserHistoryHint": "Records this connection's user counts, bandwidth and ping in the background for Statistics → History. Turning it off keeps what was already recorded and stops adding to it. Interval and retention are set under Statistics → History.",
         "sshPortLabel": "SSH Port",
         "sshUserLabel": "SSH User",
         "sshUserPlaceholder": "serveradmin",
@@ -1053,6 +1586,16 @@
       "download": "Download",
       "upload": "Upload",
       "collectingData": "Collecting data...",
+      "userHistory": {
+        "title": "Users, last 24 hours",
+        "peak": "Peak {{value}}",
+        "average": "Avg {{value}}",
+        "moreInHistory": "More in History",
+        "noData": "No measurements yet.",
+        "recordingOff": "Recording is turned off for this connection.",
+        "recordingOffNote": "Recording is turned off for this connection, so no new points are added.",
+        "loadFailed": "Could not load the user history."
+      },
       "in": "In:",
       "out": "Out:",
       "serverCapacity": "Server Capacity",

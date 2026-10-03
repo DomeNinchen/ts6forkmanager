@@ -38,6 +38,7 @@ const VirtualServers = lazy(() => import('@/pages/VirtualServers'));
 const ServerStats = lazy(() => import('@/pages/ServerStats'));
 const Channels = lazy(() => import('@/pages/Channels'));
 const Clients = lazy(() => import('@/pages/Clients'));
+const ClientDatabase = lazy(() => import('@/pages/ClientDatabase'));
 const ServerGroups = lazy(() => import('@/pages/ServerGroups'));
 const ChannelGroups = lazy(() => import('@/pages/ChannelGroups'));
 const Permissions = lazy(() => import('@/pages/Permissions'));
@@ -48,6 +49,7 @@ const Icons = lazy(() => import('@/pages/Icons'));
 const Complaints = lazy(() => import('@/pages/Complaints'));
 const Messages = lazy(() => import('@/pages/Messages'));
 const ServerLogs = lazy(() => import('@/pages/ServerLogs'));
+const Console = lazy(() => import('@/pages/Console'));
 const Instance = lazy(() => import('@/pages/Instance'));
 const Miscellaneous = lazy(() => import('@/pages/Miscellaneous'));
 const AdvancedServerSettings = lazy(() => import('@/pages/AdvancedServerSettings'));
@@ -81,6 +83,7 @@ export function App() {
               <Route path="/server-stats" element={<AdminRoute><ServerStats /></AdminRoute>} />
               <Route path="/channels" element={<Channels />} />
               <Route path="/clients" element={<Clients />} />
+              <Route path="/client-database" element={<AdminRoute><ClientDatabase /></AdminRoute>} />
               <Route path="/server-groups" element={<AdminRoute><ServerGroups /></AdminRoute>} />
               <Route path="/channel-groups" element={<AdminRoute><ChannelGroups /></AdminRoute>} />
               <Route path="/permissions" element={<AdminRoute><Permissions /></AdminRoute>} />
@@ -91,6 +94,7 @@ export function App() {
               <Route path="/complaints" element={<AdminRoute><Complaints /></AdminRoute>} />
               <Route path="/messages" element={<AdminRoute><Messages /></AdminRoute>} />
               <Route path="/logs" element={<AdminRoute><ServerLogs /></AdminRoute>} />
+              <Route path="/console" element={<AdminRoute><Console /></AdminRoute>} />
               <Route path="/instance" element={<AdminRoute><Instance /></AdminRoute>} />
               <Route path="/miscellaneous" element={<AdminRoute><Miscellaneous /></AdminRoute>} />
               <Route path="/advanced-settings" element={<AdminRoute><AdvancedServerSettings /></AdminRoute>} />

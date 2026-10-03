@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import { useVirtualServerInfo, useConnectionInfo, useHostInfo, useVirtualServers } from '@/hooks/use-servers';
 import { useServerStore } from '@/stores/server.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { UserHistoryTab } from '@/components/statistics/UserHistoryTab';
 import { formatUptime, formatBytes } from '@/lib/utils';
 import { BarChart3, Info, Users, Activity, ArrowUpDown, Server, LayoutGrid } from 'lucide-react';
 
@@ -164,20 +166,28 @@ function SelectedServerTab() {
 
 export default function ServerStats() {
   const { t } = useTranslation();
+  // The dashboard's history card links to /server-stats?tab=history.
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const initialTab = requestedTab === 'history' || requestedTab === 'selected' ? requestedTab : 'overview';
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-semibold">{t('nav.items.statistics')}</h1>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="overview">{t('pages.serverStats.overview')}</TabsTrigger>
           <TabsTrigger value="selected">{t('pages.serverStats.selectedServer')}</TabsTrigger>
+          <TabsTrigger value="history">{t('pages.serverStats.history.tab')}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4">
           <OverviewTab />
         </TabsContent>
         <TabsContent value="selected" className="mt-4">
           <SelectedServerTab />
+        </TabsContent>
+        <TabsContent value="history" className="mt-4">
+          <UserHistoryTab />
         </TabsContent>
       </Tabs>
     </div>

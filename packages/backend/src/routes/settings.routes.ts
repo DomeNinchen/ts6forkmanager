@@ -15,6 +15,20 @@ import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-con
 import { getGithubToken, setGithubToken } from '../utils/github-token.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
 import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN } from '../utils/stream-defaults.js';
+import {
+  getUserHistorySettings,
+  setUserHistorySettings,
+  isValidUserHistoryInterval,
+  isValidUserHistoryRetention,
+  USER_HISTORY_DEFAULTS,
+  USER_HISTORY_INTERVAL_OPTIONS,
+  USER_HISTORY_RETENTION_MIN_DAYS,
+  USER_HISTORY_RETENTION_MAX_DAYS,
+  type UserHistorySettings,
+} from '../utils/user-history-settings.js';
+import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
+import { CONSOLE_AUDIT_RETENTION_BOUNDS } from '@ts6/common';
+import { getConsoleSettings, setConsoleSettings } from '../utils/console-settings.js';
 import { STREAM_PRESETS } from '../voice/streaming/types.js';
 import { forceCookieCheck } from '../utils/yt-cookie-check.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
@@ -382,6 +396,71 @@ settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: R
       builtIn: builtInStreamDefaults(),
       presets: Object.entries(STREAM_PRESETS).map(([name, p]) => ({ name, ...p })),
     });
+  } catch (err) { next(err); }
+});
+
+// What the History tab's "Recording" card needs besides the two values: the
+// allowed choices and the defaults, so the frontend never hard-codes them.
+const userHistorySettingsResponse = (settings: UserHistorySettings) => ({
+  ...settings,
+  defaults: USER_HISTORY_DEFAULTS,
+  intervalOptions: USER_HISTORY_INTERVAL_OPTIONS,
+  retentionBounds: { min: USER_HISTORY_RETENTION_MIN_DAYS, max: USER_HISTORY_RETENTION_MAX_DAYS },
+});
+
+// GET /api/settings/user-history - sampling interval and retention of the long-term user-count history
+settingsRoutes.get('/user-history', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    res.json(userHistorySettingsResponse(await getUserHistorySettings(prisma)));
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/user-history - takes effect immediately: the sampler
+// restarts at the new interval, and a shorter retention prunes right away.
+settingsRoutes.put('/user-history', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { intervalSeconds, retentionDays } = req.body ?? {};
+    if (!isValidUserHistoryInterval(intervalSeconds)) {
+      throw new AppError(400, `intervalSeconds must be one of: ${USER_HISTORY_INTERVAL_OPTIONS.join(', ')}`);
+    }
+    if (!isValidUserHistoryRetention(retentionDays)) {
+      throw new AppError(400, `retentionDays must be a whole number between ${USER_HISTORY_RETENTION_MIN_DAYS} and ${USER_HISTORY_RETENTION_MAX_DAYS}`);
+    }
+
+    const prisma = req.app.locals.prisma;
+    const saved = await setUserHistorySettings(prisma, { intervalSeconds, retentionDays });
+    const sampler: UserHistorySampler = req.app.locals.userHistorySampler;
+    await sampler.applySettings();
+    console.log(`[Settings] User history set to every ${saved.intervalSeconds}s, kept for ${saved.retentionDays} day(s)`);
+    res.json(userHistorySettingsResponse(saved));
+  } catch (err) { next(err); }
+});
+
+// GET /api/settings/console - how the admin query console keeps its audit trail and protects the query flood limit
+settingsRoutes.get('/console', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    res.json(await getConsoleSettings(prisma));
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/console
+settingsRoutes.put('/console', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { auditRetentionDays, floodGuardEnabled } = req.body ?? {};
+
+    if (!Number.isInteger(auditRetentionDays) || auditRetentionDays < CONSOLE_AUDIT_RETENTION_BOUNDS.min || auditRetentionDays > CONSOLE_AUDIT_RETENTION_BOUNDS.max) {
+      throw new AppError(400, `auditRetentionDays must be a whole number between ${CONSOLE_AUDIT_RETENTION_BOUNDS.min} and ${CONSOLE_AUDIT_RETENTION_BOUNDS.max}`);
+    }
+    if (typeof floodGuardEnabled !== 'boolean') {
+      throw new AppError(400, 'floodGuardEnabled must be a boolean');
+    }
+
+    const prisma = req.app.locals.prisma;
+    const saved = await setConsoleSettings(prisma, { auditRetentionDays, floodGuardEnabled });
+    console.log(`[Settings] Query console: audit trail kept ${saved.auditRetentionDays} days, flood guard ${saved.floodGuardEnabled ? 'on' : 'off'}`);
+    res.json(saved);
   } catch (err) { next(err); }
 });
 

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench, SlidersHorizontal,
+  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
@@ -44,6 +44,7 @@ function getNavSections(t: TFunction) {
       items: [
         { to: '/channels', icon: Hash, label: t('nav.items.channels') },
         { to: '/clients', icon: Users, label: t('nav.items.clients') },
+        { to: '/client-database', icon: Database, label: t('nav.items.clientDatabase'), visible: adminOnly },
         { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: adminOnly },
         { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: adminOnly },
         { to: '/permissions', icon: Lock, label: t('nav.items.permissions'), visible: adminOnly },
@@ -74,6 +75,7 @@ function getNavSections(t: TFunction) {
       visible: adminOnly,
       items: [
         { to: '/logs', icon: ScrollText, label: t('nav.items.serverLogs'), visible: adminOnly },
+        { to: '/console', icon: SquareTerminal, label: t('nav.items.queryConsole'), visible: adminOnly },
         { to: '/instance', icon: Cpu, label: t('nav.items.instance'), visible: adminOnly },
         { to: '/miscellaneous', icon: Wrench, label: t('nav.items.miscellaneous'), visible: adminOnly },
         { to: '/advanced-settings', icon: SlidersHorizontal, label: t('nav.items.advancedSettings'), visible: adminOnly },

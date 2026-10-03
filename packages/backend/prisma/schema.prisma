@@ -112,6 +112,13 @@ model TsServerConfig {
   // means "whatever TS assigns by default" (usually "serveradmin").
   queryNickname String?
   enabled      Boolean  @default(true)
+  // Whether UserHistorySampler records this connection's virtual servers in
+  // the long-term user-count history (Statistics -> History). On by default so
+  // a new connection has history from its first minute; the switch exists for
+  // admins who would rather not poll a particular (remote, metered, or simply
+  // uninteresting) connection every interval. Turning it off keeps whatever
+  // was already recorded and only stops adding to it.
+  recordUserHistory Boolean @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -142,6 +149,8 @@ model TsServerConfig {
   commandPermissions  BotCommandPermission[]
   commandAdminGroups  BotCommandAdminGroup[]
   metricSamples       ServerMetricSample[]
+  userSamples         ServerUserSample[]
+  metricRollups       ServerMetricRollup[]
 }
 
 model BotFlow {
@@ -377,6 +386,42 @@ model BotCommandAdminGroup {
   @@unique([serverConfigId, groupId])
 }
 
+// === Query console audit trail ===
+// One row per command the admin query console sent to TeamSpeak: who ran what,
+// where, when, and how it ended. Nothing else is stored - in particular no
+// results, and every secret parameter value in `command` is already replaced
+// by *** before the row is written.
+//
+// User and server are deliberate snapshots (id plus name) instead of relations:
+// the trail has to stay readable after the account or the server connection it
+// refers to is deleted. Rows older than the retention setting (default 90 days,
+// see utils/console-settings.ts) are pruned as new ones are written.
+model QueryConsoleLog {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  userId          Int?
+  username        String
+  serverConfigId  Int
+  serverName      String
+  // TeamSpeak's own virtual server id; 0 = a command run on the instance itself.
+  virtualServerId Int
+  command         String
+  commandName     String
+  danger          Boolean  @default(false)
+  mutating        Boolean  @default(true)
+  // "pending" (written before the command is sent, so a command that takes the
+  // whole TeamSpeak process down still leaves a trace), then "ok" or "error".
+  status          String   @default("pending")
+  errorCode       Int?
+  errorMessage    String?
+  durationMs      Int?
+  // Whether a line went into the TeamSpeak server log as well (logadd).
+  loggedToTeamSpeak Boolean @default(false)
+
+  @@index([createdAt])
+  @@index([serverConfigId, createdAt])
+}
+
 // === Dashboard metric history ===
 // One row per bandwidth/ping measurement taken by BandwidthSampler. This
 // exists so the dashboard's charts can show a full time window the moment
@@ -410,5 +455,102 @@ model ServerMetricSample {
 
   // Every read is "this server's samples in time order" and every prune is
   // "everything older than X" - one composite index serves both.
+  @@index([serverConfigId, virtualServerId, measuredAt])
+}
+
+// === Long-term user-count history (Statistics -> History) ===
+// One row per virtual server per UserHistorySampler tick. Unlike
+// ServerMetricSample above (a 20-minute window for the dashboard's live
+// charts), this is a deliberate archive: the retention is an admin setting
+// (default 32 days, enough for the chart's longest window plus a day of
+// lead-in for its 24-hour average) and a tick is ~90 bytes, so a month at the
+// default 60s interval is about 44,000 rows / 4 MB per virtual server.
+//
+// A row is written for every tick whether or not anyone could be counted,
+// with `state` saying why - that is what lets the chart tell "nobody was
+// online" (users = 0) apart from "we could not look" (no number at all).
+// Stretches with no rows at all mean the backend itself was not running.
+model ServerUserSample {
+  id              Int      @id @default(autoincrement())
+  serverConfigId  Int
+  serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  // TeamSpeak's own virtual server id (sid) - not a row in this database,
+  // same as ServerMetricSample.virtualServerId.
+  virtualServerId Int
+  measuredAt      DateTime @default(now())
+  // "online"      - the virtual server answered and `users` is a real count
+  // "stopped"     - the instance answered but this virtual server is not
+  //                 running (offline, booting up, shutting down, virtual online)
+  // "unreachable" - the instance itself could not be reached (network error or
+  //                 timeout), so nothing is known about this virtual server
+  state           String
+  // Real users only: virtualserver_clientsonline minus
+  // virtualserver_queryclientsonline, the same figure the Virtual Servers page
+  // shows. Null unless state is "online" - never 0 as a stand-in for unknown.
+  users           Int?
+  // The virtual server's slot limit (virtualserver_maxclients) when this row
+  // was written, so the chart can show how close the user count came to it
+  // even after an admin has changed the limit. Null for rows recorded before
+  // this column existed (they get no limit line), and for "stopped" and
+  // "unreachable" rows, where serverlist does not report it.
+  maxClients      Int?
+  // The sampling interval in force when this row was written, in seconds. It
+  // is stored per row because the interval is an admin setting: the chart
+  // decides whether two neighbouring rows are "one sample apart" or "a gap"
+  // from the interval that applied at the time, which stays correct after the
+  // setting has been changed.
+  intervalSec     Int
+
+  // Reads are "this virtual server's rows in time order" and the periodic
+  // prune is "everything older than X" - one composite index serves both.
+  @@index([serverConfigId, virtualServerId, measuredAt])
+}
+
+// === Long-term bandwidth and ping history (Statistics -> History) ===
+// One row per virtual server per history interval, rolled up from the
+// measurements BandwidthSampler already takes every 30 seconds for the
+// dashboard's 20-minute charts. Recording this therefore adds no requests to
+// TeamSpeak and does not contact the ping target any more often than before.
+// Interval and retention are the same admin settings as for ServerUserSample.
+//
+// Whether a stretch was unreachable or stopped is not repeated here: the chart
+// takes that from ServerUserSample, which records it per tick.
+model ServerMetricRollup {
+  id              Int      @id @default(autoincrement())
+  serverConfigId  Int
+  serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  // TeamSpeak's own virtual server id (sid), as on ServerUserSample.
+  virtualServerId Int
+  // Start of the window this row covers.
+  measuredAt      DateTime
+  // The history interval in force when the window was recorded, in seconds
+  // (stored per row for the same reason as ServerUserSample.intervalSec).
+  intervalSec     Int
+
+  // Bytes moved during the window, taken from the difference of the server's
+  // own running totals (connection_bytes_*_total) rather than estimated from
+  // sampled rates - so the average rate over any stretch is exact, whatever the
+  // measuring interval. `spanSec` is the number of seconds that difference
+  // covers. All three are null when no difference could be taken: the first
+  // reading after the backend started, or a total that went backwards because
+  // the virtual server restarted (a wrong number is worse than none).
+  bytesIn         BigInt?
+  bytesOut        BigInt?
+  spanSec         Int?
+  // The highest "last second" rate any of the window's samples saw, in bytes per
+  // second. Only about one second in thirty is sampled, so this is a floor for
+  // the real peak, not the peak itself.
+  peakIn          Int?
+  peakOut         Int?
+
+  // Ping in milliseconds (a timed TCP connect to the ping target). Average,
+  // lowest and highest are over the successful pings only; a failed ping is
+  // counted in pingFailed and never enters them as a number.
+  pingOk          Int
+  pingFailed      Int
+  pingAvg         Int?
+  pingMin         Int?
+  pingMax         Int?
+
   @@index([serverConfigId, virtualServerId, measuredAt])
 }

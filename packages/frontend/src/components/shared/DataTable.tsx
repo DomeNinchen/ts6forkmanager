@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   type ColumnDef,
   columnFilteringFeature,
@@ -58,16 +58,33 @@ interface DataTableProps<TData extends RowData> {
   /** Required when enableRowSelection is true, so selection survives sorting/filtering/paging. */
   getRowId?: (row: TData) => string;
   onSelectionChange?: (selected: TData[]) => void;
+  /** Change this value to clear the row selection, e.g. after a bulk action went through. */
+  selectionResetKey?: string | number;
+  /** Extra classes for a row, e.g. to tint the rows that need attention. */
+  rowClassName?: (row: TData) => string | undefined;
+  /** Makes rows clickable. Clicks on a control inside the row (checkbox, button, link, menu) do not count. */
+  onRowClick?: (row: TData) => void;
+  /** Let a table that is wider than its container scroll sideways instead of cutting off its last columns. */
+  horizontalScroll?: boolean;
+  /** Reports every row the table shows across all its pages, in display order (after the text filter and the sort), whenever that changes. */
+  onVisibleRowsChange?: (rows: TData[]) => void;
 }
 
 export function DataTable<TData extends RowData>({
   columns, data, searchKey, searchPlaceholder, pageSize = 20,
   enableRowSelection = false, getRowId, onSelectionChange,
+  selectionResetKey, rowClassName, onRowClick, horizontalScroll = false, onVisibleRowsChange,
 }: DataTableProps<TData>) {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const lastResetKey = useRef(selectionResetKey);
+  useEffect(() => {
+    if (lastResetKey.current === selectionResetKey) return;
+    lastResetKey.current = selectionResetKey;
+    setRowSelection({});
+  }, [selectionResetKey]);
 
   const tableColumns = enableRowSelection
     ? [
@@ -111,6 +128,11 @@ export function DataTable<TData extends RowData>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection]);
 
+  useEffect(() => {
+    onVisibleRowsChange?.(table.getPrePaginatedRowModel().rows.map((r) => r.original));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, globalFilter, sorting]);
+
   return (
     <div className="space-y-3">
       {searchKey !== undefined && (
@@ -125,7 +147,7 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className="card-hero rounded-md border border-border overflow-hidden">
+      <div className={cn('card-hero rounded-md border border-border', horizontalScroll ? 'overflow-x-auto' : 'overflow-hidden')}>
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map((hg) => (
@@ -161,7 +183,18 @@ export function DataTable<TData extends RowData>({
           <tbody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                <tr
+                  key={row.id}
+                  className={cn(
+                    'border-b border-border last:border-0 hover:bg-muted/20 transition-colors',
+                    onRowClick && 'cursor-pointer',
+                    rowClassName?.(row.original),
+                  )}
+                  onClick={onRowClick ? (e) => {
+                    if ((e.target as HTMLElement).closest('button, a, input, label, [role="checkbox"], [role="menuitem"]')) return;
+                    onRowClick(row.original);
+                  } : undefined}
+                >
                   {row.getAllCells().map((cell) => (
                     <td key={cell.id} className="px-3 py-2.5 align-middle">
                       <table.FlexRender cell={cell} />

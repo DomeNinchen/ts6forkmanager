@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
+import { DashboardUserHistoryCard } from '@/components/statistics/DashboardUserHistoryCard';
 import { formatBytes, formatUptime, cn } from '@/lib/utils';
 import { Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid, Lock, Bot } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
@@ -265,6 +266,9 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* The recorded user count of the last 24 hours: the live number above, its history here, the detail panels below. */}
+      <DashboardUserHistoryCard />
 
       {/* Bandwidth + Detail panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

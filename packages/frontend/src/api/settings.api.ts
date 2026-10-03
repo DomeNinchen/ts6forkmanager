@@ -52,6 +52,12 @@ export const settingsApi = {
   setStreamDefaults: (config: StreamDefaults): Promise<StreamDefaultsResponse> =>
     api.put('/settings/stream-defaults', config).then((r) => r.data),
 
+  getUserHistorySettings: (): Promise<UserHistorySettingsResponse> =>
+    api.get('/settings/user-history').then((r) => r.data),
+
+  setUserHistorySettings: (config: UserHistorySettings): Promise<UserHistorySettingsResponse> =>
+    api.put('/settings/user-history', config).then((r) => r.data),
+
   getWebguiTheme: (): Promise<{ preset: AccentPreset }> =>
     api.get('/settings/webgui-theme').then((r) => r.data),
 
@@ -151,6 +157,22 @@ export interface StreamDefaultsResponse extends StreamDefaults {
   /** What the app ships with, so the form can offer a way back. */
   builtIn: StreamDefaults;
   presets: StreamPreset[];
+}
+
+/** How the long-term user-count history (Statistics -> History) is recorded. */
+export interface UserHistorySettings {
+  /** Seconds between two measurements. */
+  intervalSeconds: number;
+  /** How many days of history are kept. */
+  retentionDays: number;
+}
+
+export interface UserHistorySettingsResponse extends UserHistorySettings {
+  /** What the app ships with, so the form can offer a way back. */
+  defaults: UserHistorySettings;
+  /** The intervals the backend accepts, in seconds. */
+  intervalOptions: number[];
+  retentionBounds: { min: number; max: number };
 }
 
 export interface ScheduledRestartConfig {
