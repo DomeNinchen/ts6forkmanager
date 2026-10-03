@@ -44,6 +44,8 @@ export interface UserSampleRow {
   state: UserSampleState;
   /** The real-user count; null unless state is "online". */
   users: number | null;
+  /** The slot limit when the row was written; null when unknown (older rows, or not online). */
+  maxClients: number | null;
   /** The sampling interval in force when the row was written, in seconds. */
   intervalSec: number;
 }
@@ -73,6 +75,13 @@ export interface UserHistoryPoint {
    * places instead of carrying on through an outage as if nothing happened.
    */
   avg24h: number | null;
+  /**
+   * The slot limit in force at the end of the bucket (the last online sample
+   * that reported one), or null when the bucket is empty or its rows predate
+   * the stored limit - the chart draws no limit line there rather than
+   * assuming today's value applied.
+   */
+  slots: number | null;
 }
 
 export interface UserHistoryStats {
@@ -80,8 +89,12 @@ export interface UserHistoryStats {
   current: number | null;
   /** The state of the newest sample, or "nodata" when it is too old to say anything about now. */
   currentState: UserSampleState | 'nodata' | null;
-  /** Highest single sample in the window and when it was taken. */
-  peak: { users: number; at: number } | null;
+  /**
+   * Highest single sample in the window and when it was taken, with the slot
+   * limit that applied at that moment (null when unknown) so the figure can be
+   * read as "13 of 32 slots".
+   */
+  peak: { users: number; at: number; slots: number | null } | null;
   /** Mean user count over the window's online samples. */
   average: number | null;
   /**
@@ -140,6 +153,7 @@ export function buildUserHistory(rows: UserSampleRow[], range: UserHistoryRange,
   const count = new Array<number>(total).fill(0);
   const max = new Array<number>(total).fill(-Infinity);
   const min = new Array<number>(total).fill(Infinity);
+  const slots = new Array<number | null>(total).fill(null);
 
   for (const r of rows) {
     if (r.state !== 'online' || r.users === null) continue;
@@ -149,6 +163,8 @@ export function buildUserHistory(rows: UserSampleRow[], range: UserHistoryRange,
     count[index] += 1;
     if (r.users > max[index]) max[index] = r.users;
     if (r.users < min[index]) min[index] = r.users;
+    // Rows come oldest first, so the last one with a limit is the one in force at the end of the bucket.
+    if (r.maxClients !== null) slots[index] = r.maxClients;
   }
 
   // Prefix sums make the trailing 24-hour window a subtraction per bucket.
@@ -164,7 +180,7 @@ export function buildUserHistory(rows: UserSampleRow[], range: UserHistoryRange,
     const index = leadBuckets + i;
     const t = gridStart + i * bucketMs;
     if (count[index] === 0) {
-      points.push({ t, avg: null, max: null, min: null, avg24h: null });
+      points.push({ t, avg: null, max: null, min: null, avg24h: null, slots: null });
       continue;
     }
     // The 24 hours ending with this bucket: this bucket and the
@@ -177,6 +193,7 @@ export function buildUserHistory(rows: UserSampleRow[], range: UserHistoryRange,
       max: max[index],
       min: min[index],
       avg24h: windowCount > 0 ? round2(windowSum / windowCount) : null,
+      slots: slots[index],
     });
   }
 
@@ -242,7 +259,7 @@ function buildStats(rows: UserSampleRow[], from: number, to: number): UserHistor
       userSum += r.users;
       userCount += 1;
       // `>` keeps the first time the peak was reached, not the last.
-      if (peak === null || r.users > peak.users) peak = { users: r.users, at: r.t };
+      if (peak === null || r.users > peak.users) peak = { users: r.users, at: r.t, slots: r.maxClients };
     } else {
       downWeight += r.intervalSec;
     }

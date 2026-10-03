@@ -29,6 +29,8 @@ interface SampledServer {
   virtualServerId: number;
   state: UserSampleState;
   users: number | null;
+  /** The slot limit, when serverlist reports it (only for a running virtual server). */
+  maxClients: number | null;
 }
 
 /** WebQueryClient turns every failure that never got an answer from TeamSpeak (refused, timed out, DNS, a proxy's 502) into code -1. */
@@ -165,7 +167,7 @@ export class UserHistorySampler {
         }
         this.report(configId, 'unreachable', err.message);
         const known = await this.getKnownServers(configId);
-        servers = [...known].map((virtualServerId) => ({ virtualServerId, state: 'unreachable', users: null }));
+        servers = [...known].map((virtualServerId) => ({ virtualServerId, state: 'unreachable', users: null, maxClients: null }));
       }
 
       if (servers.length === 0) return;
@@ -176,6 +178,7 @@ export class UserHistorySampler {
           measuredAt: at,
           state: s.state,
           users: s.users,
+          maxClients: s.maxClients,
           intervalSec: this.settings.intervalSeconds,
         })),
       });
@@ -197,7 +200,7 @@ export class UserHistorySampler {
       // online (a stopped server a ServerQuery client has selected) - is a
       // virtual server nobody can join right now.
       if (String(vs.virtualserver_status) !== 'online') {
-        servers.push({ virtualServerId, state: 'stopped', users: null });
+        servers.push({ virtualServerId, state: 'stopped', users: null, maxClients: null });
         continue;
       }
 
@@ -208,10 +211,15 @@ export class UserHistorySampler {
       // virtualserver_queryclientsonline leaves the real users, the same figure
       // the Virtual Servers page shows.
       const queryClients = Number(vs.virtualserver_queryclientsonline);
+      // The slot limit comes in the same answer. Stored per row rather than
+      // read at chart time, because an admin can change it and the chart
+      // should show the limit that applied when each sample was taken.
+      const slots = Number(vs.virtualserver_maxclients);
       servers.push({
         virtualServerId,
         state: 'online',
         users: Math.max(0, clients - (Number.isFinite(queryClients) ? queryClients : 0)),
+        maxClients: Number.isFinite(slots) && slots > 0 ? slots : null,
       });
     }
     return servers;
@@ -276,7 +284,7 @@ export class UserHistorySampler {
       this.prisma.serverUserSample.findMany({
         where: { ...where, measuredAt: { gte: since } },
         orderBy: { measuredAt: 'asc' },
-        select: { measuredAt: true, state: true, users: true, intervalSec: true },
+        select: { measuredAt: true, state: true, users: true, maxClients: true, intervalSec: true },
       }),
       this.prisma.serverUserSample.findFirst({
         where,
@@ -288,7 +296,7 @@ export class UserHistorySampler {
     const rows: UserSampleRow[] = [];
     for (const s of samples) {
       if (s.state !== 'online' && s.state !== 'stopped' && s.state !== 'unreachable') continue;
-      rows.push({ t: s.measuredAt.getTime(), state: s.state, users: s.users, intervalSec: s.intervalSec });
+      rows.push({ t: s.measuredAt.getTime(), state: s.state, users: s.users, maxClients: s.maxClients, intervalSec: s.intervalSec });
     }
 
     return {
