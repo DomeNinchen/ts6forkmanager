@@ -544,12 +544,84 @@
         "connections": "Verbindungen",
         "lastIp": "Letzte IP",
         "description": "Beschreibung",
-        "match": "Treffer bei"
+        "match": "Treffer bei",
+        "status": "Status",
+        "created": "Erstmals gesehen",
+        "loginName": "Login-Name"
       },
       "actions": {
         "details": "Details",
         "ban": "Sperren",
         "delete": "Löschen"
+      },
+      "groupMode": {
+        "label": "Gruppen-Modus",
+        "loadFailed": "Die Servergruppen konnten nicht geladen werden"
+      },
+      "groups": {
+        "unavailable": "TeamSpeak hat die Mitglieder dieser Gruppe nicht herausgegeben (fehlende Berechtigung).",
+        "added": "{{name}} zu {{group}} hinzugefügt",
+        "removed": "{{name}} aus {{group}} entfernt",
+        "undo": "Rückgängig",
+        "changeFailed": "Mitgliedschaft von {{name}} in {{group}} konnte nicht geändert werden"
+      },
+      "columnsMenu": {
+        "title": "Spalten",
+        "columns": "Spalten",
+        "reset": "Auf Standard zurücksetzen",
+        "groups": "Servergruppen (Gruppen-Modus)",
+        "groupsOff": "Schalte den Gruppen-Modus ein, um zu wählen, welche Servergruppen als Spalten erscheinen.",
+        "noGroups": "Dieser Server hat keine Servergruppe, die hier geändert werden kann.",
+        "showAll": "Alle zeigen",
+        "hideAll": "Alle ausblenden"
+      },
+      "export": {
+        "button": "Exportieren",
+        "title": "Client-Datenbank exportieren",
+        "columnsHint": "Spalten: {{columns}}",
+        "format": "Format",
+        "formats": {
+          "csv": "CSV",
+          "html": "HTML-Tabelle",
+          "json": "JSON"
+        },
+        "encoding": "Kodierung",
+        "encodings": {
+          "utf8-bom": "UTF-8 mit BOM (für Excel)",
+          "utf8": "UTF-8 ohne BOM",
+          "utf16le": "UTF-16LE mit BOM"
+        },
+        "delimiter": "CSV-Trennzeichen",
+        "delimiters": {
+          "comma": "Komma",
+          "semicolon": "Semikolon",
+          "tab": "Tabulator"
+        },
+        "dateFormat": "Datumsformat",
+        "dateFormats": {
+          "iso-local": "ISO 8601, lokale Zeit",
+          "iso-utc": "ISO 8601, UTC",
+          "locale": "Format der Oberfläche",
+          "unix": "Unix-Sekunden"
+        },
+        "scope": "Was exportieren",
+        "scopes": {
+          "selected": "Ausgewählte Profile ({{count}})",
+          "visible": "Aktuelle Ansicht ({{count}})",
+          "loaded": "Alles Geladene ({{count}})",
+          "database": "Ganze Datenbank ({{count}})"
+        },
+        "databaseHint": "Lädt vorher alle noch fehlenden Blöcke.",
+        "jsonNote": "JSON ist immer UTF-8 ohne BOM.",
+        "loading": "Lade... {{loaded}} von {{total}}",
+        "run": "Exportieren",
+        "done_one": "{{count}} Profil exportiert",
+        "done_other": "{{count}} Profile exportiert",
+        "failed": "Der Export ist fehlgeschlagen",
+        "htmlTitle": "Client-Datenbank",
+        "htmlSubtitle": "Server {{sid}} - {{count}} Profile - exportiert am {{date}}",
+        "online": "Online",
+        "banned": "Gesperrt"
       },
       "search": {
         "mode": "Ganze Datenbank durchsuchen nach",

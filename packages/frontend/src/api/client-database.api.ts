@@ -3,6 +3,7 @@ import type {
   ClientDbBanResult,
   ClientDbDeleteResult,
   ClientDbDetails,
+  ClientDbGroupsOverview,
   ClientDbListPage,
   ClientDbSearchParams,
   ClientDbSearchResult,
@@ -20,6 +21,9 @@ export const clientDatabaseApi = {
     api.get(`${base(configId, sid)}/search`, { params }).then((r) => r.data),
   details: (configId: number, sid: number, cldbid: number): Promise<ClientDbDetails> =>
     api.get(`${base(configId, sid)}/${cldbid}/details`).then((r) => r.data),
+  /** The server groups whose membership can be changed here, with the members of each (group mode). */
+  groups: (configId: number, sid: number): Promise<ClientDbGroupsOverview> =>
+    api.get(`${base(configId, sid)}/groups`).then((r) => r.data),
   ban: (configId: number, sid: number, request: ClientDbBanRequest): Promise<ClientDbBanResult> =>
     api.post(`${base(configId, sid)}/ban`, request).then((r) => r.data),
   remove: (configId: number, sid: number, cldbids: number[]): Promise<ClientDbDeleteResult> =>

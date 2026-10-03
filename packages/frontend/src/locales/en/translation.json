@@ -544,12 +544,84 @@
         "connections": "Connections",
         "lastIp": "Last IP",
         "description": "Description",
-        "match": "Matched on"
+        "match": "Matched on",
+        "status": "Status",
+        "created": "First seen",
+        "loginName": "Login name"
       },
       "actions": {
         "details": "Details",
         "ban": "Ban",
         "delete": "Delete"
+      },
+      "groupMode": {
+        "label": "Group mode",
+        "loadFailed": "Could not load the server groups"
+      },
+      "groups": {
+        "unavailable": "TeamSpeak refused to list this group's members (missing permission).",
+        "added": "{{name}} added to {{group}}",
+        "removed": "{{name}} removed from {{group}}",
+        "undo": "Undo",
+        "changeFailed": "Could not change {{name}}'s membership in {{group}}"
+      },
+      "columnsMenu": {
+        "title": "Columns",
+        "columns": "Columns",
+        "reset": "Reset to default",
+        "groups": "Server groups (group mode)",
+        "groupsOff": "Switch on group mode to choose which server groups appear as columns.",
+        "noGroups": "This server has no server group that can be changed here.",
+        "showAll": "Show all",
+        "hideAll": "Hide all"
+      },
+      "export": {
+        "button": "Export",
+        "title": "Export client database",
+        "columnsHint": "Columns: {{columns}}",
+        "format": "Format",
+        "formats": {
+          "csv": "CSV",
+          "html": "HTML table",
+          "json": "JSON"
+        },
+        "encoding": "Encoding",
+        "encodings": {
+          "utf8-bom": "UTF-8 with BOM (for Excel)",
+          "utf8": "UTF-8 without BOM",
+          "utf16le": "UTF-16LE with BOM"
+        },
+        "delimiter": "CSV delimiter",
+        "delimiters": {
+          "comma": "Comma",
+          "semicolon": "Semicolon",
+          "tab": "Tab"
+        },
+        "dateFormat": "Date format",
+        "dateFormats": {
+          "iso-local": "ISO 8601, local time",
+          "iso-utc": "ISO 8601, UTC",
+          "locale": "Interface format",
+          "unix": "Unix seconds"
+        },
+        "scope": "What to export",
+        "scopes": {
+          "selected": "Selected profiles ({{count}})",
+          "visible": "Current view ({{count}})",
+          "loaded": "Everything loaded ({{count}})",
+          "database": "Whole database ({{count}})"
+        },
+        "databaseHint": "Loads all remaining blocks first.",
+        "jsonNote": "JSON is always UTF-8 without a BOM.",
+        "loading": "Loading... {{loaded}} of {{total}}",
+        "run": "Export",
+        "done_one": "Exported {{count}} profile",
+        "done_other": "Exported {{count}} profiles",
+        "failed": "The export failed",
+        "htmlTitle": "Client database",
+        "htmlSubtitle": "Server {{sid}} - {{count}} profiles - exported {{date}}",
+        "online": "Online",
+        "banned": "Banned"
       },
       "search": {
         "mode": "Search the whole database by",
