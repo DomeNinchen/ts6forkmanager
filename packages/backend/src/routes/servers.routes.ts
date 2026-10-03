@@ -43,7 +43,7 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
 // Add new TS server connection
 serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
-    const { name, host, webqueryPort, apiKey, useHttps, sshPort, sshUsername, sshPassword, recordUserHistory } = req.body;
+    const { name, host, webqueryPort, apiKey, useHttps, sshPort, sshUsername, sshPassword, pingHost, recordUserHistory } = req.body;
     if (!name || !host || !apiKey) throw new AppError(400, 'Name, host, and API key are required');
 
     const prisma = req.app.locals.prisma;
@@ -58,6 +58,9 @@ serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response,
         sshPort: sshPort || 10022,
         sshUsername: sshUsername || null,
         sshPassword: sshPassword ? encrypt(sshPassword) : null,
+        // Left blank in the dialog it arrives as '' - stored as null ("unset",
+        // the dashboard then pings `host`), like the SSH fields above.
+        pingHost: pingHost || null,
         // Only an explicit false switches it off; a client that doesn't know
         // about the option gets the default, which is on.
         recordUserHistory: recordUserHistory !== false,
