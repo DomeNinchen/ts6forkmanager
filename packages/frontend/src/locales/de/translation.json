@@ -106,6 +106,7 @@
       "complaints": "Beschwerden",
       "messages": "Nachrichten",
       "serverLogs": "Server-Logs",
+      "queryConsole": "Query-Konsole",
       "instance": "Instanz",
       "miscellaneous": "Sonstiges",
       "advancedSettings": "Erweiterte Einstellungen",
@@ -445,6 +446,168 @@
       "signingIn": "Anmeldung läuft...",
       "signIn": "Anmelden",
       "or": "oder"
+    },
+    "console": {
+      "tabs": {
+        "console": "Konsole",
+        "log": "Protokoll",
+        "settings": "Einstellungen"
+      },
+      "virtualServer": "Virtueller Server",
+      "instance": "Instanz (kein virtueller Server)",
+      "clearScreen": "Bildschirm leeren",
+      "empty": "Gib einen Befehl ein und drücke Enter. Mit \"help\" bekommst du eine Übersicht, oder tippe ein paar Buchstaben und drücke Tab.",
+      "mode": {
+        "label": "Senden als",
+        "command": "Befehl",
+        "server": "Nachricht an den Server",
+        "channel": "Nachricht an einen Channel",
+        "private": "Nachricht an einen Client",
+        "client": "Client",
+        "pickClient": "Client auswählen",
+        "noClients": "Keine Sprach-Clients online (Query-Clients können keine Nachrichten empfangen)",
+        "channelHint": "Geht an Channel {{cid}}, in dem sich die Query-Verbindung gerade befindet"
+      },
+      "history": {
+        "menu": "Verlauf ({{count}})",
+        "clear": "Befehlsverlauf leeren",
+        "cleared": "Befehlsverlauf geleert"
+      },
+      "input": {
+        "label": "ServerQuery-Befehl",
+        "placeholder": "clientlist -uid -away",
+        "messagePlaceholder": "Nachrichtentext",
+        "shortcuts": "Tab: vervollständigen · Strg+Leertaste: Vorschläge und Werte · ↑ ↓: Verlauf · Strg+E: Auswahl escapen bzw. Escapes auflösen"
+      },
+      "suggest": {
+        "danger": "Bestätigung",
+        "hidden": "versteckt",
+        "alias": "Alias",
+        "required": "Pflicht"
+      },
+      "notice": {
+        "using": "Befehle laufen jetzt auf: {{name}}",
+        "useUsage": "Aufruf: use sid=<id> (oder use <id>, oder use port=<port>). Mit sid=0 wählst du die Instanz selbst.",
+        "unknownVirtualServer": "Es gibt keinen virtuellen Server mit der ID {{sid}}.",
+        "pickClient": "Wähle zuerst den Client, an den die Nachricht gehen soll.",
+        "noChannel": "Der Channel der Query-Verbindung konnte nicht ermittelt werden."
+      },
+      "errors": {
+        "rateLimited": "Zu viele Befehle in kurzer Zeit – TeamSpeak würde die Adresse dieser App sperren. Versuche es in {{seconds}} s erneut.",
+        "noConnection": "Für diesen Server besteht keine aktive WebQuery-Verbindung.",
+        "generic": "Der Befehl konnte nicht gesendet werden."
+      },
+      "parse": {
+        "empty": "Nichts auszuführen.",
+        "invalid_command": "\"{{detail}}\" ist kein gültiger Befehlsname (Kleinbuchstaben, Ziffern und Unterstriche).",
+        "invalid_option": "\"{{detail}}\" ist keine gültige Option (ein Bindestrich und ein Name, z. B. -uid).",
+        "invalid_key": "\"{{detail}}\" ist kein gültiger Parametername.",
+        "empty_block": "Ein Listeneintrag ist leer: Links und rechts von jedem | muss etwas stehen."
+      },
+      "help": {
+        "required": "Pflicht",
+        "optional": "Optional",
+        "repeatable": "Kann mehrfach angegeben werden (a=1|a=2)",
+        "aliasOf": "= {{name}}",
+        "hidden": "nicht in help",
+        "hiddenHint": "TeamSpeaks eigene help-Übersicht listet diesen Befehl nicht auf",
+        "needsConfirmation": "braucht Bestätigung",
+        "readOnly": "liest nur",
+        "properties": "{{group}}-Eigenschaften…",
+        "noParameters": "Keine Parameter",
+        "integer": "ganze Zahl",
+        "range": "{{min}} bis {{max}}",
+        "defaultValue": "Standard {{value}}",
+        "orOther": "oder andere Werte",
+        "permissions": "Geprüfte Berechtigungen",
+        "unknownTopic": "Es gibt keinen Befehl namens \"{{name}}\".",
+        "intro": "{{count}} ServerQuery-Befehle sind bekannt. Mit \"help <Befehl>\" siehst du die Verwendung eines Befehls, oder klicke unten einen an, um ihn einzutippen.",
+        "introHelp": "help und use gehören der Konsole selbst: WebQuery kennt beides nicht.",
+        "introUse": "use sid=<id> wechselt den virtuellen Server, auf dem die Befehle laufen; use sid=0 ist die Instanz selbst.",
+        "introKeys": "Strg+Leertaste zeigt, was an der Textmarke passt: Parameter, feste Werte und die Channels, Clients oder Gruppen, für die eine ID stehen kann.",
+        "introEscapes": "Werte nutzen ServerQuery-Escapes: \\s für ein Leerzeichen, \\p für einen senkrechten Strich, \\\\ für einen Backslash.",
+        "legend": "Rot: fragt vor dem Ausführen nach einer Bestätigung. Gestrichelter Rahmen: steht nicht in TeamSpeaks eigener help-Übersicht."
+      },
+      "result": {
+        "emptyResult": "keine Einträge",
+        "records": "{{count}} Datensätze",
+        "loggedToTeamSpeak": "ins TeamSpeak-Log geschrieben",
+        "truncated": "Nur die ersten {{shown}} von {{total}} Datensätzen werden angezeigt.",
+        "tableView": "Tabelle",
+        "rawView": "Roh",
+        "revealSecrets": "Geheimnisse anzeigen",
+        "hideSecrets": "Geheimnisse verbergen",
+        "copyRaw": "Roh kopieren",
+        "copyJson": "JSON kopieren",
+        "copyFailed": "Kopieren nicht möglich – der Browser erlaubt das nur über https oder auf localhost",
+        "showAll": "Alle {{count}} Zeilen anzeigen"
+      },
+      "hints": {
+        "outOfScope": "TeamSpeak bietet diesen Befehl nicht über WebQuery an (dazu gehören u. a. use, login, logout, quit, help, ft* und servernotifyregister), oder der Scope des API-Keys deckt ihn nicht ab.",
+        "noAnswer": "TeamSpeak hat keine brauchbare Antwort gegeben: Der Server ist womöglich nicht erreichbar, oder die Anfrage wurde schon vorher abgelehnt.",
+        "unknownCommand": "Dieser TeamSpeak-Server hat diesen Befehl nicht. Die Dokumentation kann Befehle aufführen, die eine bestimmte Serverversion nicht umsetzt."
+      },
+      "explain": {
+        "none": "keine",
+        "notFound": "nicht gefunden (nicht online oder nicht in der Liste)",
+        "empty": "(leer)",
+        "nothingToExplain": "Zu diesem Wert gibt es nichts zu erklären.",
+        "queryClient": "ServerQuery-Client",
+        "voiceClient": "Sprach-Client"
+      },
+      "danger": {
+        "title": "{{command}} ausführen?",
+        "generic": "Dieser Befehl kann nicht rückgängig gemacht werden.",
+        "willRun": "Läuft auf {{target}}:",
+        "typeToConfirm": "Tippe {{command}} zur Bestätigung.",
+        "run": "{{command}} ausführen",
+        "reasons": {
+          "processStop": "Fährt den gesamten TeamSpeak-Serverprozess herunter: Jeder virtuelle Server dieser Instanz geht offline, und diese App kann ihn nicht wieder starten.",
+          "serverStop": "Hält diesen virtuellen Server an und trennt alle, die darauf verbunden sind.",
+          "serverDelete": "Löscht den virtuellen Server samt Channels, Gruppen und Berechtigungen. Das kann nicht rückgängig gemacht werden.",
+          "instanceEdit": "Ändert Einstellungen der ganzen Instanz, etwa die Query-Flood-Grenzen und die Standardgruppen. Ein falscher Wert kann diese App aussperren.",
+          "snapshotDeploy": "Ersetzt die komplette Konfiguration des virtuellen Servers durch den Inhalt des Snapshots.",
+          "permReset": "Löscht jede Gruppe und Berechtigung auf dem virtuellen Server und stellt die Standardwerte wieder her. Schlägt das auf halbem Weg fehl, kann TeamSpeak stattdessen den virtuellen Server löschen.",
+          "massDelete": "Löscht alle Einträge auf einmal.",
+          "dataDelete": "Löscht Daten endgültig: einen Channel, die gespeicherten Daten eines Clients oder eine Gruppe. Das kann nicht rückgängig gemacht werden.",
+          "credentialsRevoke": "Widerruft einen API-Key, ein Query-Login oder einen Privilege Key. Nutzt diese App ihn, um TeamSpeak zu erreichen, ist sie ausgesperrt.",
+          "credentialsReset": "Setzt ein neues Passwort für ein Query-Login. Alles, was noch das alte nutzt, funktioniert nicht mehr."
+        }
+      },
+      "log": {
+        "ok": "ok",
+        "pending": "offen",
+        "pendingHint": "Es wurde keine Antwort festgehalten – das Backend wurde womöglich beendet, während der Befehl lief.",
+        "error": "Fehler",
+        "search": "Suche",
+        "searchPlaceholder": "Befehl oder Benutzername",
+        "allStatuses": "Alle Ergebnisse",
+        "dangerOnly": "Nur gefährliche Befehle",
+        "thisServerOnly": "Nur dieser Server",
+        "empty": "Das Protokoll ist noch leer",
+        "emptyHint": "Jeder Befehl, den die Konsole an TeamSpeak sendet, wird hier festgehalten, samt dem, der ihn ausgeführt hat.",
+        "time": "Zeit",
+        "where": "Wo",
+        "command": "Befehl",
+        "result": "Ergebnis",
+        "duration": "Dauer",
+        "teamSpeakLog": "TS-Log",
+        "teamSpeakLogHint": "Es wurde zusätzlich eine Zeile ins TeamSpeak-Serverlog geschrieben (nur bei Befehlen, die etwas ändern)",
+        "instance": "Instanz",
+        "danger": "gefährlich",
+        "loadMore": "Ältere Einträge laden"
+      },
+      "settings": {
+        "title": "Query-Konsole",
+        "retentionLabel": "Protokoll aufbewahren für (Tage)",
+        "retentionHint": "{{min}} bis {{max}} Tage. Ältere Einträge werden automatisch entfernt.",
+        "floodGuardLabel": "Query-Flood-Grenze von TeamSpeak schützen",
+        "floodGuardHint": "TeamSpeak sperrt die Adresse von allem, was zu schnell zu viele Befehle sendet – für diese App hieße das, dass für eine Weile keine Seite mehr funktioniert. Ist das aktiviert, nutzt die Konsole nur die Hälfte der Grenze (von der Instanz gelesen) und bittet dich zu warten, wenn du darüber kommst. Schalte es aus, wenn die Adresse dieser App auf der query_ip_allowlist des Servers steht, die der Flood-Schutz ignoriert.",
+        "restoreDefaults": "Standardwerte",
+        "unsaved": "Ungespeicherte Änderungen",
+        "saved": "Konsoleneinstellungen gespeichert",
+        "saveFailed": "Konsoleneinstellungen konnten nicht gespeichert werden"
+      }
     },
     "serverLogs": {
       "entryAdded": "Logeintrag hinzugefügt",

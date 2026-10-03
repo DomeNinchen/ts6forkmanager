@@ -106,6 +106,7 @@
       "complaints": "Complaints",
       "messages": "Messages",
       "serverLogs": "Server Logs",
+      "queryConsole": "Query Console",
       "instance": "Instance",
       "miscellaneous": "Miscellaneous",
       "advancedSettings": "Advanced Settings",
@@ -445,6 +446,168 @@
       "signingIn": "Signing in...",
       "signIn": "Sign In",
       "or": "or"
+    },
+    "console": {
+      "tabs": {
+        "console": "Console",
+        "log": "Audit log",
+        "settings": "Settings"
+      },
+      "virtualServer": "Virtual server",
+      "instance": "Instance (no virtual server)",
+      "clearScreen": "Clear screen",
+      "empty": "Type a command and press Enter. Start with \"help\" for an overview, or type a few letters and press Tab.",
+      "mode": {
+        "label": "Send as",
+        "command": "Command",
+        "server": "Message to the server",
+        "channel": "Message to a channel",
+        "private": "Message to a client",
+        "client": "Client",
+        "pickClient": "Pick a client",
+        "noClients": "No voice clients online (query clients can not receive messages)",
+        "channelHint": "Goes to channel {{cid}}, where the query connection currently is"
+      },
+      "history": {
+        "menu": "History ({{count}})",
+        "clear": "Clear command history",
+        "cleared": "Command history cleared"
+      },
+      "input": {
+        "label": "ServerQuery command",
+        "placeholder": "clientlist -uid -away",
+        "messagePlaceholder": "Message text",
+        "shortcuts": "Tab: complete · Ctrl+Space: suggestions and values · ↑ ↓: history · Ctrl+E: escape or unescape the selection"
+      },
+      "suggest": {
+        "danger": "confirm",
+        "hidden": "hidden",
+        "alias": "alias",
+        "required": "required"
+      },
+      "notice": {
+        "using": "Now running commands on: {{name}}",
+        "useUsage": "Usage: use sid=<id> (or use <id>, or use port=<port>). Use sid=0 for the instance itself.",
+        "unknownVirtualServer": "There is no virtual server with the id {{sid}}.",
+        "pickClient": "Pick the client to send the message to first.",
+        "noChannel": "Could not find out which channel the query connection is in."
+      },
+      "errors": {
+        "rateLimited": "Too many commands in a short time - TeamSpeak would block this app's address. Try again in {{seconds}} s.",
+        "noConnection": "This server has no active WebQuery connection.",
+        "generic": "The command could not be sent."
+      },
+      "parse": {
+        "empty": "Nothing to run.",
+        "invalid_command": "\"{{detail}}\" is not a valid command name (lowercase letters, digits and underscores).",
+        "invalid_option": "\"{{detail}}\" is not a valid option (a dash and a name, like -uid).",
+        "invalid_key": "\"{{detail}}\" is not a valid parameter name.",
+        "empty_block": "A list item is empty: there has to be something on both sides of every |."
+      },
+      "help": {
+        "required": "Required",
+        "optional": "Optional",
+        "repeatable": "Can be given several times (a=1|a=2)",
+        "aliasOf": "= {{name}}",
+        "hidden": "not in help",
+        "hiddenHint": "TeamSpeak's own help overview does not list this command",
+        "needsConfirmation": "needs confirmation",
+        "readOnly": "only reads",
+        "properties": "{{group}} properties…",
+        "noParameters": "No parameters",
+        "integer": "whole number",
+        "range": "{{min}} to {{max}}",
+        "defaultValue": "default {{value}}",
+        "orOther": "or other values",
+        "permissions": "Permissions it checks",
+        "unknownTopic": "There is no command called \"{{name}}\".",
+        "intro": "{{count}} ServerQuery commands are known. Type \"help <command>\" for the usage of one, or click one below to start typing it.",
+        "introHelp": "help and use are the console's own: WebQuery has neither.",
+        "introUse": "use sid=<id> switches the virtual server the commands run on; use sid=0 is the instance itself.",
+        "introKeys": "Ctrl+Space lists what fits at the caret: parameters, fixed values, and the channels, clients or groups an id can stand for.",
+        "introEscapes": "Values use ServerQuery escapes: \\s for a space, \\p for a pipe, \\\\ for a backslash.",
+        "legend": "Red: asks for confirmation before it runs. Dashed outline: not listed by TeamSpeak's own help."
+      },
+      "result": {
+        "emptyResult": "no entries",
+        "records": "{{count}} records",
+        "loggedToTeamSpeak": "written to the TeamSpeak log",
+        "truncated": "Only the first {{shown}} of {{total}} records are shown.",
+        "tableView": "Table",
+        "rawView": "Raw",
+        "revealSecrets": "Show secrets",
+        "hideSecrets": "Hide secrets",
+        "copyRaw": "Copy raw",
+        "copyJson": "Copy JSON",
+        "copyFailed": "Could not copy - the browser only allows this on https or on localhost",
+        "showAll": "Show all {{count}} rows"
+      },
+      "hints": {
+        "outOfScope": "TeamSpeak does not offer this command over WebQuery (use, login, logout, quit, help, ft* and servernotifyregister are among those), or the API key's scope does not cover it.",
+        "noAnswer": "TeamSpeak did not give a usable answer: the server may be unreachable, or the request was refused before it got there.",
+        "unknownCommand": "This TeamSpeak server does not have this command. The documentation can list commands that a particular server version does not implement."
+      },
+      "explain": {
+        "none": "none",
+        "notFound": "not found (not online, or not in the list)",
+        "empty": "(empty)",
+        "nothingToExplain": "Nothing to explain about this value.",
+        "queryClient": "ServerQuery client",
+        "voiceClient": "Voice client"
+      },
+      "danger": {
+        "title": "Run {{command}}?",
+        "generic": "This command can not be undone.",
+        "willRun": "Will run on {{target}}:",
+        "typeToConfirm": "Type {{command}} to confirm.",
+        "run": "Run {{command}}",
+        "reasons": {
+          "processStop": "Shuts down the whole TeamSpeak server process: every virtual server on this instance goes offline, and this app can not start it again.",
+          "serverStop": "Stops this virtual server and disconnects everyone on it.",
+          "serverDelete": "Deletes the virtual server together with its channels, groups and permissions. This can not be undone.",
+          "instanceEdit": "Changes settings of the whole instance, such as the query flood limits and the default groups. A wrong value can lock this app out.",
+          "snapshotDeploy": "Replaces the complete configuration of the virtual server with the contents of the snapshot.",
+          "permReset": "Deletes every group and permission on the virtual server and restores the defaults. If it fails halfway, TeamSpeak may delete the virtual server instead.",
+          "massDelete": "Deletes all entries at once.",
+          "dataDelete": "Deletes data for good: a channel, a client's stored data or a group. This can not be undone.",
+          "credentialsRevoke": "Revokes an API key, query login or privilege key. If this app uses it to reach TeamSpeak, it is locked out.",
+          "credentialsReset": "Gives a query login a new password. Anything still using the old one stops working."
+        }
+      },
+      "log": {
+        "ok": "ok",
+        "pending": "pending",
+        "pendingHint": "No answer was recorded - the backend may have been stopped while the command was running.",
+        "error": "error",
+        "search": "Search",
+        "searchPlaceholder": "Command or user name",
+        "allStatuses": "All results",
+        "dangerOnly": "Only dangerous commands",
+        "thisServerOnly": "Only this server",
+        "empty": "Nothing in the audit trail yet",
+        "emptyHint": "Every command the console sends to TeamSpeak is recorded here, with who ran it.",
+        "time": "Time",
+        "where": "Where",
+        "command": "Command",
+        "result": "Result",
+        "duration": "Duration",
+        "teamSpeakLog": "TS log",
+        "teamSpeakLogHint": "A line was also written to the TeamSpeak server log (only commands that change something are)",
+        "instance": "instance",
+        "danger": "dangerous",
+        "loadMore": "Load older entries"
+      },
+      "settings": {
+        "title": "Query console",
+        "retentionLabel": "Keep the audit trail for (days)",
+        "retentionHint": "{{min}} to {{max}} days. Older entries are removed automatically.",
+        "floodGuardLabel": "Protect TeamSpeak's query flood limit",
+        "floodGuardHint": "TeamSpeak blocks the address of anything that sends too many commands too quickly - for this app that would mean every page stops working for a while. With this on, the console only uses half of the limit (read from the instance) and asks you to wait when you go past it. Turn it off if this app's address is on the server's query_ip_allowlist, which the flood protection ignores.",
+        "restoreDefaults": "Restore defaults",
+        "unsaved": "Unsaved changes",
+        "saved": "Console settings saved",
+        "saveFailed": "Could not save the console settings"
+      }
     },
     "serverLogs": {
       "entryAdded": "Log entry added",

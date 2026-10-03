@@ -49,6 +49,7 @@ const Icons = lazy(() => import('@/pages/Icons'));
 const Complaints = lazy(() => import('@/pages/Complaints'));
 const Messages = lazy(() => import('@/pages/Messages'));
 const ServerLogs = lazy(() => import('@/pages/ServerLogs'));
+const Console = lazy(() => import('@/pages/Console'));
 const Instance = lazy(() => import('@/pages/Instance'));
 const Miscellaneous = lazy(() => import('@/pages/Miscellaneous'));
 const AdvancedServerSettings = lazy(() => import('@/pages/AdvancedServerSettings'));
@@ -93,6 +94,7 @@ export function App() {
               <Route path="/complaints" element={<AdminRoute><Complaints /></AdminRoute>} />
               <Route path="/messages" element={<AdminRoute><Messages /></AdminRoute>} />
               <Route path="/logs" element={<AdminRoute><ServerLogs /></AdminRoute>} />
+              <Route path="/console" element={<AdminRoute><Console /></AdminRoute>} />
               <Route path="/instance" element={<AdminRoute><Instance /></AdminRoute>} />
               <Route path="/miscellaneous" element={<AdminRoute><Miscellaneous /></AdminRoute>} />
               <Route path="/advanced-settings" element={<AdminRoute><AdvancedServerSettings /></AdminRoute>} />
