@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { statisticsApi, type UserHistoryRange } from '../api/statistics.api';
+import { statisticsApi, type MetricKind, type UserHistoryRange } from '../api/statistics.api';
 import { useServerStore } from '../stores/server.store';
 
 // The recorded user count of the selected virtual server, for the Statistics
@@ -20,6 +20,26 @@ export function useUserHistory(range: UserHistoryRange) {
     // numbers under the new name.
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[1] === selectedConfigId && previousQuery?.queryKey[2] === selectedSid
+        ? previous
+        : undefined,
+  });
+}
+
+// The rolled-up bandwidth or ping of the selected virtual server, for the same
+// tab. One row per sampling interval, so the same once-a-minute refresh applies.
+export function useMetricHistory(metric: MetricKind, range: UserHistoryRange) {
+  const { selectedConfigId, selectedSid } = useServerStore();
+  return useQuery({
+    queryKey: ['metric-history', selectedConfigId, selectedSid, metric, range],
+    queryFn: () => statisticsApi.metricHistory(selectedConfigId!, selectedSid!, metric, range),
+    enabled: !!selectedConfigId && !!selectedSid,
+    refetchInterval: 60_000,
+    // As above, and additionally only within the same metric: the previous
+    // answer is a different kind of chart when the switch was just flipped.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[1] === selectedConfigId &&
+      previousQuery?.queryKey[2] === selectedSid &&
+      previousQuery?.queryKey[3] === metric
         ? previous
         : undefined,
   });

@@ -1,38 +1,26 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Area, ComposedChart, Line, ReferenceArea, ResponsiveContainer, Tooltip as ReTooltip, XAxis, YAxis } from 'recharts';
-import type { UserHistoryEvent, UserHistoryResponse } from '@/api/statistics.api';
+import { Area, ComposedChart, Line, ResponsiveContainer, Tooltip as ReTooltip, XAxis, YAxis } from 'recharts';
+import type { UserHistoryResponse } from '@/api/statistics.api';
+import {
+  AXIS_TICK,
+  COLOR,
+  HATCH_CSS,
+  HatchPattern,
+  LegendItem,
+  TooltipRow,
+  box,
+  eventBands,
+  isolatedDot,
+  weekendBands,
+} from '@/components/statistics/history-chart-parts';
 import {
   axisTicks,
   formatAxisTick,
   formatDateTime,
   formatTimeOnly,
-  weekendAreas,
   type HistoryTimeZone,
 } from '@/lib/user-history-time';
-
-// Colours come from the theme tokens so the chart follows every base theme and
-// accent, light and dark. The 24-hour line uses the foreground colour on
-// purpose: an accent-coloured second line would collide with the user line
-// under some accents, a neutral dashed one never does.
-const COLOR = {
-  mean: 'hsl(var(--chart-1))',
-  peak: 'hsl(var(--chart-1) / 0.16)',
-  avg24h: 'hsl(var(--foreground) / 0.75)',
-  saturday: 'hsl(var(--muted-foreground) / 0.14)',
-  sunday: 'hsl(var(--destructive) / 0.12)',
-  unreachableTint: 'hsl(var(--destructive) / 0.16)',
-  unreachable: 'hsl(var(--destructive))',
-  stoppedTint: 'hsl(var(--muted-foreground) / 0.14)',
-  // Long dashes in the muted colour: unlike the short-dashed 24-hour line it
-  // reads as a ceiling rather than as another measurement.
-  slots: 'hsl(var(--muted-foreground))',
-};
-
-/** Hatched fill for "virtual server stopped": grey diagonal stripes, distinct from the plain Saturday tint. */
-const HATCH_ID = 'user-history-hatch';
-const HATCH_CSS =
-  'repeating-linear-gradient(45deg, hsl(var(--muted-foreground)) 0 2px, transparent 2px 5px)';
 
 const formatCount = (value: number) => (Number.isInteger(value) ? String(value) : value.toFixed(1));
 
@@ -51,18 +39,6 @@ interface HistoryTooltipProps {
   data: UserHistoryResponse;
   tz: HistoryTimeZone;
   showSlots: boolean;
-}
-
-function TooltipRow({ color, name, value }: { color: string; name: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="flex items-center gap-1.5 text-muted-foreground">
-        <span className="inline-block h-2 w-2 rounded-full" style={{ background: color }} />
-        {name}
-      </span>
-      <span className="font-mono-data">{value}</span>
-    </div>
-  );
 }
 
 function HistoryTooltip({ active, label, data, tz, showSlots }: HistoryTooltipProps) {
@@ -110,17 +86,6 @@ function HistoryTooltip({ active, label, data, tz, showSlots }: HistoryTooltipPr
   );
 }
 
-function LegendItem({ swatch, label }: { swatch: React.ReactNode; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-      {swatch}
-      {label}
-    </span>
-  );
-}
-
-const box = 'inline-block h-3 w-3 rounded-[2px]';
-
 interface UserHistoryChartProps {
   data: UserHistoryResponse;
   tz: HistoryTimeZone;
@@ -164,29 +129,6 @@ export function UserHistoryChart({ data, tz, compact = false, showSlots = false 
   }, [data.points, showSlots]);
 
   const ticks = useMemo(() => axisTicks(data.from, data.to, data.range, tz), [data.from, data.to, data.range, tz]);
-  const weekends = useMemo(() => weekendAreas(data.from, data.to, tz), [data.from, data.to, tz]);
-
-  // An outage of a minute is under a pixel wide on a month view; widen the
-  // marker to something you can see without changing where it is centred.
-  const minWidth = (data.to - data.from) * 0.004;
-  const marker = (e: UserHistoryEvent) => {
-    const width = e.to - e.from;
-    if (width >= minWidth) return { from: e.from, to: e.to };
-    const mid = (e.from + e.to) / 2;
-    return { from: Math.max(data.from, mid - minWidth / 2), to: Math.min(data.to, mid + minWidth / 2) };
-  };
-  const markedEvents = data.events.filter((e) => e.kind !== 'nodata');
-  const stripHeight = yMax * 0.07;
-
-  // A bucket with a number on both sides is part of the line; one with empty
-  // buckets on both sides has no line to belong to and would vanish entirely.
-  const isolatedDot = (props: { cx?: number; cy?: number; index?: number }) => {
-    const { cx, cy, index } = props;
-    const i = index ?? -1;
-    const alone = chartData[i]?.avg != null && chartData[i - 1]?.avg == null && chartData[i + 1]?.avg == null;
-    if (cx == null || cy == null || !alone) return <g key={`dot-${i}`} />;
-    return <circle key={`dot-${i}`} cx={cx} cy={cy} r={2.5} fill={COLOR.mean} />;
-  };
 
   const summary = data.stats.peak
     ? t('pages.serverStats.history.chartAria', {
@@ -202,49 +144,11 @@ export function UserHistoryChart({ data, tz, compact = false, showSlots = false 
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
             <defs>
-              <pattern id={HATCH_ID} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <line x1="0" y1="0" x2="0" y2="6" style={{ stroke: 'hsl(var(--muted-foreground))' }} strokeWidth="2" />
-              </pattern>
+              <HatchPattern />
             </defs>
 
-            {weekends.map((w) => (
-              <ReferenceArea
-                key={`weekend-${w.kind}-${w.from}`}
-                x1={w.from}
-                x2={w.to}
-                fill={w.kind === 'sunday' ? COLOR.sunday : COLOR.saturday}
-                stroke="none"
-                ifOverflow="hidden"
-                zIndex={50}
-              />
-            ))}
-
-            {markedEvents.flatMap((e) => {
-              const { from, to } = marker(e);
-              const unreachable = e.kind === 'unreachable';
-              return [
-                <ReferenceArea
-                  key={`tint-${e.kind}-${e.from}`}
-                  x1={from}
-                  x2={to}
-                  fill={unreachable ? COLOR.unreachableTint : COLOR.stoppedTint}
-                  stroke="none"
-                  ifOverflow="hidden"
-                  zIndex={60}
-                />,
-                <ReferenceArea
-                  key={`strip-${e.kind}-${e.from}`}
-                  x1={from}
-                  x2={to}
-                  y1={0}
-                  y2={stripHeight}
-                  fill={unreachable ? COLOR.unreachable : `url(#${HATCH_ID})`}
-                  stroke="none"
-                  ifOverflow="hidden"
-                  zIndex={150}
-                />,
-              ];
-            })}
+            {weekendBands(data.from, data.to, tz)}
+            {eventBands(data.events, data.from, data.to, yMax)}
 
             <XAxis
               dataKey="t"
@@ -253,7 +157,7 @@ export function UserHistoryChart({ data, tz, compact = false, showSlots = false 
               domain={[data.from, data.to]}
               ticks={ticks}
               tickFormatter={(v: number) => formatAxisTick(v, data.range, tz, locale)}
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+              tick={AXIS_TICK}
               axisLine={false}
               tickLine={false}
             />
@@ -261,7 +165,7 @@ export function UserHistoryChart({ data, tz, compact = false, showSlots = false 
               type="number"
               domain={[0, yMax]}
               allowDecimals={false}
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+              tick={AXIS_TICK}
               axisLine={false}
               tickLine={false}
               width={32}
@@ -278,7 +182,7 @@ export function UserHistoryChart({ data, tz, compact = false, showSlots = false 
               <Line dataKey="slots" type="stepAfter" stroke={COLOR.slots} strokeWidth={1.5} strokeDasharray="10 5" dot={false} activeDot={false} connectNulls={false} isAnimationActive={false} />
             )}
             <Line dataKey="avg24h" type="monotone" stroke={COLOR.avg24h} strokeWidth={1.5} strokeDasharray="5 4" dot={false} activeDot={false} connectNulls={false} isAnimationActive={false} />
-            <Line dataKey="avg" type="monotone" stroke={COLOR.mean} strokeWidth={2} dot={isolatedDot} activeDot={{ r: 3.5 }} connectNulls={false} isAnimationActive={false} />
+            <Line dataKey="avg" type="monotone" stroke={COLOR.mean} strokeWidth={2} dot={isolatedDot(chartData, 'avg', COLOR.mean)} activeDot={{ r: 3.5 }} connectNulls={false} isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

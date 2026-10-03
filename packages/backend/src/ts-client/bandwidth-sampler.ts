@@ -1,5 +1,6 @@
 import { connect } from 'net';
 import type { ConnectionPool } from './connection-pool.js';
+import type { MetricSink } from './metric-rollup.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
 
 const SAMPLE_INTERVAL_MS = 30_000;
@@ -40,6 +41,13 @@ function tcpPing(host: string, port: number): Promise<number> {
   });
 }
 
+/** A running byte total as a number, or null when the server did not report one (older builds) or it is not a plausible total. */
+function byteTotal(value: unknown): number | null {
+  if (value === undefined || value === null || value === '') return null;
+  const total = Number(value);
+  return Number.isFinite(total) && total >= 0 ? total : null;
+}
+
 export interface BandwidthSample {
   timestamp: number;
   incoming: number;
@@ -60,13 +68,24 @@ export interface BandwidthSample {
  * charts were short of history exactly after an update. Keeping both a buffer
  * and a table would just be two sources of truth that can disagree, and at
  * roughly 40 rows per virtual server the query costs nothing.
+ *
+ * Every measurement is also handed to the metric sink, which rolls them up
+ * into the long-term bandwidth and ping history. That is a tap on the
+ * measurement already being taken, not a second one: the server and the ping
+ * target are not contacted any more often because of it.
  */
 export class BandwidthSampler {
   private timers = new Map<string, ReturnType<typeof setInterval>>();
   private reconcileTimer: ReturnType<typeof setInterval> | null = null;
+  private metricSink: MetricSink | null = null;
   private destroyed = false;
 
   constructor(private connectionPool: ConnectionPool, private prisma: PrismaClient) {}
+
+  /** Where every measurement is also sent, for the long-term charts. Set once, at backend startup. */
+  setMetricSink(sink: MetricSink): void {
+    this.metricSink = sink;
+  }
 
   /** Begins continuous sampling. Called once, at backend startup. */
   async start(): Promise<void> {
@@ -151,19 +170,31 @@ export class BandwidthSampler {
           client.execute(sid, 'serverrequestconnectioninfo'),
           this.prisma.tsServerConfig.findUnique({ where: { id: configId } }),
         ]);
+        // The byte totals describe this very moment, so the time is taken
+        // before the ping, which can wait for its own timeout.
+        const readAt = Date.now();
         const info = Array.isArray(connResult) ? connResult[0] : connResult;
         const ping = serverConfig
           ? await tcpPing(serverConfig.pingHost || serverConfig.host, serverConfig.webqueryPort)
           : -1;
+        const incoming = Number(info.connection_bandwidth_received_last_second_total) || 0;
+        const outgoing = Number(info.connection_bandwidth_sent_last_second_total) || 0;
+
+        // The long-term history only gets what the connection's switch allows;
+        // the dashboard's own 20 minutes below are unaffected by it.
+        if (serverConfig?.recordUserHistory) {
+          this.metricSink?.recordMetric(configId, sid, {
+            at: readAt,
+            counterIn: byteTotal(info.connection_bytes_received_total),
+            counterOut: byteTotal(info.connection_bytes_sent_total),
+            rateIn: incoming,
+            rateOut: outgoing,
+            ping,
+          });
+        }
 
         await this.prisma.serverMetricSample.create({
-          data: {
-            serverConfigId: configId,
-            virtualServerId: sid,
-            incoming: Number(info.connection_bandwidth_received_last_second_total) || 0,
-            outgoing: Number(info.connection_bandwidth_sent_last_second_total) || 0,
-            ping,
-          },
+          data: { serverConfigId: configId, virtualServerId: sid, incoming, outgoing, ping },
         });
 
         await this.prisma.serverMetricSample.deleteMany({

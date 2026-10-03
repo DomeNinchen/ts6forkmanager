@@ -1,4 +1,5 @@
 import type { ConnectionPool } from './connection-pool.js';
+import { MetricRollup, type MetricReading, type MetricSink, type RollupRow } from './metric-rollup.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { TSApiError } from '../middleware/error-handler.js';
 import {
@@ -14,6 +15,7 @@ import {
   type UserSampleRow,
   type UserSampleState,
 } from '../utils/user-history-series.js';
+import { buildMetricHistory, type MetricKind, type RollupSampleRow } from '../utils/metric-history-series.js';
 
 const CLEANUP_INTERVAL_MS = 60 * 60_000;
 
@@ -55,12 +57,23 @@ function isConnectionFailure(err: unknown): boolean {
  * at. Each tick therefore writes a row with a state instead: "online" with the
  * count, "stopped" when the instance answered but that virtual server is not
  * running, or "unreachable" when the instance itself did not answer.
+ *
+ * It also owns the long-term bandwidth and ping history, because that shares
+ * this class's interval, retention and per-connection switch. Those figures are
+ * not measured here - BandwidthSampler already takes them every 30 seconds for
+ * the dashboard and hands each reading to recordMetric, which folds them into
+ * one ServerMetricRollup row per interval.
  */
-export class UserHistorySampler {
+export class UserHistorySampler implements MetricSink {
   private timer: ReturnType<typeof setInterval> | null = null;
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
   private settings: UserHistorySettings = { ...USER_HISTORY_DEFAULTS };
   private destroyed = false;
+
+  /** The windows of the bandwidth and ping history that are still being filled. */
+  private rollup = new MetricRollup();
+  /** Rollup rows that are being written, so shutdown can wait for them. */
+  private pendingWrites = new Set<Promise<void>>();
 
   /** Connections whose previous tick has not finished, so a slow one is not asked again on top of itself. */
   private inFlight = new Set<number>();
@@ -250,14 +263,55 @@ export class UserHistorySampler {
     }
   }
 
-  /** Deletes everything older than the retention setting. */
+  /**
+   * One bandwidth and ping measurement from BandwidthSampler. Folded into the
+   * window it belongs to; the row of the window before is written once this
+   * reading shows that window is over.
+   */
+  recordMetric(configId: number, sid: number, reading: MetricReading): void {
+    if (this.destroyed) return;
+    const finished = this.rollup.add(`${configId}:${sid}`, reading, this.settings.intervalSeconds);
+    if (finished) this.writeRollups([{ configId, sid, row: finished }]);
+  }
+
+  /** Writes the windows that are still open - at shutdown, so the last partial one is not lost - and waits for every write in flight. */
+  async flush(): Promise<void> {
+    this.writeRollups(
+      this.rollup.flushAll().map(({ key, row }) => {
+        const [configId, sid] = key.split(':').map(Number);
+        return { configId, sid, row };
+      }),
+    );
+    await Promise.allSettled([...this.pendingWrites]);
+  }
+
+  private writeRollups(entries: Array<{ configId: number; sid: number; row: RollupRow }>): void {
+    if (entries.length === 0) return;
+    const write: Promise<void> = this.prisma.serverMetricRollup
+      .createMany({
+        data: entries.map(({ configId, sid, row }) => ({ serverConfigId: configId, virtualServerId: sid, ...row })),
+      })
+      .then(() => undefined)
+      .catch((err: any) => {
+        console.warn(`[UserHistorySampler] Could not store ${entries.length} bandwidth/ping sample(s): ${err.message}`);
+      })
+      .finally(() => {
+        this.pendingWrites.delete(write);
+      });
+    this.pendingWrites.add(write);
+  }
+
+  /** Deletes everything older than the retention setting, from both history tables. */
   private async cleanup(): Promise<void> {
     if (this.destroyed) return;
     try {
       const cutoff = new Date(Date.now() - this.settings.retentionDays * DAY_MS);
-      const { count } = await this.prisma.serverUserSample.deleteMany({ where: { measuredAt: { lt: cutoff } } });
-      if (count > 0) {
-        console.log(`[UserHistorySampler] Pruned ${count} sample(s) older than ${this.settings.retentionDays} day(s)`);
+      const users = await this.prisma.serverUserSample.deleteMany({ where: { measuredAt: { lt: cutoff } } });
+      const metrics = await this.prisma.serverMetricRollup.deleteMany({ where: { measuredAt: { lt: cutoff } } });
+      if (users.count > 0 || metrics.count > 0) {
+        console.log(
+          `[UserHistorySampler] Pruned ${users.count} user and ${metrics.count} bandwidth/ping sample(s) older than ${this.settings.retentionDays} day(s)`,
+        );
       }
     } catch (err: any) {
       console.warn(`[UserHistorySampler] Cleanup failed: ${err.message}`);
@@ -307,6 +361,76 @@ export class UserHistorySampler {
       retentionDays: this.settings.retentionDays,
       recording: config.recordUserHistory,
       firstSampleAt: first ? first.measuredAt.getTime() : null,
+    };
+  }
+
+  /**
+   * Everything the History chart needs to draw one virtual server's bandwidth
+   * or ping over the requested window, or null when the connection does not
+   * exist. The unreachable and stopped marks are read from the user-count rows,
+   * which note the state of every virtual server at every tick.
+   */
+  async getMetricHistory(configId: number, sid: number, metric: MetricKind, range: UserHistoryRange) {
+    const config = await this.prisma.tsServerConfig.findUnique({
+      where: { id: configId },
+      select: { recordUserHistory: true, host: true, pingHost: true, webqueryPort: true },
+    });
+    if (!config) return null;
+
+    const now = Date.now();
+    // A day more than the window: the lead-in the 24-hour average needs at the left edge.
+    const since = new Date(now - USER_HISTORY_RANGES[range].seconds * 1000 - DAY_MS);
+    const where = { serverConfigId: configId, virtualServerId: sid };
+
+    const [rollups, states, first] = await Promise.all([
+      this.prisma.serverMetricRollup.findMany({
+        where: { ...where, measuredAt: { gte: since } },
+        // The id breaks ties between the two halves of a window that a restart split in two.
+        orderBy: [{ measuredAt: 'asc' }, { id: 'asc' }],
+      }),
+      this.prisma.serverUserSample.findMany({
+        where: { ...where, measuredAt: { gte: since } },
+        orderBy: { measuredAt: 'asc' },
+        select: { measuredAt: true, state: true, intervalSec: true },
+      }),
+      this.prisma.serverMetricRollup.findFirst({
+        where,
+        orderBy: { measuredAt: 'asc' },
+        select: { measuredAt: true },
+      }),
+    ]);
+
+    const rollupRows: RollupSampleRow[] = rollups.map((r) => ({
+      t: r.measuredAt.getTime(),
+      intervalSec: r.intervalSec,
+      bytesIn: r.bytesIn === null ? null : Number(r.bytesIn),
+      bytesOut: r.bytesOut === null ? null : Number(r.bytesOut),
+      spanSec: r.spanSec,
+      peakIn: r.peakIn,
+      peakOut: r.peakOut,
+      pingOk: r.pingOk,
+      pingFailed: r.pingFailed,
+      pingAvg: r.pingAvg,
+      pingMin: r.pingMin,
+      pingMax: r.pingMax,
+    }));
+
+    const stateRows: UserSampleRow[] = [];
+    for (const s of states) {
+      if (s.state !== 'online' && s.state !== 'stopped' && s.state !== 'unreachable') continue;
+      stateRows.push({ t: s.measuredAt.getTime(), state: s.state, users: null, maxClients: null, intervalSec: s.intervalSec });
+    }
+
+    return {
+      range,
+      ...buildMetricHistory(metric, rollupRows, stateRows, range, now),
+      // What the tab's settings card shows, so it doesn't need a second request.
+      intervalSeconds: this.settings.intervalSeconds,
+      retentionDays: this.settings.retentionDays,
+      recording: config.recordUserHistory,
+      firstSampleAt: first ? first.measuredAt.getTime() : null,
+      // What the ping actually measures: a TCP connect to this host and port.
+      pingTarget: { host: config.pingHost || config.host, port: config.webqueryPort },
     };
   }
 

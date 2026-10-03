@@ -328,6 +328,66 @@
           "stopped": "Virtual server stopped",
           "nodata": "No measurement"
         },
+        "metric": {
+          "label": "Metric",
+          "users": "Users",
+          "bandwidth": "Bandwidth",
+          "ping": "Ping"
+        },
+        "metricNoDataYetHint": "The backend rolls bandwidth and ping up into one value every {{interval}} while the virtual server is running and the connection is reachable. The chart appears as soon as the first one is saved.",
+        "metricRecordingSince": "Recorded since {{time}}, one value per {{interval}}",
+        "bandwidth": {
+          "chartTitle": "Bandwidth",
+          "chartAria": "Bandwidth, last {{range}}: download averaging {{down}}, upload averaging {{up}}",
+          "chartAriaEmpty": "Bandwidth: no measurements in this time range",
+          "kpi": {
+            "current": "Latest",
+            "peak": "Peak",
+            "average": "Average",
+            "volume": "Data volume"
+          },
+          "tooltip": {
+            "avgIn": "Download avg",
+            "peakIn": "Download peak",
+            "avgOut": "Upload avg",
+            "peakOut": "Upload peak",
+            "avg24hIn": "Download 24 h avg",
+            "avg24hOut": "Upload 24 h avg"
+          },
+          "legend": {
+            "down": "Download (average)",
+            "up": "Upload (average)",
+            "peak": "Peak"
+          },
+          "note": "The average is exact: it is calculated from the server's byte counters (the server counts file transfers separately, so they are not included). The peak is the highest single reading; short spikes in between are not captured."
+        },
+        "ping": {
+          "chartTitle": "Ping to {{target}}",
+          "chartAria": "Ping, last {{range}}: average {{average}}, peak {{peak}}, {{timeouts}} timeouts",
+          "chartAriaEmpty": "Ping: no measurements in this time range",
+          "kpi": {
+            "current": "Latest",
+            "peak": "Peak",
+            "average": "Average",
+            "timeouts": "Timeouts",
+            "timeoutsCount_one": "{{count}} unanswered ping",
+            "timeoutsCount_other": "{{count}} unanswered pings"
+          },
+          "tooltip": {
+            "mean": "Average",
+            "peak": "Peak",
+            "min": "Minimum",
+            "avg24h": "24 h average",
+            "timeouts_one": "{{count}} ping timeout",
+            "timeouts_other": "{{count}} ping timeouts"
+          },
+          "legend": {
+            "mean": "Ping (average)",
+            "peak": "Peak",
+            "timeout": "Ping timeout"
+          },
+          "note": "What is measured is how long a TCP connection to this connection's ping target takes to open. No answer counts as a timeout: marked red, never counted as 0 ms."
+        },
         "recordingSince": "Recording since {{time}}, measured every {{interval}}",
         "slots": {
           "toggle": "Slot limit",
@@ -341,8 +401,8 @@
         "loadFailedHint": "Check that the connection is enabled and the backend is running.",
         "settings": {
           "title": "Recording",
-          "description": "How often the user count is measured and how long it is kept. Applies to every connection that has recording turned on (Settings → Connections).",
-          "intervalLabel": "Measure every",
+          "description": "How often user count, bandwidth and ping are recorded and how long they are kept. Applies to every connection that has recording turned on (Settings → Connections).",
+          "intervalLabel": "Record every",
           "intervalOptions": {
             "30": "30 seconds",
             "60": "1 minute",
@@ -351,7 +411,7 @@
           },
           "retentionLabel": "Keep history for (days)",
           "retentionHint": "{{min}} to {{max}} days. The longest chart range is 31 days.",
-          "estimate": "Roughly {{size}} per virtual server at these values.",
+          "estimate": "Roughly {{size}} per virtual server at these values (user count, bandwidth and ping together).",
           "restoreDefaults": "Restore defaults",
           "unsaved": "Unsaved changes",
           "saved": "Recording settings saved",
@@ -961,8 +1021,8 @@
         "pingTargetLabel": "Dashboard Ping Target (optional)",
         "pingTargetPlaceholder": "Defaults to Host above ({{host}})",
         "pingTargetHint": "Only affects the Dashboard's Ping reading - useful if Host above is an internal address but the public domain is what should actually be tested. Bot flows always use Host, never this.",
-        "recordUserHistory": "Record user history",
-        "recordUserHistoryHint": "Measures this connection's user counts in the background for Statistics → History. Turning it off keeps what was already recorded and stops adding to it. Interval and retention are set under Statistics → History.",
+        "recordUserHistory": "Record history",
+        "recordUserHistoryHint": "Records this connection's user counts, bandwidth and ping in the background for Statistics → History. Turning it off keeps what was already recorded and stops adding to it. Interval and retention are set under Statistics → History.",
         "sshPortLabel": "SSH Port",
         "sshUserLabel": "SSH User",
         "sshUserPlaceholder": "serveradmin",

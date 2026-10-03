@@ -328,6 +328,66 @@
           "stopped": "Virtueller Server gestoppt",
           "nodata": "Keine Messung"
         },
+        "metric": {
+          "label": "Messwert",
+          "users": "Nutzer",
+          "bandwidth": "Bandbreite",
+          "ping": "Ping"
+        },
+        "metricNoDataYetHint": "Das Backend fasst Bandbreite und Ping alle {{interval}} zu einem Wert zusammen, solange der virtuelle Server läuft und die Verbindung erreichbar ist. Das Diagramm erscheint, sobald der erste gespeichert ist.",
+        "metricRecordingSince": "Aufgezeichnet seit {{time}}, ein Wert je {{interval}}",
+        "bandwidth": {
+          "chartTitle": "Bandbreite",
+          "chartAria": "Bandbreite, letzte {{range}}: Download im Durchschnitt {{down}}, Upload im Durchschnitt {{up}}",
+          "chartAriaEmpty": "Bandbreite: keine Messwerte in diesem Zeitraum",
+          "kpi": {
+            "current": "Zuletzt",
+            "peak": "Spitze",
+            "average": "Durchschnitt",
+            "volume": "Datenmenge"
+          },
+          "tooltip": {
+            "avgIn": "Download Ø",
+            "peakIn": "Download Spitze",
+            "avgOut": "Upload Ø",
+            "peakOut": "Upload Spitze",
+            "avg24hIn": "Download 24-h-Ø",
+            "avg24hOut": "Upload 24-h-Ø"
+          },
+          "legend": {
+            "down": "Download (Durchschnitt)",
+            "up": "Upload (Durchschnitt)",
+            "peak": "Spitze"
+          },
+          "note": "Der Durchschnitt ist exakt: Er wird aus den Byte-Zählern des Servers berechnet (Dateiübertragungen zählt der Server getrennt, sie sind darin nicht enthalten). Die Spitze ist der höchste einzeln gemessene Wert, kurze Spitzen dazwischen werden nicht erfasst."
+        },
+        "ping": {
+          "chartTitle": "Ping zu {{target}}",
+          "chartAria": "Ping, letzte {{range}}: Durchschnitt {{average}}, Spitze {{peak}}, {{timeouts}} Timeouts",
+          "chartAriaEmpty": "Ping: keine Messwerte in diesem Zeitraum",
+          "kpi": {
+            "current": "Zuletzt",
+            "peak": "Spitze",
+            "average": "Durchschnitt",
+            "timeouts": "Timeouts",
+            "timeoutsCount_one": "{{count}} ausgebliebene Antwort",
+            "timeoutsCount_other": "{{count}} ausgebliebene Antworten"
+          },
+          "tooltip": {
+            "mean": "Durchschnitt",
+            "peak": "Spitze",
+            "min": "Minimum",
+            "avg24h": "24-h-Durchschnitt",
+            "timeouts_one": "{{count}} Ping-Timeout",
+            "timeouts_other": "{{count}} Ping-Timeouts"
+          },
+          "legend": {
+            "mean": "Ping (Durchschnitt)",
+            "peak": "Spitze",
+            "timeout": "Ping-Timeout"
+          },
+          "note": "Gemessen wird der Aufbau einer TCP-Verbindung zum Ping-Ziel dieser Verbindung. Bleibt die Antwort aus, zählt das als Timeout: rot markiert, nie als 0 ms."
+        },
         "recordingSince": "Aufzeichnung seit {{time}}, Messintervall {{interval}}",
         "slots": {
           "toggle": "Slot-Limit",
@@ -341,8 +401,8 @@
         "loadFailedHint": "Prüfe, ob die Verbindung aktiviert ist und das Backend läuft.",
         "settings": {
           "title": "Aufzeichnung",
-          "description": "Wie oft die Nutzerzahl gemessen und wie lange sie aufbewahrt wird. Gilt für jede Verbindung, bei der die Aufzeichnung eingeschaltet ist (Einstellungen → Verbindungen).",
-          "intervalLabel": "Messen alle",
+          "description": "Wie oft Nutzerzahl, Bandbreite und Ping aufgezeichnet und wie lange sie aufbewahrt werden. Gilt für jede Verbindung, bei der die Aufzeichnung eingeschaltet ist (Einstellungen → Verbindungen).",
+          "intervalLabel": "Aufzeichnen alle",
           "intervalOptions": {
             "30": "30 Sekunden",
             "60": "1 Minute",
@@ -351,7 +411,7 @@
           },
           "retentionLabel": "Verlauf aufbewahren (Tage)",
           "retentionHint": "{{min}} bis {{max}} Tage. Der längste Diagramm-Zeitraum sind 31 Tage.",
-          "estimate": "Bei diesen Werten etwa {{size}} pro virtuellem Server.",
+          "estimate": "Bei diesen Werten etwa {{size}} pro virtuellem Server (Nutzer, Bandbreite und Ping zusammen).",
           "restoreDefaults": "Standardwerte",
           "unsaved": "Ungespeicherte Änderungen",
           "saved": "Aufzeichnungs-Einstellungen gespeichert",
@@ -961,8 +1021,8 @@
         "pingTargetLabel": "Dashboard-Ping-Ziel (optional)",
         "pingTargetPlaceholder": "Standardmäßig obiger Host ({{host}})",
         "pingTargetHint": "Betrifft nur die Ping-Anzeige des Dashboards - nützlich, wenn der Host oben eine interne Adresse ist, aber eigentlich die öffentliche Domain getestet werden soll. Bot-Flows verwenden immer den Host, niemals dies.",
-        "recordUserHistory": "Nutzerverlauf aufzeichnen",
-        "recordUserHistoryHint": "Misst die Nutzerzahlen dieser Verbindung im Hintergrund für Statistiken → Verlauf. Ausschalten behält das bisher Aufgezeichnete und fügt nichts mehr hinzu. Takt und Aufbewahrung werden unter Statistiken → Verlauf eingestellt.",
+        "recordUserHistory": "Verlauf aufzeichnen",
+        "recordUserHistoryHint": "Zeichnet Nutzerzahl, Bandbreite und Ping dieser Verbindung im Hintergrund für Statistiken → Verlauf auf. Ausschalten behält das bisher Aufgezeichnete und fügt nichts mehr hinzu. Takt und Aufbewahrung werden unter Statistiken → Verlauf eingestellt.",
         "sshPortLabel": "SSH-Port",
         "sshUserLabel": "SSH-Benutzer",
         "sshUserPlaceholder": "serveradmin",
