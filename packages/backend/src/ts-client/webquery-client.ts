@@ -1,9 +1,50 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import http from 'http';
 import https from 'https';
 import { TSApiError } from '../middleware/error-handler.js';
 import { config } from '../config.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
+
+/** TeamSpeak's answer to one command, as WebQuery delivered it. */
+export interface WebQueryEnvelope {
+  httpStatus: number;
+  /** TeamSpeak's own verdict, code 0 = ok. -1 when the answer was not TeamSpeak's JSON status block at all. */
+  status: { code: number; message: string; extraMessage?: string };
+  /** The result records; empty for commands that return nothing and for an empty result set. */
+  body: unknown[];
+  /** TeamSpeak reported 1281 (empty result set), which its own WebQuery docs say to treat as OK. */
+  emptyResult: boolean;
+}
+
+function toEnvelope(httpStatus: number, data: unknown): WebQueryEnvelope {
+  const status = (data as any)?.status;
+  if (status && typeof status.code === 'number') {
+    if (status.code === 1281) {
+      return { httpStatus, status: { code: 0, message: 'ok' }, body: [], emptyResult: true };
+    }
+    const rawBody = (data as any).body;
+    const body = Array.isArray(rawBody) ? rawBody : rawBody && typeof rawBody === 'object' ? [rawBody] : [];
+    return {
+      httpStatus,
+      status: {
+        code: status.code,
+        message: String(status.message ?? ''),
+        ...(status.extra_message ? { extraMessage: String(status.extra_message) } : {}),
+      },
+      body,
+      emptyResult: false,
+    };
+  }
+  // Not TeamSpeak's status block: WebQuery answers a route it does not have (e.g. `help`) with a bare
+  // "not found" text, and a proxy in front of it could answer with anything.
+  const text = typeof data === 'string' ? data.trim() : '';
+  return {
+    httpStatus,
+    status: { code: -1, message: text || 'Unexpected response from WebQuery', extraMessage: `HTTP ${httpStatus}` },
+    body: [],
+    emptyResult: false,
+  };
+}
 
 export class WebQueryClient {
   private http: AxiosInstance;
@@ -163,6 +204,45 @@ export class WebQueryClient {
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
       throw new TSApiError(-1, error.message || 'Connection failed');
     }
+  }
+
+  /**
+   * Sends any command and reports exactly what TeamSpeak answered, without
+   * turning a TeamSpeak-level error into an exception - the query console shows
+   * the answer as it is instead of guessing what the caller wants done with it.
+   * Only a failure to reach the server at all throws.
+   *
+   * `payload` becomes the JSON request body: one object for a single command, or
+   * an array of objects for a `a=1|a=2` style list (WebQuery's own form for it,
+   * see doc/server/webquery.md). Options such as `-uid` are keys with an empty
+   * value. Parameters are never put into the URL, so an API key in a parameter
+   * can not override the real one.
+   */
+  async executeRaw(
+    sid: number,
+    command: string,
+    payload?: Record<string, string> | Record<string, string>[],
+  ): Promise<WebQueryEnvelope> {
+    // The name becomes part of the URL path, so nothing but a plain command name may get through.
+    if (!/^[a-z][a-z0-9_]*$/.test(command)) {
+      throw new TSApiError(-1, 'Invalid command name');
+    }
+    const debug = isDebugEnabled('query');
+    // Deliberately no parameters in the log line: the console is where passwords and keys get typed.
+    if (debug) console.log(`[WebQuery ${this.target}] → console POST sid=${sid} ${command}`);
+
+    let response: AxiosResponse;
+    try {
+      const path = sid > 0 ? `/${sid}/${command}` : `/${command}`;
+      response = await this.http.post(path, payload ?? {}, { validateStatus: () => true });
+    } catch (error: any) {
+      if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
+      throw new TSApiError(-1, error.message || 'Connection failed');
+    }
+
+    const envelope = toEnvelope(response.status, response.data);
+    if (debug) console.log(`[WebQuery ${this.target}] ← console ${command} id=${envelope.status.code} msg=${envelope.status.message}`);
+    return envelope;
   }
 
   // Remove undefined/null values from params

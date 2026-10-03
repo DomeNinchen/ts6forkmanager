@@ -386,6 +386,42 @@ model BotCommandAdminGroup {
   @@unique([serverConfigId, groupId])
 }
 
+// === Query console audit trail ===
+// One row per command the admin query console sent to TeamSpeak: who ran what,
+// where, when, and how it ended. Nothing else is stored - in particular no
+// results, and every secret parameter value in `command` is already replaced
+// by *** before the row is written.
+//
+// User and server are deliberate snapshots (id plus name) instead of relations:
+// the trail has to stay readable after the account or the server connection it
+// refers to is deleted. Rows older than the retention setting (default 90 days,
+// see utils/console-settings.ts) are pruned as new ones are written.
+model QueryConsoleLog {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  userId          Int?
+  username        String
+  serverConfigId  Int
+  serverName      String
+  // TeamSpeak's own virtual server id; 0 = a command run on the instance itself.
+  virtualServerId Int
+  command         String
+  commandName     String
+  danger          Boolean  @default(false)
+  mutating        Boolean  @default(true)
+  // "pending" (written before the command is sent, so a command that takes the
+  // whole TeamSpeak process down still leaves a trace), then "ok" or "error".
+  status          String   @default("pending")
+  errorCode       Int?
+  errorMessage    String?
+  durationMs      Int?
+  // Whether a line went into the TeamSpeak server log as well (logadd).
+  loggedToTeamSpeak Boolean @default(false)
+
+  @@index([createdAt])
+  @@index([serverConfigId, createdAt])
+}
+
 // === Dashboard metric history ===
 // One row per bandwidth/ping measurement taken by BandwidthSampler. This
 // exists so the dashboard's charts can show a full time window the moment
