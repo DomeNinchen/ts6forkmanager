@@ -27,6 +27,8 @@ import {
   type UserHistorySettings,
 } from '../utils/user-history-settings.js';
 import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
+import { CONSOLE_AUDIT_RETENTION_BOUNDS } from '@ts6/common';
+import { getConsoleSettings, setConsoleSettings } from '../utils/console-settings.js';
 import { STREAM_PRESETS } from '../voice/streaming/types.js';
 import { forceCookieCheck } from '../utils/yt-cookie-check.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
@@ -432,6 +434,33 @@ settingsRoutes.put('/user-history', requireAdmin, async (req: Request, res: Resp
     await sampler.applySettings();
     console.log(`[Settings] User history set to every ${saved.intervalSeconds}s, kept for ${saved.retentionDays} day(s)`);
     res.json(userHistorySettingsResponse(saved));
+  } catch (err) { next(err); }
+});
+
+// GET /api/settings/console - how the admin query console keeps its audit trail and protects the query flood limit
+settingsRoutes.get('/console', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    res.json(await getConsoleSettings(prisma));
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/console
+settingsRoutes.put('/console', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { auditRetentionDays, floodGuardEnabled } = req.body ?? {};
+
+    if (!Number.isInteger(auditRetentionDays) || auditRetentionDays < CONSOLE_AUDIT_RETENTION_BOUNDS.min || auditRetentionDays > CONSOLE_AUDIT_RETENTION_BOUNDS.max) {
+      throw new AppError(400, `auditRetentionDays must be a whole number between ${CONSOLE_AUDIT_RETENTION_BOUNDS.min} and ${CONSOLE_AUDIT_RETENTION_BOUNDS.max}`);
+    }
+    if (typeof floodGuardEnabled !== 'boolean') {
+      throw new AppError(400, 'floodGuardEnabled must be a boolean');
+    }
+
+    const prisma = req.app.locals.prisma;
+    const saved = await setConsoleSettings(prisma, { auditRetentionDays, floodGuardEnabled });
+    console.log(`[Settings] Query console: audit trail kept ${saved.auditRetentionDays} days, flood guard ${saved.floodGuardEnabled ? 'on' : 'off'}`);
+    res.json(saved);
   } catch (err) { next(err); }
 });
 

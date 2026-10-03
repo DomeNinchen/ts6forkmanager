@@ -21,6 +21,7 @@ import { iconRoutes } from './routes/icons.routes.js';
 import { complaintRoutes } from './routes/complaints.routes.js';
 import { messageRoutes } from './routes/messages.routes.js';
 import { logRoutes } from './routes/logs.routes.js';
+import { consoleRoutes } from './routes/console.routes.js';
 import { instanceRoutes } from './routes/instance.routes.js';
 import { dashboardRoutes } from './routes/dashboard.routes.js';
 import { statisticsRoutes } from './routes/statistics.routes.js';
@@ -100,6 +101,7 @@ export function createApp(): Express {
   app.use('/api/servers/:configId/vs/:sid/complaints', serverAccess, complaintRoutes);
   app.use('/api/servers/:configId/vs/:sid/messages', serverAccess, messageRoutes);
   app.use('/api/servers/:configId/vs/:sid/logs', serverAccess, logRoutes);
+  app.use('/api/servers/:configId/console', serverAccess, consoleRoutes);
   app.use('/api/servers/:configId/instance', serverAccess, instanceRoutes);
   app.use('/api/servers/:configId/command-permissions', serverAccess, commandPermissionRoutes);
   app.use('/api/servers/:configId/vs/:sid/dashboard', serverAccess, dashboardRoutes);
