@@ -7,5 +7,6 @@ export * from './types/update-check.js';
 export * from './constants/events.js';
 export * from './utils/ts-escape.js';
 export * from './utils/icon-id.js';
+export * from './utils/file-repository.js';
 export * from './utils/version-compare.js';
 export * from './widget-themes.js';

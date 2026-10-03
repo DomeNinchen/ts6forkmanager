@@ -385,3 +385,22 @@ export interface IconUsageRef {
 
 /** Icon ID -> everywhere that icon is currently in use. */
 export type IconUsageMap = Record<number, IconUsageRef[]>;
+
+// Files - every channel has its own file repository, listed by
+// `ftgetfilelist`. The raw rows say `type=0` for a directory and `type=1` for
+// a file (verified live), which is easy to read backwards; the API hands out
+// this normalized shape instead.
+export interface ServerFileEntry {
+  name: string;
+  /** Size in bytes; 0 for directories. */
+  size: number;
+  /** Last change in milliseconds since the epoch, 0 when the server gave none. */
+  modified: number;
+  isDirectory: boolean;
+}
+
+/** Limits the Files page needs to know about before it starts a transfer. */
+export interface FileTransferLimits {
+  /** Largest single file the app will upload (FILES_MAX_UPLOAD_MB). */
+  maxUploadBytes: number;
+}
