@@ -74,8 +74,22 @@ Upstream had a persistent video/audio streaming stutter that was never resolved,
 
 ## Quick Start (Docker)
 
-1. Download the [`docker-compose.yml`](docker-compose.yml)
-2. Create a `.env` file next to it:
+The images are built locally from source, so the whole repository is needed, not just the [`docker-compose.yml`](docker-compose.yml).
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/DomeNinchen/ts6forkmanager.git
+cd ts6forkmanager
+```
+
+2. Create the Docker network the stack runs on (it's declared as external in `docker-compose.yml`, so Compose won't create it on its own — this is only needed once per host):
+
+```bash
+docker network create ts6-network
+```
+
+3. Create a `.env` file in the repository root:
 
 ```env
 JWT_SECRET=your-random-secret-at-least-32-characters
@@ -89,17 +103,19 @@ echo "JWT_SECRET=$(openssl rand -base64 32)" >> .env
 echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 ```
 
-3. Start the stack:
+4. Build and start the stack (the first build takes a few minutes):
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-4. Open `http://localhost:3000/setup` and create your admin account
-5. Log in, then add your TeamSpeak server connection under **Settings → Connections** (host, WebQuery port, API key)
+5. Open `http://localhost:3000/setup` and create your admin account
+6. Log in, then add your TeamSpeak server connection under **Settings → Connections** (host, WebQuery port, API key)
 
 > `JWT_SECRET` is **required** — the backend will refuse to start in production without it.
 > `ENCRYPTION_KEY` is optional but recommended — if not set, `JWT_SECRET` is used as fallback for credential encryption.
+
+To update later, run `git pull && docker compose up -d --build` in the repository folder — the same command the in-app update banner shows.
 
 Running it behind a reverse proxy, or on Coolify? See [Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment). Every other environment variable is listed in [Configuration](https://github.com/DomeNinchen/ts6forkmanager/wiki/Configuration).
 
