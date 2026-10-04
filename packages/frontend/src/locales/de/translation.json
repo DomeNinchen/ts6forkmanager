@@ -1600,6 +1600,11 @@
       "dropToUpload": "Dateien hier ablegen, um sie hochzuladen",
       "foldersNotSupported": "Ordner lassen sich noch nicht hochladen - es wurden nur die Dateien übernommen.",
       "uploadLimitNotice": "Größte hochladbare Datei: {{size}} (einstellbar über FILES_MAX_UPLOAD_MB auf dem Server).",
+      "nonAsciiWarning": {
+        "title": "Nicht-ASCII-Zeichen im Dateinamen",
+        "description_one": "TeamSpeak-Clients können {{names}} danach womöglich nicht herunterladen (\"file not found\"). Ein reiner ASCII-Name ist sicherer.",
+        "description_other": "TeamSpeak-Clients können diese Dateien danach womöglich nicht herunterladen (\"file not found\"): {{names}}. Reine ASCII-Namen sind sicherer."
+      },
       "problem": {
         "empty": "Der Name ist leer.",
         "not-absolute": "Der Pfad muss mit \"/\" beginnen.",

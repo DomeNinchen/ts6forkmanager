@@ -4,7 +4,7 @@ import { checkFileName, joinRepositoryPath } from '@ts6/common';
 import i18n from '@/lib/i18n';
 import { formatBytes } from '@/lib/utils';
 import { filesApi } from '@/api/files.api';
-import { fileErrorMessage, isAlreadyExists, pathProblemMessage } from '@/lib/file-errors';
+import { fileErrorMessage, hasNonAscii, isAlreadyExists, pathProblemMessage } from '@/lib/file-errors';
 
 // Uploads to a channel's file repository, kept outside any page so they keep
 // running - and their progress keeps counting - while you look at another
@@ -208,6 +208,7 @@ export const useTransfers = create<TransfersState>()((set, get) => {
 
     enqueueUploads: (target, files, maxUploadBytes) => {
       const batchId = `batch-${nextId++}`;
+      const nonAsciiNames: string[] = [];
       const items: UploadItem[] = files.map((file) => {
         const id = newId();
         // A name the server would refuse anyway is turned away here, where it costs nothing
@@ -222,6 +223,7 @@ export const useTransfers = create<TransfersState>()((set, get) => {
           error = i18n.t('pages.files.errors.tooLargeFor', { size: formatBytes(maxUploadBytes) });
         } else {
           pendingFiles.set(id, file);
+          if (hasNonAscii(file.name)) nonAsciiNames.push(file.name);
         }
         return {
           id,
@@ -242,6 +244,7 @@ export const useTransfers = create<TransfersState>()((set, get) => {
       for (const item of items) {
         if (item.status === 'error') settle(item.id, 'error', { error: item.error });
       }
+      if (nonAsciiNames.length > 0) warnNonAscii(nonAsciiNames);
       pump();
     },
 
@@ -268,6 +271,28 @@ export const useTransfers = create<TransfersState>()((set, get) => {
     clearFinished: () => set((state) => ({ uploads: state.uploads.filter((item) => !isFinished(item.status)) })),
   };
 });
+
+// A TeamSpeak client can fail to download a file whose name has umlauts or other
+// non-ASCII characters ("file not found") even where the server accepted the upload
+// - reproduced with the official client alone - so say so before the file goes up.
+// Only a hint: the upload still runs.
+const NON_ASCII_NAMES_SHOWN = 3;
+const NON_ASCII_NAME_LENGTH = 48;
+
+function warnNonAscii(names: string[]) {
+  const t = i18n.t.bind(i18n);
+  const shown = names
+    .slice(0, NON_ASCII_NAMES_SHOWN)
+    .map((name) => (name.length > NON_ASCII_NAME_LENGTH ? `${name.slice(0, NON_ASCII_NAME_LENGTH - 1)}…` : name))
+    .join(', ');
+  toast.warning(t('pages.files.nonAsciiWarning.title'), {
+    description: t('pages.files.nonAsciiWarning.description', {
+      count: names.length,
+      names: names.length > NON_ASCII_NAMES_SHOWN ? `${shown}, …` : shown,
+    }),
+    duration: 12000,
+  });
+}
 
 function announce(batch: Batch) {
   const t = i18n.t.bind(i18n);
