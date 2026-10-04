@@ -1209,7 +1209,15 @@
         "baseThemeSetFailed": "Failed to update installation base theme",
         "accentSetToast": "Installation accent set to {{accent}}",
         "accentSetFailed": "Failed to update installation accent",
-        "pairingHint": "{{theme}} goes well with the {{accent}} accent."
+        "pairingHint": "{{theme}} goes well with the {{accent}} accent.",
+        "privacyNotice": {
+          "title": "Storage notice",
+          "description": "Shows every visitor, the login page included, a small dismissible note that this interface only keeps technically necessary data in the browser. It is purely informational: nothing is blocked until it is dismissed, and each browser remembers its own dismissal. It is not shown on the public widget page.",
+          "label": "Show the storage notice",
+          "onToast": "Storage notice switched on",
+          "offToast": "Storage notice switched off",
+          "failed": "Failed to update the storage notice"
+        }
       },
       "title": "Settings",
       "tabs": {
@@ -2748,6 +2756,11 @@
       "updateAvailable": "Update available:",
       "copyDeployCommand": "Copy deploy command (keeps your own changes to files like docker-compose.yml)",
       "postpone": "Postpone"
+    },
+    "privacyNotice": {
+      "title": "Storage notice",
+      "message": "This interface only stores data in your browser that it needs to work, such as your login, language and display settings. The application sets no cookies of its own and uses no tracking or analytics services. Fonts are served from this server.",
+      "dismiss": "Got it"
     },
     "ytCookieBanner": {
       "message": "YouTube cookies stopped working — age-restricted/member-only content and searches may fail until they're refreshed in <1>Settings → YouTube</1>."

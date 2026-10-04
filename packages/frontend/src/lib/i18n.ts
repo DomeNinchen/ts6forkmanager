@@ -38,6 +38,11 @@ export function nativeLanguageName(code: string): string {
 // the detector when no account preference is set yet.
 export const LANGUAGE_STORAGE_KEY = 'ts6-language';
 
+// The public widget page is an iframe on other people's sites. Its visitors never
+// picked a language here, so detecting one must not leave an entry behind in their
+// browser - the page still reads a stored language, it just never writes one.
+const isWidgetPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/widget/');
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -49,7 +54,7 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       lookupLocalStorage: LANGUAGE_STORAGE_KEY,
-      caches: ['localStorage'],
+      caches: isWidgetPage ? [] : ['localStorage'],
     },
   });
 

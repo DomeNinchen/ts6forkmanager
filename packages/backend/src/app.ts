@@ -38,6 +38,7 @@ import { commandPermissionRoutes } from './routes/command-permissions.routes.js'
 import { widgetPublicRoutes } from './routes/widget-public.routes.js';
 import { widgetRoutes } from './routes/widget.routes.js';
 import { setupRoutes } from './routes/setup.routes.js';
+import { publicConfigRoutes } from './routes/public-config.routes.js';
 import { settingsRoutes } from './routes/settings.routes.js';
 import { updateCheckRoutes } from './routes/update-check.routes.js';
 import { ytCookieCheckRoutes } from './routes/yt-cookie-check.routes.js';
@@ -72,6 +73,7 @@ export function createApp(): Express {
 
   // Public routes
   app.use('/api/setup', setupRoutes);
+  app.use('/api/public-config', publicConfigRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/auth/oidc', oidcAuthRoutes);
 

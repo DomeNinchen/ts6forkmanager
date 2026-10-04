@@ -137,11 +137,39 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Security** — role-based access control with four roles and per-server scoping, two-factor authentication with recovery codes, Single Sign-On via any OpenID Connect provider, AES-256-GCM encryption for stored credentials, JWT with refresh-token rotation, SSRF protection, and rate limiting. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
 
+**Privacy** — the web interface loads nothing from a third party (its fonts are bundled and served from the app's own origin), the application sets no HTTP cookies, and the browser only keeps what the interface needs to work. A dismissible storage notice says so on the login page and in the app; admins switch it off in Settings → WebGui. It is informational, not a consent gate. What exactly is stored and loaded is listed [below](#privacy-what-the-app-stores-and-loads). → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Privacy-and-Hosting)
+
 **Theming** — nine base themes, six dark (Command Deck, OLED-Black, Graphite, Carbon, Frost, Deep Forest) and three light (Daylight, Paper, Frost Light), combinable with any of ten accent colours. The admin sets an installation-wide default; every user can override both for themselves in their own browser. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Themes-and-Appearance)
 
 **Language** — the interface is available in English, German and French, with more added as the community translates them on [Crowdin](https://crowdin.com/project/ts6forkmanager). Pick one in Settings → WebGui and it's remembered on your account across devices; before logging in, the login and setup screens instead follow your browser's own language automatically. Want to help translate? Join the project on Crowdin - no code changes needed, new/updated translations land in this repo on their own.
 
 **Administration** — user and session management, yt-dlp cookie handling, runtime debug toggles, scheduled restarts, and an update status page. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Administration)
+
+## Privacy: What the App Stores and Loads
+
+This is a description of what the software does, not legal advice. Every installation is run by its own admin, who decides what a visitor has to be told; the defaults are meant to leave as little behind as possible.
+
+**Loaded.** A visitor's browser talks only to the server the app runs on. The fonts (Manrope, JetBrains Mono, Rajdhani, SIL Open Font License 1.1, text in `/fonts-LICENSE.txt`) are bundled and served from the same origin, and the Content-Security-Policy of the frontend container allows no external script, style, font or `connect` source. Separate from that, the *server* contacts what an admin configures or uses: TeamSpeak servers, an OpenID Connect provider, GitHub for the update check, YouTube through yt-dlp, and the URLs in bot flows.
+
+**Cookies.** The application sets no HTTP cookies. The only "cookie" in the code is the optional YouTube cookie file for yt-dlp, which has nothing to do with visitors.
+
+**Browser storage.** Everything else is `localStorage` in the visitor's own browser, never `sessionStorage` or IndexedDB, and all of it is functional:
+
+| Key | Holds |
+|---|---|
+| `ts6-auth` | the login session: access and refresh token and the user's profile |
+| `ts6-server` | the selected server and virtual server |
+| `ts6-ui` | display state: personal theme and accent, sidebar and collapsed sections |
+| `ts6-language` | the interface language (also the fallback before logging in) |
+| `ts6-privacy-notice` | whether the storage notice was dismissed |
+| `ts6-update-banner`, `ts6-yt-cookie-banner` | which update and YouTube-cookie notices were dismissed |
+| `ts6-client-database` | the Client Database page's columns and hidden groups |
+| `ts6-flow-editor-help-seen` | that the Bot Flow editor's usage dialog is not to be shown again |
+| `ts6-history-timezone`, `ts6-history-show-slots`, `ts6-history-metric` | display choices of the statistics History tab |
+| `ts6-2fa-device-<username>` | the "remember this device" token for two-factor login |
+| `ts6-console-events-<id>`, `ts6-console-history-<id>` | the Query console's chosen event categories and its command history, one pair per user account (a command carrying a password is never kept) |
+
+The public widget page (`/widget/<token>`), which is meant to sit in an iframe on other sites, stores nothing at all and does not show the storage notice.
 
 ## 📖 Documentation
 
@@ -154,6 +182,7 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 | [Tips and Pitfalls](https://github.com/DomeNinchen/ts6forkmanager/wiki/Tips-and-Pitfalls) | Behaviour that looks like a bug but isn't. Worth reading early |
 | [Configuration](https://github.com/DomeNinchen/ts6forkmanager/wiki/Configuration) | Every environment variable, for backend and sidecar |
 | [Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment) | Reverse proxies, Coolify, backups |
+| [Privacy and Hosting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Privacy-and-Hosting) | What the app stores and loads, and what a host should think about (no legal advice) |
 | [Development](https://github.com/DomeNinchen/ts6forkmanager/wiki/Development) | Architecture, tech stack, running it from source |
 
 ## Known Issues (Upstream TS6 Server Bug)
