@@ -8,6 +8,12 @@ name: Crowdin
 # translations out of the PR entirely - Crowdin's own export otherwise fills
 # an untranslated string with the English source text, which would silently
 # add a "new language" that's actually just English under a different code.
+# The upload_translations input is the opposite direction, for catching
+# Crowdin up with the repo: the English source strings reach Crowdin on every
+# push, but the German (and English) text written next to them in the repo
+# does not, so after a stretch of new features Crowdin shows those languages
+# as only partly translated. Ticking it pushes the repo's en and de files up
+# instead of pulling anything down.
 # Needs three repo secrets (Settings -> Secrets and variables -> Actions):
 # CROWDIN_PROJECT_ID, CROWDIN_PERSONAL_TOKEN, and GH_TOKEN (see below).
 on:
@@ -15,7 +21,12 @@ on:
     branches: [main]
     paths:
       - "packages/frontend/src/locales/en/translation.json"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      upload_translations:
+        description: "Push the repo's en and de translations up to Crowdin instead of pulling translations down"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -37,8 +48,34 @@ jobs:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
+  upload-translations:
+    if: github.event_name == 'workflow_dispatch' && inputs.upload_translations
+    needs: upload-sources
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [de, en]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Upload the ${{ matrix.language }} translations to Crowdin
+        uses: crowdin/github-action@v3
+        with:
+          upload_sources: false
+          upload_translations: true
+          upload_language: ${{ matrix.language }}
+          # A translation identical to its source is skipped by default, but
+          # that is exactly what a loanword is here (Channel, Status, Online,
+          # ...), and for English every string is identical to its source.
+          import_eq_suggestions: true
+          download_translations: false
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
   download-translations:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.upload_translations
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
