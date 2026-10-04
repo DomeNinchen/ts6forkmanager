@@ -3,6 +3,8 @@ import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/rea
 import { normalizeIconId } from '@ts6/common';
 import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
+import { useAuthStore } from '@/stores/auth.store';
+import { AutomaticGroupsPanel } from '@/components/permissions/AutomaticGroupsPanel';
 import { IconImage } from '@/components/icons/IconImage';
 import { IconPickerDialog } from '@/components/icons/IconPickerDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -223,9 +225,13 @@ export default function Permissions() {
   // being one of them - it replaces the whole select/edit layout while active.
   // The tier tabs edit permissions; Find and Overview replace that whole
   // layout with their own, so they're modes rather than a sixth/seventh tier.
-  const [mode, setMode] = useState<'edit' | 'find' | 'overview'>('edit');
+  // Automatic Groups is the odd one out: it edits server group *templates*
+  // instance-wide, not one entity's permissions, and is admin-only.
+  const [mode, setMode] = useState<'edit' | 'find' | 'overview' | 'automatic'>('edit');
   const findMode = mode === 'find';
   const overviewMode = mode === 'overview';
+  const automaticMode = mode === 'automatic';
+  const isAdmin = useAuthStore((st) => st.user?.role === 'admin');
   const setFindMode = (on: boolean) => setMode(on ? 'find' : 'edit');
   const [findPermsid, setFindPermsid] = useState('');
   const [findSearch, setFindSearch] = useState('');
@@ -1142,7 +1148,7 @@ export default function Permissions() {
             onClick={() => { setLayer(key); setFindMode(false); }}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-              layer === key && !findMode
+              layer === key && !findMode && !automaticMode
                 ? 'bg-background text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
             )}
@@ -1176,9 +1182,25 @@ export default function Permissions() {
           <Layers className="h-3.5 w-3.5" />
           {t('pages.permissions.permissionOverview')}
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => setMode('automatic')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+              automaticMode
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Shield className="h-3.5 w-3.5" />
+            {t('pages.permissions.automatic.tab')}
+          </button>
+        )}
       </div>
 
-      {overviewMode ? (
+      {automaticMode && isAdmin ? (
+        <AutomaticGroupsPanel configId={c!} sid={s!} perms={allPerms} />
+      ) : overviewMode ? (
         <div className="grid grid-cols-12 gap-4">
           {/* Client picker */}
           <Card className="card-hero col-span-3">
