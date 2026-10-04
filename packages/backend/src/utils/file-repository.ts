@@ -11,6 +11,7 @@ import {
   type FtTicket,
 } from '../ts-client/file-transfer.js';
 import { TicketStore } from './ticket-store.js';
+import type { ArchivePlan } from './folder-archive.js';
 
 // Everything the Files routes need to talk to one channel's file repository over
 // the shared SSH ServerQuery connection: listing, asking for transfer tickets,
@@ -68,7 +69,17 @@ export interface DownloadLink {
   sid: number;
   cid: number;
   path: string;
+  /** What the browser saves it as: the file's name, or `<folder>.zip`. */
   name: string;
+  /**
+   * `path` is a folder, to be streamed as a ZIP, and this is what is in it: walked
+   * when the link was made, which is also what told the browser how large the
+   * download is. Walking a folder costs a command per sub-folder (about 45 ms each
+   * on a local test server), so the click that opens the link goes by this and does
+   * not do it again; a file that changed within the minute the link lives for ends
+   * the download, as one that changes while it streams does anyway.
+   */
+  archive?: ArchivePlan;
 }
 
 // The browser follows up a `POST .../uploads` with the file body straight away,

@@ -13,6 +13,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
 import { ftDownloadBytes, ftUploadStream } from '../ts-client/file-transfer.js';
 import { MAX_PREVIEW_PIXELS, sniffImage } from '../utils/image-sniff.js';
+import { planFolderArchive } from '../utils/folder-archive.js';
 import {
   TICKET_FRESH_MS,
   UPLOAD_SESSION_TTL_MS,
@@ -105,6 +106,77 @@ fileRoutes.post('/:cid/mkdir', async (req: Request, res: Response, next) => {
     });
     res.json(result);
   } catch (err) { next(toSshAppError(err)); }
+});
+
+// Make sure a whole tree of folders exists - what a folder upload needs before its
+// files go up. ftcreatedir makes one level at a time (no parents), so each one is
+// created parents first. On a real TS6 server it answers 2050 for a folder that is
+// already there - fine, that is what was wanted - but with plain success, and no
+// folder, when a FILE of that name is there (verified live), so every answer is
+// checked against what is really at the path afterwards. Every folder gets its own
+// answer, so the files of one that could not be made (a name the server cannot
+// store, a file in the way) can be turned away while the rest of the upload goes
+// on; the children of a folder that failed are not even tried.
+const MAX_MKDIRS = 2000;
+
+interface MkdirResult {
+  dirname: string;
+  ok: boolean;
+  /** Whether this call made it, as opposed to finding it there. */
+  created?: boolean;
+  /** TeamSpeak's own status code, when it refused. */
+  code?: number;
+  error?: string;
+}
+
+fileRoutes.post('/:cid/mkdirs', async (req: Request, res: Response, next) => {
+  try {
+    const scope = scopeOf(req);
+    const list = req.body?.dirnames;
+    if (!Array.isArray(list) || list.length === 0 || list.length > MAX_MKDIRS) {
+      throw new AppError(400, `dirnames must be a list of 1 to ${MAX_MKDIRS} folders`);
+    }
+    // Parents before children, whatever order they came in
+    const dirnames = [...new Set<string>(list.map((value) => requirePath(value, 'directory name')))]
+      .sort((a, b) => a.split('/').length - b.split('/').length || (a < b ? -1 : a > b ? 1 : 0));
+
+    const results: MkdirResult[] = [];
+    const failed: string[] = [];
+    for (const dirname of dirnames) {
+      if (failed.some((bad) => dirname.startsWith(`${bad}/`))) {
+        results.push({ dirname, ok: false, error: 'Its parent folder could not be created' });
+        continue;
+      }
+      let code: number | undefined;
+      let error: string;
+      try {
+        let created = true;
+        try {
+          await sshExecute(req, 'ftcreatedir', { cid: scope.cid, cpw: '', dirname });
+        } catch (err) {
+          // 2050: something of that name is there already - a folder is what was wanted
+          if (!(err instanceof TSApiError) || err.code !== 2050) throw err;
+          created = false;
+        }
+        const found = await statPath(scope, dirname);
+        if (found.kind === 'directory') {
+          results.push({ dirname, ok: true, created });
+          continue;
+        }
+        code = found.kind === 'file' ? 2050 : undefined;
+        error = found.kind === 'file' ? 'file already exists' : 'The folder was not created';
+      } catch (err) {
+        if (!(err instanceof TSApiError)) throw err; // not an answer of TeamSpeak's (SSH down ...): the whole request fails
+        code = err.code;
+        error = err.message;
+      }
+      failed.push(dirname);
+      results.push({ dirname, ok: false, code, error });
+    }
+    res.json({ results });
+  } catch (err) {
+    next(asTransferError(err));
+  }
 });
 
 // Delete file
@@ -264,15 +336,22 @@ fileRoutes.put('/:cid/uploads/:uploadId', async (req: Request, res: Response, ne
 // is a one-time ticket the browser can simply open, which lets it stream the file
 // straight to disk itself - a request that has to carry an Authorization header
 // could only ever be collected in memory by a script first.
+//
+// A folder gets a link too: opening it streams the folder as a ZIP. The folder is
+// walked here already, so one that cannot become a ZIP (too many files, more than
+// 4 GiB) is refused now, with a message, rather than failing in the browser's
+// download list.
 fileRoutes.post('/:cid/download-links', async (req: Request, res: Response, next) => {
   try {
     const scope = scopeOf(req);
     const path = requirePath(req.body?.path, 'path');
     const stat = await statPath(scope, path);
     if (stat.kind === null) throw new AppError(404, 'File not found');
-    if (stat.kind === 'directory') throw new AppError(400, 'A folder cannot be downloaded as a single file');
 
-    const { name } = splitRepositoryPath(path);
+    const { name: baseName } = splitRepositoryPath(path);
+    const archive = stat.kind === 'directory';
+    const plan = archive ? await planFolderArchive(scope, path) : null;
+    const name = archive ? `${baseName}.zip` : baseName;
     const token = downloadLinks.issue({
       userId: req.user!.id,
       configId: scope.configId,
@@ -280,8 +359,14 @@ fileRoutes.post('/:cid/download-links', async (req: Request, res: Response, next
       cid: scope.cid,
       path,
       name,
+      archive: plan ?? undefined,
     });
-    res.status(201).json({ url: `/api/file-downloads/${token}`, name, size: stat.size });
+    res.status(201).json({
+      url: `/api/file-downloads/${token}`,
+      name,
+      size: plan ? plan.bytes : stat.size,
+      ...(plan ? { files: plan.files, folders: plan.folders } : {}),
+    });
   } catch (err) {
     next(asTransferError(err));
   }

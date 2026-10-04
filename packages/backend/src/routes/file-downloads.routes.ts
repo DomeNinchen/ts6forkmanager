@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { AppError } from '../middleware/error-handler.js';
 import { ftDownloadStream } from '../ts-client/file-transfer.js';
 import { asTransferError, downloadLinks, initDownload } from '../utils/file-repository.js';
+import { streamFolderArchive } from '../utils/folder-archive.js';
 
 // Redeems the one-time links handed out by `POST .../files/:cid/download-links`.
 //
@@ -26,18 +27,23 @@ fileDownloadRoutes.get('/:token', async (req: Request, res: Response, next) => {
     if (!user?.enabled || user.role !== 'admin') throw new AppError(403, 'Insufficient permissions');
 
     const scope = { app: req.app, configId: link.configId, sid: link.sid, cid: link.cid };
-    const { ticket, host } = await initDownload(scope, link.path);
+
+    // A folder was walked when the link was made (that is where its size came from);
+    // the ZIP is written from that plan, which has the size the browser was promised
+    const plan = link.archive ?? null;
+    const transfer = plan ? null : await initDownload(scope, link.path);
 
     // Always a download, never something the browser may render: a file in a
     // channel is whatever a user of the server put there, HTML and SVG included.
     res.attachment(link.name);
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Length', String(ticket.size));
+    res.setHeader('Content-Type', plan ? 'application/zip' : 'application/octet-stream');
+    res.setHeader('Content-Length', String(plan ? plan.bytes : transfer!.ticket.size));
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
     try {
-      await ftDownloadStream(host, ticket.port, ticket.ftkey, ticket.size, res);
+      if (plan) await streamFolderArchive(scope, plan, res);
+      else await ftDownloadStream(transfer!.host, transfer!.ticket.port, transfer!.ticket.ftkey, transfer!.ticket.size, res);
     } catch (err) {
       // Bytes are already on their way: the only honest way to say "this did
       // not work" is to cut the connection, so the browser reports a failed
