@@ -104,6 +104,21 @@ export function splitRepositoryPath(path: string): { directory: string; name: st
   return { directory: index <= 0 ? '/' : path.slice(0, index), name: path.slice(index + 1) };
 }
 
+/** Largest image the preview loads: it is read into memory on the server and
+ * again in the browser, so a bigger one is only offered as a download. */
+export const PREVIEW_MAX_BYTES = 10 * 1024 * 1024;
+
+const PREVIEW_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'jpe', 'jfif', 'gif', 'bmp', 'webp']);
+
+/** Does the name look like one of the five image formats every browser draws on
+ * its own (PNG, JPEG, GIF, BMP, WebP)? Only decides whether the Files page
+ * offers a preview button - the backend never goes by the name, it looks at the
+ * bytes, so a file called `photo.png` that is not an image is refused there. */
+export function isPreviewableImageName(name: string): boolean {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 && PREVIEW_IMAGE_EXTENSIONS.has(name.slice(dot + 1).toLowerCase());
+}
+
 /**
  * `ftgetfilelist` reports `datetime` in whatever unit the server build uses:
  * seconds in the TS3 documentation, milliseconds on a real TS6 server

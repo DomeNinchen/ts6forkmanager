@@ -1625,6 +1625,18 @@
         "upload_other": "{{count}} Dateien hochladen",
         "uploadEmpty": "Hochladen"
       },
+      "preview": {
+        "title": "Vorschau",
+        "previous": "Vorheriges Bild",
+        "next": "Nächstes Bild",
+        "position": "{{index}} von {{total}}",
+        "dimensions": "{{width}} x {{height}} Pixel",
+        "loading": "Bild wird geladen...",
+        "retry": "Erneut versuchen",
+        "notAnImage": "Diese Datei ist kein Bild, das die Vorschau zeigen kann (PNG, JPEG, GIF, BMP und WebP werden unterstützt).",
+        "tooLarge": "Dieses Bild ist zu groß für die Vorschau. Lade es stattdessen herunter.",
+        "busy": "Der Server ist mit anderen Vorschauen beschäftigt. Versuche es gleich noch einmal."
+      },
       "problem": {
         "empty": "Der Name ist leer.",
         "not-absolute": "Der Pfad muss mit \"/\" beginnen.",

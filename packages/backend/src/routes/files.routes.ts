@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import {
+  PREVIEW_MAX_BYTES,
   checkRepositoryPath,
   splitRepositoryPath,
   type FileTransferLimits,
@@ -10,7 +11,8 @@ import { requireRole } from '../middleware/rbac.js';
 import { allowSlowBody } from '../middleware/request-timeout.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
-import { ftUploadStream } from '../ts-client/file-transfer.js';
+import { ftDownloadBytes, ftUploadStream } from '../ts-client/file-transfer.js';
+import { MAX_PREVIEW_PIXELS, sniffImage } from '../utils/image-sniff.js';
 import {
   TICKET_FRESH_MS,
   UPLOAD_SESSION_TTL_MS,
@@ -18,6 +20,7 @@ import {
   cancelUpload,
   completeUpload,
   downloadLinks,
+  initDownload,
   initUpload,
   listDirectory,
   statPath,
@@ -74,7 +77,10 @@ function scopeOf(req: Request): RepositoryScope {
 // The limits the app itself enforces - registered before "/:cid", which would
 // otherwise swallow "limits" as a channel ID.
 fileRoutes.get('/limits', (_req: Request, res: Response) => {
-  const limits: FileTransferLimits = { maxUploadBytes: config.filesMaxUploadBytes };
+  const limits: FileTransferLimits = {
+    maxUploadBytes: config.filesMaxUploadBytes,
+    previewMaxBytes: PREVIEW_MAX_BYTES,
+  };
   res.json(limits);
 });
 
@@ -278,5 +284,66 @@ fileRoutes.post('/:cid/download-links', async (req: Request, res: Response, next
     res.status(201).json({ url: `/api/file-downloads/${token}`, name, size: stat.size });
   } catch (err) {
     next(asTransferError(err));
+  }
+});
+
+// Preview: the image itself, for the Files page's preview dialog. A small file is
+// read into memory, recognised by its own bytes (see utils/image-sniff.ts) and
+// handed over as the image type found there - or refused. Nothing that is not one
+// of the five browser image formats ever leaves this route, so an SVG or HTML file
+// a channel member put there is never served inline, whatever it is called.
+//
+// Each preview reads a whole file over the file-transfer port. One person flicking
+// through pictures needs a couple at a time at most; the cap keeps a flood of
+// requests from using up the TeamSpeak server's small pool of transfer tickets.
+const MAX_CONCURRENT_PREVIEWS = 4;
+let previewsRunning = 0;
+
+fileRoutes.get('/:cid/preview', async (req: Request, res: Response, next) => {
+  let holdsSlot = false;
+  try {
+    const scope = scopeOf(req);
+    const path = requirePath(req.query.path, 'path');
+
+    const stat = await statPath(scope, path);
+    if (stat.kind === null) throw new AppError(404, 'File not found');
+    if (stat.kind === 'directory') throw new AppError(400, 'A folder cannot be previewed');
+    if (stat.size === 0) throw new AppError(415, 'The file is empty');
+    const tooLarge = (bytes: number) =>
+      new AppError(413, 'The file is too large to preview', `${bytes} bytes, the limit is ${PREVIEW_MAX_BYTES} bytes`);
+    if (stat.size > PREVIEW_MAX_BYTES) throw tooLarge(stat.size);
+
+    // Whatever was refused above never took a slot
+    if (previewsRunning >= MAX_CONCURRENT_PREVIEWS) throw new AppError(429, 'Too many previews at once, try again in a moment');
+    previewsRunning++;
+    holdsSlot = true;
+
+    const { ticket, host } = await initDownload(scope, path);
+    // The size above was read a moment ago; the file may have been replaced since
+    if (ticket.size === 0 || ticket.size > PREVIEW_MAX_BYTES) throw tooLarge(ticket.size);
+    const data = await ftDownloadBytes(host, ticket.port, ticket.ftkey, ticket.size);
+
+    const image = sniffImage(data);
+    if (!image) throw new AppError(415, 'This file is not an image the preview can show');
+    if (image.width * image.height > MAX_PREVIEW_PIXELS) {
+      throw new AppError(
+        413,
+        'The picture is too large to preview',
+        `${image.width} x ${image.height} pixels, the limit is ${MAX_PREVIEW_PIXELS / 1_000_000} megapixels`,
+      );
+    }
+
+    res.setHeader('Content-Type', image.type);
+    res.setHeader('Content-Length', String(data.length));
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Even a picture is somebody else's file: should a browser ever be pointed at
+    // this URL itself, nothing in it may run or load anything
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    res.end(data);
+  } catch (err) {
+    next(asTransferError(err));
+  } finally {
+    if (holdsSlot) previewsRunning--;
   }
 });
