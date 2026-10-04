@@ -403,4 +403,6 @@ export interface ServerFileEntry {
 export interface FileTransferLimits {
   /** Largest single file the app will upload (FILES_MAX_UPLOAD_MB). */
   maxUploadBytes: number;
+  /** Largest image the preview will load; anything bigger is only offered as a download. */
+  previewMaxBytes: number;
 }
