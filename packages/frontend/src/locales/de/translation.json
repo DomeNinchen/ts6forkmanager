@@ -1558,6 +1558,8 @@
       "move": "Verschieben",
       "deleteFileTitle": "Datei löschen",
       "deleteFileDescription": "Bist du sicher, dass du \"{{name}}\" löschen willst? Dies kann nicht rückgängig gemacht werden.",
+      "deleteFolderTitle": "Ordner löschen",
+      "deleteFolderDescription": "Bist du sicher, dass du den Ordner \"{{name}}\" samt allem darin löschen willst? Dies kann nicht rückgängig gemacht werden.",
       "directoryCreated": "Verzeichnis erstellt",
       "directoryCreateFailed": "Verzeichnis konnte nicht erstellt werden",
       "fileDeleted": "Datei gelöscht",

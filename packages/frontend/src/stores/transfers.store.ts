@@ -117,9 +117,10 @@ export const useTransfers = create<TransfersState>()((set, get) => {
   /** Ask once per conflict, one dialog at a time, unless the answer was already given for everything. */
   const askOverwrite = (id: string): Promise<ConflictDecision> => {
     const answer = conflictQueue.then(async (): Promise<ConflictDecision> => {
+      // Called off while it waited its turn behind another question
+      if (controllers.get(id)?.signal.aborted) return 'skip';
       if (rememberedDecision) return rememberedDecision;
       set({ conflictId: id });
-      patch(id, { status: 'conflict' });
       return new Promise<ConflictDecision>((resolve) => {
         answerConflict = (decision, applyToAll) => {
           if (applyToAll) rememberedDecision = decision;
@@ -152,6 +153,8 @@ export const useTransfers = create<TransfersState>()((set, get) => {
           break;
         } catch (err) {
           if (!isAlreadyExists(err) || overwrite) throw err;
+          // Shown as waiting from the start, even when another question has to be answered first
+          patch(id, { status: 'conflict' });
           const decision = await askOverwrite(id);
           if (controller.signal.aborted) throw err;
           if (decision === 'skip') {

@@ -152,7 +152,8 @@ export default function Files() {
   );
   useEffect(() => {
     if (uploadsDoneHere > 0) qc.invalidateQueries({ queryKey: ['files', c, s, selectedCid, currentPath] });
-  }, [uploadsDoneHere]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadsDoneHere]);
 
   const navigateTo = (entry: ServerFileEntry) => {
     if (entry.isDirectory) setCurrentPath(joinRepositoryPath(currentPath, entry.name));
@@ -491,8 +492,10 @@ export default function Files() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
-        title={t('pages.files.deleteFileTitle')}
-        description={t('pages.files.deleteFileDescription', { name: deleteTarget?.name })}
+        title={deleteTarget?.isDirectory ? t('pages.files.deleteFolderTitle') : t('pages.files.deleteFileTitle')}
+        description={deleteTarget?.isDirectory
+          ? t('pages.files.deleteFolderDescription', { name: deleteTarget?.name })
+          : t('pages.files.deleteFileDescription', { name: deleteTarget?.name })}
         confirmLabel={t('common.delete')}
         destructive
         onConfirm={handleDelete}

@@ -1558,6 +1558,8 @@
       "move": "Move",
       "deleteFileTitle": "Delete File",
       "deleteFileDescription": "Are you sure you want to delete \"{{name}}\"? This cannot be undone.",
+      "deleteFolderTitle": "Delete Folder",
+      "deleteFolderDescription": "Are you sure you want to delete the folder \"{{name}}\" and everything in it? This cannot be undone.",
       "directoryCreated": "Directory created",
       "directoryCreateFailed": "Failed to create directory",
       "fileDeleted": "File deleted",

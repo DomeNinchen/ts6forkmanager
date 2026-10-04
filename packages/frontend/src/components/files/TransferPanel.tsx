@@ -92,8 +92,11 @@ export function TransferPanel({ configId, sid }: { configId: number; sid: number
   const { t } = useTranslation();
   const uploads = useTransfers((state) => state.uploads);
   const clearFinished = useTransfers((state) => state.clearFinished);
+  // What is still going on comes first, so a long list of finished uploads never pushes it out of sight
   const items = useMemo(
-    () => uploads.filter((item) => item.configId === configId && item.sid === sid),
+    () => uploads
+      .filter((item) => item.configId === configId && item.sid === sid)
+      .sort((a, b) => Number(FINISHED.includes(a.status)) - Number(FINISHED.includes(b.status))),
     [uploads, configId, sid],
   );
 

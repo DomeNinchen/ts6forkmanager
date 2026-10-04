@@ -49,6 +49,11 @@ export function fileErrorMessage(err: any, t: TFunction, fileName?: string): str
   if (typeof message === 'string' && message.includes('SSH credentials are not configured')) {
     return t('pages.files.unavailableSsh');
   }
+  // The app's own errors put a sentence in `error` and the technical detail in `details`;
+  // TeamSpeak's carry a `code` and say "TeamSpeak API Error" in `error`, which tells nobody anything
+  if (typeof data === 'object' && code === undefined && data?.error && data?.details) {
+    return `${data.error} (${data.details})`;
+  }
   return message || t('pages.files.errors.generic');
 }
 
