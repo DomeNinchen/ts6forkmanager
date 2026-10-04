@@ -70,6 +70,10 @@ export const settingsApi = {
   setWebguiBaseTheme: (theme: BaseTheme): Promise<{ theme: BaseTheme }> =>
     api.put('/settings/webgui-base-theme', { theme }).then((r) => r.data),
 
+  /** Reading the current value needs no login, see publicConfigApi. */
+  setPrivacyNotice: (enabled: boolean): Promise<{ enabled: boolean }> =>
+    api.put('/settings/privacy-notice', { enabled }).then((r) => r.data),
+
   getGithubToken: (): Promise<{ hasToken: boolean }> =>
     api.get('/settings/github-token').then((r) => r.data),
 

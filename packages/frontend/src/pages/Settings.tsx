@@ -23,6 +23,7 @@ import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { useSetWebguiTheme, useSetWebguiBaseTheme } from '@/hooks/use-webgui-theme';
+import { usePublicConfig, useSetPrivacyNotice } from '@/hooks/use-public-config';
 import { useUiStore } from '@/stores/ui.store';
 import { useLanguagePreference } from '@/hooks/use-language';
 import { SUPPORTED_LANGUAGES, nativeLanguageName } from '@/lib/i18n';
@@ -379,6 +380,8 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
   });
   const setInstallTheme = useSetWebguiTheme();
   const setInstallBaseTheme = useSetWebguiBaseTheme();
+  const { data: publicConfig } = usePublicConfig();
+  const setPrivacyNotice = useSetPrivacyNotice();
   const accentOverride = useUiStore((s) => s.accentOverride);
   const setAccentOverride = useUiStore((s) => s.setAccentOverride);
   const baseThemeOverride = useUiStore((s) => s.baseThemeOverride);
@@ -501,6 +504,31 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
               })}
               disabled={setInstallTheme.isPending}
             />
+          </CardContent>
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card className="card-hero">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.privacyNotice.title')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              {t('pages.settings.webgui.privacyNotice.description')}
+            </p>
+            <div className="flex items-center justify-between gap-4">
+              <Label htmlFor="privacy-notice-enabled" className="text-xs">{t('pages.settings.webgui.privacyNotice.label')}</Label>
+              <Switch
+                id="privacy-notice-enabled"
+                checked={publicConfig?.privacyNotice.enabled ?? true}
+                disabled={!publicConfig || setPrivacyNotice.isPending}
+                onCheckedChange={(enabled) => setPrivacyNotice.mutate(enabled, {
+                  onSuccess: () => toast.success(t(enabled ? 'pages.settings.webgui.privacyNotice.onToast' : 'pages.settings.webgui.privacyNotice.offToast')),
+                  onError: () => toast.error(t('pages.settings.webgui.privacyNotice.failed')),
+                })}
+              />
+            </div>
           </CardContent>
         </Card>
       )}

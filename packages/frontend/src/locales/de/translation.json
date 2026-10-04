@@ -1209,7 +1209,15 @@
         "baseThemeSetFailed": "Installations-Grunddesign konnte nicht aktualisiert werden",
         "accentSetToast": "Installationsakzent auf {{accent}} gesetzt",
         "accentSetFailed": "Installationsakzent konnte nicht aktualisiert werden",
-        "pairingHint": "{{theme}} passt gut zum Akzent {{accent}}."
+        "pairingHint": "{{theme}} passt gut zum Akzent {{accent}}.",
+        "privacyNotice": {
+          "title": "Hinweis zur Datenspeicherung",
+          "description": "Zeigt jedem Besucher, auch auf der Login-Seite, einen kleinen wegklickbaren Hinweis, dass diese Oberfläche im Browser nur technisch notwendige Daten speichert. Rein informativ: Bis zum Wegklicken wird nichts gesperrt, und jeder Browser merkt sich sein Wegklicken selbst. Auf der öffentlichen Widget-Seite wird er nicht angezeigt.",
+          "label": "Hinweis zur Datenspeicherung anzeigen",
+          "onToast": "Hinweis zur Datenspeicherung eingeschaltet",
+          "offToast": "Hinweis zur Datenspeicherung ausgeschaltet",
+          "failed": "Hinweis zur Datenspeicherung konnte nicht aktualisiert werden"
+        }
       },
       "title": "Einstellungen",
       "tabs": {
@@ -2748,6 +2756,11 @@
       "updateAvailable": "Update verfügbar:",
       "copyDeployCommand": "Deploy-Befehl kopieren (behält eigene Änderungen an Dateien wie docker-compose.yml)",
       "postpone": "Verschieben"
+    },
+    "privacyNotice": {
+      "title": "Hinweis zur Datenspeicherung",
+      "message": "Diese Oberfläche speichert in deinem Browser nur Daten, die für den Betrieb nötig sind, etwa Anmeldung, Sprache und Darstellung. Die Anwendung setzt selbst keine Cookies und nutzt keine Tracking- oder Analysedienste. Schriften werden vom eigenen Server geladen.",
+      "dismiss": "Verstanden"
     },
     "ytCookieBanner": {
       "message": "YouTube-Cookies funktionieren nicht mehr — altersbeschränkte/mitgliederexklusive Inhalte und Suchen können fehlschlagen, bis sie unter <1>Einstellungen → YouTube</1> aktualisiert wurden."
