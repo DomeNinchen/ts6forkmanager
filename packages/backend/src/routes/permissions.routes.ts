@@ -44,16 +44,18 @@ permissionRoutes.get('/overview/:cldbid', async (req: Request, res: Response, ne
 });
 
 // Automatic Groups: servergroupautoaddperm / servergroupautodelperm apply a set
-// of permissions to every server group of one template type (sgtype), not to a
-// single group, and TeamSpeak applies them across the whole instance rather than
-// just the virtual server in the URL. Admin only for that reason.
+// of permissions to every regular server group whose i_group_auto_update_type
+// equals sgtype, not to a single group, and TeamSpeak applies them across the
+// whole instance rather than just the virtual server in the URL. Admin only for
+// that reason. Template groups and the built-in query groups carry the same
+// permission but are left alone (measured on 6.0.0-beta13.1).
 const AUTO_GROUP_TYPES = new Set([10, 15, 20, 25, 30, 35, 40, 45, 50]);
 const PERMSID_PATTERN = /^[a-z][a-z0-9_]*$/;
 const MAX_AUTO_PERMS = 200;
 
 function parseAutoGroupRequest(body: any, withValues: boolean): { sgtype: number; perms: Record<string, string>[] } {
   const sgtype = Number(body?.sgtype);
-  if (!AUTO_GROUP_TYPES.has(sgtype)) throw new AppError(400, 'sgtype must be one of the server group template types (10-50)');
+  if (!AUTO_GROUP_TYPES.has(sgtype)) throw new AppError(400, 'sgtype must be one of the automatic group types (10, 15, 20, 25, 30, 35, 40, 45, 50)');
   const list = body?.permissions;
   if (!Array.isArray(list) || list.length === 0) throw new AppError(400, 'permissions must be a non-empty list');
   if (list.length > MAX_AUTO_PERMS) throw new AppError(400, `At most ${MAX_AUTO_PERMS} permissions per request`);
