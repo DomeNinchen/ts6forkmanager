@@ -5,7 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { useUpdateCheck } from '@/hooks/use-update-check';
 import { useUpdateBannerStore, type UpdateComponent } from '@/stores/update-banner.store';
 
-const DEPLOY_COMMAND = 'git pull && docker compose up -d --build';
+// What an admin copies to update: pull the new code, rebuild and restart the stack.
+// `--autostash` is what makes it work on a server whose own edits to a tracked file
+// (typically docker-compose.yml: ports, networks, environment) overlap with an
+// upstream change to that file - a plain `git pull` refuses with "Your local
+// changes ... would be overwritten by merge". Git puts the edits aside, pulls and
+// puts them back (and does nothing special when there are none). When a release
+// needs more than this, change it here, in the same change as the release.
+const DEPLOY_COMMAND = 'git pull --autostash && docker compose up -d --build';
 
 interface OutdatedComponent {
   component: UpdateComponent;
