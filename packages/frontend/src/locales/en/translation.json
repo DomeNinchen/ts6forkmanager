@@ -1600,6 +1600,11 @@
       "dropToUpload": "Drop files here to upload them",
       "foldersNotSupported": "Folders can't be uploaded yet - only the files were added.",
       "uploadLimitNotice": "Largest file you can upload: {{size}} (set with FILES_MAX_UPLOAD_MB on the server).",
+      "nonAsciiWarning": {
+        "title": "Non-ASCII characters in a file name",
+        "description_one": "TeamSpeak clients may not be able to download {{names}} afterwards (\"file not found\"). A plain ASCII name is safer.",
+        "description_other": "TeamSpeak clients may not be able to download these files afterwards (\"file not found\"): {{names}}. Plain ASCII names are safer."
+      },
       "problem": {
         "empty": "The name is empty.",
         "not-absolute": "The path must start with \"/\".",

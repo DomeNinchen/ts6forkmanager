@@ -6,7 +6,8 @@ export function pathProblemMessage(problem: RepositoryPathProblem, t: TFunction)
   return t(`pages.files.problem.${problem}`);
 }
 
-function hasNonAscii(name: string): boolean {
+/** Does the name hold a character outside ASCII (umlauts, accents, CJK, emoji ...)? */
+export function hasNonAscii(name: string): boolean {
   for (let index = 0; index < name.length; index++) {
     if (name.charCodeAt(index) > 0x7f) return true;
   }
