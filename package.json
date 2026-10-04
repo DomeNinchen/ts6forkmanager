@@ -22,7 +22,8 @@
   "pnpm": {
     "overrides": {
       "qs": "^6.16.0",
-      "mysql2": "^3.23.1"
+      "mysql2": "^3.23.1",
+      "deepmerge-ts": "^8.0.2"
     },
     "onlyBuiltDependencies": [
       "@prisma/engines",
