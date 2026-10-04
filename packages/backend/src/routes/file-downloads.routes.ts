@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { AppError, TSApiError } from '../middleware/error-handler.js';
-import { toSshAppError } from '../utils/ssh-query.js';
+import { AppError } from '../middleware/error-handler.js';
 import { ftDownloadStream } from '../ts-client/file-transfer.js';
-import { downloadLinks, initDownload, toTransferApiError } from '../utils/file-repository.js';
+import { asTransferError, downloadLinks, initDownload } from '../utils/file-repository.js';
 
 // Redeems the one-time links handed out by `POST .../files/:cid/download-links`.
 //
@@ -55,11 +54,6 @@ fileDownloadRoutes.get('/:token', async (req: Request, res: Response, next) => {
     }
   } catch (err) {
     if (res.headersSent) return;
-    const converted = toSshAppError(toTransferApiError(err));
-    next(
-      converted instanceof AppError || converted instanceof TSApiError
-        ? converted
-        : new AppError(502, 'The file transfer failed', (converted as Error)?.message),
-    );
+    next(asTransferError(err));
   }
 });

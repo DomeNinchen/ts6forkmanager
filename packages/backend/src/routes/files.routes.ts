@@ -7,11 +7,14 @@ import {
 } from '@ts6/common';
 import { config } from '../config.js';
 import { requireRole } from '../middleware/rbac.js';
+import { allowSlowBody } from '../middleware/request-timeout.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
 import { ftUploadStream } from '../ts-client/file-transfer.js';
 import {
+  TICKET_FRESH_MS,
   UPLOAD_SESSION_TTL_MS,
+  asTransferError,
   cancelUpload,
   completeUpload,
   downloadLinks,
@@ -19,9 +22,9 @@ import {
   listDirectory,
   statPath,
   tempUploadPath,
-  toTransferApiError,
   uploadSessions,
   type RepositoryScope,
+  type UploadSession,
 } from '../utils/file-repository.js';
 
 export const fileRoutes: Router = Router({ mergeParams: true });
@@ -66,16 +69,6 @@ function scopeOf(req: Request): RepositoryScope {
     sid: parseInt(String(req.params.sid), 10),
     cid: parseChannelId(req.params.cid, 'channel ID'),
   };
-}
-
-/** An error that reaches the client with its own message: the API's own and
- * TeamSpeak's (including the SSH-not-configured case) pass through, anything
- * else - a dropped connection, a short transfer - is reported as a failed transfer
- * instead of the opaque "Internal server error" a bare Error would become. */
-function asTransferError(err: unknown): unknown {
-  const converted = toSshAppError(toTransferApiError(err));
-  if (converted instanceof AppError || converted instanceof TSApiError) return converted;
-  return new AppError(502, 'The file transfer failed', (converted as Error)?.message);
 }
 
 // The limits the app itself enforces - registered before "/:cid", which would
@@ -169,7 +162,7 @@ fileRoutes.post('/:cid/uploads', async (req: Request, res: Response, next) => {
 
     const tempPath = tempUploadPath(path);
     const { ticket, host } = await initUpload(scope, tempPath, size);
-    const uploadId = uploadSessions.issue({
+    const session: UploadSession = {
       userId: req.user!.id,
       configId: scope.configId,
       sid: scope.sid,
@@ -181,14 +174,17 @@ fileRoutes.post('/:cid/uploads', async (req: Request, res: Response, next) => {
       host,
       port: ticket.port,
       ftkey: ticket.ftkey,
-    });
+      issuedAt: Date.now(),
+    };
+    const uploadId = uploadSessions.issue(session);
 
     // Nobody may ever send the bytes (browser closed, connection dropped), yet the
     // server has already created the - empty - temp file. Clear it away once the
     // session has run out; `drop` only finds a session nobody redeemed.
-    setTimeout(() => {
+    session.cleanupTimer = setTimeout(() => {
       if (uploadSessions.drop(uploadId)) void cancelUpload(scope, tempPath);
-    }, UPLOAD_SESSION_TTL_MS + 2000).unref();
+    }, UPLOAD_SESSION_TTL_MS + 2000);
+    session.cleanupTimer.unref();
 
     res.status(201).json({ uploadId });
   } catch (err) {
@@ -223,6 +219,7 @@ fileRoutes.put('/:cid/uploads/:uploadId', async (req: Request, res: Response, ne
     return next(new AppError(404, 'This upload has expired or does not exist - start it again'));
   }
   const session = uploadSessions.take(token)!;
+  clearTimeout(session.cleanupTimer);
 
   if (req.headers['content-length'] !== String(session.size)) {
     await cancelUpload(scope, session.tempPath);
@@ -230,11 +227,23 @@ fileRoutes.put('/:cid/uploads/:uploadId', async (req: Request, res: Response, ne
     return next(new AppError(400, `The request body must be exactly ${session.size} bytes, as announced`));
   }
 
+  // The caller and the session are both vouched for: a slow line may take its time
+  allowSlowBody(req);
+
   try {
-    await ftUploadStream(session.host, session.port, session.ftkey, req, session.size);
+    let { host, port, ftkey } = session;
+    if (Date.now() - session.issuedAt > TICKET_FRESH_MS) {
+      // The body arrived too late for the ticket it was agreed with (a proxy that
+      // collects it first): ask for another one for the same temp file
+      const fresh = await initUpload(scope, session.tempPath, session.size, true);
+      ({ host } = fresh);
+      ({ port, ftkey } = fresh.ticket);
+    }
+    await ftUploadStream(host, port, ftkey, req, session.size);
     await completeUpload(scope, session);
     res.status(201).json({ path: session.path, size: session.size });
   } catch (err) {
+    console.warn(`[Files] Upload of ${session.path} to channel ${scope.cid} failed: ${(err as Error)?.message}`);
     // Whatever arrived before the failure sits in the temp file, not under the real name
     await cancelUpload(scope, session.tempPath);
     // Nobody left to tell if the browser cancelled the upload

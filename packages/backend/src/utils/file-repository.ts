@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto';
 import type { Application } from 'express';
 import { joinRepositoryPath, normalizeFileDatetime, splitRepositoryPath, type ServerFileEntry } from '@ts6/common';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
-import { sshExecuteFor } from './ssh-query.js';
+import { sshExecuteFor, toSshAppError } from './ssh-query.js';
 import {
   FtInitError,
   allocateClientFtfid,
@@ -42,7 +42,22 @@ export interface UploadSession {
   host: string;
   port: number;
   ftkey: string;
+  /** When the server handed out the ticket (ms since the epoch) - see {@link TICKET_FRESH_MS}. */
+  issuedAt: number;
+  /** Fires when nobody ever sends the body, to remove the temp file; cleared once the body arrives. */
+  cleanupTimer?: NodeJS.Timeout;
 }
+
+/**
+ * A transfer ticket is only good for a few seconds: on a real TS6 server one
+ * that waited 5 s was still honoured, one that waited 10 s was not, and the
+ * transfer connection then simply closes without taking a byte. The body of an
+ * upload usually follows the request that agreed it at once, but a reverse proxy
+ * that collects the whole body before passing it on delivers it only after the
+ * browser has sent every byte - far too late. A ticket older than this is
+ * replaced by a fresh one when the body finally arrives.
+ */
+export const TICKET_FRESH_MS = 3000;
 
 /** A download the admin has asked for and been given a link to. The transfer
  * ticket itself is requested from the server only when the link is opened, so
@@ -57,9 +72,13 @@ export interface DownloadLink {
 }
 
 // The browser follows up a `POST .../uploads` with the file body straight away,
-// so half a minute is generous; downloads are opened by a click that follows
-// the link request immediately, so a minute covers a slow page.
-export const UPLOAD_SESSION_TTL_MS = 30_000;
+// but a reverse proxy that collects the whole body before passing it on delivers
+// it only after the browser has sent every byte - for a large file on a slow line
+// that takes a while. So an upload session lives as long as the longest request
+// body is allowed to take (see middleware/request-timeout.ts); one nobody ever
+// redeems is cleaned up when it runs out. Downloads are opened by a click that
+// follows the link request immediately, so a minute covers a slow page.
+export const UPLOAD_SESSION_TTL_MS = 60 * 60 * 1000;
 export const uploadSessions = new TicketStore<UploadSession>(UPLOAD_SESSION_TTL_MS);
 export const downloadLinks = new TicketStore<DownloadLink>(60_000);
 
@@ -142,18 +161,24 @@ export interface InitiatedTransfer {
   host: string;
 }
 
-/** Ask for an upload ticket. Always `overwrite=0`: the only thing ever uploaded
- * directly is a temp file under a fresh random name (see {@link tempUploadPath}),
+/** Ask for an upload ticket. The only thing ever uploaded directly is a temp file
+ * under a fresh random name (see {@link tempUploadPath}), never an existing file,
  * because `ftinitupload` with `overwrite=1` empties an existing file right away,
- * before a single byte of the new one has arrived. */
-export async function initUpload(scope: RepositoryScope, path: string, size: number): Promise<InitiatedTransfer> {
+ * before a single byte of the new one has arrived. `replaceTemp` is for asking
+ * again for a temp file this app created itself, whose first ticket ran out. */
+export async function initUpload(
+  scope: RepositoryScope,
+  path: string,
+  size: number,
+  replaceTemp = false,
+): Promise<InitiatedTransfer> {
   const rows = await sshExecuteFor(scope.app, scope.configId, scope.sid, 'ftinitupload', {
     clientftfid: allocateClientFtfid(),
     name: path,
     cid: scope.cid,
     cpw: '',
     size,
-    overwrite: 0,
+    overwrite: replaceTemp ? 1 : 0,
     resume: 0,
   });
   const ticket = parseFtTicket(rows);
@@ -240,4 +265,32 @@ export function toTransferApiError(err: unknown): unknown {
     return err.status > 0 ? new TSApiError(err.status, err.message) : new AppError(502, err.message);
   }
   return err;
+}
+
+// What a socket reports when the transfer port cannot be reached at all
+const UNREACHABLE = new Set(['ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENETUNREACH', 'ENOTFOUND']);
+
+/**
+ * Any failure of a file transfer as an error that reaches the client with its own
+ * message. The API's own errors and TeamSpeak's (including "SSH is not configured")
+ * pass through; anything else - a dropped connection, a short transfer - becomes a
+ * failed transfer instead of the opaque "Internal server error" a bare Error would
+ * turn into.
+ *
+ * The query connection and the transfer port are separate: the first can work
+ * while the second (30033 by default) is closed to this app by a firewall or a
+ * missing port mapping, which is worth saying in so many words.
+ */
+export function asTransferError(err: unknown): unknown {
+  const converted = toSshAppError(toTransferApiError(err));
+  if (converted instanceof AppError || converted instanceof TSApiError) return converted;
+  const failure = converted as NodeJS.ErrnoException;
+  if (UNREACHABLE.has(failure?.code ?? '')) {
+    return new AppError(
+      502,
+      "The app could not reach the TeamSpeak server's file-transfer port (30033 by default) - is it open to this app?",
+      failure.message,
+    );
+  }
+  return new AppError(502, 'The file transfer failed', failure?.message);
 }

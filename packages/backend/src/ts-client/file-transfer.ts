@@ -111,6 +111,16 @@ export function parseFtTicket(rows: Record<string, string>[]): FtTicket {
   };
 }
 
+/** A transfer that went quiet. When the connection was never made, that is the
+ * same thing as the port being unreachable, and is reported with the matching
+ * error code (what a refused or unrouted connection would have carried) so the
+ * caller can say so; a transfer that stalls midway is a different problem. */
+function timedOut(what: string, connected: boolean): NodeJS.ErrnoException {
+  const err: NodeJS.ErrnoException = new Error(`File transfer ${what} timed out`);
+  if (!connected) err.code = 'ETIMEDOUT';
+  return err;
+}
+
 export function ftUploadBytes(
   host: string,
   port: number,
@@ -201,7 +211,10 @@ export function ftUploadStream(
     socket.setTimeout(idleTimeoutMs);
 
     let sent = 0;
-    let allWritten = false;
+    // Set by the source having delivered exactly `size` bytes - not by the socket's
+    // own 'finish', which also fires when the *server* hangs up and the socket
+    // ends its side in return
+    let allSent = false;
     let settled = false;
 
     const counter = new Transform({
@@ -211,7 +224,9 @@ export function ftUploadStream(
         else callback(null, chunk);
       },
       flush(callback) {
-        callback(sent === size ? null : new Error(`Upload ended after ${sent} of ${size} bytes`));
+        if (sent !== size) return callback(new Error(`Upload ended after ${sent} of ${size} bytes`));
+        allSent = true;
+        callback();
       },
     });
 
@@ -233,23 +248,23 @@ export function ftUploadStream(
     source.on('error', fail);
     counter.on('error', fail);
 
+    let connected = false;
     socket.once('connect', () => {
+      connected = true;
       socket.write(ftkey, (err) => {
         if (err) return fail(err);
         source.pipe(counter).pipe(socket);
       });
     });
-    socket.once('finish', () => {
-      allWritten = true;
-    });
-    socket.once('timeout', () => fail(new Error(`File transfer to ${host}:${port} timed out`)));
+    socket.once('timeout', () => fail(timedOut(`to ${host}:${port}`, connected)));
     socket.on('error', fail);
     socket.once('close', () => {
       if (settled) return;
       settled = true;
-      // The server closes once it has every byte. A close before we had
-      // written the last one is a refusal or a crash, not a finished upload.
-      if (allWritten) resolve();
+      // The server closes once it has every byte. A close before the source had
+      // delivered the last one is a refusal, an expired ticket or an idle timeout
+      // on the server's side (about 30 s on a real TS6 server), not a finished upload.
+      if (allSent) resolve();
       else reject(new Error(`The server closed the file transfer after ${sent} of ${size} bytes`));
     });
   });
@@ -305,7 +320,9 @@ export function ftDownloadStream(
     destination.once('close', onDestinationClose);
     destination.on('error', finish);
 
+    let connected = false;
     socket.once('connect', () => {
+      connected = true;
       socket.write(ftkey);
       // A zero-byte file has nothing to read; the server just closes.
       if (size === 0) complete();
@@ -321,7 +338,7 @@ export function ftDownloadStream(
         destination.once('drain', () => socket.resume());
       }
     });
-    socket.once('timeout', () => finish(new Error(`File transfer from ${host}:${port} timed out`)));
+    socket.once('timeout', () => finish(timedOut(`from ${host}:${port}`, connected)));
     socket.on('error', finish);
     socket.once('close', () => {
       // A close before `size` bytes arrived means the server cut the transfer

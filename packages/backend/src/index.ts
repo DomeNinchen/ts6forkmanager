@@ -76,12 +76,11 @@ async function main() {
   const app = createApp();
   const server = createServer(app);
 
-  // Node drops any request that takes longer than five minutes to arrive in
-  // full (`requestTimeout`, default 300 s). Fine for JSON, but a large file
-  // upload from a slow connection legitimately takes longer - it would be cut
-  // off mid-transfer with a 408. An hour still guards against connections that
-  // never finish sending.
-  server.requestTimeout = 60 * 60 * 1000;
+  // Node's own request timeout (five minutes for a request to arrive in full) is
+  // off: middleware/request-timeout.ts applies the same limit per request, and
+  // lets an authenticated file upload from a slow line take longer. The header
+  // timeout (60 s) still covers connections that never finish their headers.
+  server.requestTimeout = 0;
 
   // H3: WebSocket with JWT authentication
   const wss = new WebSocketServer({
