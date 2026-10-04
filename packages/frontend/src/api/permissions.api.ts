@@ -28,6 +28,19 @@ export const permissionsApi = {
   overview: (configId: number, sid: number, cldbid: number, cid: number) =>
     api.get(`${base(configId, sid)}/overview/${cldbid}`, { params: { cid } }).then((r) => r.data),
 
+  // Automatic Groups: add/remove permissions on every server group of one
+  // template type (sgtype). TeamSpeak applies this instance-wide.
+  automaticGroupsAdd: (
+    configId: number, sid: number, sgtype: number,
+    permissions: { permsid: string; permvalue: number; permnegated: number; permskip: number }[],
+  ) =>
+    api.post(`${base(configId, sid)}/automatic-groups/add`, { sgtype, permissions }).then((r) => r.data),
+  automaticGroupsRemove: (configId: number, sid: number, sgtype: number, permsids: string[]) =>
+    api.post(`${base(configId, sid)}/automatic-groups/remove`, {
+      sgtype,
+      permissions: permsids.map((permsid) => ({ permsid })),
+    }).then((r) => r.data),
+
   // Server Group permissions
   serverGroupPerms: (configId: number, sid: number, sgid: number) =>
     api.get(`${sgBase(configId, sid)}/${sgid}/permissions`).then((r) => r.data),
