@@ -2638,7 +2638,7 @@
     },
     "updateBanner": {
       "updateAvailable": "Update available:",
-      "copyDeployCommand": "Copy deploy command",
+      "copyDeployCommand": "Copy deploy command (keeps your own changes to files like docker-compose.yml)",
       "postpone": "Postpone"
     },
     "ytCookieBanner": {
