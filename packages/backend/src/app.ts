@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { config } from './config.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { authMiddleware } from './middleware/auth.js';
+import { requestTimeout } from './middleware/request-timeout.js';
 import { authRoutes } from './routes/auth.routes.js';
 import { oidcAuthRoutes } from './routes/oidc-auth.routes.js';
 import { serverRoutes } from './routes/servers.routes.js';
@@ -17,6 +18,7 @@ import { permissionRoutes } from './routes/permissions.routes.js';
 import { banRoutes } from './routes/bans.routes.js';
 import { tokenRoutes } from './routes/tokens.routes.js';
 import { fileRoutes } from './routes/files.routes.js';
+import { fileDownloadRoutes } from './routes/file-downloads.routes.js';
 import { iconRoutes } from './routes/icons.routes.js';
 import { complaintRoutes } from './routes/complaints.routes.js';
 import { messageRoutes } from './routes/messages.routes.js';
@@ -47,6 +49,7 @@ export function createApp(): Express {
   // Trust first proxy (nginx / Coolify reverse proxy)
   app.set('trust proxy', 1);
 
+  app.use(requestTimeout);
   app.use(helmet());
   app.use(cors({ origin: config.frontendUrl, credentials: true }));
   app.use(express.json({ limit: '10mb' }));
@@ -81,6 +84,10 @@ export function createApp(): Express {
 
   // Public widget routes (unauthenticated — embeddable on external sites)
   app.use('/api/widget', widgetPublicRoutes);
+
+  // One-time file download links (unauthenticated — the link itself is the
+  // credential, see file-downloads.routes.ts)
+  app.use('/api/file-downloads', fileDownloadRoutes);
 
   // Protected routes
   app.use('/api', authMiddleware);

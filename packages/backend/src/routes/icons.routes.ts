@@ -5,7 +5,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { normalizeIconId, type IconUsageMap, type IconUsageRef, type ServerIcon } from '@ts6/common';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
 import { crc32 } from '../utils/crc32.js';
-import { ftDownloadBytes, ftUploadBytes, resolveFileTransferHost } from '../ts-client/file-transfer.js';
+import { allocateClientFtfid, ftDownloadBytes, ftUploadBytes, resolveFileTransferHost } from '../ts-client/file-transfer.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
 
@@ -18,21 +18,6 @@ export const iconRoutes: Router = Router({ mergeParams: true });
 const ICON_DIR = '/icons';
 const ICON_CID = 0;
 const iconPath = (iconId: number) => `/icon_${iconId}`;
-
-// `clientftfid` only has to be unique among this process's own *currently
-// pending* transfers on a given SSH connection - TeamSpeak uses it purely to
-// echo back which request a ticket belongs to. `Date.now()`-based values are
-// not safe here: two requests issued within the same millisecond (which the
-// icon grid's parallel image fetches make routine) reuse the same id, and a
-// real TS6 server then answers with a generic "convert error" (code 1540)
-// instead of a normal ticket - confirmed against a live server. A simple
-// wrapping counter guarantees distinct ids regardless of request timing.
-let nextClientFtfid = 1;
-function allocateClientFtfid(): number {
-  const id = nextClientFtfid;
-  nextClientFtfid = nextClientFtfid >= 0xffff ? 1 : nextClientFtfid + 1;
-  return id;
-}
 
 // Hard ceiling for the multipart parser only. The limit that actually decides
 // what may be uploaded is the server's own `i_max_icon_filesize` permission,

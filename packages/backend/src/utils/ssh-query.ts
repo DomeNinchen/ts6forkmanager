@@ -1,4 +1,4 @@
-import type { Request } from 'express';
+import type { Application, Request } from 'express';
 import { parseQueryResponse, tsEscape } from '@ts6/common';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import type { BotEngine } from '../bot-engine/engine.js';
@@ -25,17 +25,36 @@ export function toSshAppError(err: any): any {
  * Execute a ServerQuery command via the shared SSH connection (EventBridge).
  * Reuses the same SSH session used for bot events — no extra server slots.
  */
-export async function sshExecute(
+export function sshExecute(
   req: Request,
   command: string,
   params: Record<string, string | number> = {},
 ): Promise<Record<string, string>[]> {
-  const engine: BotEngine = req.app.locals.botEngine;
+  return sshExecuteFor(
+    req.app,
+    parseInt(String(req.params.configId)),
+    parseInt(String(req.params.sid)),
+    command,
+    params,
+  );
+}
+
+/**
+ * Same as {@link sshExecute} for callers that have no request carrying the
+ * server in its route parameters - e.g. a download link redeemed later on a
+ * route of its own, which has to run the command for the server it was issued for.
+ */
+export async function sshExecuteFor(
+  app: Application,
+  configId: number,
+  sid: number,
+  command: string,
+  params: Record<string, string | number> = {},
+): Promise<Record<string, string>[]> {
+  const engine: BotEngine = app.locals.botEngine;
   if (!engine) throw new AppError(503, 'Bot engine not available');
 
   const bridge = engine.getEventBridge();
-  const configId = parseInt(String(req.params.configId));
-  const sid = parseInt(String(req.params.sid));
 
   // Build raw ServerQuery command string
   const paramStr = Object.entries(params)

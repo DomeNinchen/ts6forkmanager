@@ -76,6 +76,12 @@ async function main() {
   const app = createApp();
   const server = createServer(app);
 
+  // Node's own request timeout (five minutes for a request to arrive in full) is
+  // off: middleware/request-timeout.ts applies the same limit per request, and
+  // lets an authenticated file upload from a slow line take longer. The header
+  // timeout (60 s) still covers connections that never finish their headers.
+  server.requestTimeout = 0;
+
   // H3: WebSocket with JWT authentication
   const wss = new WebSocketServer({
     server,

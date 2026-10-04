@@ -12,5 +12,6 @@ export * from './utils/ban-rules.js';
 export * from './serverquery/syntax.js';
 export * from './serverquery/classification.js';
 export * from './utils/icon-id.js';
+export * from './utils/file-repository.js';
 export * from './utils/version-compare.js';
 export * from './widget-themes.js';
