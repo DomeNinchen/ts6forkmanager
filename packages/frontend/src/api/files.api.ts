@@ -7,8 +7,24 @@ const base = (configId: number, sid: number) =>
 export interface DownloadLink {
   /** Same-origin URL the browser can simply open; good for one use, for about a minute. */
   url: string;
+  /** What the browser saves it as: the file's name, or `<folder>.zip`. */
   name: string;
+  /** Bytes of the file, or of the ZIP of a folder. */
   size: number;
+  /** For a folder: how many files and folders the ZIP holds. */
+  files?: number;
+  folders?: number;
+}
+
+/** The answer for one folder of `ensureDirectories`. */
+export interface DirectoryResult {
+  dirname: string;
+  ok: boolean;
+  /** Whether it was made now (false: it was already there). */
+  created?: boolean;
+  /** TeamSpeak's own status code, when it refused. */
+  code?: number;
+  error?: string;
 }
 
 export const filesApi = {
@@ -18,6 +34,12 @@ export const filesApi = {
     api.get(`${base(configId, sid)}/limits`).then((r) => r.data),
   createDir: (configId: number, sid: number, cid: number, dirname: string) =>
     api.post(`${base(configId, sid)}/${cid}/mkdir`, { dirname }).then((r) => r.data),
+  // A whole tree of folders in one request, parents first; every folder gets its own
+  // answer (see the backend's /mkdirs), so one that cannot be made does not stop the rest
+  ensureDirectories: (configId: number, sid: number, cid: number, dirnames: string[], signal?: AbortSignal): Promise<DirectoryResult[]> =>
+    api
+      .post(`${base(configId, sid)}/${cid}/mkdirs`, { dirnames }, { signal, timeout: 120_000 })
+      .then((r) => r.data.results),
   delete: (configId: number, sid: number, cid: number, name: string) =>
     api.delete(`${base(configId, sid)}/${cid}/file`, { data: { name } }).then((r) => r.data),
   move: (configId: number, sid: number, cid: number, name: string, targetCid: number) =>
@@ -58,9 +80,10 @@ export const filesApi = {
   // A download is a link the browser opens itself (see file-downloads.routes.ts
   // in the backend): it streams the file straight to disk, which a request
   // carrying an Authorization header could not do without holding the whole
-  // file in memory first.
+  // file in memory first. For a folder the answer waits for the backend to look
+  // through it (it says how large the ZIP will be), so it gets more than 15 s.
   createDownloadLink: (configId: number, sid: number, cid: number, path: string): Promise<DownloadLink> =>
-    api.post(`${base(configId, sid)}/${cid}/download-links`, { path }).then((r) => r.data),
+    api.post(`${base(configId, sid)}/${cid}/download-links`, { path }, { timeout: 120_000 }).then((r) => r.data),
 
   // The picture itself, for the preview window. It is fetched with the app's own
   // login (an <img> tag cannot send one) and shown from an object URL. The backend
