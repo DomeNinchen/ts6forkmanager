@@ -74,8 +74,14 @@ Upstream had a persistent video/audio streaming stutter that was never resolved,
 
 ## Quick Start (Docker)
 
-1. Download the [`docker-compose.yml`](docker-compose.yml)
-2. Create a `.env` file next to it:
+1. Clone the repository — the images are built from source, so the compose file alone is not enough:
+
+```bash
+git clone https://github.com/DomeNinchen/ts6forkmanager.git
+cd ts6forkmanager
+```
+
+2. Create a `.env` file in the repository root:
 
 ```env
 JWT_SECRET=your-random-secret-at-least-32-characters
@@ -89,14 +95,20 @@ echo "JWT_SECRET=$(openssl rand -base64 32)" >> .env
 echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 ```
 
-3. Start the stack:
+3. Create the shared Docker network — once per host. The compose file attaches to it as an *external* network, so Compose won't create it for you and the first start fails without it:
 
 ```bash
-docker compose up -d
+docker network create ts6-network
 ```
 
-4. Open `http://localhost:3000/setup` and create your admin account
-5. Log in, then add your TeamSpeak server connection under **Settings → Connections** (host, WebQuery port, API key)
+4. Build and start the stack. The first build takes a few minutes, since it compiles the Go sidecar and both Node apps:
+
+```bash
+docker compose up -d --build
+```
+
+5. Open `http://localhost:3000/setup` and create your admin account
+6. Log in, then add your TeamSpeak server connection under **Settings → Connections** (host, WebQuery port, API key)
 
 > `JWT_SECRET` is **required** — the backend will refuse to start in production without it.
 > `ENCRYPTION_KEY` is optional but recommended — if not set, `JWT_SECRET` is used as fallback for credential encryption.
