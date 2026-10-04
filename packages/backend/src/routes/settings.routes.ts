@@ -14,6 +14,7 @@ import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRes
 import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-config.js';
 import { getGithubToken, setGithubToken } from '../utils/github-token.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
+import { setPrivacyNoticeEnabled } from '../utils/privacy-notice-settings.js';
 import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN } from '../utils/stream-defaults.js';
 import {
   getUserHistorySettings,
@@ -332,6 +333,19 @@ settingsRoutes.put('/webgui-base-theme', requireAdmin, async (req: Request, res:
     });
     console.log(`[Settings] WebGui base theme set to '${theme}'`);
     res.json({ theme: theme as BaseTheme });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/privacy-notice — admin switches the storage notice (the info bar about what the
+// browser keeps) on or off for everyone. Reading it needs no login and lives at GET /api/public-config.
+settingsRoutes.put('/privacy-notice', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') throw new AppError(400, 'enabled must be a boolean');
+    const prisma = req.app.locals.prisma;
+    await setPrivacyNoticeEnabled(prisma, enabled);
+    console.log(`[Settings] Privacy notice ${enabled ? 'enabled' : 'disabled'}`);
+    res.json({ enabled });
   } catch (err) { next(err); }
 });
 

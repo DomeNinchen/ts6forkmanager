@@ -576,7 +576,15 @@
         "baseThemeSetFailed": "Échec de la mise à jour du thème de base de l'installation",
         "accentSetToast": "Accent de l'installation défini sur {{accent}}",
         "accentSetFailed": "Échec de la mise à jour de l'accent de l'installation",
-        "pairingHint": "{{theme}} va bien avec l'accent {{accent}}."
+        "pairingHint": "{{theme}} va bien avec l'accent {{accent}}.",
+        "privacyNotice": {
+          "title": "Information sur le stockage des données",
+          "description": "Affiche à chaque visiteur, page de connexion comprise, une courte note masquable indiquant que cette interface ne conserve dans le navigateur que des données techniquement nécessaires. Elle est purement informative : rien n'est bloqué tant qu'elle n'est pas masquée, et chaque navigateur retient lui-même son choix. Elle n'est pas affichée sur la page publique du widget.",
+          "label": "Afficher l'information sur le stockage des données",
+          "onToast": "Information sur le stockage des données activée",
+          "offToast": "Information sur le stockage des données désactivée",
+          "failed": "Échec de la mise à jour de l'information sur le stockage des données"
+        }
       },
       "title": "Paramètres",
       "tabs": {
@@ -1977,6 +1985,11 @@
       "updateAvailable": "Mise à jour disponible :",
       "copyDeployCommand": "Copier la commande de déploiement",
       "postpone": "Reporter"
+    },
+    "privacyNotice": {
+      "title": "Information sur le stockage des données",
+      "message": "Cette interface ne conserve dans votre navigateur que les données nécessaires à son fonctionnement, par exemple votre connexion, la langue et l'affichage. L'application ne dépose pas de cookies elle-même et n'utilise aucun service de suivi ou d'analyse. Les polices sont servies depuis ce serveur.",
+      "dismiss": "Compris"
     },
     "ytCookieBanner": {
       "message": "Les cookies YouTube ne fonctionnent plus — le contenu réservé aux adultes/aux membres et les recherches peuvent échouer jusqu’à leur actualisation dans <1>Paramètres → YouTube</1>."
