@@ -1,5 +1,7 @@
 import * as dgram from "dgram";
+import * as dns from "dns";
 import * as crypto from "crypto";
+import * as net from "net";
 import { EventEmitter } from "events";
 import {
   eaxEncrypt,
@@ -91,10 +93,35 @@ type ClientState =
   | "connected"
   | "disconnecting";
 
+/**
+ * Resolve the server host to an IPv4 address (the socket is udp4). Done once per
+ * connect() because dgram's socket.send(msg, port, hostname) runs a fresh
+ * dns.lookup for EVERY packet - at 50 voice packets/s per bot that floods the
+ * resolver until it fails with EAI_AGAIN and drops the connection mid-playback.
+ */
+async function resolveHostIPv4(host: string): Promise<string> {
+  let address: string;
+  let family: number;
+  try {
+    ({ address, family } = await dns.promises.lookup(host, { family: 4 }));
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException).code;
+    throw new Error(
+      `Cannot resolve TeamSpeak server host "${host}"${code ? ` (${code})` : ""}: ${(e as Error).message}`
+    );
+  }
+  if (family !== 4 || !net.isIPv4(address)) {
+    throw new Error(`TeamSpeak server host "${host}" is not an IPv4 address (${address}); only IPv4 is supported`);
+  }
+  return address;
+}
+
 export class Ts3Client extends EventEmitter {
   private socket: dgram.Socket | null = null;
   private state: ClientState = "disconnected";
   private opts!: Ts3ClientOptions;
+  // IPv4 address opts.host resolved to for the current connection (see connect())
+  private remoteAddress = "";
 
   // Packet counters (one per packet type for outgoing)
   private packetCounter = new Uint16Array(9);
@@ -156,6 +183,20 @@ export class Ts3Client extends EventEmitter {
     this.fragmentFlags = 0;
     this.clientId = 0;
     this.channelMap.clear();
+
+    // Resolve the host once per connection and send to the cached IP. Done on
+    // every connect() (not cached across them) so a changed server IP is picked
+    // up on reconnect.
+    try {
+      this.remoteAddress = await resolveHostIPv4(opts.host);
+    } catch (e) {
+      // Same outcome as a connect timeout: bot ends up stopped and the manager's
+      // auto-reconnect retries, instead of the bot hanging in "starting".
+      this.cleanup();
+      throw e;
+    }
+    // stop()/forceClose() may have run while the lookup was pending
+    if (this.state !== "init") throw new Error("Connection aborted");
 
     return new Promise((resolve, reject) => {
       this.socket = dgram.createSocket("udp4");
@@ -523,7 +564,7 @@ export class Ts3Client extends EventEmitter {
     const pflags = ptByte & 0xf0;
     const pid = raw.readUInt16BE(MAC_LEN);
     this.emit("debug", `[OUT] type=${ptype} id=${pid} flags=0x${pflags.toString(16)} len=${raw.length}`);
-    this.socket.send(raw, this.opts.port, this.opts.host);
+    this.socket.send(raw, this.opts.port, this.remoteAddress);
   }
 
   // ====== Incoming Packet Handling ======
