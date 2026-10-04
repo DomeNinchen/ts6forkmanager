@@ -1,65 +1,282 @@
 import { Router, Request, Response } from 'express';
+import {
+  checkRepositoryPath,
+  splitRepositoryPath,
+  type FileTransferLimits,
+  type RepositoryPathProblem,
+} from '@ts6/common';
+import { config } from '../config.js';
 import { requireRole } from '../middleware/rbac.js';
-import { TSApiError } from '../middleware/error-handler.js';
+import { allowSlowBody } from '../middleware/request-timeout.js';
+import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
+import { ftUploadStream } from '../ts-client/file-transfer.js';
+import {
+  TICKET_FRESH_MS,
+  UPLOAD_SESSION_TTL_MS,
+  asTransferError,
+  cancelUpload,
+  completeUpload,
+  downloadLinks,
+  initUpload,
+  listDirectory,
+  statPath,
+  tempUploadPath,
+  uploadSessions,
+  type RepositoryScope,
+  type UploadSession,
+} from '../utils/file-repository.js';
 
 export const fileRoutes: Router = Router({ mergeParams: true });
+
+// The Files page is admin-only, and so is everything behind it: browsing a
+// channel's file repository, and above all moving bytes in and out of it, is
+// not something the other roles get to do through the API either.
+fileRoutes.use(requireRole('admin'));
+
+const PROBLEM_TEXT: Record<RepositoryPathProblem, string> = {
+  empty: 'it is empty',
+  'not-absolute': 'it must start with "/"',
+  'control-character': 'it contains control characters',
+  backslash: 'it contains a backslash',
+  'slash-in-name': 'a name contains "/"',
+  'empty-segment': 'it contains an empty segment ("//" or a trailing "/")',
+  'dot-segment': 'it contains a "." or ".." segment',
+  'name-too-long': 'a file or folder name is longer than 255 bytes',
+  'path-too-long': 'the path is too long',
+};
+
+/** A path from the request body or query, checked before it gets anywhere
+ * near a ServerQuery command. */
+function requirePath(value: unknown, label: string, allowRoot = false): string {
+  if (typeof value !== 'string') throw new AppError(400, `${label} must be a string`);
+  const problem = checkRepositoryPath(value, { allowRoot });
+  if (problem) throw new AppError(400, `Invalid ${label}: ${PROBLEM_TEXT[problem]}`);
+  return value;
+}
+
+function parseChannelId(value: unknown, label: string): number {
+  const cid = Number(value);
+  // cid 0 is the virtual server's own repository (icons, avatars), not a channel's
+  if (!Number.isInteger(cid) || cid < 1) throw new AppError(400, `Invalid ${label}`);
+  return cid;
+}
+
+function scopeOf(req: Request): RepositoryScope {
+  return {
+    app: req.app,
+    configId: parseInt(String(req.params.configId), 10),
+    sid: parseInt(String(req.params.sid), 10),
+    cid: parseChannelId(req.params.cid, 'channel ID'),
+  };
+}
+
+// The limits the app itself enforces - registered before "/:cid", which would
+// otherwise swallow "limits" as a channel ID.
+fileRoutes.get('/limits', (_req: Request, res: Response) => {
+  const limits: FileTransferLimits = { maxUploadBytes: config.filesMaxUploadBytes };
+  res.json(limits);
+});
 
 // List files in a channel directory
 // Uses shared SSH connection because ft* commands are not supported via WebQuery HTTP
 fileRoutes.get('/:cid', async (req: Request, res: Response, next) => {
   try {
-    const result = await sshExecute(req, 'ftgetfilelist', {
-      cid: String(req.params.cid),
-      cpw: String(req.query.cpw || ''),
-      path: String(req.query.path || '/'),
-    });
-    res.json(result);
-  } catch (err: any) {
-    // TS3 error 1281 = database_empty_result → empty directory
-    if (err instanceof TSApiError && err.code === 1281) {
-      return res.json([]);
-    }
+    const path = requirePath(req.query.path ?? '/', 'path', true);
+    res.json(await listDirectory(scopeOf(req), path, String(req.query.cpw || '')));
+  } catch (err) {
     next(toSshAppError(err));
   }
 });
 
 // Create directory
-fileRoutes.post('/:cid/mkdir', requireRole('admin'), async (req: Request, res: Response, next) => {
+fileRoutes.post('/:cid/mkdir', async (req: Request, res: Response, next) => {
   try {
     const result = await sshExecute(req, 'ftcreatedir', {
-      cid: String(req.params.cid),
+      cid: scopeOf(req).cid,
       cpw: '',
-      dirname: req.body.dirname,
+      dirname: requirePath(req.body?.dirname, 'directory name'),
     });
     res.json(result);
-  } catch (err) { next(err); }
+  } catch (err) { next(toSshAppError(err)); }
 });
 
 // Delete file
-fileRoutes.delete('/:cid/file', requireRole('admin'), async (req: Request, res: Response, next) => {
+fileRoutes.delete('/:cid/file', async (req: Request, res: Response, next) => {
   try {
     const result = await sshExecute(req, 'ftdeletefile', {
-      cid: String(req.params.cid),
+      cid: scopeOf(req).cid,
       cpw: '',
-      name: req.body.name,
+      name: requirePath(req.body?.name, 'file name'),
     });
     res.json(result);
-  } catch (err) { next(err); }
+  } catch (err) { next(toSshAppError(err)); }
 });
 
 // Move a file to another channel's file repository - ftrenamefile does this
 // entirely server-side (no byte transfer through us) when tcid is given.
-fileRoutes.post('/:cid/move', requireRole('admin'), async (req: Request, res: Response, next) => {
+fileRoutes.post('/:cid/move', async (req: Request, res: Response, next) => {
   try {
+    const name = requirePath(req.body?.name, 'file name');
     const result = await sshExecute(req, 'ftrenamefile', {
-      cid: String(req.params.cid),
+      cid: scopeOf(req).cid,
       cpw: '',
-      tcid: String(req.body.targetCid),
+      tcid: parseChannelId(req.body?.targetCid, 'target channel ID'),
       tcpw: '',
-      oldname: req.body.name,
-      newname: req.body.name,
+      oldname: name,
+      newname: name,
     });
     res.json(result);
-  } catch (err) { next(err); }
+  } catch (err) { next(toSshAppError(err)); }
+});
+
+// Upload, step 1: agree on the file. Everything that can be refused - a name the
+// server will not take, a file that is already there, a missing permission -
+// comes back as a normal error answer *before* the browser has sent a single
+// byte of the file. Step 2 is the PUT below.
+//
+// The bytes are not written to the target name but to a temp file next to it,
+// which is renamed into place once everything has arrived. Writing straight to
+// the target is not an option: `ftinitupload` empties an existing file the
+// moment it hands out the ticket, so an upload that breaks off would destroy
+// the file it was meant to replace.
+fileRoutes.post('/:cid/uploads', async (req: Request, res: Response, next) => {
+  try {
+    const scope = scopeOf(req);
+    const path = requirePath(req.body?.path, 'path');
+    const size = req.body?.size;
+    if (!Number.isSafeInteger(size) || size < 0) throw new AppError(400, 'size must be a whole number of bytes');
+    if (size > config.filesMaxUploadBytes) {
+      throw new AppError(
+        413,
+        'The file is larger than the maximum upload size',
+        `${size} bytes, the limit is ${config.filesMaxUploadBytes} bytes (FILES_MAX_UPLOAD_MB)`,
+      );
+    }
+    const overwrite = req.body?.overwrite === true;
+
+    const target = await statPath(scope, path);
+    if (target.kind === 'directory') throw new AppError(409, 'A folder with this name already exists');
+    // Reported the way TeamSpeak itself reports it, so the frontend has one code to ask about
+    if (target.kind === 'file' && !overwrite) throw new TSApiError(2050, 'file already exists');
+
+    const tempPath = tempUploadPath(path);
+    const { ticket, host } = await initUpload(scope, tempPath, size);
+    const session: UploadSession = {
+      userId: req.user!.id,
+      configId: scope.configId,
+      sid: scope.sid,
+      cid: scope.cid,
+      path,
+      tempPath,
+      size,
+      overwrite,
+      host,
+      port: ticket.port,
+      ftkey: ticket.ftkey,
+      issuedAt: Date.now(),
+    };
+    const uploadId = uploadSessions.issue(session);
+
+    // Nobody may ever send the bytes (browser closed, connection dropped), yet the
+    // server has already created the - empty - temp file. Clear it away once the
+    // session has run out; `drop` only finds a session nobody redeemed.
+    session.cleanupTimer = setTimeout(() => {
+      if (uploadSessions.drop(uploadId)) void cancelUpload(scope, tempPath);
+    }, UPLOAD_SESSION_TTL_MS + 2000);
+    session.cleanupTimer.unref();
+
+    res.status(201).json({ uploadId });
+  } catch (err) {
+    next(asTransferError(err));
+  }
+});
+
+// Upload, step 2: the file's bytes, as the raw request body. They go straight
+// through to the server's transfer port without being held in memory or on
+// disk, so the file size is limited by the agreed upload limit and nothing else.
+fileRoutes.put('/:cid/uploads/:uploadId', async (req: Request, res: Response, next) => {
+  let scope: RepositoryScope;
+  try {
+    scope = scopeOf(req);
+  } catch (err) {
+    return next(err);
+  }
+
+  // Look before redeeming: a request that merely names somebody else's session
+  // must not use it up.
+  const token = String(req.params.uploadId);
+  const pending = uploadSessions.peek(token);
+  if (
+    !pending ||
+    pending.userId !== req.user!.id ||
+    pending.configId !== scope.configId ||
+    pending.sid !== scope.sid ||
+    pending.cid !== scope.cid
+  ) {
+    // The body is not going to be read, so do not keep the connection around for reuse
+    res.setHeader('Connection', 'close');
+    return next(new AppError(404, 'This upload has expired or does not exist - start it again'));
+  }
+  const session = uploadSessions.take(token)!;
+  clearTimeout(session.cleanupTimer);
+
+  if (req.headers['content-length'] !== String(session.size)) {
+    await cancelUpload(scope, session.tempPath);
+    res.setHeader('Connection', 'close');
+    return next(new AppError(400, `The request body must be exactly ${session.size} bytes, as announced`));
+  }
+
+  // The caller and the session are both vouched for: a slow line may take its time
+  allowSlowBody(req);
+
+  try {
+    let { host, port, ftkey } = session;
+    if (Date.now() - session.issuedAt > TICKET_FRESH_MS) {
+      // The body arrived too late for the ticket it was agreed with (a proxy that
+      // collects it first): ask for another one for the same temp file
+      const fresh = await initUpload(scope, session.tempPath, session.size, true);
+      ({ host } = fresh);
+      ({ port, ftkey } = fresh.ticket);
+    }
+    await ftUploadStream(host, port, ftkey, req, session.size);
+    await completeUpload(scope, session);
+    res.status(201).json({ path: session.path, size: session.size });
+  } catch (err) {
+    console.warn(`[Files] Upload of ${session.path} to channel ${scope.cid} failed: ${(err as Error)?.message}`);
+    // Whatever arrived before the failure sits in the temp file, not under the real name
+    await cancelUpload(scope, session.tempPath);
+    // Nobody left to tell if the browser cancelled the upload
+    if (res.headersSent || res.destroyed || !res.writable) return;
+    // Let the browser finish sending so it can read our answer
+    req.resume();
+    next(asTransferError(err));
+  }
+});
+
+// Download, step 1: check the file is there and hand out a link for it. The link
+// is a one-time ticket the browser can simply open, which lets it stream the file
+// straight to disk itself - a request that has to carry an Authorization header
+// could only ever be collected in memory by a script first.
+fileRoutes.post('/:cid/download-links', async (req: Request, res: Response, next) => {
+  try {
+    const scope = scopeOf(req);
+    const path = requirePath(req.body?.path, 'path');
+    const stat = await statPath(scope, path);
+    if (stat.kind === null) throw new AppError(404, 'File not found');
+    if (stat.kind === 'directory') throw new AppError(400, 'A folder cannot be downloaded as a single file');
+
+    const { name } = splitRepositoryPath(path);
+    const token = downloadLinks.issue({
+      userId: req.user!.id,
+      configId: scope.configId,
+      sid: scope.sid,
+      cid: scope.cid,
+      path,
+      name,
+    });
+    res.status(201).json({ url: `/api/file-downloads/${token}`, name, size: stat.size });
+  } catch (err) {
+    next(asTransferError(err));
+  }
 });
