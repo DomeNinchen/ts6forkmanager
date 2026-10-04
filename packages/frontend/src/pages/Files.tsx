@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback, type DragEvent } from 'react';
+import { useState, useMemo, useRef, useEffect, type DragEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { checkFileName, joinRepositoryPath, type ServerFileEntry } from '@ts6/common';
@@ -18,16 +18,15 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { TransferPanel } from '@/components/files/TransferPanel';
 import { UploadConflictDialog } from '@/components/files/UploadConflictDialog';
+import { UploadDialog } from '@/components/files/UploadDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn, formatBytes } from '@/lib/utils';
 import { fileErrorMessage, pathProblemMessage } from '@/lib/file-errors';
+import { dragCarriesFiles, readDroppedFiles } from '@/lib/dropped-files';
 import {
   FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput, Upload, Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-/** Something a drag carries that can be uploaded, as opposed to a dragged piece of text or a link. */
-const dragCarriesFiles = (event: DragEvent) => Array.from(event.dataTransfer.types).includes('Files');
 
 export default function Files() {
   const { t, i18n } = useTranslation();
@@ -43,7 +42,8 @@ export default function Files() {
   const [moveTargetCid, setMoveTargetCid] = useState('');
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // The upload window: closed (null), open and empty, or open with the files dropped on the list
+  const [uploadFiles, setUploadFiles] = useState<File[] | null>(null);
 
   // Fetch channel list for selector
   const { data: channelData } = useQuery({
@@ -135,14 +135,11 @@ export default function Files() {
     onError: (err, entry) => toast.error(fileErrorMessage(err, t, entry.name)),
   });
 
-  const enqueueUploads = useTransfers((state) => state.enqueueUploads);
-  const uploadFiles = useCallback(
-    (list: File[]) => {
-      if (!c || !s || !selectedCid || list.length === 0) return;
-      enqueueUploads({ configId: c, sid: s, cid: selectedCid, directory: currentPath }, list, limits?.maxUploadBytes);
-    },
-    [c, s, selectedCid, currentPath, limits, enqueueUploads],
+  const uploadTarget = useMemo(
+    () => (c && s && selectedCid ? { configId: c, sid: s, cid: selectedCid, directory: currentPath } : null),
+    [c, s, selectedCid, currentPath],
   );
+  const selectedChannelName = channels.find((ch) => ch.cid === selectedCid)?.name ?? '';
 
   // The listing is refreshed whenever another upload into it completes
   const uploadsDoneHere = useTransfers(
@@ -191,20 +188,10 @@ export default function Files() {
     setDragging(false);
     if (!selectedCid) return;
 
-    // The items have to be read right now, inside the event
-    const dropped: File[] = [];
-    let folders = 0;
-    for (const item of Array.from(event.dataTransfer.items)) {
-      if (item.kind !== 'file') continue;
-      if (item.webkitGetAsEntry?.()?.isDirectory) {
-        folders++;
-        continue;
-      }
-      const file = item.getAsFile();
-      if (file) dropped.push(file);
-    }
+    const { files: dropped, folders } = readDroppedFiles(event);
     if (folders > 0) toast.info(t('pages.files.foldersNotSupported'));
-    uploadFiles(dropped);
+    // What was dropped goes into the upload window, where it can be looked over before it is sent
+    if (dropped.length > 0) setUploadFiles(dropped);
   };
 
   const formatDate = (ms: number) => {
@@ -229,23 +216,12 @@ export default function Files() {
             <Button size="sm" variant="outline" onClick={() => setShowMkdir(true)}>
               <FolderPlus className="h-4 w-4 mr-1" /> {t('pages.files.newFolder')}
             </Button>
-            <Button size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Button size="sm" onClick={() => setUploadFiles([])}>
               <Upload className="h-4 w-4 mr-1" /> {t('pages.files.uploadFiles')}
             </Button>
           </div>
         )}
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          uploadFiles(Array.from(e.target.files ?? []));
-          e.target.value = '';
-        }}
-      />
 
       <div className="grid grid-cols-12 gap-4">
         {/* Channel Selector */}
@@ -446,6 +422,16 @@ export default function Files() {
       )}
 
       <UploadConflictDialog />
+      {uploadTarget && (
+        <UploadDialog
+          open={uploadFiles !== null}
+          initialFiles={uploadFiles ?? []}
+          target={uploadTarget}
+          channelName={selectedChannelName}
+          maxUploadBytes={limits?.maxUploadBytes}
+          onClose={() => setUploadFiles(null)}
+        />
+      )}
 
       {/* Create Directory Dialog */}
       <Dialog open={showMkdir} onOpenChange={setShowMkdir}>
