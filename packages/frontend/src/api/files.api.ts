@@ -61,4 +61,33 @@ export const filesApi = {
   // file in memory first.
   createDownloadLink: (configId: number, sid: number, cid: number, path: string): Promise<DownloadLink> =>
     api.post(`${base(configId, sid)}/${cid}/download-links`, { path }).then((r) => r.data),
+
+  // The picture itself, for the preview window. It is fetched with the app's own
+  // login (an <img> tag cannot send one) and shown from an object URL. The backend
+  // only ever sends one of the five browser image formats, recognised by its bytes.
+  preview: async (configId: number, sid: number, cid: number, path: string, signal?: AbortSignal): Promise<Blob> => {
+    try {
+      const response = await api.get<Blob>(`${base(configId, sid)}/${cid}/preview`, {
+        params: { path },
+        responseType: 'blob',
+        // The default 15 s is for small JSON answers; the picture is read from TeamSpeak first
+        timeout: 60_000,
+        signal,
+      });
+      return response.data;
+    } catch (err: any) {
+      // With responseType 'blob' an error answer arrives as a Blob too; read it, so that
+      // the usual error texts (they look at `code` and `error`) keep working
+      const data = err?.response?.data;
+      if (data instanceof Blob) {
+        const text = await data.text();
+        try {
+          err.response.data = JSON.parse(text);
+        } catch {
+          err.response.data = text;
+        }
+      }
+      throw err;
+    }
+  },
 };

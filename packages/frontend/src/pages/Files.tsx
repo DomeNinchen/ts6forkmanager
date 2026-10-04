@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, type DragEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { checkFileName, joinRepositoryPath, type ServerFileEntry } from '@ts6/common';
+import { checkFileName, isPreviewableImageName, joinRepositoryPath, type ServerFileEntry } from '@ts6/common';
 import { filesApi } from '@/api/files.api';
 import { channelsApi } from '@/api/channels.api';
 import { useServerStore } from '@/stores/server.store';
@@ -19,12 +19,13 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { TransferPanel } from '@/components/files/TransferPanel';
 import { UploadConflictDialog } from '@/components/files/UploadConflictDialog';
 import { UploadDialog } from '@/components/files/UploadDialog';
+import { ImagePreviewDialog } from '@/components/files/ImagePreviewDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn, formatBytes } from '@/lib/utils';
 import { fileErrorMessage, pathProblemMessage } from '@/lib/file-errors';
 import { dragCarriesFiles, readDroppedFiles } from '@/lib/dropped-files';
 import {
-  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput, Upload, Download,
+  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput, Upload, Download, Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -44,6 +45,8 @@ export default function Files() {
   const dragDepth = useRef(0);
   // The upload window: closed (null), open and empty, or open with the files dropped on the list
   const [uploadFiles, setUploadFiles] = useState<File[] | null>(null);
+  // The picture open in the preview window, by name (null: closed)
+  const [previewName, setPreviewName] = useState<string | null>(null);
 
   // Fetch channel list for selector
   const { data: channelData } = useQuery({
@@ -85,6 +88,19 @@ export default function Files() {
       return a.name.localeCompare(b.name);
     });
   }, [fileData]);
+
+  // A picture gets a preview when its name says so and it is small enough; the
+  // backend decides again by looking at the bytes, so the name is only a hint
+  const previewMax = limits?.previewMaxBytes;
+  const canPreview = (file: ServerFileEntry) =>
+    !file.isDirectory && previewMax !== undefined && file.size > 0 && file.size <= previewMax && isPreviewableImageName(file.name);
+  const images = useMemo(
+    () => files.filter(canPreview),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [files, previewMax],
+  );
+  // Another channel or folder: the picture of the old one is not part of this list
+  useEffect(() => setPreviewName(null), [c, s, selectedCid, currentPath]);
 
   const mkdirMutation = useMutation({
     mutationFn: (dirname: string) => filesApi.createDir(c!, s!, selectedCid!, dirname),
@@ -154,6 +170,7 @@ export default function Files() {
 
   const navigateTo = (entry: ServerFileEntry) => {
     if (entry.isDirectory) setCurrentPath(joinRepositoryPath(currentPath, entry.name));
+    else if (canPreview(entry)) setPreviewName(entry.name);
   };
 
   const goUp = () => {
@@ -358,7 +375,7 @@ export default function Files() {
                         key={file.name}
                         className={cn(
                           'grid grid-cols-12 gap-2 px-4 py-2 text-sm items-center group hover:bg-muted/20 transition-colors',
-                          file.isDirectory && 'cursor-pointer',
+                          (file.isDirectory || canPreview(file)) && 'cursor-pointer',
                         )}
                         onClick={() => navigateTo(file)}
                       >
@@ -377,6 +394,15 @@ export default function Files() {
                           {formatDate(file.modified)}
                         </div>
                         <div className="col-span-1 flex justify-end gap-0.5">
+                          {canPreview(file) && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setPreviewName(file.name); }}
+                              className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                              title={t('pages.files.preview.title')}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           {!file.isDirectory && (
                             <button
                               onClick={(e) => { e.stopPropagation(); downloadMutation.mutate(file); }}
@@ -422,6 +448,19 @@ export default function Files() {
       )}
 
       <UploadConflictDialog />
+      {uploadTarget && (
+        <ImagePreviewDialog
+          configId={uploadTarget.configId}
+          sid={uploadTarget.sid}
+          cid={uploadTarget.cid}
+          directory={currentPath}
+          images={images}
+          current={previewName}
+          onChange={setPreviewName}
+          onClose={() => setPreviewName(null)}
+          onDownload={(entry) => downloadMutation.mutate(entry)}
+        />
+      )}
       {uploadTarget && (
         <UploadDialog
           open={uploadFiles !== null}

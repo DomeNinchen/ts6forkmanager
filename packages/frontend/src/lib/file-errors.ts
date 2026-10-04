@@ -58,6 +58,20 @@ export function fileErrorMessage(err: any, t: TFunction, fileName?: string): str
   return message || t('pages.files.errors.generic');
 }
 
+/**
+ * Readable text for a failed preview. The backend refuses a file that is not a
+ * picture it can show (415), one that is too large (413: too many bytes, or too
+ * many pixels) and a flood of previews at once (429).
+ */
+export function previewErrorMessage(err: any, t: TFunction): string {
+  const status = err?.response?.status;
+  if (status === 404) return t('pages.files.errors.notFound');
+  if (status === 415) return t('pages.files.preview.notAnImage');
+  if (status === 413) return t('pages.files.preview.tooLarge');
+  if (status === 429) return t('pages.files.preview.busy');
+  return fileErrorMessage(err, t);
+}
+
 /** Is this the "a file with that name is already there" refusal? */
 export function isAlreadyExists(err: any): boolean {
   return err?.response?.data?.code === 2050;

@@ -1625,6 +1625,18 @@
         "upload_other": "Upload {{count}} files",
         "uploadEmpty": "Upload"
       },
+      "preview": {
+        "title": "Preview",
+        "previous": "Previous picture",
+        "next": "Next picture",
+        "position": "{{index}} of {{total}}",
+        "dimensions": "{{width}} x {{height}} pixels",
+        "loading": "Loading the picture...",
+        "retry": "Try again",
+        "notAnImage": "This file is not a picture the preview can show (PNG, JPEG, GIF, BMP and WebP are supported).",
+        "tooLarge": "This picture is too large to preview. Download it instead.",
+        "busy": "The server is busy with other previews. Try again in a moment."
+      },
       "problem": {
         "empty": "The name is empty.",
         "not-absolute": "The path must start with \"/\".",
