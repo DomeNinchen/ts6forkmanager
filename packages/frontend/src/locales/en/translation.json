@@ -468,6 +468,108 @@
         "noClients": "No voice clients online (query clients can not receive messages)",
         "channelHint": "Goes to channel {{cid}}, where the query connection currently is"
       },
+      "events": {
+        "toggle": "Events",
+        "intro": "Listen to what happens on this virtual server. Events appear in the transcript as they arrive and can be saved as a file; nothing is stored on the server.",
+        "noSsh": "Live events need SSH credentials for this server connection - configure them in the server settings - because WebQuery can not register for events.",
+        "needVirtualServer": "Pick a virtual server first - events belong to one, not to the instance.",
+        "categories": {
+          "server": {
+            "label": "Server",
+            "short": "server",
+            "help": "Clients joining and leaving, changes to the server's settings"
+          },
+          "channel": {
+            "label": "Channels",
+            "short": "channels",
+            "help": "Channels created, edited, moved and deleted, and clients moving between channels"
+          },
+          "textserver": {
+            "label": "Server chat",
+            "short": "server chat",
+            "help": "Messages written to the whole server"
+          },
+          "textchannel": {
+            "label": "Channel chat",
+            "short": "channel chat",
+            "help": "Messages in one channel - the listener sits in that channel to hear them"
+          },
+          "textprivate": {
+            "label": "Private messages",
+            "short": "private",
+            "help": "Private messages sent to the listener - only other ServerQuery clients can send them"
+          },
+          "bans": {
+            "label": "Bans",
+            "short": "bans",
+            "help": "Bans added or removed (needs the permission to see the ban list)"
+          }
+        },
+        "other": "other",
+        "channelLabel": "Channel to hear",
+        "pickChannel": "Pick a channel",
+        "start": "Start listening",
+        "apply": "Apply changes",
+        "stop": "Stop",
+        "state": {
+          "idle": "Not listening",
+          "connecting": "Connecting...",
+          "live": "Listening",
+          "reconnecting": "Connection lost - reconnecting...",
+          "closed": "Stopped"
+        },
+        "listeningTo": "{{categories}} on virtual server {{sid}}",
+        "hearingChannel": "chat of channel {{cid}}",
+        "collected": "Collected: {{count}}",
+        "dropped": "The {{count}} oldest events did not fit and were dropped.",
+        "save": "Save",
+        "saveTxt": "Text file (.txt)",
+        "saveJson": "JSON file (.json)",
+        "clearCollected": "Clear",
+        "refused": "TeamSpeak refused {{category}}: {{message}} ({{code}})",
+        "notice": {
+          "started": "Listening to {{categories}} on {{name}}.",
+          "alreadyListening": "Already listening to {{categories}}.",
+          "stopped": "Stopped listening.",
+          "notListening": "Not listening to anything.",
+          "pickChannel": "Pick the channel whose chat to listen to first.",
+          "channelNeedsId": "Usage: servernotifyregister event=textchannel id=<channel> - this console needs the channel, because TeamSpeak delivers the chat of the channel the listener is in.",
+          "channelAll": "Channel events always cover every channel here.",
+          "usage": "Usage: servernotifyregister event=<server|channel|textserver|textchannel|textprivate|bans>, and servernotifyunregister [event=...]."
+        },
+        "failure": {
+          "lost": "The connection to the backend could not be restored.",
+          "UNAUTHORIZED": "This account may not listen to events (any more).",
+          "FORBIDDEN": "Only admins may listen to events.",
+          "SESSION_FAILED": "The listener stopped: {{message}}",
+          "SSH_CONNECT_FAILED": "The listener could not connect to the server over SSH: {{message}}",
+          "SSH_AUTH_FAILED": "TeamSpeak refused the SSH login of this server connection: {{message}}. Check the SSH credentials; the backend does not try again for a minute.",
+          "VIRTUAL_SERVER_UNAVAILABLE": "This virtual server can not be listened to: {{message}}",
+          "TEXT_CHANNEL_IN_USE": "Another admin is already listening to the chat of channel {{channel}}; one listener hears one channel at a time.",
+          "RATE_LIMITED": "Listening was started too often in a short time. Try again in {{seconds}} s.",
+          "TOO_MANY_STREAMS": "You already have the most live event streams open that are allowed; close one first.",
+          "TOO_MANY_LISTENERS": "This server connection already has the most listeners open that the console allows, or too many admins are listening to this virtual server.",
+          "generic": "Listening to events failed."
+        },
+        "summary": {
+          "clientEnter": "{{client_nickname}} joined (client {{clid}}, into channel {{ctid}})",
+          "clientLeft": "Client {{clid}} left (from channel {{cfid}})",
+          "clientMoved": "Client {{clid}} moved from channel {{cfid}} to channel {{ctid}}",
+          "serverEdited": "The virtual server was edited by {{invokername}}",
+          "channelCreated": "Channel {{channel_name}} ({{cid}}) was created by {{invokername}}",
+          "channelEdited": "Channel {{cid}} was edited by {{invokername}}",
+          "channelDescription": "The description of channel {{cid}} changed",
+          "channelPassword": "The password of channel {{cid}} changed",
+          "channelMoved": "Channel {{cid}} was moved below channel {{cpid}} by {{invokername}}",
+          "channelDeleted": "Channel {{cid}} was deleted by {{invokername}}",
+          "textServer": "{{invokername}} (server chat): {{msg}}",
+          "textChannel": "{{invokername}} (channel chat): {{msg}}",
+          "textPrivate": "{{invokername}} (private): {{msg}}",
+          "banAdded": "Ban {{banid}} was added by {{invokername}}",
+          "banRemoved": "Ban {{banid}} was removed",
+          "unknown": "{{name}}"
+        }
+      },
       "history": {
         "menu": "History ({{count}})",
         "clear": "Clear command history",

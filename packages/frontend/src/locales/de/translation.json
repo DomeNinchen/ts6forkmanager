@@ -468,6 +468,108 @@
         "noClients": "Keine Sprach-Clients online (Query-Clients können keine Nachrichten empfangen)",
         "channelHint": "Geht an Channel {{cid}}, in dem sich die Query-Verbindung gerade befindet"
       },
+      "events": {
+        "toggle": "Ereignisse",
+        "intro": "Höre mit, was auf diesem virtuellen Server passiert. Die Ereignisse erscheinen live im Verlauf und lassen sich als Datei speichern; auf dem Server wird nichts abgelegt.",
+        "noSsh": "Live-Ereignisse brauchen SSH-Zugangsdaten für diese Serververbindung – trage sie in den Servereinstellungen ein –, weil WebQuery sich nicht für Ereignisse anmelden kann.",
+        "needVirtualServer": "Wähle zuerst einen virtuellen Server – Ereignisse gehören zu einem virtuellen Server, nicht zur Instanz.",
+        "categories": {
+          "server": {
+            "label": "Server",
+            "short": "Server",
+            "help": "Clients, die kommen und gehen, und Änderungen an den Servereinstellungen"
+          },
+          "channel": {
+            "label": "Channels",
+            "short": "Channels",
+            "help": "Channels, die angelegt, bearbeitet, verschoben oder gelöscht werden, und Clients, die zwischen Channels wechseln"
+          },
+          "textserver": {
+            "label": "Server-Chat",
+            "short": "Server-Chat",
+            "help": "Nachrichten an den ganzen Server"
+          },
+          "textchannel": {
+            "label": "Channel-Chat",
+            "short": "Channel-Chat",
+            "help": "Nachrichten in einem Channel – der Listener sitzt dafür in diesem Channel"
+          },
+          "textprivate": {
+            "label": "Privatnachrichten",
+            "short": "privat",
+            "help": "Privatnachrichten an den Listener – die können nur andere ServerQuery-Clients schicken"
+          },
+          "bans": {
+            "label": "Bans",
+            "short": "Bans",
+            "help": "Hinzugefügte oder entfernte Bans (braucht das Recht, die Ban-Liste zu sehen)"
+          }
+        },
+        "other": "sonstige",
+        "channelLabel": "Channel zum Mithören",
+        "pickChannel": "Channel auswählen",
+        "start": "Mithören starten",
+        "apply": "Änderungen übernehmen",
+        "stop": "Stoppen",
+        "state": {
+          "idle": "Hört nicht mit",
+          "connecting": "Verbinde ...",
+          "live": "Hört mit",
+          "reconnecting": "Verbindung verloren – verbinde neu ...",
+          "closed": "Gestoppt"
+        },
+        "listeningTo": "{{categories}} auf virtuellem Server {{sid}}",
+        "hearingChannel": "Chat von Channel {{cid}}",
+        "collected": "Gesammelt: {{count}}",
+        "dropped": "Die {{count}} ältesten Ereignisse haben nicht mehr hineingepasst und wurden verworfen.",
+        "save": "Speichern",
+        "saveTxt": "Textdatei (.txt)",
+        "saveJson": "JSON-Datei (.json)",
+        "clearCollected": "Leeren",
+        "refused": "TeamSpeak hat {{category}} abgelehnt: {{message}} ({{code}})",
+        "notice": {
+          "started": "Höre mit: {{categories}} auf {{name}}.",
+          "alreadyListening": "{{categories}} wird bereits mitgehört.",
+          "stopped": "Mithören beendet.",
+          "notListening": "Es wird gerade nichts mitgehört.",
+          "pickChannel": "Wähle zuerst den Channel, dessen Chat du mithören möchtest.",
+          "channelNeedsId": "Aufruf: servernotifyregister event=textchannel id=<Channel> – die Konsole braucht den Channel, weil TeamSpeak den Chat des Channels liefert, in dem der Listener sitzt.",
+          "channelAll": "Channel-Ereignisse umfassen hier immer alle Channels.",
+          "usage": "Aufruf: servernotifyregister event=<server|channel|textserver|textchannel|textprivate|bans> und servernotifyunregister [event=...]."
+        },
+        "failure": {
+          "lost": "Die Verbindung zum Backend ließ sich nicht wiederherstellen.",
+          "UNAUTHORIZED": "Dieses Konto darf keine Ereignisse (mehr) mithören.",
+          "FORBIDDEN": "Nur Admins dürfen Ereignisse mithören.",
+          "SESSION_FAILED": "Der Listener wurde beendet: {{message}}",
+          "SSH_CONNECT_FAILED": "Der Listener konnte sich nicht per SSH mit dem Server verbinden: {{message}}",
+          "SSH_AUTH_FAILED": "TeamSpeak hat den SSH-Login dieser Serververbindung abgelehnt: {{message}}. Prüfe die SSH-Zugangsdaten; das Backend versucht es eine Minute lang nicht erneut.",
+          "VIRTUAL_SERVER_UNAVAILABLE": "Auf diesem virtuellen Server lässt sich nicht mithören: {{message}}",
+          "TEXT_CHANNEL_IN_USE": "Ein anderer Admin hört schon den Chat von Channel {{channel}} mit; ein Listener hört immer nur einen Channel.",
+          "RATE_LIMITED": "Das Mithören wurde in kurzer Zeit zu oft gestartet. Versuche es in {{seconds}} s erneut.",
+          "TOO_MANY_STREAMS": "Du hast schon so viele Live-Ereignis-Streams offen, wie erlaubt sind; schließe erst einen.",
+          "TOO_MANY_LISTENERS": "Diese Serververbindung hat schon so viele Listener offen, wie die Konsole erlaubt, oder es hören zu viele Admins auf diesem virtuellen Server mit.",
+          "generic": "Das Mithören der Ereignisse ist fehlgeschlagen."
+        },
+        "summary": {
+          "clientEnter": "{{client_nickname}} ist beigetreten (Client {{clid}}, in Channel {{ctid}})",
+          "clientLeft": "Client {{clid}} ist gegangen (aus Channel {{cfid}})",
+          "clientMoved": "Client {{clid}} ist von Channel {{cfid}} nach Channel {{ctid}} gewechselt",
+          "serverEdited": "Der virtuelle Server wurde von {{invokername}} bearbeitet",
+          "channelCreated": "Channel {{channel_name}} ({{cid}}) wurde von {{invokername}} angelegt",
+          "channelEdited": "Channel {{cid}} wurde von {{invokername}} bearbeitet",
+          "channelDescription": "Die Beschreibung von Channel {{cid}} hat sich geändert",
+          "channelPassword": "Das Passwort von Channel {{cid}} hat sich geändert",
+          "channelMoved": "Channel {{cid}} wurde von {{invokername}} unter Channel {{cpid}} verschoben",
+          "channelDeleted": "Channel {{cid}} wurde von {{invokername}} gelöscht",
+          "textServer": "{{invokername}} (Server-Chat): {{msg}}",
+          "textChannel": "{{invokername}} (Channel-Chat): {{msg}}",
+          "textPrivate": "{{invokername}} (privat): {{msg}}",
+          "banAdded": "Ban {{banid}} wurde von {{invokername}} hinzugefügt",
+          "banRemoved": "Ban {{banid}} wurde entfernt",
+          "unknown": "{{name}}"
+        }
+      },
       "history": {
         "menu": "Verlauf ({{count}})",
         "clear": "Befehlsverlauf leeren",

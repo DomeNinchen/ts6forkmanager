@@ -2,13 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Eraser, History, SquareTerminal } from 'lucide-react';
+import { Eraser, History, Radio, SquareTerminal } from 'lucide-react';
 import {
+  CONSOLE_EVENT_CATEGORIES,
   formatQueryLine,
   getDangerReason,
+  isConsoleEventCategory,
   isSecretKey,
   parseQueryLine,
   type ConsoleErrorBody,
+  type ConsoleEvent,
+  type ConsoleEventCategory,
   type ConsoleExecuteResponse,
   type DangerReason,
 } from '@ts6/common';
@@ -26,24 +30,40 @@ import { CommandHelp } from '@/components/console/CommandHelp';
 import { ConsoleInput } from '@/components/console/ConsoleInput';
 import { ConsoleSettingsCard } from '@/components/console/ConsoleSettingsCard';
 import { DangerConfirmDialog } from '@/components/console/DangerConfirmDialog';
+import { EventEntry } from '@/components/console/EventEntry';
+import { EventsPanel } from '@/components/console/EventsPanel';
 import { HelpEntry } from '@/components/console/HelpEntry';
 import { ResultView } from '@/components/console/ResultView';
 import { useServers, useVirtualServers } from '@/hooks/use-servers';
 import { getCommand } from '@/lib/console/catalog';
 import type { Completion } from '@/lib/console/completion';
 import { useEntityList } from '@/lib/console/entities';
+import {
+  buildJsonExport,
+  buildTextExport,
+  describeFailure,
+  downloadTextFile,
+  exportFileName,
+  loadEventSelection,
+  saveEventSelection,
+} from '@/lib/console/events';
 import { clearHistory, loadHistory, rememberCommand } from '@/lib/console/history';
 import { buildMessageLine, maskedEcho, type ConsoleMode } from '@/lib/console/messages';
+import { useEventListener, type ActiveListening } from '@/lib/console/use-event-listener';
 import { useAuthStore } from '@/stores/auth.store';
 import { useServerStore } from '@/stores/server.store';
 import { cn } from '@/lib/utils';
 
 /** The transcript keeps this many entries; older ones scroll out of memory, not just out of sight. */
 const MAX_ENTRIES = 200;
+/** Live events are counted apart: on a busy server they would push every command out of the transcript within minutes. */
+const MAX_EVENT_ENTRIES = 500;
 
 interface Entry {
   id: number;
-  kind: 'command' | 'help' | 'notice';
+  kind: 'command' | 'help' | 'notice' | 'event';
+  /** event: what TeamSpeak reported. */
+  event?: ConsoleEvent;
   /** command: what was sent, secret values hidden. */
   line?: string;
   /** command: the virtual server it ran on (0 = the instance). */
@@ -62,6 +82,19 @@ interface PendingDanger {
   line: string;
   command: string;
   reason: DangerReason | null;
+}
+
+/** Drops the oldest entries over the limits; commands and events are counted apart. */
+function trimEntries(list: Entry[]): Entry[] {
+  let events = 0;
+  for (const entry of list) if (entry.kind === 'event') events++;
+  let overEvents = Math.max(0, events - MAX_EVENT_ENTRIES);
+  let overOthers = Math.max(0, list.length - events - MAX_ENTRIES);
+  if (overEvents === 0 && overOthers === 0) return list;
+  return list.filter((entry) => {
+    if (entry.kind === 'event') return overEvents-- <= 0;
+    return overOthers-- <= 0;
+  });
 }
 
 export default function Console() {
@@ -83,10 +116,15 @@ export default function Console() {
   const [pending, setPending] = useState<PendingDanger | null>(null);
   const [history, setHistory] = useState<string[]>(() => loadHistory(userId));
   const [completion, setCompletion] = useState<Completion | null>(null);
+  const [eventsOpen, setEventsOpen] = useState(false);
+  const [eventSelection, setEventSelection] = useState<ConsoleEventCategory[]>(() => loadEventSelection(userId));
+  const [eventChannel, setEventChannel] = useState('');
 
   const nextId = useRef(1);
   const inputRef = useRef<HTMLInputElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  // Whether the transcript follows what arrives. It stops doing so as soon as the admin scrolls up to read.
+  const stickToBottom = useRef(true);
 
   const serverName = servers?.find((server: { id: number; name: string }) => server.id === configId)?.name ?? '';
 
@@ -104,8 +142,12 @@ export default function Console() {
 
   useEffect(() => {
     const element = transcriptRef.current;
-    if (element) element.scrollTop = element.scrollHeight;
+    if (element && stickToBottom.current) element.scrollTop = element.scrollHeight;
   }, [entries]);
+
+  useEffect(() => {
+    saveEventSelection(userId, eventSelection);
+  }, [userId, eventSelection]);
 
   // Chat messages need a virtual server to speak on.
   useEffect(() => {
@@ -127,7 +169,9 @@ export default function Console() {
 
   const push = useCallback((entry: Omit<Entry, 'id'>): number => {
     const id = nextId.current++;
-    setEntries((current) => [...current, { ...entry, id }].slice(-MAX_ENTRIES));
+    // What the admin does themselves is always shown, wherever they had scrolled to.
+    if (entry.kind !== 'event') stickToBottom.current = true;
+    setEntries((current) => trimEntries([...current, { ...entry, id }]));
     return id;
   }, []);
 
@@ -136,6 +180,116 @@ export default function Console() {
   }, []);
 
   const notice = useCallback((text: string, tone: 'info' | 'error' = 'info') => push({ kind: 'notice', text, tone }), [push]);
+
+  // --- Live events -----------------------------------------------------------
+
+  /** The listener hands over what arrived in batches; each event becomes a line of the transcript. */
+  const showEvents = useCallback((batch: ConsoleEvent[], listening: ActiveListening) => {
+    setEntries((current) =>
+      trimEntries([...current, ...batch.map((event): Entry => ({ id: nextId.current++, kind: 'event', event, sid: listening.sid }))]),
+    );
+  }, []);
+  const listener = useEventListener({ configId, onBatch: showEvents });
+  const listening = listener.connection !== 'idle' && listener.connection !== 'closed';
+  const sshAvailable = Boolean(servers?.find((server: { id: number; hasSshCredentials?: boolean }) => server.id === configId)?.hasSshCredentials);
+
+  // A listening that ended on its own says so in the transcript as well, where the admin is looking, not only in the panel.
+  useEffect(() => {
+    if (listener.connection === 'closed' && listener.failure) notice(describeFailure(t, listener.failure), 'error');
+  }, [listener.connection, listener.failure]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Starts listening to these categories on a virtual server - or, with none left, stops. */
+  const startListening = (wanted: ConsoleEventCategory[], channel: string, onSid: number) => {
+    if (onSid === 0) {
+      notice(t('pages.console.events.needVirtualServer'), 'error');
+      return;
+    }
+    // In the order the panel lists them, whatever order they were asked for in.
+    const categories = CONSOLE_EVENT_CATEGORIES.filter((category) => wanted.includes(category));
+    if (categories.length === 0) {
+      listener.stop();
+      notice(t('pages.console.events.notice.stopped'));
+      return;
+    }
+    const textChannelId = categories.includes('textchannel') ? Number(channel) : null;
+    if (textChannelId !== null && !(Number.isInteger(textChannelId) && textChannelId > 0)) {
+      notice(t('pages.console.events.notice.pickChannel'), 'error');
+      return;
+    }
+    setEventSelection(categories);
+    if (textChannelId !== null) setEventChannel(String(textChannelId));
+    // Starting over would only close the stream and open the same one again.
+    const running = listening ? listener.active : null;
+    if (
+      running &&
+      running.sid === onSid &&
+      running.textChannelId === textChannelId &&
+      running.categories.length === categories.length &&
+      categories.every((category) => running.categories.includes(category))
+    ) {
+      notice(t('pages.console.events.notice.alreadyListening', { categories: categories.join(', ') }));
+      return;
+    }
+    listener.start({ sid: onSid, categories, textChannelId });
+    notice(t('pages.console.events.notice.started', { categories: categories.join(', '), name: virtualServerName(onSid) }));
+  };
+
+  /**
+   * `servernotifyregister` and `servernotifyunregister` are not something WebQuery
+   * has - TeamSpeak answers 5120 - so, like `use`, they are the console's own: they
+   * add to or take away from what the live listening covers.
+   */
+  const handleNotify = (parsed: ReturnType<typeof parseQueryLine>): boolean => {
+    if (!parsed.ok || (parsed.value.command !== 'servernotifyregister' && parsed.value.command !== 'servernotifyunregister')) return false;
+    const params = parsed.value.blocks[0] ?? {};
+    const event = params.event;
+    const current = listening ? listener.active : null;
+    const onSid = current?.sid ?? sid;
+    const currentCategories = current?.categories ?? [];
+    const currentChannel = current?.textChannelId != null ? String(current.textChannelId) : eventChannel;
+
+    if (parsed.value.command === 'servernotifyunregister') {
+      if (event !== undefined && !isConsoleEventCategory(event)) notice(t('pages.console.events.notice.usage'), 'error');
+      else if (!current) notice(t('pages.console.events.notice.notListening'));
+      else startListening(event === undefined ? [] : currentCategories.filter((category) => category !== event), currentChannel, onSid);
+      return true;
+    }
+
+    if (event === undefined || !isConsoleEventCategory(event)) {
+      notice(t('pages.console.events.notice.usage'), 'error');
+      return true;
+    }
+    let channel = currentChannel;
+    if (event === 'textchannel') {
+      // TeamSpeak delivers the chat of the channel the listener is in, so the console has to be told which one.
+      if (params.id === undefined && !channel) {
+        notice(t('pages.console.events.notice.channelNeedsId'), 'error');
+        return true;
+      }
+      if (params.id !== undefined) channel = params.id;
+    } else if (event === 'channel' && params.id !== undefined && params.id !== '0') {
+      notice(t('pages.console.events.notice.channelAll'));
+    }
+    startListening([...currentCategories, event], channel, onSid);
+    return true;
+  };
+
+  const saveEvents = (format: 'txt' | 'json') => {
+    const snapshot = listener.snapshot();
+    if (snapshot.events.length === 0) return;
+    const context = {
+      serverName,
+      sid: snapshot.sid,
+      virtualServerName: virtualServerName(snapshot.sid),
+      categories: snapshot.categories,
+      dropped: snapshot.dropped,
+    };
+    downloadTextFile(
+      exportFileName(context, format),
+      format === 'txt' ? buildTextExport(snapshot.events, context) : buildJsonExport(snapshot.events, context),
+      format === 'txt' ? 'text/plain' : 'application/json',
+    );
+  };
 
   const describeError = (error: unknown): string => {
     const data = (error as { response?: { data?: Partial<ConsoleErrorBody> & { error?: string } } })?.response?.data;
@@ -236,6 +390,10 @@ export default function Console() {
     }
     if (!parsed.ok) {
       push({ kind: 'command', line: text, sid, error: t(`pages.console.parse.${parsed.error.code}`, { detail: parsed.error.detail }) });
+      return;
+    }
+    if (handleNotify(parsed)) {
+      setLine('');
       return;
     }
 
@@ -344,6 +502,20 @@ export default function Console() {
                 )}
 
                 <div className="ml-auto flex items-center gap-1">
+                  <Button
+                    variant={eventsOpen ? 'secondary' : 'ghost'}
+                    size="sm"
+                    aria-expanded={eventsOpen}
+                    onClick={() => setEventsOpen((open) => !open)}
+                  >
+                    <Radio className="h-3.5 w-3.5" /> {t('pages.console.events.toggle')}
+                    {listening && (
+                      <span
+                        className={cn('ml-1 h-1.5 w-1.5 rounded-full', listener.connection === 'live' ? 'animate-pulse bg-emerald-500' : 'bg-amber-500')}
+                        aria-hidden
+                      />
+                    )}
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => setEntries([])} disabled={entries.length === 0}>
                     <Eraser className="h-3.5 w-3.5" /> {t('pages.console.clearScreen')}
                   </Button>
@@ -369,10 +541,31 @@ export default function Console() {
                 </div>
               </div>
 
+              {eventsOpen && (
+                <EventsPanel
+                  configId={configId}
+                  sid={sid}
+                  sshAvailable={sshAvailable}
+                  listener={listener}
+                  selection={eventSelection}
+                  onSelectionChange={setEventSelection}
+                  channelId={eventChannel}
+                  onChannelChange={setEventChannel}
+                  onApply={() => startListening(eventSelection, eventChannel, sid)}
+                  onStop={() => startListening([], '', listener.active?.sid ?? sid)}
+                  onSave={saveEvents}
+                />
+              )}
+
               <div
                 ref={transcriptRef}
                 className="h-[min(55vh,34rem)] overflow-y-auto rounded-md border border-border bg-background/60 p-3 font-mono text-sm"
-                aria-live="polite"
+                // A live feed read out line by line would drown everything else.
+                aria-live={listening ? 'off' : 'polite'}
+                onScroll={(event) => {
+                  const element = event.currentTarget;
+                  stickToBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+                }}
               >
                 {entries.length === 0 ? (
                   <p className="text-xs text-muted-foreground">{t('pages.console.empty')}</p>
@@ -383,7 +576,8 @@ export default function Console() {
                         {entry.kind === 'notice' && (
                           <p className={cn('text-xs', entry.tone === 'error' ? 'text-destructive' : 'text-muted-foreground')}>{entry.text}</p>
                         )}
-                        {entry.kind !== 'notice' && (
+                        {entry.kind === 'event' && entry.event && <EventEntry event={entry.event} sid={entry.sid ?? sid} configId={configId} />}
+                        {entry.kind !== 'notice' && entry.kind !== 'event' && (
                           <div className="mb-1.5 break-all">
                             <span className="text-muted-foreground">{virtualServerName(entry.sid ?? sid)}</span>{' '}
                             <span className="text-primary">{'›'}</span> <span>{entry.line}</span>
