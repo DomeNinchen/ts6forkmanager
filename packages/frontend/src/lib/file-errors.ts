@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import type { RepositoryPathProblem } from '@ts6/common';
+import type { DirectoryResult } from '@/api/files.api';
 
 /** Text for a problem the shared path checks (`@ts6/common`) found in a name. */
 export function pathProblemMessage(problem: RepositoryPathProblem, t: TFunction): string {
@@ -56,6 +57,19 @@ export function fileErrorMessage(err: any, t: TFunction, fileName?: string): str
     return `${data.error} (${data.details})`;
   }
   return message || t('pages.files.errors.generic');
+}
+
+/**
+ * Readable text for a folder the backend could not make while a folder was being
+ * uploaded (one answer of `filesApi.ensureDirectories`). TeamSpeak reports a file
+ * of the folder's name being in the way as 2050 too, which `fileErrorMessage`
+ * would call "a file with this name already exists" - true, but not what a
+ * folder's owner needs to hear.
+ */
+export function folderErrorMessage(result: DirectoryResult, t: TFunction): string {
+  if (result.code === 2050) return t('pages.files.errors.folderBlocked');
+  if (result.code === undefined) return t('pages.files.errors.folderFailed');
+  return fileErrorMessage({ response: { data: { code: result.code, error: result.error } } }, t, result.dirname);
 }
 
 /**

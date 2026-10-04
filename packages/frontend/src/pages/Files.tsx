@@ -24,8 +24,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn, formatBytes } from '@/lib/utils';
 import { fileErrorMessage, pathProblemMessage } from '@/lib/file-errors';
 import { dragCarriesFiles, readDroppedFiles } from '@/lib/dropped-files';
+import { MAX_UPLOAD_ITEMS, type PickedItem } from '@/lib/upload-tree';
 import {
-  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput, Upload, Download, Eye,
+  FolderOpen, File, Folder, ArrowLeft, FolderPlus, Trash2, Hash, HardDrive, AlertTriangle, FolderInput, Upload, Download, Eye, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,8 +44,10 @@ export default function Files() {
   const [moveTargetCid, setMoveTargetCid] = useState('');
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
-  // The upload window: closed (null), open and empty, or open with the files dropped on the list
-  const [uploadFiles, setUploadFiles] = useState<File[] | null>(null);
+  // The upload window: closed (null), open and empty, or open with the files and folders dropped on the list
+  const [uploadItems, setUploadItems] = useState<PickedItem[] | null>(null);
+  // A dropped folder is read to the bottom before the window opens, which can take a moment
+  const [readingDrop, setReadingDrop] = useState(false);
   // The picture open in the preview window, by name (null: closed)
   const [previewName, setPreviewName] = useState<string | null>(null);
 
@@ -135,7 +138,10 @@ export default function Files() {
   });
 
   // A download is a link the browser opens itself, so the file streams straight
-  // to disk and the browser's own download list shows the progress
+  // to disk and the browser's own download list shows the progress. A folder
+  // comes as one ZIP, packed on the way; it is the link that is made first (the
+  // backend looks through the folder to say how large the ZIP will be, which can
+  // take a moment for a big one).
   const downloadMutation = useMutation({
     mutationFn: (entry: ServerFileEntry) =>
       filesApi.createDownloadLink(c!, s!, selectedCid!, joinRepositoryPath(currentPath, entry.name)),
@@ -146,10 +152,23 @@ export default function Files() {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      toast.success(t('pages.files.downloadStarted', { name: link.name }));
+      toast.success(
+        link.files
+          ? t('pages.files.downloadFolderStarted', { name: link.name, count: link.files, size: formatBytes(link.size) })
+          : t('pages.files.downloadStarted', { name: link.name }),
+      );
     },
-    onError: (err, entry) => toast.error(fileErrorMessage(err, t, entry.name)),
+    onError: (err: any, entry) => {
+      // The backend refuses a folder that cannot be a ZIP (see ArchiveLimitError): too many files or folders,
+      // nested too deeply, or over 4 GiB. fileErrorMessage would call any 413 "the file is larger than the upload limit".
+      if (entry.isDirectory && err?.response?.status === 413 && typeof err.response.data === 'object') {
+        toast.error(t('pages.files.errors.folderTooLarge'));
+        return;
+      }
+      toast.error(fileErrorMessage(err, t, entry.name));
+    },
   });
+  const downloading = (entry: ServerFileEntry) => downloadMutation.isPending && downloadMutation.variables?.name === entry.name;
 
   const uploadTarget = useMemo(
     () => (c && s && selectedCid ? { configId: c, sid: s, cid: selectedCid, directory: currentPath } : null),
@@ -158,9 +177,11 @@ export default function Files() {
   const selectedChannelName = channels.find((ch) => ch.cid === selectedCid)?.name ?? '';
 
   // The listing is refreshed whenever another upload into it completes
+  // (a file of an uploaded folder is also "here" for the folder the upload started in, where the new folder shows up)
   const uploadsDoneHere = useTransfers(
     (state) => state.uploads.filter((item) => (
-      item.status === 'done' && item.configId === c && item.sid === s && item.cid === selectedCid && item.directory === currentPath
+      item.status === 'done' && item.configId === c && item.sid === s && item.cid === selectedCid
+      && (item.directory === currentPath || item.root === currentPath)
     )).length,
   );
   useEffect(() => {
@@ -205,10 +226,15 @@ export default function Files() {
     setDragging(false);
     if (!selectedCid) return;
 
-    const { files: dropped, folders } = readDroppedFiles(event);
-    if (folders > 0) toast.info(t('pages.files.foldersNotSupported'));
-    // What was dropped goes into the upload window, where it can be looked over before it is sent
-    if (dropped.length > 0) setUploadFiles(dropped);
+    setReadingDrop(true);
+    readDroppedFiles(event)
+      .then(({ items, tooMany }) => {
+        if (tooMany) toast.error(t('pages.files.uploadDialog.tooMany', { max: MAX_UPLOAD_ITEMS }));
+        // What was dropped goes into the upload window, where it can be looked over before it is sent
+        else if (items.length > 0) setUploadItems(items);
+      })
+      .catch(() => toast.error(t('pages.files.uploadDialog.readFailed')))
+      .finally(() => setReadingDrop(false));
   };
 
   const formatDate = (ms: number) => {
@@ -233,7 +259,7 @@ export default function Files() {
             <Button size="sm" variant="outline" onClick={() => setShowMkdir(true)}>
               <FolderPlus className="h-4 w-4 mr-1" /> {t('pages.files.newFolder')}
             </Button>
-            <Button size="sm" onClick={() => setUploadFiles([])}>
+            <Button size="sm" onClick={() => setUploadItems([])}>
               <Upload className="h-4 w-4 mr-1" /> {t('pages.files.uploadFiles')}
             </Button>
           </div>
@@ -297,6 +323,11 @@ export default function Files() {
           {dragging && (
             <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-primary/10 border-2 border-dashed border-primary text-sm font-medium text-primary pointer-events-none">
               <Upload className="h-5 w-5" /> {t('pages.files.dropToUpload')}
+            </div>
+          )}
+          {readingDrop && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-background/70 text-sm font-medium text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> {t('pages.files.uploadDialog.reading')}
             </div>
           )}
           <CardHeader className="pb-2">
@@ -403,15 +434,17 @@ export default function Files() {
                               <Eye className="h-3.5 w-3.5" />
                             </button>
                           )}
-                          {!file.isDirectory && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); downloadMutation.mutate(file); }}
-                              className="p-1 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-                              title={t('pages.files.download')}
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                            </button>
-                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); downloadMutation.mutate(file); }}
+                            disabled={downloadMutation.isPending}
+                            className={cn(
+                              'p-1 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-all',
+                              downloading(file) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                            )}
+                            title={file.isDirectory ? t('pages.files.downloadFolder') : t('pages.files.download')}
+                          >
+                            {downloading(file) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                          </button>
                           {!file.isDirectory && (
                             <button
                               onClick={(e) => { e.stopPropagation(); setMoveTarget(file); setMoveTargetCid(''); }}
@@ -463,12 +496,12 @@ export default function Files() {
       )}
       {uploadTarget && (
         <UploadDialog
-          open={uploadFiles !== null}
-          initialFiles={uploadFiles ?? []}
+          open={uploadItems !== null}
+          initialItems={uploadItems ?? []}
           target={uploadTarget}
           channelName={selectedChannelName}
           maxUploadBytes={limits?.maxUploadBytes}
-          onClose={() => setUploadFiles(null)}
+          onClose={() => setUploadItems(null)}
         />
       )}
 
