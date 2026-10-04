@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { cn } from '@/lib/utils';
 
-// The server group template types TeamSpeak's servergroupauto* commands accept.
+// The i_group_auto_update_type values TeamSpeak's servergroupauto* commands accept.
 const SG_TYPES = [10, 15, 20, 25, 30, 35, 40, 45, 50] as const;
 const PREVIEW_LIMIT = 8;
 
