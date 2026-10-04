@@ -24,6 +24,35 @@ RUN printf 'server {\n\
 \n\
     client_max_body_size 150m;\n\
 \n\
+    # File body of a Files page upload. The backend decides how large it may be\n\
+    # (FILES_MAX_UPLOAD_MB, announced up front and checked against the real body),\n\
+    # so nginx neither caps it nor collects it on disk first.\n\
+    location ~ ^/api/servers/[0-9]+/vs/[0-9]+/files/[0-9]+/uploads/[A-Za-z0-9_-]+$ {\n\
+        client_max_body_size 0;\n\
+        proxy_request_buffering off;\n\
+        proxy_read_timeout 3600s;\n\
+        proxy_send_timeout 3600s;\n\
+        proxy_pass http://backend:3001;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
+    # One-time file download links: stream straight through instead of collecting\n\
+    # the whole file in nginx first\n\
+    location /api/file-downloads/ {\n\
+        proxy_buffering off;\n\
+        proxy_read_timeout 3600s;\n\
+        proxy_pass http://backend:3001;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
     location /api {\n\
         proxy_pass http://backend:3001;\n\
         proxy_http_version 1.1;\n\
