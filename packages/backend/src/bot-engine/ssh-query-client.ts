@@ -521,7 +521,11 @@ export class SshQueryClient extends EventEmitter {
         await this.connect();
       } catch (err: any) {
         console.error(`[SshQueryClient] Reconnect failed: ${err.message}`);
-        // connect() failure will trigger another reconnect via the error/close handlers
+        // An attempt that is refused or reset (the server is still starting after a restart) never
+        // reaches the 'close' handlers, which only act for a connection that had been up - so
+        // nothing else would schedule the next attempt, and the client stayed dead for good.
+        // scheduleReconnect() already declines when the client was destroyed or its login refused.
+        this.scheduleReconnect();
       }
     }, delay);
   }

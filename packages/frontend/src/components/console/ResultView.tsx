@@ -19,14 +19,14 @@ interface ResultViewProps {
 /** More rows than this in one table are folded away behind a button: a large listing would otherwise freeze the page. */
 const ROW_LIMIT = 300;
 
-interface SelectedCell {
+export interface SelectedCell {
   field: string;
   value: string;
   record: Record<string, string>;
 }
 
 /** The browser only offers the clipboard on https and on localhost; elsewhere `navigator.clipboard` does not exist. */
-function copy(text: string) {
+export function copy(text: string) {
   const failed = () => toast.error(i18n.t('pages.console.result.copyFailed'));
   if (!navigator.clipboard) return failed();
   navigator.clipboard.writeText(text).then(() => toast.success(i18n.t('common.copied')), failed);
@@ -80,7 +80,7 @@ function Meaning({ meaning, configId, sid }: { meaning: ValueMeaning; configId: 
   }
 }
 
-function ExplainPanel({ cell, configId, sid, onClose }: { cell: SelectedCell; configId: number | null; sid: number; onClose: () => void }) {
+export function ExplainPanel({ cell, configId, sid, onClose }: { cell: SelectedCell; configId: number | null; sid: number; onClose: () => void }) {
   const { t } = useTranslation();
   const meaning = explainValue(cell.field, cell.value, cell.record);
   return (
