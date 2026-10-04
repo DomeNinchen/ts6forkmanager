@@ -1,10 +1,18 @@
 import { Router, Request, Response } from 'express';
-import type { ConsoleAuditStatus, ConsoleErrorBody } from '@ts6/common';
+import {
+  CONSOLE_EVENT_CATEGORIES,
+  isConsoleEventCategory,
+  type ConsoleAuditStatus,
+  type ConsoleErrorBody,
+  type ConsoleEventCategory,
+} from '@ts6/common';
 import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { listAudit } from '../console/audit.js';
 import { executeConsoleCommand } from '../console/execute.js';
+import type { EventSessionManager } from '../console/event-sessions.js';
+import { openEventStream } from '../console/event-stream.js';
 import { getConsoleSettings } from '../utils/console-settings.js';
 
 /**
@@ -66,6 +74,78 @@ consoleRoutes.post('/execute', async (req: Request, res: Response, next) => {
 
     if (!outcome.ok) return sendError(res, outcome.httpStatus, outcome.body);
     res.json(outcome.response);
+  } catch (err) { next(err); }
+});
+
+type EventRequest =
+  | { ok: true; sid: number; categories: ConsoleEventCategory[]; textChannelId: number | null }
+  | { ok: false; error: string };
+
+function parseEventRequest(query: Request['query']): EventRequest {
+  const sid = Number(query.sid);
+  if (typeof query.sid !== 'string' || !Number.isInteger(sid) || sid < 1) {
+    return { ok: false, error: 'sid must be the number of a virtual server, 1 or higher' };
+  }
+
+  const asked = String(query.categories ?? '')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+  if (asked.length === 0 || !asked.every(isConsoleEventCategory)) {
+    return { ok: false, error: `categories must be a list of: ${CONSOLE_EVENT_CATEGORIES.join(', ')}` };
+  }
+  // In the order the console lists them, each once.
+  const categories = CONSOLE_EVENT_CATEGORIES.filter((category) => asked.includes(category));
+
+  let textChannelId: number | null = null;
+  if (categories.includes('textchannel')) {
+    textChannelId = Number(query.channel);
+    if (typeof query.channel !== 'string' || !Number.isInteger(textChannelId) || textChannelId < 1) {
+      return { ok: false, error: 'channel must be the id of the channel whose chat is to be heard' };
+    }
+  }
+  return { ok: true, sid, categories, textChannelId };
+}
+
+// Live events of one virtual server as a server-sent-events stream; see console/event-stream.ts.
+// A GET, but not a cacheable one: it opens a listener and holds it until the browser lets go.
+consoleRoutes.get('/events', async (req: Request, res: Response, next) => {
+  try {
+    const configId = parseInt(String(req.params.configId));
+    const request = parseEventRequest(req.query);
+    if (!request.ok) return sendError(res, 400, { code: 'INVALID_REQUEST', error: request.error });
+
+    const prisma = req.app.locals.prisma;
+    const manager: EventSessionManager | undefined = req.app.locals.consoleEvents;
+    if (!manager) throw new AppError(503, 'The event listener is not available');
+
+    const server = await prisma.tsServerConfig.findUnique({
+      where: { id: configId },
+      select: { name: true, sshUsername: true, sshPassword: true, sshPort: true },
+    });
+    if (!server) throw new AppError(404, 'Server not found');
+    // WebQuery can not register for events (TeamSpeak answers 5120), so this is SSH or nothing.
+    if (!server.sshUsername || !server.sshPassword || !server.sshPort) {
+      return sendError(res, 409, {
+        code: 'SSH_NOT_CONFIGURED',
+        error: 'Live events need SSH credentials for this server connection, because WebQuery can not register for events',
+      });
+    }
+
+    const outcome = await openEventStream({
+      req,
+      res,
+      prisma,
+      manager,
+      user: { id: req.user!.id, username: req.user!.username },
+      configId,
+      serverName: server.name,
+      sid: request.sid,
+      categories: request.categories,
+      textChannelId: request.textChannelId,
+      settings: await getConsoleSettings(prisma),
+    });
+    if (!outcome.ok) sendError(res, outcome.httpStatus, outcome.body);
   } catch (err) { next(err); }
 });
 

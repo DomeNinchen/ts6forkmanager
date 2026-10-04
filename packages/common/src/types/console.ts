@@ -43,7 +43,12 @@ export type ConsoleErrorCode =
   | 'PARSE_ERROR'
   | 'CONFIRMATION_REQUIRED'
   | 'RATE_LIMITED'
-  | 'NO_CONNECTION';
+  | 'NO_CONNECTION'
+  // The live event stream
+  | 'SSH_NOT_CONFIGURED'
+  | 'TEXT_CHANNEL_IN_USE'
+  | 'TOO_MANY_LISTENERS'
+  | 'TOO_MANY_STREAMS';
 
 /** Body of every 4xx answer the console endpoints give for something the admin can act on. */
 export interface ConsoleErrorBody {
@@ -55,6 +60,8 @@ export interface ConsoleErrorBody {
   reason?: DangerReason;
   /** RATE_LIMITED: how long until the console may send again. */
   retryAfterMs?: number;
+  /** TEXT_CHANNEL_IN_USE: the channel whose chat another admin is already listening to. */
+  channelId?: number;
 }
 
 /** 'pending' stays if the backend went down before TeamSpeak's answer came back. */
@@ -100,3 +107,68 @@ export const CONSOLE_SETTINGS_DEFAULTS: ConsoleSettings = {
 
 /** What the retention setting may be, in days. */
 export const CONSOLE_AUDIT_RETENTION_BOUNDS = { min: 1, max: 3650 } as const;
+
+// --- Live events ---------------------------------------------------------
+//
+// An admin can listen to what happens on a virtual server (`servernotifyregister`).
+// WebQuery can not do that, so the backend keeps one SSH ServerQuery session per
+// server connection and virtual server, shared by every admin listening there,
+// and relays what arrives over a server-sent-events stream. This is what the
+// stream says.
+
+/** The categories `servernotifyregister` knows, in the order the console lists them. */
+export const CONSOLE_EVENT_CATEGORIES = ['server', 'channel', 'textserver', 'textchannel', 'textprivate', 'bans'] as const;
+export type ConsoleEventCategory = (typeof CONSOLE_EVENT_CATEGORIES)[number];
+
+export function isConsoleEventCategory(value: string): value is ConsoleEventCategory {
+  return (CONSOLE_EVENT_CATEGORIES as readonly string[]).includes(value);
+}
+
+/** Whether the listener behind a stream is up. A listener that is gone for good ends the stream instead (see ConsoleEventEnd). */
+export type ConsoleEventConnectionState = 'connecting' | 'live' | 'reconnecting';
+
+/** A category TeamSpeak would not register, typically for a missing permission. */
+export interface ConsoleEventRefusal {
+  category: ConsoleEventCategory;
+  code: number;
+  message: string;
+}
+
+/** The `status` message: sent when a stream opens and whenever something about its listener changes. */
+export interface ConsoleEventStatus {
+  state: ConsoleEventConnectionState;
+  /** The categories this stream asked for that TeamSpeak has registered. */
+  registered: ConsoleEventCategory[];
+  refused: ConsoleEventRefusal[];
+  /** The channel the listener sits in - TeamSpeak delivers the chat of the channel the listener is in, which is what `textchannel` hears. */
+  textChannelId: number | null;
+}
+
+/** The `notify` message: one `notify...` line from TeamSpeak. */
+export interface ConsoleEvent {
+  /** When the backend received it, ISO 8601. */
+  at: string;
+  /** `notifycliententerview`, `notifytextmessage`, ... */
+  name: string;
+  /** The registered categories that deliver it; empty for an event this app does not know. */
+  categories: ConsoleEventCategory[];
+  /** The fields of the line, unescaped. */
+  data: Record<string, string>;
+}
+
+/** Why the backend ended a stream; a stream that ends on its own is a lost connection, not one of these. */
+export type ConsoleEventEndReason =
+  | 'UNAUTHORIZED' // the account was disabled or is no longer an admin
+  | 'CONNECTION_CHANGED' // the server connection was edited or deleted
+  | 'SERVER_SHUTDOWN'
+  | 'SLOW_CONSUMER' // the browser did not keep up reading
+  | 'SESSION_FAILED'; // the listener could not be set up, or was lost for good - see `failure`
+
+export type ConsoleEventFailure = 'SSH_CONNECT_FAILED' | 'SSH_AUTH_FAILED' | 'VIRTUAL_SERVER_UNAVAILABLE';
+
+/** The `end` message: the last thing a stream says. */
+export interface ConsoleEventEnd {
+  reason: ConsoleEventEndReason;
+  failure?: ConsoleEventFailure;
+  message?: string;
+}

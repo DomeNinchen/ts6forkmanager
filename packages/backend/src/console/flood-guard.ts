@@ -18,6 +18,8 @@ const FALLBACK_CACHE_MS = 30_000;
  * flows, another admin's page) - all of it counts against the same limit.
  */
 const BUDGET_SHARE = 0.5;
+/** Even against a generous limit, a session does not send faster than this. */
+export const MIN_SPACING_MS = 150;
 
 interface FloodLimit {
   commands: number;
@@ -59,6 +61,19 @@ export class ConsoleFloodGuard {
     for (let i = 0; i < units; i++) recent.push(now);
     this.spent.set(configId, recent);
     return { ok: true };
+  }
+
+  /**
+   * How far apart the commands of one long-lived query session of the console
+   * (the event listener) have to be, to stay within the console's share of the
+   * limit. TeamSpeak counts per query client, but the ban for exceeding it is on
+   * the address - which is the whole app's - so the listener paces itself like
+   * everything else the console sends.
+   */
+  async minSpacingMs(pool: ConnectionPool, configId: number): Promise<number> {
+    const limit = await this.getLimit(pool, configId);
+    const budget = Math.max(1, Math.floor(limit.commands * BUDGET_SHARE));
+    return Math.max(MIN_SPACING_MS, Math.ceil((limit.seconds * 1000) / budget));
   }
 
   /** Forget what was read about a server, e.g. after its connection was edited. */

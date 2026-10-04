@@ -7,6 +7,7 @@ import { ConnectionPool } from './ts-client/connection-pool.js';
 import { BandwidthSampler } from './ts-client/bandwidth-sampler.js';
 import { UserHistorySampler } from './ts-client/user-history-sampler.js';
 import { BotEngine } from './bot-engine/engine.js';
+import { EventSessionManager } from './console/event-sessions.js';
 import { VoiceBotManager } from './voice/voice-bot-manager.js';
 import { MusicCommandHandler } from './voice/music-command-handler.js';
 import { config } from './config.js';
@@ -109,6 +110,9 @@ async function main() {
   // reading of the first pass is missed.
   bandwidthSampler.setMetricSink(userHistorySampler);
   app.locals.wss = wss;
+  // The query console's live events: one shared SSH listener per virtual server, opened when an admin starts listening.
+  const consoleEvents = new EventSessionManager(prisma, connectionPool);
+  app.locals.consoleEvents = consoleEvents;
 
   // Initialize Bot Engine
   const botEngine = new BotEngine(prisma, connectionPool, wss, app);
@@ -148,6 +152,8 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     console.log('\n[TS6 WebUI] Shutting down...');
+    // Ends the streams and says `quit` to TeamSpeak for each listener, instead of dropping the connections.
+    await consoleEvents.destroy();
     await voiceBotManager.stopAll();
     await botEngine.destroy();
     (app.locals.bandwidthSampler as BandwidthSampler).destroy();

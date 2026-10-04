@@ -38,6 +38,15 @@ export async function startAudit(prisma: PrismaClient, entry: AuditStart): Promi
   }
 }
 
+/** Writes a row for something that is already over, in one go. A row that can not be written is only logged: there is nothing left to hold back. */
+export async function recordAudit(prisma: PrismaClient, entry: AuditStart & AuditFinish): Promise<void> {
+  try {
+    await prisma.queryConsoleLog.create({ data: entry, select: { id: true } });
+  } catch (err: any) {
+    console.error(`[Console] Could not write the audit trail: ${err.message}`);
+  }
+}
+
 export async function finishAudit(prisma: PrismaClient, id: number, outcome: AuditFinish): Promise<void> {
   try {
     await prisma.queryConsoleLog.update({ where: { id }, data: outcome });
