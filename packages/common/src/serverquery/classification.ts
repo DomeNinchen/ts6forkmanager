@@ -105,6 +105,8 @@ const READ_ONLY_COMMANDS: ReadonlySet<string> = new Set([
   'permoverview',
   'privilegekeylist',
   'queryloginlist',
+  'servernotifyregister', // only changes what this one query session is told, never the server
+  'servernotifyunregister',
   'serverrequestconnectioninfo',
   'serveridgetbyport',
   'serverinfo',

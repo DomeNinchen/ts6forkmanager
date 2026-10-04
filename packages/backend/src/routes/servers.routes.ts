@@ -3,6 +3,7 @@ import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
+import { consoleFloodGuard } from '../console/flood-guard.js';
 import { encrypt, decrypt } from '../utils/crypto.js';
 
 export const serverRoutes: Router = Router();
@@ -141,6 +142,12 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const sshFieldsChanged = ['host', 'sshPort', 'sshUsername', 'sshPassword'].some(f => data[f] !== undefined);
     if (sshFieldsChanged) {
       await req.app.locals.botEngine?.refreshServerConnections(id);
+      // The query console's live-event listeners are SSH sessions of their own and need the same.
+      await req.app.locals.consoleEvents?.closeConfig(id);
+    }
+    // What the console's flood guard read from the old connection is not known to hold for the new one.
+    if (['host', 'webqueryPort', 'apiKey', 'useHttps'].some(f => data[f] !== undefined)) {
+      consoleFloodGuard.forget(id);
     }
 
     res.json({ id: server.id, name: server.name });
@@ -156,6 +163,8 @@ serverRoutes.delete('/:configId', requireRole('admin'), async (req: Request, res
 
     const pool: ConnectionPool = req.app.locals.connectionPool;
     pool.removeClient(id);
+    await req.app.locals.consoleEvents?.closeConfig(id);
+    consoleFloodGuard.forget(id);
 
     res.status(204).send();
   } catch (err) { next(err); }

@@ -11,6 +11,7 @@ export * from './utils/ts-escape.js';
 export * from './utils/ban-rules.js';
 export * from './serverquery/syntax.js';
 export * from './serverquery/classification.js';
+export * from './serverquery/events.js';
 export * from './utils/icon-id.js';
 export * from './utils/version-compare.js';
 export * from './widget-themes.js';
