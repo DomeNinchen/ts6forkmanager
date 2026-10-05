@@ -144,7 +144,10 @@ export class VoiceBotManager extends EventEmitter {
     });
 
     bot.on('disconnected', () => {
-      if (!bot.manuallyStopped) {
+      // A fatal error (banned, ...) tears the connection down half a second
+      // after it is reported - that disconnect is the end of the story, not a
+      // dropped connection to retry (see the 'fatalError' handler below).
+      if (!bot.manuallyStopped && !bot.hasFatalError) {
         console.log(`[VoiceBotManager] Bot ${config.id}: unexpected disconnect, scheduling reconnect`);
         this.scheduleReconnect(config.id);
       }
@@ -352,6 +355,13 @@ export class VoiceBotManager extends EventEmitter {
   private scheduleReconnect(botId: number): void {
     const bot = this.bots.get(botId);
     if (!bot) return;
+
+    // Also covers the failure path of attemptReconnect: a refused connection
+    // (banned, wrong password, server full) must not queue another attempt.
+    if (bot.hasFatalError) {
+      this.clearReconnect(botId);
+      return;
+    }
 
     let state = this.reconnectState.get(botId);
     if (!state) {

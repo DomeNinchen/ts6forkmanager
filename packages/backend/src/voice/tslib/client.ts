@@ -238,23 +238,35 @@ export class Ts3Client extends EventEmitter {
         const init0 = this.buildInit0();
         this.sendInitPacket(init0);
 
+        // However this attempt ends, the listener for the other outcome has to
+        // go with it - a failed attempt used to leave its "connected" listener
+        // behind, so every automatic retry added one (until Node warned about
+        // a possible EventEmitter memory leak).
+        const settle = () => {
+          clearTimeout(timeout);
+          this.off("connected", onConnected);
+          this.off("error", onError);
+        };
+        const onConnected = () => {
+          settle();
+          resolve();
+        };
+        const onError = (err: Error) => {
+          settle();
+          reject(err);
+        };
+
         // Set up connect timeout
         const timeout = setTimeout(() => {
           if (this.state !== "connected") {
+            settle();
             reject(new Error("Connection timeout"));
             this.disconnect();
           }
         }, 15000);
 
-        this.once("connected", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-
-        this.once("error", (err) => {
-          clearTimeout(timeout);
-          reject(err);
-        });
+        this.once("connected", onConnected);
+        this.once("error", onError);
       });
     });
   }
