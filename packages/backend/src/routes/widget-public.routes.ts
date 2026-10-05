@@ -95,6 +95,15 @@ widgetPublicRoutes.get('/:token/data', async (req: Request, res: Response, next)
   } catch (err) { next(err); }
 });
 
+// helmet() sends Cross-Origin-Resource-Policy: same-origin on every response, which makes browsers refuse these two
+// images when another site embeds them with <img> (forum signatures, BBCode [img], external websites) - the whole point
+// of the routes. The content is public anyway (/data is readable from any origin) and the token in the URL stays the
+// only gate, so only these two routes are opened up; every other route keeps same-origin.
+widgetPublicRoutes.get(['/:token/image.svg', '/:token/image.png'], (_req: Request, res: Response, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
+
 // GET /:token/image.svg — SVG image
 widgetPublicRoutes.get('/:token/image.svg', async (req: Request, res: Response, next) => {
   try {
