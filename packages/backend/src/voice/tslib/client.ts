@@ -238,23 +238,35 @@ export class Ts3Client extends EventEmitter {
         const init0 = this.buildInit0();
         this.sendInitPacket(init0);
 
+        // However this attempt ends, the listener for the other outcome has to
+        // go with it - a failed attempt used to leave its "connected" listener
+        // behind, so every automatic retry added one (until Node warned about
+        // a possible EventEmitter memory leak).
+        const settle = () => {
+          clearTimeout(timeout);
+          this.off("connected", onConnected);
+          this.off("error", onError);
+        };
+        const onConnected = () => {
+          settle();
+          resolve();
+        };
+        const onError = (err: Error) => {
+          settle();
+          reject(err);
+        };
+
         // Set up connect timeout
         const timeout = setTimeout(() => {
           if (this.state !== "connected") {
+            settle();
             reject(new Error("Connection timeout"));
             this.disconnect();
           }
         }, 15000);
 
-        this.once("connected", () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-
-        this.once("error", (err) => {
-          clearTimeout(timeout);
-          reject(err);
-        });
+        this.once("connected", onConnected);
+        this.once("error", onError);
       });
     });
   }
@@ -805,7 +817,9 @@ export class Ts3Client extends EventEmitter {
         const errId = parseInt(parsed.params.id || "0");
         if (errId === 2568 || errId === 3329 || errId === 1796) {
           const errMsg = parsed.params.msg || "unknown error";
-          this.emit("error", new Error(`TS3 error ${errId}: ${errMsg}`));
+          // 3329 "banned" covers real bans and the flood protection; extra_msg is what tells them apart
+          const extra = parsed.params.extra_msg;
+          this.emit("error", new Error(`TS3 error ${errId}: ${errMsg}${extra ? ` (${extra.replace(/\s+/g, " ")})` : ""}`));
           this.disconnect();
         }
         break;

@@ -11,6 +11,15 @@ const PROGRESS_INTERVAL_MS = 1000;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const MAX_RECONNECT_DELAY_MS = 30000;
 const RECONNECT_GRACE_PERIOD_MS = 5000;
+// The server's flood protection (reported as a "ban") lifts by itself, but every
+// further attempt - refused ones too - counts against its limit: retrying every
+// 6 s never got through in 5 minutes, retrying every 30 s did after about 90 s.
+// So it gets a much slower back-off than an ordinary failed connect, and the
+// bots of one server take turns (several refused bots retrying at the same
+// moment kept each other blocked: 5 of 8 bots were still out after 7 minutes).
+const FLOOD_RECONNECT_BASE_MS = 30000;
+const FLOOD_RECONNECT_MAX_MS = 300000;
+const FLOOD_ATTEMPT_SPACING_MS = 30000;
 
 interface ReconnectState {
   attempts: number;
@@ -21,6 +30,8 @@ export class VoiceBotManager extends EventEmitter {
   private bots = new Map<number, VoiceBot>();
   private progressTimers = new Map<number, ReturnType<typeof setInterval>>();
   private reconnectState = new Map<number, ReconnectState>();
+  // Per server (host:port), the earliest time the next flood-refused bot may try again
+  private floodNextSlot = new Map<string, number>();
   private musicCmdHandler: MusicCommandHandler | null = null;
 
   constructor(
@@ -144,7 +155,10 @@ export class VoiceBotManager extends EventEmitter {
     });
 
     bot.on('disconnected', () => {
-      if (!bot.manuallyStopped) {
+      // A fatal error (banned, ...) tears the connection down half a second
+      // after it is reported - that disconnect is the end of the story, not a
+      // dropped connection to retry (see the 'fatalError' handler below).
+      if (!bot.manuallyStopped && !bot.hasFatalError) {
         console.log(`[VoiceBotManager] Bot ${config.id}: unexpected disconnect, scheduling reconnect`);
         this.scheduleReconnect(config.id);
       }
@@ -353,6 +367,13 @@ export class VoiceBotManager extends EventEmitter {
     const bot = this.bots.get(botId);
     if (!bot) return;
 
+    // Also covers the failure path of attemptReconnect: a refused connection
+    // (banned, wrong password, server full) must not queue another attempt.
+    if (bot.hasFatalError) {
+      this.clearReconnect(botId);
+      return;
+    }
+
     let state = this.reconnectState.get(botId);
     if (!state) {
       state = { attempts: 0, timer: null };
@@ -370,9 +391,20 @@ export class VoiceBotManager extends EventEmitter {
       return;
     }
 
-    const delay = Math.min(Math.pow(2, state.attempts) * 1000, MAX_RECONNECT_DELAY_MS);
+    const flood = bot.isFloodBlocked;
+    let delay: number;
+    if (flood) {
+      delay = Math.min(Math.pow(2, state.attempts) * FLOOD_RECONNECT_BASE_MS, FLOOD_RECONNECT_MAX_MS);
+      const { serverHost, serverPort } = bot.currentConfig;
+      const server = `${serverHost}:${serverPort}`;
+      const turn = Math.max(Date.now() + delay, this.floodNextSlot.get(server) ?? 0);
+      this.floodNextSlot.set(server, turn + FLOOD_ATTEMPT_SPACING_MS);
+      delay = turn - Date.now();
+    } else {
+      delay = Math.min(Math.pow(2, state.attempts) * 1000, MAX_RECONNECT_DELAY_MS);
+    }
     state.attempts++;
-    console.log(`[VoiceBotManager] Bot ${botId}: reconnect attempt ${state.attempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay / 1000}s`);
+    console.log(`[VoiceBotManager] Bot ${botId}: reconnect attempt ${state.attempts}/${MAX_RECONNECT_ATTEMPTS} in ${Math.round(delay / 100) / 10}s${flood ? ' (the server\'s flood protection refused the connection, backing off slowly)' : ''}`);
 
     state.timer = setTimeout(() => this.attemptReconnect(botId), delay);
   }
