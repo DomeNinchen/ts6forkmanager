@@ -817,7 +817,9 @@ export class Ts3Client extends EventEmitter {
         const errId = parseInt(parsed.params.id || "0");
         if (errId === 2568 || errId === 3329 || errId === 1796) {
           const errMsg = parsed.params.msg || "unknown error";
-          this.emit("error", new Error(`TS3 error ${errId}: ${errMsg}`));
+          // 3329 "banned" covers real bans and the flood protection; extra_msg is what tells them apart
+          const extra = parsed.params.extra_msg;
+          this.emit("error", new Error(`TS3 error ${errId}: ${errMsg}${extra ? ` (${extra.replace(/\s+/g, " ")})` : ""}`));
           this.disconnect();
         }
         break;

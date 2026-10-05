@@ -96,6 +96,10 @@ export class VoiceBot extends EventEmitter {
   // The server refused the connection for a reason retrying cannot fix
   // (banned, wrong server password, server full); cleared by the next start().
   private _fatalError: boolean = false;
+  // The server's flood protection refused it (reported as "banned", but no ban
+  // rule exists and it lifts by itself): worth retrying, only slowly. Cleared
+  // by the next start().
+  private _floodBlocked: boolean = false;
 
   // Video streaming state
   private signaling: StreamSignaling | null = null;
@@ -152,7 +156,16 @@ export class VoiceBot extends EventEmitter {
     this.client.on('ts3error', (params: Record<string, string>) => {
       const id = parseInt(params.id || '0');
       const msg = params.msg || 'unknown error';
-      this._lastError = `TS3 error ${id}: ${msg}`;
+      // extra_msg tells what "banned" means: 'flood prevention, please try
+      // again later', or a real ban's reason and remaining time
+      const extra = params.extra_msg;
+      this._lastError = `TS3 error ${id}: ${msg}${extra ? ` (${extra.replace(/\s+/g, ' ')})` : ''}`;
+      // 3329 is also what the flood protection answers a burst of connections
+      // from one IP with (several bots starting together); that is no ban.
+      if (id === 3329 && extra && /flood/i.test(extra)) {
+        this._floodBlocked = true;
+        return;
+      }
       // Fatal errors that should not trigger reconnect
       // 2568 = invalid password, 3329 = banned, 1796 = max clients reached
       if (id === 2568 || id === 3329 || id === 1796) {
@@ -194,6 +207,10 @@ export class VoiceBot extends EventEmitter {
 
   get hasFatalError(): boolean {
     return this._fatalError;
+  }
+
+  get isFloodBlocked(): boolean {
+    return this._floodBlocked;
   }
 
   get playbackProgress(): PlaybackProgress | null {
@@ -489,6 +506,7 @@ export class VoiceBot extends EventEmitter {
 
     this._manuallyStopped = false;
     this._fatalError = false;
+    this._floodBlocked = false;
     this._status = 'starting';
     this.emit('statusChange', this._status);
 
