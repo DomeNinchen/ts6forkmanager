@@ -2,6 +2,28 @@
 
 export type VoiceBotStatus = 'stopped' | 'starting' | 'connected' | 'playing' | 'paused' | 'error';
 
+/** Why the TeamSpeak server refused a bot's connection, as far as it said so.
+ * 'flood' is the server's flood protection (reported as a ban, but no ban
+ * exists and it lifts by itself); 'banned' is a real ban. */
+export type BotFailureKind = 'flood' | 'banned' | 'password' | 'serverFull' | 'other';
+
+/** What a music bot that is not connected is doing about it. Absent (null)
+ * when there is nothing to report: connected, or stopped on purpose. */
+export interface BotConnectionInfo {
+  /** 'connecting': an attempt is running right now. 'retrying': waiting for
+   * the next automatic attempt. 'failed': no further automatic attempts -
+   * the refusal is final or the retries ran out; Start tries again. */
+  phase: 'connecting' | 'retrying' | 'failed';
+  /** Number of the automatic retry this refers to; 0 for the first attempt (Start, or boot). */
+  attempt: number;
+  maxAttempts: number;
+  /** ISO time the next automatic attempt starts; only while 'retrying'. */
+  nextAttemptAt: string | null;
+  kind: BotFailureKind;
+  /** The server's (or the network's) own words for the last failure; '' before any. */
+  reason: string;
+}
+
 /** What a bot starts playing on its own right after it connects (manual
  * Start, autoStart at boot, or an automatic reconnect) - "none" leaves it
  * idle, same as before this existed. */
@@ -25,6 +47,7 @@ export interface MusicBotSummary {
   autoplayRadioStationId: number | null;
   hasAvatar: boolean;
   status: VoiceBotStatus;
+  connection: BotConnectionInfo | null;
   nowPlaying: QueueItemInfo | null;
   createdAt: string;
 }
@@ -94,6 +117,7 @@ export type RepeatMode = 'off' | 'track' | 'queue';
 
 export interface PlaybackState {
   status: VoiceBotStatus;
+  connection?: BotConnectionInfo | null;
   nowPlaying: QueueItemInfo | null;
   position: number;
   duration: number;

@@ -1,10 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { MusicBotSummary } from '@ts6/common';
 import { musicBotsApi } from '../api/music.api';
 
 export function useMusicBots() {
   return useQuery({
     queryKey: ['music-bots'],
     queryFn: musicBotsApi.list,
+    // Bots change state on their own (boot, a dropped connection, automatic
+    // retries): follow closely while one is connecting or about to retry,
+    // and look now and then otherwise.
+    refetchInterval: (query) => {
+      const bots = query.state.data as MusicBotSummary[] | undefined;
+      const busy = bots?.some((b) => b.status === 'starting' || b.connection?.phase === 'connecting' || b.connection?.phase === 'retrying');
+      return busy ? 3000 : 15000;
+    },
   });
 }
 
@@ -47,7 +56,9 @@ export function useStartMusicBot() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => musicBotsApi.start(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['music-bots'] }),
+    // Also after a failed start: the bot is now retrying (or has given up), and
+    // the card has to show that, not the state from before the click.
+    onSettled: () => qc.invalidateQueries({ queryKey: ['music-bots'] }),
   });
 }
 

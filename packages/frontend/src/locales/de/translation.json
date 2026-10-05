@@ -2515,6 +2515,22 @@
         "botStopped": "Bot gestoppt",
         "botStarted": "Bot gestartet",
         "startFailed": "Bot konnte nicht gestartet werden",
+        "connection": {
+          "badge": { "connecting": "Verbindet", "retrying": "Neuer Versuch", "failed": "Fehlgeschlagen" },
+          "connecting": "Verbindet sich mit dem Server…",
+          "connectingRetry": "Verbindet sich mit dem Server… (Versuch {{attempt}} von {{max}})",
+          "retrying": "Verbindung fehlgeschlagen. Neuer Versuch {{attempt}} von {{max}} in {{time}}.",
+          "gaveUp": "Verbindung fehlgeschlagen. Nach {{max}} Versuchen aufgegeben.",
+          "final": "Verbindung fehlgeschlagen. Der Bot versucht es nicht von selbst erneut.",
+          "pressStart": "Zum erneuten Versuch auf Start klicken.",
+          "details": "Details: {{reason}}",
+          "kind": {
+            "flood": "Der Flood-Schutz des Servers hat die Verbindung abgelehnt. Das ist kein Bann, die Sperre löst sich von selbst.",
+            "banned": "Der Bot ist auf diesem Server gebannt.",
+            "password": "Das Serverpasswort ist falsch.",
+            "serverFull": "Der Server ist voll."
+          }
+        },
         "queueCount": "Warteschlange ({{count}})",
         "moreCount": "+{{count}} weitere",
         "widgetDescription": "Bette diese URLs in deine TeamSpeak-Channel-Beschreibung oder Website ein.",
