@@ -6,6 +6,7 @@ import { generateIdentityAsync, restoreIdentity, type IdentityData } from './tsl
 import type { QueueItem } from './playlist/queue.js';
 import type { MusicCommandHandler } from './music-command-handler.js';
 import { decrypt, encrypt } from '../utils/crypto.js';
+import type { BotConnectionInfo } from '@ts6/common';
 
 const PROGRESS_INTERVAL_MS = 1000;
 const MAX_RECONNECT_ATTEMPTS = 10;
@@ -24,6 +25,8 @@ const FLOOD_ATTEMPT_SPACING_MS = 30000;
 interface ReconnectState {
   attempts: number;
   timer: ReturnType<typeof setTimeout> | null;
+  /** When the pending timer fires (epoch ms); null while an attempt runs */
+  nextAttemptAt: number | null;
 }
 
 export class VoiceBotManager extends EventEmitter {
@@ -32,6 +35,12 @@ export class VoiceBotManager extends EventEmitter {
   private reconnectState = new Map<number, ReconnectState>();
   // Per server (host:port), the earliest time the next flood-refused bot may try again
   private floodNextSlot = new Map<string, number>();
+  // Bots whose automatic attempts ran out. Kept until the bot is started,
+  // stopped or removed: that is what makes giving up final (a disconnect event
+  // after the last attempt must not begin a new round). The reason is read from
+  // the bot when asked for, not stored here: for an unresolvable host the
+  // disconnect event that triggers the give-up fires before start() has noted why.
+  private gaveUp = new Set<number>();
   private musicCmdHandler: MusicCommandHandler | null = null;
 
   constructor(
@@ -120,6 +129,8 @@ export class VoiceBotManager extends EventEmitter {
     // Stop, a failed play), so autoplay can't hook into that one without
     // re-triggering on every song that finishes.
     bot.on('connected', () => {
+      // Connected by whatever route (Start, restart, boot): nothing is given up on any more
+      this.gaveUp.delete(config.id);
       this.runAutoplayOnConnect(config.id, bot).catch((err) => {
         console.error(`[VoiceBotManager] Bot ${config.id}: autoplay-on-connect failed: ${err.message}`);
       });
@@ -321,12 +332,45 @@ export class VoiceBotManager extends EventEmitter {
     return result;
   }
 
-  listBots(): Array<{ id: number; status: VoiceBotStatus; nowPlaying: QueueItem | null }> {
-    const list: Array<{ id: number; status: VoiceBotStatus; nowPlaying: QueueItem | null }> = [];
+  listBots(): Array<{ id: number; status: VoiceBotStatus; connection: BotConnectionInfo | null; nowPlaying: QueueItem | null }> {
+    const list: Array<{ id: number; status: VoiceBotStatus; connection: BotConnectionInfo | null; nowPlaying: QueueItem | null }> = [];
     for (const [id, bot] of this.bots) {
-      list.push({ id, status: bot.status, nowPlaying: bot.nowPlaying });
+      list.push({ id, status: bot.status, connection: this.getConnectionInfo(id), nowPlaying: bot.nowPlaying });
     }
     return list;
+  }
+
+  /** What a bot that is not connected is doing about it, for the UI: an
+   * attempt running, waiting for the next automatic attempt (and when), or
+   * done trying (and why). null when connected, or stopped on purpose. */
+  getConnectionInfo(botId: number): BotConnectionInfo | null {
+    const bot = this.bots.get(botId);
+    if (!bot || bot.manuallyStopped) return null;
+    if (bot.status === 'connected' || bot.status === 'playing' || bot.status === 'paused') return null;
+
+    const state = this.reconnectState.get(botId);
+    const kind = bot.failureKind ?? 'other';
+    const reason = bot.failureReason;
+    const attempt = state?.attempts ?? 0;
+
+    if (this.gaveUp.has(botId)) {
+      return { phase: 'failed', attempt: MAX_RECONNECT_ATTEMPTS, maxAttempts: MAX_RECONNECT_ATTEMPTS, nextAttemptAt: null, kind, reason };
+    }
+
+    // Refused for good (banned, wrong password, server full): nothing will be tried again
+    if (bot.hasFatalError) {
+      return { phase: 'failed', attempt, maxAttempts: MAX_RECONNECT_ATTEMPTS, nextAttemptAt: null, kind, reason };
+    }
+    if (state?.timer && state.nextAttemptAt !== null) {
+      return { phase: 'retrying', attempt, maxAttempts: MAX_RECONNECT_ATTEMPTS, nextAttemptAt: new Date(state.nextAttemptAt).toISOString(), kind, reason };
+    }
+    // An automatic attempt is under way (its grace pause included), or Start / boot is connecting.
+    // 'error' is the half second between a failed attempt and the disconnect that
+    // decides what happens next (retry or give up) - still "connecting", not "nothing".
+    if (state || bot.status === 'starting' || bot.status === 'error') {
+      return { phase: 'connecting', attempt, maxAttempts: MAX_RECONNECT_ATTEMPTS, nextAttemptAt: null, kind, reason };
+    }
+    return null;
   }
 
   async startBot(id: number): Promise<void> {
@@ -334,6 +378,13 @@ export class VoiceBotManager extends EventEmitter {
     if (!bot) throw new Error(`Music bot ${id} not found`);
     this.clearReconnect(id);
     await bot.start();
+  }
+
+  async restartBot(id: number): Promise<void> {
+    const bot = this.bots.get(id);
+    if (!bot) throw new Error(`Music bot ${id} not found`);
+    this.clearReconnect(id);
+    await bot.restart();
   }
 
   async stopBot(id: number): Promise<void> {
@@ -374,9 +425,13 @@ export class VoiceBotManager extends EventEmitter {
       return;
     }
 
+    // Final: the disconnect event that follows the last failed attempt (and the
+    // catch of attemptReconnect) must not start a new round
+    if (this.gaveUp.has(botId)) return;
+
     let state = this.reconnectState.get(botId);
     if (!state) {
-      state = { attempts: 0, timer: null };
+      state = { attempts: 0, timer: null, nextAttemptAt: null };
       this.reconnectState.set(botId, state);
     }
 
@@ -386,8 +441,9 @@ export class VoiceBotManager extends EventEmitter {
 
     if (state.attempts >= MAX_RECONNECT_ATTEMPTS) {
       console.error(`[VoiceBotManager] Bot ${botId}: max reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached, giving up`);
-      this.broadcast('music:bot:reconnectFailed', { botId });
+      this.gaveUp.add(botId);
       this.reconnectState.delete(botId);
+      this.broadcast('music:bot:reconnectFailed', { botId });
       return;
     }
 
@@ -406,6 +462,7 @@ export class VoiceBotManager extends EventEmitter {
     state.attempts++;
     console.log(`[VoiceBotManager] Bot ${botId}: reconnect attempt ${state.attempts}/${MAX_RECONNECT_ATTEMPTS} in ${Math.round(delay / 100) / 10}s${flood ? ' (the server\'s flood protection refused the connection, backing off slowly)' : ''}`);
 
+    state.nextAttemptAt = Date.now() + delay;
     state.timer = setTimeout(() => this.attemptReconnect(botId), delay);
   }
 
@@ -423,6 +480,7 @@ export class VoiceBotManager extends EventEmitter {
 
     // Mark timer as executed so scheduleReconnect can run again
     state.timer = null;
+    state.nextAttemptAt = null;
 
     try {
       // Ensure previous connection is fully cleaned up before reconnecting
@@ -480,6 +538,7 @@ export class VoiceBotManager extends EventEmitter {
   }
 
   private clearReconnect(botId: number): void {
+    this.gaveUp.delete(botId);
     const state = this.reconnectState.get(botId);
     if (state?.timer) {
       clearTimeout(state.timer);

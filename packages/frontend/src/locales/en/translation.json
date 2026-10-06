@@ -2515,6 +2515,22 @@
         "botStopped": "Bot stopped",
         "botStarted": "Bot started",
         "startFailed": "Failed to start bot",
+        "connection": {
+          "badge": { "connecting": "Connecting", "retrying": "Retrying", "failed": "Failed" },
+          "connecting": "Connecting to the server…",
+          "connectingRetry": "Connecting to the server… (retry {{attempt}} of {{max}})",
+          "retrying": "Could not connect. Retry {{attempt}} of {{max}} in {{time}}.",
+          "gaveUp": "Could not connect. Gave up after {{max}} retries.",
+          "final": "Could not connect. The bot will not try again by itself.",
+          "pressStart": "Press Start to try again.",
+          "details": "Details: {{reason}}",
+          "kind": {
+            "flood": "The server's flood protection refused the connection. This is not a ban, it lifts by itself.",
+            "banned": "The bot is banned on this server.",
+            "password": "The server password is wrong.",
+            "serverFull": "The server is full."
+          }
+        },
         "queueCount": "Queue ({{count}})",
         "moreCount": "+{{count}} more",
         "widgetDescription": "Embed these URLs in your TeamSpeak channel description or website.",

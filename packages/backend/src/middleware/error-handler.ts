@@ -5,6 +5,8 @@ export class AppError extends Error {
     public statusCode: number,
     message: string,
     public details?: string,
+    /** Machine-readable reason a client can branch on (e.g. a BotFailureKind) */
+    public code?: string,
   ) {
     super(message);
     this.name = 'AppError';
@@ -31,6 +33,7 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     res.status(err.statusCode).json({
       error: err.message,
       details: err.details,
+      ...(err.code ? { code: err.code } : {}),
     });
     return;
   }

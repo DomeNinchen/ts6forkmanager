@@ -11,6 +11,7 @@ import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamS
 import { downloadVideoForStream, safeUnlinkStreamTemp } from './streaming/video-download.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import { WebQueryClient } from '../ts-client/webquery-client.js';
+import type { BotFailureKind } from '@ts6/common';
 
 /** Default cap on how long a pre-downloaded video may run, in seconds. */
 const DEFAULT_MAX_VIDEO_DURATION_SEC = 900;
@@ -100,6 +101,10 @@ export class VoiceBot extends EventEmitter {
   // rule exists and it lifts by itself): worth retrying, only slowly. Cleared
   // by the next start().
   private _floodBlocked: boolean = false;
+  // What the server said about refusing the current/last connection attempt
+  // (null when it said nothing specific); cleared by the next start().
+  private _failureKind: BotFailureKind | null = null;
+  private _failureReason: string = '';
 
   // Video streaming state
   private signaling: StreamSignaling | null = null;
@@ -135,6 +140,12 @@ export class VoiceBot extends EventEmitter {
     this.queue.on('lengthChange', () => this.refreshDescriptionNow());
 
     this.client.on('error', (err) => {
+      // Why this connection attempt (or the running connection) failed:
+      // the server's refusal with its own words, a timeout, an unresolvable
+      // host... The first error of an attempt is the cause, later ones are
+      // fallout. (_lastError can't serve: it also takes every harmless
+      // command error of a running session.)
+      if (!this._failureReason) this._failureReason = err.message;
       this._status = 'error';
       this.emit('error', err);
       this.emit('statusChange', this._status);
@@ -164,11 +175,13 @@ export class VoiceBot extends EventEmitter {
       // from one IP with (several bots starting together); that is no ban.
       if (id === 3329 && extra && /flood/i.test(extra)) {
         this._floodBlocked = true;
+        this._failureKind = 'flood';
         return;
       }
       // Fatal errors that should not trigger reconnect
       // 2568 = invalid password, 3329 = banned, 1796 = max clients reached
       if (id === 2568 || id === 3329 || id === 1796) {
+        this._failureKind = id === 2568 ? 'password' : id === 3329 ? 'banned' : 'serverFull';
         this._fatalError = true;
         this._status = 'error';
         this.emit('statusChange', this._status);
@@ -211,6 +224,15 @@ export class VoiceBot extends EventEmitter {
 
   get isFloodBlocked(): boolean {
     return this._floodBlocked;
+  }
+
+  get failureKind(): BotFailureKind | null {
+    return this._failureKind;
+  }
+
+  /** The server's (or the network's) own words for why the last connection attempt failed; '' if none did. */
+  get failureReason(): string {
+    return this._failureReason;
   }
 
   get playbackProgress(): PlaybackProgress | null {
@@ -507,6 +529,8 @@ export class VoiceBot extends EventEmitter {
     this._manuallyStopped = false;
     this._fatalError = false;
     this._floodBlocked = false;
+    this._failureKind = null;
+    this._failureReason = '';
     this._status = 'starting';
     this.emit('statusChange', this._status);
 
@@ -522,7 +546,13 @@ export class VoiceBot extends EventEmitter {
       channelPassword: this.config.channelPassword,
     };
 
-    await this.client.connect(opts);
+    try {
+      await this.client.connect(opts);
+    } catch (err: any) {
+      // A timeout or an unresolvable host rejects without any 'error' event
+      if (!this._failureReason) this._failureReason = err.message;
+      throw err;
+    }
     this._status = 'connected';
     this.emit('statusChange', this._status);
     this.emit('connected');
