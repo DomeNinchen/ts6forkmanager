@@ -323,21 +323,17 @@ export default function Permissions() {
   }, [layer]);
   // Compare only makes sense with 2+ selected - drop out of it otherwise
   useEffect(() => { if (!bulkMode) setCompareMode(false); }, [bulkMode]);
-  // "Only show set" has no toggle in plain Bulk Apply (currentPerms is
-  // always empty there, so its filter would silently blank the whole list
-  // with no visible control to undo it) - reset it whenever that mode is
-  // entered, so a stale checked state from Compare or single-entity view
-  // can't carry over invisibly.
-  useEffect(() => { if (bulkMode && !compareMode) setShowModifiedOnly(false); }, [bulkMode, compareMode]);
   // Compare edits one cell at a time by design, so a ticked multi-selection
   // would have nothing to act on there - leave the mode when Compare opens.
   useEffect(() => { if (compareMode) { setMultiSelect(false); setSelectedPerms(new Set()); } }, [compareMode]);
 
-  // Fetch each selected entity's permissions in Compare mode (shares its
-  // query key with the single-entity fetch above, so switching between
-  // Compare and a single selection reuses the cache instead of refetching)
+  // Fetch each selected entity's permissions whenever 2+ are selected - for
+  // Compare, and for Bulk Apply so its rows can show what the selection
+  // actually holds (shares its query key with the single-entity fetch above,
+  // so switching between a single selection and several reuses the cache
+  // instead of refetching)
   const compareQueries = useQueries({
-    queries: compareMode
+    queries: bulkMode
       ? [...selectedIds].map((key) => ({
           queryKey: ['entity-perms', c, s, layer, key],
           queryFn: () => fetchPerms(layer, c!, s!, key),
@@ -345,7 +341,7 @@ export default function Permissions() {
         }))
       : [],
   });
-  const compareLoading = compareMode && compareQueries.some((q) => q.isLoading);
+  const compareLoading = bulkMode && compareQueries.some((q) => q.isLoading);
 
   // Parse permission definitions into categorized structure
   // TS WebQuery returns { permid, permname, permdesc } — NOT permsid
@@ -484,10 +480,10 @@ export default function Permissions() {
     }).sort((a, b) => a.permsid.localeCompare(b.permsid));
   }, [overviewRows]);
 
-  // Compare mode: each selected entity's permissions as its own map
+  // Each selected entity's permissions as its own map (Compare and Bulk Apply)
   const compareData = useMemo(() => {
     const map = new Map<string, Map<string, PermValue>>();
-    if (!compareMode) return map;
+    if (!bulkMode) return map;
     [...selectedIds].forEach((key, i) => {
       const raw = compareQueries[i]?.data;
       const inner = new Map<string, PermValue>();
@@ -505,7 +501,28 @@ export default function Permissions() {
       map.set(key, inner);
     });
     return map;
-  }, [compareMode, selectedIds, compareQueries, permIdToName]);
+  }, [bulkMode, selectedIds, compareQueries, permIdToName]);
+
+  // Bulk Apply: what the selection holds per permission. `common` is the one
+  // value (with its skip/negate flags) when EVERY selected entity has exactly
+  // that, null when they differ or only some have it ("mixed"); `perEntity`
+  // keeps each entity's own value, in selection order, for the tooltip. A
+  // permission no selected entity has is simply absent from the map.
+  const bulkSummary = useMemo(() => {
+    const summary = new Map<string, { common: PermValue | null; perEntity: (PermValue | null)[] }>();
+    if (!bulkMode) return summary;
+    const keys = [...selectedIds];
+    const sig = (v: PermValue) => `${v.permvalue}:${v.permnegated}:${v.permskip}`;
+    const names = new Set<string>();
+    for (const perms of compareData.values()) for (const name of perms.keys()) names.add(name);
+    for (const name of names) {
+      const perEntity = keys.map((k) => compareData.get(k)?.get(name) ?? null);
+      const first = perEntity[0];
+      const identical = first !== null && perEntity.every((v) => v !== null && sig(v) === sig(first));
+      summary.set(name, { common: identical ? first : null, perEntity });
+    }
+    return summary;
+  }, [bulkMode, selectedIds, compareData]);
 
   // Compare signatures fold in any not-yet-saved edit too, so "differs" and
   // "only show set" react live while you're editing, not just to the server.
@@ -685,6 +702,13 @@ export default function Permissions() {
     return map;
   }, [entityPerms, permIdToName]);
 
+  // Does the entity - or, in Bulk Apply, at least one of the selected ones -
+  // have this permission set? Decides whether a removal is worth staging.
+  const isSetOnAny = useCallback(
+    (permsid: string) => (bulkMode ? bulkSummary.has(permsid) : currentPerms.has(permsid)),
+    [bulkMode, bulkSummary, currentPerms],
+  );
+
   // Categorize permissions
   const categories = useMemo(() => {
     const catMap = new Map<string, PermDef[]>();
@@ -700,10 +724,11 @@ export default function Permissions() {
       if (showModifiedOnly) filtered = filtered.filter((p) => isSetForAny(p.permsid));
       if (showDifferingOnly) filtered = filtered.filter((p) => permDiffers(p.permsid));
     } else if (showModifiedOnly) {
-      // "Set" (has an explicit value on this entity) OR mid-edit (a pending
-      // local change of any kind) - keeps a permission visible while it's
-      // being removed instead of yanking it out from under the user.
-      filtered = filtered.filter((p) => currentPerms.has(p.permsid) || changes.has(p.permsid));
+      // "Set" (has an explicit value on this entity - or on at least one of
+      // the selected ones in Bulk Apply) OR mid-edit (a pending local change
+      // of any kind) - keeps a permission visible while it's being removed
+      // instead of yanking it out from under the user.
+      filtered = filtered.filter((p) => isSetOnAny(p.permsid) || changes.has(p.permsid));
     }
 
     for (const perm of filtered) {
@@ -712,7 +737,7 @@ export default function Permissions() {
       catMap.get(cat)!.push(perm);
     }
     return catMap;
-  }, [allPerms, search, showModifiedOnly, showDifferingOnly, compareMode, comparePermIds, currentPerms, changes, isSetForAny, permDiffers]);
+  }, [allPerms, search, showModifiedOnly, showDifferingOnly, compareMode, comparePermIds, isSetOnAny, changes, isSetForAny, permDiffers]);
 
   // Every permission the current search/filters leave visible, flattened out
   // of its categories - what "Select all shown" acts on.
@@ -743,10 +768,12 @@ export default function Permissions() {
 
   const getEffectiveValue = useCallback((permsid: string): PendingChange | null => {
     if (changes.has(permsid)) return changes.get(permsid)!;
-    const current = currentPerms.get(permsid);
+    // In Bulk Apply only a value every selected entity shares counts as "the"
+    // current value; differing ones are shown as mixed instead
+    const current = bulkMode ? bulkSummary.get(permsid)?.common : currentPerms.get(permsid);
     if (current) return { ...current, action: 'set' };
     return null;
-  }, [changes, currentPerms]);
+  }, [changes, bulkMode, bulkSummary, currentPerms]);
 
   const setPermValue = useCallback((permsid: string, value: number, negated: number, skip: number) => {
     setChanges((prev) => {
@@ -759,14 +786,31 @@ export default function Permissions() {
   const removePerm = useCallback((permsid: string) => {
     setChanges((prev) => {
       const next = new Map(prev);
-      if (currentPerms.has(permsid)) {
+      if (isSetOnAny(permsid)) {
         next.set(permsid, { permsid, permvalue: 0, permnegated: 0, permskip: 0, action: 'remove' });
       } else {
         next.delete(permsid);
       }
       return next;
     });
-  }, [currentPerms]);
+  }, [isSetOnAny]);
+
+  // A number field that was emptied. Where the selected entities hold
+  // different values, the field only ever showed what was just typed, so
+  // emptying it takes that typing back; removing the permission from all of
+  // them is the row's own remove button.
+  const clearPermValue = useCallback((permsid: string) => {
+    const summary = bulkMode ? bulkSummary.get(permsid) : undefined;
+    if (summary && !summary.common) {
+      setChanges((prev) => {
+        const next = new Map(prev);
+        next.delete(permsid);
+        return next;
+      });
+      return;
+    }
+    removePerm(permsid);
+  }, [bulkMode, bulkSummary, removePerm]);
 
   const togglePermSelect = useCallback((permsid: string) => {
     setSelectedPerms((prev) => {
@@ -813,7 +857,7 @@ export default function Permissions() {
       for (const permsid of selectedPerms) {
         // Only an actually-set permission needs a remove sent to the server;
         // for anything else just drop a staged change, same as removePerm.
-        if (currentPerms.has(permsid) || bulkMode) {
+        if (isSetOnAny(permsid)) {
           next.set(permsid, { permsid, permvalue: 0, permnegated: 0, permskip: 0, action: 'remove' });
         } else {
           next.delete(permsid);
@@ -822,7 +866,7 @@ export default function Permissions() {
       return next;
     });
     toast.success(t('pages.permissions.stagedForRemoval', { count: selectedPerms.size }));
-  }, [selectedPerms, currentPerms, bulkMode, t]);
+  }, [selectedPerms, isSetOnAny, t]);
 
   const handleImportFileChosen = useCallback(async (file: File) => {
     try {
@@ -999,6 +1043,15 @@ export default function Permissions() {
     }
     return entities.find((e: any) => e.id === key)?.name || key;
   };
+
+  // One line per selected entity with what it holds - the tooltip of a row
+  // whose selected entities differ. [S] = skip, [N] = negate.
+  const describeMixed = (perEntity: (PermValue | null)[]): string =>
+    [...selectedIds].map((key, i) => {
+      const v = perEntity[i];
+      const flags = v ? `${v.permskip ? ' [S]' : ''}${v.permnegated ? ' [N]' : ''}` : '';
+      return `${entityName(key)}: ${v ? `${v.permvalue}${flags}` : t('pages.permissions.notSet')}`;
+    }).join('\n');
 
   // Find Permission needs names for every tier at once, not just the current
   // one, so it can't reuse entityName above (which is scoped to `layer`).
@@ -1677,12 +1730,10 @@ export default function Permissions() {
                       {t('pages.permissions.simple')}
                     </button>
                   </div>
-                  {(!bulkMode || compareMode) && (
-                    <div className="flex items-center gap-1.5">
-                      <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
-                      <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">{t('pages.permissions.onlyShowSet')}</Label>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    <Switch id="show-modified-only" checked={showModifiedOnly} onCheckedChange={setShowModifiedOnly} />
+                    <Label htmlFor="show-modified-only" className="text-xs text-muted-foreground cursor-pointer">{t('pages.permissions.onlyShowSet')}</Label>
+                  </div>
                   {compareMode && (
                     <div className="flex items-center gap-1.5">
                       <Switch id="show-differing-only" checked={showDifferingOnly} onCheckedChange={setShowDifferingOnly} />
@@ -1796,7 +1847,7 @@ export default function Permissions() {
                 <div className="flex items-center justify-center h-[400px]">
                   <p className="text-sm text-muted-foreground">{t('pages.permissions.selectEntityHint')}</p>
                 </div>
-              ) : (compareMode ? compareLoading : loadingPerms) ? (
+              ) : (bulkMode ? compareLoading : loadingPerms) ? (
                 <div className="flex items-center justify-center h-[400px]">
                   <PageLoader />
                 </div>
@@ -1988,6 +2039,10 @@ export default function Permissions() {
                             const isSet = effective !== null && effective.action !== 'remove';
                             const isChanged = changes.has(perm.permsid);
                             const isBoolean = perm.permsid.startsWith('b_');
+                            // Bulk Apply, row not touched yet, selected entities differ
+                            const bulkRow = bulkMode ? bulkSummary.get(perm.permsid) : undefined;
+                            const isMixed = !!bulkRow && !bulkRow.common && !isChanged;
+                            const mixedTitle = isMixed ? describeMixed(bulkRow!.perEntity) : undefined;
 
                             return (
                               <div
@@ -1995,7 +2050,7 @@ export default function Permissions() {
                                 className={cn(
                                   'grid grid-cols-12 gap-2 px-2 py-1 rounded-sm text-xs items-center group',
                                   isChanged && 'bg-primary/5',
-                                  isSet ? 'text-foreground' : 'text-muted-foreground',
+                                  isSet || isMixed ? 'text-foreground' : 'text-muted-foreground',
                                 )}
                               >
                                 <div className="col-span-5 flex items-center gap-2 min-w-0" title={permTooltip(perm)}>
@@ -2015,14 +2070,17 @@ export default function Permissions() {
                                         if (isSet) removePerm(perm.permsid);
                                         else setPermValue(perm.permsid, 1, 0, 0);
                                       }}
+                                      title={mixedTitle}
                                       className={cn(
                                         'h-5 w-5 rounded-sm border flex items-center justify-center transition-colors',
                                         isSet
                                           ? 'bg-primary border-primary text-primary-foreground'
-                                          : 'border-border hover:border-primary/50',
+                                          : isMixed
+                                            ? 'bg-primary/15 border-primary/60 text-primary'
+                                            : 'border-border hover:border-primary/50',
                                       )}
                                     >
-                                      {isSet && <Check className="h-3 w-3" />}
+                                      {isSet ? <Check className="h-3 w-3" /> : isMixed ? <Minus className="h-3 w-3" /> : null}
                                     </button>
                                   ) : (
                                     <div className="inline-flex items-center gap-1">
@@ -2030,13 +2088,14 @@ export default function Permissions() {
                                         type="number"
                                         className="h-6 w-20 text-xs text-center font-mono-data px-1"
                                         value={effective?.permvalue ?? ''}
-                                        placeholder="—"
+                                        placeholder={isMixed ? t('pages.permissions.mixed') : '—'}
+                                        title={mixedTitle}
                                         onChange={(e) => {
                                           const val = parseInt(e.target.value);
                                           if (!isNaN(val)) {
                                             setPermValue(perm.permsid, val, effective?.permnegated || 0, effective?.permskip || 0);
                                           } else if (e.target.value === '') {
-                                            removePerm(perm.permsid);
+                                            clearPermValue(perm.permsid);
                                           }
                                         }}
                                       />
@@ -2096,7 +2155,7 @@ export default function Permissions() {
                                   )}
                                 </div>
                                 <div className="col-span-3 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {isSet && (
+                                  {(isSet || isMixed) && (
                                     <button
                                       onClick={() => removePerm(perm.permsid)}
                                       className="p-0.5 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
@@ -2126,7 +2185,7 @@ export default function Permissions() {
                               ? t('pages.permissions.noPermissionsSetAny')
                               : t('pages.permissions.noPermissionsMatchSearch')
                           : showModifiedOnly
-                            ? t('pages.permissions.noPermissionsSetEntity')
+                            ? t(bulkMode ? 'pages.permissions.noPermissionsSetAny' : 'pages.permissions.noPermissionsSetEntity')
                             : t('pages.permissions.noPermissionsMatchSearch')}
                       </p>
                     </div>
