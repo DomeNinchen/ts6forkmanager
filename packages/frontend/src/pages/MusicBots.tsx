@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
 import { toast } from 'sonner';
+import { BotConnectionNotice, botFailureKindText } from '@/components/bots/BotConnectionNotice';
 import { formatBytes, fileBasename } from '@/lib/utils';
 import { settingsApi } from '@/api/settings.api';
 import { RESTRICTABLE_COMMANDS, OPEN_BY_DEFAULT_COMMANDS } from '@ts6/common';
@@ -116,7 +117,15 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   const [draggingSeek, setDraggingSeek] = useState<number | null>(null);
   const [draggingVolume, setDraggingVolume] = useState<number | null>(null);
 
-  const isRunning = bot.status !== 'stopped' && bot.status !== 'error';
+  // "Running" = connected to the server, so the playback controls make sense.
+  // A bot that is still connecting or waiting for its next automatic attempt
+  // only gets a Stop (to cancel the retries).
+  const isRunning = bot.status === 'connected' || bot.status === 'playing' || bot.status === 'paused';
+  const connection = bot.connection ?? null;
+  const isTrying = !isRunning && (bot.status === 'starting' || connection?.phase === 'connecting' || connection?.phase === 'retrying');
+  const dotClass = connection
+    ? (connection.phase === 'failed' ? 'bg-red-500' : 'bg-amber-500 animate-pulse')
+    : (statusColors[bot.status] || 'bg-zinc-500');
   const isPlaying = state?.status === 'playing';
   const isPaused = state?.status === 'paused';
   const isStreaming = state?.isStreaming ?? false;
@@ -126,7 +135,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className={`h-2 w-2 rounded-full shrink-0 ${statusColors[bot.status] || 'bg-zinc-500'}`} />
+            <div className={`h-2 w-2 rounded-full shrink-0 ${dotClass}`} />
             <CardTitle className="flex min-w-0 flex-1 items-center gap-1 text-sm font-medium">
               <span className="min-w-0 truncate">{bot.name}</span>
               <span className="shrink-0 text-muted-foreground">#{bot.id}</span>
@@ -153,12 +162,17 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
       <CardContent className="space-y-3">
         {/* Status badges */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-[10px] capitalize">{bot.status}</Badge>
+          <Badge variant="outline" className="text-[10px] capitalize">
+            {connection ? t(`pages.musicBots.botPlayerCard.connection.badge.${connection.phase}`) : bot.status}
+          </Badge>
           <Badge variant="outline" className="text-[10px]">{bot.nickname}</Badge>
           {bot.serverConfig && (
             <Badge variant="secondary" className="text-[10px]">{bot.serverConfig.name}</Badge>
           )}
         </div>
+
+        {/* Connecting, waiting for the next attempt, or done trying - and why */}
+        {connection && <BotConnectionNotice connection={connection} />}
 
         {/* Play button when connected but idle */}
         {isRunning && !state?.nowPlaying && (
@@ -311,11 +325,26 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
                 </Button>
               )}
             </>
+          ) : isTrying ? (
+            <Button variant="outline" size="sm" className="h-7 text-xs flex-1"
+              onClick={() => stopBot.mutate(bot.id, { onSuccess: () => toast.success(t('pages.musicBots.botPlayerCard.botStopped')) })}
+              disabled={stopBot.isPending}
+            >
+              <PowerOff className="h-3 w-3 mr-1" /> {t('pages.musicBots.botPlayerCard.stop')}
+            </Button>
           ) : (
             <Button variant="default" size="sm" className="h-7 text-xs flex-1"
               onClick={() => startBot.mutate(bot.id, {
                 onSuccess: () => toast.success(t('pages.musicBots.botPlayerCard.botStarted')),
-                onError: () => toast.error(t('pages.musicBots.botPlayerCard.startFailed')),
+                onError: (err: any) => {
+                  // Say WHY: the backend passes on the server's own words, and a
+                  // code for the kind of refusal. "Failed to start bot" alone helps nobody.
+                  const data = err?.response?.data;
+                  const description = [botFailureKindText(t, data?.code), data?.error ?? err?.message]
+                    .filter(Boolean)
+                    .join(' ');
+                  toast.error(t('pages.musicBots.botPlayerCard.startFailed'), { description: description || undefined });
+                },
               })}
               disabled={startBot.isPending}
             >

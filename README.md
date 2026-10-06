@@ -23,7 +23,7 @@ Live overview of your server: online users, channel count, uptime, ping, bandwid
 ![Dashboard](docs/dashboard.png)
 
 ### Music Bots
-Run multiple music bots per server. Each bot has its own queue, volume control, and playback state. Supports radio streams, YouTube, and a local music library. Users in the bot's channel can control it via text commands (`!radio`, `!play`, `!vol`, etc.). A bot can also be configured to autoplay a chosen song or radio station on its own every time it connects, so it's never left sitting idle after a manual start, a server restart, or a reconnect.
+Run multiple music bots per server. Each bot has its own queue, volume control, and playback state. Supports radio streams, YouTube, and a local music library. Users in the bot's channel can control it via text commands (`!radio`, `!play`, `!vol`, etc.). A bot can also be configured to autoplay a chosen song or radio station on its own every time it connects, so it's never left sitting idle after a manual start, a server restart, or a reconnect. A bot that can't reach the server says so on its card - connecting, waiting for the next of up to 10 automatic retries (with a countdown), or stopped for good - together with the server's own reason (banned, flood protection, wrong password, server full, unreachable host, ...); a failed **Start** shows the same reason instead of a generic error. After the 10th failed retry, or at once for a real ban, a wrong server password or a full server, the bot stays stopped until you press **Start**.
 
 ![Music Bots](docs/musicbots.png)
 

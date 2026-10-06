@@ -1746,6 +1746,22 @@
         "botStopped": "Bot arrêté",
         "botStarted": "Bot démarré",
         "startFailed": "Échec du démarrage du bot",
+        "connection": {
+          "badge": { "connecting": "Connexion", "retrying": "Nouvel essai", "failed": "Échec" },
+          "connecting": "Connexion au serveur…",
+          "connectingRetry": "Connexion au serveur… (essai {{attempt}} sur {{max}})",
+          "retrying": "Connexion impossible. Nouvel essai {{attempt}} sur {{max}} dans {{time}}.",
+          "gaveUp": "Connexion impossible. Abandon après {{max}} essais.",
+          "final": "Connexion impossible. Le bot ne réessaiera pas tout seul.",
+          "pressStart": "Cliquez sur Démarrer pour réessayer.",
+          "details": "Détails : {{reason}}",
+          "kind": {
+            "flood": "La protection anti-flood du serveur a refusé la connexion. Ce n'est pas un bannissement, elle se lève d'elle-même.",
+            "banned": "Le bot est banni de ce serveur.",
+            "password": "Le mot de passe du serveur est incorrect.",
+            "serverFull": "Le serveur est plein."
+          }
+        },
         "queueCount": "File d’attente ({{count}})",
         "moreCount": "+{{count}} de plus",
         "widgetDescription": "Intégrez ces URL dans la description de votre salon TeamSpeak ou sur votre site web.",

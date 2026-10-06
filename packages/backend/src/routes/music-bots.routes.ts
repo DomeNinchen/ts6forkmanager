@@ -83,6 +83,7 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         autoplayRadioStationId: b.autoplayRadioStationId,
         hasAvatar: b.avatarData != null,
         status: runtime?.status ?? 'stopped',
+        connection: runtime?.connection ?? null,
         nowPlaying: runtime?.nowPlaying ?? null,
         createdAt: b.createdAt,
       };
@@ -114,6 +115,7 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
       avatarData: undefined, // served separately via GET /:id/avatar
       hasAvatar: dbBot.avatarData != null,
       status: bot?.status ?? 'stopped',
+      connection: manager.getConnectionInfo(id),
       nowPlaying: bot?.nowPlaying ?? null,
       playbackProgress: bot?.playbackProgress ?? null,
     });
@@ -274,14 +276,24 @@ musicBotRoutes.delete('/:id', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
+/** A failed connect carries the server's own explanation in its message ("...
+ * you are banned (flood prevention, ...)", "Connection timeout", ...). Hand
+ * that on - with the kind, for the UI to word it - instead of the anonymous
+ * 500 an unhandled Error turns into. */
+function connectFailure(err: any, manager: VoiceBotManager, id: number): Error {
+  if (err instanceof AppError) return err;
+  if (err?.message === 'Bot is already running') return new AppError(409, err.message);
+  return new AppError(502, err?.message || 'Connecting to the TeamSpeak server failed', undefined, manager.getBot(id)?.failureKind ?? 'other');
+}
+
 // POST /:id/start — Start bot
 musicBotRoutes.post('/:id/start', async (req: Request, res: Response, next) => {
+  const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+  const id = parseInt(req.params.id as string);
   try {
-    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const id = parseInt(req.params.id as string);
     await manager.startBot(id);
     res.json({ success: true });
-  } catch (err) { next(err); }
+  } catch (err) { next(connectFailure(err, manager, id)); }
 });
 
 // POST /:id/stop — Stop bot
@@ -296,14 +308,13 @@ musicBotRoutes.post('/:id/stop', async (req: Request, res: Response, next) => {
 
 // POST /:id/restart — Restart bot
 musicBotRoutes.post('/:id/restart', async (req: Request, res: Response, next) => {
+  const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+  const id = parseInt(req.params.id as string);
   try {
-    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const id = parseInt(req.params.id as string);
-    const bot = manager.getBot(id);
-    if (!bot) throw new AppError(404, 'Music bot not found');
-    await bot.restart();
+    if (!manager.getBot(id)) throw new AppError(404, 'Music bot not found');
+    await manager.restartBot(id);
     res.json({ success: true });
-  } catch (err) { next(err); }
+  } catch (err) { next(connectFailure(err, manager, id)); }
 });
 
 // === Playback Control ===
@@ -553,6 +564,7 @@ musicBotRoutes.get('/:id/state', async (req: Request, res: Response, next) => {
     const progress = bot.playbackProgress;
     res.json({
       status: bot.status,
+      connection: manager.getConnectionInfo(bot.id),
       nowPlaying: bot.nowPlaying,
       position: progress?.position ?? 0,
       duration: progress?.duration ?? 0,
