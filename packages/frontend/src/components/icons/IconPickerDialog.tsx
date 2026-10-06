@@ -19,12 +19,17 @@ interface IconPickerDialogProps {
   /** Called with the picked icon's ID; the dialog closes itself afterward. */
   onSelect: (iconId: number) => void;
   currentIconId?: number;
+  /** Whether wherever opened the picker also lets the user type an icon ID. When the pool
+   * cannot be read the error texts suggest typing the ID instead; a place without such a
+   * field (the Edit Channel dialog) would be sending people looking for something that is
+   * not there. Defaults to true. */
+  idEntryAvailable?: boolean;
 }
 
 /** Browse the active server's icon pool and pick one. Shares the ['icons', c,
  * s] query key with the Icon Browser page, so switching between them doesn't
  * refetch. Read-only - uploading new icons stays the Icon Browser's job. */
-export function IconPickerDialog({ open, onOpenChange, onSelect, currentIconId }: IconPickerDialogProps) {
+export function IconPickerDialog({ open, onOpenChange, onSelect, currentIconId, idEntryAvailable = true }: IconPickerDialogProps) {
   const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const [search, setSearch] = useState('');
@@ -71,8 +76,8 @@ export function IconPickerDialog({ open, onOpenChange, onSelect, currentIconId }
             <p className="text-sm font-medium text-foreground">{t('components.iconPickerDialog.poolUnavailable')}</p>
             <p className="text-xs text-muted-foreground text-center max-w-md">
               {errorMessage?.includes('SSH')
-                ? t('components.iconPickerDialog.sshRequired')
-                : errorMessage || t('components.iconPickerDialog.loadFailed')}
+                ? t(idEntryAvailable ? 'components.iconPickerDialog.sshRequired' : 'components.iconPickerDialog.sshRequiredPickOnly')
+                : errorMessage || t(idEntryAvailable ? 'components.iconPickerDialog.loadFailed' : 'components.iconPickerDialog.loadFailedPickOnly')}
             </p>
           </div>
         ) : icons.length === 0 ? (

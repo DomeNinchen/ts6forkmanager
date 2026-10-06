@@ -15,6 +15,9 @@ export class TSApiError extends Error {
   constructor(
     public code: number,
     message: string,
+    /** The permission TeamSpeak names as the one that was missing, when it says so
+     * (WebQuery adds `failed_permission` to a 2568 "insufficient client permissions"). */
+    public failedPermission?: string,
   ) {
     super(message);
     this.name = 'TSApiError';
@@ -37,6 +40,7 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
       error: 'TeamSpeak API Error',
       code: err.code,
       details: err.message,
+      ...(err.failedPermission ? { failedPermission: err.failedPermission } : {}),
     });
     return;
   }

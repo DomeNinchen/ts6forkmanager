@@ -26,3 +26,27 @@ export function tsErrorMessage(err: any, fallback: string, t: TFunction): string
   }
   return err?.response?.data?.details || err?.response?.data?.error || fallback;
 }
+
+/**
+ * The message for a failed change of a channel's icon. A channel's icon is the channel
+ * permission `i_icon_id`, so what goes wrong is nearly always a missing right - and
+ * TeamSpeak's own "insufficient client permissions" says too little, because two different
+ * checks are in play (both reproduced against a real TS6 server with a restricted account):
+ *  - 2568 naming `i_channel_needed_permission_modify_power`: the channel itself asks for more
+ *    channel permission modify power than the account has. A channel made through ServerQuery
+ *    carries the query admin's 100, so even a regular Server Admin with 75 cannot change it.
+ *  - 2570: the account's permission modify power is below what `i_icon_id` needs.
+ * The backend passes the permission TeamSpeak names on as `failedPermission`.
+ */
+export function channelIconErrorMessage(err: any, t: TFunction): string {
+  const data = err?.response?.data;
+  if (data?.code === 2570) return t('errors.ts.channelIconModifyPower');
+  if (data?.code === 2568) {
+    const permission = typeof data.failedPermission === 'string' ? data.failedPermission : '';
+    if (permission === 'i_channel_needed_permission_modify_power') return t('errors.ts.channelIconChannelPower');
+    return permission
+      ? t('errors.ts.channelIconMissingPermission', { permission })
+      : t('errors.ts.channelIconNoRights');
+  }
+  return tsErrorMessage(err, t('components.editChannelDialog.iconChangeFailed'), t);
+}
