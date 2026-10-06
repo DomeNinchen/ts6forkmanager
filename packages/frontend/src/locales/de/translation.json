@@ -2808,6 +2808,8 @@
       "poolUnavailable": "Icon-Pool nicht verfügbar",
       "sshRequired": "Das Auslesen des Icon-Pools benötigt SSH-Zugriff, da die WebQuery-HTTP-API von TeamSpeak keine Dateiübertragungsbefehle unterstützt. Konfiguriere SSH-Zugangsdaten in den Server-Einstellungen oder gib die Icon-ID direkt ein.",
       "loadFailed": "Der Icon-Pool konnte nicht geladen werden - gib stattdessen die Icon-ID direkt ein.",
+      "sshRequiredPickOnly": "Das Auslesen des Icon-Pools benötigt SSH-Zugriff, da die WebQuery-HTTP-API von TeamSpeak keine Dateiübertragungsbefehle unterstützt. Konfiguriere SSH-Zugangsdaten in den Server-Einstellungen.",
+      "loadFailedPickOnly": "Der Icon-Pool konnte nicht geladen werden.",
       "noMatchingIcons": "Keine passenden Icons",
       "noIconsUploaded": "Keine Icons hochgeladen",
       "noMatchDescription": "Kein Icon in diesem Pool entspricht deiner Suche.",
@@ -3226,6 +3228,13 @@
         "advanced": "Erweitert"
       },
       "channelName": "Channel-Name",
+      "icon": "Icon",
+      "iconNone": "Kein Icon",
+      "iconChoose": "Icon auswählen...",
+      "iconRemove": "Icon entfernen",
+      "iconHint": "Wird als Channel-Berechtigung i_icon_id gespeichert und erscheint deshalb auch unter Berechtigungen.",
+      "iconSaveFailed": "Die Channel-Einstellungen wurden gespeichert, aber das Icon konnte nicht geändert werden: {{reason}}",
+      "iconChangeFailed": "Das Icon konnte nicht geändert werden",
       "topic": "Thema",
       "leaveEmptyToKeep": "Leer lassen, um das aktuelle beizubehalten",
       "codec": "Codec",
@@ -3637,7 +3646,11 @@
       "cannotModifyDefaultGroup": "Berechtigungen einer Standard-/Vorlagengruppe können nicht geändert werden",
       "invalidPermValueSize": "Ungültige Berechtigungswertgröße in der Datei",
       "invalidPermValue": "Ungültiger Berechtigungswert in der Datei",
-      "insufficientModifyPower": "Unzureichende Berechtigungs-Änderungsmacht für einen der importierten Werte"
+      "insufficientModifyPower": "Unzureichende Berechtigungs-Änderungsmacht für einen der importierten Werte",
+      "channelIconChannelPower": "Dieser Channel verlangt mehr Berechtigungs-Änderungsmacht für Channel-Berechtigungen, als dein Account hat (i_channel_needed_permission_modify_power).",
+      "channelIconMissingPermission": "Dir fehlen die Rechte, das Icon dieses Channels zu ändern (unzureichende Client-Berechtigungen, fehlgeschlagen bei {{permission}}).",
+      "channelIconNoRights": "Dir fehlen die Rechte, das Icon dieses Channels zu ändern (unzureichende Client-Berechtigungen).",
+      "channelIconModifyPower": "Deine Berechtigungs-Änderungsmacht reicht nicht aus, um Icons zu ändern: Der Server verlangt für i_icon_id mehr, als dein Account hat (i_permission_modify_power gegenüber i_needed_modify_power_icon_id)."
     }
   }
 }

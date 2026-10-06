@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+import { normalizeIconId } from '@ts6/common';
 import { channelsApi } from '@/api/channels.api';
+import { permissionsApi } from '@/api/permissions.api';
 import { useEditChannel } from '@/hooks/use-channels';
 import { useServerStore } from '@/stores/server.store';
+import { channelIconErrorMessage } from '@/lib/ts-errors';
+import { IconImage } from '@/components/icons/IconImage';
+import { IconPickerDialog } from '@/components/icons/IconPickerDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +17,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Image as ImageIcon, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ChannelType = 'permanent' | 'semipermanent' | 'temporary';
@@ -20,6 +27,9 @@ type FamilyClientsMode = 'limited' | 'unlimited' | 'inherited';
 
 interface EditChannelForm {
   channel_name: string;
+  /** The channel's icon (a CRC32 icon ID, 0 = none). Not a `channeledit` property: TS6 rejects
+   * `channel_icon_id` there, the icon is the channel permission `i_icon_id` - see handleSave. */
+  iconId: number;
   channel_topic: string;
   channel_description: string;
   channel_password: string;
@@ -42,6 +52,7 @@ interface EditChannelForm {
 
 const EMPTY_FORM: EditChannelForm = {
   channel_name: '',
+  iconId: 0,
   channel_topic: '',
   channel_description: '',
   channel_password: '',
@@ -83,6 +94,9 @@ function formFromChannelInfo(info: any, fallbackName: string): EditChannelForm {
 
   return {
     channel_name: info.channel_name ?? fallbackName,
+    // channelinfo reports the icon the channel's i_icon_id permission yields, as an unsigned
+    // CRC32; normalizeIconId also copes with the signed form some other commands use
+    iconId: normalizeIconId(info.channel_icon_id),
     channel_topic: info.channel_topic ?? '',
     channel_description: info.channel_description ?? '',
     channel_password: '',
@@ -164,6 +178,11 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
   const [originalName, setOriginalName] = useState(fallbackName);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const qc = useQueryClient();
+  // The icon as the server has it - to tell whether it was changed, and what was saved already
+  const [originalIconId, setOriginalIconId] = useState(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [savingIcon, setSavingIcon] = useState(false);
 
   useEffect(() => {
     if (cid === null || !selectedConfigId || !selectedSid) return;
@@ -171,6 +190,8 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
     setLoadError(null);
     setForm({ ...EMPTY_FORM, channel_name: fallbackName });
     setOriginalName(fallbackName);
+    setOriginalIconId(0);
+    setPickerOpen(false);
 
     let cancelled = false;
     channelsApi.get(selectedConfigId, selectedSid, cid).then((res) => {
@@ -179,6 +200,7 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
       const nextForm = formFromChannelInfo(info || {}, fallbackName);
       setForm(nextForm);
       setOriginalName(nextForm.channel_name);
+      setOriginalIconId(nextForm.iconId);
       setLoaded(true);
     }).catch(() => {
       if (cancelled) return;
@@ -189,18 +211,56 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cid, selectedConfigId, selectedSid]);
 
-  const handleSave = () => {
-    if (cid === null || !form.channel_name.trim()) return;
+  const handleSave = async () => {
+    if (cid === null || !selectedConfigId || !selectedSid || !form.channel_name.trim()) return;
     const data = buildPayload(form);
     // TS6's channeledit rejects channel_name when it's unchanged from the
     // channel's own current name, treating it as a conflict with itself
     // (error 771 "channel name is already in use") - confirmed live against
     // a real server. Only send it when it actually changed.
     if (form.channel_name === originalName) delete data.channel_name;
-    editChannel.mutate({ cid, data }, {
-      onSuccess: () => { toast.success(t('components.editChannelDialog.updated')); onClose(); },
-      onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('components.editChannelDialog.updateFailed')),
-    });
+
+    // 1. The channel's own settings. When this fails nothing has been changed yet.
+    try {
+      await editChannel.mutateAsync({ cid, data });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.details || err?.response?.data?.error || t('components.editChannelDialog.updateFailed'));
+      return;
+    }
+    // The server has the new name now; a second Save (after the icon failed below) must not send it again
+    setOriginalName(form.channel_name);
+
+    // 2. The icon, only when it was changed. It is the channel permission i_icon_id and not a
+    // channeledit property - TS6 (6.0.0-beta13.1) answers `1538 invalid parameter` to
+    // channel_icon_id on every path (WebQuery, SSH ServerQuery, the client protocol), whatever
+    // the value - so it is a request of its own that can fail on its own, typically for a
+    // missing right, which is why the message says what is missing. The permission is set with
+    // channeladdperm and removed with channeldelperm (a value of 0 would leave an empty entry
+    // behind); the channel's icon follows at once, and its sub-channels do not inherit it.
+    if (form.iconId !== originalIconId) {
+      setSavingIcon(true);
+      try {
+        if (form.iconId > 0) {
+          await permissionsApi.addChannelPerm(selectedConfigId, selectedSid, cid, { permsid: 'i_icon_id', permvalue: form.iconId });
+        } else {
+          await permissionsApi.delChannelPerm(selectedConfigId, selectedSid, cid, { permsid: 'i_icon_id' });
+        }
+      } catch (err: any) {
+        // The dialog stays open and the icon stays selected, so it can be tried again
+        toast.error(t('components.editChannelDialog.iconSaveFailed', { reason: channelIconErrorMessage(err, t) }));
+        return;
+      } finally {
+        setSavingIcon(false);
+      }
+      setOriginalIconId(form.iconId);
+      // Everything that shows the channel's permissions or where an icon is used
+      for (const key of ['entity-perms', 'perm-find', 'perm-overview', 'icon-usage']) {
+        qc.invalidateQueries({ queryKey: [key, selectedConfigId, selectedSid] });
+      }
+    }
+
+    toast.success(t('components.editChannelDialog.updated'));
+    onClose();
   };
 
   return (
@@ -230,6 +290,39 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
               <div>
                 <Label className="text-xs">{t('components.editChannelDialog.channelName')}</Label>
                 <Input value={form.channel_name} onChange={(e) => setForm({ ...form, channel_name: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">{t('components.editChannelDialog.icon')}</Label>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-md border',
+                      form.iconId > 0 ? 'border-border bg-muted/30' : 'border-dashed border-border/60 text-muted-foreground/50',
+                    )}
+                  >
+                    {form.iconId > 0 ? <IconImage iconId={form.iconId} size={24} /> : <ImageIcon className="h-4 w-4" />}
+                  </div>
+                  <span className={cn('min-w-0 flex-1 truncate text-xs', form.iconId > 0 ? 'font-mono-data' : 'text-muted-foreground')}>
+                    {form.iconId > 0 ? `#${form.iconId}` : t('components.editChannelDialog.iconNone')}
+                  </span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)} disabled={!loaded}>
+                    <ImageIcon className="h-3.5 w-3.5 mr-1" /> {t('components.editChannelDialog.iconChoose')}
+                  </Button>
+                  {form.iconId > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => setForm({ ...form, iconId: 0 })}
+                      title={t('components.editChannelDialog.iconRemove')}
+                      aria-label={t('components.editChannelDialog.iconRemove')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t('components.editChannelDialog.iconHint')}</p>
               </div>
               <div>
                 <Label className="text-xs">{t('components.editChannelDialog.topic')}</Label>
@@ -369,10 +462,20 @@ export function EditChannelDialog({ cid, fallbackName, onClose }: EditChannelDia
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={!form.channel_name.trim() || !loaded || editChannel.isPending}>
-            {editChannel.isPending ? t('common.saving') : t('common.save')}
+          <Button onClick={handleSave} disabled={!form.channel_name.trim() || !loaded || editChannel.isPending || savingIcon}>
+            {editChannel.isPending || savingIcon ? t('common.saving') : t('common.save')}
           </Button>
         </DialogFooter>
+
+        {/* Inside the dialog's own tree, so that Radix treats clicks and Escape in the picker as
+            belonging to the topmost layer and does not close this dialog underneath it. */}
+        <IconPickerDialog
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          currentIconId={form.iconId}
+          idEntryAvailable={false}
+          onSelect={(iconId) => setForm((current) => ({ ...current, iconId }))}
+        />
       </DialogContent>
     </Dialog>
   );
