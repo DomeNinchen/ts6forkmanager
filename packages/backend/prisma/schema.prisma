@@ -199,7 +199,10 @@ model BotExecutionLog {
   executionId    Int?
   execution      BotExecution?  @relation(fields: [executionId], references: [id], onDelete: Cascade)
   serverConfigId Int
-  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id])
+  // Cascade like every other relation to TsServerConfig: without it the first
+  // execution log of a connection made deleting that connection fail with a
+  // foreign key error.
+  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
   flowId         Int?
   nodeId         String?
   nodeName       String?

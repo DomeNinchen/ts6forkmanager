@@ -172,11 +172,17 @@ function resolveTimeVars(text: string, timezone?: string): string {
 export class AnimationManager {
   private animations: Map<number, ActiveAnimation> = new Map();
 
+  /**
+   * `getClient` is asked again on every frame instead of being handed a client
+   * once: the connection can be edited while the animation runs (new API key,
+   * host or port), and an animation holding on to the client it started with
+   * would go on talking to the old one.
+   */
   startAnimation(
     flowId: number,
     sid: number,
     config: AnimationConfig,
-    client: WebQueryClient,
+    getClient: () => WebQueryClient,
   ): void {
     // Stop existing animation for this flow
     this.stopAnimation(flowId);
@@ -194,7 +200,7 @@ export class AnimationManager {
         const channelName = frames[frameIndex % frames.length];
         frameIndex++;
 
-        await client.executePost(sid, 'channeledit', {
+        await getClient().executePost(sid, 'channeledit', {
           cid: config.channelId,
           channel_name: channelName,
         });

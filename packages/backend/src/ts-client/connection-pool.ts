@@ -1,6 +1,21 @@
 import { PrismaClient } from '../generated/prisma/client.js';
 import { WebQueryClient } from './webquery-client.js';
 import { decrypt } from '../utils/crypto.js';
+import { ConnectionUnavailableError } from '../middleware/error-handler.js';
+
+/**
+ * How long a client that has just been replaced keeps its sockets. A little
+ * longer than WebQueryClient's own 15 s request timeout, so a call that was
+ * already under way when the connection was edited still gets its answer.
+ */
+const RETIRE_DELAY_MS = 20_000;
+
+/** Closes the sockets of a replaced client once nothing can still be waiting on it. Without this every edit left a keep-alive connection behind. */
+function retire(client: WebQueryClient | undefined): void {
+  if (!client) return;
+  const timer = setTimeout(() => client.destroy(), RETIRE_DELAY_MS);
+  timer.unref?.();
+}
 
 export class ConnectionPool {
   private clients: Map<number, WebQueryClient> = new Map();
@@ -27,8 +42,10 @@ export class ConnectionPool {
   }
 
   async addClient(id: number, host: string, port: number, apiKey: string, useHttps: boolean, nickname?: string | null): Promise<void> {
+    const previous = this.clients.get(id);
     const client = new WebQueryClient(host, port, apiKey, useHttps);
     this.clients.set(id, client);
+    retire(previous);
     if (nickname) {
       try {
         // clientupdate fails with "invalid serverID" without a real virtual
@@ -53,13 +70,29 @@ export class ConnectionPool {
   getClient(configId: number): WebQueryClient {
     const client = this.clients.get(configId);
     if (!client) {
-      throw new Error(`No connection configured for server config ID ${configId}`);
+      throw new ConnectionUnavailableError(configId);
     }
     return client;
   }
 
+  /** The client for a connection, or null when it has none - for callers that can do without one. */
+  tryGetClient(configId: number): WebQueryClient | null {
+    return this.clients.get(configId) ?? null;
+  }
+
   hasClient(configId: number): boolean {
     return this.clients.has(configId);
+  }
+
+  /**
+   * Brings the pool in line with the database row of one connection: whatever
+   * it holds for that connection afterwards is built from the row as it is now,
+   * or nothing when the row is gone or disabled. The single entry point after a
+   * connection was created, edited, enabled, disabled or got a bot identity.
+   */
+  async syncServer(configId: number): Promise<void> {
+    await this.refreshClient(configId);
+    await this.refreshBotClient(configId);
   }
 
   async refreshClient(configId: number): Promise<void> {
@@ -77,8 +110,10 @@ export class ConnectionPool {
    * server sees registers as a distinct client - re-apply the nickname on every
    * (re)connect rather than assuming TS remembers it from a previous session. */
   private async addBotClient(id: number, host: string, port: number, apiKey: string, useHttps: boolean, nickname: string | null): Promise<void> {
+    const previous = this.botClients.get(id);
     const client = new WebQueryClient(host, port, apiKey, useHttps);
     this.botClients.set(id, client);
+    retire(previous);
     if (nickname) {
       try {
         // Same sid=0-doesn't-work quirk as the main identity above.
