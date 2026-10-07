@@ -15,13 +15,13 @@ export class AppError extends Error {
 
 /**
  * Something asked for a server connection's WebQuery client while the pool has
- * none for it (the connection is disabled, was deleted, or never came up). A
- * 409 with a readable message rather than the anonymous 500 a plain Error
- * turns into.
+ * none for it (the connection is disabled, was deleted, or has no API key - a
+ * connection without query access). A 409 with a readable message rather than
+ * the anonymous 500 a plain Error turns into.
  */
 export class ConnectionUnavailableError extends AppError {
   constructor(public readonly configId: number) {
-    super(409, 'The query connection for this server is not active (the server connection is disabled)', undefined, 'CONNECTION_UNAVAILABLE');
+    super(409, 'The query connection for this server is not active (the server connection is disabled, or it has no WebQuery API key)', undefined, 'CONNECTION_UNAVAILABLE');
     this.name = 'ConnectionUnavailableError';
   }
 }

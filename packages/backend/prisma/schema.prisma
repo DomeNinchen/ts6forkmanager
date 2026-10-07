@@ -92,7 +92,11 @@ model TsServerConfig {
   name         String
   host         String
   webqueryPort Int      @default(10080)
-  apiKey       String
+  // Null for a connection without query access (a hosted server whose provider
+  // gives out no WebQuery API key): such a connection has no WebQuery client in
+  // the connection pool, and only what runs over the voice connection works on
+  // it - the music bots. Everything else that needs WebQuery answers 409.
+  apiKey       String?
   useHttps     Boolean  @default(false)
   sshPort      Int      @default(10022)
   sshUsername  String?

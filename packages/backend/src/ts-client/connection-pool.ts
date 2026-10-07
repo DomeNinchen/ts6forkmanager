@@ -26,13 +26,14 @@ export class ConnectionPool {
   constructor(private prisma: PrismaClient) {}
 
   async initialize(): Promise<void> {
+    // A connection without an API key has no WebQuery access and so no client here (see the apiKey comment on TsServerConfig).
     const servers = await this.prisma.tsServerConfig.findMany({
-      where: { enabled: true },
+      where: { enabled: true, apiKey: { not: null } },
     });
 
     for (const server of servers) {
       // H8: Decrypt API key before use
-      await this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps, server.queryNickname);
+      await this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey!), server.useHttps, server.queryNickname);
       if (server.botApiKey) {
         await this.addBotClient(server.id, server.host, server.webqueryPort, decrypt(server.botApiKey), server.useHttps, server.botQueryName);
       }
@@ -99,7 +100,7 @@ export class ConnectionPool {
     const server = await this.prisma.tsServerConfig.findUnique({
       where: { id: configId },
     });
-    if (server && server.enabled) {
+    if (server && server.enabled && server.apiKey) {
       await this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps, server.queryNickname);
     } else {
       this.removeClient(configId);
@@ -142,7 +143,8 @@ export class ConnectionPool {
     const server = await this.prisma.tsServerConfig.findUnique({
       where: { id: configId },
     });
-    if (server && server.enabled && server.botApiKey) {
+    // The bot identity is provisioned through, and belongs to, the connection's own WebQuery access: without that there is none.
+    if (server && server.enabled && server.apiKey && server.botApiKey) {
       await this.addBotClient(server.id, server.host, server.webqueryPort, decrypt(server.botApiKey), server.useHttps, server.botQueryName);
     } else {
       this.removeBotClient(configId);

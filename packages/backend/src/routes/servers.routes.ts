@@ -30,12 +30,18 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
         createdAt: true, sshUsername: true, pingHost: true,
         recordUserHistory: true,
         botQueryName: true, botApiKey: true,
+        apiKey: true,
       },
       orderBy: { id: 'asc' },
     });
 
+    // The two capability flags are what the UI hides pages by: a connection
+    // without an API key has no WebQuery (only the music bots work on it), one
+    // without an SSH login has no live events for bot flows.
     res.json(servers.map((s: any) => ({
       ...s,
+      hasWebQuery: !!s.apiKey,
+      apiKey: undefined,
       hasSshCredentials: !!s.sshUsername,
       sshUsername: undefined,
       hasBotIdentity: !!s.botApiKey,
@@ -48,7 +54,9 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
 serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const { name, host, webqueryPort, apiKey, useHttps, sshPort, sshUsername, sshPassword, pingHost, recordUserHistory } = req.body;
-    if (!name || !host || !apiKey) throw new AppError(400, 'Name, host, and API key are required');
+    // The API key is optional: a connection without one (a hosted server whose
+    // provider gives out no WebQuery access) still runs the music bots.
+    if (!name || !host) throw new AppError(400, 'Name and host are required');
 
     const prisma = req.app.locals.prisma;
     // H8: Encrypt sensitive fields at rest
@@ -57,7 +65,7 @@ serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response,
         name,
         host,
         webqueryPort: webqueryPort || 10080,
-        apiKey: encrypt(apiKey),
+        apiKey: apiKey ? encrypt(apiKey) : null,
         useHttps: useHttps || false,
         sshPort: sshPort || 10022,
         sshUsername: sshUsername || null,
@@ -92,6 +100,7 @@ serverRoutes.get('/:configId', async (req: Request, res: Response, next) => {
       id: server.id, name: server.name, host: server.host,
       webqueryPort: server.webqueryPort, useHttps: server.useHttps,
       sshPort: server.sshPort, hasSshCredentials: !!server.sshUsername,
+      hasWebQuery: !!server.apiKey,
       enabled: server.enabled, createdAt: server.createdAt,
       botQueryName: server.botQueryName, hasBotIdentity: !!server.botApiKey,
       pingHost: server.pingHost,
@@ -114,6 +123,13 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     }
     for (const field of fields) {
       if (req.body[field] !== undefined) {
+        // An explicit null (not the empty string the edit form sends for "leave
+        // it as it is") removes the API key: the connection becomes one without
+        // query access, which keeps the music bots and drops everything else.
+        if (field === 'apiKey' && req.body.apiKey === null) {
+          data.apiKey = null;
+          continue;
+        }
         // Don't overwrite API key, SSH username, or SSH password with empty
         // strings - the frontend never receives these back after saving them
         // (GET strips them to a hasSshCredentials/hasBotIdentity-style flag,
@@ -227,6 +243,8 @@ serverRoutes.post('/:configId/test', requireRole('admin'), async (req: Request, 
       where: { id: parseInt(String(req.params.configId)) },
     });
     if (!server) throw new AppError(404, 'Server config not found');
+    // Nothing to test over WebQuery: say so, rather than reporting a failed connection.
+    if (!server.apiKey) throw new AppError(409, 'This connection has no WebQuery API key, so there is no query connection to test', undefined, 'NO_WEBQUERY');
 
     const client = new WebQueryClient(server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps);
     const result = await client.testConnection();
