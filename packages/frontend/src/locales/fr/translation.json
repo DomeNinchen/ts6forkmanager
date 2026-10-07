@@ -1617,7 +1617,9 @@
       "setMultiple": "Définir plusieurs",
       "importFileHint": "Appliquer un fichier de permissions précédemment exporté à la sélection actuelle",
       "importFile": "Importer un fichier",
-      "bulkApplyHint": "Définissez ici les valeurs à appliquer aux {{count}} entités sélectionnées - les valeurs par entité actuelles ne sont pas affichées quand plusieurs sont sélectionnées.",
+      "bulkApplyHint": "Les valeurs définies ici sont appliquées aux {{count}} entités sélectionnées. Une valeur affichée est celle de toutes les entités ; « mixte » signifie qu'elles diffèrent (survolez pour voir la valeur de chacune). Le bouton Retirer enlève la permission à toutes.",
+      "mixed": "mixte",
+      "notSet": "non défini",
       "compareHintAutoRank": "Toutes les permissions sont affichées par défaut (« Ajouter/retirer une perm » pour réduire, le × sur une ligne pour la retirer) - modifiez une cellule pour changer uniquement cette entité. Avec 3 entités ou moins, chaque ligne est colorée automatiquement par rang : rouge = plus élevé, jaune = égal/milieu, vert = plus bas, rose = non défini.",
       "compareHintPivot": "Toutes les permissions sont affichées par défaut (« Ajouter/retirer une perm » pour réduire, le × sur une ligne pour la retirer) - modifiez une cellule pour changer uniquement cette entité. Cliquez sur une cellule pour l’épingler comme référence ; le reste de cette ligne est coloré par rapport à elle (turquoise = plus bas, vert citron = identique, rouge = plus élevé, rose = non défini).",
       "compareHintSuffix": "« Ajouter une cible » charge un fichier de groupe précédemment exporté comme colonne supplémentaire en lecture seule. Utilisez plutôt Application en masse pour pousser la même valeur à toutes les entités sélectionnées en une fois.",
@@ -2035,6 +2037,8 @@
       "poolUnavailable": "Pool d’icônes indisponible",
       "sshRequired": "La lecture du pool d’icônes nécessite un accès SSH, car l’API HTTP WebQuery de TeamSpeak ne prend pas en charge les commandes de transfert de fichiers. Configurez les identifiants SSH dans les paramètres du serveur, ou saisissez directement l’ID de l’icône.",
       "loadFailed": "Échec du chargement du pool d’icônes ; saisissez directement l’ID de l’icône à la place.",
+      "sshRequiredPickOnly": "La lecture du pool d’icônes nécessite un accès SSH, car l’API HTTP WebQuery de TeamSpeak ne prend pas en charge les commandes de transfert de fichiers. Configurez les identifiants SSH dans les paramètres du serveur.",
+      "loadFailedPickOnly": "Échec du chargement du pool d’icônes.",
       "noMatchingIcons": "Aucune icône correspondante",
       "noIconsUploaded": "Aucune icône importée",
       "noMatchDescription": "Aucune icône de ce pool ne correspond à votre recherche.",
@@ -2453,6 +2457,13 @@
         "advanced": "Avancé"
       },
       "channelName": "Nom du salon",
+      "icon": "Icône",
+      "iconNone": "Aucune icône",
+      "iconChoose": "Choisir une icône...",
+      "iconRemove": "Retirer l’icône",
+      "iconHint": "Enregistrée comme permission de salon i_icon_id ; elle apparaît donc aussi sous Autorisations.",
+      "iconSaveFailed": "Les paramètres du salon ont été enregistrés, mais l’icône n’a pas pu être modifiée : {{reason}}",
+      "iconChangeFailed": "L’icône n’a pas pu être modifiée",
       "topic": "Sujet",
       "leaveEmptyToKeep": "Laisser vide pour conserver l’actuel",
       "codec": "Codec",
@@ -2864,7 +2875,11 @@
       "cannotModifyDefaultGroup": "Impossible de modifier les permissions d’un groupe par défaut/modèle",
       "invalidPermValueSize": "Taille de valeur de permission invalide dans le fichier",
       "invalidPermValue": "Valeur de permission invalide dans le fichier",
-      "insufficientModifyPower": "Pouvoir de modification des permissions insuffisant pour l’une des valeurs importées"
+      "insufficientModifyPower": "Pouvoir de modification des permissions insuffisant pour l’une des valeurs importées",
+      "channelIconChannelPower": "Ce salon exige un pouvoir de modification des permissions de salon supérieur à celui de votre compte (i_channel_needed_permission_modify_power).",
+      "channelIconMissingPermission": "Vous n’avez pas le droit de modifier l’icône de ce salon (permissions client insuffisantes, échec sur {{permission}}).",
+      "channelIconNoRights": "Vous n’avez pas le droit de modifier l’icône de ce salon (permissions client insuffisantes).",
+      "channelIconModifyPower": "Votre pouvoir de modification des permissions est trop faible pour modifier des icônes : le serveur exige pour i_icon_id plus que ce que votre compte possède (i_permission_modify_power par rapport à i_needed_modify_power_icon_id)."
     }
   }
 }

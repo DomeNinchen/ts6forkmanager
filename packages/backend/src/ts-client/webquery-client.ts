@@ -46,6 +46,16 @@ function toEnvelope(httpStatus: number, data: unknown): WebQueryEnvelope {
   };
 }
 
+/** An error answer of TeamSpeak's as a TSApiError. For a missing permission (2568) WebQuery
+ * names it in `failed_permission`; that name is kept, since "insufficient client permissions"
+ * alone does not tell an admin which one to look at. */
+function tsApiErrorFrom(status: { code: number; message: string; failed_permission?: unknown }): TSApiError {
+  const failedPermission = typeof status.failed_permission === 'string' && status.failed_permission
+    ? status.failed_permission
+    : undefined;
+  return new TSApiError(status.code, status.message, failedPermission);
+}
+
 export class WebQueryClient {
   private http: AxiosInstance;
   private agent: http.Agent | https.Agent;
@@ -102,7 +112,7 @@ export class WebQueryClient {
           return [];
         }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${data.status.code} msg=${data.status.message}`);
-        throw new TSApiError(data.status.code, data.status.message);
+        throw tsApiErrorFrom(data.status);
       }
 
       if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(data.body ?? data)}`);
@@ -111,10 +121,7 @@ export class WebQueryClient {
       if (error instanceof TSApiError) throw error;
       if (error.response?.data?.status) {
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${error.response.data.status.code} msg=${error.response.data.status.message}`);
-        throw new TSApiError(
-          error.response.data.status.code,
-          error.response.data.status.message,
-        );
+        throw tsApiErrorFrom(error.response.data.status);
       }
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
       throw new TSApiError(-1, error.message || 'Connection failed');
@@ -138,7 +145,7 @@ export class WebQueryClient {
           return [];
         }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${data.status.code} msg=${data.status.message}`);
-        throw new TSApiError(data.status.code, data.status.message);
+        throw tsApiErrorFrom(data.status);
       }
 
       if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(data.body ?? data)}`);
@@ -151,10 +158,7 @@ export class WebQueryClient {
           return [];
         }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${error.response.data.status.code} msg=${error.response.data.status.message}`);
-        throw new TSApiError(
-          error.response.data.status.code,
-          error.response.data.status.message,
-        );
+        throw tsApiErrorFrom(error.response.data.status);
       }
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
       throw new TSApiError(-1, error.message || 'Connection failed');
@@ -183,7 +187,7 @@ export class WebQueryClient {
           return [];
         }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${data.status.code} msg=${data.status.message}`);
-        throw new TSApiError(data.status.code, data.status.message);
+        throw tsApiErrorFrom(data.status);
       }
 
       if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(data.body ?? data)}`);
@@ -196,10 +200,7 @@ export class WebQueryClient {
           return [];
         }
         if (debug) console.log(`[WebQuery ${this.target}] ← error id=${error.response.data.status.code} msg=${error.response.data.status.message}`);
-        throw new TSApiError(
-          error.response.data.status.code,
-          error.response.data.status.message,
-        );
+        throw tsApiErrorFrom(error.response.data.status);
       }
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
       throw new TSApiError(-1, error.message || 'Connection failed');
