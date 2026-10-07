@@ -2084,10 +2084,11 @@ export default function Permissions() {
                                     </button>
                                   ) : (
                                     <div className="inline-flex items-center gap-1">
+                                      {/* A staged removal carries permvalue 0 - show it as unset, not as a value of 0 */}
                                       <Input
                                         type="number"
                                         className="h-6 w-20 text-xs text-center font-mono-data px-1"
-                                        value={effective?.permvalue ?? ''}
+                                        value={isSet ? effective.permvalue : ''}
                                         placeholder={isMixed ? t('pages.permissions.mixed') : '—'}
                                         title={mixedTitle}
                                         onChange={(e) => {
