@@ -95,6 +95,8 @@ export class VoiceBot extends EventEmitter {
 
   // Description template refresh (keeps {remaining}/{elapsed} current while playing)
   private descriptionTimer: ReturnType<typeof setInterval> | null = null;
+  /** The "no WebQuery, so no description" note is logged once per bot, not on every refresh. */
+  private descriptionUnavailableLogged = false;
 
   // Reconnect: distinguishes manual stop from unexpected disconnect
   private _manuallyStopped: boolean = false;
@@ -369,24 +371,14 @@ export class VoiceBot extends EventEmitter {
       return;
     }
 
-    // Best-effort: TS3 error responses aren't correlated to a specific
-    // command here (unlike ftinitupload's clientftfid), so this can
-    // occasionally attribute an unrelated concurrent error to this update -
-    // still a large improvement over the previous silent catch, which
-    // swallowed every client_description failure with no trace at all.
-    const onError = (params: Record<string, string>) => {
-      const id = parseInt(params.id || '0', 10);
-      if (id !== 0) {
-        console.error(`[VoiceBot ${this.config.id}] client_description update may have been rejected: TS error ${id}: ${params.msg || 'unknown error'}`);
-      }
-    };
-    this.client.once('ts3error', onError);
-    setTimeout(() => this.client.off('ts3error', onError), 3000);
-    try {
-      this.client.sendCommand(buildCommand('clientupdate', { client_description: rendered }));
-    } catch (err: any) {
-      this.client.off('ts3error', onError);
-      console.error(`[VoiceBot ${this.config.id}] Failed to send client_description update: ${err.message}`);
+    // No WebQuery client (the server connection has no API key, or is disabled):
+    // there is no way to set the description. Over the voice connection itself
+    // TS6 refuses it - measured on 6.0.0-beta13.1: `clientupdate client_description`
+    // answers error 1538 "invalid parameter" while `clientupdate client_nickname`
+    // is fine - so nothing is sent rather than a command that is rejected every time.
+    if (rendered && !this.descriptionUnavailableLogged) {
+      this.descriptionUnavailableLogged = true;
+      console.log(`[VoiceBot ${this.config.id}] The description template is not shown: setting it needs a WebQuery connection, and this server connection has none`);
     }
   }
 

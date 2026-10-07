@@ -32,6 +32,9 @@ const MAX_DELAY_MS = 300000; // 5 minutes
 const MAX_LOOP_ITERATIONS_DEFAULT = 50;
 const MAX_LOOP_ITERATIONS_HARD_CAP = 500; // absolute ceiling regardless of node config
 
+/** The two WebQuery calls the flow actions make - what they get instead of a client, see FlowRunner.execute. */
+type FlowQueryClient = Pick<WebQueryClient, 'execute' | 'executePost'>;
+
 interface FlowInfo {
   id: number;
   name: string;
@@ -89,7 +92,16 @@ export class FlowRunner {
     const startTime = Date.now();
 
     try {
-      const client = this.connectionPool.getBotClient(flow.serverConfigId);
+      // The pool is asked when an action actually calls WebQuery, not when the flow
+      // starts: a flow made of voice, log, delay and variable nodes needs no WebQuery
+      // connection and has to run on a server connection that has none, and a flow
+      // that waits a while picks up an API key edited meanwhile.
+      const pool = this.connectionPool;
+      const configId = flow.serverConfigId;
+      const client: FlowQueryClient = {
+        execute: (...args) => pool.getBotClient(configId).execute(...args),
+        executePost: (...args) => pool.getBotClient(configId).executePost(...args),
+      };
       const triggerNode = flow.flowData.nodes.find(n => n.id === triggerNodeId);
 
       if (!triggerNode) {
@@ -139,7 +151,7 @@ export class FlowRunner {
     node: FlowNode,
     flowDef: FlowDefinition,
     ctx: ExecutionContext,
-    client: WebQueryClient,
+    client: FlowQueryClient,
     visitNode: (node: FlowNode) => Promise<void>,
   ): Promise<void> {
     await this.log(ctx, node, 'debug', `Processing node '${node.data.label}' (type=${node.type})`);
@@ -305,7 +317,7 @@ export class FlowRunner {
   private async executeAction(
     node: FlowNode,
     ctx: ExecutionContext,
-    client: WebQueryClient,
+    client: FlowQueryClient,
   ): Promise<void> {
     const data = node.data as any;
     const actionType = data.actionType as string;
@@ -357,7 +369,7 @@ export class FlowRunner {
     }
   }
 
-  private async executeKick(data: KickActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeKick(data: KickActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const clid = ctx.eventData.clid;
     const reasonMsg = await ctx.resolveTemplate(data.reasonMsg || '');
     await client.executePost(ctx.sid, 'clientkick', {
@@ -367,7 +379,7 @@ export class FlowRunner {
     });
   }
 
-  private async executeBan(data: BanActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeBan(data: BanActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const clid = ctx.eventData.clid;
     const reason = data.reason ? await ctx.resolveTemplate(data.reason) : undefined;
     await client.executePost(ctx.sid, 'banclient', {
@@ -377,13 +389,13 @@ export class FlowRunner {
     });
   }
 
-  private async executeMove(data: MoveActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeMove(data: MoveActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const clid = ctx.eventData.clid;
     const cid = await ctx.resolveTemplate(data.channelId);
     await client.executePost(ctx.sid, 'clientmove', { clid, cid });
   }
 
-  private async executeMessage(data: MessageActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeMessage(data: MessageActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const msg = await ctx.resolveTemplate(data.message);
     const target = data.target ? await ctx.resolveTemplate(data.target) : ctx.eventData.clid;
 
@@ -415,7 +427,7 @@ export class FlowRunner {
     });
   }
 
-  private async clientMoveTolerating770(client: WebQueryClient, sid: number, clid: string, cid: string): Promise<void> {
+  private async clientMoveTolerating770(client: FlowQueryClient, sid: number, clid: string, cid: string): Promise<void> {
     try {
       await client.executePost(sid, 'clientmove', { clid, cid });
     } catch (err) {
@@ -423,13 +435,13 @@ export class FlowRunner {
     }
   }
 
-  private async executePoke(data: PokeActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executePoke(data: PokeActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const clid = ctx.eventData.clid;
     const msg = await ctx.resolveTemplate(data.message);
     await client.executePost(ctx.sid, 'clientpoke', { clid, msg });
   }
 
-  private async executeChannelCreate(data: ChannelCreateActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeChannelCreate(data: ChannelCreateActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const resolved: Record<string, string> = {};
     for (const [key, val] of Object.entries(data.params || {})) {
       resolved[key] = await ctx.resolveTemplate(val);
@@ -440,19 +452,19 @@ export class FlowRunner {
     }
   }
 
-  private async executeGroupAddClient(data: GroupAddClientActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeGroupAddClient(data: GroupAddClientActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const cldbid = ctx.eventData.client_database_id;
     const sgid = await ctx.resolveTemplate(data.groupId);
     await client.executePost(ctx.sid, 'servergroupaddclient', { sgid, cldbid });
   }
 
-  private async executeGroupRemoveClient(data: GroupRemoveClientActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeGroupRemoveClient(data: GroupRemoveClientActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const cldbid = ctx.eventData.client_database_id;
     const sgid = await ctx.resolveTemplate(data.groupId);
     await client.executePost(ctx.sid, 'servergroupdelclient', { sgid, cldbid });
   }
 
-  private async executeWebQuery(data: WebQueryActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeWebQuery(data: WebQueryActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const resolved: Record<string, string> = {};
     for (const [key, val] of Object.entries(data.params || {})) {
       resolved[key] = await ctx.resolveTemplate(val);
@@ -520,7 +532,7 @@ export class FlowRunner {
     }
   }
 
-  private async executeChannelEdit(data: ChannelEditActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeChannelEdit(data: ChannelEditActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const cid = await ctx.resolveTemplate(data.channelId);
     const resolved: Record<string, string> = { cid };
     for (const [key, val] of Object.entries(data.params || {})) {
@@ -529,7 +541,7 @@ export class FlowRunner {
     await client.executePost(ctx.sid, 'channeledit', resolved);
   }
 
-  private async executeChannelDelete(data: ChannelDeleteActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeChannelDelete(data: ChannelDeleteActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const cid = await ctx.resolveTemplate(data.channelId);
     await client.executePost(ctx.sid, 'channeldelete', { cid, force: data.force ? 1 : 0 });
   }
@@ -572,7 +584,7 @@ export class FlowRunner {
     }
   }
 
-  private async executeAfkMover(data: AfkMoverActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeAfkMover(data: AfkMoverActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const afkCid = await ctx.resolveTemplate(data.afkChannelId);
     const thresholdSec = data.idleThresholdSeconds || 300;
     const exemptIds = data.exemptGroupIds
@@ -609,7 +621,7 @@ export class FlowRunner {
     ctx.setTemp('afkMovedCount', movedCount);
   }
 
-  private async executeIdleKicker(data: IdleKickerActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeIdleKicker(data: IdleKickerActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const thresholdSec = data.idleThresholdSeconds || 1800;
     const reason = data.reason ? await ctx.resolveTemplate(data.reason) : 'Idle timeout';
     const exemptIds = data.exemptGroupIds
@@ -636,7 +648,7 @@ export class FlowRunner {
     ctx.setTemp('idleKickedCount', kickedCount);
   }
 
-  private async executePokeGroup(data: PokeGroupActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executePokeGroup(data: PokeGroupActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const sgid = await ctx.resolveTemplate(data.groupId);
     const msg = await ctx.resolveTemplate(data.message);
 
@@ -661,7 +673,7 @@ export class FlowRunner {
     ctx.setTemp('pokedCount', pokedCount);
   }
 
-  private async executeRankCheck(data: RankCheckActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeRankCheck(data: RankCheckActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     // Per-client detail (computed hours, group membership, why a client was
     // or wasn't promoted) is verbose - every eligible client, every tick.
     // Off by default; toggle via Settings > Debug (or RANK_CHECK_DEBUG=1 on
@@ -773,7 +785,7 @@ export class FlowRunner {
     console.log(`[BotEngine] Rank Check: ${clients.length} connection(s) seen, ${eligible} eligible (query clients and excluded groups filtered out), ${promoted} promoted`);
   }
 
-  private async executeTempChannelCleanup(data: TempChannelCleanupActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeTempChannelCleanup(data: TempChannelCleanupActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const parentCid = await ctx.resolveTemplate(data.parentChannelId);
     const protectedStr = data.protectedChannelIds ? await ctx.resolveTemplate(data.protectedChannelIds) : '';
     const protectedSet = new Set(protectedStr.split(',').map(s => s.trim()).filter(Boolean));
@@ -1038,7 +1050,7 @@ export class FlowRunner {
   // cheap regardless of how many people are online - a Loop-based equivalent would
   // cost 1-2 of the engine's MAX_NODE_VISITS per online client, which on a busy
   // server could exhaust that shared per-execution budget and fail the whole flow.
-  private async executeCountOnlineInGroups(data: CountOnlineInGroupsActionData, ctx: ExecutionContext, client: WebQueryClient): Promise<void> {
+  private async executeCountOnlineInGroups(data: CountOnlineInGroupsActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const groupIds = await ctx.resolveTemplate(data.groupIds);
     const storeAs = data.storeAs || 'onlineCount';
 

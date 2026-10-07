@@ -137,8 +137,9 @@ export class UserHistorySampler implements MetricSink {
       // Read fresh each tick rather than caching: a connection that was
       // added, disabled, or had its recording switched on or off is picked up
       // by the very next tick, with no reconcile step to keep in sync.
+      // Connections without an API key have no WebQuery access, so nothing to record for them.
       configs = await this.prisma.tsServerConfig.findMany({
-        where: { enabled: true, recordUserHistory: true },
+        where: { enabled: true, recordUserHistory: true, apiKey: { not: null } },
         select: { id: true },
       });
     } catch (err: any) {
