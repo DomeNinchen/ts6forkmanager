@@ -16,7 +16,7 @@ import {
 import { useSongs, useUploadSong, useDeleteSong, useYouTubeSearch, useYouTubeDownload, useYouTubeInfo, useYouTubeDownloadBatch, useScanMusicLibrary } from '@/hooks/use-music-library';
 import { useRadioStations, useRadioPresets, useCreateRadioStation, useDeleteRadioStation, usePlayRadio } from '@/hooks/use-radio-stations';
 import { usePlaylists, usePlaylist, useCreatePlaylist, useDeletePlaylist, useAddSongToPlaylist, useRemoveSongFromPlaylist } from '@/hooks/use-playlists';
-import { useServers } from '@/hooks/use-servers';
+import { useServers, serverCapabilities } from '@/hooks/use-servers';
 import { useServerStore } from '@/stores/server.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -658,6 +658,9 @@ function BotsTab() {
 
   const bots = Array.isArray(data) ? data : [];
   const serverList = Array.isArray(servers) ? servers : [];
+  // The description is set through WebQuery; on a connection without an API key it is never shown (the voice
+  // connection itself cannot set it), so the field says so instead of silently doing nothing.
+  const descriptionUnavailable = !serverCapabilities(serverList.find((s: any) => String(s.id) === String(form.serverConfigId || selectedConfigId))).hasWebQuery;
 
   // Scoped to whichever server this bot belongs to (or is being created for),
   // for the autoplay song/station pickers below.
@@ -896,6 +899,9 @@ function BotsTab() {
                 rows={2}
                 className="text-sm"
               />
+              {descriptionUnavailable && (
+                <p className="text-[11px] text-amber-500 mt-1">{t('pages.musicBots.botsTab.descriptionNeedsWebQuery')}</p>
+              )}
               {Array.isArray(placeholders) && placeholders.length > 0 && (
                 <div className="mt-1.5 space-y-0.5">
                   {placeholders.map((p) => (
@@ -2198,6 +2204,9 @@ function PermissionsTab() {
   const [serverId, setServerId] = useState<number | null>(selectedConfigId);
   const configId = serverId || selectedConfigId;
   const serverList = Array.isArray(servers) ? servers : [];
+  // A connection without an API key has no WebQuery: the server groups cannot be listed here, and the bot
+  // cannot look up a sender's groups either, so there is nothing to assign (see the notice below).
+  const noWebQuery = !serverCapabilities(serverList.find((s: any) => s.id === configId)).hasWebQuery;
 
   // Music bots assume a single virtual server per TS instance throughout
   // this app (see the sid=1 comment in voice/voice-bot.ts) - group IDs here
@@ -2205,7 +2214,7 @@ function PermissionsTab() {
   const { data: groupsData } = useQuery({
     queryKey: ['server-groups-for-command-perms', configId],
     queryFn: () => groupsApi.serverGroups(configId!, 1),
-    enabled: !!configId,
+    enabled: !!configId && !noWebQuery,
   });
   // Template/query groups can't be assigned to a real client (TeamSpeak
   // rejects them - see the same filter and note in ChannelGroups.tsx), so
@@ -2253,18 +2262,40 @@ function PermissionsTab() {
 
   if (!configId) return <EmptyState icon={ShieldCheck} title={t('pages.noServerSelected')} />;
 
+  const serverSelect = (
+    <div className="flex items-center gap-2">
+      <Select value={String(configId)} onValueChange={(v) => setServerId(Number(v))}>
+        <SelectTrigger className="h-8 w-56 text-xs"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {serverList.map((s: any) => (
+            <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  if (noWebQuery) {
+    return (
+      <div className="space-y-4">
+        {serverSelect}
+        <Card className="card-hero">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" /> {t('pages.musicBots.permissionsTab.noWebQueryTitle')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{t('pages.musicBots.permissionsTab.noWebQueryHint')}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Select value={String(configId)} onValueChange={(v) => setServerId(Number(v))}>
-          <SelectTrigger className="h-8 w-56 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {serverList.map((s: any) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {serverSelect}
 
       <Card className="card-hero">
         <CardHeader className="pb-2">
