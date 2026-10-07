@@ -10,7 +10,7 @@ import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.
 import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus, type VideoQueueItem } from './streaming/types.js';
 import { downloadVideoForStream, safeUnlinkStreamTemp } from './streaming/video-download.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
-import { WebQueryClient } from '../ts-client/webquery-client.js';
+import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { BotFailureKind } from '@ts6/common';
 
 /** Default cap on how long a pre-downloaded video may run, in seconds. */
@@ -45,7 +45,12 @@ export interface VoiceBotConfig {
   // which the TS6 server rejects outright (error 1538 "invalid parameter").
   // Confirmed against a real server: clientedit succeeds and the value reads
   // back correctly. Used for description pushes when present.
-  webQuery?: { host: string; port: number; apiKey: string; useHttps: boolean };
+  //
+  // A lookup, not a copy of the credentials: it hands out whatever WebQuery
+  // client the connection pool currently holds for this bot's server (or null
+  // when there is none), so an edited API key, host or port reaches a running
+  // bot without a restart, and the bot does not open a query connection of its own.
+  getWebQuery?: () => WebQueryClient | null;
 }
 
 export class VoiceBot extends EventEmitter {
@@ -90,7 +95,6 @@ export class VoiceBot extends EventEmitter {
 
   // Description template refresh (keeps {remaining}/{elapsed} current while playing)
   private descriptionTimer: ReturnType<typeof setInterval> | null = null;
-  private webQueryClient: WebQueryClient | null = null;
 
   // Reconnect: distinguishes manual stop from unexpected disconnect
   private _manuallyStopped: boolean = false;
@@ -276,14 +280,11 @@ export class VoiceBot extends EventEmitter {
    * up at all (the voice connection's own protocol has no equivalent query).
    */
   async getClientServerGroups(clid: number): Promise<string | null> {
-    if (!this.config.webQuery) return null;
-    if (!this.webQueryClient) {
-      const wq = this.config.webQuery;
-      this.webQueryClient = new WebQueryClient(wq.host, wq.port, wq.apiKey, wq.useHttps);
-    }
+    const webQuery = this.config.getWebQuery?.();
+    if (!webQuery) return null;
     // sid=1: see the comment on pushDescription() below for why music bots
     // hardcode this.
-    const list = await this.webQueryClient.execute(1, 'clientlist', { '-groups': '' });
+    const list = await webQuery.execute(1, 'clientlist', { '-groups': '' });
     const clients = Array.isArray(list) ? list : [list];
     const match = clients.find((c: any) => Number(c.clid) === clid);
     return match?.client_servergroups ?? '';
@@ -296,12 +297,9 @@ export class VoiceBot extends EventEmitter {
    * null under the same condition as getClientServerGroups().
    */
   async getServerGroupNames(): Promise<Record<string, string> | null> {
-    if (!this.config.webQuery) return null;
-    if (!this.webQueryClient) {
-      const wq = this.config.webQuery;
-      this.webQueryClient = new WebQueryClient(wq.host, wq.port, wq.apiKey, wq.useHttps);
-    }
-    const list = await this.webQueryClient.execute(1, 'servergrouplist');
+    const webQuery = this.config.getWebQuery?.();
+    if (!webQuery) return null;
+    const list = await webQuery.execute(1, 'servergrouplist');
     const groups = Array.isArray(list) ? list : [list];
     const map: Record<string, string> = {};
     for (const g of groups) map[String(g.sgid)] = String(g.name ?? g.sgid);
@@ -356,20 +354,17 @@ export class VoiceBot extends EventEmitter {
   }
 
   private pushDescription(rendered: string): void {
-    if (this.config.webQuery) {
+    const webQuery = this.config.getWebQuery?.();
+    if (webQuery) {
       // clientedit (ServerQuery, edit-from-outside) instead of clientupdate
       // (self, over the voice connection) - see the comment on
-      // VoiceBotConfig.webQuery for why.
-      if (!this.webQueryClient) {
-        const wq = this.config.webQuery;
-        this.webQueryClient = new WebQueryClient(wq.host, wq.port, wq.apiKey, wq.useHttps);
-      }
+      // VoiceBotConfig.getWebQuery for why.
       const clid = this.client.getClientId();
       // sid=1: music bots have no stored virtual-server id (only a voicePort),
       // and every other part of this app that defaults one also uses 1 - fine
       // as long as a physical server hosts a single virtual server, which is
       // the only setup this app's music bot feature otherwise assumes anyway.
-      this.webQueryClient.execute(1, 'clientedit', { clid, client_description: rendered })
+      webQuery.execute(1, 'clientedit', { clid, client_description: rendered })
         .catch((err: any) => console.error(`[VoiceBot ${this.config.id}] clientedit client_description failed: ${err.message}`));
       return;
     }

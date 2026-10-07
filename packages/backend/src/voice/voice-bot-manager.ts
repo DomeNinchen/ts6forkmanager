@@ -5,6 +5,8 @@ import { VoiceBot, type VoiceBotConfig, type VoiceBotStatus } from './voice-bot.
 import { generateIdentityAsync, restoreIdentity, type IdentityData } from './tslib/index.js';
 import type { QueueItem } from './playlist/queue.js';
 import type { MusicCommandHandler } from './music-command-handler.js';
+import type { ConnectionPool } from '../ts-client/connection-pool.js';
+import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { decrypt, encrypt } from '../utils/crypto.js';
 import type { BotConnectionInfo } from '@ts6/common';
 
@@ -46,8 +48,51 @@ export class VoiceBotManager extends EventEmitter {
   constructor(
     private prisma: PrismaClient,
     private wss: WebSocketServer,
+    private pool: ConnectionPool,
   ) {
     super();
+  }
+
+  /** What a bot of this server connection uses for the few things only WebQuery can do (group lookups, description). */
+  private webQueryFor(serverConfigId: number): () => WebQueryClient | null {
+    return () => this.pool.tryGetClient(serverConfigId);
+  }
+
+  /**
+   * The server connection's host was edited: bots that are loaded take the new
+   * one. A bot that is connected stays where it is until its next (re)connect -
+   * nothing can move a live voice connection to another server.
+   */
+  async syncServerHost(configId: number): Promise<void> {
+    const server = await this.prisma.tsServerConfig.findUnique({ where: { id: configId }, select: { host: true } });
+    if (!server) return;
+    for (const bot of this.bots.values()) {
+      if (bot.currentConfig.serverConfigId === configId) bot.updateConfig({ serverHost: server.host });
+    }
+  }
+
+  /**
+   * The server connection is gone (its database rows with it): stops and forgets
+   * every bot that was loaded for it. Does not touch the database, which has
+   * already cascaded; going through removeBot would fail on the missing rows.
+   */
+  async dropServerBots(configId: number): Promise<void> {
+    const ids = [...this.bots.entries()]
+      .filter(([, bot]) => bot.currentConfig.serverConfigId === configId)
+      .map(([id]) => id);
+    for (const id of ids) {
+      this.clearReconnect(id);
+      const bot = this.bots.get(id);
+      this.stopProgressBroadcast(id);
+      this.musicCmdHandler?.unregisterBot(id);
+      this.bots.delete(id);
+      if (bot && bot.status !== 'stopped') {
+        await bot.stop().catch((err: any) => console.warn(`[VoiceBotManager] Bot ${id}: stopping it for a deleted server connection failed: ${err.message}`));
+      }
+    }
+    if (ids.length > 0) {
+      console.log(`[VoiceBotManager] Stopped ${ids.length} music bot(s) of deleted server connection ${configId}`);
+    }
   }
 
   setMusicCommandHandler(handler: MusicCommandHandler): void {
@@ -91,12 +136,7 @@ export class VoiceBotManager extends EventEmitter {
         avatarImage: dbBot.avatarData
           ? { data: Buffer.from(dbBot.avatarData), mimeType: dbBot.avatarMimeType || 'image/png' }
           : undefined,
-        webQuery: {
-          host: dbBot.serverConfig.host,
-          port: dbBot.serverConfig.webqueryPort,
-          apiKey: decrypt(dbBot.serverConfig.apiKey),
-          useHttps: dbBot.serverConfig.useHttps,
-        },
+        getWebQuery: this.webQueryFor(dbBot.serverConfigId),
       };
 
       const bot = this.createBotInstance(config);
@@ -279,12 +319,7 @@ export class VoiceBotManager extends EventEmitter {
       sidecarBinaryPath: process.env.SIDECAR_BINARY_PATH,
       sidecarPort: 9800,
       descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
-      webQuery: {
-        host: serverConfig.host,
-        port: serverConfig.webqueryPort,
-        apiKey: decrypt(serverConfig.apiKey),
-        useHttps: serverConfig.useHttps,
-      },
+      getWebQuery: this.webQueryFor(data.serverConfigId),
     };
 
     const bot = this.createBotInstance(config);

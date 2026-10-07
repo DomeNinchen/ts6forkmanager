@@ -2,6 +2,7 @@ import { connect } from 'net';
 import type { ConnectionPool } from './connection-pool.js';
 import type { MetricSink } from './metric-rollup.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
+import { ConnectionUnavailableError } from '../middleware/error-handler.js';
 
 const SAMPLE_INTERVAL_MS = 30_000;
 /** How much history the dashboard charts show, and how long rows are kept. */
@@ -94,6 +95,11 @@ export class BandwidthSampler {
     this.reconcileTimer.unref?.();
   }
 
+  /** Runs the reconcile pass now - after a server connection was added or edited. */
+  refresh(): Promise<void> {
+    return this.reconcile();
+  }
+
   /**
    * Brings the set of sampled virtual servers in line with what is actually
    * running: starts sampling anything online that isn't sampled yet, and stops
@@ -128,6 +134,9 @@ export class BandwidthSampler {
           this.ensureSampling(configId, sid);
         }
       } catch (err: any) {
+        // A connection without a client (disabled) has nothing to sample and
+        // nothing to warn about; its timers drop out below.
+        if (err instanceof ConnectionUnavailableError) continue;
         // An unreachable server is normal and temporary - keep whatever
         // sampling it already has rather than tearing it down over one
         // failed serverlist, and let the next reconcile try again.

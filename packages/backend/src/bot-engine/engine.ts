@@ -286,6 +286,33 @@ export class BotEngine {
     this.setupSshConnections();
   }
 
+  /**
+   * Stops everything the engine runs for one server connection - its flows, cron
+   * jobs, webhooks, animations and every SSH session (event listeners and command
+   * listeners) - without touching the database. For a connection that was deleted
+   * or disabled; works from what is in memory, so it is safe after the rows are gone.
+   */
+  async stopServer(configId: number): Promise<void> {
+    for (const flow of [...this.flows.values()]) {
+      if (flow.serverConfigId === configId) await this.disableFlow(flow.id);
+    }
+    // Also catches sessions opened by something other than a loaded flow (e.g. on-demand command execution).
+    await this.eventBridge.disconnectAllForConfig(configId);
+  }
+
+  /** Starts, from the database, every flow that is enabled for a connection - after the connection was enabled again. */
+  async startServer(configId: number): Promise<void> {
+    const server = await this.prisma.tsServerConfig.findUnique({ where: { id: configId }, select: { enabled: true } });
+    if (!server?.enabled) return;
+    const flows = await this.prisma.botFlow.findMany({ where: { serverConfigId: configId, enabled: true }, select: { id: true } });
+    for (const { id } of flows) await this.enableFlow(id);
+  }
+
+  async reloadServer(configId: number): Promise<void> {
+    await this.stopServer(configId);
+    await this.startServer(configId);
+  }
+
   async start(): Promise<void> {
     if (this.running) return;
 
@@ -334,9 +361,14 @@ export class BotEngine {
 
   async enableFlow(flowId: number): Promise<void> {
     console.log(`[BotEngine] Enabling flow ${flowId}...`);
-    const dbFlow = await this.prisma.botFlow.findUnique({ where: { id: flowId } });
+    const dbFlow = await this.prisma.botFlow.findUnique({ where: { id: flowId }, include: { serverConfig: { select: { enabled: true } } } });
     if (!dbFlow || !dbFlow.enabled) {
       console.log(`[BotEngine] Flow ${flowId} not found or not enabled in DB`);
+      return;
+    }
+    if (!dbFlow.serverConfig.enabled) {
+      // It starts by itself when the connection is enabled (see startServer); until then there is no query client for it to act with.
+      console.log(`[BotEngine] Flow ${flowId} ('${dbFlow.name}') waits: its server connection is disabled`);
       return;
     }
 
@@ -492,7 +524,8 @@ export class BotEngine {
   // --- Private Methods ---
 
   private async loadFlows(): Promise<void> {
-    const dbFlows = await this.prisma.botFlow.findMany({ where: { enabled: true } });
+    // A disabled connection has no query client to act with, so its flows stay idle until it is enabled again (see startServer).
+    const dbFlows = await this.prisma.botFlow.findMany({ where: { enabled: true, serverConfig: { enabled: true } } });
 
     for (const dbFlow of dbFlows) {
       try {
@@ -803,23 +836,18 @@ export class BotEngine {
 
     if (animNodes.length === 0) return;
 
-    try {
-      const client = this.connectionPool.getClient(serverConfigId);
+    for (const node of animNodes) {
+      const d = node.data as AnimatedChannelActionData;
+      const config: AnimationConfig = {
+        channelId: d.channelId,
+        text: d.text,
+        style: d.style || 'scroll',
+        intervalSeconds: parseInt(d.intervalSeconds) || 3,
+        prefix: d.prefix || '[cspacer]',
+      };
 
-      for (const node of animNodes) {
-        const d = node.data as AnimatedChannelActionData;
-        const config: AnimationConfig = {
-          channelId: d.channelId,
-          text: d.text,
-          style: d.style || 'scroll',
-          intervalSeconds: parseInt(d.intervalSeconds) || 3,
-          prefix: d.prefix || '[cspacer]',
-        };
-
-        this.animationManager.startAnimation(flowId, virtualServerId, config, client);
-      }
-    } catch (err: any) {
-      console.error(`[BotEngine] Failed to start animations for flow ${flowId}: ${err.message}`);
+      // Looked up per frame, not captured here: the connection can be edited while the animation runs.
+      this.animationManager.startAnimation(flowId, virtualServerId, config, () => this.connectionPool.getClient(serverConfigId));
     }
   }
 

@@ -3,10 +3,13 @@ import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
-import { consoleFloodGuard } from '../console/flood-guard.js';
+import type { ServerLifecycle } from '../ts-client/server-lifecycle.js';
+import { widgetDataCache } from './widget-public.routes.js';
 import { encrypt, decrypt } from '../utils/crypto.js';
 
 export const serverRoutes: Router = Router();
+
+const lifecycle = (req: Request): ServerLifecycle => req.app.locals.serverLifecycle;
 
 // List all configured TS server connections. Admins see everything; every
 // other role only sees servers they've actually been granted access to
@@ -68,9 +71,9 @@ serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response,
       },
     });
 
-    // Add to connection pool (use plaintext key for connection)
-    const pool: ConnectionPool = req.app.locals.connectionPool;
-    pool.addClient(server.id, server.host, server.webqueryPort, apiKey, server.useHttps);
+    // Brings the connection up everywhere it is used, before the answer: the UI
+    // starts using the new connection the moment it gets the id.
+    await lifecycle(req).created(server.id);
 
     res.status(201).json({ id: server.id, name: server.name });
   } catch (err) { next(err); }
@@ -127,28 +130,20 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
       }
     }
 
+    const before = await prisma.tsServerConfig.findUnique({ where: { id } });
+    if (!before) throw new AppError(404, 'Server config not found');
     const server = await prisma.tsServerConfig.update({ where: { id }, data });
 
-    // Refresh connection pool
-    const pool: ConnectionPool = req.app.locals.connectionPool;
-    await pool.refreshClient(id);
-    // Re-applies the nickname too if botQueryName changed - a no-op if no bot identity is provisioned yet
-    await pool.refreshBotClient(id);
+    // What actually changed, not what was sent: the edit form sends every field on
+    // every save, and reconnecting every SSH session over an untouched host would
+    // be needless. The two secrets are encrypted afresh each time, so one that was
+    // sent counts as changed.
+    const changed = new Set(Object.keys(data).filter((field) => field === 'apiKey' || field === 'sshPassword' || before[field] !== server[field]));
 
-    // If any SSH-relevant field changed, existing EventBridge connections
-    // (event registration, command listeners) are still running on the old
-    // credentials — they don't pick up new ones on their own since connecting
-    // no-ops while already connected. Force a reconnect.
-    const sshFieldsChanged = ['host', 'sshPort', 'sshUsername', 'sshPassword'].some(f => data[f] !== undefined);
-    if (sshFieldsChanged) {
-      await req.app.locals.botEngine?.refreshServerConnections(id);
-      // The query console's live-event listeners are SSH sessions of their own and need the same.
-      await req.app.locals.consoleEvents?.closeConfig(id);
-    }
-    // What the console's flood guard read from the old connection is not known to hold for the new one.
-    if (['host', 'webqueryPort', 'apiKey', 'useHttps'].some(f => data[f] !== undefined)) {
-      consoleFloodGuard.forget(id);
-    }
+    // Pool clients (re-applying the nicknames), bot flows and their SSH
+    // sessions, music bots, console listeners: whoever was built from the old
+    // row hears about what changed - see ServerLifecycle.
+    await lifecycle(req).updated(id, changed);
 
     res.json({ id: server.id, name: server.name });
   } catch (err) { next(err); }
@@ -159,12 +154,13 @@ serverRoutes.delete('/:configId', requireRole('admin'), async (req: Request, res
   try {
     const prisma = req.app.locals.prisma;
     const id = parseInt(String(req.params.configId));
+    // Read before the delete cascades them away: their cached data must not outlive the connection.
+    const widgets = await prisma.widget.findMany({ where: { serverConfigId: id }, select: { token: true } });
     await prisma.tsServerConfig.delete({ where: { id } });
 
-    const pool: ConnectionPool = req.app.locals.connectionPool;
-    pool.removeClient(id);
-    await req.app.locals.consoleEvents?.closeConfig(id);
-    consoleFloodGuard.forget(id);
+    // The flows, SSH sessions and music bots of the connection are still running in memory.
+    await lifecycle(req).deleted(id);
+    for (const { token } of widgets) widgetDataCache.delete(token);
 
     res.status(204).send();
   } catch (err) { next(err); }

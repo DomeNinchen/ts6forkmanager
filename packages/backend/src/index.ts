@@ -6,6 +6,7 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { ConnectionPool } from './ts-client/connection-pool.js';
 import { BandwidthSampler } from './ts-client/bandwidth-sampler.js';
 import { UserHistorySampler } from './ts-client/user-history-sampler.js';
+import { ServerLifecycle } from './ts-client/server-lifecycle.js';
 import { BotEngine } from './bot-engine/engine.js';
 import { EventSessionManager } from './console/event-sessions.js';
 import { VoiceBotManager } from './voice/voice-bot-manager.js';
@@ -126,9 +127,20 @@ async function main() {
   await botEngine.start();
 
   // Initialize Voice Bot Manager (Music Bots)
-  const voiceBotManager = new VoiceBotManager(prisma, wss);
+  const voiceBotManager = new VoiceBotManager(prisma, wss, connectionPool);
   app.locals.voiceBotManager = voiceBotManager;
   await voiceBotManager.start();
+
+  // One place that tells everything holding per-connection state (pool, flows,
+  // SSH sessions, music bots, console listeners, samplers) when a server
+  // connection is created, edited or deleted - so none of it needs a restart.
+  app.locals.serverLifecycle = new ServerLifecycle({
+    pool: connectionPool,
+    botEngine,
+    voiceBots: voiceBotManager,
+    consoleEvents,
+    bandwidthSampler,
+  });
 
   // Wire VoiceBotManager into BotEngine for voice action nodes in flows
   botEngine.setVoiceBotManager(voiceBotManager);
