@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useBot, useUpdateBot } from '@/hooks/use-bots';
+import { useServers, serverCapabilities } from '@/hooks/use-servers';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -684,6 +685,10 @@ export default function BotEditor() {
   const navigate = useNavigate();
   const { data: bot, isLoading } = useBot(botId ? parseInt(botId) : null);
   const updateBot = useUpdateBot();
+  // What this flow's server connection can do: event and command triggers arrive over SSH, and every
+  // action that talks to TeamSpeak goes through WebQuery (voice, HTTP, log, delay, variable and loop nodes do not).
+  const { data: servers } = useServers();
+  const { hasWebQuery, hasSsh } = serverCapabilities(Array.isArray(servers) ? servers.find((s: any) => s.id === bot?.serverConfigId) : undefined);
 
   const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [edges, setEdges] = useState<FlowEdge[]>([]);
@@ -1034,6 +1039,13 @@ export default function BotEditor() {
         </div>
       </div>
 
+      {(!hasSsh || !hasWebQuery) && (
+        <div className="mb-2 space-y-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-500">
+          {!hasWebQuery && <p>{t('pages.botEditor.noWebQueryNotice')}</p>}
+          {!hasSsh && <p>{t('pages.botEditor.noSshNotice')}</p>}
+        </div>
+      )}
+
       <div className="card-hero flex flex-1 gap-0 overflow-hidden border border-border">
         {/* Node Palette */}
         <div className="w-52 border-r border-border bg-card/50 shrink-0">
@@ -1043,17 +1055,24 @@ export default function BotEditor() {
                 <div key={cat.label}>
                   <p className="font-display text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{cat.label}</p>
                   <div className="space-y-1">
-                    {cat.nodes.map((node) => (
+                    {cat.nodes.map((node) => {
+                      // Event and command triggers are fed by the SSH session; without a login on the connection they never fire.
+                      const needsSsh = node.type === 'trigger_event' || node.type === 'trigger_command';
+                      const unavailable = needsSsh && !hasSsh;
+                      return (
                       <button
                         key={node.type}
-                        className={cn('w-full flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs border transition-colors hover:opacity-80', node.color)}
+                        className={cn('w-full flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs border transition-colors hover:opacity-80', node.color, unavailable && 'opacity-40 cursor-not-allowed hover:opacity-40')}
+                        disabled={unavailable}
+                        title={unavailable ? t('pages.botEditor.needsSshHint') : undefined}
                         onClick={() => addNode(node.type, node.label)}
                       >
                         <node.icon className="h-3.5 w-3.5 shrink-0" />
                         <span>{node.label}</span>
                         <Plus className="h-3 w-3 ml-auto opacity-50" />
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

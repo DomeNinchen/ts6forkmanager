@@ -6,6 +6,7 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { PrivacyNotice } from '@/components/layout/PrivacyNotice';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLanguageSync } from '@/hooks/use-language';
+import { useSelectedServer } from '@/hooks/use-servers';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const isAdmin = useAuthStore((s) => s.isAdmin());
@@ -19,6 +20,21 @@ function RoleRoute({ check, children }: { check: 'botFlows' | 'musicBots'; child
   const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
   const allowed = check === 'botFlows' ? canManageBotFlows : canManageMusicBots;
   if (!allowed) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
+/**
+ * A page that reads or changes the server through WebQuery. On a connection
+ * without an API key (only the music bots work on it) there is nothing for it
+ * to show - the sidebar already hides it - so a bookmark or the start page
+ * sends the visitor to where there is something: the music bots, or the settings.
+ */
+function WebQueryRoute({ children }: { children: React.ReactNode }) {
+  const { hasWebQuery, loaded } = useSelectedServer();
+  const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
+  // The page would ask WebQuery the moment it mounts; whether it may is not known until the server list is here.
+  if (!loaded) return <PageLoader />;
+  if (!hasWebQuery) return <Navigate to={canManageMusicBots ? '/music-bots' : '/settings'} replace />;
   return <>{children}</>;
 }
 
@@ -79,26 +95,26 @@ export function App() {
 
             <Route element={<AppLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/servers" element={<AdminRoute><VirtualServers /></AdminRoute>} />
-              <Route path="/server-stats" element={<AdminRoute><ServerStats /></AdminRoute>} />
-              <Route path="/channels" element={<Channels />} />
-              <Route path="/clients" element={<Clients />} />
-              <Route path="/client-database" element={<AdminRoute><ClientDatabase /></AdminRoute>} />
-              <Route path="/server-groups" element={<AdminRoute><ServerGroups /></AdminRoute>} />
-              <Route path="/channel-groups" element={<AdminRoute><ChannelGroups /></AdminRoute>} />
-              <Route path="/permissions" element={<AdminRoute><Permissions /></AdminRoute>} />
-              <Route path="/bans" element={<AdminRoute><Bans /></AdminRoute>} />
-              <Route path="/tokens" element={<AdminRoute><Tokens /></AdminRoute>} />
-              <Route path="/files" element={<AdminRoute><Files /></AdminRoute>} />
-              <Route path="/icons" element={<Icons />} />
-              <Route path="/complaints" element={<AdminRoute><Complaints /></AdminRoute>} />
-              <Route path="/messages" element={<AdminRoute><Messages /></AdminRoute>} />
-              <Route path="/logs" element={<AdminRoute><ServerLogs /></AdminRoute>} />
-              <Route path="/console" element={<AdminRoute><Console /></AdminRoute>} />
-              <Route path="/instance" element={<AdminRoute><Instance /></AdminRoute>} />
-              <Route path="/miscellaneous" element={<AdminRoute><Miscellaneous /></AdminRoute>} />
-              <Route path="/advanced-settings" element={<AdminRoute><AdvancedServerSettings /></AdminRoute>} />
+              <Route path="/dashboard" element={<WebQueryRoute><Dashboard /></WebQueryRoute>} />
+              <Route path="/servers" element={<AdminRoute><WebQueryRoute><VirtualServers /></WebQueryRoute></AdminRoute>} />
+              <Route path="/server-stats" element={<AdminRoute><WebQueryRoute><ServerStats /></WebQueryRoute></AdminRoute>} />
+              <Route path="/channels" element={<WebQueryRoute><Channels /></WebQueryRoute>} />
+              <Route path="/clients" element={<WebQueryRoute><Clients /></WebQueryRoute>} />
+              <Route path="/client-database" element={<AdminRoute><WebQueryRoute><ClientDatabase /></WebQueryRoute></AdminRoute>} />
+              <Route path="/server-groups" element={<AdminRoute><WebQueryRoute><ServerGroups /></WebQueryRoute></AdminRoute>} />
+              <Route path="/channel-groups" element={<AdminRoute><WebQueryRoute><ChannelGroups /></WebQueryRoute></AdminRoute>} />
+              <Route path="/permissions" element={<AdminRoute><WebQueryRoute><Permissions /></WebQueryRoute></AdminRoute>} />
+              <Route path="/bans" element={<AdminRoute><WebQueryRoute><Bans /></WebQueryRoute></AdminRoute>} />
+              <Route path="/tokens" element={<AdminRoute><WebQueryRoute><Tokens /></WebQueryRoute></AdminRoute>} />
+              <Route path="/files" element={<AdminRoute><WebQueryRoute><Files /></WebQueryRoute></AdminRoute>} />
+              <Route path="/icons" element={<WebQueryRoute><Icons /></WebQueryRoute>} />
+              <Route path="/complaints" element={<AdminRoute><WebQueryRoute><Complaints /></WebQueryRoute></AdminRoute>} />
+              <Route path="/messages" element={<AdminRoute><WebQueryRoute><Messages /></WebQueryRoute></AdminRoute>} />
+              <Route path="/logs" element={<AdminRoute><WebQueryRoute><ServerLogs /></WebQueryRoute></AdminRoute>} />
+              <Route path="/console" element={<AdminRoute><WebQueryRoute><Console /></WebQueryRoute></AdminRoute>} />
+              <Route path="/instance" element={<AdminRoute><WebQueryRoute><Instance /></WebQueryRoute></AdminRoute>} />
+              <Route path="/miscellaneous" element={<AdminRoute><WebQueryRoute><Miscellaneous /></WebQueryRoute></AdminRoute>} />
+              <Route path="/advanced-settings" element={<AdminRoute><WebQueryRoute><AdvancedServerSettings /></WebQueryRoute></AdminRoute>} />
               <Route path="/music-requests" element={<AdminRoute><MusicRequests /></AdminRoute>} />
               <Route path="/bots" element={<RoleRoute check="botFlows"><BotList /></RoleRoute>} />
               <Route path="/bots/:botId" element={<RoleRoute check="botFlows"><BotEditor /></RoleRoute>} />

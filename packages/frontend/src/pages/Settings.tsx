@@ -549,17 +549,21 @@ function ConnectionsTab() {
   const [editId, setEditId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [botIdentityServerId, setBotIdentityServerId] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
+  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', removeApiKey: false, useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
 
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
   const editingServer = editId ? serverList.find((s: any) => s.id === editId) : null;
 
   if (isLoading) return <PageLoader />;
 
-  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
+  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', removeApiKey: false, useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
 
   const handleSave = () => {
-    const payload = { ...form, webqueryPort: parseInt(form.webqueryPort), sshPort: parseInt(form.sshPort) };
+    const { removeApiKey, ...fields } = form;
+    // A blank key field means "leave the key as it is" (it is never sent back to
+    // this form); removing it takes an explicit null, which the backend reads as
+    // "this connection has no WebQuery access".
+    const payload = { ...fields, ...(removeApiKey ? { apiKey: null } : {}), webqueryPort: parseInt(form.webqueryPort), sshPort: parseInt(form.sshPort) };
     if (editId) {
       updateServer.mutate({ id: editId, data: payload }, {
         onSuccess: () => { toast.success(t('pages.settings.connections.connectionUpdated')); setEditId(null); setShowAdd(false); resetForm(); },
@@ -579,6 +583,7 @@ function ConnectionsTab() {
       host: server.host || '',
       webqueryPort: String(server.webqueryPort || 10080),
       apiKey: server.apiKey || '',
+      removeApiKey: false,
       useHttps: server.useHttps || false,
       sshPort: String(server.sshPort || 10022),
       sshUsername: server.sshUsername || '',
@@ -605,22 +610,38 @@ function ConnectionsTab() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">{server.name}</CardTitle>
-                <Badge variant={server.enabled ? 'default' : 'secondary'} className="text-[10px]">
-                  {server.enabled ? t('common.enabled') : t('common.disabled')}
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                  {server.hasWebQuery === false && (
+                    <Badge variant="outline" className="text-[10px]" title={t('pages.settings.connections.noWebQueryHint')}>
+                      {t('pages.settings.connections.noWebQueryBadge')}
+                    </Badge>
+                  )}
+                  <Badge variant={server.enabled ? 'default' : 'secondary'} className="text-[10px]">
+                    {server.enabled ? t('common.enabled') : t('common.disabled')}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <span className="text-muted-foreground">{t('pages.settings.connections.host')}</span>
-                <span className="font-mono-data">{server.host}:{server.webqueryPort}</span>
-                <span className="text-muted-foreground">{t('pages.settings.connections.protocol')}</span>
-                <span>{server.useHttps ? 'HTTPS' : 'HTTP'}</span>
+                <span className="font-mono-data">{server.hasWebQuery === false ? server.host : `${server.host}:${server.webqueryPort}`}</span>
+                {server.hasWebQuery !== false && (
+                  <>
+                    <span className="text-muted-foreground">{t('pages.settings.connections.protocol')}</span>
+                    <span>{server.useHttps ? 'HTTPS' : 'HTTP'}</span>
+                  </>
+                )}
                 <span className="text-muted-foreground">{t('pages.settings.connections.ssh')}</span>
                 <span className="font-mono-data">{server.sshPort || '-'}</span>
               </div>
+              {server.hasWebQuery === false && (
+                <p className="text-[11px] text-muted-foreground">{t('pages.settings.connections.noWebQueryHint')}</p>
+              )}
               <div className="flex items-center gap-1 pt-2">
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => testServer.mutate(server.id, {
+                <Button variant="outline" size="sm" className="h-7 text-xs" disabled={server.hasWebQuery === false}
+                  title={server.hasWebQuery === false ? t('pages.settings.connections.needsApiKey') : undefined}
+                  onClick={() => testServer.mutate(server.id, {
                   onSuccess: (data: any) => data?.success ? toast.success(t('pages.settings.connections.connectionSuccessful')) : toast.error(data?.error ? t('pages.settings.connections.connectionFailedWithError', { error: data.error }) : t('pages.settings.connections.connectionFailed')),
                   onError: () => toast.error(t('pages.settings.connections.connectionFailed')),
                 })}>
@@ -629,7 +650,9 @@ function ConnectionsTab() {
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(server)}>
                   <Pencil className="h-3 w-3 mr-1" /> {t('common.edit')}
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setBotIdentityServerId(server.id)}>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setBotIdentityServerId(server.id)}
+                  disabled={server.hasWebQuery === false}
+                  title={server.hasWebQuery === false ? t('pages.settings.connections.needsApiKey') : undefined}>
                   <Bot className="h-3 w-3 mr-1" /> {server.hasBotIdentity ? server.botQueryName : t('pages.settings.connections.botIdentityFallback')}
                 </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(server.id)}>
@@ -653,7 +676,23 @@ function ConnectionsTab() {
             </div>
             <div>
               <Label className="text-xs">{t('pages.settings.connections.apiKeyLabel')}</Label>
-              <Input value={form.apiKey} onChange={(e) => setForm({ ...form, apiKey: e.target.value })} placeholder={editId ? t('pages.settings.connections.apiKeyUnchangedPlaceholder') : t('pages.settings.connections.apiKeyPlaceholder')} type="password" />
+              <Input
+                value={form.apiKey}
+                onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+                placeholder={editId && editingServer?.hasWebQuery !== false ? t('pages.settings.connections.apiKeyUnchangedPlaceholder') : t('pages.settings.connections.apiKeyPlaceholder')}
+                type="password"
+                disabled={form.removeApiKey}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">{t('pages.settings.connections.apiKeyOptionalHint')}</p>
+              {editId && editingServer?.hasWebQuery !== false && (
+                <div className="flex items-start gap-2 mt-2">
+                  <Switch className="mt-0.5" checked={form.removeApiKey} onCheckedChange={(v) => setForm({ ...form, removeApiKey: v, apiKey: v ? '' : form.apiKey })} />
+                  <div>
+                    <Label className="text-xs">{t('pages.settings.connections.removeApiKey')}</Label>
+                    <p className="text-[11px] text-muted-foreground mt-1">{t('pages.settings.connections.removeApiKeyHint')}</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.useHttps} onCheckedChange={(v) => setForm({ ...form, useHttps: v })} />
@@ -683,7 +722,7 @@ function ConnectionsTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditId(null); resetForm(); }}>{t('common.cancel')}</Button>
-            <Button onClick={handleSave} disabled={!form.name || !form.host || (!editId && !form.apiKey)}>{editId ? t('pages.settings.connections.update') : t('common.add')}</Button>
+            <Button onClick={handleSave} disabled={!form.name || !form.host}>{editId ? t('pages.settings.connections.update') : t('common.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

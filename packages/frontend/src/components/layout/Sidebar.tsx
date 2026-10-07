@@ -10,7 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { useServers } from '@/hooks/use-servers';
+import { useServers, useSelectedServer } from '@/hooks/use-servers';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,18 +21,27 @@ interface NavContext {
   canManageMusicBots: boolean;
   /** True for admin (who always has "access"), or a non-admin with at least one assigned server. */
   hasAnyServerAccess: boolean;
+  /** The selected connection has a WebQuery API key; without one only the music bots (voice) work on it. */
+  hasWebQuery: boolean;
 }
 
 const adminOnly = (ctx: NavContext) => ctx.isAdmin;
+
+/**
+ * An entry that is only a page when the selected connection has WebQuery: all of
+ * them read or change the server through it. The few that do not (the music bots,
+ * the bot flows, the request history) simply do not carry the flag.
+ */
+const needsWebQuery = { needsWebQuery: true } as const;
 
 function getNavSections(t: TFunction) {
   return [
     {
       label: t('nav.sections.overview'),
       items: [
-        { to: '/dashboard', icon: LayoutDashboard, label: t('nav.items.dashboard') },
-        { to: '/servers', icon: Server, label: t('nav.items.virtualServers'), visible: adminOnly },
-        { to: '/server-stats', icon: BarChart3, label: t('nav.items.statistics'), visible: adminOnly },
+        { to: '/dashboard', icon: LayoutDashboard, label: t('nav.items.dashboard'), ...needsWebQuery },
+        { to: '/servers', icon: Server, label: t('nav.items.virtualServers'), visible: adminOnly, ...needsWebQuery },
+        { to: '/server-stats', icon: BarChart3, label: t('nav.items.statistics'), visible: adminOnly, ...needsWebQuery },
       ],
     },
     {
@@ -42,20 +51,20 @@ function getNavSections(t: TFunction) {
       // showing this section just leads to a guaranteed "no access" page.
       visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
       items: [
-        { to: '/channels', icon: Hash, label: t('nav.items.channels') },
-        { to: '/clients', icon: Users, label: t('nav.items.clients') },
-        { to: '/client-database', icon: Database, label: t('nav.items.clientDatabase'), visible: adminOnly },
-        { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: adminOnly },
-        { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: adminOnly },
-        { to: '/permissions', icon: Lock, label: t('nav.items.permissions'), visible: adminOnly },
+        { to: '/channels', icon: Hash, label: t('nav.items.channels'), ...needsWebQuery },
+        { to: '/clients', icon: Users, label: t('nav.items.clients'), ...needsWebQuery },
+        { to: '/client-database', icon: Database, label: t('nav.items.clientDatabase'), visible: adminOnly, ...needsWebQuery },
+        { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: adminOnly, ...needsWebQuery },
+        { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: adminOnly, ...needsWebQuery },
+        { to: '/permissions', icon: Lock, label: t('nav.items.permissions'), visible: adminOnly, ...needsWebQuery },
       ],
     },
     {
       label: t('nav.sections.security'),
       visible: adminOnly,
       items: [
-        { to: '/bans', icon: Ban, label: t('nav.items.bans'), visible: adminOnly },
-        { to: '/tokens', icon: KeyRound, label: t('nav.items.tokens'), visible: adminOnly },
+        { to: '/bans', icon: Ban, label: t('nav.items.bans'), visible: adminOnly, ...needsWebQuery },
+        { to: '/tokens', icon: KeyRound, label: t('nav.items.tokens'), visible: adminOnly, ...needsWebQuery },
       ],
     },
     {
@@ -64,21 +73,21 @@ function getNavSections(t: TFunction) {
       // non-admins, since the icon browser is readable by every role.
       visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
       items: [
-        { to: '/files', icon: FolderOpen, label: t('nav.items.files'), visible: adminOnly },
-        { to: '/icons', icon: ImageIcon, label: t('nav.items.icons') },
-        { to: '/complaints', icon: MessageSquareWarning, label: t('nav.items.complaints'), visible: adminOnly },
-        { to: '/messages', icon: Mail, label: t('nav.items.messages'), visible: adminOnly },
+        { to: '/files', icon: FolderOpen, label: t('nav.items.files'), visible: adminOnly, ...needsWebQuery },
+        { to: '/icons', icon: ImageIcon, label: t('nav.items.icons'), ...needsWebQuery },
+        { to: '/complaints', icon: MessageSquareWarning, label: t('nav.items.complaints'), visible: adminOnly, ...needsWebQuery },
+        { to: '/messages', icon: Mail, label: t('nav.items.messages'), visible: adminOnly, ...needsWebQuery },
       ],
     },
     {
       label: t('nav.sections.system'),
       visible: adminOnly,
       items: [
-        { to: '/logs', icon: ScrollText, label: t('nav.items.serverLogs'), visible: adminOnly },
-        { to: '/console', icon: SquareTerminal, label: t('nav.items.queryConsole'), visible: adminOnly },
-        { to: '/instance', icon: Cpu, label: t('nav.items.instance'), visible: adminOnly },
-        { to: '/miscellaneous', icon: Wrench, label: t('nav.items.miscellaneous'), visible: adminOnly },
-        { to: '/advanced-settings', icon: SlidersHorizontal, label: t('nav.items.advancedSettings'), visible: adminOnly },
+        { to: '/logs', icon: ScrollText, label: t('nav.items.serverLogs'), visible: adminOnly, ...needsWebQuery },
+        { to: '/console', icon: SquareTerminal, label: t('nav.items.queryConsole'), visible: adminOnly, ...needsWebQuery },
+        { to: '/instance', icon: Cpu, label: t('nav.items.instance'), visible: adminOnly, ...needsWebQuery },
+        { to: '/miscellaneous', icon: Wrench, label: t('nav.items.miscellaneous'), visible: adminOnly, ...needsWebQuery },
+        { to: '/advanced-settings', icon: SlidersHorizontal, label: t('nav.items.advancedSettings'), visible: adminOnly, ...needsWebQuery },
         { to: '/music-requests', icon: ListMusic, label: t('nav.items.musicRequestHistory'), visible: adminOnly },
       ],
     },
@@ -100,6 +109,7 @@ export function Sidebar() {
   const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
   const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
   const { data: servers } = useServers();
+  const { hasWebQuery } = useSelectedServer();
   const location = useLocation();
   const navSections = getNavSections(t);
 
@@ -108,6 +118,7 @@ export function Sidebar() {
     canManageBotFlows,
     canManageMusicBots,
     hasAnyServerAccess: isAdmin || (servers?.length ?? 0) > 0,
+    hasWebQuery,
   };
 
   return (
@@ -141,7 +152,8 @@ export function Sidebar() {
             {navSections
               .filter((section) => !(section as any).visible || (section as any).visible(navCtx))
               .map((section, si) => {
-                const visibleItems = section.items.filter((item) => !(item as any).visible || (item as any).visible(navCtx));
+                const visibleItems = section.items.filter((item) =>
+                  (!(item as any).needsWebQuery || navCtx.hasWebQuery) && (!(item as any).visible || (item as any).visible(navCtx)));
                 if (visibleItems.length === 0) return null;
                 const isCollapsed = !sidebarCollapsed && collapsedSections[section.label];
                 return (
