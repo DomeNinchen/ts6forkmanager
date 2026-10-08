@@ -3041,7 +3041,7 @@
       "nothingQueuedStops": "Nothing queued - this stops the stream",
       "skip": "Skip",
       "now": "Now",
-      "nothingQueuedHint": "Nothing queued. Paste a URL above and choose <1>Queue</1> to line one up — <3>!stream &lt;url&gt;</3> in chat does the same while a stream is running.",
+      "nothingQueuedHint": "Nothing queued. Paste a URL above and choose <1>Queue</1> to line one up — <3>!stream URL</3> in chat does the same while a stream is running.",
       "livePreview": "Live Preview",
       "volume": "Volume",
       "volumeHint": "Set under Settings -> Streaming; viewers can still turn their own player up",
