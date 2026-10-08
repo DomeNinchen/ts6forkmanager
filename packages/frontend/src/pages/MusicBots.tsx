@@ -40,7 +40,7 @@ import {
   Volume2, VolumeX, Upload, Search, Download, ListMusic, Shuffle,
   Repeat, Repeat1, Power, PowerOff, RefreshCw, Pencil, X, Loader2,
   Film, FileAudio, Link, GripVertical, Music2, Radio, Clock,
-  Video, ArrowUp, ArrowDown, ArrowUpDown, ImageIcon, UserRound, ShieldCheck,
+  Video, ArrowUp, ArrowDown, ArrowUpDown, ImageIcon, UserRound, ShieldCheck, Copy,
 } from 'lucide-react';
 import { VideoStreamTab } from '@/components/video/VideoStreamTab';
 import { toast } from 'sonner';
@@ -831,6 +831,42 @@ function BotsTab() {
               <Label className="text-xs">{t('pages.musicBots.botsTab.nicknameLabel')}</Label>
               <Input value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} placeholder="MusicBot" />
             </div>
+            {editBot && (
+              <div>
+                <Label className="text-xs">{t('pages.musicBots.botsTab.uidLabel')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={editBot.uid ?? ''}
+                    onFocus={(e) => e.target.select()}
+                    className="font-mono text-xs"
+                    aria-label={t('pages.musicBots.botsTab.uidLabel')}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    disabled={!editBot.uid}
+                    title={t('common.copy')}
+                    aria-label={t('common.copy')}
+                    onClick={() => {
+                      // The browser only offers the clipboard on https and on localhost
+                      if (!navigator.clipboard) { toast.error(t('pages.musicBots.botsTab.uidCopyFailed')); return; }
+                      navigator.clipboard.writeText(editBot.uid!).then(
+                        () => toast.success(t('pages.musicBots.botsTab.uidCopied')),
+                        () => toast.error(t('pages.musicBots.botsTab.uidCopyFailed')),
+                      );
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                {editBot.uid
+                  ? <p className="text-[11px] text-muted-foreground mt-1">{t('pages.musicBots.botsTab.uidHint')}</p>
+                  : <p className="text-[11px] text-amber-500 mt-1">{t('pages.musicBots.botsTab.uidMissing')}</p>}
+              </div>
+            )}
             <div>
               <Label className="text-xs">{t('pages.musicBots.botsTab.serverPasswordLabel')}</Label>
               <Input type="password" value={form.serverPassword} onChange={(e) => setForm({ ...form, serverPassword: e.target.value })} placeholder={t('pages.musicBots.botsTab.leaveEmptyIfNone')} />

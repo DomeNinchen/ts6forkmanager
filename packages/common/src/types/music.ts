@@ -46,6 +46,8 @@ export interface MusicBotSummary {
   autoplaySongId: number | null;
   autoplayRadioStationId: number | null;
   hasAvatar: boolean;
+  /** The bot's TeamSpeak unique ID (client_unique_identifier); null when it has no stored identity. */
+  uid: string | null;
   status: VoiceBotStatus;
   connection: BotConnectionInfo | null;
   nowPlaying: QueueItemInfo | null;
