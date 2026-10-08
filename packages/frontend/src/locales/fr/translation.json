@@ -2120,7 +2120,7 @@
       "nothingQueuedStops": "Rien en file d’attente - cela arrête le flux",
       "skip": "Passer",
       "now": "Maintenant",
-      "nothingQueuedHint": "Rien en file d’attente. Collez une URL ci-dessus et choisissez <1>File d’attente</1> pour l’ajouter — <3>!stream &lt;url&gt;</3> dans le chat fait la même chose pendant qu’un flux est en cours.",
+      "nothingQueuedHint": "Rien en file d’attente. Collez une URL ci-dessus et choisissez <1>File d’attente</1> pour l’ajouter — <3>!stream URL</3> dans le chat fait la même chose pendant qu’un flux est en cours.",
       "livePreview": "Aperçu en direct",
       "volume": "Volume",
       "volumeHint": "Défini dans Paramètres -> Streaming ; les spectateurs peuvent toujours augmenter leur propre lecteur",

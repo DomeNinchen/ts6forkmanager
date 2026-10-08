@@ -316,7 +316,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
               <p className="text-xs text-muted-foreground">
                 <Trans i18nKey="components.videoStreamTab.nothingQueuedHint">
                   Nothing queued. Paste a URL above and choose <strong>Queue</strong> to line one up —
-                  <code className="mx-1 text-[11px]">!stream &lt;url&gt;</code> in chat does the same
+                  <code className="mx-1 text-[11px]">!stream URL</code> in chat does the same
                   while a stream is running.
                 </Trans>
               </p>
