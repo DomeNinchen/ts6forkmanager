@@ -6,6 +6,7 @@ export * from './types/music.js';
 export * from './types/update-check.js';
 export * from './types/client-database.js';
 export * from './types/console.js';
+export * from './types/connection-journal.js';
 export * from './constants/events.js';
 export * from './utils/ts-escape.js';
 export * from './utils/ban-rules.js';

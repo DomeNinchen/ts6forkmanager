@@ -8,6 +8,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
 import { issueTokensForUser } from '../utils/issue-tokens.js';
+import { recordWebEvent } from '../utils/connection-journal.js';
 import { encrypt, decrypt } from '../utils/crypto.js';
 import {
   generateTotpSecret, generateTotpQrCode, verifyTotpCode,
@@ -27,12 +28,28 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const user = await prisma.user.findUnique({ where: { username } });
 
+    // Every refusal below answers the same way, whatever the reason - the
+    // reason only goes into the connection journal, for the admin.
+    if (!user) {
+      recordWebEvent(req, { event: 'login', result: 'failure', reason: 'unknown-user', username });
+      throw new AppError(401, 'Invalid credentials');
+    }
+    if (!user.enabled) {
+      recordWebEvent(req, { event: 'login', result: 'failure', reason: 'disabled', username: user.username, userId: user.id });
+      throw new AppError(401, 'Invalid credentials');
+    }
     // SSO-only accounts (authProvider 'oidc') have no passwordHash at all -
     // there's nothing to compare against, so they simply can't use this route.
-    if (!user || !user.enabled || !user.passwordHash) throw new AppError(401, 'Invalid credentials');
+    if (!user.passwordHash) {
+      recordWebEvent(req, { event: 'login', result: 'failure', reason: 'sso-account', username: user.username, userId: user.id });
+      throw new AppError(401, 'Invalid credentials');
+    }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) throw new AppError(401, 'Invalid credentials');
+    if (!valid) {
+      recordWebEvent(req, { event: 'login', result: 'failure', reason: 'wrong-password', username: user.username, userId: user.id });
+      throw new AppError(401, 'Invalid credentials');
+    }
 
     if (user.totpEnabled) {
       // A device that already completed a TOTP challenge recently doesn't need
@@ -40,6 +57,7 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
       if (deviceToken) {
         const trusted = await prisma.trustedDevice.findUnique({ where: { token: deviceToken } });
         if (trusted && trusted.userId === user.id && trusted.expiresAt > new Date()) {
+          recordWebEvent(req, { event: 'login', result: 'success', reason: 'trusted-device', username: user.username, userId: user.id });
           const { accessToken, refreshToken } = await issueTokensForUser(prisma, user);
           res.json({
             accessToken, refreshToken,
@@ -52,10 +70,12 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
       // Password checked out, but the second factor is still needed - hand back
       // a short-lived ticket identifying this half-completed login instead of tokens.
       const ticket = jwt.sign({ purpose: TOTP_TICKET_PURPOSE, userId: user.id }, config.jwtSecret, { expiresIn: '5m' });
+      recordWebEvent(req, { event: 'login', result: 'success', reason: 'totp-required', username: user.username, userId: user.id });
       res.json({ requiresTotp: true, ticket });
       return;
     }
 
+    recordWebEvent(req, { event: 'login', result: 'success', username: user.username, userId: user.id });
     const { accessToken, refreshToken } = await issueTokensForUser(prisma, user);
 
     res.json({
@@ -83,15 +103,26 @@ authRoutes.post('/login/verify-totp', async (req: Request, res: Response, next) 
     try {
       payload = jwt.verify(ticket, config.jwtSecret);
     } catch {
+      recordWebEvent(req, { event: 'totp', result: 'failure', reason: 'ticket-invalid' });
       throw new AppError(401, 'This login attempt has expired - please log in again');
     }
-    if (payload.purpose !== TOTP_TICKET_PURPOSE) throw new AppError(401, 'Invalid ticket');
+    if (payload.purpose !== TOTP_TICKET_PURPOSE) {
+      recordWebEvent(req, { event: 'totp', result: 'failure', reason: 'ticket-invalid' });
+      throw new AppError(401, 'Invalid ticket');
+    }
 
     const prisma = req.app.locals.prisma;
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
-    if (!user || !user.enabled || !user.totpEnabled || !user.totpSecret) throw new AppError(401, 'Invalid credentials');
+    if (!user || !user.enabled || !user.totpEnabled || !user.totpSecret) {
+      recordWebEvent(req, {
+        event: 'totp', result: 'failure', reason: user && !user.enabled ? 'disabled' : 'ticket-invalid',
+        username: user?.username, userId: user?.id,
+      });
+      throw new AppError(401, 'Invalid credentials');
+    }
 
     let ok = await verifyTotpCode(decrypt(user.totpSecret), code);
+    let usedRecoveryCode = false;
     if (!ok) {
       // Not a valid TOTP code right now - maybe it's a one-time recovery code instead.
       const unused = await prisma.recoveryCode.findMany({ where: { userId: user.id, usedAt: null } });
@@ -99,11 +130,19 @@ authRoutes.post('/login/verify-totp', async (req: Request, res: Response, next) 
         if (await verifyRecoveryCode(code, rc.codeHash)) {
           await prisma.recoveryCode.update({ where: { id: rc.id }, data: { usedAt: new Date() } });
           ok = true;
+          usedRecoveryCode = true;
           break;
         }
       }
     }
-    if (!ok) throw new AppError(401, 'Invalid code');
+    if (!ok) {
+      recordWebEvent(req, { event: 'totp', result: 'failure', reason: 'wrong-code', username: user.username, userId: user.id });
+      throw new AppError(401, 'Invalid code');
+    }
+    recordWebEvent(req, {
+      event: 'totp', result: 'success', reason: usedRecoveryCode ? 'recovery-code' : undefined,
+      username: user.username, userId: user.id,
+    });
 
     const { accessToken, refreshToken } = await issueTokensForUser(prisma, user);
 

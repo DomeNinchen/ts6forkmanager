@@ -565,3 +565,35 @@ model ServerMetricRollup {
 
   @@index([serverConfigId, virtualServerId, measuredAt])
 }
+
+// The connection journal (Connection journal page): one row per sign-in event at
+// the web interface, with the address it came from. `source` leaves room for the
+// TeamSpeak logins of a later step; every row is `web` today.
+// There is deliberately no relation to User: the journal outlives an account
+// that is deleted, and an attempt with a name nobody has belongs here too.
+model ConnectionJournalEntry {
+  id        Int      @id @default(autoincrement())
+  at        DateTime @default(now())
+  // "web" (the sign-in of this app); later also "ts".
+  source    String
+  // web: "login" (password step), "totp" (second factor), "sso", "rate-limit".
+  event     String
+  // "success" | "failure"
+  result    String
+  // Why - a short code (wrong-password, unknown-user, disabled, totp-required, ...);
+  // see utils/connection-journal.ts. The Connection journal page words them.
+  reason    String?
+  // The account name. For an attempt with a name that no account has this is
+  // what was typed (cut to 100 characters), which can be a password pasted into
+  // the wrong field - the admin chose to keep it, the README says so.
+  username  String?
+  userId    Int?
+  // The address the backend took for the visitor (see TRUST_PROXY).
+  ip        String
+  // The browser/device, cut to 300 characters.
+  userAgent String?
+
+  @@index([at])
+  @@index([ip, at])
+  @@index([source, at])
+}
