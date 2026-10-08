@@ -1532,6 +1532,8 @@
         "bitrateHintPrefix": "So wie ffmpeg es schreibt, z. B.",
         "volumeLabel": "Lautstärke",
         "volumeHint": "Prozent der Eigenlautstärke des Videos, 0-100. Videos sind deutlich lauter abgemischt, als Menschen sprechen, sodass ein Stream auf voller Videolautstärke wie ein Schrei ankommt - daher der niedrige Standardwert. Zuschauer können ihren eigenen Player trotzdem lauter stellen. Wirkt sich erst auf den nächsten Stream aus, nicht auf den laufenden.",
+        "idleStopLabel": "Stream beenden, wenn niemand zuschaut (Minuten)",
+        "idleStopHint": "Wie lange ein Video-Stream ohne Zuschauer laufen darf, bevor der Bot ihn beendet - damit ein vergessener Stream nicht dauerhaft Upstream und CPU des Servers belegt. Die Zeit läuft ab dem Moment, in dem der letzte Zuschauer geht, oder ab dem Start des Streams, wenn nie jemand beigetreten ist; tritt jemand bei, beginnt sie von vorn. 0 lässt den Stream laufen, bis ihn jemand beendet. Die Vorschau in dieser Weboberfläche zählt nicht als Zuschauer.",
         "restoreShippedValues": "Ausgelieferte Werte wiederherstellen",
         "unsavedChanges": "Ungespeicherte Änderungen",
         "streamDefaultsSaved": "Stream-Standardwerte gespeichert",
