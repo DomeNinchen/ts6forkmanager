@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parseTrustProxy } from './utils/trust-proxy.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
@@ -29,4 +30,9 @@ export const config = {
   tsAllowSelfSigned: process.env.TS_ALLOW_SELF_SIGNED === 'true' || process.env.TS_ALLOW_SELF_SIGNED === '1',
   // Largest single file the Files page will upload to a channel's file repository.
   filesMaxUploadBytes: parseFilesMaxUploadBytes(process.env.FILES_MAX_UPLOAD_MB),
+  // How many proxies (or which addresses) in front of the backend may vouch for the
+  // visitor's address in X-Forwarded-For; see utils/trust-proxy.ts.
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
 };
+
+if (config.trustProxy.warning) console.warn(`[Config] ${config.trustProxy.warning}`);

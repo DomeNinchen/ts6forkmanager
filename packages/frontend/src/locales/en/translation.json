@@ -1227,6 +1227,7 @@
         "users": "Users",
         "youtube": "YouTube",
         "streaming": "Streaming",
+        "network": "Network",
         "debug": "Debug",
         "restart": "Restart",
         "sso": "SSO",
@@ -1439,6 +1440,40 @@
         "unsavedChanges": "Unsaved changes",
         "streamDefaultsSaved": "Stream defaults saved",
         "streamDefaultsSaveFailed": "Failed to save stream defaults"
+      },
+      "network": {
+        "title": "Visitor address",
+        "checkAgain": "Check again",
+        "loadFailed": "Could not read how this request reached the backend.",
+        "description": "Behind a reverse proxy, the backend learns who is really connecting from the X-Forwarded-For header, and can only believe it as far as TRUST_PROXY says. It uses that address for the sign-in rate limit today, and for the connection journal and IP bans later.",
+        "detectedLabel": "Address the backend takes for you",
+        "detectedHint": "Open this page from a computer whose public address you know, and compare.",
+        "settingLabel": "Setting",
+        "settingFromEnv": "from the environment",
+        "settingDefault": "default",
+        "suggestionNone": "Every address in this request belongs to a private network (you are probably on the same network as the server), so no number can be suggested. Open this page from outside that network.",
+        "suggestionMatches": "The first public address in this request is the one the backend takes for you - TRUST_PROXY fits your setup.",
+        "suggestionDiffers": "The first public address in this request is {{address}}, which the backend would take for you with TRUST_PROXY={{hops}}. If that is your address, set it in the backend's environment and restart the backend.",
+        "suggestionCheck": "If it is not your address, a CDN or another proxy sits in between, and its addresses have to be listed in TRUST_PROXY instead of counted.",
+        "chainTitle": "How this request arrived",
+        "chainHint": "Nearest to the backend first. Proxies the backend believes are green, the address it takes for you is highlighted, and everything after it is not believed because the visitor can write it themselves.",
+        "origin": {
+          "socket": "connection",
+          "forwarded": "X-Forwarded-For"
+        },
+        "scope": {
+          "public": "public",
+          "private": "private network",
+          "loopback": "this machine",
+          "unknown": "unknown"
+        },
+        "role": {
+          "proxy": "believed proxy",
+          "client": "taken as you",
+          "ignored": "not believed"
+        },
+        "notSent": "not sent",
+        "howToChange": "TRUST_PROXY is set in the backend's environment (the .env file next to docker-compose.yml, which the compose file passes through), followed by a restart of the backend."
       },
       "debug": {
         "loggingTitle": "Debug Logging",
@@ -2594,6 +2629,11 @@
         "selectServerPlaceholder": "Select server...",
         "voicePortLabel": "Voice Port",
         "nicknameLabel": "Nickname",
+        "uidLabel": "Unique ID (UID)",
+        "uidHint": "The ID TeamSpeak knows this bot by - use it for server group assignments, permissions or ban exceptions. It never changes for this bot.",
+        "uidMissing": "This bot has no stored identity, so it connects with a new random one each time and there is no fixed ID to show.",
+        "uidCopied": "Unique ID copied",
+        "uidCopyFailed": "Could not copy - the browser only allows this on https or on localhost",
         "serverPasswordLabel": "Server Password",
         "defaultChannelLabel": "Default Channel",
         "defaultChannelPlaceholder": "Channel name or ID (optional)",

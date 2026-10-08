@@ -8,6 +8,8 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import { AppError } from '../middleware/error-handler.js';
+import { config } from '../config.js';
+import { buildChain, normalizeAddress, suggestHops, trustProxyEnvValue } from '../utils/trust-proxy.js';
 import { setYtCookieFile, getYtCookieFile } from '../voice/audio/youtube.js';
 import { getDebugFlags, setDebugFlag, type DebugFlagName } from '../utils/debug-flags.js';
 import { getScheduledRestartConfig, setScheduledRestartConfig, type ScheduledRestartConfig } from '../utils/scheduled-restart.js';
@@ -127,6 +129,33 @@ settingsRoutes.put('/debug-flags/:name', requireAdmin, async (req: Request, res:
     console.log(`[Settings] Debug flag '${name}' set to ${enabled}`);
     res.json(getDebugFlags());
   } catch (err) { next(err); }
+});
+
+// GET /api/settings/client-ip — How this very request reached the backend and whom the
+// backend takes for the client, so an admin can check TRUST_PROXY against their own
+// address instead of guessing how many proxies sit in front of the app.
+settingsRoutes.get('/client-ip', requireAdmin, (req: Request, res: Response) => {
+  const header = (name: string): string | null => {
+    const value = req.headers[name];
+    const text = Array.isArray(value) ? value.join(', ') : value;
+    return text && text.trim() !== '' ? text : null;
+  };
+  const forwardedFor = header('x-forwarded-for');
+  const chain = buildChain(req.socket.remoteAddress, forwardedFor ?? undefined);
+  res.json({
+    ip: normalizeAddress(req.ip ?? ''),
+    socketAddress: req.socket.remoteAddress ? normalizeAddress(req.socket.remoteAddress) : null,
+    forwardedFor,
+    realIp: header('x-real-ip'),
+    trustProxy: {
+      description: config.trustProxy.description,
+      envValue: trustProxyEnvValue(config.trustProxy.value),
+      fromEnv: config.trustProxy.fromEnv,
+      warning: config.trustProxy.warning ?? null,
+    },
+    chain,
+    suggestedHops: suggestHops(chain),
+  });
 });
 
 // Both reset endpoints below wipe the table across every server (not just

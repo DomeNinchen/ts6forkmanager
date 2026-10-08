@@ -23,7 +23,7 @@ Live overview of your server: online users, channel count, uptime, ping, bandwid
 ![Dashboard](docs/dashboard.png)
 
 ### Music Bots
-Run multiple music bots per server. Each bot has its own queue, volume control, and playback state. Supports radio streams, YouTube, and a local music library. Users in the bot's channel can control it via text commands (`!radio`, `!play`, `!vol`, etc.). A bot can also be configured to autoplay a chosen song or radio station on its own every time it connects, so it's never left sitting idle after a manual start, a server restart, or a reconnect. A bot that can't reach the server says so on its card - connecting, waiting for the next of up to 10 automatic retries (with a countdown), or stopped for good - together with the server's own reason (banned, flood protection, wrong password, server full, unreachable host, ...); a failed **Start** shows the same reason instead of a generic error. After the 10th failed retry, or at once for a real ban, a wrong server password or a full server, the bot stays stopped until you press **Start**.
+Run multiple music bots per server. Each bot has its own queue, volume control, and playback state. Supports radio streams, YouTube, and a local music library. Users in the bot's channel can control it via text commands (`!radio`, `!play`, `!vol`, etc.). A bot can also be configured to autoplay a chosen song or radio station on its own every time it connects, so it's never left sitting idle after a manual start, a server restart, or a reconnect. A bot that can't reach the server says so on its card - connecting, waiting for the next of up to 10 automatic retries (with a countdown), or stopped for good - together with the server's own reason (banned, flood protection, wrong password, server full, unreachable host, ...); a failed **Start** shows the same reason instead of a generic error. After the 10th failed retry, or at once for a real ban, a wrong server password or a full server, the bot stays stopped until you press **Start**. Each bot's TeamSpeak unique ID (UID) is shown, with a copy button, in its settings dialog - the ID to use for server group assignments, permissions or ban exceptions on the server.
 
 ![Music Bots](docs/musicbots.png)
 
@@ -114,6 +114,8 @@ docker compose up -d --build
 > `ENCRYPTION_KEY` is optional but recommended — if not set, `JWT_SECRET` is used as fallback for credential encryption.
 
 Running it behind a reverse proxy, or on Coolify? See [Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment). Every other environment variable is listed in [Configuration](https://github.com/DomeNinchen/ts6forkmanager/wiki/Configuration).
+
+> **Visitor address behind a proxy:** the backend learns who is connecting from the `X-Forwarded-For` header and believes it only as far as `TRUST_PROXY` says — the number of reverse proxies in front of it (`1`, the frontend container's nginx alone, by default; `2` with a host nginx or Coolify's proxy in front of that), or a comma-separated list of proxy addresses. Too low and every visitor appears as your proxy (the sign-in rate limit is then shared by everybody); too high and an address the visitor wrote himself is believed. **Settings → Network** shows how a request reached the backend, which address it takes for you and which number fits. The backend port `3001` is published on `127.0.0.1` only; open it to the network and anybody can forge that header.
 
 ## Features
 

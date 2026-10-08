@@ -19,7 +19,18 @@ export interface IdentityData {
   privateKeyBigInt: bigint; // Raw private key scalar
   publicKeyString: string; // Base64 of libtomcrypt-style public key export
   keyOffset: bigint;
-  uid: string; // base64(sha1(publicKeyString))
+  uid: string; // client_unique_identifier: base64(sha256(publicKeyString)), see uidFromPublicKey
+}
+
+/**
+ * The unique ID TeamSpeak 6 shows for a client (client_unique_identifier):
+ * base64(sha256(publicKeyString)). TeamSpeak 3 used SHA-1 here and this file
+ * did too, which gave 28-character IDs no TS6 server ever reports - checked
+ * against a TS6 server's clientlist, where the identity's public key hashed
+ * with SHA-256 matched for every connected bot.
+ */
+export function uidFromPublicKey(publicKeyString: string): string {
+  return crypto.createHash("sha256").update(publicKeyString, "ascii").digest("base64");
 }
 
 // Restore identity from serialized JSON (KeyObjects reconstructed from privateKeyBigInt)
@@ -27,7 +38,7 @@ export function restoreIdentity(data: {
   privateKeyBigInt: string | bigint;
   keyOffset: string | bigint;
   publicKeyString: string;
-  uid: string;
+  uid?: string; // ignored: identities stored by earlier versions carry the SHA-1 form, so it is derived again
 }): IdentityData {
   const privScalar = typeof data.privateKeyBigInt === 'bigint'
     ? data.privateKeyBigInt
@@ -60,7 +71,7 @@ export function restoreIdentity(data: {
     privateKeyBigInt: privScalar,
     publicKeyString: data.publicKeyString,
     keyOffset,
-    uid: data.uid,
+    uid: uidFromPublicKey(data.publicKeyString),
   };
 }
 
@@ -172,7 +183,6 @@ function importKeyFromAsn(
   }
 
   const pubKeyString = exportPublicKeyString(ecPubKey);
-  const uid = sha1(Buffer.from(pubKeyString, "ascii")).toString("base64");
 
   return {
     privateKey: ecPrivKey,
@@ -180,7 +190,7 @@ function importKeyFromAsn(
     privateKeyBigInt: privateKeyScalar,
     publicKeyString: pubKeyString,
     keyOffset,
-    uid,
+    uid: uidFromPublicKey(pubKeyString),
   };
 }
 
@@ -193,7 +203,6 @@ export function generateIdentity(securityLevel: number = 8): IdentityData {
   const jwk = ecPrivKey.export({ format: "jwk" }) as any;
   const privScalar = bufferToBigint(Buffer.from(jwk.d!, "base64url"));
   const pubKeyString = exportPublicKeyString(ecPubKey);
-  const uid = sha1(Buffer.from(pubKeyString, "ascii")).toString("base64");
 
   const identity: IdentityData = {
     privateKey: ecPrivKey,
@@ -201,7 +210,7 @@ export function generateIdentity(securityLevel: number = 8): IdentityData {
     privateKeyBigInt: privScalar,
     publicKeyString: pubKeyString,
     keyOffset: 0n,
-    uid,
+    uid: uidFromPublicKey(pubKeyString),
   };
 
   if (securityLevel > 0) {

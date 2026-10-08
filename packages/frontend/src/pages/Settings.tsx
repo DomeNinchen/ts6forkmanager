@@ -17,7 +17,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot, Palette, Video } from 'lucide-react';
+import { NetworkTab } from '@/components/settings/NetworkTab';
+import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot, Palette, Video, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
@@ -47,6 +48,7 @@ export default function Settings() {
           {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.users')}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.youtube')}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="streaming"><Video className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.streaming')}</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="network"><Globe className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.network')}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.debug')}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.restart')}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="sso"><ShieldCheck className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.sso')}</TabsTrigger>}
@@ -82,6 +84,12 @@ export default function Settings() {
         {isAdmin && (
           <TabsContent value="streaming" className="mt-4">
             <StreamingTab />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="network" className="mt-4">
+            <NetworkTab />
           </TabsContent>
         )}
 

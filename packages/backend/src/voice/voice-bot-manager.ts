@@ -342,6 +342,16 @@ export class VoiceBotManager extends EventEmitter {
     return this.bots.get(id);
   }
 
+  /**
+   * The unique ID (client_unique_identifier) TeamSpeak shows for this bot - the
+   * only part of its identity that may leave the backend; the identity itself
+   * holds the private key. null for a bot without a stored identity: it
+   * connects with a throwaway one each time, so there is no ID worth showing.
+   */
+  getIdentityUid(id: number): string | null {
+    return this.bots.get(id)?.currentConfig.identity?.uid ?? null;
+  }
+
   async removeBot(id: number): Promise<void> {
     this.clearReconnect(id);
     const bot = this.bots.get(id);
