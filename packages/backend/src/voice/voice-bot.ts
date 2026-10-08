@@ -12,9 +12,20 @@ import { downloadVideoForStream, safeUnlinkStreamTemp } from './streaming/video-
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { BotFailureKind } from '@ts6/common';
+import { ChannelOccupancy } from './channel-occupancy.js';
 
 /** Default cap on how long a pre-downloaded video may run, in seconds. */
 const DEFAULT_MAX_VIDEO_DURATION_SEC = 900;
+
+/** How often a bot checks whether it has been alone long enough to pause. */
+const IDLE_CHECK_INTERVAL_MS = 5000;
+/**
+ * Playback that stays stopped this long is no longer "the same playback": the
+ * time spent alone then starts over with whatever plays next, instead of an
+ * admin pressing Play in an empty channel after an hour being paused again
+ * within seconds. Shorter gaps are just one track ending and the next beginning.
+ */
+const IDLE_PLAYBACK_GAP_MS = 30_000;
 
 export type VoiceBotStatus = 'stopped' | 'starting' | 'connected' | 'playing' | 'paused' | 'error';
 
@@ -51,6 +62,16 @@ export interface VoiceBotConfig {
   // when there is none), so an edited API key, host or port reaches a running
   // bot without a restart, and the bot does not open a query connection of its own.
   getWebQuery?: () => WebQueryClient | null;
+  /**
+   * Minutes the bot keeps playing while no real user is in its channel before it
+   * pauses itself (and carries on when somebody comes back); 0 or unset = never.
+   */
+  idlePauseMinutes?: number;
+  /**
+   * Client IDs of the app's other bots on the same server: they are voice
+   * clients like any person and must not count as company for this one.
+   */
+  getOtherBotClientIds?: () => ReadonlySet<number>;
 }
 
 export class VoiceBot extends EventEmitter {
@@ -78,6 +99,18 @@ export class VoiceBot extends EventEmitter {
   private statDtSum = 0;
   private statDtMin = Number.POSITIVE_INFINITY;
   private statDtMax = 0;
+
+  // Who is in the bot's channel, and what the "pause when alone" rule has done
+  private occupancy = new ChannelOccupancy();
+  private idleTimer: ReturnType<typeof setInterval> | null = null;
+  /** When the channel became empty of people (while the bot was playing); null while someone is there. */
+  private _aloneSince: number | null = null;
+  /** Since when playback has not been running while the channel is empty; see IDLE_PLAYBACK_GAP_MS. */
+  private _notPlayingSince: number | null = null;
+  /** The pause currently in force was made by the "alone" rule, not by a person: only that one is undone by it. */
+  private _idlePaused = false;
+  /** A radio stream that was paused: it has no position to keep, so resuming plays the station again. */
+  private _pausedStream: QueueItem | null = null;
 
   // Streaming state (radio)
   private _isStreaming: boolean = false;
@@ -158,6 +191,8 @@ export class VoiceBot extends EventEmitter {
     });
 
     this.client.on('disconnected', () => {
+      this.stopIdleWatch();
+      this.occupancy.reset();
       this.stopIcyPolling();
       this.stopPlayback();
       if (this.descriptionTimer) {
@@ -196,6 +231,12 @@ export class VoiceBot extends EventEmitter {
     });
 
     this.client.on('command', (cmd) => {
+      // Who comes and goes in the channel; a change can decide the "alone" rule at once
+      try {
+        if (this.occupancy.handle(cmd, this.client.getClientId())) this.evaluateIdle();
+      } catch (err: any) {
+        console.error(`[VoiceBot ${this.config.id}] Reading the channel's occupants failed: ${err.message}`);
+      }
       this.emit('command', cmd);
     });
 
@@ -315,6 +356,8 @@ export class VoiceBot extends EventEmitter {
   updateConfig(partial: Partial<VoiceBotConfig>): void {
     Object.assign(this.config, partial);
     if (partial.nickname) this._originalNickname = partial.nickname;
+    // A changed "alone" time applies to the bot as it is now, not from the next track on
+    if (partial.idlePauseMinutes !== undefined) this.evaluateIdle();
   }
 
   /** Push a new avatar immediately if connected; otherwise it uploads on the next connect. */
@@ -542,6 +585,7 @@ export class VoiceBot extends EventEmitter {
     }
     this._status = 'connected';
     this.emit('statusChange', this._status);
+    this.startIdleWatch();
     this.emit('connected');
 
     if (this.config.avatarImage) {
@@ -723,8 +767,24 @@ export class VoiceBot extends EventEmitter {
 
   pause(): void {
     if (this._status !== 'playing') return;
-    this.pausedAtFrame = this.frameIndex;
-    this.clearTimer();
+    if (this._isStreaming && this._nowPlaying) {
+      // A live stream has no position to come back to, and its ffmpeg would
+      // keep filling the buffer while nothing plays it: stop it, remember what
+      // it was, and play the station again on resume.
+      this._pausedStream = this._nowPlaying;
+      this.clearTimer();
+      this.stopIcyPolling();
+      if (this.streamKill) {
+        this.streamKill();
+        this.streamKill = null;
+      }
+      this._isStreaming = false;
+      this.streamChunks = [];
+      this.streamChunksSize = 0;
+    } else {
+      this.pausedAtFrame = this.frameIndex;
+      this.clearTimer();
+    }
     this.client.sendVoiceStop();
     this._status = 'paused';
     this.emit('statusChange', this._status);
@@ -732,6 +792,13 @@ export class VoiceBot extends EventEmitter {
 
   resume(): void {
     if (this._status !== 'paused') return;
+    this._idlePaused = false;
+    if (this._pausedStream) {
+      const station = this._pausedStream;
+      this._pausedStream = null;
+      this.playStream(station).catch((err) => this.emit('error', err));
+      return;
+    }
     this.frameIndex = this.pausedAtFrame;
     this._status = 'playing';
     this.emit('statusChange', this._status);
@@ -958,6 +1025,9 @@ export class VoiceBot extends EventEmitter {
     this.pcmFrames = [];
     this.frameIndex = 0;
     this.pausedAtFrame = 0;
+    // Whatever was paused is over now (a new track, Stop, a disconnect): there is nothing left to resume
+    this._pausedStream = null;
+    this._idlePaused = false;
 
     // Kill streaming FFmpeg if active
     if (this.streamKill) {
@@ -967,6 +1037,98 @@ export class VoiceBot extends EventEmitter {
     this._isStreaming = false;
     this.streamChunks = [];
     this.streamChunksSize = 0;
+  }
+
+  // ─── Pause when alone ───────────────────────────────────────
+
+  /** The current pause was made by the "alone" rule (and will be undone by it). */
+  get idlePaused(): boolean {
+    return this._idlePaused;
+  }
+
+  /** People (other than this bot and the app's other bots) in the bot's channel; null while that is not known. */
+  get channelPeopleCount(): number | null {
+    return this.occupancy.countPeople(this.client.getClientId(), this.config.getOtherBotClientIds?.());
+  }
+
+  private startIdleWatch(): void {
+    this.stopIdleWatch();
+    // The occupants are only ever told to the bot, never asked for, so an event
+    // is what ends being alone - but the time running out is no event, and
+    // neither is a setting that changed: those are what this tick is for.
+    this.idleTimer = setInterval(() => this.evaluateIdle(), IDLE_CHECK_INTERVAL_MS);
+    this.idleTimer.unref?.();
+  }
+
+  private stopIdleWatch(): void {
+    if (this.idleTimer) {
+      clearInterval(this.idleTimer);
+      this.idleTimer = null;
+    }
+    this._aloneSince = null;
+    this._notPlayingSince = null;
+  }
+
+  /**
+   * Never lets a failure here reach the audio path: this runs from the voice
+   * connection's command handler and from a timer, so an exception would end up
+   * in the middle of playback.
+   */
+  private evaluateIdle(): void {
+    try {
+      this.runIdleEvaluation();
+    } catch (err: any) {
+      console.error(`[VoiceBot ${this.config.id}] Checking whether the bot is alone failed: ${err.message}`);
+    }
+  }
+
+  private runIdleEvaluation(): void {
+    if (this._status !== 'playing' && this._status !== 'paused' && this._status !== 'connected') return;
+
+    const minutes = this.config.idlePauseMinutes ?? 0;
+    const people = this.channelPeopleCount;
+
+    // The rule is off, or the bot does not know its channel yet: nothing to decide, and a
+    // pause the rule made earlier is not left behind by a rule that no longer exists.
+    if (minutes <= 0 || people === null) {
+      this._aloneSince = null;
+      this._notPlayingSince = null;
+      if (minutes <= 0 && this._idlePaused) this.resumeFromIdle();
+      return;
+    }
+
+    if (people > 0) {
+      this._aloneSince = null;
+      this._notPlayingSince = null;
+      if (this._idlePaused) this.resumeFromIdle();
+      return;
+    }
+
+    // Alone. The time counts while the bot is playing; a long stop in between starts it over.
+    const now = Date.now();
+    if (this._status === 'playing') {
+      this._notPlayingSince = null;
+      this._aloneSince ??= now;
+      if (now - this._aloneSince >= minutes * 60_000) this.pauseForIdle(minutes);
+    } else if (!this._idlePaused) {
+      this._notPlayingSince ??= now;
+      if (now - this._notPlayingSince >= IDLE_PLAYBACK_GAP_MS) this._aloneSince = null;
+    }
+  }
+
+  private pauseForIdle(minutes: number): void {
+    console.log(`[VoiceBot ${this.config.id}] Nobody has been in the channel for ${minutes} min, pausing`);
+    // Set before pausing so whoever hears the status change already sees whose pause it is
+    this._idlePaused = true;
+    this.pause();
+    if (this._status !== 'paused') this._idlePaused = false;
+    this._aloneSince = null;
+  }
+
+  private resumeFromIdle(): void {
+    console.log(`[VoiceBot ${this.config.id}] Someone is in the channel again, resuming`);
+    this._idlePaused = false;
+    this.resume();
   }
 
   // ─── Video Streaming ────────────────────────────────────────

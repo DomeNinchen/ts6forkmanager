@@ -133,6 +133,7 @@ export class VoiceBotManager extends EventEmitter {
         sidecarBinaryPath: process.env.SIDECAR_BINARY_PATH,
         sidecarPort: (dbBot as any).sidecarPort ?? 9800,
         descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
+        idlePauseMinutes: dbBot.idlePauseMinutes,
         avatarImage: dbBot.avatarData
           ? { data: Buffer.from(dbBot.avatarData), mimeType: dbBot.avatarMimeType || 'image/png' }
           : undefined,
@@ -150,7 +151,29 @@ export class VoiceBotManager extends EventEmitter {
     }
   }
 
+  /**
+   * The client IDs of this app's other bots that are connected to the same
+   * voice server: they are voice clients like anybody else, so only this
+   * knowledge tells a bot that they are not company.
+   */
+  private otherBotClientIds(botId: number): ReadonlySet<number> {
+    const me = this.bots.get(botId)?.currentConfig;
+    const ids = new Set<number>();
+    if (!me) return ids;
+    for (const [id, other] of this.bots) {
+      if (id === botId) continue;
+      const cfg = other.currentConfig;
+      if (cfg.serverConfigId !== me.serverConfigId || cfg.serverPort !== me.serverPort) continue;
+      // A stopped bot keeps its last client ID, which a person may hold by now
+      if (other.status === 'stopped' || other.status === 'starting' || other.status === 'error') continue;
+      const clid = other.ts3ClientId;
+      if (clid) ids.add(clid);
+    }
+    return ids;
+  }
+
   private createBotInstance(config: VoiceBotConfig): VoiceBot {
+    config.getOtherBotClientIds = () => this.otherBotClientIds(config.id);
     const bot = new VoiceBot(config);
 
     bot.on('statusChange', (status: VoiceBotStatus) => {
@@ -264,6 +287,7 @@ export class VoiceBotManager extends EventEmitter {
     autoplayMode?: string;
     autoplaySongId?: number;
     autoplayRadioStationId?: number;
+    idlePauseMinutes?: number;
   }): Promise<{ id: number }> {
     // Enforce bot limit
     const limitSetting = await this.prisma.appSetting.findUnique({ where: { key: 'max_music_bots' } });
@@ -301,6 +325,7 @@ export class VoiceBotManager extends EventEmitter {
         autoplayMode: data.autoplayMode ?? 'none',
         autoplaySongId: data.autoplayMode === 'song' ? data.autoplaySongId : undefined,
         autoplayRadioStationId: data.autoplayMode === 'radio' ? data.autoplayRadioStationId : undefined,
+        idlePauseMinutes: data.idlePauseMinutes ?? 0,
       },
     });
 
@@ -319,6 +344,7 @@ export class VoiceBotManager extends EventEmitter {
       sidecarBinaryPath: process.env.SIDECAR_BINARY_PATH,
       sidecarPort: 9800,
       descriptionTemplate: dbBot.descriptionTemplate ?? undefined,
+      idlePauseMinutes: dbBot.idlePauseMinutes,
       getWebQuery: this.webQueryFor(data.serverConfigId),
     };
 

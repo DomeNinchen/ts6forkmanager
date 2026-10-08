@@ -259,6 +259,10 @@ model MusicBot {
   autoplaySong           Song?         @relation(fields: [autoplaySongId], references: [id], onDelete: SetNull)
   autoplayRadioStationId Int?
   autoplayRadioStation   RadioStation? @relation(fields: [autoplayRadioStationId], references: [id], onDelete: SetNull)
+  // Minutes the bot may keep playing while no real user is in its channel
+  // before it pauses (and picks up again when somebody comes back); 0 = never,
+  // which is how a bot always behaved.
+  idlePauseMinutes       Int           @default(0)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

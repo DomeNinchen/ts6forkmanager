@@ -2641,6 +2641,8 @@
         "autoStartLabel": "Auto-start on server startup",
         "autoplayLabel": "Autoplay on Connect",
         "autoplayHint": "Starts on its own every time this bot connects (manual start, server restart, or a reconnect) - only while it's coming up idle, never interrupting something already queued.",
+        "idlePauseLabel": "Pause when alone (minutes)",
+        "idlePauseHint": "Pauses the playback once no person has been in the bot's channel for this long, and carries on with the same thing (a radio station is tuned in again, a track continues where it stopped) as soon as somebody enters. Other bots and ServerQuery clients do not count as company. A pause you made yourself is left alone. 0 = never.",
         "autoplayOff": "Off",
         "autoplaySong": "Play a song",
         "autoplayRadio": "Play a radio station",
