@@ -1823,6 +1823,8 @@
         "autoStartLabel": "Démarrage auto au démarrage du serveur",
         "autoplayLabel": "Lecture auto à la connexion",
         "autoplayHint": "Démarre tout seul chaque fois que ce bot se connecte (démarrage manuel, redémarrage du serveur ou reconnexion) - uniquement quand il démarre inactif, sans jamais interrompre ce qui est déjà en file.",
+        "idlePauseLabel": "Mettre en pause quand seul (minutes)",
+        "idlePauseHint": "Met la lecture en pause quand aucune personne n'est restée dans le salon du bot pendant ce temps, et reprend la même chose (une station de radio est de nouveau syntonisée, un titre continue là où il s'était arrêté) dès que quelqu'un entre. Les autres bots et les clients ServerQuery ne comptent pas comme compagnie. Une pause faite par vous-même n'est pas touchée. 0 = jamais.",
         "autoplayOff": "Désactivé",
         "autoplaySong": "Lire un morceau",
         "autoplayRadio": "Lire une station radio",
