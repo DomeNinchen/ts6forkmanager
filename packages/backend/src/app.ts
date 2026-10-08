@@ -43,6 +43,9 @@ import { settingsRoutes } from './routes/settings.routes.js';
 import { updateCheckRoutes } from './routes/update-check.routes.js';
 import { ytCookieCheckRoutes } from './routes/yt-cookie-check.routes.js';
 import { requireServerAccess } from './middleware/server-access.js';
+import { requireRole } from './middleware/rbac.js';
+import { connectionJournalRoutes } from './routes/connection-journal.routes.js';
+import { recordRateLimitHit } from './utils/connection-journal.js';
 
 export function createApp(): Express {
   const app = express();
@@ -70,6 +73,12 @@ export function createApp(): Express {
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many attempts, please try again later' },
+    // The default answer, plus a row in the connection journal (one per address
+    // and minute, however many requests the limit keeps turning away).
+    handler: (req, res, _next, options) => {
+      recordRateLimitHit(req, req.originalUrl.startsWith('/api/auth/refresh') ? 'refresh-limit' : 'login-limit');
+      res.status(options.statusCode).send(options.message);
+    },
   });
   app.use('/api/auth/login', authLimiter);
   app.use('/api/auth/refresh', authLimiter);
@@ -127,6 +136,7 @@ export function createApp(): Express {
   app.use('/api/servers/:configId/music-requests', serverAccess, musicRequestRoutes);
   app.use('/api/widgets', widgetRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/connection-journal', requireRole('admin'), connectionJournalRoutes);
   app.use('/api/update-check', updateCheckRoutes);
   app.use('/api/yt-cookie-check', ytCookieCheckRoutes);
 

@@ -101,6 +101,7 @@
       "permissions": "Berechtigungen",
       "bans": "Sperren",
       "tokens": "Tokens",
+      "connectionJournal": "Verbindungsjournal",
       "files": "Dateien",
       "icons": "Icons",
       "complaints": "Beschwerden",
@@ -446,6 +447,103 @@
       "signingIn": "Anmeldung läuft...",
       "signIn": "Anmelden",
       "or": "oder"
+    },
+    "connectionJournal": {
+      "title": "Verbindungsjournal",
+      "subtitle": "Wer sich an dieser Weboberfläche angemeldet hat, von welcher Adresse und ob es geklappt hat. Nur für Admins sichtbar; im Reiter Einstellungen steht, wie lange es aufbewahrt wird.",
+      "tabs": {
+        "journal": "Journal",
+        "byIp": "Nach Adresse",
+        "settings": "Einstellungen"
+      },
+      "searchPlaceholder": "Konto oder Adresse",
+      "filters": {
+        "range": "Zeitraum",
+        "event": "Ereignis",
+        "result": "Ergebnis",
+        "anyEvent": "Jedes Ereignis",
+        "anyResult": "Jedes Ergebnis",
+        "removeAddress": "Adressfilter entfernen",
+        "reset": "Filter zurücksetzen"
+      },
+      "range": {
+        "24h": "Letzte 24 Stunden",
+        "7d": "Letzte 7 Tage",
+        "30d": "Letzte 30 Tage",
+        "all": "Alles"
+      },
+      "columns": {
+        "time": "Zeit",
+        "event": "Ereignis",
+        "result": "Ergebnis",
+        "account": "Konto",
+        "address": "Adresse",
+        "details": "Details",
+        "entries": "Einträge",
+        "failures": "Fehlschläge",
+        "successes": "Erfolge",
+        "accountsTried": "Konten probiert",
+        "lastSeen": "Zuletzt gesehen"
+      },
+      "event": {
+        "login": "Anmeldung",
+        "totp": "Zweiter Faktor",
+        "sso": "Single Sign-On",
+        "rate-limit": "Anmeldelimit"
+      },
+      "result": {
+        "success": "Erfolg",
+        "failure": "Fehlschlag"
+      },
+      "reason": {
+        "wrong-password": "Falsches Passwort",
+        "unknown-user": "Kein solches Konto",
+        "disabled": "Konto deaktiviert",
+        "sso-account": "Single-Sign-On-Konto (hat kein Passwort)",
+        "totp-required": "Passwort richtig, zweiter Faktor steht noch aus",
+        "trusted-device": "Vertrauenswürdiges Gerät, zweiter Faktor übersprungen",
+        "wrong-code": "Falscher Code",
+        "recovery-code": "Mit einem Wiederherstellungscode angemeldet",
+        "ticket-invalid": "Schritt des zweiten Faktors abgelaufen oder ungültig",
+        "sso-not-configured": "Single Sign-On ist nicht eingerichtet",
+        "sso-invalid-state": "Ungültiger oder abgelaufener Anmeldestatus",
+        "sso-no-subject": "Der Identitätsanbieter hat keine Konto-ID geschickt",
+        "sso-failed": "Die Antwort des Identitätsanbieters wurde abgelehnt",
+        "login-limit": "Zu viele Anmeldeversuche von dieser Adresse",
+        "refresh-limit": "Zu viele Token-Erneuerungen von dieser Adresse"
+      },
+      "unknownAccount": "unbekannt",
+      "unknownAccountHint": "Kein Konto trägt diesen Namen. Es ist das, was ins Feld getippt wurde – möglicherweise etwas anderes, etwa ein Passwort im falschen Feld.",
+      "filterByAddress": "Nur diese Adresse zeigen",
+      "showEntries": "Einträge dieser Adresse zeigen",
+      "empty": "Für diese Auswahl ist nichts aufgezeichnet.",
+      "loadFailed": "Das Verbindungsjournal konnte nicht geladen werden.",
+      "resultCount_one": "{{count}} Eintrag",
+      "resultCount_other": "{{count}} Einträge",
+      "perPage": "{{count}} pro Seite",
+      "settings": {
+        "title": "Aufzeichnung und Aufbewahrung",
+        "description": "Das Journal speichert von jedem Anmeldeereignis, erfolgreich oder nicht, die Adresse, den Kontonamen (bei einem unbekannten Konto das Getippte), den Browser und die Zeit. Adressen sind vielerorts personenbezogene Daten: Bewahre sie nur so lange auf, wie du sie brauchst. Das ist keine Rechtsberatung.",
+        "enabledLabel": "Anmeldungen aufzeichnen",
+        "enabledHint": "Ausgeschaltet wird nichts Neues aufgezeichnet; Gespeichertes bleibt, bis es aufgeräumt oder gelöscht wird.",
+        "retentionLabel": "Aufbewahren für (Tage)",
+        "retentionHint": "{{min}} bis {{max}} Tage. Ältere Einträge werden jede Stunde entfernt.",
+        "maxRowsLabel": "Höchstens aufbewahren (Einträge)",
+        "maxRowsHint": "{{min}} bis {{max}}. Darüber hinaus gehen die ältesten Einträge zuerst, egal wie alt sie sind.",
+        "saved": "Journal-Einstellungen gespeichert",
+        "saveFailed": "Journal-Einstellungen konnten nicht gespeichert werden",
+        "storedTitle": "Aktuell gespeichert",
+        "stored_one": "{{count}} Eintrag ist gespeichert.",
+        "stored_other": "{{count}} Einträge sind gespeichert.",
+        "oldest": "Der älteste ist vom {{date}}.",
+        "clear": "Journal leeren",
+        "clearTitle": "Verbindungsjournal leeren?",
+        "clearDescription_one": "Das löscht den gespeicherten Eintrag endgültig.",
+        "clearDescription_other": "Das löscht alle {{count}} gespeicherten Einträge endgültig.",
+        "cleared_one": "{{count}} Eintrag gelöscht",
+        "cleared_other": "{{count}} Einträge gelöscht",
+        "clearFailed": "Journal konnte nicht geleert werden"
+      }
     },
     "console": {
       "tabs": {

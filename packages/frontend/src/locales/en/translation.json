@@ -101,6 +101,7 @@
       "permissions": "Permissions",
       "bans": "Bans",
       "tokens": "Tokens",
+      "connectionJournal": "Connection Journal",
       "files": "Files",
       "icons": "Icons",
       "complaints": "Complaints",
@@ -446,6 +447,103 @@
       "signingIn": "Signing in...",
       "signIn": "Sign In",
       "or": "or"
+    },
+    "connectionJournal": {
+      "title": "Connection Journal",
+      "subtitle": "Who signed in to this web interface, from which address, and whether it worked. Visible to admins only; the settings tab says how long it is kept.",
+      "tabs": {
+        "journal": "Journal",
+        "byIp": "By address",
+        "settings": "Settings"
+      },
+      "searchPlaceholder": "Account or address",
+      "filters": {
+        "range": "Period",
+        "event": "Event",
+        "result": "Result",
+        "anyEvent": "Any event",
+        "anyResult": "Any result",
+        "removeAddress": "Remove the address filter",
+        "reset": "Reset filters"
+      },
+      "range": {
+        "24h": "Last 24 hours",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "all": "Everything"
+      },
+      "columns": {
+        "time": "Time",
+        "event": "Event",
+        "result": "Result",
+        "account": "Account",
+        "address": "Address",
+        "details": "Details",
+        "entries": "Entries",
+        "failures": "Failures",
+        "successes": "Successes",
+        "accountsTried": "Accounts tried",
+        "lastSeen": "Last seen"
+      },
+      "event": {
+        "login": "Sign-in",
+        "totp": "Second factor",
+        "sso": "Single sign-on",
+        "rate-limit": "Rate limit"
+      },
+      "result": {
+        "success": "Success",
+        "failure": "Failure"
+      },
+      "reason": {
+        "wrong-password": "Wrong password",
+        "unknown-user": "No such account",
+        "disabled": "Account disabled",
+        "sso-account": "Single sign-on account (has no password)",
+        "totp-required": "Password correct, second factor still needed",
+        "trusted-device": "Trusted device, second factor skipped",
+        "wrong-code": "Wrong code",
+        "recovery-code": "Signed in with a recovery code",
+        "ticket-invalid": "Second-factor step expired or invalid",
+        "sso-not-configured": "Single sign-on is not configured",
+        "sso-invalid-state": "Invalid or expired sign-in state",
+        "sso-no-subject": "The identity provider sent no account id",
+        "sso-failed": "The identity provider's answer was refused",
+        "login-limit": "Too many sign-in attempts from this address",
+        "refresh-limit": "Too many token refreshes from this address"
+      },
+      "unknownAccount": "unknown",
+      "unknownAccountHint": "No account has this name. It is what was typed into the field - possibly something else, such as a password in the wrong field.",
+      "filterByAddress": "Show only this address",
+      "showEntries": "Show the entries of this address",
+      "empty": "Nothing recorded for this selection.",
+      "loadFailed": "Could not load the connection journal.",
+      "resultCount_one": "{{count}} entry",
+      "resultCount_other": "{{count}} entries",
+      "perPage": "{{count}} per page",
+      "settings": {
+        "title": "Recording and retention",
+        "description": "The journal stores the address, the account name (for an unknown account what was typed), the browser and the time of every sign-in event, successful or not. Addresses are personal data in many places: keep them only as long as you need them. This is not legal advice.",
+        "enabledLabel": "Record sign-ins",
+        "enabledHint": "When off, nothing new is recorded; what is stored stays until it is pruned or cleared.",
+        "retentionLabel": "Keep for (days)",
+        "retentionHint": "{{min}} to {{max}} days. Older entries are removed every hour.",
+        "maxRowsLabel": "Keep at most (entries)",
+        "maxRowsHint": "{{min}} to {{max}}. Beyond this the oldest entries go first, whatever their age.",
+        "saved": "Journal settings saved",
+        "saveFailed": "Failed to save the journal settings",
+        "storedTitle": "Stored now",
+        "stored_one": "{{count}} entry is stored.",
+        "stored_other": "{{count}} entries are stored.",
+        "oldest": "The oldest is from {{date}}.",
+        "clear": "Clear the journal",
+        "clearTitle": "Clear the connection journal?",
+        "clearDescription_one": "This deletes the {{count}} stored entry for good.",
+        "clearDescription_other": "This deletes all {{count}} stored entries for good.",
+        "cleared_one": "{{count}} entry deleted",
+        "cleared_other": "{{count}} entries deleted",
+        "clearFailed": "Failed to clear the journal"
+      }
     },
     "console": {
       "tabs": {

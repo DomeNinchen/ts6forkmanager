@@ -19,6 +19,7 @@ import { startScheduledRestartChecker } from './utils/scheduled-restart.js';
 import { startUpdateChecker } from './utils/update-check.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
+import { startJournalPruner } from './utils/connection-journal.js';
 import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -56,6 +57,7 @@ async function main() {
   startScheduledRestartChecker(prisma);
   startUpdateChecker(prisma);
   startPlayedSongCleanup(prisma);
+  startJournalPruner(prisma);
   startYtCookieChecker();
 
   // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared
