@@ -6,13 +6,14 @@ import { Trash2 } from 'lucide-react';
 import { connectionJournalApi } from '@/api/connection-journal.api';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
-/** Whether the journal records, how long it keeps what it recorded, and emptying it. */
+/** Whether the journal records, how long it keeps what it recorded, which TeamSpeak clients count, what is watched, and emptying it. */
 export function JournalSettings() {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -20,10 +21,18 @@ export function JournalSettings() {
     queryKey: ['connection-journal', 'settings'],
     queryFn: connectionJournalApi.getSettings,
   });
+  const { data: tsStatus } = useQuery({
+    queryKey: ['connection-journal', 'ts-status'],
+    queryFn: connectionJournalApi.getTsStatus,
+    // The state of the watching changes without anybody touching this page (a connection dropping, a login refused).
+    refetchInterval: 10_000,
+  });
 
   const [enabled, setEnabled] = useState(true);
   const [retentionDays, setRetentionDays] = useState('30');
   const [maxRows, setMaxRows] = useState('100000');
+  const [recordQueryClients, setRecordQueryClients] = useState(false);
+  const [recordOwnBots, setRecordOwnBots] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
   // The form follows what the server holds - first load, and after a save.
@@ -32,18 +41,23 @@ export function JournalSettings() {
     setEnabled(data.enabled);
     setRetentionDays(String(data.retentionDays));
     setMaxRows(String(data.maxRows));
+    setRecordQueryClients(data.recordQueryClients);
+    setRecordOwnBots(data.recordOwnBots);
   }, [data]);
 
   const days = Number(retentionDays);
   const rows = Number(maxRows);
   const daysValid = data ? Number.isInteger(days) && days >= data.bounds.retentionMin && days <= data.bounds.retentionMax : false;
   const rowsValid = data ? Number.isInteger(rows) && rows >= data.bounds.maxRowsMin && rows <= data.bounds.maxRowsMax : false;
-  const dirty = !!data && (enabled !== data.enabled || days !== data.retentionDays || rows !== data.maxRows);
+  const dirty =
+    !!data &&
+    (enabled !== data.enabled || days !== data.retentionDays || rows !== data.maxRows
+      || recordQueryClients !== data.recordQueryClients || recordOwnBots !== data.recordOwnBots);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['connection-journal'] });
 
   const save = useMutation({
-    mutationFn: () => connectionJournalApi.setSettings({ enabled, retentionDays: days, maxRows: rows }),
+    mutationFn: () => connectionJournalApi.setSettings({ enabled, retentionDays: days, maxRows: rows, recordQueryClients, recordOwnBots }),
     onSuccess: (saved) => {
       qc.setQueryData(['connection-journal', 'settings'], saved);
       void invalidate();
@@ -80,6 +94,22 @@ export function JournalSettings() {
               <p className="text-[11px] text-muted-foreground">{t('pages.connectionJournal.settings.enabledHint')}</p>
             </div>
             <Switch checked={enabled} onCheckedChange={setEnabled} data-testid="journal-enabled" />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">{t('pages.connectionJournal.settings.queryClientsLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.connectionJournal.settings.queryClientsHint')}</p>
+            </div>
+            <Switch checked={recordQueryClients} onCheckedChange={setRecordQueryClients} data-testid="journal-query-clients" />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">{t('pages.connectionJournal.settings.ownBotsLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.connectionJournal.settings.ownBotsHint')}</p>
+            </div>
+            <Switch checked={recordOwnBots} onCheckedChange={setRecordOwnBots} data-testid="journal-own-bots" />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -121,6 +151,38 @@ export function JournalSettings() {
           <Button onClick={() => save.mutate()} disabled={!dirty || !daysValid || !rowsValid || save.isPending}>
             {t('common.save')}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">{t('pages.connectionJournal.settings.watchedTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">{t('pages.connectionJournal.settings.watchedDescription')}</p>
+          {!tsStatus || tsStatus.length === 0 ? (
+            <p className="text-xs" data-testid="journal-watched-empty">{t('pages.connectionJournal.settings.watchedNone')}</p>
+          ) : (
+            <ul className="space-y-1.5" data-testid="journal-watched">
+              {tsStatus.map((s) => (
+                <li key={`${s.configId}:${s.virtualServerId}`} className="rounded-md border px-3 py-2 text-xs space-y-1" data-testid="journal-watched-row">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{s.connectionName}</span>
+                    {s.virtualServerId > 0 && (
+                      <span className="text-muted-foreground">{t('pages.connectionJournal.ts.virtualServer', { id: s.virtualServerId })}</span>
+                    )}
+                    <Badge variant={s.mode === 'events' ? 'success' : s.mode === 'polling' ? 'secondary' : 'warning'}>
+                      {t(`pages.connectionJournal.settings.mode.${s.mode}`)}
+                    </Badge>
+                    {s.virtualServerId > 0 && (
+                      <span className="text-muted-foreground">{t('pages.connectionJournal.settings.openSessions', { count: s.openSessions })}</span>
+                    )}
+                  </div>
+                  {s.problem && <p className="text-amber-500">{t(`pages.connectionJournal.settings.problem.${s.problem}`)}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

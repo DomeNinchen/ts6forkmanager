@@ -15,6 +15,7 @@ import {
   type JournalSource,
 } from '@ts6/common';
 import { AppError } from '../middleware/error-handler.js';
+import type { TsLoginJournal } from '../ts-client/ts-login-journal.js';
 import {
   CONNECTION_JOURNAL_MAX_ROWS_MAX,
   CONNECTION_JOURNAL_MAX_ROWS_MIN,
@@ -73,6 +74,8 @@ function parseFilters(req: Request): JournalFilters {
     result: oneOf<JournalResult>(req.query.result, JOURNAL_RESULTS, 'result'),
     q: text(req.query.q, 'q'),
     ip: text(req.query.ip, 'ip'),
+    online: oneOf(req.query.online, ['1'] as const, 'online') === '1' ? true : undefined,
+    serverConfigId: req.query.server === undefined || req.query.server === '' ? undefined : positiveInt(req.query.server, 'server', 1, 1_000_000_000),
   };
 }
 
@@ -113,6 +116,12 @@ connectionJournalRoutes.get('/by-ip', async (req: Request, res: Response, next) 
   } catch (err) { next(err); }
 });
 
+// GET /api/connection-journal/ts-status - which TeamSpeak virtual servers are watched, and how
+connectionJournalRoutes.get('/ts-status', (req: Request, res: Response) => {
+  const journal = req.app.locals.tsLoginJournal as TsLoginJournal | undefined;
+  res.json(journal ? journal.status() : []);
+});
+
 // GET /api/connection-journal/settings
 connectionJournalRoutes.get('/settings', async (req: Request, res: Response, next) => {
   try { res.json(await settingsDto(req)); } catch (err) { next(err); }
@@ -121,8 +130,10 @@ connectionJournalRoutes.get('/settings', async (req: Request, res: Response, nex
 // PUT /api/connection-journal/settings - applies at once: a shorter retention prunes now
 connectionJournalRoutes.put('/settings', async (req: Request, res: Response, next) => {
   try {
-    const { enabled, retentionDays, maxRows } = req.body ?? {};
+    const { enabled, retentionDays, maxRows, recordQueryClients, recordOwnBots } = req.body ?? {};
     if (typeof enabled !== 'boolean') throw new AppError(400, 'enabled must be a boolean');
+    if (typeof recordQueryClients !== 'boolean') throw new AppError(400, 'recordQueryClients must be a boolean');
+    if (typeof recordOwnBots !== 'boolean') throw new AppError(400, 'recordOwnBots must be a boolean');
     if (!isValidJournalRetention(retentionDays)) {
       throw new AppError(400, `retentionDays must be a whole number from ${CONNECTION_JOURNAL_RETENTION_MIN_DAYS} to ${CONNECTION_JOURNAL_RETENTION_MAX_DAYS}`);
     }
@@ -130,9 +141,14 @@ connectionJournalRoutes.put('/settings', async (req: Request, res: Response, nex
       throw new AppError(400, `maxRows must be a whole number from ${CONNECTION_JOURNAL_MAX_ROWS_MIN} to ${CONNECTION_JOURNAL_MAX_ROWS_MAX}`);
     }
     const prisma = req.app.locals.prisma;
-    await setConnectionJournalSettings(prisma, { enabled, retentionDays, maxRows });
-    console.log(`[ConnectionJournal] Settings updated by ${req.user?.username}: enabled=${enabled}, ${retentionDays} days, ${maxRows} rows`);
+    await setConnectionJournalSettings(prisma, { enabled, retentionDays, maxRows, recordQueryClients, recordOwnBots });
+    console.log(
+      `[ConnectionJournal] Settings updated by ${req.user?.username}: enabled=${enabled}, ${retentionDays} days, ${maxRows} rows, ` +
+      `query clients ${recordQueryClients ? 'on' : 'off'}, own bots ${recordOwnBots ? 'on' : 'off'}`,
+    );
     await pruneJournal(prisma);
+    // The TeamSpeak side picks the switches up now, not at its next pass.
+    await (req.app.locals.tsLoginJournal as TsLoginJournal | undefined)?.refresh();
     res.json(await settingsDto(req));
   } catch (err) { next(err); }
 });

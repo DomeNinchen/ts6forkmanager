@@ -1,5 +1,6 @@
 import type { ConnectionPool } from './connection-pool.js';
 import type { BandwidthSampler } from './bandwidth-sampler.js';
+import type { TsLoginJournal } from './ts-login-journal.js';
 import type { BotEngine } from '../bot-engine/engine.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 import type { EventSessionManager } from '../console/event-sessions.js';
@@ -11,6 +12,7 @@ export interface ServerLifecycleDeps {
   voiceBots: Pick<VoiceBotManager, 'syncServerHost' | 'dropServerBots'>;
   consoleEvents: Pick<EventSessionManager, 'closeConfig'>;
   bandwidthSampler: Pick<BandwidthSampler, 'refresh'>;
+  loginJournal: Pick<TsLoginJournal, 'refresh'>;
 }
 
 /**
@@ -33,6 +35,7 @@ export class ServerLifecycle {
   async created(configId: number): Promise<void> {
     await this.deps.pool.syncServer(configId);
     this.pokeSamplers();
+    this.pokeJournal();
   }
 
   /**
@@ -68,6 +71,11 @@ export class ServerLifecycle {
     if (touches('host', 'webqueryPort', 'apiKey', 'useHttps')) consoleFloodGuard.forget(configId);
 
     if (touches('host', 'webqueryPort', 'apiKey', 'useHttps', 'enabled')) this.pokeSamplers();
+
+    // The connection journal rebuilds what it watches on a changed way in, and starts or stops on its own switch.
+    if (touches('name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'recordConnectionJournal')) {
+      this.pokeJournal();
+    }
   }
 
   /**
@@ -81,6 +89,13 @@ export class ServerLifecycle {
     await voiceBots.dropServerBots(configId);
     await consoleEvents.closeConfig(configId);
     consoleFloodGuard.forget(configId);
+    // Its sessions are closed with "recording stopped"; the rows stay in the journal.
+    this.pokeJournal();
+  }
+
+  /** Lets the connection journal look at the connections now rather than at its next 30-second pass. Never throws, never blocks. */
+  private pokeJournal(): void {
+    void this.deps.loginJournal.refresh().catch(() => undefined);
   }
 
   /** Lets the dashboard sampler look at the new set of connections now rather than at its next 2-minute pass. Never throws, never blocks. */

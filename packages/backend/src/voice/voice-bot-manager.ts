@@ -352,6 +352,22 @@ export class VoiceBotManager extends EventEmitter {
     return this.bots.get(id)?.currentConfig.identity?.uid ?? null;
   }
 
+  /**
+   * Every unique ID one of this app's bots has, stored or in use right now - what
+   * tells a bot from a person in a client list. A bot without a stored identity
+   * has a different one each time it connects, so the live one counts too.
+   */
+  ownIdentityUids(): Set<string> {
+    const uids = new Set<string>();
+    for (const bot of this.bots.values()) {
+      const stored = bot.currentConfig.identity?.uid;
+      if (stored) uids.add(stored);
+      const live = bot.liveIdentityUid;
+      if (live) uids.add(live);
+    }
+    return uids;
+  }
+
   async removeBot(id: number): Promise<void> {
     this.clearReconnect(id);
     const bot = this.bots.get(id);

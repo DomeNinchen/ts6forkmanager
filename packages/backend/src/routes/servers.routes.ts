@@ -28,7 +28,7 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
         id: true, name: true, host: true, webqueryPort: true,
         useHttps: true, sshPort: true, enabled: true,
         createdAt: true, sshUsername: true, pingHost: true,
-        recordUserHistory: true,
+        recordUserHistory: true, recordConnectionJournal: true,
         botQueryName: true, botApiKey: true,
         apiKey: true,
       },
@@ -53,7 +53,7 @@ serverRoutes.get('/', async (req: Request, res: Response, next) => {
 // Add new TS server connection
 serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
-    const { name, host, webqueryPort, apiKey, useHttps, sshPort, sshUsername, sshPassword, pingHost, recordUserHistory } = req.body;
+    const { name, host, webqueryPort, apiKey, useHttps, sshPort, sshUsername, sshPassword, pingHost, recordUserHistory, recordConnectionJournal } = req.body;
     // The API key is optional: a connection without one (a hosted server whose
     // provider gives out no WebQuery access) still runs the music bots.
     if (!name || !host) throw new AppError(400, 'Name and host are required');
@@ -76,6 +76,7 @@ serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response,
         // Only an explicit false switches it off; a client that doesn't know
         // about the option gets the default, which is on.
         recordUserHistory: recordUserHistory !== false,
+        recordConnectionJournal: recordConnectionJournal !== false,
       },
     });
 
@@ -106,6 +107,7 @@ serverRoutes.get('/:configId', async (req: Request, res: Response, next) => {
       pingHost: server.pingHost,
       queryNickname: server.queryNickname,
       recordUserHistory: server.recordUserHistory,
+      recordConnectionJournal: server.recordConnectionJournal,
     });
   } catch (err) { next(err); }
 });
@@ -117,9 +119,12 @@ serverRoutes.put('/:configId', requireRole('admin'), async (req: Request, res: R
     const id = parseInt(String(req.params.configId));
     const data: any = {};
 
-    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname', 'recordUserHistory'];
+    const fields = ['name', 'host', 'webqueryPort', 'apiKey', 'useHttps', 'sshPort', 'sshUsername', 'sshPassword', 'enabled', 'botQueryName', 'pingHost', 'queryNickname', 'recordUserHistory', 'recordConnectionJournal'];
     if (req.body.recordUserHistory !== undefined && typeof req.body.recordUserHistory !== 'boolean') {
       throw new AppError(400, 'recordUserHistory must be a boolean');
+    }
+    if (req.body.recordConnectionJournal !== undefined && typeof req.body.recordConnectionJournal !== 'boolean') {
+      throw new AppError(400, 'recordConnectionJournal must be a boolean');
     }
     for (const field of fields) {
       if (req.body[field] !== undefined) {
