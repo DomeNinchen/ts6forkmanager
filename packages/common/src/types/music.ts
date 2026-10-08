@@ -45,6 +45,8 @@ export interface MusicBotSummary {
   autoplayMode: AutoplayMode;
   autoplaySongId: number | null;
   autoplayRadioStationId: number | null;
+  /** Minutes alone in its channel before the bot pauses; 0 = never. */
+  idlePauseMinutes: number;
   hasAvatar: boolean;
   /** The bot's TeamSpeak unique ID (client_unique_identifier); null when it has no stored identity. */
   uid: string | null;
@@ -73,6 +75,7 @@ export interface CreateMusicBotRequest {
   autoplayMode?: AutoplayMode;
   autoplaySongId?: number;
   autoplayRadioStationId?: number;
+  idlePauseMinutes?: number;
 }
 
 export interface UpdateMusicBotRequest {
@@ -88,6 +91,7 @@ export interface UpdateMusicBotRequest {
   autoplayMode?: AutoplayMode;
   autoplaySongId?: number;
   autoplayRadioStationId?: number;
+  idlePauseMinutes?: number;
 }
 
 // === Song Types ===

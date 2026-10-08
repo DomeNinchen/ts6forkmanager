@@ -2741,6 +2741,8 @@
         "autoStartLabel": "Automatisch starten beim Serverstart",
         "autoplayLabel": "Autoplay bei Verbindung",
         "autoplayHint": "Startet von selbst, sobald sich dieser Bot verbindet (manueller Start, Serverneustart oder Neuverbindung) - nur solange er im Leerlauf hochfährt, unterbricht nie etwas bereits Eingereihtes.",
+        "idlePauseLabel": "Pausieren, wenn allein (Minuten)",
+        "idlePauseHint": "Pausiert die Wiedergabe, sobald so lange keine Person mehr im Channel des Bots war, und macht mit demselben weiter (ein Radiosender wird neu eingeschaltet, ein Titel läuft an der Stelle weiter), sobald jemand den Channel betritt. Andere Bots und ServerQuery-Clients zählen nicht als Gesellschaft. Eine Pause, die du selbst gemacht hast, bleibt unangetastet. 0 = nie.",
         "autoplayOff": "Aus",
         "autoplaySong": "Einen Song abspielen",
         "autoplayRadio": "Einen Radiosender abspielen",

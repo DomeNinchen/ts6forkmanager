@@ -81,6 +81,7 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         autoplayMode: b.autoplayMode,
         autoplaySongId: b.autoplaySongId,
         autoplayRadioStationId: b.autoplayRadioStationId,
+        idlePauseMinutes: b.idlePauseMinutes,
         hasAvatar: b.avatarData != null,
         uid: manager.getIdentityUid(b.id),
         status: runtime?.status ?? 'stopped',
@@ -128,8 +129,9 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
 musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId } = req.body;
+    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes } = req.body;
     if (!name || !serverConfigId) throw new AppError(400, 'name and serverConfigId are required');
+    if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
 
     const result = await manager.createBot({
       name,
@@ -145,6 +147,7 @@ musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
       autoplayMode: autoplayMode || undefined,
       autoplaySongId: autoplaySongId != null ? parseInt(autoplaySongId) : undefined,
       autoplayRadioStationId: autoplayRadioStationId != null ? parseInt(autoplayRadioStationId) : undefined,
+      idlePauseMinutes: idlePauseMinutes ?? undefined,
     });
 
     res.status(201).json(result);
@@ -157,7 +160,8 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const id = parseInt(req.params.id as string);
-    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId } = req.body;
+    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes } = req.body;
+    if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
 
     const dbBot = await prisma.musicBot.update({
       where: { id },
@@ -170,6 +174,7 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(voicePort != null && { voicePort: parseInt(voicePort) }),
         ...(volume != null && { volume: parseInt(volume) }),
         ...(autoStart != null && { autoStart }),
+        ...(idlePauseMinutes != null && { idlePauseMinutes }),
         ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || null }),
         // The two ID fields are only ever meaningful together with the mode
         // that names them, so clear both whenever the mode changes away from
@@ -193,6 +198,7 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(channelPassword !== undefined && { channelPassword: channelPassword || undefined }),
         ...(voicePort != null && { serverPort: parseInt(voicePort) }),
         ...(volume != null && { volume: parseInt(volume) }),
+        ...(idlePauseMinutes != null && { idlePauseMinutes }),
         ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || undefined }),
       });
       // Push the new template right away instead of waiting for the next
@@ -286,6 +292,13 @@ function connectFailure(err: any, manager: VoiceBotManager, id: number): Error {
   if (err instanceof AppError) return err;
   if (err?.message === 'Bot is already running') return new AppError(409, err.message);
   return new AppError(502, err?.message || 'Connecting to the TeamSpeak server failed', undefined, manager.getBot(id)?.failureKind ?? 'other');
+}
+
+/** The "pause when alone" time: whole minutes, 0 (never) up to a day. */
+function requireIdlePauseMinutes(value: unknown): void {
+  if (!Number.isInteger(value) || (value as number) < 0 || (value as number) > 1440) {
+    throw new AppError(400, 'idlePauseMinutes must be a whole number between 0 (never) and 1440');
+  }
 }
 
 // POST /:id/start — Start bot

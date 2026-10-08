@@ -653,7 +653,7 @@ function BotsTab() {
   // Create form
   const [form, setForm] = useState({
     name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
-    autoplayMode: 'none' as 'none' | 'song' | 'radio', autoplaySongId: '', autoplayRadioStationId: '',
+    autoplayMode: 'none' as 'none' | 'song' | 'radio', autoplaySongId: '', autoplayRadioStationId: '', idlePauseMinutes: 0,
   });
 
   const bots = Array.isArray(data) ? data : [];
@@ -687,6 +687,7 @@ function BotsTab() {
       autoplayMode: form.autoplayMode,
       autoplaySongId: form.autoplayMode === 'song' && form.autoplaySongId ? parseInt(form.autoplaySongId) : undefined,
       autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
+      idlePauseMinutes: form.idlePauseMinutes,
     }, {
       onSuccess: (result: { id: number }) => {
         toast.success(t('pages.musicBots.botsTab.botCreated'));
@@ -717,6 +718,7 @@ function BotsTab() {
       autoplayMode: form.autoplayMode,
       autoplaySongId: form.autoplayMode === 'song' && form.autoplaySongId ? parseInt(form.autoplaySongId) : undefined,
       autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
+      idlePauseMinutes: form.idlePauseMinutes,
     }}, {
       onSuccess: () => {
         toast.success(t('pages.musicBots.botsTab.botUpdated'));
@@ -735,7 +737,7 @@ function BotsTab() {
   const resetForm = () => {
     setForm({
       name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
-      autoplayMode: 'none', autoplaySongId: '', autoplayRadioStationId: '',
+      autoplayMode: 'none', autoplaySongId: '', autoplayRadioStationId: '', idlePauseMinutes: 0,
     });
     setAvatarFile(null);
     setAvatarRemoved(false);
@@ -773,6 +775,7 @@ function BotsTab() {
                   autoplayMode: bot.autoplayMode,
                   autoplaySongId: bot.autoplaySongId != null ? String(bot.autoplaySongId) : '',
                   autoplayRadioStationId: bot.autoplayRadioStationId != null ? String(bot.autoplayRadioStationId) : '',
+                  idlePauseMinutes: bot.idlePauseMinutes ?? 0,
                 });
                 setAvatarFile(null);
                 setAvatarRemoved(false);
@@ -925,6 +928,22 @@ function BotsTab() {
                   </SelectContent>
                 </Select>
               )}
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="bot-idle-pause">{t('pages.musicBots.botsTab.idlePauseLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground mb-1.5">
+                {t('pages.musicBots.botsTab.idlePauseHint')}
+              </p>
+              <Input
+                id="bot-idle-pause"
+                type="number"
+                min={0}
+                max={1440}
+                step={1}
+                className="max-w-[8rem]"
+                value={form.idlePauseMinutes}
+                onChange={(e) => setForm({ ...form, idlePauseMinutes: Number(e.target.value) })}
+              />
             </div>
             <div>
               <Label className="text-xs">{t('pages.musicBots.botsTab.descriptionTemplateLabel')}</Label>
