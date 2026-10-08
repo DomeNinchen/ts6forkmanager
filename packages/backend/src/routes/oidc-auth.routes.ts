@@ -18,6 +18,7 @@ import { config } from '../config.js';
 import { getOidcConfig } from '../utils/oidc-config.js';
 import { getOidcClientConfig } from '../utils/oidc-client.js';
 import { issueTokensForUser } from '../utils/issue-tokens.js';
+import { recordWebEvent } from '../utils/connection-journal.js';
 
 export const oidcAuthRoutes: Router = Router();
 
@@ -74,6 +75,7 @@ oidcAuthRoutes.get('/callback', async (req: Request, res: Response) => {
   try {
     const oidc = await getOidcConfig(prisma);
     if (!oidc.enabled || !oidc.issuer || !oidc.clientId) {
+      recordWebEvent(req, { event: 'sso', result: 'failure', reason: 'sso-not-configured' });
       return res.redirect(`${config.frontendUrl}/login?error=sso_not_configured`);
     }
 
@@ -82,6 +84,7 @@ oidcAuthRoutes.get('/callback', async (req: Request, res: Response) => {
     try {
       statePayload = jwt.verify(stateToken, config.jwtSecret) as OAuthStatePayload;
     } catch {
+      recordWebEvent(req, { event: 'sso', result: 'failure', reason: 'sso-invalid-state' });
       return res.redirect(`${config.frontendUrl}/login?error=sso_invalid_state`);
     }
 
@@ -96,6 +99,7 @@ oidcAuthRoutes.get('/callback', async (req: Request, res: Response) => {
 
     const claims = tokens.claims();
     if (!claims?.sub) {
+      recordWebEvent(req, { event: 'sso', result: 'failure', reason: 'sso-no-subject' });
       return res.redirect(`${config.frontendUrl}/login?error=sso_no_subject`);
     }
 
@@ -134,9 +138,11 @@ oidcAuthRoutes.get('/callback', async (req: Request, res: Response) => {
         },
       });
     } else if (!user.enabled) {
+      recordWebEvent(req, { event: 'sso', result: 'failure', reason: 'disabled', username: user.username, userId: user.id });
       return res.redirect(`${config.frontendUrl}/login?error=account_disabled`);
     }
 
+    recordWebEvent(req, { event: 'sso', result: 'success', username: user.username, userId: user.id });
     const { accessToken, refreshToken } = await issueTokensForUser(prisma, user);
 
     // Tokens travel in the URL fragment (#), not the query string - fragments
@@ -147,6 +153,7 @@ oidcAuthRoutes.get('/callback', async (req: Request, res: Response) => {
     res.redirect(`${config.frontendUrl}/auth/callback#access_token=${accessToken}&refresh_token=${refreshToken}`);
   } catch (err) {
     console.error('[OIDC] /callback failed:', (err as Error).message);
+    recordWebEvent(req, { event: 'sso', result: 'failure', reason: 'sso-failed' });
     res.redirect(`${config.frontendUrl}/login?error=sso_failed`);
   }
 });

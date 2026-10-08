@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal,
+  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
@@ -65,6 +65,8 @@ function getNavSections(t: TFunction) {
       items: [
         { to: '/bans', icon: Ban, label: t('nav.items.bans'), visible: adminOnly, ...needsWebQuery },
         { to: '/tokens', icon: KeyRound, label: t('nav.items.tokens'), visible: adminOnly, ...needsWebQuery },
+        // About who signs in to this app, not about the selected server, so it needs no WebQuery.
+        { to: '/connection-journal', icon: Fingerprint, label: t('nav.items.connectionJournal'), visible: adminOnly },
       ],
     },
     {
