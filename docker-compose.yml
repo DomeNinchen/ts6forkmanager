@@ -19,6 +19,9 @@ services:
       - JWT_ACCESS_EXPIRY=15m
       - JWT_REFRESH_EXPIRY=7d
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      # How many proxies stand in front of the backend (the frontend container's
+      # nginx is one). Settings -> Network shows the number that fits your setup.
+      - TRUST_PROXY=${TRUST_PROXY:-1}
       - MUSIC_DIR=/data/music
       - SIDECAR_URL=http://ts6-sidecar:9800
       - SIDECAR_BINARY_PATH=${SIDECAR_BINARY_PATH:-}
@@ -28,7 +31,10 @@ services:
       # Optional: mount YouTube cookies file for yt-dlp
       # - ./cookies.txt:/app/cookies.txt
     ports:
-      - "3001:3001"
+      # Only this machine: the frontend container reaches the backend over the
+      # Docker network, and anyone who can open this port directly could write
+      # their own X-Forwarded-For and be believed (see TRUST_PROXY above).
+      - "127.0.0.1:3001:3001"
     depends_on:
       - sidecar
     networks:

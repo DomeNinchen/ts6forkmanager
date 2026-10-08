@@ -18,6 +18,10 @@ services:
       - JWT_ACCESS_EXPIRY=15m
       - JWT_REFRESH_EXPIRY=7d
       - FRONTEND_URL=${FRONTEND_URL:-https://ts6.example.com}
+      # How many proxies stand in front of the backend: the frontend container's
+      # nginx is one, and Coolify's own proxy in front of that is a second one.
+      # Settings -> Network shows the number that fits your setup.
+      - TRUST_PROXY=${TRUST_PROXY:-1}
       - MUSIC_DIR=/data/music
       - SIDECAR_URL=http://ts6-sidecar:9800
     volumes:

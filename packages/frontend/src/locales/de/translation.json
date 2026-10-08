@@ -1227,6 +1227,7 @@
         "users": "Benutzer",
         "youtube": "YouTube",
         "streaming": "Streaming",
+        "network": "Netzwerk",
         "debug": "Debug",
         "restart": "Neustart",
         "sso": "SSO",
@@ -1437,6 +1438,40 @@
         "unsavedChanges": "Ungespeicherte Änderungen",
         "streamDefaultsSaved": "Stream-Standardwerte gespeichert",
         "streamDefaultsSaveFailed": "Stream-Standardwerte konnten nicht gespeichert werden"
+      },
+      "network": {
+        "title": "Besucheradresse",
+        "checkAgain": "Erneut prüfen",
+        "loadFailed": "Konnte nicht auslesen, wie diese Anfrage das Backend erreicht hat.",
+        "description": "Hinter einem Reverse-Proxy erfährt das Backend aus dem Header X-Forwarded-For, wer sich wirklich verbindet, und darf ihm nur so weit glauben, wie TRUST_PROXY es erlaubt. Diese Adresse nutzt es heute für die Begrenzung der Anmeldeversuche und später für das Verbindungsjournal und IP-Sperren.",
+        "detectedLabel": "Adresse, die das Backend für dich annimmt",
+        "detectedHint": "Öffne diese Seite von einem Rechner, dessen öffentliche Adresse du kennst, und vergleiche.",
+        "settingLabel": "Einstellung",
+        "settingFromEnv": "aus der Umgebung",
+        "settingDefault": "Standard",
+        "suggestionNone": "Alle Adressen in dieser Anfrage gehören zu privaten Netzen (du bist vermutlich im selben Netz wie der Server), deshalb lässt sich keine Zahl vorschlagen. Öffne diese Seite von außerhalb dieses Netzes.",
+        "suggestionMatches": "Die erste öffentliche Adresse in dieser Anfrage ist die, die das Backend für dich annimmt – TRUST_PROXY passt zu deinem Aufbau.",
+        "suggestionDiffers": "Die erste öffentliche Adresse in dieser Anfrage ist {{address}}; das Backend würde sie mit TRUST_PROXY={{hops}} für dich annehmen. Ist das deine Adresse, setze den Wert in der Umgebung des Backends und starte das Backend neu.",
+        "suggestionCheck": "Ist es nicht deine Adresse, steht ein CDN oder ein weiterer Proxy dazwischen; dessen Adressen müssen dann in TRUST_PROXY aufgelistet statt gezählt werden.",
+        "chainTitle": "So ist diese Anfrage angekommen",
+        "chainHint": "Die Einträge nächst dem Backend zuerst. Proxys, denen das Backend glaubt, sind grün, die Adresse, die es für dich annimmt, ist hervorgehoben, und alles danach wird nicht geglaubt, weil der Besucher es selbst schreiben kann.",
+        "origin": {
+          "socket": "Verbindung",
+          "forwarded": "X-Forwarded-For"
+        },
+        "scope": {
+          "public": "öffentlich",
+          "private": "privates Netz",
+          "loopback": "dieser Rechner",
+          "unknown": "unbekannt"
+        },
+        "role": {
+          "proxy": "Proxy (geglaubt)",
+          "client": "als du angenommen",
+          "ignored": "nicht geglaubt"
+        },
+        "notSent": "nicht gesendet",
+        "howToChange": "TRUST_PROXY wird in der Umgebung des Backends gesetzt (die .env neben der docker-compose.yml, die die Compose-Datei durchreicht) und danach das Backend neu gestartet."
       },
       "debug": {
         "loggingTitle": "Debug-Protokollierung",
