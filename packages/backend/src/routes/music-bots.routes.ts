@@ -82,6 +82,7 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         autoplaySongId: b.autoplaySongId,
         autoplayRadioStationId: b.autoplayRadioStationId,
         hasAvatar: b.avatarData != null,
+        uid: manager.getIdentityUid(b.id),
         status: runtime?.status ?? 'stopped',
         connection: runtime?.connection ?? null,
         nowPlaying: runtime?.nowPlaying ?? null,
@@ -111,9 +112,10 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
     const bot = manager.getBot(id);
     res.json({
       ...dbBot,
-      identityData: undefined, // don't expose identity
+      identityData: undefined, // don't expose identity (it holds the private key) - only the unique ID derived from it below
       avatarData: undefined, // served separately via GET /:id/avatar
       hasAvatar: dbBot.avatarData != null,
+      uid: manager.getIdentityUid(id),
       status: bot?.status ?? 'stopped',
       connection: manager.getConnectionInfo(id),
       nowPlaying: bot?.nowPlaying ?? null,
