@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { connectionJournalApi } from '@/api/connection-journal.api';
+import { countryName } from '@/components/connection-journal/format';
 import { Search, X } from 'lucide-react';
 import { JOURNAL_EVENTS, JOURNAL_RESULTS, JOURNAL_RANGES, JOURNAL_SOURCES } from '@ts6/common';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +26,11 @@ type JournalTab = 'journal' | 'by-ip' | 'settings';
  * narrowing the journal and then looking at it by address (or the other way round) keeps what was asked for.
  */
 export default function ConnectionJournal() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: servers } = useServers();
+  // The countries that occur, for the filter; and whose data the country column shows, for the credit it has to carry.
+  const { data: countries } = useQuery({ queryKey: ['connection-journal', 'countries'], queryFn: connectionJournalApi.countries });
+  const { data: geoip } = useQuery({ queryKey: ['connection-journal', 'geoip'], queryFn: connectionJournalApi.getGeoIp });
   const [tab, setTab] = useState<JournalTab>('journal');
   const [filters, setFilters] = useState<JournalFilterState>(DEFAULT_FILTERS);
 
@@ -38,7 +44,7 @@ export default function ConnectionJournal() {
   const patch = (change: Partial<JournalFilterState>) => setFilters((f) => ({ ...f, ...change }));
   const filtered =
     filters.source !== 'all' || filters.event !== 'all' || filters.result !== 'all' || filters.q !== '' || filters.ip !== ''
-    || filters.server !== 'all' || filters.online || filters.range !== DEFAULT_FILTERS.range;
+    || filters.server !== 'all' || filters.online || filters.country !== 'all' || filters.range !== DEFAULT_FILTERS.range;
 
   // Only a TeamSpeak session has a server connection and can be "online now".
   const showsTs = filters.source !== 'web';
@@ -112,6 +118,18 @@ export default function ConnectionJournal() {
               </SelectContent>
             </Select>
 
+            {countries && countries.length > 0 && (
+              <Select value={filters.country} onValueChange={(v) => patch({ country: v })}>
+                <SelectTrigger className="h-9 w-[190px]" aria-label={t('pages.connectionJournal.filters.country')} data-testid="journal-country-filter"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('pages.connectionJournal.filters.anyCountry')}</SelectItem>
+                  {countries.map((c) => (
+                    <SelectItem key={c.country} value={c.country}>{`${countryName(c.country, i18n.language)} (${c.count})`}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             {showsTs && servers && servers.length > 1 && (
               <Select value={String(filters.server)} onValueChange={(v) => patch({ server: v === 'all' ? 'all' : Number(v) })}>
                 <SelectTrigger className="h-9 w-[170px]" aria-label={t('pages.connectionJournal.filters.server')}><SelectValue /></SelectTrigger>
@@ -156,6 +174,19 @@ export default function ConnectionJournal() {
           <JournalSettings />
         </TabsContent>
       </Tabs>
+
+      {/* The credit the country data comes with (DB-IP: CC BY 4.0, a link back; a MaxMind GeoLite2 file: its own line). */}
+      {geoip?.attribution === 'dbip' && (
+        <p className="text-[11px] text-muted-foreground" data-testid="journal-attribution">
+          <a className="underline hover:text-foreground" href="https://db-ip.com" target="_blank" rel="noopener noreferrer">IP Geolocation by DB-IP</a>
+        </p>
+      )}
+      {geoip?.attribution === 'maxmind' && (
+        <p className="text-[11px] text-muted-foreground" data-testid="journal-attribution">
+          This product includes GeoLite data created by MaxMind, available from{' '}
+          <a className="underline hover:text-foreground" href="https://www.maxmind.com" target="_blank" rel="noopener noreferrer">https://www.maxmind.com</a>.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import type {
+  ConnectionJournalCountry,
+  ConnectionJournalGeoIpStatus,
   ConnectionJournalIpPage,
   ConnectionJournalPage,
   ConnectionJournalSettingsDto,
   ConnectionJournalTsStatus,
+  GeoIpEdition,
   JournalEvent,
   JournalIpSortColumn,
   JournalRange,
@@ -24,6 +27,8 @@ export interface JournalQuery {
   online?: boolean;
   /** Only TeamSpeak sessions on this server connection. */
   server?: number;
+  /** Only addresses in this country (ISO 3166-1 alpha-2). */
+  country?: string;
   page: number;
   pageSize: number;
 }
@@ -60,4 +65,27 @@ export const connectionJournalApi = {
 
   clear: (): Promise<{ deletedCount: number }> =>
     api.delete('/connection-journal').then((r) => r.data),
+
+  countries: (): Promise<ConnectionJournalCountry[]> =>
+    api.get('/connection-journal/countries').then((r) => r.data),
+
+  // --- the GeoIP database behind the country column ---
+  getGeoIp: (): Promise<ConnectionJournalGeoIpStatus> =>
+    api.get('/connection-journal/geoip').then((r) => r.data),
+
+  setGeoIpSettings: (values: { edition: GeoIpEdition; autoUpdate: boolean }): Promise<ConnectionJournalGeoIpStatus> =>
+    api.put('/connection-journal/geoip/settings', values).then((r) => r.data),
+
+  /** Starts the download; it runs on the server and the status shows how far it is. */
+  downloadGeoIp: (edition?: GeoIpEdition): Promise<ConnectionJournalGeoIpStatus> =>
+    api.post('/connection-journal/geoip/download', edition ? { edition } : {}).then((r) => r.data),
+
+  uploadGeoIp: (file: File): Promise<ConnectionJournalGeoIpStatus> => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post('/connection-journal/geoip/upload', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0 }).then((r) => r.data);
+  },
+
+  removeGeoIp: (): Promise<ConnectionJournalGeoIpStatus> =>
+    api.delete('/connection-journal/geoip').then((r) => r.data),
 };

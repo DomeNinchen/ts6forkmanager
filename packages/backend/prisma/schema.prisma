@@ -600,6 +600,14 @@ model ConnectionJournalEntry {
   // The browser/device, cut to 300 characters.
   userAgent String?
 
+  // Where the address is, from the GeoIP database (see utils/geoip.ts). `country` is
+  // an ISO 3166-1 alpha-2 code; null = not looked up yet (no database was installed -
+  // the backfill fills these in when one is), "" = looked up, nothing found (a
+  // private address, or one the database does not have).
+  country   String?
+  region    String?
+  city      String?
+
   // --- ts only (all null on a web row) ---
   // `username` is the nickname the client had when it joined; these say who and where.
   serverConfigId  Int?
@@ -626,4 +634,5 @@ model ConnectionJournalEntry {
   @@index([ip, at])
   @@index([source, at])
   @@index([source, serverConfigId, virtualServerId, leftAt])
+  @@index([country])
 }

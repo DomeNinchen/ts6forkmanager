@@ -462,6 +462,57 @@
         "recordingStopped": "still there when recording stopped",
         "virtualServer": "virtual server {{id}}"
       },
+      "scope": {
+        "private": "private network",
+        "loopback": "this machine"
+      },
+      "noCountryHint": "No country: no GeoIP database is installed, or it has no entry for this address.",
+      "geoip": {
+        "title": "Country lookup (GeoIP)",
+        "description": "Shows the country - and with the City database the place - of every address in the journal. The database is a file on this machine and each lookup is made here: no address is sent anywhere. The app can download DB-IP's free database, or you upload one of your own (a MaxMind GeoLite2 file, for example).",
+        "sourceDbip": "DB-IP, downloaded",
+        "sourceCustom": "uploaded file",
+        "release": "release {{version}}",
+        "built": "built {{date}}",
+        "installedAt": "installed {{date}}",
+        "none": "No database installed. The country column stays empty until you download or upload one.",
+        "backfill": "Looking up the older entries: {{done}} of {{total}} addresses",
+        "editionLabel": "DB-IP edition to download",
+        "edition": {
+          "country": "Country (about 4 MB)",
+          "city": "City (about 60 MB)",
+          "custom": "Uploaded file"
+        },
+        "editionHint": {
+          "country": "The country and nothing else: a download of about 4 MB and little memory.",
+          "city": "Country, region and city: a download of about 60 MB that takes about 120 MB of memory once loaded. City names are less certain than countries."
+        },
+        "downloadNow": "Download now",
+        "updateNow": "Update now",
+        "upload": "Upload a file…",
+        "remove": "Remove",
+        "downloading": "Downloading… {{received}} of {{total}}",
+        "installing": "Installing…",
+        "errors": {
+          "not-published": "DB-IP has not published this month's or last month's file under the expected name ({{detail}}).",
+          "download-failed": "The download failed: {{detail}}",
+          "too-large": "The file is larger than the app accepts ({{detail}}).",
+          "invalid-file": "This is not a readable MMDB database ({{detail}}).",
+          "not-a-geo-database": "This is a database, but not a country or city database ({{detail}})."
+        },
+        "autoUpdateLabel": "Update by itself every month",
+        "autoUpdateHint": "Off by default. When on, the app checks every six hours whether DB-IP has published a newer release and downloads it. A file you uploaded is never replaced.",
+        "lastCheck": "Last looked for a release: {{date}}",
+        "privacy": "Downloading is a plain request to download.db-ip.com for one file; nothing about this installation is sent. DB-IP's data is licensed CC BY 4.0, and the page credits it.",
+        "uploaded": "Database installed",
+        "removed": "Database removed",
+        "removeTitle": "Remove the GeoIP database?",
+        "removeDescription": "New entries get no country any more. What was already looked up stays in the journal.",
+        "saveFailed": "Failed to save the GeoIP settings",
+        "downloadFailed": "Failed to start the download",
+        "uploadFailed": "Failed to upload the file",
+        "removeFailed": "Failed to remove the database"
+      },
       "unknownAddress": "unknown",
       "unknownAddressHint": "TeamSpeak did not tell this address. The account the app uses on that server may not be allowed to see client addresses (b_client_remoteaddress_view).",
       "tabs": {
@@ -478,6 +529,8 @@
         "anyResult": "Any result",
         "source": "Source",
         "anySource": "Any source",
+        "country": "Country",
+        "anyCountry": "Any country",
         "server": "Server",
         "anyServer": "Any server",
         "onlineNow": "Online now",
@@ -497,6 +550,7 @@
         "result": "Result",
         "account": "Account",
         "address": "Address",
+        "country": "Country",
         "details": "Details",
         "entries": "Entries",
         "failures": "Failures",

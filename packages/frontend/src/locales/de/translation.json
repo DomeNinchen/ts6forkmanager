@@ -462,6 +462,57 @@
         "recordingStopped": "noch da, als die Aufzeichnung endete",
         "virtualServer": "virtueller Server {{id}}"
       },
+      "scope": {
+        "private": "privates Netz",
+        "loopback": "dieser Rechner"
+      },
+      "noCountryHint": "Kein Land: Es ist keine GeoIP-Datenbank installiert, oder sie kennt diese Adresse nicht.",
+      "geoip": {
+        "title": "Länderzuordnung (GeoIP)",
+        "description": "Zeigt für jede Adresse im Journal das Land – mit der City-Datenbank auch den Ort. Die Datenbank ist eine Datei auf diesem Rechner und jede Abfrage geschieht hier: Keine Adresse wird irgendwohin gesendet. Die App kann die kostenlose Datenbank von DB-IP herunterladen, oder du lädst eine eigene hoch (zum Beispiel eine MaxMind-GeoLite2-Datei).",
+        "sourceDbip": "DB-IP, heruntergeladen",
+        "sourceCustom": "hochgeladene Datei",
+        "release": "Ausgabe {{version}}",
+        "built": "erstellt am {{date}}",
+        "installedAt": "installiert am {{date}}",
+        "none": "Keine Datenbank installiert. Die Länderspalte bleibt leer, bis du eine herunterlädst oder hochlädst.",
+        "backfill": "Ältere Einträge werden nachgeschlagen: {{done}} von {{total}} Adressen",
+        "editionLabel": "DB-IP-Ausgabe zum Herunterladen",
+        "edition": {
+          "country": "Country (etwa 4 MB)",
+          "city": "City (etwa 60 MB)",
+          "custom": "Hochgeladene Datei"
+        },
+        "editionHint": {
+          "country": "Nur das Land: ein Download von etwa 4 MB und wenig Arbeitsspeicher.",
+          "city": "Land, Region und Stadt: ein Download von etwa 60 MB, der geladen etwa 120 MB Arbeitsspeicher braucht. Städte sind unsicherer als Länder."
+        },
+        "downloadNow": "Jetzt herunterladen",
+        "updateNow": "Jetzt aktualisieren",
+        "upload": "Datei hochladen …",
+        "remove": "Entfernen",
+        "downloading": "Lade herunter … {{received}} von {{total}}",
+        "installing": "Installiere …",
+        "errors": {
+          "not-published": "DB-IP hat die Datei dieses oder des letzten Monats nicht unter dem erwarteten Namen veröffentlicht ({{detail}}).",
+          "download-failed": "Der Download ist fehlgeschlagen: {{detail}}",
+          "too-large": "Die Datei ist größer, als die App annimmt ({{detail}}).",
+          "invalid-file": "Das ist keine lesbare MMDB-Datenbank ({{detail}}).",
+          "not-a-geo-database": "Das ist eine Datenbank, aber keine Länder- oder Stadt-Datenbank ({{detail}})."
+        },
+        "autoUpdateLabel": "Jeden Monat selbst aktualisieren",
+        "autoUpdateHint": "Standardmäßig aus. Wenn an, prüft die App alle sechs Stunden, ob DB-IP eine neuere Ausgabe veröffentlicht hat, und lädt sie herunter. Eine selbst hochgeladene Datei wird nie ersetzt.",
+        "lastCheck": "Zuletzt nach einer neuen Ausgabe gesucht: {{date}}",
+        "privacy": "Der Download ist eine einfache Anfrage an download.db-ip.com nach einer Datei; über diese Installation wird nichts gesendet. Die Daten von DB-IP stehen unter CC BY 4.0, die Seite nennt die Quelle.",
+        "uploaded": "Datenbank installiert",
+        "removed": "Datenbank entfernt",
+        "removeTitle": "GeoIP-Datenbank entfernen?",
+        "removeDescription": "Neue Einträge bekommen kein Land mehr. Was schon nachgeschlagen wurde, bleibt im Journal.",
+        "saveFailed": "GeoIP-Einstellungen konnten nicht gespeichert werden",
+        "downloadFailed": "Download konnte nicht gestartet werden",
+        "uploadFailed": "Datei konnte nicht hochgeladen werden",
+        "removeFailed": "Datenbank konnte nicht entfernt werden"
+      },
       "unknownAddress": "unbekannt",
       "unknownAddressHint": "TeamSpeak hat diese Adresse nicht mitgeteilt. Das Konto, das die App auf diesem Server nutzt, darf vielleicht keine Client-Adressen sehen (b_client_remoteaddress_view).",
       "tabs": {
@@ -478,6 +529,8 @@
         "anyResult": "Jedes Ergebnis",
         "source": "Quelle",
         "anySource": "Jede Quelle",
+        "country": "Land",
+        "anyCountry": "Jedes Land",
         "server": "Server",
         "anyServer": "Jeder Server",
         "onlineNow": "Gerade online",
@@ -497,6 +550,7 @@
         "result": "Ergebnis",
         "account": "Konto",
         "address": "Adresse",
+        "country": "Land",
         "details": "Details",
         "entries": "Einträge",
         "failures": "Fehlschläge",

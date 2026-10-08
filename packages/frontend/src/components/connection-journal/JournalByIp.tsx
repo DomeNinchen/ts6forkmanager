@@ -5,6 +5,7 @@ import { Filter } from 'lucide-react';
 import type { JournalIpSortColumn } from '@ts6/common';
 import { connectionJournalApi } from '@/api/connection-journal.api';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
+import { CountryCell } from './CountryCell';
 import { PAGE_SIZE_OPTIONS } from './format';
 import { toQuery, type JournalFilterState } from './filters';
 import { Pager, SortHeader, type SortOrder } from './table-parts';
@@ -56,6 +57,7 @@ export function JournalByIp({
           <thead>
             <tr className="border-b border-border bg-muted/30">
               <SortHeader column="ip" label={t('pages.connectionJournal.columns.address')} sort={sort} order={order} onSort={onSort} />
+              <SortHeader column="country" label={t('pages.connectionJournal.columns.country')} sort={sort} order={order} onSort={onSort} />
               <SortHeader column="total" label={t('pages.connectionJournal.columns.entries')} sort={sort} order={order} onSort={onSort} />
               <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground">{t('pages.connectionJournal.columns.failures')}</th>
               <th className="h-10 px-3 text-left align-middle font-medium text-muted-foreground">{t('pages.connectionJournal.columns.successes')}</th>
@@ -66,7 +68,7 @@ export function JournalByIp({
           <tbody>
             {data.rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="h-24 text-center text-muted-foreground">{t('pages.connectionJournal.empty')}</td>
+                <td colSpan={7} className="h-24 text-center text-muted-foreground">{t('pages.connectionJournal.empty')}</td>
               </tr>
             ) : (
               data.rows.map((row) => (
@@ -82,6 +84,7 @@ export function JournalByIp({
                       <Filter className="h-3 w-3 opacity-40" />
                     </button>
                   </td>
+                  <td className="px-3 py-2.5 align-middle text-xs"><CountryCell country={row.country} city={row.city} scope={row.scope} /></td>
                   <td className="px-3 py-2.5 align-middle font-mono-data">{row.total}</td>
                   <td className={row.failures > 0 ? 'px-3 py-2.5 align-middle font-mono-data text-destructive' : 'px-3 py-2.5 align-middle font-mono-data'}>{row.failures}</td>
                   <td className="px-3 py-2.5 align-middle font-mono-data">{row.successes}</td>

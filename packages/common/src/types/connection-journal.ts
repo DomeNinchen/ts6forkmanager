@@ -51,6 +51,9 @@ export interface ConnectionJournalEntryDto {
   userId: number | null;
   ip: string;
   userAgent: string | null;
+  scope: JournalAddressScope;
+  /** Null when the address was not looked up (no GeoIP database yet), is not public, or is not in the database. */
+  geo: ConnectionJournalGeo | null;
   /** TeamSpeak rows only; null on a web row. */
   ts: ConnectionJournalTsDetails | null;
 }
@@ -100,7 +103,7 @@ export interface ConnectionJournalTsStatus {
   lastSyncAt: string | null;
 }
 
-export const JOURNAL_SORT_COLUMNS =['at', 'source', 'event', 'result', 'username', 'ip', 'reason', 'serverName'] as const;
+export const JOURNAL_SORT_COLUMNS = ['at', 'source', 'event', 'result', 'username', 'ip', 'country', 'reason', 'serverName'] as const;
 export type JournalSortColumn = (typeof JOURNAL_SORT_COLUMNS)[number];
 
 /** How far back the list looks. */
@@ -125,6 +128,21 @@ export interface ConnectionJournalIpRow {
   lastAt: string;
   /** Distinct account names tried from this address. */
   usernames: number;
+  /** ISO 3166-1 alpha-2 code, null when the address was not looked up or is not in the database. */
+  country: string | null;
+  city: string | null;
+  scope: JournalAddressScope;
+}
+
+/** What kind of address it is: only a `public` one can be placed on a map. */
+export type JournalAddressScope = 'public' | 'private' | 'loopback' | 'unknown';
+
+/** Where an address is, from the GeoIP database. Only the fields the database has are filled. */
+export interface ConnectionJournalGeo {
+  /** ISO 3166-1 alpha-2 code. */
+  country: string;
+  region: string | null;
+  city: string | null;
 }
 
 export interface ConnectionJournalIpPage {
@@ -135,7 +153,7 @@ export interface ConnectionJournalIpPage {
   pageSize: number;
 }
 
-export const JOURNAL_IP_SORT_COLUMNS = ['lastAt', 'total', 'ip'] as const;
+export const JOURNAL_IP_SORT_COLUMNS = ['lastAt', 'total', 'ip', 'country'] as const;
 export type JournalIpSortColumn = (typeof JOURNAL_IP_SORT_COLUMNS)[number];
 
 export interface ConnectionJournalSettingsDto {
@@ -151,4 +169,62 @@ export interface ConnectionJournalSettingsDto {
   entryCount: number;
   /** ISO 8601, or null when the journal is empty. */
   oldestAt: string | null;
+}
+
+// --- GeoIP -----------------------------------------------------------------------------------
+
+/** DB-IP's free "Lite" editions the app can download; a file of the admin's own is `custom`. */
+export const GEOIP_EDITIONS = ['country', 'city'] as const;
+export type GeoIpEdition = (typeof GEOIP_EDITIONS)[number];
+
+/** Why the last download, update or upload did not work. */
+export type GeoIpErrorCode =
+  /** The file of this month (and last month's) is not on the download server. */
+  | 'not-published'
+  /** The download server could not be reached or answered with an error. */
+  | 'download-failed'
+  /** The file is larger than the app accepts. */
+  | 'too-large'
+  /** Not an MMDB file at all (or damaged). */
+  | 'invalid-file'
+  /** A readable MMDB, but not a country or city database (an ASN database, say). */
+  | 'not-a-geo-database';
+
+export interface ConnectionJournalGeoIpStatus {
+  installed: boolean;
+  /** `dbip`: downloaded by the app. `custom`: a file the admin uploaded. */
+  source: 'dbip' | 'custom' | null;
+  /** What is installed: a DB-IP edition, or `custom`. */
+  edition: GeoIpEdition | 'custom' | null;
+  /** DB-IP's release, e.g. "2026-10"; null for a custom file. */
+  version: string | null;
+  /** The database type the file says it is (e.g. "DBIP-Country-Lite"). */
+  databaseType: string | null;
+  /** ISO 8601, when the database was built. */
+  builtAt: string | null;
+  installedAt: string | null;
+  sizeBytes: number | null;
+  /** What the next download (and the monthly update) fetches. */
+  selectedEdition: GeoIpEdition;
+  /** Fetch a newer DB-IP release by itself once a month. Off by default. */
+  autoUpdate: boolean;
+  state: 'idle' | 'downloading' | 'installing';
+  /** While downloading. `totalBytes` is the compressed size the server announced, if it did. */
+  progress: { receivedBytes: number; totalBytes: number | null } | null;
+  /** ISO 8601 of the last time a newer release was looked for (automatically or by hand). */
+  lastCheckAt: string | null;
+  lastError: { code: GeoIpErrorCode; detail: string } | null;
+  /** Looking up the entries that were recorded before there was a database. */
+  backfill: { running: boolean; done: number; total: number };
+  /**
+   * Whose data the page has to credit: `dbip` (CC BY 4.0: a link back to db-ip.com wherever the data is shown) or
+   * `maxmind` (a GeoLite2 file: "This product includes GeoLite data created by MaxMind").
+   */
+  attribution: 'dbip' | 'maxmind' | null;
+}
+
+/** One country that occurs in the journal, with how many entries. */
+export interface ConnectionJournalCountry {
+  country: string;
+  count: number;
 }
