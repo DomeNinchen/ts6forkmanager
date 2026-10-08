@@ -37,5 +37,17 @@ export function describeUserAgent(userAgent: string | null): string | null {
   return browser ?? system;
 }
 
+/**
+ * The name of a country in the interface language ("DE" -> "Germany" / "Deutschland"), from the browser's
+ * own tables - no list is shipped with the app. A code the browser does not know comes back as it is.
+ */
+export function countryName(code: string, language: string): string {
+  try {
+    return new Intl.DisplayNames([language], { type: 'region' }).of(code.toUpperCase()) ?? code;
+  } catch {
+    return code;
+  }
+}
+
 export const RANGE_OPTIONS = ['24h', '7d', '30d', 'all'] as const;
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;

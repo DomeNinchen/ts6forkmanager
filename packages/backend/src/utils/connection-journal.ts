@@ -13,7 +13,8 @@ import type {
 } from '@ts6/common';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 import { getConnectionJournalSettings } from './connection-journal-settings.js';
-import { normalizeAddress } from './trust-proxy.js';
+import { toGeo, type GeoIpService } from './geoip.js';
+import { addressScope, normalizeAddress } from './trust-proxy.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
@@ -54,6 +55,8 @@ export function recordWebEvent(req: Request, entry: WebJournalEvent): void {
   if (!prisma) return;
   const ip = clientIpOf(req);
   const userAgent = cleanText(req.headers['user-agent'], MAX_USER_AGENT_LENGTH);
+  // Null while no GeoIP database is installed: the row then waits for the backfill.
+  const geo = (req.app.locals.geoIp as GeoIpService | undefined)?.lookup(ip) ?? null;
   void (async () => {
     try {
       const settings = await getConnectionJournalSettings(prisma);
@@ -68,6 +71,7 @@ export function recordWebEvent(req: Request, entry: WebJournalEvent): void {
           userId: entry.userId ?? null,
           ip,
           userAgent,
+          ...(geo ? { country: geo.country, region: geo.region, city: geo.city } : {}),
         },
       });
     } catch (err: any) {
@@ -100,22 +104,46 @@ export interface JournalFilters {
   source?: JournalSource;
   event?: JournalEvent;
   result?: JournalResult;
-  /** Part of an account name or an address. */
+  /** Part of an account name, a nickname, a unique id, a connection name or an address. */
   q?: string;
   /** Exactly this address. */
   ip?: string;
+  /** Only TeamSpeak sessions that have not ended. */
+  online?: boolean;
+  /** Only TeamSpeak sessions on this server connection. */
+  serverConfigId?: number;
+  /** Only addresses in this country (ISO 3166-1 alpha-2). */
+  country?: string;
 }
 
 const RANGE_MS: Record<Exclude<JournalRange, 'all'>, number> = { '24h': DAY_MS, '7d': 7 * DAY_MS, '30d': 30 * DAY_MS };
 
 function buildWhere(filters: JournalFilters): Prisma.ConnectionJournalEntryWhereInput {
   const where: Prisma.ConnectionJournalEntryWhereInput = {};
-  if (filters.range !== 'all') where.at = { gte: new Date(Date.now() - RANGE_MS[filters.range]) };
+  // "Online now" is about who is there, however long ago they came: it ignores the period.
+  if (filters.range !== 'all' && !filters.online) where.at = { gte: new Date(Date.now() - RANGE_MS[filters.range]) };
   if (filters.source) where.source = filters.source;
   if (filters.event) where.event = filters.event;
   if (filters.result) where.result = filters.result;
   if (filters.ip) where.ip = filters.ip;
-  if (filters.q) where.OR = [{ username: { contains: filters.q } }, { ip: { contains: filters.q } }];
+  if (filters.online) {
+    // Open: not left, and not closed with "end not seen" either (that one has no time but is over).
+    where.source = 'ts';
+    where.leftAt = null;
+    where.leaveReason = null;
+  }
+  if (filters.serverConfigId !== undefined) where.serverConfigId = filters.serverConfigId;
+  if (filters.country) where.country = filters.country;
+  if (filters.q) {
+    where.OR = [
+      { username: { contains: filters.q } },
+      { ip: { contains: filters.q } },
+      { uid: { contains: filters.q } },
+      { serverName: { contains: filters.q } },
+      // The name of the place too: "Berlin" finds what came from there (stored in English, as the database has it).
+      { city: { contains: filters.q } },
+    ];
+  }
   return where;
 }
 
@@ -130,6 +158,18 @@ function toDto(row: {
   userId: number | null;
   ip: string;
   userAgent: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  serverConfigId: number | null;
+  virtualServerId: number | null;
+  serverName: string | null;
+  uid: string | null;
+  cldbid: number | null;
+  clientVersion: string | null;
+  clientPlatform: string | null;
+  leftAt: Date | null;
+  leaveReason: string | null;
 }): ConnectionJournalEntryDto {
   return {
     id: row.id,
@@ -142,6 +182,22 @@ function toDto(row: {
     userId: row.userId,
     ip: row.ip,
     userAgent: row.userAgent,
+    scope: addressScope(row.ip),
+    geo: toGeo(row),
+    ts:
+      row.source === 'ts'
+        ? {
+            serverConfigId: row.serverConfigId,
+            virtualServerId: row.virtualServerId,
+            serverName: row.serverName,
+            uid: row.uid,
+            cldbid: row.cldbid,
+            clientVersion: row.clientVersion,
+            clientPlatform: row.clientPlatform,
+            leftAt: row.leftAt ? row.leftAt.toISOString() : null,
+            leaveReason: row.leaveReason,
+          }
+        : null,
   };
 }
 
@@ -177,10 +233,13 @@ export async function listJournalByIp(
 ): Promise<ConnectionJournalIpPage> {
   const where = buildWhere(filters);
   const primary: Prisma.ConnectionJournalEntryOrderByWithAggregationInput =
-    sort === 'ip' ? { ip: order } : sort === 'total' ? { _count: { id: order } } : { _max: { at: order } };
+    sort === 'ip' ? { ip: order }
+    : sort === 'total' ? { _count: { id: order } }
+    : sort === 'country' ? { _max: { country: order } }
+    : { _max: { at: order } };
   const orderBy: Prisma.ConnectionJournalEntryOrderByWithAggregationInput[] = [primary, { ip: 'asc' }];
 
-  type IpGroup = { ip: string; _count: { id: number }; _max: { at: Date | null } };
+  type IpGroup = { ip: string; _count: { id: number }; _max: { at: Date | null; country: string | null; city: string | null } };
   const [distinct, groups] = await Promise.all([
     prisma.connectionJournalEntry.groupBy({ by: ['ip'], where }),
     // Prisma's groupBy typing insists that every field in orderBy is also in `by`,
@@ -190,7 +249,7 @@ export async function listJournalByIp(
       by: ['ip'],
       where,
       _count: { id: true },
-      _max: { at: true },
+      _max: { at: true, country: true, city: true },
       orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -222,11 +281,28 @@ export async function listJournalByIp(
       successes: successes.get(g.ip) ?? 0,
       lastAt: (g._max.at ?? new Date(0)).toISOString(),
       usernames: names.get(g.ip) ?? 0,
+      // One address is one place, so the largest value of its rows is its value ("" = not found counts as none).
+      country: g._max.country || null,
+      city: g._max.city || null,
+      scope: addressScope(g.ip),
     })),
     total: distinct.length,
     page,
     pageSize,
   };
+}
+
+/** The countries that occur in the journal, most entries first - what the country filter offers. */
+export async function listCountries(prisma: PrismaClient): Promise<Array<{ country: string; count: number }>> {
+  const groups = await prisma.connectionJournalEntry.groupBy({
+    by: ['country'],
+    where: { country: { not: null } },
+    _count: { id: true },
+  });
+  return groups
+    .filter((g: { country: string | null }) => g.country)
+    .map((g: { country: string | null; _count: { id: number } }) => ({ country: g.country as string, count: g._count.id }))
+    .sort((a: { count: number; country: string }, b: { count: number; country: string }) => b.count - a.count || a.country.localeCompare(b.country));
 }
 
 export async function journalStats(prisma: PrismaClient): Promise<{ entryCount: number; oldestAt: string | null }> {

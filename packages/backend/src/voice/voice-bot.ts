@@ -353,6 +353,11 @@ export class VoiceBot extends EventEmitter {
     return { ...this.config };
   }
 
+  /** The unique ID the bot is connected with right now, which is a throwaway one when it has no stored identity. */
+  get liveIdentityUid(): string | null {
+    return this.identity?.uid ?? null;
+  }
+
   updateConfig(partial: Partial<VoiceBotConfig>): void {
     Object.assign(this.config, partial);
     if (partial.nickname) this._originalNickname = partial.nickname;

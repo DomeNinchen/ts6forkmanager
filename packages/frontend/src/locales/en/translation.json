@@ -450,7 +450,71 @@
     },
     "connectionJournal": {
       "title": "Connection Journal",
-      "subtitle": "Who signed in to this web interface, from which address, and whether it worked. Visible to admins only; the settings tab says how long it is kept.",
+      "subtitle": "Who signed in to this web interface and who joined a TeamSpeak server, from which address, and whether it worked. Visible to admins only; the settings tab says how long it is kept.",
+      "source": {
+        "web": "Web",
+        "ts": "TeamSpeak"
+      },
+      "ts": {
+        "online": "online now",
+        "leftAfter": "left after {{duration}} ({{reason}})",
+        "endNotSeen": "left - the end was not seen",
+        "recordingStopped": "still there when recording stopped",
+        "virtualServer": "virtual server {{id}}"
+      },
+      "scope": {
+        "private": "private network",
+        "loopback": "this machine"
+      },
+      "noCountryHint": "No country: no GeoIP database is installed, or it has no entry for this address.",
+      "geoip": {
+        "title": "Country lookup (GeoIP)",
+        "description": "Shows the country - and with the City database the place - of every address in the journal. The database is a file on this machine and each lookup is made here: no address is sent anywhere. The app can download DB-IP's free database, or you upload one of your own (a MaxMind GeoLite2 file, for example).",
+        "sourceDbip": "DB-IP, downloaded",
+        "sourceCustom": "uploaded file",
+        "release": "release {{version}}",
+        "built": "built {{date}}",
+        "installedAt": "installed {{date}}",
+        "none": "No database installed. The country column stays empty until you download or upload one.",
+        "backfill": "Looking up the older entries: {{done}} of {{total}} addresses",
+        "editionLabel": "DB-IP edition to download",
+        "edition": {
+          "country": "Country (about 4 MB)",
+          "city": "City (about 60 MB)",
+          "custom": "Uploaded file"
+        },
+        "editionHint": {
+          "country": "The country and nothing else: a download of about 4 MB and little memory.",
+          "city": "Country, region and city: a download of about 60 MB that takes about 120 MB of memory once loaded. City names are less certain than countries."
+        },
+        "downloadNow": "Download now",
+        "updateNow": "Update now",
+        "upload": "Upload a file…",
+        "remove": "Remove",
+        "downloading": "Downloading… {{received}} of {{total}}",
+        "installing": "Installing…",
+        "errors": {
+          "not-published": "DB-IP has not published this month's or last month's file under the expected name ({{detail}}).",
+          "download-failed": "The download failed: {{detail}}",
+          "too-large": "The file is larger than the app accepts ({{detail}}).",
+          "invalid-file": "This is not a readable MMDB database ({{detail}}).",
+          "not-a-geo-database": "This is a database, but not a country or city database ({{detail}})."
+        },
+        "autoUpdateLabel": "Update by itself every month",
+        "autoUpdateHint": "Off by default. When on, the app checks every six hours whether DB-IP has published a newer release and downloads it. A file you uploaded is never replaced.",
+        "lastCheck": "Last looked for a release: {{date}}",
+        "privacy": "Downloading is a plain request to download.db-ip.com for one file; nothing about this installation is sent. DB-IP's data is licensed CC BY 4.0, and the page credits it.",
+        "uploaded": "Database installed",
+        "removed": "Database removed",
+        "removeTitle": "Remove the GeoIP database?",
+        "removeDescription": "New entries get no country any more. What was already looked up stays in the journal.",
+        "saveFailed": "Failed to save the GeoIP settings",
+        "downloadFailed": "Failed to start the download",
+        "uploadFailed": "Failed to upload the file",
+        "removeFailed": "Failed to remove the database"
+      },
+      "unknownAddress": "unknown",
+      "unknownAddressHint": "TeamSpeak did not tell this address. The account the app uses on that server may not be allowed to see client addresses (b_client_remoteaddress_view).",
       "tabs": {
         "journal": "Journal",
         "byIp": "By address",
@@ -463,6 +527,13 @@
         "result": "Result",
         "anyEvent": "Any event",
         "anyResult": "Any result",
+        "source": "Source",
+        "anySource": "Any source",
+        "country": "Country",
+        "anyCountry": "Any country",
+        "server": "Server",
+        "anyServer": "Any server",
+        "onlineNow": "Online now",
         "removeAddress": "Remove the address filter",
         "reset": "Reset filters"
       },
@@ -474,10 +545,12 @@
       },
       "columns": {
         "time": "Time",
+        "source": "Source",
         "event": "Event",
         "result": "Result",
         "account": "Account",
         "address": "Address",
+        "country": "Country",
         "details": "Details",
         "entries": "Entries",
         "failures": "Failures",
@@ -489,7 +562,8 @@
         "login": "Sign-in",
         "totp": "Second factor",
         "sso": "Single sign-on",
-        "rate-limit": "Rate limit"
+        "rate-limit": "Rate limit",
+        "ts-session": "TeamSpeak connection"
       },
       "result": {
         "success": "Success",
@@ -523,15 +597,35 @@
       "perPage": "{{count}} per page",
       "settings": {
         "title": "Recording and retention",
-        "description": "The journal stores the address, the account name (for an unknown account what was typed), the browser and the time of every sign-in event, successful or not. Addresses are personal data in many places: keep them only as long as you need them. This is not legal advice.",
-        "enabledLabel": "Record sign-ins",
-        "enabledHint": "When off, nothing new is recorded; what is stored stays until it is pruned or cleared.",
+        "description": "The journal stores the address, the account name (for an unknown account what was typed), the browser and the time of every sign-in event, successful or not, and for every client that joins a TeamSpeak server its nickname, unique ID, address and client version. Addresses are personal data in many places: keep them only as long as you need them. This is not legal advice.",
+        "enabledLabel": "Record sign-ins and joins",
+        "enabledHint": "When off, nothing new is recorded, on the web interface or on TeamSpeak; what is stored stays until it is pruned or cleared.",
+        "queryClientsLabel": "Also record ServerQuery clients",
+        "queryClientsHint": "Off by default: query clients are tools, not people - and every request this app makes to a server is one, so with this on the journal gets very busy.",
+        "ownBotsLabel": "Also record this app's own music bots",
+        "ownBotsHint": "Off by default: a bot that reconnects would add a row every time.",
         "retentionLabel": "Keep for (days)",
         "retentionHint": "{{min}} to {{max}} days. Older entries are removed every hour.",
         "maxRowsLabel": "Keep at most (entries)",
         "maxRowsHint": "{{min}} to {{max}}. Beyond this the oldest entries go first, whatever their age.",
         "saved": "Journal settings saved",
         "saveFailed": "Failed to save the journal settings",
+        "watchedTitle": "TeamSpeak servers watched",
+        "watchedDescription": "Each connection with \"record who joins\" switched on (Settings → Connections). With an SSH login the app listens to live events and misses nothing; without one it asks the server every 15 seconds and does not see a visit shorter than that, nor why a client left.",
+        "watchedNone": "No TeamSpeak server is watched right now: recording is off, or no connection has it switched on.",
+        "mode": {
+          "events": "live events",
+          "polling": "every 15 seconds",
+          "idle": "not watched"
+        },
+        "openSessions_one": "{{count}} client there now",
+        "openSessions_other": "{{count}} clients there now",
+        "problem": {
+          "no-access": "This connection has neither an API key nor an SSH login, so there is nothing to ask the server with.",
+          "ssh-unavailable": "The SSH login does not work (refused or not reachable) and there is no API key to fall back on.",
+          "unreachable": "The server did not answer the last time it was asked.",
+          "no-address-permission": "TeamSpeak sends no client addresses: the account the app uses may not be allowed to see them (permission b_client_remoteaddress_view)."
+        },
         "storedTitle": "Stored now",
         "stored_one": "{{count}} entry is stored.",
         "stored_other": "{{count}} entries are stored.",
@@ -1399,6 +1493,8 @@
         "pingTargetLabel": "Dashboard Ping Target (optional)",
         "pingTargetPlaceholder": "Defaults to Host above ({{host}})",
         "pingTargetHint": "Only affects the Dashboard's Ping reading - useful if Host above is an internal address but the public domain is what should actually be tested. Bot flows always use Host, never this.",
+        "recordConnectionJournal": "Record who joins in the Connection Journal",
+        "recordConnectionJournalHint": "Writes a row to the Connection Journal for every client that joins this connection's virtual servers (nickname, unique ID, address, client version, when it left). Uses the SSH login for live events when there is one, otherwise asks the server every 15 seconds. Turning it off keeps what was already recorded.",
         "recordUserHistory": "Record history",
         "recordUserHistoryHint": "Records this connection's user counts, bandwidth and ping in the background for Statistics → History. Turning it off keeps what was already recorded and stops adding to it. Interval and retention are set under Statistics → History.",
         "sshPortLabel": "SSH Port",
