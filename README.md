@@ -28,7 +28,7 @@ Run multiple music bots per server. Each bot has its own queue, volume control, 
 ![Music Bots](docs/musicbots.png)
 
 ### Video Streaming
-Stream YouTube, Twitch, a direct URL or a video from your library into a TeamSpeak channel over WebRTC. Queue what plays next, watch a live preview in the browser, and see who is currently watching. Quality and volume default to values you set once under Settings → Streaming.
+Stream YouTube, Twitch, a direct URL or a video from your library into a TeamSpeak channel over WebRTC. Queue what plays next, watch a live preview in the browser, and see who is currently watching. Quality and volume default to values you set once under Settings → Streaming, where you can also let a stream end by itself after nobody has watched it for a number of minutes (off by default).
 
 ![Video Streaming](docs/video-streaming.png)
 
