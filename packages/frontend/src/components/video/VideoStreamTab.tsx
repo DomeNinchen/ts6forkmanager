@@ -25,7 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { settingsApi, type StreamPreset, type StreamDefaults } from '@/api/settings.api';
+import { settingsApi, type StreamPreset, type StreamQuality } from '@/api/settings.api';
 import type { VideoQueueItem } from '@/api/music.api';
 import type { SongInfo } from '@ts6/common';
 import { fileBasename } from '@/lib/utils';
@@ -38,7 +38,7 @@ const FALLBACK_PRESETS: StreamPreset[] = [
   { name: '1080p', label: '1080p', width: 1920, height: 1080, framerate: 60, bitrate: '6000k' },
 ];
 
-const FALLBACK_DEFAULTS: StreamDefaults = { preset: '1080p', framerate: 60, bitrate: '6000k', volume: 10 };
+const FALLBACK_DEFAULTS: StreamQuality = { preset: '1080p', framerate: 60, bitrate: '6000k', volume: 10 };
 
 const FPS_OPTIONS = [24, 30, 60];
 
@@ -62,8 +62,8 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
     staleTime: 5 * 60_000,
   });
   const presets = configured?.presets ?? FALLBACK_PRESETS;
-  const [quality, setQuality] = useState<StreamDefaults | null>(null);
-  const active: StreamDefaults = quality ?? (configured
+  const [quality, setQuality] = useState<StreamQuality | null>(null);
+  const active: StreamQuality = quality ?? (configured
     ? { preset: configured.preset, framerate: configured.framerate, bitrate: configured.bitrate, volume: configured.volume }
     : FALLBACK_DEFAULTS);
 

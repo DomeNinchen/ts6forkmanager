@@ -8,6 +8,7 @@ import type { MusicCommandHandler } from './music-command-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { decrypt, encrypt } from '../utils/crypto.js';
+import { getStreamDefaults } from '../utils/stream-defaults.js';
 import type { BotConnectionInfo } from '@ts6/common';
 
 const PROGRESS_INTERVAL_MS = 1000;
@@ -43,6 +44,10 @@ export class VoiceBotManager extends EventEmitter {
   // the bot when asked for, not stored here: for an unresolvable host the
   // disconnect event that triggers the give-up fires before start() has noted why.
   private gaveUp = new Set<number>();
+  // Video streams that currently have nobody watching: since when, and the
+  // timer that ends each. Both exist only while such a stream is running.
+  private videoEmptySince = new Map<number, number>();
+  private videoIdleTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private musicCmdHandler: MusicCommandHandler | null = null;
 
   constructor(
@@ -218,18 +223,23 @@ export class VoiceBotManager extends EventEmitter {
     // Video streaming events
     bot.on('videoStreamStarted', (data: any) => {
       this.broadcast('music:bot:videoStreamStarted', { botId: config.id, ...data });
+      // Nobody has had the chance to join yet: the clock for an unwatched stream starts here
+      this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoStreamStopped', () => {
       this.broadcast('music:bot:videoStreamStopped', { botId: config.id });
+      this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoViewerJoined', (viewer: any) => {
       this.broadcast('music:bot:videoViewerJoined', { botId: config.id, viewer });
+      this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoViewerLeft', (clid: number) => {
       this.broadcast('music:bot:videoViewerLeft', { botId: config.id, clid });
+      this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoSourceChanged', (source: string) => {
@@ -570,6 +580,67 @@ export class VoiceBotManager extends EventEmitter {
       };
       await bot.playStream(queueItem);
     }
+  }
+
+  /**
+   * Ends a video stream that nobody has watched for the time set in Settings ->
+   * Streaming (0 = never). Called whenever something that bears on it changes -
+   * the stream starts or stops, a viewer joins or leaves, the setting is saved -
+   * and works out what is due from the bot's own state, so no caller has to know
+   * whether the stream is empty right now.
+   *
+   * The setting is read on every evaluation rather than once when the stream
+   * starts: lowering it applies to a stream that has already been empty a while.
+   */
+  private evaluateVideoIdleStop(botId: number): void {
+    this.runVideoIdleStop(botId).catch((err: any) => {
+      console.error(`[VoiceBotManager] Bot ${botId}: checking the idle video stream failed: ${err.message}`);
+    });
+  }
+
+  /** Re-checks every running video stream; for when the setting was just saved. */
+  reevaluateVideoIdleStops(): void {
+    for (const [id, bot] of this.bots) {
+      if (bot.videoStreaming) this.evaluateVideoIdleStop(id);
+    }
+  }
+
+  private clearVideoIdleTimer(botId: number): void {
+    const timer = this.videoIdleTimers.get(botId);
+    if (timer) {
+      clearTimeout(timer);
+      this.videoIdleTimers.delete(botId);
+    }
+  }
+
+  private async runVideoIdleStop(botId: number): Promise<void> {
+    this.clearVideoIdleTimer(botId);
+    const bot = this.bots.get(botId);
+    if (!bot || !bot.videoStreaming || bot.videoViewerCount > 0) {
+      this.videoEmptySince.delete(botId);
+      return;
+    }
+    if (!this.videoEmptySince.has(botId)) this.videoEmptySince.set(botId, Date.now());
+
+    const { idleStopMinutes } = await getStreamDefaults(this.prisma);
+
+    // Whatever happened while the setting was being read ran its own evaluation
+    // and has cleaned up after itself; this one must not set a timer for a
+    // stream that has since gained a viewer or ended.
+    if (!bot.videoStreaming || bot.videoViewerCount > 0) return;
+    if (idleStopMinutes <= 0) return;
+
+    const since = this.videoEmptySince.get(botId) ?? Date.now();
+    const remaining = since + idleStopMinutes * 60_000 - Date.now();
+    if (remaining > 0) {
+      this.clearVideoIdleTimer(botId);
+      this.videoIdleTimers.set(botId, setTimeout(() => this.evaluateVideoIdleStop(botId), remaining));
+      return;
+    }
+
+    console.log(`[VoiceBotManager] Bot ${botId}: nobody has watched the video stream for ${idleStopMinutes} min, stopping it`);
+    this.videoEmptySince.delete(botId);
+    await bot.stopVideoStream();
   }
 
   private clearReconnect(botId: number): void {

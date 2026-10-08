@@ -1421,7 +1421,7 @@ function StreamingTab() {
 
   const [draft, setDraft] = useState<StreamDefaults | null>(null);
   const active: StreamDefaults | null =
-    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume } : null);
+    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume, idleStopMinutes: data.idleStopMinutes } : null);
 
   const save = useMutation({
     mutationFn: (cfg: StreamDefaults) => settingsApi.setStreamDefaults(cfg),
@@ -1446,7 +1446,8 @@ function StreamingTab() {
     active.preset === data.builtIn.preset &&
     active.framerate === data.builtIn.framerate &&
     active.bitrate === data.builtIn.bitrate &&
-    active.volume === data.builtIn.volume;
+    active.volume === data.builtIn.volume &&
+    active.idleStopMinutes === data.builtIn.idleStopMinutes;
 
   return (
     <div className="max-w-lg space-y-4">
@@ -1521,6 +1522,23 @@ function StreamingTab() {
             />
             <p className="text-[11px] text-muted-foreground">
               {t('pages.settings.streaming.volumeHint')}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs" htmlFor="stream-idle-stop">{t('pages.settings.streaming.idleStopLabel')}</Label>
+            <Input
+              id="stream-idle-stop"
+              type="number"
+              min={0}
+              max={1440}
+              step={1}
+              className="max-w-[8rem]"
+              value={active.idleStopMinutes}
+              onChange={(e) => setDraft({ ...active, idleStopMinutes: Number(e.target.value) })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {t('pages.settings.streaming.idleStopHint')}
             </p>
           </div>
 

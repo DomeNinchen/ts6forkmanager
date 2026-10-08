@@ -15,7 +15,7 @@ import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-con
 import { getGithubToken, setGithubToken } from '../utils/github-token.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
 import { setPrivacyNoticeEnabled } from '../utils/privacy-notice-settings.js';
-import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN } from '../utils/stream-defaults.js';
+import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES } from '../utils/stream-defaults.js';
 import {
   getUserHistorySettings,
   setUserHistorySettings,
@@ -384,6 +384,7 @@ settingsRoutes.get('/stream-defaults', requireAdmin, async (req: Request, res: R
 settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: Response, next) => {
   try {
     const { preset, framerate, bitrate, volume } = req.body ?? {};
+    const prisma = req.app.locals.prisma;
 
     if (typeof preset !== 'string' || !(preset in STREAM_PRESETS)) {
       throw new AppError(400, `preset must be one of: ${Object.keys(STREAM_PRESETS).join(', ')}`);
@@ -402,9 +403,20 @@ settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: R
       throw new AppError(400, 'volume must be a whole number between 0 and 100');
     }
 
-    const prisma = req.app.locals.prisma;
-    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume });
-    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%`);
+    // Left out (a script that predates the field): keep what is stored rather
+    // than quietly switching the rule off.
+    const idleStopMinutes = req.body?.idleStopMinutes === undefined
+      ? (await getStreamDefaults(prisma)).idleStopMinutes
+      : req.body.idleStopMinutes;
+    if (!Number.isInteger(idleStopMinutes) || idleStopMinutes < 0 || idleStopMinutes > IDLE_STOP_MAX_MINUTES) {
+      throw new AppError(400, `idleStopMinutes must be a whole number between 0 (never) and ${IDLE_STOP_MAX_MINUTES}`);
+    }
+
+    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume, idleStopMinutes });
+    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%, idle stop ${saved.idleStopMinutes === 0 ? 'off' : `${saved.idleStopMinutes} min`}`);
+    // A stream that is already running with nobody watching follows the new
+    // value now, instead of at the next time someone leaves it.
+    req.app.locals.voiceBotManager?.reevaluateVideoIdleStops();
     res.json({
       ...saved,
       builtIn: builtInStreamDefaults(),

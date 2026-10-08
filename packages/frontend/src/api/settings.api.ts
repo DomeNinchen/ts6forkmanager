@@ -145,7 +145,12 @@ export interface StreamDefaults {
   bitrate: string;
   /** Percent the source's own audio is scaled by; 100 leaves it alone. */
   volume: number;
+  /** Minutes a running stream may have no viewer before it is ended; 0 = never. */
+  idleStopMinutes: number;
 }
+
+/** The part of the stream defaults that describes the picture and sound of a stream being started. */
+export type StreamQuality = Omit<StreamDefaults, 'idleStopMinutes'>;
 
 export interface StreamPreset {
   /** The name !stream accepts, e.g. `720p`. */

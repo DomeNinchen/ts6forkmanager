@@ -1433,6 +1433,8 @@
         "bitrateHintPrefix": "As ffmpeg writes it, e.g.",
         "volumeLabel": "Volume",
         "volumeHint": "Percent of the video's own loudness, 0-100. Videos are mastered far louder than people speak, so a stream at its own level arrives as a shout — hence the low default. Viewers can still turn their own player up. Takes effect on the next stream, not the running one.",
+        "idleStopLabel": "End the stream when nobody is watching (minutes)",
+        "idleStopHint": "How long a video stream may run with no viewer before the bot ends it, so a forgotten stream does not keep using the server's upstream and CPU. The clock starts when the last viewer leaves, or when the stream starts if nobody ever joins; a viewer joining resets it. 0 keeps the stream running until someone stops it. The preview in this web interface does not count as a viewer.",
         "restoreShippedValues": "Restore shipped values",
         "unsavedChanges": "Unsaved changes",
         "streamDefaultsSaved": "Stream defaults saved",
