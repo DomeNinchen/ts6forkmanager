@@ -12,6 +12,7 @@ import { connectionJournalApi } from '@/api/connection-journal.api';
 import { Badge } from '@/components/ui/badge';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { formatDuration } from '@/lib/utils';
+import { CountryCell } from './CountryCell';
 import { describeUserAgent, PAGE_SIZE_OPTIONS } from './format';
 import { toQuery, type JournalFilterState } from './filters';
 import { Pager, SortHeader, type SortOrder } from './table-parts';
@@ -75,13 +76,14 @@ export function JournalList({
               {header('result', 'pages.connectionJournal.columns.result')}
               {header('username', 'pages.connectionJournal.columns.account')}
               {header('ip', 'pages.connectionJournal.columns.address')}
+              {header('country', 'pages.connectionJournal.columns.country')}
               {header('reason', 'pages.connectionJournal.columns.details')}
             </tr>
           </thead>
           <tbody>
             {data.entries.length === 0 ? (
               <tr>
-                <td colSpan={7} className="h-24 text-center text-muted-foreground">{t('pages.connectionJournal.empty')}</td>
+                <td colSpan={8} className="h-24 text-center text-muted-foreground">{t('pages.connectionJournal.empty')}</td>
               </tr>
             ) : (
               data.entries.map((entry) => <JournalRow key={entry.id} entry={entry} onFilterIp={onFilterIp} />)
@@ -159,6 +161,9 @@ function JournalRow({ entry, onFilterIp }: { entry: ConnectionJournalEntryDto; o
         ) : (
           <span className="text-muted-foreground" title={t('pages.connectionJournal.unknownAddressHint')}>{t('pages.connectionJournal.unknownAddress')}</span>
         )}
+      </td>
+      <td className="px-3 py-2.5 align-middle text-xs">
+        <CountryCell country={entry.geo?.country ?? null} region={entry.geo?.region ?? null} city={entry.geo?.city ?? null} scope={entry.scope} />
       </td>
       <td className="px-3 py-2.5 align-middle text-xs">
         {entry.ts ? <TsDetails entry={entry} /> : <WebDetails entry={entry} />}

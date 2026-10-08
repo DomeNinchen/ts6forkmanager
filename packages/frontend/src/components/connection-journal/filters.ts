@@ -15,10 +15,12 @@ export interface JournalFilterState {
   server: number | 'all';
   /** TeamSpeak only: just the clients that are on the server now. */
   online: boolean;
+  /** An ISO 3166-1 alpha-2 code. */
+  country: string | 'all';
 }
 
 export const DEFAULT_FILTERS: JournalFilterState = {
-  range: '7d', source: 'all', event: 'all', result: 'all', q: '', ip: '', server: 'all', online: false,
+  range: '7d', source: 'all', event: 'all', result: 'all', q: '', ip: '', server: 'all', online: false, country: 'all',
 };
 
 export function toQuery(filters: JournalFilterState, page: number, pageSize: number): JournalQuery {
@@ -31,6 +33,7 @@ export function toQuery(filters: JournalFilterState, page: number, pageSize: num
     ip: filters.ip || undefined,
     online: filters.online || undefined,
     server: filters.server === 'all' ? undefined : filters.server,
+    country: filters.country === 'all' ? undefined : filters.country,
     page,
     pageSize,
   };

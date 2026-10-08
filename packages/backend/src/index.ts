@@ -21,6 +21,7 @@ import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
 import { startJournalPruner } from './utils/connection-journal.js';
 import { TsLoginJournal } from './ts-client/ts-login-journal.js';
+import { GeoIpService } from './utils/geoip.js';
 import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -111,6 +112,10 @@ async function main() {
   // Make services available via app.locals
   app.locals.prisma = prisma;
   app.locals.connectionPool = connectionPool;
+  // Where an address is, for the connection journal's country column: a database file on this machine.
+  const geoIp = new GeoIpService(prisma);
+  app.locals.geoIp = geoIp;
+  void geoIp.start();
   const bandwidthSampler = new BandwidthSampler(connectionPool, prisma);
   app.locals.bandwidthSampler = bandwidthSampler;
   const userHistorySampler = new UserHistorySampler(connectionPool, prisma);
@@ -136,7 +141,7 @@ async function main() {
 
   // The TeamSpeak side of the connection journal: one row per client connection, from SSH
   // events or from polling. Needs the voice bot manager to tell its own bots from people.
-  const tsLoginJournal = new TsLoginJournal({ prisma, pool: connectionPool, ownBotUids: () => voiceBotManager.ownIdentityUids() });
+  const tsLoginJournal = new TsLoginJournal({ prisma, pool: connectionPool, ownBotUids: () => voiceBotManager.ownIdentityUids(), geo: geoIp });
   app.locals.tsLoginJournal = tsLoginJournal;
 
   // One place that tells everything holding per-connection state (pool, flows,
@@ -186,6 +191,7 @@ async function main() {
     await consoleEvents.destroy();
     // Stops listening; sessions stay open in the database, the next start finds them again.
     await tsLoginJournal.destroy();
+    geoIp.destroy();
     await voiceBotManager.stopAll();
     await botEngine.destroy();
     (app.locals.bandwidthSampler as BandwidthSampler).destroy();

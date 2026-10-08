@@ -29,17 +29,22 @@ import {
 import {
   clearJournal,
   journalStats,
+  listCountries,
   listJournal,
   listJournalByIp,
   pruneJournal,
   type JournalFilters,
 } from '../utils/connection-journal.js';
+import { geoIpRoutes } from './geoip.routes.js';
 
 /**
  * The connection journal. Mounted behind the admin check (app.ts): the rows
  * carry the addresses people signed in from.
  */
 export const connectionJournalRoutes: Router = Router();
+
+// The GeoIP database behind the country column: install, update, switches
+connectionJournalRoutes.use('/geoip', geoIpRoutes);
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
@@ -76,7 +81,15 @@ function parseFilters(req: Request): JournalFilters {
     ip: text(req.query.ip, 'ip'),
     online: oneOf(req.query.online, ['1'] as const, 'online') === '1' ? true : undefined,
     serverConfigId: req.query.server === undefined || req.query.server === '' ? undefined : positiveInt(req.query.server, 'server', 1, 1_000_000_000),
+    country: countryCode(req.query.country),
   };
+}
+
+/** An ISO 3166-1 alpha-2 code, in the capitals the database stores it in. */
+function countryCode(raw: unknown): string | undefined {
+  if (raw === undefined || raw === '') return undefined;
+  if (typeof raw !== 'string' || !/^[A-Za-z]{2}$/.test(raw)) throw new AppError(400, 'country must be a two-letter country code');
+  return raw.toUpperCase();
 }
 
 async function settingsDto(req: Request): Promise<ConnectionJournalSettingsDto> {
@@ -114,6 +127,11 @@ connectionJournalRoutes.get('/by-ip', async (req: Request, res: Response, next) 
     const pageSize = positiveInt(req.query.pageSize, 'pageSize', DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
     res.json(await listJournalByIp(req.app.locals.prisma, parseFilters(req), sort, order, page, pageSize));
   } catch (err) { next(err); }
+});
+
+// GET /api/connection-journal/countries - the countries in the journal, for the filter
+connectionJournalRoutes.get('/countries', async (req: Request, res: Response, next) => {
+  try { res.json(await listCountries(req.app.locals.prisma)); } catch (err) { next(err); }
 });
 
 // GET /api/connection-journal/ts-status - which TeamSpeak virtual servers are watched, and how

@@ -4,6 +4,7 @@ import type { ConnectionJournalTsStatus } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { SshQueryClient } from '../bot-engine/ssh-query-client.js';
 import { decrypt } from '../utils/crypto.js';
+import type { GeoIpService } from '../utils/geoip.js';
 import {
   getConnectionJournalSettings,
   type ConnectionJournalSettings,
@@ -101,6 +102,8 @@ export interface TsLoginJournalDeps {
   pool: ConnectionPool;
   /** The unique ids of this app's own music bots, current and stored. */
   ownBotUids: () => Set<string>;
+  /** Where an address is; null from it while no GeoIP database is installed (the row waits for the backfill). */
+  geo?: Pick<GeoIpService, 'lookup'>;
 }
 
 /**
@@ -667,6 +670,7 @@ class VirtualServerTracker {
   }
 
   private async openSession(client: ClientRow, at: Date): Promise<void> {
+    const geo = client.ip ? this.deps.geo?.lookup(client.ip) ?? null : null;
     const row = await this.deps.prisma.connectionJournalEntry.create({
       data: {
         at,
@@ -675,6 +679,7 @@ class VirtualServerTracker {
         result: 'success',
         username: client.nickname.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, MAX_NICKNAME_LENGTH) || null,
         ip: client.ip ?? 'unknown',
+        ...(geo ? { country: geo.country, region: geo.region, city: geo.city } : {}),
         serverConfigId: this.configId,
         virtualServerId: this.sid,
         serverName: this.setup.name,
