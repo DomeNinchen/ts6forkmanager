@@ -975,6 +975,15 @@ export class VoiceBot extends EventEmitter {
     return this._videoStreaming;
   }
 
+  /**
+   * TeamSpeak clients watching the video stream right now. The web UI's own
+   * preview player is a peer of the sidecar but not listed here, so an admin
+   * watching it does not count as a viewer.
+   */
+  get videoViewerCount(): number {
+    return this._viewers.size;
+  }
+
   get videoStreamStatus(): VideoStreamStatus {
     return {
       streaming: this._videoStreaming,
