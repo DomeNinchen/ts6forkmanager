@@ -22,6 +22,9 @@ export const settingsApi = {
   setDebugFlag: (name: 'voice' | 'rankCheck' | 'query', enabled: boolean) =>
     api.put(`/settings/debug-flags/${name}`, { enabled }).then((r) => r.data),
 
+  getClientIp: (): Promise<ClientIpDiagnostics> =>
+    api.get('/settings/client-ip').then((r) => r.data),
+
   resetRadioStationIds: (): Promise<{ deletedCount: number }> =>
     api.post('/settings/reset-radio-station-ids').then((r) => r.data),
 
@@ -84,7 +87,31 @@ export const settingsApi = {
     api.delete('/settings/github-token').then((r) => r.data),
 };
 
-export const ACCENT_PRESETS = ['violet', 'teal', 'red', 'blue', 'yellow', 'green', 'orange', 'pink', 'cyan', 'lime'] as const;
+/** How the request that fetched this reached the backend, and whom the backend takes for the client. */
+export interface ClientIpDiagnostics {
+  /** The address the backend takes for the visitor (what the login rate limit keys on). */
+  ip: string;
+  socketAddress: string | null;
+  forwardedFor: string | null;
+  realIp: string | null;
+  trustProxy: {
+    description: string;
+    /** The setting as it is written in `.env`. */
+    envValue: string;
+    fromEnv: boolean;
+    warning: string | null;
+  };
+  /** Nearest to the backend first: the connection itself, then X-Forwarded-For from its last entry back. */
+  chain: Array<{
+    address: string;
+    origin: 'socket' | 'forwarded';
+    scope: 'public' | 'private' | 'loopback' | 'unknown';
+  }>;
+  /** The TRUST_PROXY hop count that would make the backend take the first public address for the visitor; null if there is none. */
+  suggestedHops: number | null;
+}
+
+export const ACCENT_PRESETS =['violet', 'teal', 'red', 'blue', 'yellow', 'green', 'orange', 'pink', 'cyan', 'lime'] as const;
 export type AccentPreset = (typeof ACCENT_PRESETS)[number];
 
 /**

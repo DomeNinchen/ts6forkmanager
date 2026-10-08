@@ -47,8 +47,11 @@ import { requireServerAccess } from './middleware/server-access.js';
 export function createApp(): Express {
   const app = express();
 
-  // Trust first proxy (nginx / Coolify reverse proxy)
-  app.set('trust proxy', 1);
+  // How many proxies (nginx, Coolify's Traefik, a CDN, ...) stand between the
+  // visitor and this process decides which X-Forwarded-For entry is believed -
+  // one hop unless TRUST_PROXY says otherwise. It sets req.ip, which the login
+  // rate limit below keys on.
+  app.set('trust proxy', config.trustProxy.value);
 
   app.use(requestTimeout);
   app.use(helmet());
