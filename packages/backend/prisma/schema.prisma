@@ -123,6 +123,11 @@ model TsServerConfig {
   // uninteresting) connection every interval. Turning it off keeps whatever
   // was already recorded and only stops adding to it.
   recordUserHistory Boolean @default(true)
+  // Whether the connection journal records the clients that join this
+  // connection's virtual servers (the TeamSpeak side of the Connection Journal
+  // page). Needs WebQuery or an SSH login, and the admin identity must be
+  // allowed to see client addresses. Turning it off keeps what was recorded.
+  recordConnectionJournal Boolean @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -567,16 +572,18 @@ model ServerMetricRollup {
 }
 
 // The connection journal (Connection journal page): one row per sign-in event at
-// the web interface, with the address it came from. `source` leaves room for the
-// TeamSpeak logins of a later step; every row is `web` today.
-// There is deliberately no relation to User: the journal outlives an account
-// that is deleted, and an attempt with a name nobody has belongs here too.
+// the web interface, and one per TeamSpeak session, with the address it came from.
+// There is deliberately no relation to User or TsServerConfig: the journal outlives
+// an account or a connection that is deleted, and an attempt with a name nobody
+// has belongs here too.
 model ConnectionJournalEntry {
   id        Int      @id @default(autoincrement())
+  // web: when it happened. ts: when the client joined.
   at        DateTime @default(now())
-  // "web" (the sign-in of this app); later also "ts".
+  // "web" (the sign-in of this app) | "ts" (a client on a TeamSpeak virtual server).
   source    String
   // web: "login" (password step), "totp" (second factor), "sso", "rate-limit".
+  // ts: "ts-session" (one row per connection of one client: joined, later left).
   event     String
   // "success" | "failure"
   result    String
@@ -593,7 +600,30 @@ model ConnectionJournalEntry {
   // The browser/device, cut to 300 characters.
   userAgent String?
 
+  // --- ts only (all null on a web row) ---
+  // `username` is the nickname the client had when it joined; these say who and where.
+  serverConfigId  Int?
+  virtualServerId Int?
+  // The connection's name when the client joined (it can be renamed or deleted later).
+  serverName      String?
+  // client_unique_identifier and the database id (null when the server did not report one).
+  uid             String?
+  cldbid          Int?
+  // The client id of this session: what a "left" event names, and with the uid what
+  // a polling pass recognises the session by. Only meaningful while the session is open.
+  clid            Int?
+  clientVersion   String?
+  clientPlatform  String?
+  // Null while the client is still on the server (or the end was never seen - then
+  // `leaveReason` says "unknown").
+  leftAt          DateTime?
+  // What TeamSpeak said ("leaving", "connection lost", "kicked from the server", ...),
+  // "unknown" when the end was not seen, "recording-stopped" when the journal stopped
+  // watching this server while the client was on it.
+  leaveReason     String?
+
   @@index([at])
   @@index([ip, at])
   @@index([source, at])
+  @@index([source, serverConfigId, virtualServerId, leftAt])
 }

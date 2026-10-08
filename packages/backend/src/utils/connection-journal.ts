@@ -100,22 +100,41 @@ export interface JournalFilters {
   source?: JournalSource;
   event?: JournalEvent;
   result?: JournalResult;
-  /** Part of an account name or an address. */
+  /** Part of an account name, a nickname, a unique id, a connection name or an address. */
   q?: string;
   /** Exactly this address. */
   ip?: string;
+  /** Only TeamSpeak sessions that have not ended. */
+  online?: boolean;
+  /** Only TeamSpeak sessions on this server connection. */
+  serverConfigId?: number;
 }
 
 const RANGE_MS: Record<Exclude<JournalRange, 'all'>, number> = { '24h': DAY_MS, '7d': 7 * DAY_MS, '30d': 30 * DAY_MS };
 
 function buildWhere(filters: JournalFilters): Prisma.ConnectionJournalEntryWhereInput {
   const where: Prisma.ConnectionJournalEntryWhereInput = {};
-  if (filters.range !== 'all') where.at = { gte: new Date(Date.now() - RANGE_MS[filters.range]) };
+  // "Online now" is about who is there, however long ago they came: it ignores the period.
+  if (filters.range !== 'all' && !filters.online) where.at = { gte: new Date(Date.now() - RANGE_MS[filters.range]) };
   if (filters.source) where.source = filters.source;
   if (filters.event) where.event = filters.event;
   if (filters.result) where.result = filters.result;
   if (filters.ip) where.ip = filters.ip;
-  if (filters.q) where.OR = [{ username: { contains: filters.q } }, { ip: { contains: filters.q } }];
+  if (filters.online) {
+    // Open: not left, and not closed with "end not seen" either (that one has no time but is over).
+    where.source = 'ts';
+    where.leftAt = null;
+    where.leaveReason = null;
+  }
+  if (filters.serverConfigId !== undefined) where.serverConfigId = filters.serverConfigId;
+  if (filters.q) {
+    where.OR = [
+      { username: { contains: filters.q } },
+      { ip: { contains: filters.q } },
+      { uid: { contains: filters.q } },
+      { serverName: { contains: filters.q } },
+    ];
+  }
   return where;
 }
 
@@ -130,6 +149,15 @@ function toDto(row: {
   userId: number | null;
   ip: string;
   userAgent: string | null;
+  serverConfigId: number | null;
+  virtualServerId: number | null;
+  serverName: string | null;
+  uid: string | null;
+  cldbid: number | null;
+  clientVersion: string | null;
+  clientPlatform: string | null;
+  leftAt: Date | null;
+  leaveReason: string | null;
 }): ConnectionJournalEntryDto {
   return {
     id: row.id,
@@ -142,6 +170,20 @@ function toDto(row: {
     userId: row.userId,
     ip: row.ip,
     userAgent: row.userAgent,
+    ts:
+      row.source === 'ts'
+        ? {
+            serverConfigId: row.serverConfigId,
+            virtualServerId: row.virtualServerId,
+            serverName: row.serverName,
+            uid: row.uid,
+            cldbid: row.cldbid,
+            clientVersion: row.clientVersion,
+            clientPlatform: row.clientPlatform,
+            leftAt: row.leftAt ? row.leftAt.toISOString() : null,
+            leaveReason: row.leaveReason,
+          }
+        : null,
   };
 }
 

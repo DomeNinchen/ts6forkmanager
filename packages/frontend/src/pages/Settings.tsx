@@ -557,14 +557,14 @@ function ConnectionsTab() {
   const [editId, setEditId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [botIdentityServerId, setBotIdentityServerId] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', removeApiKey: false, useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
+  const [form, setForm] = useState({ name: '', host: '', webqueryPort: '10080', apiKey: '', removeApiKey: false, useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true, recordConnectionJournal: true });
 
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
   const editingServer = editId ? serverList.find((s: any) => s.id === editId) : null;
 
   if (isLoading) return <PageLoader />;
 
-  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', removeApiKey: false, useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true });
+  const resetForm = () => setForm({ name: '', host: '', webqueryPort: '10080', apiKey: '', removeApiKey: false, useHttps: false, sshPort: '10022', sshUsername: '', sshPassword: '', pingHost: '', recordUserHistory: true, recordConnectionJournal: true });
 
   const handleSave = () => {
     const { removeApiKey, ...fields } = form;
@@ -600,6 +600,7 @@ function ConnectionsTab() {
       // Only an explicit false is off; anything else (including a server
       // that predates the field) is the default, which is on.
       recordUserHistory: server.recordUserHistory !== false,
+      recordConnectionJournal: server.recordConnectionJournal !== false,
     });
     setEditId(server.id);
     setShowAdd(true);
@@ -719,6 +720,15 @@ function ConnectionsTab() {
                 <Label className="text-xs">{t('pages.settings.connections.recordUserHistory')}</Label>
                 <p className="text-[11px] text-muted-foreground mt-1">
                   {t('pages.settings.connections.recordUserHistoryHint')}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Switch className="mt-0.5" checked={form.recordConnectionJournal} onCheckedChange={(v) => setForm({ ...form, recordConnectionJournal: v })} />
+              <div>
+                <Label className="text-xs">{t('pages.settings.connections.recordConnectionJournal')}</Label>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {t('pages.settings.connections.recordConnectionJournalHint')}
                 </p>
               </div>
             </div>

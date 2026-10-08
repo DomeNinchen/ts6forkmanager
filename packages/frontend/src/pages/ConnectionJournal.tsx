@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
-import { JOURNAL_EVENTS, JOURNAL_RESULTS, JOURNAL_RANGES } from '@ts6/common';
+import { JOURNAL_EVENTS, JOURNAL_RESULTS, JOURNAL_RANGES, JOURNAL_SOURCES } from '@ts6/common';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useServers } from '@/hooks/use-servers';
 import { DEFAULT_FILTERS, type JournalFilterState } from '@/components/connection-journal/filters';
 import { JournalByIp } from '@/components/connection-journal/JournalByIp';
 import { JournalList } from '@/components/connection-journal/JournalList';
@@ -15,12 +18,13 @@ import { JournalSettings } from '@/components/connection-journal/JournalSettings
 type JournalTab = 'journal' | 'by-ip' | 'settings';
 
 /**
- * Who signed in to this app, from where, and whether it worked. Admin-only: every row carries
- * an address. The filters are shared by the two lists, so narrowing the journal and then
- * looking at it by address (or the other way round) keeps what was asked for.
+ * Who signed in to this app and who joined a TeamSpeak server, from which address, and whether it
+ * worked. Admin-only: every row carries an address. The filters are shared by the two lists, so
+ * narrowing the journal and then looking at it by address (or the other way round) keeps what was asked for.
  */
 export default function ConnectionJournal() {
   const { t } = useTranslation();
+  const { data: servers } = useServers();
   const [tab, setTab] = useState<JournalTab>('journal');
   const [filters, setFilters] = useState<JournalFilterState>(DEFAULT_FILTERS);
 
@@ -33,7 +37,11 @@ export default function ConnectionJournal() {
 
   const patch = (change: Partial<JournalFilterState>) => setFilters((f) => ({ ...f, ...change }));
   const filtered =
-    filters.event !== 'all' || filters.result !== 'all' || filters.q !== '' || filters.ip !== '' || filters.range !== DEFAULT_FILTERS.range;
+    filters.source !== 'all' || filters.event !== 'all' || filters.result !== 'all' || filters.q !== '' || filters.ip !== ''
+    || filters.server !== 'all' || filters.online || filters.range !== DEFAULT_FILTERS.range;
+
+  // Only a TeamSpeak session has a server connection and can be "online now".
+  const showsTs = filters.source !== 'web';
 
   const showAddress = (ip: string) => {
     patch({ ip });
@@ -73,8 +81,23 @@ export default function ConnectionJournal() {
               </SelectContent>
             </Select>
 
+            <Select
+              value={filters.source}
+              onValueChange={(v) => {
+                const source = v as JournalFilterState['source'];
+                // The TeamSpeak-only filters mean nothing for web rows; they are dropped with the source.
+                patch(source === 'web' ? { source, server: 'all', online: false } : { source });
+              }}
+            >
+              <SelectTrigger className="h-9 w-[150px]" aria-label={t('pages.connectionJournal.filters.source')}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('pages.connectionJournal.filters.anySource')}</SelectItem>
+                {JOURNAL_SOURCES.map((s) => <SelectItem key={s} value={s}>{t(`pages.connectionJournal.source.${s}`)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
             <Select value={filters.event} onValueChange={(v) => patch({ event: v as JournalFilterState['event'] })}>
-              <SelectTrigger className="h-9 w-[150px]" aria-label={t('pages.connectionJournal.filters.event')}><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-[170px]" aria-label={t('pages.connectionJournal.filters.event')}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('pages.connectionJournal.filters.anyEvent')}</SelectItem>
                 {JOURNAL_EVENTS.map((e) => <SelectItem key={e} value={e}>{t(`pages.connectionJournal.event.${e}`)}</SelectItem>)}
@@ -88,6 +111,23 @@ export default function ConnectionJournal() {
                 {JOURNAL_RESULTS.map((r) => <SelectItem key={r} value={r}>{t(`pages.connectionJournal.result.${r}`)}</SelectItem>)}
               </SelectContent>
             </Select>
+
+            {showsTs && servers && servers.length > 1 && (
+              <Select value={String(filters.server)} onValueChange={(v) => patch({ server: v === 'all' ? 'all' : Number(v) })}>
+                <SelectTrigger className="h-9 w-[170px]" aria-label={t('pages.connectionJournal.filters.server')}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('pages.connectionJournal.filters.anyServer')}</SelectItem>
+                  {servers.map((s: { id: number; name: string }) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+
+            {showsTs && (
+              <div className="flex items-center gap-2 px-1">
+                <Switch id="journal-online" checked={filters.online} onCheckedChange={(v) => patch({ online: v })} />
+                <Label htmlFor="journal-online" className="text-xs">{t('pages.connectionJournal.filters.onlineNow')}</Label>
+              </div>
+            )}
 
             {filters.ip && (
               <Badge variant="default" className="gap-1 h-9 px-3" data-testid="journal-ip-chip">
