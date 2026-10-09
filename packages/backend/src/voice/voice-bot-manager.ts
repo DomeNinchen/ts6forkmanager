@@ -9,6 +9,7 @@ import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { decrypt, encrypt } from '../utils/crypto.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
+import { musicAudience, sendToAudience } from '../utils/ws-audience.js';
 import type { BotConnectionInfo } from '@ts6/common';
 
 const PROGRESS_INTERVAL_MS = 1000;
@@ -179,10 +180,12 @@ export class VoiceBotManager extends EventEmitter {
 
   private createBotInstance(config: VoiceBotConfig): VoiceBot {
     config.getOtherBotClientIds = () => this.otherBotClientIds(config.id);
+    // Every event of this bot goes to the users who may see this bot: admins, and the music roles granted its server connection.
+    const broadcast = (type: string, payload: object) => sendToAudience(this.wss, type, payload, musicAudience(config.serverConfigId));
     const bot = new VoiceBot(config);
 
     bot.on('statusChange', (status: VoiceBotStatus) => {
-      this.broadcast('music:bot:status', { botId: config.id, status });
+      broadcast('music:bot:status', { botId: config.id, status });
 
       if (status === 'playing') {
         this.startProgressBroadcast(config.id);
@@ -210,7 +213,7 @@ export class VoiceBotManager extends EventEmitter {
 
     bot.on('nowPlaying', (item: QueueItem) => {
       const progress = bot.playbackProgress;
-      this.broadcast('music:bot:nowPlaying', {
+      broadcast('music:bot:nowPlaying', {
         botId: config.id,
         song: { id: item.id, title: item.title, artist: item.artist, duration: item.duration, source: item.source },
         progress: progress ? { position: progress.position, duration: progress.duration } : null,
@@ -218,15 +221,15 @@ export class VoiceBotManager extends EventEmitter {
     });
 
     bot.on('trackEnd', (item: QueueItem | null) => {
-      this.broadcast('music:bot:trackEnd', { botId: config.id, songId: item?.id ?? null });
+      broadcast('music:bot:trackEnd', { botId: config.id, songId: item?.id ?? null });
     });
 
     bot.on('volumeChange', (volume: number) => {
-      this.broadcast('music:bot:volumeChange', { botId: config.id, volume });
+      broadcast('music:bot:volumeChange', { botId: config.id, volume });
     });
 
     bot.on('metadataChange', (item: QueueItem) => {
-      this.broadcast('music:bot:nowPlaying', {
+      broadcast('music:bot:nowPlaying', {
         botId: config.id,
         song: { id: item.id, title: item.title, artist: item.artist, duration: item.duration, source: item.source },
         progress: null,
@@ -245,34 +248,34 @@ export class VoiceBotManager extends EventEmitter {
 
     // Video streaming events
     bot.on('videoStreamStarted', (data: any) => {
-      this.broadcast('music:bot:videoStreamStarted', { botId: config.id, ...data });
+      broadcast('music:bot:videoStreamStarted', { botId: config.id, ...data });
       // Nobody has had the chance to join yet: the clock for an unwatched stream starts here
       this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoStreamStopped', () => {
-      this.broadcast('music:bot:videoStreamStopped', { botId: config.id });
+      broadcast('music:bot:videoStreamStopped', { botId: config.id });
       this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoViewerJoined', (viewer: any) => {
-      this.broadcast('music:bot:videoViewerJoined', { botId: config.id, viewer });
+      broadcast('music:bot:videoViewerJoined', { botId: config.id, viewer });
       this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoViewerLeft', (clid: number) => {
-      this.broadcast('music:bot:videoViewerLeft', { botId: config.id, clid });
+      broadcast('music:bot:videoViewerLeft', { botId: config.id, clid });
       this.evaluateVideoIdleStop(config.id);
     });
 
     bot.on('videoSourceChanged', (source: string) => {
-      this.broadcast('music:bot:videoSourceChanged', { botId: config.id, source });
+      broadcast('music:bot:videoSourceChanged', { botId: config.id, source });
     });
 
     bot.on('fatalError', (msg: string) => {
       console.error(`[VoiceBotManager] Bot ${config.id}: fatal error — ${msg}. No reconnect.`);
       this.clearReconnect(config.id);
-      this.broadcast('music:bot:error', { botId: config.id, error: msg });
+      broadcast('music:bot:error', { botId: config.id, error: msg });
     });
 
     // Register for music text commands
@@ -540,7 +543,7 @@ export class VoiceBotManager extends EventEmitter {
       console.error(`[VoiceBotManager] Bot ${botId}: max reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached, giving up`);
       this.gaveUp.add(botId);
       this.reconnectState.delete(botId);
-      this.broadcast('music:bot:reconnectFailed', { botId });
+      this.broadcastForBot(botId, 'music:bot:reconnectFailed', { botId });
       return;
     }
 
@@ -714,7 +717,7 @@ export class VoiceBotManager extends EventEmitter {
       }
       const progress = bot.playbackProgress;
       if (progress) {
-        this.broadcast('music:bot:progress', {
+        this.broadcastForBot(botId, 'music:bot:progress', {
           botId,
           position: progress.position,
           duration: progress.duration,
@@ -732,12 +735,11 @@ export class VoiceBotManager extends EventEmitter {
     }
   }
 
-  private broadcast(type: string, payload: any): void {
-    const msg = JSON.stringify({ type, ...payload });
-    this.wss.clients.forEach((client) => {
-      if (client.readyState === 1) {
-        client.send(msg);
-      }
-    });
+  /**
+   * An event of a bot that is only known by its id: it goes to the users who may see that bot - admins,
+   * and the music roles granted its server connection. A bot that is gone is nobody's but the admins'.
+   */
+  private broadcastForBot(botId: number, type: string, payload: object): void {
+    sendToAudience(this.wss, type, payload, musicAudience(this.bots.get(botId)?.currentConfig.serverConfigId));
   }
 }
