@@ -1,4 +1,4 @@
-import express, { type Express } from 'express';
+import express, { type Express, type Router } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -45,6 +45,7 @@ import { updateCheckRoutes } from './routes/update-check.routes.js';
 import { ytCookieCheckRoutes } from './routes/yt-cookie-check.routes.js';
 import { requireServerAccess } from './middleware/server-access.js';
 import { requireRole } from './middleware/rbac.js';
+import { adminExcept, BOT_FLOW_ROLES, EVERY_ROLE, MUSIC_ROLES, type OpenRoute } from './middleware/access-policy.js';
 import { connectionJournalRoutes } from './routes/connection-journal.routes.js';
 import { recordRateLimitHit } from './utils/connection-journal.js';
 
@@ -111,38 +112,69 @@ export function createApp(): Express {
   app.use('/api', authMiddleware);
   app.use('/api/servers', serverRoutes);
 
-  // H9: Server access control on all :configId routes
+  // H9: Server access control on all :configId routes, then the role gate: every mount below is
+  // admin-only except for the requests listed with it. That list is all a viewer, bot operator or
+  // music operator can reach on that mount - a route added to a router later stays admin-only
+  // until it is opened here (see middleware/access-policy.ts).
   const serverAccess = requireServerAccess();
-  app.use('/api/servers/:configId/virtual-servers', serverAccess, virtualServerRoutes);
-  app.use('/api/servers/:configId/vs/:sid/channels', serverAccess, channelRoutes);
-  app.use('/api/servers/:configId/vs/:sid/clients', serverAccess, clientRoutes);
-  app.use('/api/servers/:configId/vs/:sid/server-groups', serverAccess, serverGroupRoutes);
-  app.use('/api/servers/:configId/vs/:sid/channel-groups', serverAccess, channelGroupRoutes);
-  app.use('/api/servers/:configId/vs/:sid/permissions', serverAccess, permissionRoutes);
-  app.use('/api/servers/:configId/vs/:sid/bans', serverAccess, banRoutes);
-  app.use('/api/servers/:configId/vs/:sid/tokens', serverAccess, tokenRoutes);
-  app.use('/api/servers/:configId/vs/:sid/files', serverAccess, fileRoutes);
-  app.use('/api/servers/:configId/vs/:sid/icons', serverAccess, iconRoutes);
-  app.use('/api/servers/:configId/vs/:sid/complaints', serverAccess, complaintRoutes);
-  app.use('/api/servers/:configId/vs/:sid/messages', serverAccess, messageRoutes);
-  app.use('/api/servers/:configId/vs/:sid/logs', serverAccess, logRoutes);
-  app.use('/api/servers/:configId/console', serverAccess, consoleRoutes);
-  app.use('/api/servers/:configId/instance', serverAccess, instanceRoutes);
-  app.use('/api/servers/:configId/command-permissions', serverAccess, commandPermissionRoutes);
-  app.use('/api/servers/:configId/vs/:sid/dashboard', serverAccess, dashboardRoutes);
-  app.use('/api/servers/:configId/vs/:sid/statistics', serverAccess, statisticsRoutes);
-  app.use('/api/bots', botRoutes);
+  const serverScoped = (path: string, router: Router, open: readonly OpenRoute[] = []) =>
+    app.use(`/api/servers/:configId/${path}`, serverAccess, adminExcept(open), router);
+
+  serverScoped('virtual-servers', virtualServerRoutes, [{ method: 'GET', path: '/', roles: EVERY_ROLE }]);
+  serverScoped('vs/:sid/channels', channelRoutes, [{ method: 'GET', path: '/', roles: EVERY_ROLE }]);
+  serverScoped('vs/:sid/clients', clientRoutes, [{ method: 'GET', path: '/', roles: EVERY_ROLE }]);
+  serverScoped('vs/:sid/server-groups', serverGroupRoutes, [{ method: 'GET', path: '/', roles: MUSIC_ROLES }]);
+  serverScoped('vs/:sid/channel-groups', channelGroupRoutes);
+  serverScoped('vs/:sid/permissions', permissionRoutes);
+  serverScoped('vs/:sid/bans', banRoutes);
+  serverScoped('vs/:sid/tokens', tokenRoutes);
+  serverScoped('vs/:sid/files', fileRoutes);
+  serverScoped('vs/:sid/icons', iconRoutes, [
+    { method: 'GET', path: '/', roles: EVERY_ROLE },
+    { method: 'GET', path: '/usage', roles: EVERY_ROLE },
+    { method: 'GET', path: '/:iconId/image', roles: EVERY_ROLE },
+  ]);
+  serverScoped('vs/:sid/complaints', complaintRoutes);
+  serverScoped('vs/:sid/messages', messageRoutes);
+  serverScoped('vs/:sid/logs', logRoutes);
+  serverScoped('console', consoleRoutes);
+  serverScoped('instance', instanceRoutes);
+  serverScoped('command-permissions', commandPermissionRoutes, [{ method: 'GET', path: '/', roles: MUSIC_ROLES }]);
+  serverScoped('vs/:sid/dashboard', dashboardRoutes, [
+    { method: 'GET', path: '/', roles: EVERY_ROLE },
+    { method: 'GET', path: '/bandwidth-history', roles: EVERY_ROLE },
+    { method: 'GET', path: '/user-history', roles: EVERY_ROLE },
+  ]);
+  serverScoped('vs/:sid/statistics', statisticsRoutes);
+  // The Music Bots page's own routers: all of it is for the music roles (each router checks that as well).
+  serverScoped('music-library', musicLibraryRoutes, [{ method: '*', path: '/*', roles: MUSIC_ROLES }]);
+  serverScoped('radio-stations', radioStationRoutes, [{ method: '*', path: '/*', roles: MUSIC_ROLES }]);
+  serverScoped('music-requests', musicRequestRoutes, [{ method: 'GET', path: '/', roles: MUSIC_ROLES }]);
+
+  // Not under :configId, same rule: admin-only except what is listed.
+  app.use('/api/bots', adminExcept([
+    { method: 'GET', path: '/', roles: EVERY_ROLE }, // the flow list on the Dashboard
+    { method: 'POST', path: '/', roles: BOT_FLOW_ROLES },
+    { method: 'GET', path: '/:botId', roles: BOT_FLOW_ROLES },
+    { method: 'PUT', path: '/:botId', roles: BOT_FLOW_ROLES },
+    { method: 'DELETE', path: '/:botId', roles: BOT_FLOW_ROLES },
+    { method: 'POST', path: '/:botId/enable', roles: BOT_FLOW_ROLES },
+    { method: 'POST', path: '/:botId/disable', roles: BOT_FLOW_ROLES },
+    { method: 'GET', path: '/:botId/executions', roles: BOT_FLOW_ROLES },
+    { method: 'GET', path: '/:botId/executions/:execId/logs', roles: BOT_FLOW_ROLES },
+  ]), botRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/music-bots', musicBotRoutes);
-  app.use('/api/servers/:configId/music-library', serverAccess, musicLibraryRoutes);
   app.use('/api/playlists', playlistRoutes);
-  app.use('/api/servers/:configId/radio-stations', serverAccess, radioStationRoutes);
-  app.use('/api/servers/:configId/music-requests', serverAccess, musicRequestRoutes);
-  app.use('/api/widgets', widgetRoutes);
-  app.use('/api/settings', settingsRoutes);
+  app.use('/api/widgets', requireRole('admin'), widgetRoutes);
+  app.use('/api/settings', adminExcept([
+    { method: 'GET', path: '/webgui-theme', roles: EVERY_ROLE },
+    { method: 'GET', path: '/webgui-base-theme', roles: EVERY_ROLE },
+  ]), settingsRoutes);
   app.use('/api/connection-journal', requireRole('admin'), connectionJournalRoutes);
-  app.use('/api/update-check', updateCheckRoutes);
-  app.use('/api/yt-cookie-check', ytCookieCheckRoutes);
+  // The banners in the layout read the cached results for every role; forcing a fresh check is an admin's.
+  app.use('/api/update-check', adminExcept([{ method: 'GET', path: '/', roles: EVERY_ROLE }]), updateCheckRoutes);
+  app.use('/api/yt-cookie-check', adminExcept([{ method: 'GET', path: '/', roles: EVERY_ROLE }]), ytCookieCheckRoutes);
 
   // 404 for unmatched routes. Without this, Express's own default 404
   // page (finalhandler) overwrites helmet's Content-Security-Policy
