@@ -10,6 +10,10 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
+// The server log carries client addresses and the actions of every admin. The
+// Server Logs page is admin-only in the UI, so the whole router is - reads included.
+logRoutes.use(requireRole('admin'));
+
 logRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'logview', {

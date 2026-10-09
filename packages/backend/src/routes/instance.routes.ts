@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/rbac.js';
+import { AppError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const instanceRoutes: Router = Router({ mergeParams: true });
@@ -8,6 +9,11 @@ const getClient = (req: Request) => {
   const pool: ConnectionPool = req.app.locals.connectionPool;
   return pool.getClient(parseInt(String(req.params.configId)));
 };
+
+// Instance, host and binding data (bound addresses, hardware, instance-wide
+// settings). The Instance and Statistics pages are admin-only in the UI, so the
+// whole router is - reads included.
+instanceRoutes.use(requireRole('admin'));
 
 instanceRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(0, 'instanceinfo')); } catch (err) { next(err); }
@@ -28,10 +34,16 @@ const ALLOWED_INSTANCE_PARAMS = new Set([
 
 instanceRoutes.put('/', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
+    // An unknown setting, or nothing left to change, is a 400 - filtering it out
+    // quietly would still answer "ok" for an edit that never happened.
     const filtered: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(req.body)) {
-      if (ALLOWED_INSTANCE_PARAMS.has(key)) filtered[key] = val;
+    const unknown: string[] = [];
+    for (const [key, val] of Object.entries(req.body ?? {})) {
+      if (!ALLOWED_INSTANCE_PARAMS.has(key)) unknown.push(key);
+      else if (val !== null && val !== undefined) filtered[key] = val;
     }
+    if (unknown.length > 0) throw new AppError(400, `Unknown instance setting: ${unknown.join(', ')}`);
+    if (Object.keys(filtered).length === 0) throw new AppError(400, 'No instance setting to change');
     res.json(await getClient(req).execute(0, 'instanceedit', filtered));
   } catch (err) { next(err); }
 });

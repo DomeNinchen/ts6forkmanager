@@ -74,7 +74,10 @@ clientRoutes.post('/bulk/describe', requireRole('admin'), async (req: Request, r
   } catch (err) { next(err); }
 });
 
-clientRoutes.get('/:clid', async (req: Request, res: Response, next) => {
+// clientinfo carries the client's address (connection_client_ip), which the list
+// above deliberately withholds from non-admins (M2) - and no page reads a single
+// client's info through here anyway.
+clientRoutes.get('/:clid', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'clientinfo', { clid: String(req.params.clid) });
     res.json(result);
@@ -126,7 +129,7 @@ clientRoutes.post('/:clid/message', requireRole('admin'), async (req: Request, r
   } catch (err) { next(err); }
 });
 
-clientRoutes.get('/:cldbid/permissions', async (req: Request, res: Response, next) => {
+clientRoutes.get('/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'clientpermlist', {
       cldbid: String(req.params.cldbid), '-permsid': '',
@@ -172,7 +175,7 @@ clientRoutes.delete('/:cldbid/permissions', requireRole('admin'), async (req: Re
   } catch (err) { next(err); }
 });
 
-clientRoutes.get('/:clid/groups', async (req: Request, res: Response, next) => {
+clientRoutes.get('/:clid/groups', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'servergroupsbyclientid', {
       cldbid: String(req.params.clid),
