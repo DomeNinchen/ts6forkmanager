@@ -58,7 +58,9 @@ services:
       # container) reads them back by the same path.
       - music-data:/data/music
     ports:
-      - "9800:9800"
+      # No "9800:9800" here, on purpose: the sidecar's HTTP API has no sign-in
+      # (POST /source makes ffmpeg open whatever input the caller names), and
+      # the backend reaches it over the Docker network (SIDECAR_URL above).
       # WebRTC ICE media (video/audio) -- must also be opened in the host
       # firewall, UDP, both IPv4 and IPv6.
       - "50000-50100:50000-50100/udp"

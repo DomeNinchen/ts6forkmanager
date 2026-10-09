@@ -144,6 +144,7 @@
     "messages": {
       "title": "Offline-Nachrichten",
       "compose": "Verfassen",
+      "hint": "Das ist der Posteingang des Query-Logins, mit dem der Manager verbunden ist, keine Liste für den ganzen Server. Offline-Nachrichten lassen sich nur an die eindeutige ID eines Clients hinterlassen, die Liste bleibt also leer, solange der API-Key des Managers nicht zu einem echten Client gehört.",
       "searchPlaceholder": "Nachrichten durchsuchen...",
       "from": "Von",
       "subject": "Betreff",

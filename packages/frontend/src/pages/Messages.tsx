@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { messagesApi } from '@/api/bans.api';
@@ -37,6 +37,18 @@ export default function Messages() {
     enabled: !!c && !!s && !!showView,
   });
   const opened = Array.isArray(openedQuery.data) ? openedQuery.data[0] : undefined;
+
+  // messageget leaves flag_read alone, so opening a message marks it read here, once its text has arrived.
+  const markReadMutation = useMutation({
+    mutationFn: (msgid: number) => messagesApi.setRead(c!, s!, msgid, true),
+    onSuccess: (_result, msgid) => qc.setQueryData(['messages', c, s], (rows: any) => (
+      Array.isArray(rows) ? rows.map((m: any) => (String(m.msgid) === String(msgid) ? { ...m, flag_read: '1' } : m)) : rows
+    )),
+  });
+  useEffect(() => {
+    if (opened && showView && Number(showView.flag_read) !== 1) markReadMutation.mutate(showView.msgid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened?.msgid]);
 
   const messages = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
@@ -92,6 +104,8 @@ export default function Messages() {
         <h1 className="text-xl font-semibold">{t('pages.messages.title')}</h1>
         <Button size="sm" onClick={() => setShowCompose(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.messages.compose')}</Button>
       </div>
+
+      <p className="text-sm text-muted-foreground max-w-3xl">{t('pages.messages.hint')}</p>
 
       <DataTable columns={columns} data={messages} searchKey="subject" searchPlaceholder={t('pages.messages.searchPlaceholder')} />
 
