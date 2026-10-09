@@ -155,6 +155,7 @@
       "sendFailed": "Nachricht konnte nicht gesendet werden",
       "message": "Nachricht",
       "noContent": "Kein Inhalt",
+      "loadFailed": "Die Nachricht konnte nicht geladen werden (vielleicht wurde sie inzwischen gelöscht)",
       "composeTitle": "Nachricht verfassen",
       "recipientUid": "Empfänger-Client-UID",
       "recipientUidPlaceholder": "Eindeutige Client-ID",

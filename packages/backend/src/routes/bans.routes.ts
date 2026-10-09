@@ -10,6 +10,10 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
+// The ban list carries addresses, UIDs and reasons. The Bans page is admin-only
+// in the UI, so the whole router is - reads included.
+banRoutes.use(requireRole('admin'));
+
 banRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'banlist')); } catch (err) { next(err); }
 });

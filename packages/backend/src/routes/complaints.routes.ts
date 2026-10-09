@@ -10,6 +10,9 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
+// The Complaints page is admin-only in the UI, so the whole router is - reads included.
+complaintRoutes.use(requireRole('admin'));
+
 complaintRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     const params = req.query.tcldbid ? { tcldbid: req.query.tcldbid } : undefined;

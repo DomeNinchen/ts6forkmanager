@@ -10,7 +10,9 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
-serverGroupRoutes.get('/', async (req: Request, res: Response, next) => {
+// The group list (names, ids, types) is also what the Music Bots permission tab
+// offers its operators; a group's members and permissions are admin-only.
+serverGroupRoutes.get('/', requireRole('admin', 'bot-operator', 'music-operator'), async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'servergrouplist')); } catch (err) { next(err); }
 });
 
@@ -36,7 +38,7 @@ serverGroupRoutes.post('/:sgid/copy', requireRole('admin'), async (req: Request,
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.get('/:sgid/members', async (req: Request, res: Response, next) => {
+serverGroupRoutes.get('/:sgid/members', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupclientlist', { sgid: String(req.params.sgid), '-names': '' }));
   } catch (err) { next(err); }
@@ -54,7 +56,7 @@ serverGroupRoutes.delete('/:sgid/members/:cldbid', requireRole('admin'), async (
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.get('/:sgid/permissions', async (req: Request, res: Response, next) => {
+serverGroupRoutes.get('/:sgid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergrouppermlist', { sgid: String(req.params.sgid), '-permsid': '' }));
   } catch (err) { next(err); }
