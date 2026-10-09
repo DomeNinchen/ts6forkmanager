@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { authMiddleware } from './middleware/auth.js';
 import { requestTimeout } from './middleware/request-timeout.js';
+import { ipBanMiddleware } from './middleware/ip-ban.js';
 import { authRoutes } from './routes/auth.routes.js';
 import { oidcAuthRoutes } from './routes/oidc-auth.routes.js';
 import { serverRoutes } from './routes/servers.routes.js';
@@ -59,6 +60,9 @@ export function createApp(): Express {
   app.use(requestTimeout);
   app.use(helmet());
   app.use(cors({ origin: config.frontendUrl, credentials: true }));
+  // A banned address is turned away before anything else is read or parsed - after CORS, so
+  // the browser of a banned visitor can still read the answer.
+  app.use(ipBanMiddleware);
   app.use(express.json({ limit: '10mb' }));
 
   // Health check

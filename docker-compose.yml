@@ -22,6 +22,8 @@ services:
       # How many proxies stand in front of the backend (the frontend container's
       # nginx is one). Settings -> Network shows the number that fits your setup.
       - TRUST_PROXY=${TRUST_PROXY:-1}
+      # Emergency switch: true = no address is turned away, whatever the ban list says.
+      - IP_BANS_DISABLED=${IP_BANS_DISABLED:-false}
       - MUSIC_DIR=/data/music
       - SIDECAR_URL=http://ts6-sidecar:9800
       - SIDECAR_BINARY_PATH=${SIDECAR_BINARY_PATH:-}

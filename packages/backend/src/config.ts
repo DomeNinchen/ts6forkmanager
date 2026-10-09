@@ -33,6 +33,9 @@ export const config = {
   // How many proxies (or which addresses) in front of the backend may vouch for the
   // visitor's address in X-Forwarded-For; see utils/trust-proxy.ts.
   trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
+  // Emergency switch: with IP_BANS_DISABLED=true no address is turned away, whatever the
+  // ban list says - for the day an admin has banned the address they come in from.
+  ipBansDisabled: process.env.IP_BANS_DISABLED === 'true' || process.env.IP_BANS_DISABLED === '1',
 };
 
 if (config.trustProxy.warning) console.warn(`[Config] ${config.trustProxy.warning}`);

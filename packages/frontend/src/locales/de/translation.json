@@ -515,9 +515,77 @@
       },
       "unknownAddress": "unbekannt",
       "unknownAddressHint": "TeamSpeak hat diese Adresse nicht mitgeteilt. Das Konto, das die App auf diesem Server nutzt, darf vielleicht keine Client-Adressen sehen (b_client_remoteaddress_view).",
+      "ban": {
+        "banThis": "Diese Adresse sperren",
+        "title": "{{ip}} sperren",
+        "description": "Wähle, wo diese Adresse abgewiesen wird. Beides lässt sich gleichzeitig setzen.",
+        "web": {
+          "label": "Auf dieser Weboberfläche sperren",
+          "hint": "Jede Anfrage von ihr - die ganze API und der WebSocket - wird mit 403 beantwortet, bis die Sperre endet; nur /api/health bleibt offen. Offene Sockets von ihr werden geschlossen."
+        },
+        "ts": {
+          "label": "Auf einem TeamSpeak-Server sperren",
+          "hint": "Eine Sperrregel für genau diese Adresse in der eigenen Bann-Liste des Servers. Sie erscheint auf der Seite Bans, wo sie auch wieder aufgehoben wird.",
+          "connection": "Verbindung",
+          "virtualServer": "Virtueller Server",
+          "allServers": "Alle virtuellen Server"
+        },
+        "protected": {
+          "own": "Das ist die Adresse, von der du gerade zugreifst: Sie zu sperren würde dich aussperren.",
+          "loopback": "Das ist der Rechner, auf dem das Backend läuft.",
+          "private": "Das ist eine Adresse in einem privaten Netz. Hinter einem falsch eingestellten Proxy sieht jeder Besucher so aus, und ein TeamSpeak-Server in einem Container sieht das Docker-Gateway als Adresse jedes Clients - sie zu sperren könnte alle aussperren.",
+          "invalid": "Das ist keine IP-Adresse."
+        },
+        "disabled": "IP-Sperren sind auf dem Server abgeschaltet (IP_BANS_DISABLED): Keine Adresse wird abgewiesen, und eine Web-Sperre lässt sich nicht setzen, bis die Variable wieder entfernt ist.",
+        "alreadyUntil": "Diese Adresse ist schon bis {{date}} gesperrt. Sie erneut zu sperren erneuert die Sperre.",
+        "alreadyForever": "Diese Adresse ist schon gesperrt, bis ein Admin die Sperre aufhebt. Sie erneut zu sperren erneuert die Sperre.",
+        "adminWarning": "Ein Admin ({{names}}) hat sich in den letzten 7 Tagen von dieser Adresse angemeldet; sie zu sperren könnte ihn aussperren. Trotzdem sperren.",
+        "submit": "Sperren",
+        "failed": "Die Sperre konnte nicht gesetzt werden",
+        "webDone": "{{ip}} ist auf der Weboberfläche gesperrt",
+        "tsDone": "Auf TeamSpeak gesperrt ({{count}} virtuelle(r) Server)",
+        "tsFailed": "TeamSpeak hat die Sperre nicht angenommen: {{message}}",
+        "tsPartial": "Auf {{created}} von {{total}} virtuellen Servern gesperrt; TeamSpeak hat den Rest abgelehnt: {{message}}",
+        "errors": {
+          "ban-protected-own": "Das ist die Adresse, von der du gerade zugreifst: Sie zu sperren würde dich aussperren.",
+          "ban-protected-loopback": "Das ist der Rechner, auf dem das Backend läuft.",
+          "ban-protected-private": "Das ist eine Adresse in einem privaten Netz und lässt sich nicht sperren.",
+          "ban-invalid-address": "Das ist keine IP-Adresse.",
+          "ban-confirm-admin": "Ein Admin hat sich kürzlich von dieser Adresse angemeldet: Bestätige, dass sie gesperrt werden soll.",
+          "bans-disabled": "IP-Sperren sind auf dem Server abgeschaltet (IP_BANS_DISABLED)."
+        },
+        "badge": {
+          "web": "Gesperrt",
+          "ts": "Gesperrt (TeamSpeak)",
+          "tsHint": "Eine Sperre auf diesem virtuellen Server trifft diesen Client über Adresse, eindeutige ID oder Nickname.",
+          "until": "Die Weboberfläche weist diese Adresse bis {{date}} ab",
+          "forever": "Die Weboberfläche weist diese Adresse ab, bis ein Admin die Sperre aufhebt"
+        }
+      },
+      "bans": {
+        "description": "Die Adressen, die diese Weboberfläche abweist. Eine Sperre beantwortet jede Anfrage der Adresse mit 403 - die ganze API und der WebSocket, nur /api/health bleibt offen -, bis sie endet oder aufgehoben wird.",
+        "tsBansLink": "Sperren auf einem TeamSpeak-Server werden auf der Seite Bans aufgehoben.",
+        "empty": "Keine Adresse ist gesperrt.",
+        "columns": {
+          "address": "Adresse",
+          "country": "Land",
+          "reason": "Grund",
+          "setBy": "Gesetzt von",
+          "setAt": "Gesetzt",
+          "ends": "Endet",
+          "turnedAway": "Abgewiesen"
+        },
+        "lastBlocked": "zuletzt {{date}}",
+        "lift": "Aufheben",
+        "liftTitle": "Sperre von {{ip}} aufheben?",
+        "liftDescription": "Anfragen dieser Adresse werden sofort wieder beantwortet.",
+        "lifted": "Die Sperre von {{ip}} ist aufgehoben",
+        "liftFailed": "Die Sperre konnte nicht aufgehoben werden"
+      },
       "tabs": {
         "journal": "Journal",
         "byIp": "Nach Adresse",
+        "bans": "Sperren",
         "settings": "Einstellungen"
       },
       "searchPlaceholder": "Konto oder Adresse",

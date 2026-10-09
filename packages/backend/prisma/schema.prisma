@@ -636,3 +636,23 @@ model ConnectionJournalEntry {
   @@index([source, serverConfigId, virtualServerId, leftAt])
   @@index([country])
 }
+
+// An address the web interface turns away: every request from it (the whole API and the
+// WebSocket, except /api/health) is answered 403 - see utils/ip-bans.ts. Bans on a
+// TeamSpeak server are TeamSpeak's own and live in its ban list, not here.
+model IpBan {
+  id            Int       @id @default(autoincrement())
+  // The address in its plain form (IPv4-mapped IPv6 unwrapped, lower case).
+  ip            String    @unique
+  reason        String?
+  createdAt     DateTime  @default(now())
+  // Null = until an admin lifts it.
+  expiresAt     DateTime?
+  // The account name of the admin who set it (kept as text, the account can be deleted later).
+  createdBy     String
+  // How many requests it has turned away, and when it last did; written in batches.
+  blockedCount  Int       @default(0)
+  lastBlockedAt DateTime?
+
+  @@index([expiresAt])
+}

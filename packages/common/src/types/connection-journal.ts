@@ -56,6 +56,16 @@ export interface ConnectionJournalEntryDto {
   geo: ConnectionJournalGeo | null;
   /** TeamSpeak rows only; null on a web row. */
   ts: ConnectionJournalTsDetails | null;
+  /** Whether this address, or this TeamSpeak client, is banned right now. */
+  ban: JournalBanState;
+}
+
+/** The bans that cover a journal row. */
+export interface JournalBanState {
+  /** The web interface turns this address away. */
+  web: { id: number; /** ISO 8601, null = until lifted. */ expiresAt: string | null } | null;
+  /** A ban on the row's TeamSpeak virtual server covers this client (by address, unique ID or nickname); null = not a TeamSpeak row, or the ban list could not be read. */
+  ts: boolean | null;
 }
 
 /** What a TeamSpeak session row says besides the common columns (the nickname is `username`). */
@@ -132,6 +142,8 @@ export interface ConnectionJournalIpRow {
   country: string | null;
   city: string | null;
   scope: JournalAddressScope;
+  /** The web interface turns this address away. */
+  webBan: JournalBanState['web'];
 }
 
 /** What kind of address it is: only a `public` one can be placed on a map. */
@@ -227,4 +239,105 @@ export interface ConnectionJournalGeoIpStatus {
 export interface ConnectionJournalCountry {
   country: string;
   count: number;
+}
+
+// --- Bans ------------------------------------------------------------------------------------
+
+/** What the ban dialog offers for how long, in seconds; 0 = until an admin lifts it. */
+export const BAN_DURATION_CHOICES = [3600, 86400, 604800, 2592000, 0] as const;
+/** Preselected: a week. */
+export const BAN_DURATION_DEFAULT = 604800;
+/** The longest finite duration the backend accepts (ten years); "forever" is 0. */
+export const BAN_DURATION_MAX = 315_360_000;
+export const BAN_REASON_MAX_LENGTH = 200;
+
+/** Why an address cannot be banned at all. */
+export type BanProtection =
+  /** It is the address this very request comes from: the admin would lock themselves out. */
+  | 'own'
+  /** This machine. */
+  | 'loopback'
+  /** A private network: behind a proxy that is not set up right every visitor looks like this, and a TeamSpeak server in a container sees the Docker gateway. */
+  | 'private'
+  /** Not an IP address. */
+  | 'invalid';
+
+/** What the ban dialog needs to know about an address before it is banned. */
+export interface BanCheck {
+  ip: string;
+  /** Null = it may be banned; otherwise it is refused, and why. */
+  protection: BanProtection | null;
+  /** Admin accounts that signed in from this address in the last 7 days. Not empty = banning needs a second confirmation. */
+  adminAccounts: string[];
+  /** The web ban that already covers it, if any. */
+  webBan: JournalBanState['web'];
+  /** IP_BANS_DISABLED is set: the web interface turns nobody away, and a web ban cannot be set. */
+  disabled: boolean;
+}
+
+/** Codes the ban endpoints answer with next to the message (the body's `code`). */
+export type IpBanErrorCode =
+  | 'ban-protected-own'
+  | 'ban-protected-loopback'
+  | 'ban-protected-private'
+  | 'ban-invalid-address'
+  /** The address was used by an admin recently; resend with `confirmAdmin: true` to ban it anyway. */
+  | 'ban-confirm-admin'
+  | 'bans-disabled';
+
+/** One address the web interface turns away. */
+export interface WebIpBanDto {
+  id: number;
+  ip: string;
+  scope: JournalAddressScope;
+  geo: ConnectionJournalGeo | null;
+  reason: string | null;
+  /** ISO 8601 */
+  createdAt: string;
+  /** ISO 8601; null = until an admin lifts it. */
+  expiresAt: string | null;
+  createdBy: string;
+  /** Requests it has turned away. */
+  blockedCount: number;
+  /** ISO 8601 of the last one; null if it never turned one away. */
+  lastBlockedAt: string | null;
+}
+
+export interface WebIpBanList {
+  /** IP_BANS_DISABLED is set: nothing is turned away at the moment. */
+  disabled: boolean;
+  bans: WebIpBanDto[];
+}
+
+export interface CreateWebBanRequest {
+  ip: string;
+  /** Seconds; 0 = until lifted. */
+  duration: number;
+  reason?: string;
+  /** Yes, even though an admin signed in from this address recently. */
+  confirmAdmin?: boolean;
+}
+
+/** A ban on a TeamSpeak server, set from the journal: the address as an exact rule on one virtual server or on all of a connection's. */
+export interface CreateTsBanRequest {
+  ip: string;
+  configId: number;
+  virtualServerId: number | 'all';
+  duration: number;
+  reason?: string;
+  /** The nickname TeamSpeak shows in its ban list. */
+  nickname?: string;
+  confirmAdmin?: boolean;
+}
+
+export interface TsBanOutcome {
+  virtualServerId: number;
+  status: 'created' | 'failed';
+  banid?: number;
+  /** TeamSpeak's own reason when it refused. */
+  message?: string;
+}
+
+export interface TsBanResult {
+  outcomes: TsBanOutcome[];
 }

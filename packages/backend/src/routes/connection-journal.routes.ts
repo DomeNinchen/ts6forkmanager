@@ -35,7 +35,10 @@ import {
   pruneJournal,
   type JournalFilters,
 } from '../utils/connection-journal.js';
+import type { IpBanService } from '../utils/ip-bans.js';
+import type { TsBanLookup } from '../utils/ts-ip-ban.js';
 import { geoIpRoutes } from './geoip.routes.js';
+import { ipBanRoutes } from './ip-bans.routes.js';
 
 /**
  * The connection journal. Mounted behind the admin check (app.ts): the rows
@@ -45,6 +48,15 @@ export const connectionJournalRoutes: Router = Router();
 
 // The GeoIP database behind the country column: install, update, switches
 connectionJournalRoutes.use('/geoip', geoIpRoutes);
+
+// Bans set from the journal: the web interface turning an address away, and a ban on a TeamSpeak server
+connectionJournalRoutes.use('/bans', ipBanRoutes);
+
+/** What marks a row as banned: the web ban list (always at hand) and the ban lists of the TeamSpeak servers the rows come from. */
+const banSources = (req: Request) => ({
+  web: req.app.locals.ipBans as IpBanService | undefined,
+  ts: req.app.locals.tsBanLookup as TsBanLookup | undefined,
+});
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
@@ -114,7 +126,7 @@ connectionJournalRoutes.get('/', async (req: Request, res: Response, next) => {
     const order = oneOf(req.query.order, ['asc', 'desc'] as const, 'order') ?? 'desc';
     const page = positiveInt(req.query.page, 'page', 1, 1_000_000);
     const pageSize = positiveInt(req.query.pageSize, 'pageSize', DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
-    res.json(await listJournal(req.app.locals.prisma, parseFilters(req), sort, order, page, pageSize));
+    res.json(await listJournal(req.app.locals.prisma, parseFilters(req), sort, order, page, pageSize, banSources(req)));
   } catch (err) { next(err); }
 });
 
@@ -125,7 +137,7 @@ connectionJournalRoutes.get('/by-ip', async (req: Request, res: Response, next) 
     const order = oneOf(req.query.order, ['asc', 'desc'] as const, 'order') ?? 'desc';
     const page = positiveInt(req.query.page, 'page', 1, 1_000_000);
     const pageSize = positiveInt(req.query.pageSize, 'pageSize', DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
-    res.json(await listJournalByIp(req.app.locals.prisma, parseFilters(req), sort, order, page, pageSize));
+    res.json(await listJournalByIp(req.app.locals.prisma, parseFilters(req), sort, order, page, pageSize, banSources(req)));
   } catch (err) { next(err); }
 });
 
