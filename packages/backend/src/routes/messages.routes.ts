@@ -4,7 +4,9 @@ import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { TSApiError } from '../middleware/error-handler.js';
 import { requireRole } from '../middleware/rbac.js';
 
+// Admin-only as a whole: the messages are private, and the page that shows them is admin-only too.
 export const messageRoutes: Router = Router({ mergeParams: true });
+messageRoutes.use(requireRole('admin'));
 
 const getClient = (req: Request) => {
   const pool: ConnectionPool = req.app.locals.connectionPool;
@@ -82,11 +84,10 @@ messageRoutes.get('/:msgid', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-// M1: Write operations require admin role
-messageRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
+messageRoutes.post('/', async (req: Request, res: Response, next) => {
   try { res.status(201).json(await getClient(req).execute(getSid(req), 'messageadd', req.body)); } catch (err) { next(err); }
 });
 
-messageRoutes.delete('/:msgid', requireRole('admin'), async (req: Request, res: Response, next) => {
+messageRoutes.delete('/:msgid', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'messagedel', { msgid: String(req.params.msgid) })); } catch (err) { next(err); }
 });

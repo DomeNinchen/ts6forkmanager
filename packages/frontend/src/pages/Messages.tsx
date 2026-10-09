@@ -93,6 +93,8 @@ export default function Messages() {
         <Button size="sm" onClick={() => setShowCompose(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.messages.compose')}</Button>
       </div>
 
+      <p className="text-sm text-muted-foreground max-w-3xl">{t('pages.messages.hint')}</p>
+
       <DataTable columns={columns} data={messages} searchKey="subject" searchPlaceholder={t('pages.messages.searchPlaceholder')} />
 
       {/* View Message Dialog */}
