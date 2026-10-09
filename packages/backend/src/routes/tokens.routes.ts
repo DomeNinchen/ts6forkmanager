@@ -10,6 +10,12 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
+// Privilege keys and temporary passwords are credentials: whoever holds a
+// privilege key can redeem it for its server group (Server Admin included),
+// whoever holds a temporary password can join the server. The Tokens page is
+// admin-only in the UI, so the whole router is - reads included.
+tokenRoutes.use(requireRole('admin'));
+
 tokenRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'privilegekeylist')); } catch (err) { next(err); }
 });

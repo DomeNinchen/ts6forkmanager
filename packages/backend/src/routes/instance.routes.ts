@@ -10,6 +10,11 @@ const getClient = (req: Request) => {
   return pool.getClient(parseInt(String(req.params.configId)));
 };
 
+// Instance, host and binding data (bound addresses, hardware, instance-wide
+// settings). The Instance and Statistics pages are admin-only in the UI, so the
+// whole router is - reads included.
+instanceRoutes.use(requireRole('admin'));
+
 instanceRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(0, 'instanceinfo')); } catch (err) { next(err); }
 });

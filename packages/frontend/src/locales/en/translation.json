@@ -155,6 +155,7 @@
       "sendFailed": "Failed to send message",
       "message": "Message",
       "noContent": "No content",
+      "loadFailed": "The message could not be loaded (it may have been deleted in the meantime)",
       "composeTitle": "Compose Message",
       "recipientUid": "Recipient Client UID",
       "recipientUidPlaceholder": "Client unique ID",

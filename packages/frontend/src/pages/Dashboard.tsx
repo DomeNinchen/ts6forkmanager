@@ -389,7 +389,8 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <WidgetManagerModal open={showWidgets} onOpenChange={setShowWidgets} />
+      {/* The dialog loads the widget list the moment it mounts, and only an admin may read it - the button that opens it is admin-only too. */}
+      {isAdmin && <WidgetManagerModal open={showWidgets} onOpenChange={setShowWidgets} />}
     </div>
   );
 }

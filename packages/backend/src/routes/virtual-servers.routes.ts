@@ -17,7 +17,9 @@ virtualServerRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-virtualServerRoutes.get('/:sid/info', async (req: Request, res: Response, next) => {
+// Only the admin pages (Statistics, Advanced Settings) read the full server
+// info / connection info; the server list above is what every role needs.
+virtualServerRoutes.get('/:sid/info', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const sid = parseInt(String(req.params.sid));
     const result = await getClient(req).execute(sid, 'serverinfo');
@@ -106,7 +108,7 @@ virtualServerRoutes.post('/:sid/snapshot/deploy', requireRole('admin'), async (r
   } catch (err) { next(err); }
 });
 
-virtualServerRoutes.get('/:sid/connection-info', async (req: Request, res: Response, next) => {
+virtualServerRoutes.get('/:sid/connection-info', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const sid = parseInt(String(req.params.sid));
     const result = await getClient(req).execute(sid, 'serverrequestconnectioninfo');
