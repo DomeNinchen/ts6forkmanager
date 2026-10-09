@@ -12,6 +12,10 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
+// Offline messages are private messages between TeamSpeak users. The Messages
+// page is admin-only in the UI, so the whole router is - reads included.
+messageRoutes.use(requireRole('admin'));
+
 type Row = Record<string, string>;
 
 /** How many sender UIDs one clientgetnamefromuid request names (a UID is 44 characters). */

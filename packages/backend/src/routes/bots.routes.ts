@@ -38,7 +38,11 @@ botRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-botRoutes.get('/:botId', async (req: Request, res: Response, next) => {
+// The flow list above is what the Dashboard shows every role. A single flow's
+// full definition (flowData: node settings, webhook paths, message texts), its
+// executions and their logs are only read by the Bot Flows editor, which is open
+// to admins and bot operators - not to viewers or music operators.
+botRoutes.get('/:botId', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const bot = await prisma.botFlow.findUnique({ where: { id: parseInt(String(req.params.botId)) } });
@@ -164,7 +168,7 @@ botRoutes.post('/:botId/disable', requireRole('admin', 'bot-operator'), async (r
   } catch (err) { next(err); }
 });
 
-botRoutes.get('/:botId/executions', async (req: Request, res: Response, next) => {
+botRoutes.get('/:botId/executions', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const flowId = parseInt(String(req.params.botId));
@@ -181,7 +185,7 @@ botRoutes.get('/:botId/executions', async (req: Request, res: Response, next) =>
   } catch (err) { next(err); }
 });
 
-botRoutes.get('/:botId/executions/:execId/logs', async (req: Request, res: Response, next) => {
+botRoutes.get('/:botId/executions/:execId/logs', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const flowId = parseInt(String(req.params.botId));

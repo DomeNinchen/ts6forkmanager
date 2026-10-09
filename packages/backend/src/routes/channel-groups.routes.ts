@@ -10,6 +10,11 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
+// Channel groups (their members and permissions) are only used by admin pages
+// in the UI (Channel Groups, Tokens, Client Database, Advanced Settings), so the
+// whole router is admin-only - reads included.
+channelGroupRoutes.use(requireRole('admin'));
+
 channelGroupRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'channelgrouplist')); } catch (err) { next(err); }
 });
