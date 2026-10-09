@@ -30,17 +30,34 @@ export default function Messages() {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
 
+  // The list rows carry no text (messagelist leaves it out), so it is fetched with messageget when a message is opened.
+  const openedQuery = useQuery({
+    queryKey: ['message', c, s, showView?.msgid],
+    queryFn: () => messagesApi.get(c!, s!, showView.msgid),
+    enabled: !!c && !!s && !!showView,
+  });
+  const opened = Array.isArray(openedQuery.data) ? openedQuery.data[0] : undefined;
+
   const messages = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
   const columns: ColumnDef<DataTableFeatures, any>[] = useMemo(() => [
-    { accessorKey: 'senderName', header: t('pages.messages.from'), cell: ({ getValue }) => <span className="font-medium">{(getValue() as string) || '-'}</span> },
+    // TeamSpeak names the sender by unique ID only; the backend adds the nickname where the client database knows it.
+    { id: 'sender', accessorFn: (m: any) => m.senderName || m.cluid, header: t('pages.messages.from'), cell: ({ row }) => (
+      row.original.senderName
+        ? <span className="font-medium" title={row.original.cluid}>{row.original.senderName}</span>
+        : <span className="block max-w-[18rem] truncate font-mono text-xs text-muted-foreground" title={row.original.cluid}>{row.original.cluid || '-'}</span>
+    )},
     { accessorKey: 'subject', header: t('pages.messages.subject') },
     { accessorKey: 'timestamp', header: t('pages.messages.date'), cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{timeAgo(getValue() as number)}</span> },
-    { accessorKey: 'flag_read', header: t('common.status'), cell: ({ getValue }) => (
-      <span className={`text-xs px-1.5 py-0.5 rounded-sm ${getValue() ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary font-medium'}`}>
-        {getValue() ? t('pages.messages.read') : t('pages.messages.unread')}
-      </span>
-    )},
+    // flag_read arrives as the text "0" or "1", and "0" is truthy.
+    { accessorKey: 'flag_read', header: t('common.status'), cell: ({ getValue }) => {
+      const read = Number(getValue()) === 1;
+      return (
+        <span className={`text-xs px-1.5 py-0.5 rounded-sm ${read ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary font-medium'}`}>
+          {read ? t('pages.messages.read') : t('pages.messages.unread')}
+        </span>
+      );
+    }},
     {
       id: 'actions', header: '',
       cell: ({ row }) => (
@@ -83,13 +100,23 @@ export default function Messages() {
         <DialogContent>
           <DialogHeader><DialogTitle>{showView?.subject || t('pages.messages.message')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{t('pages.messages.from')}: <span className="text-foreground font-medium">{showView?.senderName}</span></span>
-              <span className="text-border">|</span>
-              <span>{showView?.timestamp && timeAgo(showView.timestamp)}</span>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span>{t('pages.messages.from')}: {showView?.senderName
+                  ? <span className="text-foreground font-medium">{showView.senderName}</span>
+                  : <span className="text-foreground font-mono break-all">{showView?.cluid}</span>}
+                </span>
+                <span className="text-border">|</span>
+                <span className="shrink-0">{showView?.timestamp && timeAgo(showView.timestamp)}</span>
+              </div>
+              {showView?.senderName && <div className="font-mono break-all">{showView.cluid}</div>}
             </div>
-            <div className="rounded-md bg-muted/30 border border-border p-3 text-sm min-h-[100px] whitespace-pre-wrap">
-              {showView?.message || showView?.subject || t('pages.messages.noContent')}
+            <div className="rounded-md bg-muted/30 border border-border p-3 text-sm min-h-[100px] whitespace-pre-wrap break-words">
+              {openedQuery.isLoading
+                ? <span className="text-muted-foreground">{t('common.loading')}</span>
+                : opened
+                  ? (opened.message || t('pages.messages.noContent'))
+                  : <span className="text-destructive">{t('pages.messages.loadFailed')}</span>}
             </div>
           </div>
           <DialogFooter>
