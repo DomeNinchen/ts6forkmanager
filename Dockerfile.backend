@@ -27,13 +27,30 @@ RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @ts6/common run build
 RUN pnpm --filter @ts6/backend exec prisma generate
 RUN pnpm --filter @ts6/backend run build
-# Strip devDependencies (typescript, @types/*, and -- since this is a
-# workspace-wide node_modules -- frontend-only build tooling like
-# vite/esbuild/rollup/postcss too) before it gets copied into the
-# production image below. None of it runs at runtime, and it was
-# dragging in a lot of avoidable CVE surface (esbuild ships its own
-# compiled Go binary per platform, for example) for zero benefit.
-RUN pnpm prune --prod
+# Replace the workspace-wide node_modules (the build above needed all of it,
+# the frontend's vite/tailwind/rolldown toolchain included) with the backend's
+# own production dependencies before it gets copied into the production image
+# below. None of that tooling runs at runtime, and it was dragging in a lot of
+# avoidable CVE surface for zero benefit. `pnpm prune --prod` cannot do this:
+#   - in a workspace it only acts on the root project (which has nothing but
+#     typescript), so the other packages' dependencies stay either way;
+#   - it first asks "The modules directories will be removed and reinstalled
+#     from scratch. Proceed?" and a RUN step has no TTY to answer, so it exited
+#     0 having done nothing -- this line used to be a silent no-op;
+#   - with CI=true to skip that prompt it does run, and empties the
+#     node_modules of every workspace package, the backend's included.
+# A reinstall from the lockfile into an emptied tree has neither problem. The
+# pnpm store from the install above is still on disk, so nothing is downloaded
+# again; --frozen-lockfile keeps it to the versions that were just built, and
+# --filter @ts6/backend... limits it to the backend and @ts6/common. Beyond the
+# backend's own dependencies, what stays is what those need at runtime: the
+# prisma CLI and its dependencies (`prisma db push`), tsx and its esbuild
+# (`prisma db seed`).
+RUN rm -rf node_modules packages/*/node_modules && \
+    pnpm install --prod --frozen-lockfile --filter @ts6/backend...
+# Fail the build rather than quietly ship the frontend toolchain again.
+RUN if ls node_modules/.pnpm | grep -q -E '^(vite|rolldown|tailwindcss)@'; then \
+      echo 'frontend build tooling is still in node_modules' >&2; exit 1; fi
 
 # Production image
 FROM base AS production
