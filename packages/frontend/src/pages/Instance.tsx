@@ -63,14 +63,22 @@ export default function Instance() {
     { key: 'serverinstance_filetransfer_port', label: t('pages.instance.fields.filetransferPort'), type: 'number' },
     { key: 'serverinstance_serverquery_flood_commands', label: t('pages.instance.fields.floodCommands'), type: 'number' },
     { key: 'serverinstance_serverquery_flood_time', label: t('pages.instance.fields.floodTime'), type: 'number' },
-    { key: 'serverinstance_serverquery_flood_ban_time', label: t('pages.instance.fields.floodBanTime'), type: 'number' },
+    { key: 'serverinstance_serverquery_ban_time', label: t('pages.instance.fields.floodBanTime'), type: 'number' },
   ];
 
+  // A cleared field parses to NaN, which JSON turns into null and the backend then
+  // leaves out - the save would "succeed" without sending anything, so only fields
+  // holding a real number count as changes.
+  const changes: Record<string, number> = {};
+  for (const [k, v] of Object.entries(editFields)) {
+    const n = parseInt(v, 10);
+    if (Number.isFinite(n)) changes[k] = n;
+  }
+  const hasChanges = Object.keys(changes).length > 0;
+
   const handleSave = () => {
-    if (Object.keys(editFields).length === 0) return;
-    const data: any = {};
-    for (const [k, v] of Object.entries(editFields)) data[k] = parseInt(v);
-    editMutation.mutate(data);
+    if (!hasChanges) return;
+    editMutation.mutate(changes);
   };
 
   return (
@@ -121,7 +129,7 @@ export default function Instance() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium">{t('pages.instance.instanceSettings')}</CardTitle>
-            <Button size="sm" onClick={handleSave} disabled={Object.keys(editFields).length === 0 || editMutation.isPending}>
+            <Button size="sm" onClick={handleSave} disabled={!hasChanges || editMutation.isPending}>
               <Save className="h-4 w-4 mr-1" /> {t('pages.instance.saveChanges')}
             </Button>
           </div>
