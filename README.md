@@ -70,7 +70,7 @@ Upstream had a persistent video/audio streaming stutter that was never resolved,
 **Only if you want the matching feature:**
 
 - **SSH ServerQuery** on your TeamSpeak server — needed exclusively for bot flows triggered by server events (a client joining, leaving, moving). Everything else, including scheduled and webhook-triggered flows, runs over WebQuery alone
-- **UDP `50000-50100` open on the host** — needed exclusively for video streaming. That traffic cannot pass through an HTTP reverse proxy and needs its own firewall rule
+- **UDP `50000-50100` open on the host** — needed exclusively for video streaming. That traffic cannot pass through an HTTP reverse proxy and needs its own firewall rule. Nothing else of the sidecar is published: its HTTP API (port `9800`) has no sign-in, so the compose file leaves it inside the Docker network, where only the backend reaches it
 
 ## Quick Start (Docker)
 
