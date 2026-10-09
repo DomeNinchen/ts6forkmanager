@@ -19,7 +19,8 @@ function useCompleteLogin() {
     // Fresh update-check right on login rather than whatever the 6h
     // background timer last cached - login is a natural moment an admin
     // actually looks at the app, so it's worth the one extra GitHub call.
-    recheckUpdate.mutate();
+    // Forcing a check is an admin's; every other role keeps reading the cached result.
+    if (data.user?.role === 'admin') recheckUpdate.mutate();
     navigate('/dashboard');
   };
 }

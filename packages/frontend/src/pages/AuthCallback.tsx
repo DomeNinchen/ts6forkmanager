@@ -38,7 +38,7 @@ export default function AuthCallback() {
     authApi.me()
       .then(({ user }) => {
         setAuth(accessToken, refreshToken, user);
-        recheckUpdate.mutate(); // same as the local-login path - fresh check right on login, not whatever's cached
+        if (user?.role === 'admin') recheckUpdate.mutate(); // same as the local-login path - fresh check right on an admin's login, not whatever's cached
         navigate('/dashboard', { replace: true });
       })
       .catch(() => {
