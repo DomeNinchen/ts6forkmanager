@@ -12,6 +12,7 @@ import type {
 } from '@ts6/common';
 import { AnimationManager } from './animation-manager.js';
 import type { AnimationConfig } from './animation-manager.js';
+import { instanceAudience, sendToAudience } from '../utils/ws-audience.js';
 import crypto from 'crypto';
 
 /**
@@ -851,12 +852,8 @@ export class BotEngine {
     }
   }
 
+  /** The engine starting and stopping concerns the whole instance (all flows, all servers): admins only. */
   private broadcast(type: string, payload: any): void {
-    const msg = JSON.stringify({ type, ...payload });
-    this.wss.clients.forEach(client => {
-      if (client.readyState === 1) { // WebSocket.OPEN
-        client.send(msg);
-      }
-    });
+    sendToAudience(this.wss, type, payload, instanceAudience);
   }
 }

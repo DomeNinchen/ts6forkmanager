@@ -25,6 +25,8 @@ import { GeoIpService } from './utils/geoip.js';
 import { canonicalAddress, clientIpOfUpgrade, IpBanService } from './utils/ip-bans.js';
 import { TsBanLookup } from './utils/ts-ip-ban.js';
 import { startYtCookieChecker } from './utils/yt-cookie-check.js';
+import { attachWsAudience, type UpgradeRequest } from './utils/ws-audience.js';
+import type { JwtPayload } from '@ts6/common';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
@@ -108,7 +110,9 @@ async function main() {
         const wsUrl = new URL(req.url!, `http://${req.headers.host}`);
         const token = wsUrl.searchParams.get('token');
         if (!token) return done(false, 401, 'Missing token');
-        jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] });
+        const payload = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }) as JwtPayload;
+        // Who the socket belongs to: ws-audience.ts decides from it which events the socket receives.
+        (req as UpgradeRequest).wsUserId = payload.id;
         done(true);
       } catch {
         done(false, 401, 'Invalid token');
@@ -142,6 +146,8 @@ async function main() {
   // reading of the first pass is missed.
   bandwidthSampler.setMetricSink(userHistorySampler);
   app.locals.wss = wss;
+  // Which events each WebSocket gets depends on its user's role and server access (see utils/ws-audience.ts).
+  const wsAudience = attachWsAudience(wss, prisma);
   // The query console's live events: one shared SSH listener per virtual server, opened when an admin starts listening.
   const consoleEvents = new EventSessionManager(prisma, connectionPool);
   app.locals.consoleEvents = consoleEvents;
@@ -219,6 +225,7 @@ async function main() {
     // after the database connection is closed there would be no way to.
     await history.flush();
     connectionPool.destroy();
+    wsAudience.stop();
     wss.close();
     server.close();
     await prisma.$disconnect();
