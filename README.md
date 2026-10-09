@@ -139,7 +139,7 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Server widgets** — embeddable status banners for websites and forums, as a live page, SVG or PNG, with public token-based access. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
 
-**Security** — role-based access control with four roles and per-server scoping, two-factor authentication with recovery codes, Single Sign-On via any OpenID Connect provider, AES-256-GCM encryption for stored credentials, JWT with refresh-token rotation, SSRF protection, and rate limiting. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
+**Security** — role-based access control with four roles and per-server scoping, enforced by the backend on every read as well as every change (a page hidden from a role in the interface is also refused to it on the API), two-factor authentication with recovery codes, Single Sign-On via any OpenID Connect provider, AES-256-GCM encryption for stored credentials, JWT with refresh-token rotation, SSRF protection, and rate limiting. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
 
 **Privacy** — the web interface loads nothing from a third party (its fonts are bundled and served from the app's own origin), the application sets no HTTP cookies, and the browser only keeps what the interface needs to work. A dismissible storage notice says so on the login page and in the app; admins switch it off in Settings → WebGui. It is informational, not a consent gate. What exactly is stored and loaded is listed [below](#privacy-what-the-app-stores-and-loads). → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Privacy-and-Hosting)
 

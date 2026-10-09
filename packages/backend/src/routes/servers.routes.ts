@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/rbac.js';
+import { requireServerAccess } from '../middleware/server-access.js';
 import { AppError } from '../middleware/error-handler.js';
 import { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
@@ -88,8 +89,10 @@ serverRoutes.post('/', requireRole('admin'), async (req: Request, res: Response,
   } catch (err) { next(err); }
 });
 
-// Get server connection details
-serverRoutes.get('/:configId', async (req: Request, res: Response, next) => {
+// Get server connection details. Mounted outside the :configId routes that get
+// requireServerAccess in app.ts, so it is applied here: without it any signed-in
+// user could read the connection details of a server they were never granted.
+serverRoutes.get('/:configId', requireServerAccess(), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const server = await prisma.tsServerConfig.findUnique({
@@ -190,7 +193,9 @@ serverRoutes.delete('/:configId', requireRole('admin'), async (req: Request, res
 // Current query identity (whoami) - lets the UI show the actual live nickname
 // rather than assuming it matches whatever's stored, since a fresh connection
 // could still be running under TS's own default until the next reconnect.
-serverRoutes.get('/:configId/identity', async (req: Request, res: Response, next) => {
+// Only the admin pages (Query Console, Miscellaneous) show it, and it asks the
+// TeamSpeak server on any connection id it is given, so it is admin-only.
+serverRoutes.get('/:configId/identity', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const pool: ConnectionPool = req.app.locals.connectionPool;
     const client = pool.getClient(parseInt(String(req.params.configId)));

@@ -19,7 +19,10 @@ channelRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-channelRoutes.get('/:cid', async (req: Request, res: Response, next) => {
+// The channel list above is what every role's Channels / Clients page needs. A
+// single channel's full info and its permissions are only read by admin UI
+// (the edit / duplicate dialogs, the Permissions page).
+channelRoutes.get('/:cid', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelinfo', { cid: String(req.params.cid) });
     res.json(result);
@@ -58,7 +61,7 @@ channelRoutes.post('/:cid/move', requireRole('admin'), async (req: Request, res:
   } catch (err) { next(err); }
 });
 
-channelRoutes.get('/:cid/permissions', async (req: Request, res: Response, next) => {
+channelRoutes.get('/:cid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelpermlist', {
       cid: String(req.params.cid), '-permsid': '',
@@ -89,7 +92,7 @@ channelRoutes.delete('/:cid/permissions', requireRole('admin'), async (req: Requ
 // specific channel - the 5th permission tier alongside server group/channel
 // group/channel/client. Unlike those, TS3 has no command to list every such
 // override server-wide; you must already know the (cid, cldbid) pair.
-channelRoutes.get('/:cid/clients/:cldbid/permissions', async (req: Request, res: Response, next) => {
+channelRoutes.get('/:cid/clients/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelclientpermlist', {
       cid: String(req.params.cid), cldbid: String(req.params.cldbid), '-permsid': '',

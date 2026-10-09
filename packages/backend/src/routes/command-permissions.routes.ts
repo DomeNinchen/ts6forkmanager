@@ -10,7 +10,9 @@ export const commandPermissionRoutes: Router = Router({ mergeParams: true });
 const getPrisma = (req: Request) => req.app.locals.prisma;
 const getConfigId = (req: Request) => parseInt(String(req.params.configId));
 
-commandPermissionRoutes.get('/', async (req: Request, res: Response, next) => {
+// Only the Music Bots page (its Permissions tab) reads this, and that page is
+// open to admins, bot operators and music operators - not to viewers.
+commandPermissionRoutes.get('/', requireRole('admin', 'bot-operator', 'music-operator'), async (req: Request, res: Response, next) => {
   try {
     const serverConfigId = getConfigId(req);
     const [permissions, adminGroups] = await Promise.all([

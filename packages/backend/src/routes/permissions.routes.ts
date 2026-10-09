@@ -11,6 +11,10 @@ const getClient = (req: Request) => {
 };
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
+// The Permissions page is admin-only in the UI, so the whole router is - reads
+// included (the permission overview of a client shows what they are allowed to do).
+permissionRoutes.use(requireRole('admin'));
+
 permissionRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'permissionlist')); } catch (err) { next(err); }
 });
