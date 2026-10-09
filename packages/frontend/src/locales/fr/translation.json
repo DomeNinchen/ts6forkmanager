@@ -141,6 +141,7 @@
     "messages": {
       "title": "Messages hors ligne",
       "compose": "Rédiger",
+      "hint": "Il s'agit de la boîte de réception du compte ServerQuery auquel le gestionnaire est connecté, et non d'une liste pour tout le serveur. Un message hors ligne ne peut être laissé que pour l'ID unique d'un client : la liste reste donc vide tant que la clé API du gestionnaire n'appartient pas à un vrai client.",
       "searchPlaceholder": "Rechercher des messages...",
       "from": "De",
       "subject": "Sujet",
