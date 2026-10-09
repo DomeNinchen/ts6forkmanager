@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Filter } from 'lucide-react';
+import { Ban as BanIcon, Filter } from 'lucide-react';
 import type { JournalIpSortColumn } from '@ts6/common';
 import { connectionJournalApi } from '@/api/connection-journal.api';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
+import { BanBadges } from './BanBadges';
+import type { BanTarget } from './BanDialog';
 import { CountryCell } from './CountryCell';
 import { PAGE_SIZE_OPTIONS } from './format';
 import { toQuery, type JournalFilterState } from './filters';
@@ -13,11 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 /** The journal with one line per address: how often it came, how often it failed, how many accounts it tried. */
 export function JournalByIp({
-  filters, onFilterIp,
+  filters, onFilterIp, onBan,
 }: {
   filters: JournalFilterState;
   /** Clicking an address opens the journal narrowed to it. */
   onFilterIp: (ip: string) => void;
+  /** The ban button of a row. */
+  onBan: (target: BanTarget) => void;
 }) {
   const { t } = useTranslation();
   const [sort, setSort] = useState<JournalIpSortColumn>('lastAt');
@@ -74,15 +78,30 @@ export function JournalByIp({
               data.rows.map((row) => (
                 <tr key={row.ip} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors" data-testid="journal-ip-row">
                   <td className="px-3 py-2.5 align-middle whitespace-nowrap">
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 font-mono-data hover:text-primary transition-colors"
-                      title={t('pages.connectionJournal.showEntries')}
-                      onClick={() => onFilterIp(row.ip)}
-                    >
-                      {row.ip}
-                      <Filter className="h-3 w-3 opacity-40" />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 font-mono-data hover:text-primary transition-colors"
+                        title={t('pages.connectionJournal.showEntries')}
+                        onClick={() => onFilterIp(row.ip)}
+                      >
+                        {row.ip}
+                        <Filter className="h-3 w-3 opacity-40" />
+                      </button>
+                      {row.ip !== 'unknown' && (
+                        <button
+                          type="button"
+                          className="text-muted-foreground opacity-50 hover:opacity-100 hover:text-destructive transition-colors"
+                          title={t('pages.connectionJournal.ban.banThis')}
+                          aria-label={t('pages.connectionJournal.ban.banThis')}
+                          data-testid="journal-ban"
+                          onClick={() => onBan({ ip: row.ip, webBan: row.webBan })}
+                        >
+                          <BanIcon className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <BanBadges web={row.webBan} />
                   </td>
                   <td className="px-3 py-2.5 align-middle text-xs"><CountryCell country={row.country} city={row.city} scope={row.scope} /></td>
                   <td className="px-3 py-2.5 align-middle font-mono-data">{row.total}</td>

@@ -14,7 +14,9 @@ import type {
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 import { getConnectionJournalSettings } from './connection-journal-settings.js';
 import { toGeo, type GeoIpService } from './geoip.js';
+import type { IpBanService } from './ip-bans.js';
 import { addressScope, normalizeAddress } from './trust-proxy.js';
+import type { TsBanLookup } from './ts-ip-ban.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
@@ -147,6 +149,12 @@ function buildWhere(filters: JournalFilters): Prisma.ConnectionJournalEntryWhere
   return where;
 }
 
+/** What the lists ask to mark a row as banned; both are optional, a list without them simply shows no badges. */
+export interface BanSources {
+  web?: IpBanService;
+  ts?: TsBanLookup;
+}
+
 function toDto(row: {
   id: number;
   at: Date;
@@ -198,7 +206,26 @@ function toDto(row: {
             leaveReason: row.leaveReason,
           }
         : null,
+    ban: { web: null, ts: null },
   };
+}
+
+/** Marks the rows of one page that are banned: on the web by address, on a TeamSpeak server by what that server's ban list says. */
+async function markBans(entries: ConnectionJournalEntryDto[], sources: BanSources): Promise<void> {
+  if (sources.web) {
+    for (const entry of entries) entry.ban.web = sources.web.webBanOf(entry.ip);
+  }
+  if (sources.ts) {
+    const queries = entries.map((e) =>
+      e.ts && e.ts.serverConfigId !== null && e.ts.virtualServerId !== null && e.ip !== 'unknown'
+        ? { configId: e.ts.serverConfigId, virtualServerId: e.ts.virtualServerId, ip: e.ip, uid: e.ts.uid ?? '', nickname: e.username ?? '' }
+        : null,
+    );
+    if (queries.some((q) => q !== null)) {
+      const states = await sources.ts.check(queries);
+      entries.forEach((entry, i) => { entry.ban.ts = states[i]; });
+    }
+  }
 }
 
 export async function listJournal(
@@ -208,6 +235,7 @@ export async function listJournal(
   order: 'asc' | 'desc',
   page: number,
   pageSize: number,
+  bans: BanSources = {},
 ): Promise<ConnectionJournalPage> {
   const where = buildWhere(filters);
   const [total, rows] = await Promise.all([
@@ -220,7 +248,9 @@ export async function listJournal(
       take: pageSize,
     }),
   ]);
-  return { entries: rows.map(toDto), total, page, pageSize };
+  const entries = rows.map(toDto);
+  await markBans(entries, bans);
+  return { entries, total, page, pageSize };
 }
 
 export async function listJournalByIp(
@@ -230,6 +260,7 @@ export async function listJournalByIp(
   order: 'asc' | 'desc',
   page: number,
   pageSize: number,
+  bans: BanSources = {},
 ): Promise<ConnectionJournalIpPage> {
   const where = buildWhere(filters);
   const primary: Prisma.ConnectionJournalEntryOrderByWithAggregationInput =
@@ -285,6 +316,7 @@ export async function listJournalByIp(
       country: g._max.country || null,
       city: g._max.city || null,
       scope: addressScope(g.ip),
+      webBan: bans.web ? bans.web.webBanOf(g.ip) : null,
     })),
     total: distinct.length,
     page,

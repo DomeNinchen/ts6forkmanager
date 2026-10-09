@@ -22,6 +22,8 @@ import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
 import { startJournalPruner } from './utils/connection-journal.js';
 import { TsLoginJournal } from './ts-client/ts-login-journal.js';
 import { GeoIpService } from './utils/geoip.js';
+import { canonicalAddress, clientIpOfUpgrade, IpBanService } from './utils/ip-bans.js';
+import { TsBanLookup } from './utils/ts-ip-ban.js';
 import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -94,6 +96,15 @@ async function main() {
     path: '/ws',
     verifyClient: ({ req }, done) => {
       try {
+        // A banned address gets no socket either (checked before the token: it is not worth a look).
+        const bans = app.locals.ipBans as IpBanService | undefined;
+        if (bans) {
+          const ip = canonicalAddress(clientIpOfUpgrade(app, req));
+          if (bans.isBlocked(ip)) {
+            bans.noteBlocked(ip);
+            return done(false, 403, 'Address blocked');
+          }
+        }
         const wsUrl = new URL(req.url!, `http://${req.headers.host}`);
         const token = wsUrl.searchParams.get('token');
         if (!token) return done(false, 401, 'Missing token');
@@ -116,6 +127,12 @@ async function main() {
   const geoIp = new GeoIpService(prisma);
   app.locals.geoIp = geoIp;
   void geoIp.start();
+  // Addresses the web interface turns away (and the ban lists of the TeamSpeak servers, for the journal's badges).
+  // Started before the listener opens, so no request gets in ahead of the list.
+  const ipBans = new IpBanService(prisma, app, wss, geoIp);
+  app.locals.ipBans = ipBans;
+  app.locals.tsBanLookup = new TsBanLookup(connectionPool);
+  await ipBans.start();
   const bandwidthSampler = new BandwidthSampler(connectionPool, prisma);
   app.locals.bandwidthSampler = bandwidthSampler;
   const userHistorySampler = new UserHistorySampler(connectionPool, prisma);
@@ -192,6 +209,7 @@ async function main() {
     // Stops listening; sessions stay open in the database, the next start finds them again.
     await tsLoginJournal.destroy();
     geoIp.destroy();
+    await ipBans.destroy();
     await voiceBotManager.stopAll();
     await botEngine.destroy();
     (app.locals.bandwidthSampler as BandwidthSampler).destroy();

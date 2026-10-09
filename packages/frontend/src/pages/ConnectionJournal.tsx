@@ -14,11 +14,13 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServers } from '@/hooks/use-servers';
 import { DEFAULT_FILTERS, type JournalFilterState } from '@/components/connection-journal/filters';
+import { BanDialog, type BanTarget } from '@/components/connection-journal/BanDialog';
+import { BansTab } from '@/components/connection-journal/BansTab';
 import { JournalByIp } from '@/components/connection-journal/JournalByIp';
 import { JournalList } from '@/components/connection-journal/JournalList';
 import { JournalSettings } from '@/components/connection-journal/JournalSettings';
 
-type JournalTab = 'journal' | 'by-ip' | 'settings';
+type JournalTab = 'journal' | 'by-ip' | 'bans' | 'settings';
 
 /**
  * Who signed in to this app and who joined a TeamSpeak server, from which address, and whether it
@@ -33,6 +35,8 @@ export default function ConnectionJournal() {
   const { data: geoip } = useQuery({ queryKey: ['connection-journal', 'geoip'], queryFn: connectionJournalApi.getGeoIp });
   const [tab, setTab] = useState<JournalTab>('journal');
   const [filters, setFilters] = useState<JournalFilterState>(DEFAULT_FILTERS);
+  // The address a ban dialog is open for.
+  const [banTarget, setBanTarget] = useState<BanTarget | null>(null);
 
   // The search box types freely; the lists are asked once typing has paused.
   const [search, setSearch] = useState(filters.q);
@@ -65,10 +69,11 @@ export default function ConnectionJournal() {
         <TabsList>
           <TabsTrigger value="journal">{t('pages.connectionJournal.tabs.journal')}</TabsTrigger>
           <TabsTrigger value="by-ip">{t('pages.connectionJournal.tabs.byIp')}</TabsTrigger>
+          <TabsTrigger value="bans">{t('pages.connectionJournal.tabs.bans')}</TabsTrigger>
           <TabsTrigger value="settings">{t('pages.connectionJournal.tabs.settings')}</TabsTrigger>
         </TabsList>
 
-        {tab !== 'settings' && (
+        {(tab === 'journal' || tab === 'by-ip') && (
           <div className="mt-4 flex flex-wrap items-center gap-2" data-testid="journal-filters">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -165,15 +170,20 @@ export default function ConnectionJournal() {
         )}
 
         <TabsContent value="journal" className="mt-4">
-          <JournalList filters={filters} onFilterIp={(ip) => patch({ ip })} />
+          <JournalList filters={filters} onFilterIp={(ip) => patch({ ip })} onBan={setBanTarget} />
         </TabsContent>
         <TabsContent value="by-ip" className="mt-4">
-          <JournalByIp filters={filters} onFilterIp={showAddress} />
+          <JournalByIp filters={filters} onFilterIp={showAddress} onBan={setBanTarget} />
+        </TabsContent>
+        <TabsContent value="bans" className="mt-4">
+          <BansTab onFilterIp={showAddress} />
         </TabsContent>
         <TabsContent value="settings" className="mt-4">
           <JournalSettings />
         </TabsContent>
       </Tabs>
+
+      {banTarget && <BanDialog target={banTarget} onClose={() => setBanTarget(null)} />}
 
       {/* The credit the country data comes with (DB-IP: CC BY 4.0, a link back; a MaxMind GeoLite2 file: its own line). */}
       {geoip?.attribution === 'dbip' && (

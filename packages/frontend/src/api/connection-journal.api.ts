@@ -1,10 +1,13 @@
 import type {
+  BanCheck,
   ConnectionJournalCountry,
   ConnectionJournalGeoIpStatus,
   ConnectionJournalIpPage,
   ConnectionJournalPage,
   ConnectionJournalSettingsDto,
   ConnectionJournalTsStatus,
+  CreateTsBanRequest,
+  CreateWebBanRequest,
   GeoIpEdition,
   JournalEvent,
   JournalIpSortColumn,
@@ -12,6 +15,9 @@ import type {
   JournalResult,
   JournalSortColumn,
   JournalSource,
+  TsBanResult,
+  WebIpBanDto,
+  WebIpBanList,
 } from '@ts6/common';
 import api from './client';
 
@@ -88,4 +94,21 @@ export const connectionJournalApi = {
 
   removeGeoIp: (): Promise<ConnectionJournalGeoIpStatus> =>
     api.delete('/connection-journal/geoip').then((r) => r.data),
+
+  // --- bans: the web interface turning an address away, and a ban on a TeamSpeak server ---
+  bans: (): Promise<WebIpBanList> =>
+    api.get('/connection-journal/bans').then((r) => r.data),
+
+  /** What stands between this address and a ban (own address, private network, an admin's address, the emergency switch). */
+  banCheck: (ip: string): Promise<BanCheck> =>
+    api.get('/connection-journal/bans/check', { params: { ip } }).then((r) => r.data),
+
+  createWebBan: (request: CreateWebBanRequest): Promise<WebIpBanDto> =>
+    api.post('/connection-journal/bans', request).then((r) => r.data),
+
+  removeWebBan: (id: number): Promise<{ success: boolean }> =>
+    api.delete(`/connection-journal/bans/${id}`).then((r) => r.data),
+
+  createTsBan: (request: CreateTsBanRequest): Promise<TsBanResult> =>
+    api.post('/connection-journal/bans/ts', request).then((r) => r.data),
 };

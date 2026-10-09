@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Filter } from 'lucide-react';
+import { Ban as BanIcon, Filter } from 'lucide-react';
 import {
   JOURNAL_LEAVE_RECORDING_STOPPED,
   JOURNAL_LEAVE_UNKNOWN,
@@ -12,6 +12,8 @@ import { connectionJournalApi } from '@/api/connection-journal.api';
 import { Badge } from '@/components/ui/badge';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { formatDuration } from '@/lib/utils';
+import { BanBadges } from './BanBadges';
+import type { BanTarget } from './BanDialog';
 import { CountryCell } from './CountryCell';
 import { describeUserAgent, PAGE_SIZE_OPTIONS } from './format';
 import { toQuery, type JournalFilterState } from './filters';
@@ -19,11 +21,13 @@ import { Pager, SortHeader, type SortOrder } from './table-parts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function JournalList({
-  filters, onFilterIp,
+  filters, onFilterIp, onBan,
 }: {
   filters: JournalFilterState;
   /** Clicking an address narrows the list to it. */
   onFilterIp: (ip: string) => void;
+  /** The ban button of a row. */
+  onBan: (target: BanTarget) => void;
 }) {
   const { t } = useTranslation();
   const [sort, setSort] = useState<JournalSortColumn>('at');
@@ -86,7 +90,7 @@ export function JournalList({
                 <td colSpan={8} className="h-24 text-center text-muted-foreground">{t('pages.connectionJournal.empty')}</td>
               </tr>
             ) : (
-              data.entries.map((entry) => <JournalRow key={entry.id} entry={entry} onFilterIp={onFilterIp} />)
+              data.entries.map((entry) => <JournalRow key={entry.id} entry={entry} onFilterIp={onFilterIp} onBan={onBan} />)
             )}
           </tbody>
         </table>
@@ -115,7 +119,13 @@ export function JournalList({
 /** The client version as TeamSpeak reports it carries a build number in brackets that only makes the cell wider. */
 const shortVersion = (version: string | null) => (version ? version.split(' [')[0] : null);
 
-function JournalRow({ entry, onFilterIp }: { entry: ConnectionJournalEntryDto; onFilterIp: (ip: string) => void }) {
+function JournalRow({
+  entry, onFilterIp, onBan,
+}: {
+  entry: ConnectionJournalEntryDto;
+  onFilterIp: (ip: string) => void;
+  onBan: (target: BanTarget) => void;
+}) {
   const { t } = useTranslation();
   const unknownAccount = entry.reason === 'unknown-user';
   const addressKnown = entry.ip !== 'unknown';
@@ -149,15 +159,36 @@ function JournalRow({ entry, onFilterIp }: { entry: ConnectionJournalEntryDto; o
       </td>
       <td className="px-3 py-2.5 align-middle whitespace-nowrap">
         {addressKnown ? (
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 font-mono-data hover:text-primary transition-colors"
-            title={t('pages.connectionJournal.filterByAddress')}
-            onClick={() => onFilterIp(entry.ip)}
-          >
-            {entry.ip}
-            <Filter className="h-3 w-3 opacity-40" />
-          </button>
+          <>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 font-mono-data hover:text-primary transition-colors"
+                title={t('pages.connectionJournal.filterByAddress')}
+                onClick={() => onFilterIp(entry.ip)}
+              >
+                {entry.ip}
+                <Filter className="h-3 w-3 opacity-40" />
+              </button>
+              <button
+                type="button"
+                className="text-muted-foreground opacity-50 hover:opacity-100 hover:text-destructive transition-colors"
+                title={t('pages.connectionJournal.ban.banThis')}
+                aria-label={t('pages.connectionJournal.ban.banThis')}
+                data-testid="journal-ban"
+                onClick={() => onBan({
+                  ip: entry.ip,
+                  webBan: entry.ban.web,
+                  ts: entry.ts && entry.ts.serverConfigId !== null
+                    ? { configId: entry.ts.serverConfigId, virtualServerId: entry.ts.virtualServerId, nickname: entry.username }
+                    : undefined,
+                })}
+              >
+                <BanIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <BanBadges web={entry.ban.web} ts={entry.ban.ts} />
+          </>
         ) : (
           <span className="text-muted-foreground" title={t('pages.connectionJournal.unknownAddressHint')}>{t('pages.connectionJournal.unknownAddress')}</span>
         )}

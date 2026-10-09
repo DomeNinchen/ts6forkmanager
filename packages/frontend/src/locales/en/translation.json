@@ -515,9 +515,77 @@
       },
       "unknownAddress": "unknown",
       "unknownAddressHint": "TeamSpeak did not tell this address. The account the app uses on that server may not be allowed to see client addresses (b_client_remoteaddress_view).",
+      "ban": {
+        "banThis": "Ban this address",
+        "title": "Ban {{ip}}",
+        "description": "Choose where this address is turned away. Both ways can be set at once.",
+        "web": {
+          "label": "Block it on this web interface",
+          "hint": "Every request from it - the whole API and the WebSocket - is answered 403 until the ban ends; only /api/health stays open. Open sockets of it are closed."
+        },
+        "ts": {
+          "label": "Ban it on a TeamSpeak server",
+          "hint": "A ban rule for exactly this address in the server's own ban list. It shows on the Bans page, which is also where it is lifted.",
+          "connection": "Connection",
+          "virtualServer": "Virtual server",
+          "allServers": "All virtual servers"
+        },
+        "protected": {
+          "own": "This is the address you are using right now: banning it would lock you out.",
+          "loopback": "This is the machine the backend runs on.",
+          "private": "This is an address in a private network. Behind a proxy that is not set up right every visitor looks like this, and a TeamSpeak server in a container sees the Docker gateway as the address of every client - banning it could shut everybody out.",
+          "invalid": "This is not an IP address."
+        },
+        "disabled": "IP bans are switched off on the server (IP_BANS_DISABLED): no address is turned away, and a web ban cannot be set until it is taken out of the environment.",
+        "alreadyUntil": "This address is already blocked until {{date}}. Banning it again renews the ban.",
+        "alreadyForever": "This address is already blocked until an admin lifts it. Banning it again renews the ban.",
+        "adminWarning": "An admin ({{names}}) signed in from this address in the last 7 days; banning it may lock them out. Ban it anyway.",
+        "submit": "Ban",
+        "failed": "The ban could not be set",
+        "webDone": "{{ip}} is blocked on the web interface",
+        "tsDone": "Banned on TeamSpeak ({{count}} virtual server(s))",
+        "tsFailed": "TeamSpeak did not accept the ban: {{message}}",
+        "tsPartial": "Banned on {{created}} of {{total}} virtual servers; TeamSpeak refused the rest: {{message}}",
+        "errors": {
+          "ban-protected-own": "This is the address you are using right now: banning it would lock you out.",
+          "ban-protected-loopback": "This is the machine the backend runs on.",
+          "ban-protected-private": "This is an address in a private network and cannot be banned.",
+          "ban-invalid-address": "This is not an IP address.",
+          "ban-confirm-admin": "An admin signed in from this address recently: confirm that you want to ban it.",
+          "bans-disabled": "IP bans are switched off on the server (IP_BANS_DISABLED)."
+        },
+        "badge": {
+          "web": "Blocked",
+          "ts": "Banned (TeamSpeak)",
+          "tsHint": "A ban on this virtual server covers this client by address, unique ID or nickname.",
+          "until": "The web interface turns this address away until {{date}}",
+          "forever": "The web interface turns this address away until an admin lifts the ban"
+        }
+      },
+      "bans": {
+        "description": "The addresses this web interface turns away. A ban answers every request from the address with 403 - the whole API and the WebSocket, only /api/health stays open - until it ends or is lifted.",
+        "tsBansLink": "Bans on a TeamSpeak server are lifted on the Bans page.",
+        "empty": "No address is blocked.",
+        "columns": {
+          "address": "Address",
+          "country": "Country",
+          "reason": "Reason",
+          "setBy": "Set by",
+          "setAt": "Set",
+          "ends": "Ends",
+          "turnedAway": "Turned away"
+        },
+        "lastBlocked": "last {{date}}",
+        "lift": "Lift",
+        "liftTitle": "Lift the ban on {{ip}}?",
+        "liftDescription": "Requests from this address are answered again right away.",
+        "lifted": "The ban on {{ip}} is lifted",
+        "liftFailed": "The ban could not be lifted"
+      },
       "tabs": {
         "journal": "Journal",
         "byIp": "By address",
+        "bans": "Bans",
         "settings": "Settings"
       },
       "searchPlaceholder": "Account or address",

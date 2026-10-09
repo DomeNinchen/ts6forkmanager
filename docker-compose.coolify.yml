@@ -22,6 +22,8 @@ services:
       # nginx is one, and Coolify's own proxy in front of that is a second one.
       # Settings -> Network shows the number that fits your setup.
       - TRUST_PROXY=${TRUST_PROXY:-1}
+      # Emergency switch: true = no address is turned away, whatever the ban list says.
+      - IP_BANS_DISABLED=${IP_BANS_DISABLED:-false}
       - MUSIC_DIR=/data/music
       - SIDECAR_URL=http://ts6-sidecar:9800
     volumes:
