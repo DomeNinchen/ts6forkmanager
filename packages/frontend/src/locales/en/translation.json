@@ -144,6 +144,7 @@
     "messages": {
       "title": "Offline Messages",
       "compose": "Compose",
+      "hint": "This is the inbox of the query login the manager is connected with, not a list for the whole server. Offline messages can only be left for a client's unique ID, so the list stays empty unless the manager's API key belongs to a real client.",
       "searchPlaceholder": "Search messages...",
       "from": "From",
       "subject": "Subject",
