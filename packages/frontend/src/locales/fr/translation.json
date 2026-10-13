@@ -997,7 +997,7 @@
       "noServerDescription": "Sélectionnez une connexion serveur dans l'en-tête pour afficher le tableau de bord.",
       "connectionFailedTitle": "Échec de la connexion",
       "connectionFailedDescription": "Impossible de se connecter au serveur TeamSpeak. Vérifiez vos paramètres de connexion.",
-      "widgets": "Widgets",
+      "widgets": "Widgets intégrables",
       "liveMonitoring": "Surveillance en direct",
       "onlineUsers": "Utilisateurs en ligne",
       "ofSlots": "sur {{max}} slots",

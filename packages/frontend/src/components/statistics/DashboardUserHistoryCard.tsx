@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { UserHistoryChart } from '@/components/statistics/UserHistoryChart';
 import { readStoredTimeZone } from '@/lib/user-history-time';
+import { cn } from '@/lib/utils';
+import type { TileProps } from '@/components/dashboard/tile-types';
 
 /**
  * The dashboard's view of the recorded user count: the last 24 hours, drawn
@@ -18,7 +20,7 @@ import { readStoredTimeZone } from '@/lib/user-history-time';
  * dashboard. Only admins get the link on to the full tab, which they alone can
  * open; the longer windows and the recording settings live there.
  */
-export function DashboardUserHistoryCard() {
+export function DashboardUserHistoryCard({ className }: TileProps) {
   const { t } = useTranslation();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const { data, isLoading, isError } = useDashboardUserHistory();
@@ -51,7 +53,7 @@ export function DashboardUserHistoryCard() {
   }
 
   return (
-    <Card className="card-hero">
+    <Card className={cn('card-hero', className)}>
       <CardHeader className="pb-2">
         <CardTitle className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-muted-foreground">
           <span className="flex items-center gap-2">

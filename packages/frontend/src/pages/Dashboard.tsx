@@ -1,142 +1,21 @@
-import { useDashboard, useBandwidthHistory } from '@/hooks/use-dashboard';
+import { useDashboard } from '@/hooks/use-dashboard';
 import { useVirtualServers } from '@/hooks/use-servers';
-import { useBots } from '@/hooks/use-bots';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
-import { DashboardUserHistoryCard } from '@/components/statistics/DashboardUserHistoryCard';
-import { formatBytes, formatUptime, cn } from '@/lib/utils';
-import { Activity, Clock, Hash, ArrowDownToLine, ArrowUpFromLine, Wifi, Server, LayoutGrid, Lock, Bot } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router';
+import { DASHBOARD_TILES, DEFAULT_LAYOUT, TILE_WIDTH_CLASS } from '@/components/dashboard/tile-registry';
+import { Wifi, Server, LayoutGrid, Lock } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
-
-interface SatelliteStatProps {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  sub?: string;
-  accentColor?: string;
-  compact?: boolean;
-  /** Small inline history sparkline, e.g. the last 20min of ping - see Sparkline below. */
-  chart?: React.ReactNode;
-}
-
-/** One stat inside the unified hero card below - no border/background of its own, just padding;
-    the surrounding card supplies the one shared border for the whole section. */
-function StatCell({ icon: Icon, label, value, sub, accentColor = 'text-foreground', compact, chart }: SatelliteStatProps) {
-  return (
-    <div className={cn('flex items-center justify-between gap-3', compact ? 'p-3' : 'p-5')}>
-      <div className="min-w-0 flex-1">
-        <p className="font-display text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
-        <p className={`text-lg font-bold font-mono-data leading-tight ${accentColor}`}>{value}</p>
-        {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
-        {chart && <div className="mt-1.5">{chart}</div>}
-      </div>
-      <Icon className={`h-4 w-4 shrink-0 ${accentColor}`} />
-    </div>
-  );
-}
-
-/** Minimal inline history line - no axes/labels, just the shape of the last N samples. */
-function Sparkline({ values, className }: { values: number[]; className?: string }) {
-  if (values.length < 2) return null;
-  const w = 100, h = 28;
-  const max = Math.max(...values, 0.001);
-  const min = Math.min(...values, 0);
-  const range = max - min || 1;
-  const points = values
-    .map((v, i) => `${(i / (values.length - 1)) * w},${h - ((v - min) / range) * h}`)
-    .join(' ');
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className={cn('w-full h-7', className)} preserveAspectRatio="none">
-      <polyline points={points} fill="none" style={{ stroke: 'hsl(var(--chart-4))' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-/** The dashboard's one hero readout - an arc gauge driven by the real online/max ratio, not decorative. */
-function ArcGauge({ percent }: { percent: number }) {
-  const radius = 78;
-  const arcLength = Math.PI * radius;
-  const clamped = Math.max(0, Math.min(1, Number.isFinite(percent) ? percent : 0));
-  const d = `M22 107 A${radius} ${radius} 0 0 1 178 107`;
-  return (
-    <svg width="200" height="115" viewBox="0 0 200 115" className="overflow-visible">
-      <path d={d} fill="none" style={{ stroke: 'hsl(var(--secondary))' }} strokeWidth="14" strokeLinecap="round" />
-      <path
-        d={d}
-        fill="none"
-        style={{ stroke: 'hsl(var(--primary))' }}
-        strokeWidth="14"
-        strokeLinecap="round"
-        strokeDasharray={arcLength}
-        strokeDashoffset={arcLength * (1 - clamped)}
-      />
-    </svg>
-  );
-}
-
-interface DashboardBotFlow {
-  id: number;
-  name: string;
-  enabled: boolean;
-}
-
-/** Visible to everyone (view-only awareness of what's automated on this server); only clickable
-    through to the editor for a user who actually has bot-flow permissions - the editor route
-    itself redirects anyone else straight back here, which would otherwise look like a dead click. */
-function BotFlowRow({ flow, canEdit, t }: { flow: DashboardBotFlow; canEdit: boolean; t: TFunction }) {
-  const inner = (
-    <div
-      className={cn(
-        'flex items-center justify-between gap-3 px-1 py-2 border-b border-border last:border-b-0',
-        canEdit && 'hover:bg-muted/50 -mx-1 px-2 rounded-sm transition-colors',
-      )}
-    >
-      <div className="flex items-center gap-2.5 min-w-0">
-        <Bot className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        <span className="text-sm truncate">{flow.name}</span>
-      </div>
-      <Badge variant={flow.enabled ? 'success' : 'secondary'} className="text-[10px] shrink-0">
-        {flow.enabled ? t('common.active') : t('common.inactive')}
-      </Badge>
-    </div>
-  );
-  return canEdit ? <Link to={`/bots/${flow.id}`}>{inner}</Link> : inner;
-}
-
-const formatSampleTime = (ms: number, locale: string) =>
-  new Date(ms).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-/** One measurement as the backend's /bandwidth-history endpoint returns it. */
-interface BandwidthSample {
-  timestamp: number;
-  incoming: number;
-  outgoing: number;
-  ping?: number;
-}
-
-/** The same measurement in the shape the chart and sparkline plot. */
-interface ChartPoint {
-  time: string;
-  in: number;
-  out: number;
-  ping: number;
-}
 
 export default function Dashboard() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
   const { data, isLoading, error } = useDashboard();
-  const { data: bandwidthHistoryData } = useBandwidthHistory();
   // Only consulted for its error - ServerSelector already fetches this same
   // query (same key, shared cache) to drive the header dropdown. If it 403s,
   // selectedSid silently never gets set there, and without checking this
@@ -144,34 +23,7 @@ export default function Dashboard() {
   // genuinely just not having picked a server yet.
   const { error: virtualServersError } = useVirtualServers();
   const isAdmin = useAuthStore((s) => s.isAdmin());
-  const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
-  const { data: allBots } = useBots();
-  const serverBotFlows = (allBots ?? []).filter(
-    (b: any) => b.serverConfigId === selectedConfigId && String(b.virtualServerId) === String(selectedSid),
-  );
   const [showWidgets, setShowWidgets] = useState(false);
-
-  // Straight from the backend's measurements - the page keeps no history state
-  // of its own. The sampler runs continuously whether or not anyone is looking,
-  // so this is already the full 20-minute window on the very first render
-  // rather than a chart that starts empty and fills in while you watch it.
-  // Appending live points here instead would mix the dashboard's own 10s poll
-  // into the sampler's 30s cadence and, within a few minutes, push the real
-  // history out of the window entirely.
-  const bandwidthHistory = useMemo<ChartPoint[]>(
-    () =>
-      ((bandwidthHistoryData ?? []) as BandwidthSample[]).map((s) => ({
-        time: formatSampleTime(s.timestamp, i18n.language),
-        in: s.incoming,
-        out: s.outgoing,
-        ping: s.ping ?? -1,
-      })),
-    [bandwidthHistoryData, i18n.language],
-  );
-
-  // Clamps unreachable (-1) samples to 0 so one bad tick doesn't spike the
-  // sparkline - the headline value above still shows "timeout" for those.
-  const pingSparklineValues = bandwidthHistory.map((s) => Math.max(0, s.ping ?? 0));
 
   if (!selectedConfigId || !selectedSid) {
     const isForbidden = (virtualServersError as any)?.response?.status === 403;
@@ -211,7 +63,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">{data.serverName}</h1>
           <div className="flex items-center gap-2 mt-1">
@@ -235,159 +87,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Hero + satellite cluster, all one field per the user's own preference (matching the
-          mockup more closely than the first pass, which had split this into 4 separate boxes):
-          Online Users is the one number this whole page exists to show at a glance, so it gets
-          the dominant arc readout; everything else sits alongside it in the same card. */}
-      <Card className="card-hero">
-        <CardContent className="p-0">
-          <div className="flex flex-col lg:flex-row">
-            <div className="p-6 flex flex-col items-center justify-center text-center lg:w-80 shrink-0">
-              <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('pages.dashboard.onlineUsers')}</p>
-              <ArcGauge percent={data.maxClients ? data.onlineUsers / data.maxClients : 0} />
-              <p className="text-4xl font-bold font-mono-data text-primary -mt-4">
-                {data.onlineUsers}<span className="text-lg font-medium text-muted-foreground">/{data.maxClients}</span>
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1">{t('pages.dashboard.ofSlots', { max: data.maxClients })}</p>
-            </div>
-            <div className="flex-1 flex flex-col justify-center">
-              <StatCell icon={Hash} label={t('pages.dashboard.channels')} value={data.channelCount} accentColor="text-violet-400" compact />
-              <StatCell icon={Clock} label={t('pages.dashboard.uptime')} value={formatUptime(data.uptime)} accentColor="text-emerald-400" compact />
-              <StatCell
-                icon={Activity}
-                label={t('pages.dashboard.ping')}
-                value={data.ping < 0 ? t('pages.dashboard.timeout') : `${data.ping}ms`}
-                sub={data.pingTarget ? `→ ${data.pingTarget}` : undefined}
-                accentColor={data.ping < 0 ? 'text-destructive' : 'text-amber-400'}
-                compact
-                chart={<Sparkline values={pingSparklineValues} />}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* The recorded user count of the last 24 hours: the live number above, its history here, the detail panels below. */}
-      <DashboardUserHistoryCard />
-
-      {/* Bandwidth + Detail panels */}
+      {/* The tiles. Each loads its own data and renders nothing when it has nothing to show. */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Bandwidth Chart */}
-        <Card className="card-hero lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              {t('pages.dashboard.bandwidth')}
-              <span className="ml-auto text-[11px] font-normal normal-case tracking-normal">{t('pages.dashboard.last20Minutes')}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px]">
-              {bandwidthHistory.length > 1 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={bandwidthHistory}>
-                    <defs>
-                      <linearGradient id="inGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="outGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => formatBytes(v)} width={60} />
-                    <ReTooltip
-                      contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '6px', fontSize: '12px' }}
-                      labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                      formatter={(value, name) => [formatBytes(Number(value) || 0) + '/s', name === 'in' ? t('pages.dashboard.download') : t('pages.dashboard.upload')]}
-                    />
-                    <Area type="monotone" dataKey="in" stroke="hsl(var(--chart-1))" fill="url(#inGrad)" strokeWidth={2} />
-                    <Area type="monotone" dataKey="out" stroke="hsl(var(--chart-3))" fill="url(#outGrad)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground font-mono-data">
-                  {t('pages.dashboard.collectingData')}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-6 mt-3">
-              <div className="flex items-center gap-2 text-xs">
-                <ArrowDownToLine className="h-3.5 w-3.5 text-primary" />
-                <span className="text-muted-foreground">{t('pages.dashboard.in')}</span>
-                <span className="font-mono-data text-primary">{formatBytes(data.bandwidth.incoming)}/s</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <ArrowUpFromLine className="h-3.5 w-3.5 text-violet-400" />
-                <span className="text-muted-foreground">{t('pages.dashboard.out')}</span>
-                <span className="font-mono-data text-violet-400">{formatBytes(data.bandwidth.outgoing)}/s</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Capacity */}
-        <Card className="card-hero">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t('pages.dashboard.serverCapacity')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-muted-foreground">{t('pages.dashboard.userSlots')}</span>
-                <span className="font-mono-data">{data.onlineUsers} / {data.maxClients}</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-linear-to-r from-primary to-primary/60 transition-all duration-500"
-                  style={{ width: `${Math.min((data.onlineUsers / data.maxClients) * 100, 100)}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-1 font-mono-data">
-                {t('pages.dashboard.utilized', { percent: ((data.onlineUsers / data.maxClients) * 100).toFixed(1) })}
-              </p>
-            </div>
-
-            <div className="pt-3 border-t border-border space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('pages.dashboard.serverVersion')}</span>
-                <span className="font-mono-data text-foreground">{data.version?.split(' ')[0]}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('pages.dashboard.platform')}</span>
-                <span className="font-mono-data text-foreground">{data.platform}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('pages.dashboard.channels')}</span>
-                <span className="font-mono-data text-foreground">{data.channelCount}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t('pages.dashboard.uptime')}</span>
-                <span className="font-mono-data text-emerald-400">{formatUptime(data.uptime)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {DEFAULT_LAYOUT.map(({ id, width }) => {
+          const Tile = DASHBOARD_TILES[id];
+          return <Tile key={id} className={TILE_WIDTH_CLASS[width]} />;
+        })}
       </div>
-
-      {serverBotFlows.length > 0 && (
-        <Card className="card-hero">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Bot className="h-4 w-4 text-primary" />
-              {t('pages.dashboard.botFlows')}
-              <span className="font-mono-data text-[11px] text-muted-foreground/70 font-normal">({serverBotFlows.length})</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {serverBotFlows.map((flow: DashboardBotFlow) => (
-              <BotFlowRow key={flow.id} flow={flow} canEdit={canManageBotFlows} t={t} />
-            ))}
-          </CardContent>
-        </Card>
-      )}
 
       {/* The dialog loads the widget list the moment it mounts, and only an admin may read it - the button that opens it is admin-only too. */}
       {isAdmin && <WidgetManagerModal open={showWidgets} onOpenChange={setShowWidgets} />}

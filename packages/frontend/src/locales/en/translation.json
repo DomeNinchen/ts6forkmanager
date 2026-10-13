@@ -2061,7 +2061,7 @@
       "noServerDescription": "Select a server connection from the header to view the dashboard.",
       "connectionFailedTitle": "Connection failed",
       "connectionFailedDescription": "Could not connect to the TeamSpeak server. Check your connection settings.",
-      "widgets": "Widgets",
+      "widgets": "Embed widgets",
       "liveMonitoring": "Live Monitoring",
       "onlineUsers": "Online Users",
       "ofSlots": "of {{max}} slots",
