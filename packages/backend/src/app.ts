@@ -30,6 +30,7 @@ import { dashboardRoutes } from './routes/dashboard.routes.js';
 import { statisticsRoutes } from './routes/statistics.routes.js';
 import { botRoutes } from './routes/bots.routes.js';
 import { userRoutes } from './routes/users.routes.js';
+import { userSettingsRoutes } from './routes/user-settings.routes.js';
 import { musicBotRoutes } from './routes/music-bots.routes.js';
 import { musicLibraryRoutes } from './routes/music-library.routes.js';
 import { playlistRoutes } from './routes/playlists.routes.js';
@@ -164,6 +165,12 @@ export function createApp(): Express {
     { method: 'GET', path: '/:botId/executions/:execId/logs', roles: BOT_FLOW_ROLES },
   ]), botRoutes);
   app.use('/api/users', userRoutes);
+  // A user's own settings (dashboard layout, ...): every role, but only ever the caller's rows.
+  app.use('/api/user-settings', adminExcept([
+    { method: 'GET', path: '/', roles: EVERY_ROLE },
+    { method: 'PUT', path: '/:key', roles: EVERY_ROLE },
+    { method: 'DELETE', path: '/:key', roles: EVERY_ROLE },
+  ]), userSettingsRoutes);
   app.use('/api/music-bots', musicBotRoutes);
   app.use('/api/playlists', playlistRoutes);
   app.use('/api/widgets', requireRole('admin'), widgetRoutes);

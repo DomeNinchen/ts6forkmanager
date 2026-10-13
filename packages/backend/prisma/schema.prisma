@@ -41,6 +41,21 @@ model User {
   refreshTokens  RefreshToken[]
   recoveryCodes  RecoveryCode[]
   trustedDevices TrustedDevice[]
+  settings       UserSetting[]
+}
+
+// Per-user settings that follow the account to every browser (dashboard layout, ...): one row
+// per user and key, the value is JSON text. Which keys exist and what a value must look like
+// is decided in code (@ts6/common user-settings), not here.
+model UserSetting {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, key])
 }
 
 model RefreshToken {
