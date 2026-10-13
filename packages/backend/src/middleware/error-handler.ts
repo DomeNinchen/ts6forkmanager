@@ -39,8 +39,30 @@ export class TSApiError extends Error {
   }
 }
 
+/** Short answers for the request bodies express.json() turns away; its own messages quote the parser. */
+const BODY_ERROR_MESSAGES: Record<string, string> = {
+  'entity.parse.failed': 'Request body is not valid JSON',
+  'entity.too.large': 'Request body is too large',
+};
+
+/**
+ * The 4xx status of an error express.json() raised for a body it cannot take (malformed JSON,
+ * over the size limit, an unsupported charset, ...) - the client's mistake, not a server fault.
+ * body-parser marks every one of them with a string `type` and a 4xx `status`.
+ */
+function bodyErrorStatus(err: Error): number | undefined {
+  const { type, status } = err as Error & { type?: unknown; status?: unknown };
+  return typeof type === 'string' && typeof status === 'number' && status >= 400 && status < 500 ? status : undefined;
+}
+
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
   console.error(`[Error] ${err.name}: ${err.message}`);
+
+  const bodyStatus = bodyErrorStatus(err);
+  if (bodyStatus) {
+    res.status(bodyStatus).json({ error: BODY_ERROR_MESSAGES[(err as Error & { type: string }).type] ?? 'Invalid request body' });
+    return;
+  }
 
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
