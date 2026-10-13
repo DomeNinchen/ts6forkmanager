@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  # The backend and the sidecar run as an unprivileged user (uid/gid 1000).
+  # Volumes of an installation from before that belong to root, so this hands
+  # the two data volumes over -- as root, once per `docker compose up`, before
+  # the services that use them start. It then exits; that is not an error.
+  volume-init:
+    image: debian:trixie-slim
+    container_name: ts6-volume-init
+    restart: "no"
+    user: "0:0"
+    network_mode: none
+    command: ["chown", "-R", "1000:1000", "/app/packages/backend/data", "/data/music"]
+    volumes:
+      - backend-data:/app/packages/backend/data
+      - music-data:/data/music
+
   backend:
     build:
       context: .
@@ -38,7 +53,10 @@ services:
       # their own X-Forwarded-For and be believed (see TRUST_PROXY above).
       - "127.0.0.1:3001:3001"
     depends_on:
-      - sidecar
+      sidecar:
+        condition: service_started
+      volume-init:
+        condition: service_completed_successfully
     networks:
       - ts6-network
 
@@ -64,6 +82,9 @@ services:
       # WebRTC ICE media (video/audio) -- must also be opened in the host
       # firewall, UDP, both IPv4 and IPv6.
       - "50000-50100:50000-50100/udp"
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
     networks:
       - ts6-network
 
@@ -74,7 +95,9 @@ services:
     container_name: ts6-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"
+      # The container's nginx listens on 8080: it runs as an unprivileged user,
+      # which may not bind port 80 on every container runtime.
+      - "3000:8080"
     depends_on:
       - backend
     networks:

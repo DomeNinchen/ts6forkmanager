@@ -114,12 +114,22 @@ WORKDIR /app/packages/backend
 # (No player_client override here: web_music was this vserver's SinusBot
 # audio-only workaround and caps video formats to itag 18/360p -- wrong for
 # the video streaming path, which needs the default client's full format list.)
+# The config goes to /etc/yt-dlp.conf, which yt-dlp reads whoever runs it; under
+# /root/.config only root would have found it.
+#
+# The backend runs as the node user (uid/gid 1000), so data/ and /data/music
+# belong to it. That is what a named volume gets that is still empty when it is
+# first mounted: it takes over the owner of the directory it covers. A volume
+# that already holds files (an installation from before the backend ran
+# unprivileged, whose files belong to root) keeps its owner; the compose files'
+# volume-init service hands those over.
 RUN mkdir -p data /data/music && \
-    mkdir -p /root/.config/yt-dlp && \
+    chown node:node data /data/music && \
     printf '%s\n' \
       '--js-runtimes deno' \
-      > /root/.config/yt-dlp/config
+      > /etc/yt-dlp.conf
 
+USER node
 EXPOSE 3001
 # GET /api/health with node itself: the image has no curl. The start period
 # covers the yt-dlp update check and the database sync that run before the
@@ -131,7 +141,10 @@ ENV SIDECAR_URL=http://ts6-sidecar:9800
 # newer on a rebuild - YouTube extraction breaks on its own schedule as sites
 # change, independent of when this image last got rebuilt. Check for an
 # update on every container start; non-fatal if it fails (offline, PyPI
-# unreachable, ...) so a network hiccup at boot never blocks startup.
+# unreachable, ...) so a network hiccup at boot never blocks startup. As the
+# node user pip cannot write into the system's site-packages, so it installs a
+# newer yt-dlp into the user's own (~/.local, "Defaulting to user installation"),
+# which Python looks at before the system copy.
 #
 # `prisma db push --accept-data-loss`: this project has no formal migrations -
 # db push IS the schema-sync step, applied on every start, and every schema
