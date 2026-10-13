@@ -2091,7 +2091,32 @@
       "utilized": "{{percent}}% ausgelastet",
       "serverVersion": "Serverversion",
       "platform": "Plattform",
-      "botFlows": "Bot-Flows"
+      "botFlows": "Bot-Flows",
+      "tiles": {
+        "customise": "Anpassen",
+        "editHint": "Ordne die Kacheln per Ziehen am Griff oder mit den Pfeilen an und stelle für jede Kachel Breite und Sichtbarkeit ein. Das Layout wird in deinem Konto gespeichert und gilt auf jedem Gerät.",
+        "dragHandle": "{{name}} verschieben",
+        "moveEarlier": "{{name}} nach vorne",
+        "moveLater": "{{name}} nach hinten",
+        "hide": "{{name}} ausblenden",
+        "show": "{{name}} einblenden",
+        "hiddenBadge": "Ausgeblendet",
+        "width": "Breite von {{name}}",
+        "widthLabel": "Breite",
+        "width1": "1/3",
+        "width2": "2/3",
+        "width3": "Ganz",
+        "botFlowsHint": "Erscheint nur, wenn dieser Server Bot-Flows hat.",
+        "saved": "Dashboard-Layout gespeichert",
+        "saveFailed": "Das Layout konnte nicht gespeichert werden",
+        "dnd": {
+          "instructions": "Leertaste oder Enter nimmt die Kachel auf. Mit den Pfeiltasten verschieben, mit Leertaste oder Enter ablegen, mit Escape abbrechen.",
+          "start": "{{name}} aufgenommen.",
+          "over": "{{name}} ist jetzt bei {{target}}.",
+          "end": "{{name}} auf den Platz von {{target}} gelegt.",
+          "cancel": "Verschieben abgebrochen, {{name}} bleibt an ihrem Platz."
+        }
+      }
     },
     "serverGroups": {
       "exportSelected": "Auswahl exportieren",

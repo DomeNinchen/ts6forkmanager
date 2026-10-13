@@ -2091,7 +2091,32 @@
       "utilized": "{{percent}}% utilized",
       "serverVersion": "Server Version",
       "platform": "Platform",
-      "botFlows": "Bot Flows"
+      "botFlows": "Bot Flows",
+      "tiles": {
+        "customise": "Customise",
+        "editHint": "Drag a tile by its handle or use the arrows to change the order, and set each tile's width and visibility. The layout is saved to your account and applies on every device.",
+        "dragHandle": "Move {{name}}",
+        "moveEarlier": "Move {{name}} earlier",
+        "moveLater": "Move {{name}} later",
+        "hide": "Hide {{name}}",
+        "show": "Show {{name}}",
+        "hiddenBadge": "Hidden",
+        "width": "Width of {{name}}",
+        "widthLabel": "Width",
+        "width1": "1/3",
+        "width2": "2/3",
+        "width3": "Full",
+        "botFlowsHint": "Only appears when this server has bot flows.",
+        "saved": "Dashboard layout saved",
+        "saveFailed": "The layout could not be saved",
+        "dnd": {
+          "instructions": "Press space or enter to pick up the tile. Move it with the arrow keys, drop it with space or enter, cancel with escape.",
+          "start": "Picked up {{name}}.",
+          "over": "{{name}} is now at {{target}}.",
+          "end": "{{name}} dropped in the place of {{target}}.",
+          "cancel": "Moving cancelled, {{name}} stays where it was."
+        }
+      }
     },
     "serverGroups": {
       "exportSelected": "Export Selected",

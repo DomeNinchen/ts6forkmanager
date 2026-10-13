@@ -1017,7 +1017,32 @@
       "utilized": "{{percent}} % utilisés",
       "serverVersion": "Version du serveur",
       "platform": "Plateforme",
-      "botFlows": "Flux de bots"
+      "botFlows": "Flux de bots",
+      "tiles": {
+        "customise": "Personnaliser",
+        "editHint": "Faites glisser une tuile par sa poignée ou utilisez les flèches pour changer l'ordre, et réglez la largeur et la visibilité de chaque tuile. La disposition est enregistrée sur votre compte et s'applique sur tous vos appareils.",
+        "dragHandle": "Déplacer {{name}}",
+        "moveEarlier": "Avancer {{name}}",
+        "moveLater": "Reculer {{name}}",
+        "hide": "Masquer {{name}}",
+        "show": "Afficher {{name}}",
+        "hiddenBadge": "Masquée",
+        "width": "Largeur de {{name}}",
+        "widthLabel": "Largeur",
+        "width1": "1/3",
+        "width2": "2/3",
+        "width3": "Pleine",
+        "botFlowsHint": "N'apparaît que si ce serveur a des flux de bots.",
+        "saved": "Disposition du tableau de bord enregistrée",
+        "saveFailed": "La disposition n'a pas pu être enregistrée",
+        "dnd": {
+          "instructions": "Appuyez sur Espace ou Entrée pour saisir la tuile. Déplacez-la avec les flèches, déposez-la avec Espace ou Entrée, annulez avec Échap.",
+          "start": "{{name}} saisie.",
+          "over": "{{name}} est maintenant sur {{target}}.",
+          "end": "{{name}} déposée à la place de {{target}}.",
+          "cancel": "Déplacement annulé, {{name}} reste à sa place."
+        }
+      }
     },
     "serverGroups": {
       "exportSelected": "Exporter la sélection",

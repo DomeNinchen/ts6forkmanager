@@ -17,7 +17,7 @@ Built on the **WebQuery HTTP API** (the ServerQuery replacement in modern TeamSp
 <summary><b>Dashboard, music bots, video streaming, the visual bot flow editor, ready-made flow templates, and the permission editor</b> — click to expand</summary>
 
 ### Dashboard
-Live overview of a virtual server: online users, channels, uptime, ping, bandwidth and capacity. The charts show the last 20 minutes the moment the page opens, a card charts the users of the last 24 hours, and the Statistics page keeps users, bandwidth and ping for up to a month.
+Live overview of a virtual server: online users, channels, uptime, ping, bandwidth and capacity. The charts show the last 20 minutes the moment the page opens, a card charts the users of the last 24 hours, and the Statistics page keeps users, bandwidth and ping for up to a month. Every user can arrange the dashboard's tiles for themselves — order, width and which ones are shown — and the layout is stored on their account, so it follows them to every browser.
 
 ![Dashboard](docs/dashboard.png)
 
@@ -139,7 +139,7 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 
 **Server management**
 
-- **Dashboard and statistics** — live stats with a 20-minute bandwidth and ping history, and a History tab for the users, bandwidth and ping of each virtual server over a day up to a month. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Dashboard)
+- **Dashboard and statistics** — live stats with a 20-minute bandwidth and ping history, tiles each user arranges for their own account, and a History tab for the users, bandwidth and ping of each virtual server over a day up to a month. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Dashboard)
 - **Channels, clients and the client database** — a channel tree with drag-and-drop, the live client list with bulk kick, ban, move and describe, and a database of every profile the server has ever seen: searchable, with banning, deleting, a group mode and CSV, HTML or JSON export. → [Channels](https://github.com/DomeNinchen/ts6forkmanager/wiki/Channels), [Clients](https://github.com/DomeNinchen/ts6forkmanager/wiki/Clients), [Client Database](https://github.com/DomeNinchen/ts6forkmanager/wiki/Client-Database)
 - **Files and icons** — a browser for channel file areas (upload files and whole folders, download a folder as a ZIP, preview pictures, move, delete) and the server's icon pool. → [Files](https://github.com/DomeNinchen/ts6forkmanager/wiki/Files), [Icons](https://github.com/DomeNinchen/ts6forkmanager/wiki/Icons)
 - **Permissions and groups** — an editor across all five layers, offline clients included, with bulk apply, compare, find, an overview per client, and a way to add or remove permissions on every group of one type; server and channel groups with member handling and export/import between servers. → [Permissions](https://github.com/DomeNinchen/ts6forkmanager/wiki/Permissions), [Groups](https://github.com/DomeNinchen/ts6forkmanager/wiki/Server-and-Channel-Groups)

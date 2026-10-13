@@ -1,5 +1,6 @@
 import { useDashboard } from '@/hooks/use-dashboard';
 import { useVirtualServers } from '@/hooks/use-servers';
+import { useUserSettings, useSaveUserSetting } from '@/hooks/use-user-settings';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { Badge } from '@/components/ui/badge';
@@ -7,10 +8,13 @@ import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
-import { DASHBOARD_TILES, DEFAULT_LAYOUT, TILE_WIDTH_CLASS } from '@/components/dashboard/tile-registry';
-import { Wifi, Server, LayoutGrid, Lock } from 'lucide-react';
+import { DEFAULT_LAYOUT, TILE_WIDTH_CLASS, isDefaultLayout, resolveLayout, tileDef } from '@/components/dashboard/tile-registry';
+import { TileLayoutEditor } from '@/components/dashboard/TileLayoutEditor';
+import { Wifi, Server, LayoutGrid, Lock, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import type { DashboardTileSetting } from '@ts6/common';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -24,6 +28,24 @@ export default function Dashboard() {
   const { error: virtualServersError } = useVirtualServers();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const [showWidgets, setShowWidgets] = useState(false);
+
+  // The user's own tile layout. If it cannot be loaded the default is shown - the dashboard itself still works.
+  const { data: settings, isLoading: settingsLoading } = useUserSettings();
+  const saveLayout = useSaveUserSetting('dashboardLayout');
+  const layout = resolveLayout(settings?.dashboardLayout);
+  /** The layout being edited; null outside the customise mode. */
+  const [draft, setDraft] = useState<DashboardTileSetting[] | null>(null);
+
+  const saveDraft = () => {
+    if (!draft) return;
+    saveLayout.mutate(isDefaultLayout(draft) ? null : { tiles: draft }, {
+      onSuccess: () => {
+        setDraft(null);
+        toast.success(t('pages.dashboard.tiles.saved'));
+      },
+      onError: () => toast.error(t('pages.dashboard.tiles.saveFailed')),
+    });
+  };
 
   if (!selectedConfigId || !selectedSid) {
     const isForbidden = (virtualServersError as any)?.response?.status === 403;
@@ -42,7 +64,7 @@ export default function Dashboard() {
     );
   }
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading || settingsLoading) return <PageLoader />;
   if (error || !data) {
     const isForbidden = (error as any)?.response?.status === 403;
     return isForbidden ? (
@@ -71,11 +93,30 @@ export default function Dashboard() {
             <span className="text-xs text-muted-foreground font-mono-data">{data.version} / {data.platform}</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {isAdmin && (
-            <Button size="sm" variant="outline" onClick={() => setShowWidgets(true)}>
-              <LayoutGrid className="h-3.5 w-3.5 mr-1.5" /> {t('pages.dashboard.widgets')}
-            </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          {draft ? (
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setDraft(DEFAULT_LAYOUT)} disabled={saveLayout.isPending}>
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> {t('common.reset')}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setDraft(null)} disabled={saveLayout.isPending}>
+                {t('common.cancel')}
+              </Button>
+              <Button size="sm" onClick={saveDraft} disabled={saveLayout.isPending}>
+                {saveLayout.isPending ? t('common.saving') : t('common.save')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" onClick={() => setDraft(layout)}>
+                <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" /> {t('pages.dashboard.tiles.customise')}
+              </Button>
+              {isAdmin && (
+                <Button size="sm" variant="outline" onClick={() => setShowWidgets(true)}>
+                  <LayoutGrid className="h-3.5 w-3.5 mr-1.5" /> {t('pages.dashboard.widgets')}
+                </Button>
+              )}
+            </>
           )}
           <div className="text-right">
             <p className="text-[10px] text-muted-foreground font-mono-data uppercase tracking-widest">{t('pages.dashboard.liveMonitoring')}</p>
@@ -87,13 +128,20 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* The tiles. Each loads its own data and renders nothing when it has nothing to show. */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {DEFAULT_LAYOUT.map(({ id, width }) => {
-          const Tile = DASHBOARD_TILES[id];
-          return <Tile key={id} className={TILE_WIDTH_CLASS[width]} />;
-        })}
-      </div>
+      {draft ? (
+        <>
+          <p className="text-sm text-muted-foreground">{t('pages.dashboard.tiles.editHint')}</p>
+          <TileLayoutEditor layout={draft} onChange={setDraft} />
+        </>
+      ) : (
+        /* The tiles. Each loads its own data and renders nothing when it has nothing to show. */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {layout.filter((tile) => !tile.hidden).map(({ id, width }) => {
+            const Tile = tileDef(id)?.component;
+            return Tile && <Tile key={id} className={TILE_WIDTH_CLASS[width]} />;
+          })}
+        </div>
+      )}
 
       {/* The dialog loads the widget list the moment it mounts, and only an admin may read it - the button that opens it is admin-only too. */}
       {isAdmin && <WidgetManagerModal open={showWidgets} onOpenChange={setShowWidgets} />}
