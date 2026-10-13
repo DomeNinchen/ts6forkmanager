@@ -2061,7 +2061,7 @@
       "noServerDescription": "Wähle oben eine Serververbindung aus, um das Dashboard zu sehen.",
       "connectionFailedTitle": "Verbindung fehlgeschlagen",
       "connectionFailedDescription": "Verbindung zum TeamSpeak-Server fehlgeschlagen. Bitte die Verbindungseinstellungen prüfen.",
-      "widgets": "Widgets",
+      "widgets": "Einbettungs-Widgets",
       "liveMonitoring": "Live-Überwachung",
       "onlineUsers": "Online-Nutzer",
       "ofSlots": "von {{max}} Plätzen",
