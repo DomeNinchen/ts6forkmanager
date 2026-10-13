@@ -1,27 +1,48 @@
 # syntax=docker/dockerfile:1.4
-FROM node:24-slim AS base
-RUN corepack enable && corepack prepare pnpm@9 --activate && npm install -g npm@12.0.2
 
-# Install system deps: openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp),
-# curl (Deno installer)
+# Deno (yt-dlp's JavaScript runtime) is fetched in a stage of its own: its
+# installer needs curl and unzip, and neither of them has any business in the
+# image that actually runs.
+FROM node:24-trixie-slim AS deno
 RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl unzip ca-certificates && \
+    curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
+
+# What the running backend needs, and nothing that only building it needed:
+# openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp and its update check at
+# start), ca-certificates, Deno.
+#   - Debian 13 (trixie), not 12: bookworm left the Debian security team's
+#     regular support in July 2026 and only gets LTS updates now, while trixie
+#     is the current stable release (ffmpeg 7.1 instead of 5.1).
+#   - `apt-get upgrade` first: the node image is only rebuilt every now and
+#     then, so Debian security fixes that are already published (perl-base in
+#     the Trivy scan) would otherwise ride along until the next base image.
+#   - npm is taken out again: nothing here runs it (the CMD below calls the
+#     prisma CLI directly), and its bundled libraries (ip-address, undici, tar,
+#     ...) were a steady source of scanner findings.
+FROM node:24-trixie-slim AS runtime
+RUN apt-get update && \
+    apt-get -y upgrade && \
     apt-get install -y --no-install-recommends \
       openssl \
       ffmpeg \
       python3 \
       python3-pip \
-      curl \
-      unzip \
       ca-certificates \
     && python3 -m pip install --break-system-packages --no-cache-dir -U "yt-dlp[default]" \
-    && curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+COPY --from=deno /usr/local/bin/deno /usr/local/bin/deno
 
+# Only the build stage gets pnpm. It lives in corepack's cache under /root, and
+# when it was part of the shared base it ended up in the production image as
+# well (with its own bundled libraries, which the scanner kept flagging).
+FROM runtime AS build
+RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 
 # Copy everything at once to avoid BuildKit ordering bug on Windows
-FROM base AS build
 COPY . .
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @ts6/common run build
@@ -51,10 +72,26 @@ RUN rm -rf node_modules packages/*/node_modules && \
 # Fail the build rather than quietly ship the frontend toolchain again.
 RUN if ls node_modules/.pnpm | grep -q -E '^(vite|rolldown|tailwindcss)@'; then \
       echo 'frontend build tooling is still in node_modules' >&2; exit 1; fi
+# Two more things pnpm installs although nothing here ever runs them:
+#   - typescript, only because prisma (and valibot) list it as an optional peer
+#     dependency. TypeScript 7 is a native Go compiler (`tsc` in
+#     @typescript/typescript-<platform>), built with an older Go standard
+#     library than the one the Go advisories are already fixed in, and the
+#     scanner counted every one of those advisories against this image. The
+#     compiler has no job at runtime: `prisma` and `tsx` do not need it.
+#   - cpu-features, an optional ssh2 add-on that is not even built here (it
+#     needs a compiler toolchain); ssh2 loads it inside a try/catch. Its
+#     source tree carries a few test Dockerfiles that the scanner reported as
+#     if they were ours.
+RUN rm -rf node_modules/.pnpm/typescript@* node_modules/.pnpm/@typescript+typescript-*@* node_modules/.pnpm/cpu-features@*
 
 # Production image
-FROM base AS production
+FROM runtime AS production
 ENV NODE_ENV=production
+# The prisma and tsx executables of the backend's own dependencies (pnpm puts
+# them here): the CMD calls them by name, and `prisma db seed` runs
+# `tsx prisma/seed.ts` through the shell, which finds tsx on this PATH.
+ENV PATH=/app/packages/backend/node_modules/.bin:$PATH
 WORKDIR /app
 
 COPY --from=build /app/node_modules ./node_modules
@@ -84,6 +121,11 @@ RUN mkdir -p data /data/music && \
       > /root/.config/yt-dlp/config
 
 EXPOSE 3001
+# GET /api/health with node itself: the image has no curl. The start period
+# covers the yt-dlp update check and the database sync that run before the
+# server listens.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3001)+'/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
 ENV SIDECAR_URL=http://ts6-sidecar:9800
 # yt-dlp is baked in at build time (above) and would otherwise only ever get
 # newer on a rebuild - YouTube extraction breaks on its own schedule as sites
@@ -105,4 +147,4 @@ ENV SIDECAR_URL=http://ts6-sidecar:9800
 # exist, but its scope leaked to the whole left-hand chain including db push
 # itself) - and the backend booted anyway with a stale schema. The explicit
 # `(... || true)` grouping below scopes that tolerance to db seed only.
-CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; npx prisma db push --accept-data-loss && (npx prisma db seed || true) && exec node dist/index.js"]
+CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; prisma db push --accept-data-loss && (prisma db seed || true) && exec node dist/index.js"]
