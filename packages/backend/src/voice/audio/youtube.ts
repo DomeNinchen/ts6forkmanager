@@ -80,6 +80,10 @@ export function downloadYouTube(url: string, outputDir: string): Promise<{ fileP
         ...getCookieArgs(),
         "--dump-json",
       "--no-playlist",
+      // "--" stops option parsing: without it a `url` that begins with "-"
+      // (e.g. "--config-locations=...") would be read as a yt-dlp option, not
+      // a URL, and could run arbitrary commands via yt-dlp's own flags.
+      "--",
       url,
     ], { shell: false });
 
@@ -131,6 +135,7 @@ export function downloadYouTube(url: string, outputDir: string): Promise<{ fileP
         "--audio-quality", "0",     // best quality
         "--no-playlist",
         "-o", outputTemplate,
+        "--", // stop option parsing, see the info-step spawn above
         url,
       ], { shell: false });
 
@@ -176,6 +181,7 @@ export function getYouTubeUrlInfo(url: string): Promise<{ type: 'video' | 'playl
         "--dump-json",
       "--flat-playlist",
       "--no-download",
+      "--", // stop option parsing, see downloadYouTube
       url,
     ], { shell: false });
 
