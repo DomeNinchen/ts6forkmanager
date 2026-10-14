@@ -103,18 +103,29 @@ export async function validateUrl(
     return { valid: false, error: 'Private/reserved IP addresses are blocked' };
   }
 
-  // DNS resolution check (prevents DNS rebinding)
+  // DNS resolution check. Resolve every address the name has, not just the
+  // first: a host that answers with both a public and a private address would
+  // otherwise slip the private one past this gate. Fail closed - a name we
+  // cannot resolve is refused rather than waved through, so an attacker cannot
+  // bypass the private-IP check by pointing at a name that fails here but
+  // resolves at fetch time.
   if (!options.skipDnsCheck) {
+    let addresses: string[];
     try {
-      const { address } = await lookup(hostname);
+      addresses = (await lookup(hostname, { all: true })).map((a) => a.address);
+    } catch {
+      return { valid: false, error: `Hostname "${hostname}" could not be resolved` };
+    }
+    if (addresses.length === 0) {
+      return { valid: false, error: `Hostname "${hostname}" could not be resolved` };
+    }
+    for (const address of addresses) {
       if (isPrivateIP(address)) {
         return { valid: false, error: `Hostname "${hostname}" resolves to a private IP (${address})` };
       }
       if (CLOUD_METADATA_IPS.has(address)) {
         return { valid: false, error: `Hostname "${hostname}" resolves to a cloud metadata IP` };
       }
-    } catch {
-      // DNS resolution failed — allow the request to proceed and let axios/ffmpeg handle the error
     }
   }
 

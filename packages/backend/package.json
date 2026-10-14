@@ -1,6 +1,6 @@
 {
   "name": "@ts6/backend",
-  "version": "2.65.0",
+  "version": "2.65.1",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -8,7 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.10.0",
