@@ -15,8 +15,13 @@ const CLOUD_METADATA_IPS = new Set([
  * Check if an IP address is in a private/reserved range.
  */
 export function isPrivateIP(ip: string): boolean {
+  // A URL's hostname keeps the brackets around an IPv6 literal ("[::1]"); strip
+  // them so the checks below see the bare address. Without this "[::1]" never
+  // matched "::1" and localhost over IPv6 slipped through the SSRF filter.
+  const bare = ip.replace(/^\[/, '').replace(/\]$/, '');
+
   // IPv4
-  const parts = ip.split('.');
+  const parts = bare.split('.');
   if (parts.length === 4) {
     const [a, b] = parts.map(Number);
     if (a === 10) return true;                           // 10.0.0.0/8
@@ -28,13 +33,23 @@ export function isPrivateIP(ip: string): boolean {
   }
 
   // IPv6
-  const lower = ip.toLowerCase();
+  const lower = bare.toLowerCase();
   if (lower === '::1') return true;                       // loopback
   if (lower.startsWith('fe80:')) return true;              // link-local
   if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // unique local
   if (lower.startsWith('::ffff:')) {                      // IPv4-mapped IPv6
     const mapped = lower.slice(7);
-    return isPrivateIP(mapped);
+    // Dotted form ("::ffff:127.0.0.1") can be checked as plain IPv4. The URL
+    // parser, though, rewrites a mapped literal to hex ("::ffff:7f00:1"), so
+    // decode those two 16-bit groups back to dotted quad before the check.
+    if (mapped.includes('.')) return isPrivateIP(mapped);
+    const hex = mapped.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+    if (hex) {
+      const hi = parseInt(hex[1], 16);
+      const lo = parseInt(hex[2], 16);
+      return isPrivateIP(`${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`);
+    }
+    return false;
   }
 
   return false;
