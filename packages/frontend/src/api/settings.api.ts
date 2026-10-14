@@ -61,6 +61,12 @@ export const settingsApi = {
   setUserHistorySettings: (config: UserHistorySettings): Promise<UserHistorySettingsResponse> =>
     api.put('/settings/user-history', config).then((r) => r.data),
 
+  getBotLogSettings: (): Promise<BotLogSettingsResponse> =>
+    api.get('/settings/bot-logs').then((r) => r.data),
+
+  setBotLogSettings: (config: BotLogSettings): Promise<BotLogSettingsResponse> =>
+    api.put('/settings/bot-logs', config).then((r) => r.data),
+
   getWebguiTheme: (): Promise<{ preset: AccentPreset }> =>
     api.get('/settings/webgui-theme').then((r) => r.data),
 
@@ -209,6 +215,21 @@ export interface UserHistorySettingsResponse extends UserHistorySettings {
   /** The intervals the backend accepts, in seconds. */
   intervalOptions: number[];
   retentionBounds: { min: number; max: number };
+}
+
+/** How long the bot-flow execution history (BotExecution + BotExecutionLog) is kept. */
+export interface BotLogSettings {
+  retentionDays: number;
+  /** Largest number of rows kept in the execution and the log table each. */
+  maxRows: number;
+}
+
+export interface BotLogSettingsResponse extends BotLogSettings {
+  defaults: BotLogSettings;
+  bounds: { retentionMin: number; retentionMax: number; maxRowsMin: number; maxRowsMax: number };
+  /** Current row counts, for the panel. */
+  executionCount: number;
+  logCount: number;
 }
 
 export interface ScheduledRestartConfig {

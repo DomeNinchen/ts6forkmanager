@@ -20,6 +20,7 @@ import { startUpdateChecker } from './utils/update-check.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
 import { startJournalPruner } from './utils/connection-journal.js';
+import { startBotLogPruner } from './utils/bot-log-retention.js';
 import { TsLoginJournal } from './ts-client/ts-login-journal.js';
 import { GeoIpService } from './utils/geoip.js';
 import { canonicalAddress, clientIpOfUpgrade, IpBanService } from './utils/ip-bans.js';
@@ -64,6 +65,7 @@ async function main() {
   startUpdateChecker(prisma);
   startPlayedSongCleanup(prisma);
   startJournalPruner(prisma);
+  startBotLogPruner(prisma);
   startYtCookieChecker();
 
   // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared

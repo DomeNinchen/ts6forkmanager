@@ -199,7 +199,20 @@
       "createFromTemplateFailed": "Failed to create bot from template",
       "deleteTitle": "Delete Bot?",
       "deleteDescription": "This will permanently delete this bot flow and all its execution history.",
-      "deleted": "Bot deleted"
+      "deleted": "Bot deleted",
+      "retention": {
+        "title": "Execution log retention",
+        "description": "How long the execution history of every bot flow (runs and their log lines) is kept. Applies to the whole instance; anything older is removed hourly.",
+        "retentionLabel": "Retention (days)",
+        "retentionHint": "Between {{min}} and {{max}} days.",
+        "maxRowsLabel": "Row cap per table",
+        "maxRowsHint": "Between {{min}} and {{max}} rows; protects against a sudden burst regardless of the days.",
+        "stats": "Currently storing {{executions}} executions and {{logs}} log lines.",
+        "saved": "Retention saved",
+        "saveFailed": "Could not save retention",
+        "restoreDefaults": "Restore defaults",
+        "unsaved": "Unsaved changes"
+      }
     },
     "instance": {
       "updated": "Instance settings updated",

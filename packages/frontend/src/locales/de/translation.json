@@ -199,7 +199,20 @@
       "createFromTemplateFailed": "Bot konnte nicht aus Vorlage erstellt werden",
       "deleteTitle": "Bot löschen?",
       "deleteDescription": "Dies löscht diesen Bot-Flow und seinen gesamten Ausführungsverlauf dauerhaft.",
-      "deleted": "Bot gelöscht"
+      "deleted": "Bot gelöscht",
+      "retention": {
+        "title": "Aufbewahrung der Ausführungs-Logs",
+        "description": "Wie lange der Ausführungsverlauf aller Bot-Flows (Ausführungen und ihre Logzeilen) aufbewahrt wird. Gilt für die ganze Instanz; Älteres wird stündlich entfernt.",
+        "retentionLabel": "Aufbewahrung (Tage)",
+        "retentionHint": "Zwischen {{min}} und {{max}} Tagen.",
+        "maxRowsLabel": "Zeilen-Obergrenze je Tabelle",
+        "maxRowsHint": "Zwischen {{min}} und {{max}} Zeilen; schützt bei einer plötzlichen Flut unabhängig von den Tagen.",
+        "stats": "Aktuell {{executions}} Ausführungen und {{logs}} Logzeilen gespeichert.",
+        "saved": "Aufbewahrung gespeichert",
+        "saveFailed": "Aufbewahrung konnte nicht gespeichert werden",
+        "restoreDefaults": "Standard wiederherstellen",
+        "unsaved": "Nicht gespeicherte Änderungen"
+      }
     },
     "instance": {
       "updated": "Instanz-Einstellungen aktualisiert",
