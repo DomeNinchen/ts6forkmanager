@@ -32,6 +32,12 @@ import {
 import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
 import { CONSOLE_AUDIT_RETENTION_BOUNDS } from '@ts6/common';
 import { getConsoleSettings, setConsoleSettings } from '../utils/console-settings.js';
+import {
+  getBotLogSettings, setBotLogSettings, isValidBotLogRetention, isValidBotLogMaxRows,
+  BOT_LOG_RETENTION_MIN_DAYS, BOT_LOG_RETENTION_MAX_DAYS, BOT_LOG_MAX_ROWS_MIN, BOT_LOG_MAX_ROWS_MAX, BOT_LOG_DEFAULTS,
+  type BotLogSettings,
+} from '../utils/bot-log-settings.js';
+import { pruneBotLogs, botLogStats } from '../utils/bot-log-retention.js';
 import { STREAM_PRESETS } from '../voice/streaming/types.js';
 import { forceCookieCheck } from '../utils/yt-cookie-check.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
@@ -516,6 +522,46 @@ settingsRoutes.put('/console', requireAdmin, async (req: Request, res: Response,
     const saved = await setConsoleSettings(prisma, { auditRetentionDays, floodGuardEnabled });
     console.log(`[Settings] Query console: audit trail kept ${saved.auditRetentionDays} days, flood guard ${saved.floodGuardEnabled ? 'on' : 'off'}`);
     res.json(saved);
+  } catch (err) { next(err); }
+});
+
+// What the bot-log retention card needs besides the two values: the bounds,
+// the defaults and the current row counts, so the frontend never hard-codes them.
+const botLogSettingsResponse = async (prisma: any, settings: BotLogSettings) => ({
+  ...settings,
+  defaults: BOT_LOG_DEFAULTS,
+  bounds: {
+    retentionMin: BOT_LOG_RETENTION_MIN_DAYS,
+    retentionMax: BOT_LOG_RETENTION_MAX_DAYS,
+    maxRowsMin: BOT_LOG_MAX_ROWS_MIN,
+    maxRowsMax: BOT_LOG_MAX_ROWS_MAX,
+  },
+  ...(await botLogStats(prisma)),
+});
+
+// GET /api/settings/bot-logs - how long the bot-flow execution history is kept
+settingsRoutes.get('/bot-logs', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    res.json(await botLogSettingsResponse(prisma, await getBotLogSettings(prisma)));
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/bot-logs - applies at once: a shorter retention or lower cap prunes now
+settingsRoutes.put('/bot-logs', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { retentionDays, maxRows } = req.body ?? {};
+    if (!isValidBotLogRetention(retentionDays)) {
+      throw new AppError(400, `retentionDays must be a whole number between ${BOT_LOG_RETENTION_MIN_DAYS} and ${BOT_LOG_RETENTION_MAX_DAYS}`);
+    }
+    if (!isValidBotLogMaxRows(maxRows)) {
+      throw new AppError(400, `maxRows must be a whole number between ${BOT_LOG_MAX_ROWS_MIN} and ${BOT_LOG_MAX_ROWS_MAX}`);
+    }
+    const prisma = req.app.locals.prisma;
+    const saved = await setBotLogSettings(prisma, { retentionDays, maxRows });
+    await pruneBotLogs(prisma);
+    console.log(`[Settings] Bot logs kept ${saved.retentionDays} day(s), capped at ${saved.maxRows} rows per table`);
+    res.json(await botLogSettingsResponse(prisma, saved));
   } catch (err) { next(err); }
 });
 

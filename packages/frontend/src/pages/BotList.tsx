@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { Bot, Plus, Pencil, Trash2, Play, Clock, AlertTriangle, LayoutTemplate } from 'lucide-react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { TemplateGallery } from '@/components/bots/TemplateGallery';
+import { BotLogSettingsCard } from '@/components/bots/BotLogSettingsCard';
+import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { timeAgo } from '@/lib/utils';
@@ -25,6 +27,7 @@ export default function BotList() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { selectedConfigId, selectedSid } = useServerStore();
+  const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
   const { data, isLoading } = useBots();
   const createBot = useCreateBot();
   const toggleBot = useToggleBot();
@@ -111,6 +114,8 @@ export default function BotList() {
           ))}
         </div>
       )}
+
+      {isAdmin && <BotLogSettingsCard />}
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
