@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
+import { sameLogin } from '../utils/issue-tokens.js';
 
 const VALID_ROLES = ['admin', 'viewer', 'bot-operator', 'music-operator'];
 
@@ -115,7 +116,8 @@ userRoutes.get('/:userId/sessions', async (req: Request, res: Response, next) =>
     const prisma = req.app.locals.prisma;
     const id = parseInt(String(req.params.userId));
     const sessions = await prisma.refreshToken.findMany({
-      where: { userId: id },
+      // Used tokens are kept only to recognise their reuse; each login shows as its current one
+      where: { userId: id, replacedBy: null, expiresAt: { gt: new Date() } },
       select: { id: true, createdAt: true, expiresAt: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -128,8 +130,10 @@ userRoutes.delete('/:userId/sessions', async (req: Request, res: Response, next)
   try {
     const prisma = req.app.locals.prisma;
     const id = parseInt(String(req.params.userId));
-    const { count } = await prisma.refreshToken.deleteMany({ where: { userId: id } });
-    res.json({ revoked: count });
+    // Counted as logins, as the list shows them - not the used tokens deleted with them
+    const revoked = await prisma.refreshToken.count({ where: { userId: id, replacedBy: null, expiresAt: { gt: new Date() } } });
+    await prisma.refreshToken.deleteMany({ where: { userId: id } });
+    res.json({ revoked });
   } catch (err) { next(err); }
 });
 
@@ -139,7 +143,8 @@ userRoutes.delete('/:userId/sessions/:sessionId', async (req: Request, res: Resp
     const prisma = req.app.locals.prisma;
     const userId = parseInt(String(req.params.userId));
     const sessionId = parseInt(String(req.params.sessionId));
-    await prisma.refreshToken.deleteMany({ where: { id: sessionId, userId } });
+    const session = await prisma.refreshToken.findFirst({ where: { id: sessionId, userId } });
+    if (session) await prisma.refreshToken.deleteMany({ where: sameLogin(session) });
     res.status(204).send();
   } catch (err) { next(err); }
 });
