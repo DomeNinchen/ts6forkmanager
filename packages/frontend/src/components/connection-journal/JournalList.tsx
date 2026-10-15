@@ -70,10 +70,10 @@ export function JournalList({
 
   return (
     <div className="space-y-3" aria-busy={isFetching}>
-      <div className="card-hero rounded-md border border-border overflow-x-auto">
+      <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
+            <tr className="border-b border-border bg-muted/30 lounge:bg-transparent">
               {header('at', 'pages.connectionJournal.columns.time')}
               {header('source', 'pages.connectionJournal.columns.source')}
               {header('event', 'pages.connectionJournal.columns.event')}

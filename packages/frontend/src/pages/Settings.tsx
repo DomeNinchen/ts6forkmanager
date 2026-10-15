@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
 import { serversApi } from '@/api/servers.api';
-import { settingsApi, RECOMMENDED_ACCENT, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type StreamDefaults, type StreamPreset, type AccentPreset, type BaseTheme } from '@/api/settings.api';
+import { settingsApi, RECOMMENDED_ACCENT, type ScheduledRestartConfig, type OidcSettings, type OidcSettingsInput, type MusicCacheSettings, type StreamDefaults, type StreamPreset, type AccentPreset, type BaseTheme, DESIGNS, type Design } from '@/api/settings.api';
 import { ACCENT_PRESETS, DARK_THEME_PRESETS, LIGHT_THEME_PRESETS, accentLabel, baseThemeLabel } from '@/lib/themes';
 import { useAuthStore } from '@/stores/auth.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
-import { useSetWebguiTheme, useSetWebguiBaseTheme } from '@/hooks/use-webgui-theme';
+import { useSetWebguiTheme, useSetWebguiBaseTheme, useSetWebguiDesign } from '@/hooks/use-webgui-theme';
 import { usePublicConfig, useSetPrivacyNotice } from '@/hooks/use-public-config';
 import { useUiStore } from '@/stores/ui.store';
 import { useLanguagePreference } from '@/hooks/use-language';
@@ -375,6 +375,31 @@ function BaseThemeSwatchPicker({ value, onChange, disabled }: { value: BaseTheme
   );
 }
 
+/** The two layout/typography designs, each with a one-line description of what changes. */
+function DesignPicker({ value, onChange, disabled }: { value: Design; onChange: (design: Design) => void; disabled?: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {DESIGNS.map((design) => (
+        <button
+          key={design}
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange(design)}
+          className={cn(
+            'rounded-md border px-3 py-2 text-left transition-colors',
+            value === design ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed',
+          )}
+        >
+          <span className="block text-sm font-medium">{t(`pages.settings.webgui.designs.${design}.label`)}</span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">{t(`pages.settings.webgui.designs.${design}.description`)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
   const { t } = useTranslation();
   const { language, setLanguage, isSaving: isSavingLanguage } = useLanguagePreference();
@@ -386,8 +411,15 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
     queryKey: ['webgui-base-theme'],
     queryFn: settingsApi.getWebguiBaseTheme,
   });
+  const { data: installDesign, isLoading: isLoadingDesign } = useQuery({
+    queryKey: ['webgui-design'],
+    queryFn: settingsApi.getWebguiDesign,
+  });
   const setInstallTheme = useSetWebguiTheme();
   const setInstallBaseTheme = useSetWebguiBaseTheme();
+  const setInstallDesign = useSetWebguiDesign();
+  const designOverride = useUiStore((s) => s.designOverride);
+  const setDesignOverride = useUiStore((s) => s.setDesignOverride);
   const { data: publicConfig } = usePublicConfig();
   const setPrivacyNotice = useSetPrivacyNotice();
   const accentOverride = useUiStore((s) => s.accentOverride);
@@ -395,11 +427,12 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
   const baseThemeOverride = useUiStore((s) => s.baseThemeOverride);
   const setBaseThemeOverride = useUiStore((s) => s.setBaseThemeOverride);
 
-  if (isLoading || isLoadingBaseTheme) return <PageLoader />;
+  if (isLoading || isLoadingBaseTheme || isLoadingDesign) return <PageLoader />;
 
   // Picking a preset that already matches the installation default clears the personal
   // override instead of pinning the same value, so a later admin change still reaches this browser.
   const pickAccent = (preset: AccentPreset) => setAccentOverride(preset === installTheme?.preset ? null : preset);
+  const pickDesign = (design: Design) => setDesignOverride(design === installDesign?.design ? null : design);
 
   const pickBaseTheme = (theme: BaseTheme) => {
     setBaseThemeOverride(theme === installBaseTheme?.theme ? null : theme);
@@ -431,6 +464,23 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
               ))}
             </SelectContent>
           </Select>
+        </CardContent>
+      </Card>
+
+      <Card className="card-hero">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.myDesign')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {t('pages.settings.webgui.designDescription')}
+          </p>
+          <DesignPicker value={designOverride ?? installDesign?.design ?? 'cockpit'} onChange={pickDesign} />
+          {designOverride && (
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setDesignOverride(null)}>
+              {t('pages.settings.webgui.resetToInstallDefault')}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -473,6 +523,27 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
           )}
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <Card className="card-hero">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.installDefaultDesign')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              {t('pages.settings.webgui.installDefaultDesignDescription')}
+            </p>
+            <DesignPicker
+              value={installDesign?.design ?? 'cockpit'}
+              onChange={(design) => setInstallDesign.mutate(design, {
+                onSuccess: () => toast.success(t('pages.settings.webgui.designSetToast', { design: t(`pages.settings.webgui.designs.${design}.label`) })),
+                onError: () => toast.error(t('pages.settings.webgui.designSetFailed')),
+              })}
+              disabled={setInstallDesign.isPending}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {isAdmin && (
         <Card className="card-hero">
@@ -918,10 +989,10 @@ function UsersTab() {
         </div>
       </div>
 
-      <div className="card-hero rounded-md border border-border overflow-hidden">
+      <div className="card-hero rounded-md border border-border overflow-hidden lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
+            <tr className="border-b border-border bg-muted/30 lounge:bg-transparent">
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('pages.settings.users.colUsername')}</th>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('pages.settings.users.colDisplayName')}</th>
               <th className="h-10 px-3 text-left font-medium text-muted-foreground">{t('common.role')}</th>

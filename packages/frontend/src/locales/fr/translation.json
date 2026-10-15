@@ -579,6 +579,22 @@
         "darkGroup": "Sombre",
         "lightGroup": "Clair",
         "myBaseTheme": "Mon thème de base",
+        "myDesign": "Ma disposition",
+        "designDescription": "Structure et typographie de l'interface, indépendamment du thème de base et de l'accent. Remplace la valeur par défaut de l'installation ci-dessous, uniquement pour vous - enregistré uniquement dans ce navigateur.",
+        "installDefaultDesign": "Disposition par défaut de l'installation",
+        "installDefaultDesignDescription": "S'applique à tout utilisateur qui n'a pas encore choisi sa propre disposition ci-dessus.",
+        "designSetToast": "Disposition de l'installation définie sur {{design}}",
+        "designSetFailed": "Impossible de mettre à jour la disposition de l'installation",
+        "designs": {
+          "cockpit": {
+            "label": "Cockpit",
+            "description": "Barre latérale, tuiles et beaucoup d'informations d'un coup d'œil. L'apparence d'origine."
+          },
+          "lounge": {
+            "label": "Lounge",
+            "description": "Navigation en haut, grands caractères, sections sous des filets au lieu de cartes."
+          }
+        },
         "baseThemeDescription": "La palette d'arrière-plan et de surface, qui détermine aussi si l'appli est claire ou sombre. Remplace le défaut d'installation ci-dessous, uniquement pour vous — enregistré dans ce navigateur seulement.",
         "resetToInstallDefault": "Rétablir le défaut d'installation",
         "myAccent": "Mon accent",
@@ -1012,6 +1028,21 @@
       "connectionFailedDescription": "Impossible de se connecter au serveur TeamSpeak. Vérifiez vos paramètres de connexion.",
       "widgets": "Widgets intégrables",
       "liveMonitoring": "Surveillance en direct",
+      "lead": {
+        "peopleHere_one": "{{count}} personne est là en ce moment",
+        "peopleHere_other": "{{count}} personnes sont là en ce moment",
+        "nobodyHere": "Personne n'est là en ce moment",
+        "upDays_one": "En ligne depuis {{count}} jour",
+        "upDays_other": "En ligne depuis {{count}} jours",
+        "upHours_one": "En ligne depuis {{count}} heure",
+        "upHours_other": "En ligne depuis {{count}} heures",
+        "upMinutes_one": "En ligne depuis {{count}} minute",
+        "upMinutes_other": "En ligne depuis {{count}} minutes",
+        "channelsPing_one": "{{count}} salon, ping {{ping}} ms.",
+        "channelsPing_other": "{{count}} salons, ping {{ping}} ms.",
+        "channelsNoPing_one": "{{count}} salon, ping non mesurable pour le moment.",
+        "channelsNoPing_other": "{{count}} salons, ping non mesurable pour le moment."
+      },
       "onlineUsers": "Utilisateurs en ligne",
       "ofSlots": "sur {{max}} slots",
       "channels": "Salons",

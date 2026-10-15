@@ -69,7 +69,7 @@ export function ClientDbSearchBar({ active, busy, channels, channelGroups, onSea
   };
 
   return (
-    <form onSubmit={submit} className="card-hero rounded-md border border-border bg-card p-3 space-y-2">
+    <form onSubmit={submit} className="card-hero rounded-md border border-border bg-card p-3 space-y-2 lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none lounge:px-0">
       <div className="flex flex-wrap items-end gap-2">
         <div className="w-44">
           <Label className="text-xs">{t('pages.clientDatabase.search.mode')}</Label>

@@ -14,7 +14,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="h-8 w-8"
+      className="h-8 w-8 lounge:text-sidebar-foreground lounge:hover:bg-sidebar-accent lounge:hover:text-sidebar-accent-foreground"
       title={t('components.themeToggle.switchTo', { theme: baseThemeLabel(isDark ? lastLightTheme : lastDarkTheme) })}
     >
       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

@@ -177,6 +177,7 @@ export function createApp(): Express {
   app.use('/api/settings', adminExcept([
     { method: 'GET', path: '/webgui-theme', roles: EVERY_ROLE },
     { method: 'GET', path: '/webgui-base-theme', roles: EVERY_ROLE },
+    { method: 'GET', path: '/webgui-design', roles: EVERY_ROLE },
   ]), settingsRoutes);
   app.use('/api/connection-journal', requireRole('admin'), connectionJournalRoutes);
   // The banners in the layout read the cached results for every role; forcing a fresh check is an admin's.

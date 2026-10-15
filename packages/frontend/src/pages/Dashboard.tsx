@@ -13,11 +13,48 @@ import { TileLayoutEditor } from '@/components/dashboard/TileLayoutEditor';
 import { Wifi, Server, LayoutGrid, Lock, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { toast } from 'sonner';
 import type { DashboardTileSetting } from '@ts6/common';
+import { useClients } from '@/hooks/use-clients';
+import { useDesign } from '@/hooks/use-webgui-theme';
+import { cn } from '@/lib/utils';
+
+/** The single-number tiles; Lounge's lead sentence says all of them, so its tile grid leaves them out. */
+const SAID_IN_LEAD = new Set(['onlineUsers', 'channels', 'uptime', 'ping']);
+
+/** How long the server has been up, in its largest whole unit, as a phrase. */
+function uptimePhrase(t: TFunction, seconds: number) {
+  const days = Math.floor(seconds / 86400);
+  if (days > 0) return t('pages.dashboard.lead.upDays', { count: days });
+  const hours = Math.floor(seconds / 3600);
+  if (hours > 0) return t('pages.dashboard.lead.upHours', { count: hours });
+  return t('pages.dashboard.lead.upMinutes', { count: Math.max(1, Math.floor(seconds / 60)) });
+}
+
+/**
+ * The Lounge dashboard's opening sentence: who is here (voice clients only, no query logins),
+ * how long the server has been up, channels and ping - in words instead of tiles.
+ */
+function Lead({ uptime, channelCount, ping }: { uptime: number; channelCount: number; ping: number }) {
+  const { t } = useTranslation();
+  const { data: clients } = useClients();
+  const people = ((clients ?? []) as any[]).filter((c) => String(c.client_type) === '0').length;
+
+  return (
+    <p className="mt-6 max-w-[30ch] font-display text-3xl font-medium leading-snug sm:text-[2.6rem]">
+      {people ? t('pages.dashboard.lead.peopleHere', { count: people }) : t('pages.dashboard.lead.nobodyHere')}.{' '}
+      {uptimePhrase(t, uptime)},{' '}
+      {ping < 0
+        ? t('pages.dashboard.lead.channelsNoPing', { count: channelCount })
+        : t('pages.dashboard.lead.channelsPing', { count: channelCount, ping })}
+    </p>
+  );
+}
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const lounge = useDesign() === 'lounge';
   const { selectedConfigId, selectedSid } = useServerStore();
   const { data, isLoading, error } = useDashboard();
   // Only consulted for its error - ServerSelector already fetches this same
@@ -83,16 +120,24 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lounge:space-y-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{data.serverName}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="success" className="font-mono-data text-[10px]">{t('common.online').toUpperCase()}</Badge>
-            <span className="text-xs text-muted-foreground font-mono-data">{data.version} / {data.platform}</span>
+      <div className={cn('flex flex-wrap justify-between gap-3', lounge ? 'items-start gap-x-6 gap-y-4' : 'items-center')}>
+        {lounge ? (
+          <div className="min-w-0">
+            <h1 data-hero className="font-display text-5xl font-bold leading-[0.95] tracking-tight sm:text-7xl">{data.serverName}</h1>
+            <Lead uptime={data.uptime} channelCount={data.channelCount} ping={data.ping} />
+            <p className="mt-5 text-sm text-muted-foreground">TeamSpeak {data.version}, {data.platform}</p>
           </div>
-        </div>
+        ) : (
+          <div>
+            <h1 className="text-xl font-semibold">{data.serverName}</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="success" className="font-mono-data text-[10px]">{t('common.online').toUpperCase()}</Badge>
+              <span className="text-xs text-muted-foreground font-mono-data">{data.version} / {data.platform}</span>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-3">
           {draft ? (
             <>
@@ -118,13 +163,15 @@ export default function Dashboard() {
               )}
             </>
           )}
-          <div className="text-right">
-            <p className="text-[10px] text-muted-foreground font-mono-data uppercase tracking-widest">{t('pages.dashboard.liveMonitoring')}</p>
-            <div className="flex items-center gap-1 justify-end mt-0.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
-              <span className="text-[10px] text-emerald-400 font-mono-data">{t('common.active').toUpperCase()}</span>
+          {!lounge && (
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground font-mono-data uppercase tracking-widest">{t('pages.dashboard.liveMonitoring')}</p>
+              <div className="flex items-center gap-1 justify-end mt-0.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
+                <span className="text-[10px] text-emerald-400 font-mono-data">{t('common.active').toUpperCase()}</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -134,9 +181,10 @@ export default function Dashboard() {
           <TileLayoutEditor layout={draft} onChange={setDraft} />
         </>
       ) : (
-        /* The tiles. Each loads its own data and renders nothing when it has nothing to show. */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {layout.filter((tile) => !tile.hidden).map(({ id, width }) => {
+        /* The tiles. Each loads its own data and renders nothing when it has nothing to show.
+           Lounge leaves out the four single-number tiles - its lead sentence says what they say. */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lounge:gap-x-10 lounge:gap-y-8 lounge:pt-4">
+          {layout.filter((tile) => !tile.hidden && !(lounge && SAID_IN_LEAD.has(tile.id))).map(({ id, width }) => {
             const Tile = tileDef(id)?.component;
             return Tile && <Tile key={id} className={TILE_WIDTH_CLASS[width]} />;
           })}

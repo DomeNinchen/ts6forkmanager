@@ -22,9 +22,11 @@ export const BASE_THEME_PRESETS: { value: BaseTheme; label: string; description:
   { value: 'carbon', label: 'Carbon', description: 'Warm anthracite with a faint brown cast.', preview: 'hsl(20 10% 8%)' },
   { value: 'frost', label: 'Frost', description: 'Cool blue-grey, lower contrast.', preview: 'hsl(220 17% 13%)' },
   { value: 'deep-forest', label: 'Deep Forest', description: 'Dark green-black.', preview: 'hsl(155 28% 6%)' },
+  { value: 'petrol', label: 'Petrol', description: 'Deep blue-green, made for the Lounge layout.', preview: 'hsl(189 46% 12%)' },
   { value: 'daylight', label: 'Daylight', description: 'Neutral light grey and white.', preview: 'hsl(210 20% 98%)' },
   { value: 'paper', label: 'Paper', description: 'Warm off-white with a light sepia cast.', preview: 'hsl(40 30% 95%)' },
   { value: 'frost-light', label: 'Frost Light', description: 'Cool light blue-grey.', preview: 'hsl(218 27% 94%)' },
+  { value: 'chalk', label: 'Chalk', description: 'Light grey-green with a dark petrol bar.', preview: 'hsl(156 17% 94%)' },
 ];
 
 export const DARK_THEME_PRESETS = BASE_THEME_PRESETS.filter((t) =>

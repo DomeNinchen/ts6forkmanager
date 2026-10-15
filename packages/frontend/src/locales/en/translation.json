@@ -1472,6 +1472,22 @@
         "darkGroup": "Dark",
         "lightGroup": "Light",
         "myBaseTheme": "My Base Theme",
+        "myDesign": "My Layout",
+        "designDescription": "How the interface is laid out and set, independent of base theme and accent. Overrides the installation default below, just for you - stored in this browser only.",
+        "installDefaultDesign": "Installation Default Layout",
+        "installDefaultDesignDescription": "Applies to every user who hasn't set their own layout above.",
+        "designSetToast": "Installation layout set to {{design}}",
+        "designSetFailed": "Failed to update installation layout",
+        "designs": {
+          "cockpit": {
+            "label": "Cockpit",
+            "description": "Sidebar, tiles and a lot at a glance. The original look."
+          },
+          "lounge": {
+            "label": "Lounge",
+            "description": "Navigation on top, large type, sections under rules instead of cards."
+          }
+        },
         "baseThemeDescription": "The background and surface palette, which also decides whether the app is light or dark. Overrides the installation default below, just for you - stored in this browser only.",
         "resetToInstallDefault": "Reset to installation default",
         "myAccent": "My Accent",
@@ -2076,6 +2092,21 @@
       "connectionFailedDescription": "Could not connect to the TeamSpeak server. Check your connection settings.",
       "widgets": "Embed widgets",
       "liveMonitoring": "Live Monitoring",
+      "lead": {
+        "peopleHere_one": "{{count}} person is here right now",
+        "peopleHere_other": "{{count}} people are here right now",
+        "nobodyHere": "Nobody is here right now",
+        "upDays_one": "Up for {{count}} day straight",
+        "upDays_other": "Up for {{count}} days straight",
+        "upHours_one": "Up for {{count}} hour straight",
+        "upHours_other": "Up for {{count}} hours straight",
+        "upMinutes_one": "Up for {{count}} minute",
+        "upMinutes_other": "Up for {{count}} minutes",
+        "channelsPing_one": "{{count}} channel, {{ping}} ms ping.",
+        "channelsPing_other": "{{count}} channels, {{ping}} ms ping.",
+        "channelsNoPing_one": "{{count}} channel, ping not measurable right now.",
+        "channelsNoPing_other": "{{count}} channels, ping not measurable right now."
+      },
       "onlineUsers": "Online Users",
       "ofSlots": "of {{max}} slots",
       "channels": "Channels",

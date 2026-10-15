@@ -147,11 +147,11 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className={cn('card-hero rounded-md border border-border', horizontalScroll ? 'overflow-x-auto' : 'overflow-hidden')}>
+      <div className={cn('card-hero rounded-md border border-border lounge:border-0', horizontalScroll ? 'overflow-x-auto' : 'overflow-hidden')}>
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id} className="border-b border-border bg-muted/30">
+              <tr key={hg.id} className="border-b border-border bg-muted/30 lounge:border-b-2 lounge:border-foreground/80 lounge:bg-transparent">
                 {hg.headers.map((header) => (
                   <th
                     key={header.id}
