@@ -1,4 +1,4 @@
-import { Link, NavLink, useLocation } from 'react-router';
+import { Link, NavLink, useLocation, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { useVisibleNavSections } from './Sidebar';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLogout } from '@/hooks/use-auth';
 import { roleLabel } from '@/lib/roles';
+import { settingsTabsFor, resolveSettingsTab } from '@/lib/settings-tabs';
 
 /** Both nav rows scroll sideways on a narrow screen, without showing a scrollbar. */
 const NO_SCROLLBAR = 'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
@@ -36,8 +37,23 @@ export function LoungeHeader() {
   const logout = useLogout();
   const location = useLocation();
   const sections = useVisibleNavSections();
+  const [searchParams] = useSearchParams();
   const isActive = (to: string) => location.pathname === to || location.pathname.startsWith(to + '/');
   const activeSection = sections.find((section) => section.items.some((item) => isActive(item.to)));
+
+  // Settings has no section pages of its own; its tabs take that row instead, so it reads
+  // like every other section.
+  const rowTwo = isActive('/settings')
+    ? (() => {
+        const isAdmin = user?.role === 'admin';
+        const current = resolveSettingsTab(searchParams.get('tab'), isAdmin);
+        return settingsTabsFor(isAdmin).map((tab) => ({
+          to: `/settings?tab=${tab.value}`,
+          label: t(tab.labelKey),
+          active: tab.value === current,
+        }));
+      })()
+    : (activeSection?.items ?? []).map((item) => ({ to: item.to, label: item.label, active: isActive(item.to) }));
 
   return (
     <header className="bg-sidebar text-sidebar-foreground">
@@ -92,22 +108,23 @@ export function LoungeHeader() {
       </nav>
 
       {/* Row two: every page of the active section, always in view - one click, no menus. */}
-      {activeSection && activeSection.items.length > 1 && (
+      {rowTwo.length > 1 && (
         <nav className={cn('flex gap-x-6 border-b bg-background px-4 sm:px-6', NO_SCROLLBAR)}>
-          {activeSection.items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
+          {rowTwo.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              aria-current={link.active ? 'page' : undefined}
               className={cn(
                 '-mb-px shrink-0 border-b-2 py-2.5 text-sm transition-colors',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                isActive(item.to)
+                link.active
                   ? 'border-primary font-semibold text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
-              {item.label}
-            </NavLink>
+              {link.label}
+            </Link>
           ))}
         </nav>
       )}
