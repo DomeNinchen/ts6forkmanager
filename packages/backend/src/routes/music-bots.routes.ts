@@ -49,6 +49,13 @@ musicBotRoutes.param('id', async (req: Request, res: Response, next, idParam) =>
   } catch (err) { next(err); }
 });
 
+/** Prisma filter for a song or radio station a non-admin may hand a bot: one from a server connection
+ * they have access to (the play dialog can pick another server's library). Anything else is answered
+ * like an unknown id. */
+function onCallersServers(req: Request) {
+  return req.user!.role === 'admin' ? {} : { serverConfig: { userAccess: { some: { userId: req.user!.id } } } };
+}
+
 // GET / — List all music bots
 musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
@@ -132,6 +139,13 @@ musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
     const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes } = req.body;
     if (!name || !serverConfigId) throw new AppError(400, 'name and serverConfigId are required');
     if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
+    // The ':id' check above cannot cover a bot that does not exist yet
+    if (req.user!.role !== 'admin') {
+      const access = await req.app.locals.prisma.userServerAccess.findUnique({
+        where: { userId_serverConfigId: { userId: req.user!.id, serverConfigId: parseInt(serverConfigId) } },
+      });
+      if (!access) throw new AppError(403, 'No access to this server');
+    }
 
     const result = await manager.createBot({
       name,
@@ -349,7 +363,7 @@ musicBotRoutes.post('/:id/play', async (req: Request, res: Response, next) => {
       throw new AppError(400, 'Bot is not connected');
     }
 
-    const song = await prisma.song.findUnique({ where: { id: parseInt(songId) } });
+    const song = await prisma.song.findFirst({ where: { id: parseInt(songId), ...onCallersServers(req) } });
     if (!song) throw new AppError(404, 'Song not found');
 
     const queueItem = {
@@ -468,7 +482,7 @@ musicBotRoutes.post('/:id/play-radio', async (req: Request, res: Response, next)
       throw new AppError(400, 'Bot is not connected');
     }
 
-    const station = await prisma.radioStation.findUnique({ where: { id: parseInt(stationId) } });
+    const station = await prisma.radioStation.findFirst({ where: { id: parseInt(stationId), ...onCallersServers(req) } });
     if (!station) throw new AppError(404, 'Radio station not found');
 
     const queueItem = {
@@ -619,7 +633,7 @@ musicBotRoutes.post('/:id/queue', async (req: Request, res: Response, next) => {
     if (!bot) throw new AppError(404, 'Music bot not found');
 
     const { songId } = req.body;
-    const song = await prisma.song.findUnique({ where: { id: parseInt(songId) } });
+    const song = await prisma.song.findFirst({ where: { id: parseInt(songId), ...onCallersServers(req) } });
     if (!song) throw new AppError(404, 'Song not found');
 
     bot.queue.add({
@@ -647,7 +661,8 @@ musicBotRoutes.post('/:id/queue/playlist', async (req: Request, res: Response, n
     const { playlistId, clearFirst } = req.body;
     const playlist = await prisma.playlist.findUnique({
       where: { id: parseInt(playlistId) },
-      include: { songs: { include: { song: true }, orderBy: { position: 'asc' } } },
+      // A playlist can hold songs of any server; a non-admin gets only those of their own servers
+      include: { songs: { where: { song: onCallersServers(req) }, include: { song: true }, orderBy: { position: 'asc' } } },
     });
     if (!playlist) throw new AppError(404, 'Playlist not found');
 

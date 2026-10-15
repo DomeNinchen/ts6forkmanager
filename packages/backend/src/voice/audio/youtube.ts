@@ -1,6 +1,8 @@
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import { validateUrl } from "../../utils/url-validator.js";
+import { AppError } from "../../middleware/error-handler.js";
 
 export interface YouTubeInfo {
   id: string;
@@ -69,9 +71,22 @@ export function checkCookiesValid(): Promise<boolean> {
 }
 
 /**
+ * yt-dlp fetches whatever URL it is given (its generic extractor reads any web page), so a URL from
+ * a user goes through the same SSRF check as radio and video sources first. A `ytsearch...:` query
+ * is not a URL and only ever asks YouTube. The message names no address: it can end up in a
+ * TeamSpeak chat, and the internal address a name resolves to is nobody's business there.
+ */
+async function assertPublicSource(url: string): Promise<void> {
+  if (/^ytsearch\d*:/.test(url)) return;
+  const check = await validateUrl(url, { allowedProtocols: ['http:', 'https:'] });
+  if (!check.valid) throw new AppError(400, 'This URL is not allowed - only public http(s) addresses can be loaded');
+}
+
+/**
  * Download audio from a YouTube URL using yt-dlp
  */
-export function downloadYouTube(url: string, outputDir: string): Promise<{ filePath: string; info: YouTubeInfo }> {
+export async function downloadYouTube(url: string, outputDir: string): Promise<{ filePath: string; info: YouTubeInfo }> {
+  await assertPublicSource(url);
   return new Promise((resolve, reject) => {
     const outputTemplate = path.join(outputDir, "%(id)s.%(ext)s");
 
@@ -174,7 +189,8 @@ export function downloadYouTube(url: string, outputDir: string): Promise<{ fileP
  * Get info about a YouTube URL (single video or playlist).
  * Returns type ('video' or 'playlist') and array of items.
  */
-export function getYouTubeUrlInfo(url: string): Promise<{ type: 'video' | 'playlist'; items: YouTubeSearchResult[] }> {
+export async function getYouTubeUrlInfo(url: string): Promise<{ type: 'video' | 'playlist'; items: YouTubeSearchResult[] }> {
+  await assertPublicSource(url);
   return new Promise((resolve, reject) => {
     const proc = spawn("yt-dlp", [
         ...getCookieArgs(),

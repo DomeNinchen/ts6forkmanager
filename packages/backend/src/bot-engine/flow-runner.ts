@@ -15,7 +15,7 @@ import type {
   ConditionNodeData, DelayNodeData, VariableNodeData, LogNodeData, LoopNodeData,
 } from '@ts6/common';
 import axios from 'axios';
-import { validateUrl } from '../utils/url-validator.js';
+import { validateUrl, ssrfSafeAxiosOptions } from '../utils/url-validator.js';
 import { ALLOWED_WEBQUERY_COMMANDS } from './command-whitelist.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import { TSApiError } from '../middleware/error-handler.js';
@@ -527,6 +527,7 @@ export class FlowRunner {
       headers,
       data: body ? JSON.parse(body) : undefined,
       timeout: 10000,
+      ...ssrfSafeAxiosOptions,
     });
     if (data.storeAs) {
       ctx.setTemp(data.storeAs, response.data);
@@ -569,6 +570,7 @@ export class FlowRunner {
       headers,
       data: body ? JSON.parse(body) : undefined,
       timeout: 15000,
+      ...ssrfSafeAxiosOptions,
       transformResponse: [(data) => data], // Return raw response, don't auto-parse JSON
     });
     if (data.storeAs) {
