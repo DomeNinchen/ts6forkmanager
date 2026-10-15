@@ -1,4 +1,8 @@
 import { lookup } from 'dns/promises';
+import dns from 'dns';
+import http from 'http';
+import https from 'https';
+import net from 'net';
 
 const BLOCKED_HOSTNAMES = new Set([
   'localhost',
@@ -11,49 +15,67 @@ const CLOUD_METADATA_IPS = new Set([
   'fd00:ec2::254',    // AWS IPv6
 ]);
 
+/** Every address range that is not the public internet. BlockList also matches an
+ * IPv4-mapped IPv6 address ("::ffff:127.0.0.1", or the URL parser's hex form
+ * "::ffff:7f00:1") against the IPv4 ranges. */
+const NON_PUBLIC = new net.BlockList();
+for (const [network, prefix] of [
+  ['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16],
+  ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.168.0.0', 16], ['198.18.0.0', 15], ['224.0.0.0', 3],
+] as const) NON_PUBLIC.addSubnet(network, prefix, 'ipv4');
+for (const [network, prefix] of [
+  ['::', 128], ['::1', 128], ['fc00::', 7], ['fe80::', 10], ['ff00::', 8],
+] as const) NON_PUBLIC.addSubnet(network, prefix, 'ipv6');
+
 /**
- * Check if an IP address is in a private/reserved range.
+ * Whether an IP address literal is in a private/reserved range. A hostname is not an
+ * address and answers false - it has to be resolved first (validateUrl does that).
  */
 export function isPrivateIP(ip: string): boolean {
-  // A URL's hostname keeps the brackets around an IPv6 literal ("[::1]"); strip
-  // them so the checks below see the bare address. Without this "[::1]" never
-  // matched "::1" and localhost over IPv6 slipped through the SSRF filter.
+  // A URL's hostname keeps the brackets around an IPv6 literal ("[::1]")
   const bare = ip.replace(/^\[/, '').replace(/\]$/, '');
-
-  // IPv4
-  const parts = bare.split('.');
-  if (parts.length === 4) {
-    const [a, b] = parts.map(Number);
-    if (a === 10) return true;                           // 10.0.0.0/8
-    if (a === 172 && b >= 16 && b <= 31) return true;    // 172.16.0.0/12
-    if (a === 192 && b === 168) return true;              // 192.168.0.0/16
-    if (a === 127) return true;                           // 127.0.0.0/8
-    if (a === 169 && b === 254) return true;              // 169.254.0.0/16 (link-local)
-    if (a === 0) return true;                             // 0.0.0.0/8
-  }
-
-  // IPv6
-  const lower = bare.toLowerCase();
-  if (lower === '::1') return true;                       // loopback
-  if (lower.startsWith('fe80:')) return true;              // link-local
-  if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // unique local
-  if (lower.startsWith('::ffff:')) {                      // IPv4-mapped IPv6
-    const mapped = lower.slice(7);
-    // Dotted form ("::ffff:127.0.0.1") can be checked as plain IPv4. The URL
-    // parser, though, rewrites a mapped literal to hex ("::ffff:7f00:1"), so
-    // decode those two 16-bit groups back to dotted quad before the check.
-    if (mapped.includes('.')) return isPrivateIP(mapped);
-    const hex = mapped.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
-    if (hex) {
-      const hi = parseInt(hex[1], 16);
-      const lo = parseInt(hex[2], 16);
-      return isPrivateIP(`${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`);
-    }
-    return false;
-  }
-
-  return false;
+  const version = net.isIP(bare);
+  return version !== 0 && NON_PUBLIC.check(bare, version === 4 ? 'ipv4' : 'ipv6');
 }
+
+function isBlockedAddress(address: string): boolean {
+  return isPrivateIP(address) || CLOUD_METADATA_IPS.has(address);
+}
+
+/**
+ * dns.lookup for outgoing requests that refuses a name with any non-public address. It runs
+ * when the connection is made - for the first URL and for every redirect after it - so neither a
+ * redirect to an internal host nor a name whose answer changed since validateUrl looked at it
+ * gets through.
+ */
+const publicOnlyLookup: net.LookupFunction = (hostname, options, callback) => {
+  dns.lookup(hostname, { ...options, all: true }, (err, addresses) => {
+    if (err) return callback(err, '', 0);
+    const blocked = addresses.find((a) => isBlockedAddress(a.address));
+    if (blocked || addresses.length === 0) {
+      return callback(Object.assign(new Error(`Hostname "${hostname}" resolves to a private IP`), { code: 'ESSRF' }), '', 0);
+    }
+    if (options.all) (callback as unknown as (e: null, a: dns.LookupAddress[]) => void)(null, addresses);
+    else callback(null, addresses[0].address, addresses[0].family);
+  });
+};
+
+/**
+ * Axios options for a request to a URL a user chose (after validateUrl said yes). validateUrl only
+ * sees the first URL; these hold every hop to the same rules: the agents resolve names through
+ * publicOnlyLookup, and a redirect to an address literal - which is never looked up - is checked
+ * here. Without them a public URL that answers "307 -> http://<internal host>/" reached that host,
+ * method and body included.
+ */
+export const ssrfSafeAxiosOptions = {
+  httpAgent: new http.Agent({ lookup: publicOnlyLookup }),
+  httpsAgent: new https.Agent({ lookup: publicOnlyLookup }),
+  beforeRedirect: (options: Record<string, any>) => {
+    if (!['http:', 'https:'].includes(options.protocol) || isBlockedAddress(String(options.hostname ?? ''))) {
+      throw new Error(`Redirect to ${options.protocol}//${options.hostname} blocked`);
+    }
+  },
+};
 
 export interface ValidateUrlOptions {
   allowedProtocols?: string[];

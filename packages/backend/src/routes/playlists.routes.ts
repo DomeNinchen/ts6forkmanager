@@ -162,6 +162,14 @@ playlistRoutes.post('/:id/songs', async (req: Request, res: Response, next) => {
     const playlistId = parseInt(req.params.id as string);
     const { songId } = req.body;
     if (!songId) throw new AppError(400, 'songId is required');
+    // A non-admin may only add songs from server connections they have access to
+    if (req.user!.role !== 'admin') {
+      const song = await prisma.song.findFirst({
+        where: { id: parseInt(songId), serverConfig: { userAccess: { some: { userId: req.user!.id } } } },
+        select: { id: true },
+      });
+      if (!song) throw new AppError(404, 'Song not found');
+    }
 
     // Get next position
     const maxPos = await prisma.playlistSong.aggregate({

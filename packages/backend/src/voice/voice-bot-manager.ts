@@ -609,7 +609,8 @@ export class VoiceBotManager extends EventEmitter {
     if (!dbBot || dbBot.autoplayMode === 'none') return;
 
     if (dbBot.autoplayMode === 'song' && dbBot.autoplaySongId) {
-      const song = await this.prisma.song.findUnique({ where: { id: dbBot.autoplaySongId } });
+      // Only the bot's own server's media (what the autoplay picker offers), whatever id was stored
+      const song = await this.prisma.song.findFirst({ where: { id: dbBot.autoplaySongId, serverConfigId: dbBot.serverConfigId } });
       if (!song) return;
       const queueItem: QueueItem = {
         id: String(song.id),
@@ -623,7 +624,7 @@ export class VoiceBotManager extends EventEmitter {
       bot.queue.insertNext(queueItem);
       await bot.play(queueItem);
     } else if (dbBot.autoplayMode === 'radio' && dbBot.autoplayRadioStationId) {
-      const station = await this.prisma.radioStation.findUnique({ where: { id: dbBot.autoplayRadioStationId } });
+      const station = await this.prisma.radioStation.findFirst({ where: { id: dbBot.autoplayRadioStationId, serverConfigId: dbBot.serverConfigId } });
       if (!station) return;
       const queueItem: QueueItem = {
         id: `radio_${station.id}`,

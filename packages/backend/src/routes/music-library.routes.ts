@@ -130,7 +130,8 @@ musicLibraryRoutes.delete('/songs/:id', async (req: Request, res: Response, next
   try {
     const prisma = req.app.locals.prisma;
     const id = parseInt(req.params.id as string);
-    const song = await prisma.song.findUnique({ where: { id } });
+    // Only a song of the server in the URL - the access check upstream was for that one
+    const song = await prisma.song.findFirst({ where: { id, serverConfigId: parseInt(req.params.configId as string) } });
     if (!song) throw new AppError(404, 'Song not found');
 
     // Remove file from disk

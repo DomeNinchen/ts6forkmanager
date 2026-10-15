@@ -79,7 +79,9 @@ radioStationRoutes.delete('/:id', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const id = parseInt(req.params.id as string);
-    await prisma.radioStation.delete({ where: { id } });
+    // Only a station of the server in the URL - the access check upstream was for that one
+    const { count } = await prisma.radioStation.deleteMany({ where: { id, serverConfigId: parseInt(req.params.configId as string) } });
+    if (count === 0) throw new AppError(404, 'Radio station not found');
     res.json({ success: true });
   } catch (err) { next(err); }
 });
