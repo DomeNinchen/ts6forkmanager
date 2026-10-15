@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { NetworkTab } from '@/components/settings/NetworkTab';
-import { Settings as SettingsIcon, Users, Server, Plus, Trash2, Pencil, TestTube, Check, X, Lock, KeyRound, Film, Upload, FileText, Bug, AlertTriangle, Timer, RefreshCw, ShieldCheck, Search, Monitor, Bot, Palette, Video, Globe } from 'lucide-react';
+import { Settings as SettingsIcon, Server, Plus, Trash2, Pencil, TestTube, Check, X, KeyRound, Upload, FileText, AlertTriangle, RefreshCw, Search, Monitor, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
@@ -29,30 +29,29 @@ import { useUiStore } from '@/stores/ui.store';
 import { useLanguagePreference } from '@/hooks/use-language';
 import { SUPPORTED_LANGUAGES, nativeLanguageName } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { settingsTabsFor, resolveSettingsTab } from '@/lib/settings-tabs';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+  // The open tab lives in the address (?tab=webgui), so it survives a reload, can be linked
+  // to, and Lounge's navigation row can switch it from outside the page.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = resolveSettingsTab(searchParams.get('tab'), isAdmin);
 
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-semibold">{t('pages.settings.title')}</h1>
 
-      <Tabs defaultValue="account">
-        <TabsList>
-          {isAdmin && <TabsTrigger value="connections"><Server className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.connections')}</TabsTrigger>}
-          <TabsTrigger value="account"><Lock className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.account')}</TabsTrigger>
-          <TabsTrigger value="webgui"><Palette className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.webgui')}</TabsTrigger>
-          {isAdmin && <TabsTrigger value="users"><Users className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.users')}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="youtube"><Film className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.youtube')}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="streaming"><Video className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.streaming')}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="network"><Globe className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.network')}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="debug"><Bug className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.debug')}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="restart"><Timer className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.restart')}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="sso"><ShieldCheck className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.sso')}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="update-status"><RefreshCw className="h-3.5 w-3.5 mr-1" /> {t('pages.settings.tabs.updateStatus')}</TabsTrigger>}
+      <Tabs value={tab} onValueChange={(value) => setSearchParams({ tab: value })}>
+        {/* Lounge shows these in its second navigation row instead. */}
+        <TabsList className="lounge:hidden">
+          {settingsTabsFor(isAdmin).map(({ value, labelKey, icon: Icon }) => (
+            <TabsTrigger key={value} value={value}><Icon className="h-3.5 w-3.5 mr-1" /> {t(labelKey)}</TabsTrigger>
+          ))}
         </TabsList>
 
         {isAdmin && (
@@ -153,7 +152,7 @@ function AccountTab() {
   };
 
   return (
-    <div className="max-w-md">
+    <div className="max-w-md lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">{t('pages.settings.account.changePasswordTitle')}</CardTitle>
@@ -232,7 +231,7 @@ function TwoFactorCard() {
 
   return (
     <>
-      <Card className="card-hero mt-4">
+      <Card className="card-hero mt-4 lounge:mt-0">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">{t('pages.settings.twoFactor.title')}</CardTitle>
           <Badge variant={user?.totpEnabled ? 'default' : 'secondary'} className="text-[10px]">
@@ -445,7 +444,7 @@ function WebGuiTab({ isAdmin }: { isAdmin: boolean }) {
   };
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">{t('pages.settings.webgui.language.title')}</CardTitle>
@@ -1371,7 +1370,7 @@ function YouTubeTab() {
   };
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">{t('pages.settings.youtube.title')}</CardTitle>
@@ -1539,7 +1538,7 @@ function StreamingTab() {
     active.idleStopMinutes === data.builtIn.idleStopMinutes;
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">{t('pages.settings.streaming.title')}</CardTitle>
@@ -1691,7 +1690,7 @@ function DebugTab() {
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">{t('pages.settings.debug.loggingTitle')}</CardTitle>
@@ -1822,7 +1821,7 @@ function RestartTab() {
   };
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">{t('pages.settings.restart.title')}</CardTitle>
@@ -1911,7 +1910,7 @@ function SsoTab() {
   const update = (patch: Partial<OidcSettingsInput>) => setDraft({ ...active, ...patch });
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader>
           <CardTitle className="text-sm font-medium">{t('pages.settings.sso.title')}</CardTitle>
@@ -2014,7 +2013,7 @@ function UpdateStatusTab() {
   ];
 
   return (
-    <div className="max-w-lg space-y-4">
+    <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">{t('pages.settings.updateStatus.title')}</CardTitle>

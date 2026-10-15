@@ -44,7 +44,7 @@ export function NetworkTab() {
     index < clientIndex ? 'proxy' : index === clientIndex ? 'client' : 'ignored';
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className="max-w-2xl space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
       <Card className="card-hero">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">{t('pages.settings.network.title')}</CardTitle>
