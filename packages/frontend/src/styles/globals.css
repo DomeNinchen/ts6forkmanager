@@ -59,20 +59,41 @@
   }
 }
 
+/*
+  DESIGN (`data-design` on <html>, chosen in Settings → WebGui) - a third axis next to base
+  theme and accent. Cockpit is everything in this file without a `lounge` qualifier. Lounge
+  hangs off the `lounge:` variant in components and the [data-design='lounge'] rules here:
+  Source Sans 3 / Bricolage Grotesque, no decorative chrome, sections opened by a rule.
+*/
+@custom-variant lounge (&:is([data-design='lounge'] *));
+
 @utility font-mono-data {
   font-family: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
+  /* Lounge keeps the text face; only the digits line up. */
+  [data-design='lounge'] & {
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @utility font-display {
   font-family: 'Rajdhani', sans-serif;
+  [data-design='lounge'] & {
+    font-family: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', sans-serif;
+  }
 }
 
 /* Command Deck's angular signature treatment - reserved for a page's few
    "hero" surfaces (see Dashboard), never for dense/tabular pages, which stay
    on the plain Card look for legibility (see the WebGui redesign directions
-   artifact + the density decision that came out of it). */
+   artifact + the density decision that came out of it). Lounge opens sections
+   with a straight rule, so nothing there is cut or rounded. */
 @utility card-hero {
   clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+  [data-design='lounge'] & {
+    clip-path: none;
+    border-radius: 0;
+  }
 }
 
 @utility grid-bg {
@@ -80,6 +101,9 @@
     linear-gradient(rgba(56, 189, 198, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(56, 189, 198, 0.03) 1px, transparent 1px);
   background-size: 24px 24px;
+  [data-design='lounge'] & {
+    background-image: none;
+  }
 }
 
 @utility scan-line {
@@ -217,6 +241,28 @@
     --sidebar-foreground: 220 18% 33%;
     --sidebar-accent: 219 28% 86%;
     --sidebar-border: 219 22% 82%;
+  }
+
+  /* Chalk - light grey-green page with a dark petrol bar/sidebar, the light side of Petrol. */
+  :root:not(.dark)[data-base-theme='chalk'] {
+    --background: 156 17% 94%;
+    --foreground: 187 42% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 187 42% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 187 42% 12%;
+    --secondary: 165 18% 89%;
+    --secondary-foreground: 187 42% 14%;
+    --muted: 165 18% 92%;
+    --muted-foreground: 187 14% 36%;
+    --accent: 165 18% 90%;
+    --accent-foreground: 187 42% 14%;
+    --border: 170 15% 82%;
+    --input: 170 15% 78%;
+    --sidebar: 187 42% 14%;
+    --sidebar-foreground: 154 18% 86%;
+    --sidebar-accent: 189 40% 20%;
+    --sidebar-border: 188 33% 22%;
   }
 
   /* ---------- Dark base themes ---------- */
@@ -367,6 +413,28 @@
     --sidebar-border: 155 18% 19%;
   }
 
+  /* Petrol - deep blue-green, made for the Lounge design (pairs with yellow). */
+  .dark[data-base-theme='petrol'] {
+    --background: 189 46% 12%;
+    --foreground: 154 18% 92%;
+    --card: 189 42% 16%;
+    --card-foreground: 154 18% 92%;
+    --popover: 189 42% 16%;
+    --popover-foreground: 154 18% 92%;
+    --secondary: 189 40% 20%;
+    --secondary-foreground: 154 18% 90%;
+    --muted: 189 40% 20%;
+    --muted-foreground: 170 14% 66%;
+    --accent: 189 40% 21%;
+    --accent-foreground: 154 18% 94%;
+    --border: 188 33% 24%;
+    --input: 188 33% 28%;
+    --sidebar: 189 50% 9%;
+    --sidebar-foreground: 170 14% 72%;
+    --sidebar-accent: 189 40% 18%;
+    --sidebar-border: 188 33% 18%;
+  }
+
   /* ---------- Accents on dark base themes ---------- */
 
   .dark[data-accent='violet'] {
@@ -383,12 +451,16 @@
     --sidebar-accent-foreground: 186 72% 55%;
     --chart-1: 186 72% 50%;
   }
+  /* With red as the accent, delete actions and errors (--destructive) turn orange, so a
+     delete button never looks like a main action. */
   .dark[data-accent='red'] {
     --primary: 355 75% 50%;
     --primary-foreground: 210 40% 98%;
     --ring: 355 75% 50%;
     --sidebar-accent-foreground: 355 75% 64%;
     --chart-1: 355 75% 55%;
+    --destructive: 28 95% 55%;
+    --destructive-foreground: 20 30% 6%;
   }
   .dark[data-accent='blue'] {
     --primary: 217 75% 52%;
@@ -459,12 +531,16 @@
     --sidebar-accent-foreground: 186 72% 27%;
     --chart-1: 186 72% 34%;
   }
+  /* Orange delete actions, as on the dark themes; dark enough for white text and for
+     orange text on a light surface (4.5:1). */
   :root:not(.dark)[data-accent='red'] {
     --primary: 355 72% 46%;
     --primary-foreground: 0 0% 100%;
     --ring: 355 72% 46%;
     --sidebar-accent-foreground: 355 72% 40%;
     --chart-1: 355 72% 48%;
+    --destructive: 24 90% 36%;
+    --destructive-foreground: 0 0% 100%;
   }
   :root:not(.dark)[data-accent='blue'] {
     --primary: 217 72% 46%;
@@ -517,6 +593,12 @@
     --sidebar-accent-foreground: 85 62% 26%;
     --chart-1: 85 62% 33%;
   }
+
+  /* Chalk keeps a dark petrol bar/sidebar, so its highlight must stay light whatever the
+     accent - after the accent blocks on purpose, same specificity, later wins. */
+  :root:not(.dark)[data-base-theme='chalk'] {
+    --sidebar-accent-foreground: 0 0% 100%;
+  }
 }
 
 @layer base {
@@ -531,6 +613,14 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Rajdhani', sans-serif;
     letter-spacing: 0.01em;
+  }
+
+  [data-design='lounge'] body {
+    font-family: 'Source Sans 3 Variable', 'Source Sans 3', system-ui, sans-serif;
+  }
+  [data-design='lounge'] :is(h1, h2, h3, h4, h5, h6) {
+    font-family: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', sans-serif;
+    letter-spacing: -0.01em;
   }
 
   /* Fix Radix ScrollArea display:table bug preventing scrolling */
@@ -573,4 +663,35 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
   }
+}
+
+/*
+  Lounge overrides that have to beat plain utility classes used all over the pages, so they
+  sit outside any layer (unlayered rules win over every @layer):
+  - labels set in spaced-out capitals read as sentence case,
+  - page titles share one size; a title marked data-hero (the dashboard) keeps its own,
+  - Cockpit's ambient motion and glow stay off.
+*/
+[data-design='lounge'] .uppercase {
+  text-transform: none;
+  letter-spacing: normal;
+}
+[data-design='lounge'] .uppercase:is(.text-\[10px\], .text-\[11px\]) {
+  font-size: 0.75rem;
+}
+[data-design='lounge'] main h1:not([data-hero]) {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+[data-design='lounge'] :is(.fade-in, .slide-in-left, .pulse-dot) {
+  animation: none;
+}
+[data-design='lounge'] :is(.glow-teal, .text-glow) {
+  box-shadow: none;
+  text-shadow: none;
+}
+[data-design='lounge'] .scan-line::after {
+  display: none;
 }

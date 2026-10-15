@@ -49,10 +49,10 @@ export function BansTab({ onFilterIp }: { onFilterIp: (ip: string) => void }) {
         </p>
       )}
 
-      <div className="card-hero rounded-md border border-border overflow-x-auto">
+      <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
+            <tr className="border-b border-border bg-muted/30 lounge:bg-transparent">
               {['address', 'country', 'reason', 'setBy', 'setAt', 'ends', 'turnedAway'].map((column) => (
                 <th key={column} className="h-10 px-3 text-left align-middle font-medium text-muted-foreground">{t(`pages.connectionJournal.bans.columns.${column}`)}</th>
               ))}

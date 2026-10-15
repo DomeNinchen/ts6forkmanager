@@ -29,12 +29,12 @@ export function ServerSelector() {
 
   return (
     <div className="flex items-center gap-2">
-      <Server className="h-4 w-4 text-muted-foreground" />
+      <Server className="h-4 w-4 text-muted-foreground lounge:hidden lounge:text-sidebar-foreground/70 lounge:sm:block" />
       <Select
         value={selectedConfigId?.toString() || ''}
         onValueChange={(v) => setServer(parseInt(v))}
       >
-        <SelectTrigger className="w-[180px] h-8 text-xs">
+        <SelectTrigger className="w-[180px] h-8 text-xs lounge:border-sidebar-border lounge:bg-sidebar-accent lounge:text-sm lounge:text-sidebar-foreground">
           <SelectValue placeholder={t('components.serverSelector.selectServer')} />
         </SelectTrigger>
         <SelectContent>
@@ -48,12 +48,12 @@ export function ServerSelector() {
 
       {virtualServers && virtualServers.length > 1 && (
         <>
-          <span className="text-muted-foreground text-xs">/</span>
+          <span className="text-muted-foreground text-xs lounge:text-sidebar-foreground/50">/</span>
           <Select
             value={selectedSid?.toString() || ''}
             onValueChange={(v) => setSid(parseInt(v))}
           >
-            <SelectTrigger className="w-[160px] h-8 text-xs">
+            <SelectTrigger className="w-[160px] h-8 text-xs lounge:border-sidebar-border lounge:bg-sidebar-accent lounge:text-sm lounge:text-sidebar-foreground">
               <SelectValue placeholder={t('components.serverSelector.selectVirtualServer')} />
             </SelectTrigger>
             <SelectContent>

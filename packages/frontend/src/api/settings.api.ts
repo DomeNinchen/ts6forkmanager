@@ -79,6 +79,12 @@ export const settingsApi = {
   setWebguiBaseTheme: (theme: BaseTheme): Promise<{ theme: BaseTheme }> =>
     api.put('/settings/webgui-base-theme', { theme }).then((r) => r.data),
 
+  getWebguiDesign: (): Promise<{ design: Design }> =>
+    api.get('/settings/webgui-design').then((r) => r.data),
+
+  setWebguiDesign: (design: Design): Promise<{ design: Design }> =>
+    api.put('/settings/webgui-design', { design }).then((r) => r.data),
+
   /** Reading the current value needs no login, see publicConfigApi. */
   setPrivacyNotice: (enabled: boolean): Promise<{ enabled: boolean }> =>
     api.put('/settings/privacy-notice', { enabled }).then((r) => r.data),
@@ -126,8 +132,8 @@ export type AccentPreset = (typeof ACCENT_PRESETS)[number];
  * which is why these two lists are kept separate: the UI store derives the `.dark` class
  * from which list the selected theme is in.
  */
-export const DARK_BASE_THEMES = ['command-deck', 'oled', 'graphite', 'carbon', 'frost', 'deep-forest'] as const;
-export const LIGHT_BASE_THEMES = ['daylight', 'paper', 'frost-light'] as const;
+export const DARK_BASE_THEMES = ['command-deck', 'oled', 'graphite', 'carbon', 'frost', 'deep-forest', 'petrol'] as const;
+export const LIGHT_BASE_THEMES = ['daylight', 'paper', 'frost-light', 'chalk'] as const;
 export type BaseTheme = (typeof DARK_BASE_THEMES)[number] | (typeof LIGHT_BASE_THEMES)[number];
 
 export function isDarkBaseTheme(theme: BaseTheme): boolean {
@@ -145,10 +151,20 @@ export const RECOMMENDED_ACCENT: Record<BaseTheme, AccentPreset> = {
   carbon: 'orange',
   frost: 'blue',
   'deep-forest': 'lime',
+  petrol: 'yellow',
   daylight: 'teal',
   paper: 'orange',
   'frost-light': 'blue',
+  chalk: 'yellow',
 };
+
+/**
+ * The layout and typography - a third axis, independent of base theme and accent.
+ * Cockpit is the original dense look (sidebar, tiles); Lounge is typographic, with a
+ * two-row top navigation and ruled sections instead of cards.
+ */
+export const DESIGNS = ['cockpit', 'lounge'] as const;
+export type Design = (typeof DESIGNS)[number];
 
 export interface OidcSettings {
   enabled: boolean;

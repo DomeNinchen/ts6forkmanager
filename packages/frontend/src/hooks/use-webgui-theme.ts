@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { settingsApi, type AccentPreset, type BaseTheme } from '../api/settings.api';
+import { settingsApi, type AccentPreset, type BaseTheme, type Design } from '../api/settings.api';
 import { useUiStore } from '../stores/ui.store';
 import { useAuthStore } from '../stores/auth.store';
 
@@ -54,4 +54,35 @@ export function useSetWebguiBaseTheme() {
     mutationFn: (theme: BaseTheme) => settingsApi.setWebguiBaseTheme(theme),
     onSuccess: (data) => qc.setQueryData(['webgui-base-theme'], data),
   });
+}
+
+/** Same pattern again for the layout/typography design (Cockpit or Lounge). Mount once near the app root. */
+export function useWebguiDesignSync() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const setInstallDefaultDesign = useUiStore((s) => s.setInstallDefaultDesign);
+  const { data } = useQuery({
+    queryKey: ['webgui-design'],
+    queryFn: settingsApi.getWebguiDesign,
+    staleTime: 5 * 60 * 1000,
+    enabled: isAuthenticated,
+  });
+
+  useEffect(() => {
+    if (data?.design) {
+      setInstallDefaultDesign(data.design);
+    }
+  }, [data?.design, setInstallDefaultDesign]);
+}
+
+export function useSetWebguiDesign() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (design: Design) => settingsApi.setWebguiDesign(design),
+    onSuccess: (data) => qc.setQueryData(['webgui-design'], data),
+  });
+}
+
+/** The design in effect for this browser: its own choice, else the installation default. */
+export function useDesign(): Design {
+  return useUiStore((s) => s.designOverride ?? s.installDefaultDesign);
 }

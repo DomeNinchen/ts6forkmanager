@@ -10,7 +10,12 @@ const TabsList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
-    className={cn('inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground', className)}
+    className={cn(
+      'inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground',
+      // Lounge: tabs are underlined words, like its second navigation row.
+      'lounge:h-10 lounge:items-end lounge:gap-5 lounge:rounded-none lounge:border-b lounge:border-border lounge:bg-transparent lounge:p-0',
+      className,
+    )}
     {...props}
   />
 ));
@@ -24,6 +29,7 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+      'lounge:-mb-px lounge:rounded-none lounge:border-b-2 lounge:border-transparent lounge:px-0 lounge:pb-2 lounge:pt-0 lounge:hover:text-foreground lounge:data-[state=active]:border-primary lounge:data-[state=active]:bg-transparent lounge:data-[state=active]:font-semibold lounge:data-[state=active]:shadow-none',
       className,
     )}
     {...props}

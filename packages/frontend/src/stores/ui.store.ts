@@ -1,9 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { isDarkBaseTheme, type AccentPreset, type BaseTheme } from '@/api/settings.api';
+import { isDarkBaseTheme, type AccentPreset, type BaseTheme, type Design } from '@/api/settings.api';
 
 function applyAccent(preset: AccentPreset) {
   document.documentElement.dataset.accent = preset;
+}
+
+/** The design is a `data-design` attribute; the Lounge styles hang off it (see globals.css). */
+function applyDesign(design: Design) {
+  document.documentElement.dataset.design = design;
 }
 
 /** The base theme is what decides light vs. dark, so the `.dark` class follows from it. */
@@ -26,6 +31,9 @@ interface UiStore {
   /** What the header's light/dark button jumps back to, so switching modes keeps each side's chosen theme. */
   lastDarkTheme: BaseTheme;
   lastLightTheme: BaseTheme;
+  /** Same personal-override-vs-installation-default pattern again, for the layout/typography design. */
+  designOverride: Design | null;
+  installDefaultDesign: Design;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSection: (label: string) => void;
@@ -35,6 +43,8 @@ interface UiStore {
   setInstallDefaultAccent: (preset: AccentPreset) => void;
   setBaseThemeOverride: (theme: BaseTheme | null) => void;
   setInstallDefaultBaseTheme: (theme: BaseTheme) => void;
+  setDesignOverride: (design: Design | null) => void;
+  setInstallDefaultDesign: (design: Design) => void;
 }
 
 export const useUiStore = create<UiStore>()(
@@ -48,6 +58,8 @@ export const useUiStore = create<UiStore>()(
       installDefaultBaseTheme: 'command-deck',
       lastDarkTheme: 'command-deck',
       lastLightTheme: 'daylight',
+      designOverride: null,
+      installDefaultDesign: 'cockpit',
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       toggleSection: (label) =>
@@ -76,6 +88,14 @@ export const useUiStore = create<UiStore>()(
         set({ installDefaultBaseTheme: theme });
         applyBaseTheme(get().baseThemeOverride ?? theme);
       },
+      setDesignOverride: (design) => {
+        set({ designOverride: design });
+        applyDesign(design ?? get().installDefaultDesign);
+      },
+      setInstallDefaultDesign: (design) => {
+        set({ installDefaultDesign: design });
+        applyDesign(get().designOverride ?? design);
+      },
     }),
     {
       name: 'ts6-ui',
@@ -99,10 +119,12 @@ export const useUiStore = create<UiStore>()(
         baseThemeOverride: state.baseThemeOverride,
         lastDarkTheme: state.lastDarkTheme,
         lastLightTheme: state.lastLightTheme,
+        designOverride: state.designOverride,
       }),
       onRehydrateStorage: () => (state) => {
         applyAccent(state?.accentOverride ?? 'violet');
         applyBaseTheme(state?.baseThemeOverride ?? 'command-deck');
+        applyDesign(state?.designOverride ?? 'cockpit');
       },
     },
   ),

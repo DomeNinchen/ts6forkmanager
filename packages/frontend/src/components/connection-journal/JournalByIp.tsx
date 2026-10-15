@@ -56,10 +56,10 @@ export function JournalByIp({
 
   return (
     <div className="space-y-3">
-      <div className="card-hero rounded-md border border-border overflow-x-auto">
+      <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
+            <tr className="border-b border-border bg-muted/30 lounge:bg-transparent">
               <SortHeader column="ip" label={t('pages.connectionJournal.columns.address')} sort={sort} order={order} onSort={onSort} />
               <SortHeader column="country" label={t('pages.connectionJournal.columns.country')} sort={sort} order={order} onSort={onSort} />
               <SortHeader column="total" label={t('pages.connectionJournal.columns.entries')} sort={sort} order={order} onSort={onSort} />
