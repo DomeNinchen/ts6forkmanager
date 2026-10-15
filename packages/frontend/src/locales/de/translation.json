@@ -1472,6 +1472,22 @@
         "darkGroup": "Dunkel",
         "lightGroup": "Hell",
         "myBaseTheme": "Mein Grunddesign",
+        "myDesign": "Mein Layout",
+        "designDescription": "Aufbau und Schrift der Oberfläche, unabhängig von Grunddesign und Akzent. Überschreibt den Installationsstandard unten, nur für dich - nur in diesem Browser gespeichert.",
+        "installDefaultDesign": "Installations-Standardlayout",
+        "installDefaultDesignDescription": "Gilt für jeden Benutzer, der oben noch kein eigenes Layout festgelegt hat.",
+        "designSetToast": "Installations-Layout auf {{design}} gesetzt",
+        "designSetFailed": "Installations-Layout konnte nicht aktualisiert werden",
+        "designs": {
+          "cockpit": {
+            "label": "Cockpit",
+            "description": "Seitenleiste, Kacheln und viel auf einen Blick. Das bisherige Aussehen."
+          },
+          "lounge": {
+            "label": "Lounge",
+            "description": "Navigation oben, große Schrift, Inhalte unter Linien statt in Karten."
+          }
+        },
         "baseThemeDescription": "Die Hintergrund- und Oberflächenpalette, die auch entscheidet, ob die App hell oder dunkel ist. Überschreibt den Installationsstandard unten, nur für dich - nur in diesem Browser gespeichert.",
         "resetToInstallDefault": "Auf Installationsstandard zurücksetzen",
         "myAccent": "Mein Akzent",
@@ -2076,6 +2092,21 @@
       "connectionFailedDescription": "Verbindung zum TeamSpeak-Server fehlgeschlagen. Bitte die Verbindungseinstellungen prüfen.",
       "widgets": "Einbettungs-Widgets",
       "liveMonitoring": "Live-Überwachung",
+      "lead": {
+        "peopleHere_one": "{{count}} Person ist gerade da",
+        "peopleHere_other": "{{count}} Leute sind gerade da",
+        "nobodyHere": "Gerade ist niemand da",
+        "upDays_one": "{{count}} Tag am Stück online",
+        "upDays_other": "{{count}} Tage am Stück online",
+        "upHours_one": "{{count}} Stunde am Stück online",
+        "upHours_other": "{{count}} Stunden am Stück online",
+        "upMinutes_one": "{{count}} Minute am Stück online",
+        "upMinutes_other": "{{count}} Minuten am Stück online",
+        "channelsPing_one": "{{count}} Channel, {{ping}} ms Ping.",
+        "channelsPing_other": "{{count}} Channels, {{ping}} ms Ping.",
+        "channelsNoPing_one": "{{count}} Channel, Ping gerade nicht messbar.",
+        "channelsNoPing_other": "{{count}} Channels, Ping gerade nicht messbar."
+      },
       "onlineUsers": "Online-Nutzer",
       "ofSlots": "von {{max}} Plätzen",
       "channels": "Channels",

@@ -104,24 +104,44 @@ function getNavSections(t: TFunction) {
   ];
 }
 
-export function Sidebar() {
-  const { t } = useTranslation();
-  const { sidebarCollapsed, toggleSidebar, collapsedSections, toggleSection } = useUiStore();
+function useNavContext(): NavContext {
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
   const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
   const { data: servers } = useServers();
   const { hasWebQuery } = useSelectedServer();
-  const location = useLocation();
-  const navSections = getNavSections(t);
-
-  const navCtx: NavContext = {
+  return {
     isAdmin,
     canManageBotFlows,
     canManageMusicBots,
     hasAnyServerAccess: isAdmin || (servers?.length ?? 0) > 0,
     hasWebQuery,
   };
+}
+
+/**
+ * The sections and pages this user may open on the selected connection, with empty sections
+ * dropped - the same rules the sidebar applies, for the Lounge design's top navigation.
+ */
+export function useVisibleNavSections() {
+  const { t } = useTranslation();
+  const navCtx = useNavContext();
+  return getNavSections(t)
+    .filter((section) => !(section as any).visible || (section as any).visible(navCtx))
+    .map((section) => ({
+      label: section.label,
+      items: section.items.filter((item) =>
+        (!(item as any).needsWebQuery || navCtx.hasWebQuery) && (!(item as any).visible || (item as any).visible(navCtx))),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+export function Sidebar() {
+  const { t } = useTranslation();
+  const { sidebarCollapsed, toggleSidebar, collapsedSections, toggleSection } = useUiStore();
+  const location = useLocation();
+  const navSections = getNavSections(t);
+  const navCtx = useNavContext();
 
   return (
     <TooltipProvider delayDuration={0}>

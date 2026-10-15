@@ -3,8 +3,10 @@ Fonts bundled with TS6 Manager
 
 The web interface serves the following fonts from its own origin (no third-party
 font CDN). They come from the Fontsource packages on npm (@fontsource-variable/manrope,
-@fontsource-variable/jetbrains-mono, @fontsource/rajdhani, all version 5.3.0) and are
-licensed under the SIL Open Font License, Version 1.1, reproduced below.
+@fontsource-variable/jetbrains-mono, @fontsource/rajdhani, all version 5.3.0;
+@fontsource-variable/bricolage-grotesque 5.3.0 and @fontsource-variable/source-sans-3
+5.3.1 for the Lounge layout) and are licensed under the SIL Open Font License,
+Version 1.1, reproduced below.
 
 Manrope
 Copyright 2019 The Manrope Project Authors (https://github.com/sharanda/manrope)
@@ -14,6 +16,12 @@ Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/
 
 Rajdhani
 Copyright (c) 2014 Indian Type Foundry (info@indiantypefoundry.com) Rajdhani-Regular.ttf: Copyright (c) 2014 Indian Type Foundry (info@indiantypefoundry.com) Rajdhani-Medium.ttf: Copyright (c) 2014 Indian Type Foundry (info@indiantypefoundry.com) Rajdhani-SemiBold.ttf: Copyright (c) 2014 Indian Type Foundry (info@indiantypefoundry.com) Rajdhani-Bold.ttf: Copyright (c) 2014 Indian Type Foundry (info@indiantypefoundry.com)
+
+Bricolage Grotesque
+Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)
+
+Source Sans 3
+Google Inc. (as named in the licence file of the Fontsource package)
 
 
 

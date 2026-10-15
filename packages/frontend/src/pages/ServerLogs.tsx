@@ -149,7 +149,7 @@ export default function ServerLogs() {
         </Select>
       </div>
 
-      <div className="card-hero rounded-md border border-border bg-card overflow-hidden shadow-xs">
+      <div className="card-hero rounded-md border border-border bg-card overflow-hidden shadow-xs lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
         <ScrollArea className="h-[calc(100vh-260px)]">
           <div className="p-3 space-y-0.5">
             {logs.length === 0 ? (

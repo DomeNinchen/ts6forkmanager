@@ -335,8 +335,8 @@ settingsRoutes.put('/webgui-theme', requireAdmin, async (req: Request, res: Resp
 // Dark and light themes share one list - a base theme carries its own light/dark nature,
 // there is no separate light/dark setting to keep in sync with it.
 const VALID_BASE_THEMES = [
-  'command-deck', 'oled', 'graphite', 'carbon', 'frost', 'deep-forest',
-  'daylight', 'paper', 'frost-light',
+  'command-deck', 'oled', 'graphite', 'carbon', 'frost', 'deep-forest', 'petrol',
+  'daylight', 'paper', 'frost-light', 'chalk',
 ] as const;
 type BaseTheme = (typeof VALID_BASE_THEMES)[number];
 
@@ -368,6 +368,41 @@ settingsRoutes.put('/webgui-base-theme', requireAdmin, async (req: Request, res:
     });
     console.log(`[Settings] WebGui base theme set to '${theme}'`);
     res.json({ theme: theme as BaseTheme });
+  } catch (err) { next(err); }
+});
+
+// The layout/typography design - a third axis next to base theme and accent: Cockpit is the
+// original dense dashboard look, Lounge the typographic one with the two-row top navigation.
+const VALID_DESIGNS = ['cockpit', 'lounge'] as const;
+type Design = (typeof VALID_DESIGNS)[number];
+
+// GET /api/settings/webgui-design — the installation-wide default design; every logged-in user
+// reads it so it can be applied on load.
+settingsRoutes.get('/webgui-design', async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const row = await prisma.appSetting.findUnique({ where: { key: 'webgui_design' } });
+    const design = (row?.value && (VALID_DESIGNS as readonly string[]).includes(row.value)) ? row.value : 'cockpit';
+    res.json({ design });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/settings/webgui-design — admin sets the installation-wide default (users can still
+// pick their own in their browser; that never touches this setting)
+settingsRoutes.put('/webgui-design', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { design } = req.body;
+    if (!VALID_DESIGNS.includes(design)) {
+      throw new AppError(400, `Unknown design: ${design}`);
+    }
+    const prisma = req.app.locals.prisma;
+    await prisma.appSetting.upsert({
+      where: { key: 'webgui_design' },
+      create: { key: 'webgui_design', value: design },
+      update: { value: design },
+    });
+    console.log(`[Settings] WebGui design set to '${design}'`);
+    res.json({ design: design as Design });
   } catch (err) { next(err); }
 });
 
