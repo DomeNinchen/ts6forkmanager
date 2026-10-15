@@ -7,7 +7,7 @@ import { config } from '../config.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
-import { issueTokensForUser } from '../utils/issue-tokens.js';
+import { issueTokensForUser, sameLogin } from '../utils/issue-tokens.js';
 import { recordWebEvent } from '../utils/connection-journal.js';
 import { encrypt, decrypt } from '../utils/crypto.js';
 import {
@@ -174,49 +174,42 @@ authRoutes.post('/refresh', async (req: Request, res: Response, next) => {
       include: { user: true },
     });
 
-    if (!stored) {
-      // H5: Token not found — check if it was already used (reuse detection)
-      const replaced = await prisma.refreshToken.findFirst({
-        where: { replacedBy: refreshToken },
-      });
-      if (replaced) {
-        // Reuse detected! Revoke entire token family
-        console.warn(`[SECURITY] Refresh token reuse detected for user ${replaced.userId}. Revoking all tokens.`);
-        await prisma.refreshToken.deleteMany({ where: { userId: replaced.userId } });
-      }
+    if (!stored) throw new AppError(401, 'Invalid refresh token');
+
+    // H5: a rotated token stays stored (replacedBy set) until it expires, so presenting it again
+    // is recognised. Only one party can hold the current token of a login: a used one coming back
+    // means a copy is in other hands, so the whole login (family) ends - for the thief too, who
+    // may hold the newer token. The web interface never sends a used token on its own: its tabs
+    // refresh one at a time and share the result (api/client.ts).
+    const reuse = async (): Promise<never> => {
+      console.warn(`[SECURITY] Refresh token reuse detected for user ${stored.userId}. Ending that login.`);
+      await prisma.refreshToken.deleteMany({ where: sameLogin(stored) });
       throw new AppError(401, 'Invalid refresh token');
-    }
+    };
+    if (stored.replacedBy !== null) await reuse();
 
     if (stored.expiresAt < new Date() || !stored.user.enabled) {
-      await prisma.refreshToken.delete({ where: { id: stored.id } });
+      await prisma.refreshToken.deleteMany({ where: sameLogin(stored) });
       throw new AppError(401, 'Invalid refresh token');
     }
 
-    // Rotate: mark old token as replaced, create new one in same family.
-    // Two concurrent refresh requests can both read the same `stored` row
-    // above before either mutates it. Claim it with a conditional update
-    // (only succeeds if nobody has rotated it yet) instead of an
-    // unconditional one, so the losing request gets a clean "already
-    // refreshed" 401 instead of crashing on a Prisma "record not found"
-    // when it later tries to update/delete a row the winner already removed.
     const newRefreshToken = crypto.randomBytes(64).toString('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    // Claimed with a conditional update: of two requests that read the row above before either
+    // rotated it, only one wins - the other presented a token that is used by now.
     const claimed = await prisma.refreshToken.updateMany({
       where: { id: stored.id, replacedBy: null },
       data: { replacedBy: newRefreshToken },
     });
-    if (claimed.count === 0) {
-      throw new AppError(401, 'Refresh token already used');
-    }
+    if (claimed.count === 0) await reuse();
 
     await prisma.refreshToken.create({
       data: { token: newRefreshToken, userId: stored.userId, expiresAt, family: stored.family },
     });
-
-    // Delete old token after creating new one
-    await prisma.refreshToken.delete({ where: { id: stored.id } });
+    // Used tokens are only kept to recognise them; once expired they could not be used anyway
+    await prisma.refreshToken.deleteMany({ where: { expiresAt: { lt: new Date() } } });
 
     const payload = { id: stored.user.id, username: stored.user.username, role: stored.user.role };
     const accessToken = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtAccessExpiry } as jwt.SignOptions);
@@ -230,7 +223,9 @@ authRoutes.post('/logout', async (req: Request, res: Response, next) => {
     const { refreshToken } = req.body;
     if (refreshToken) {
       const prisma = req.app.locals.prisma;
-      await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+      // The whole login, including its used tokens
+      const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
+      if (stored) await prisma.refreshToken.deleteMany({ where: sameLogin(stored) });
     }
     res.status(204).send();
   } catch (err) { next(err); }

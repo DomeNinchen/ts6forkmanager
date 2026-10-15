@@ -4,6 +4,14 @@ import { nanoid } from 'nanoid';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { config } from '../config.js';
 
+/**
+ * Prisma filter for every refresh token of the same login as `row`: the family a login starts and
+ * each refresh carries on. Rows from before families existed have none and stand alone.
+ */
+export function sameLogin(row: { id: number; family: string | null }) {
+  return row.family ? { family: row.family } : { id: row.id };
+}
+
 /** Shared by /auth/login and the OIDC callback - both end with "this user is now authenticated, issue them a fresh token pair". */
 export async function issueTokensForUser(
   prisma: PrismaClient,
