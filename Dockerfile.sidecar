@@ -3,7 +3,7 @@ FROM golang:1.26-trixie AS build
 WORKDIR /src
 COPY packages/sidecar/go.mod packages/sidecar/go.sum ./
 RUN go mod download
-COPY packages/sidecar/*.go .
+COPY packages/sidecar/*.go ./
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /sidecar .
 
 # Debian 13 (trixie), not 12: bookworm left the Debian security team's regular
