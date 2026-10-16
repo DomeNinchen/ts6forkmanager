@@ -2092,6 +2092,7 @@
       "connectionFailedDescription": "Could not connect to the TeamSpeak server. Check your connection settings.",
       "widgets": "Embed widgets",
       "liveMonitoring": "Live Monitoring",
+      "onlineCount": "Online count",
       "lead": {
         "peopleHere_one": "{{count}} person is here right now",
         "peopleHere_other": "{{count}} people are here right now",
@@ -2145,6 +2146,8 @@
         "hide": "Hide {{name}}",
         "show": "Show {{name}}",
         "hiddenBadge": "Hidden",
+        "inLeadBadge": "In the sentence",
+        "inLeadHint": "In the Lounge layout this number is part of the sentence at the top, so the tile does not appear there. In the Cockpit layout the switch works as usual.",
         "width": "Width of {{name}}",
         "widthLabel": "Width",
         "width1": "1/3",
@@ -3155,6 +3158,21 @@
     }
   },
   "components": {
+    "onlineCountFilter": {
+      "title": {
+        "dashboard": "Who counts as online",
+        "widgets": "Online count of the embed widgets"
+      },
+      "description": {
+        "dashboard": "Applies to the Online Users tile and the Lounge layout sentence on this virtual server, for every user. Server capacity still counts every occupied slot.",
+        "widgets": "Applies to every embed widget of this virtual server. The widget channel tree still lists every client."
+      },
+      "excludeMusicBots": "Don't count this manager's music bots",
+      "groupsLabel": "Don't count clients in these server groups:",
+      "noGroups": "This server has no regular server groups.",
+      "saved": "Online count saved",
+      "saveFailed": "Failed to save the online count"
+    },
     "serverSelector": {
       "selectServer": "Select server...",
       "selectVirtualServer": "Virtual server..."

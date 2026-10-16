@@ -6,6 +6,7 @@ import { renderWidgetSvg } from '../widget/widget-svg.js';
 import type { WidgetData } from '@ts6/common';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 import { config } from '../config.js';
+import { countOnline, filterNeedsDetails, getOnlineCountFilter } from '../utils/online-count.js';
 
 // Simple in-process cache (45s TTL) with bounded size
 interface CacheEntry { data: WidgetData; expiresAt: number; }
@@ -53,23 +54,25 @@ async function fetchWidgetData(token: string, req: Request): Promise<WidgetData 
   }
 
   const sid = widget.virtualServerId;
+  const filter = await getOnlineCountFilter(prisma, widget.serverConfigId, sid, 'widgets');
 
   const [serverInfoRaw, channelListRaw, clientListRaw] = await Promise.all([
     client.execute(sid, 'serverinfo'),
     client.execute(sid, 'channellist'),
-    client.execute(sid, 'clientlist'),
+    client.execute(sid, 'clientlist', filterNeedsDetails(filter) ? { '-groups': '', '-uid': '' } : undefined),
   ]);
 
   const info = Array.isArray(serverInfoRaw) ? serverInfoRaw[0] : serverInfoRaw;
   const channels = Array.isArray(channelListRaw) ? channelListRaw : [];
   const clients = Array.isArray(clientListRaw) ? clientListRaw : [];
-  const onlineClients = clients.filter((c: any) => String(c.client_type) === '0');
+  const voiceBots: VoiceBotManager = req.app.locals.voiceBotManager;
 
   const data: WidgetData = {
     serverName: info.virtualserver_name || 'TeamSpeak Server',
     serverHost: widget.serverConfig.host,
     serverPort: Number(info.virtualserver_port) || 9987,
-    onlineUsers: onlineClients.length,
+    // The admin's filter for embeds (Embed widgets dialog); the channel tree still lists everyone.
+    onlineUsers: countOnline(clients, filter, voiceBots.ownIdentityUids()),
     maxClients: Number(info.virtualserver_maxclients) || 0,
     uptime: Number(info.virtualserver_uptime) || 0,
     // M8: Redact server version/platform to prevent targeted vulnerability scanning
