@@ -116,6 +116,15 @@ async function resolveHostIPv4(host: string): Promise<string> {
   return address;
 }
 
+// The three packet kinds TeamSpeak's connection info counts separately
+const STAT_KINDS = ["speech", "keepalive", "control"] as const;
+
+function statKind(packetType: number): number {
+  if (packetType === PacketType.Voice || packetType === PacketType.VoiceWhisper) return 0;
+  if (packetType === PacketType.Ping || packetType === PacketType.Pong) return 1;
+  return 2;
+}
+
 export class Ts3Client extends EventEmitter {
   private socket: dgram.Socket | null = null;
   private state: ClientState = "disconnected";
@@ -154,6 +163,18 @@ export class Ts3Client extends EventEmitter {
   // Channel map (populated during init sequence for auto-move)
   private channelMap = new Map<string, number>(); // channel_name → cid
 
+  // Connection statistics the server asks for (notifyconnectioninforequest)
+  // whenever someone opens this client's connection info; indexed by statKind()
+  private statSentPackets = [0, 0, 0];
+  private statSentBytes = [0, 0, 0];
+  private statRecvPackets = [0, 0, 0];
+  private statRecvBytes = [0, 0, 0];
+  // Byte totals [sent x3, received x3] sampled every second, newest last (bandwidth fields)
+  private byteSamples: number[][] = [];
+  private lastPing: { id: number; at: number } | null = null;
+  private pingMs = 0;
+  private pingDeviationMs = 0;
+
   constructor() {
     super();
   }
@@ -183,6 +204,11 @@ export class Ts3Client extends EventEmitter {
     this.fragmentFlags = 0;
     this.clientId = 0;
     this.channelMap.clear();
+    for (const a of [this.statSentPackets, this.statSentBytes, this.statRecvPackets, this.statRecvBytes]) a.fill(0);
+    this.byteSamples = [];
+    this.lastPing = null;
+    this.pingMs = 0;
+    this.pingDeviationMs = 0;
 
     // Resolve the host once per connection and send to the cached IP. Done on
     // every connect() (not cached across them) so a changed server IP is picked
@@ -577,6 +603,9 @@ export class Ts3Client extends EventEmitter {
     const pid = raw.readUInt16BE(MAC_LEN);
     this.emit("debug", `[OUT] type=${ptype} id=${pid} flags=0x${pflags.toString(16)} len=${raw.length}`);
     this.socket.send(raw, this.opts.port, this.remoteAddress);
+    const kind = statKind(ptype);
+    this.statSentPackets[kind]++;
+    this.statSentBytes[kind] += raw.length;
   }
 
   // ====== Incoming Packet Handling ======
@@ -591,6 +620,9 @@ export class Ts3Client extends EventEmitter {
     const flags = ptByte & 0xf0;
 
     this.lastMessageTime = Date.now();
+    const kind = statKind(packetType);
+    this.statRecvPackets[kind]++;
+    this.statRecvBytes[kind] += raw.length;
 
     // Decrypt
     const gen = this.inGenerationCounter[packetType] || 0;
@@ -616,7 +648,7 @@ export class Ts3Client extends EventEmitter {
         this.handlePing(packetId);
         break;
       case PacketType.Pong:
-        // Pong received, good
+        this.handlePong(data);
         break;
       case PacketType.Voice:
       case PacketType.VoiceWhisper:
@@ -635,6 +667,43 @@ export class Ts3Client extends EventEmitter {
     const buf = Buffer.alloc(2);
     buf.writeUInt16BE(packetId);
     this.sendOutgoing(buf, PacketType.Pong);
+  }
+
+  // A pong carries the id of the ping it answers; smoothed like TCP's RTT (RFC 6298)
+  private handlePong(data: Buffer): void {
+    if (data.length < 2 || !this.lastPing || data.readUInt16BE(0) !== this.lastPing.id) return;
+    const rtt = performance.now() - this.lastPing.at;
+    this.lastPing = null;
+    if (this.pingMs === 0) {
+      this.pingMs = rtt;
+      this.pingDeviationMs = rtt / 2;
+    } else {
+      this.pingDeviationMs = 0.75 * this.pingDeviationMs + 0.25 * Math.abs(this.pingMs - rtt);
+      this.pingMs = 0.875 * this.pingMs + 0.125 * rtt;
+    }
+  }
+
+  private sendConnectionInfo(): void {
+    const s = this.byteSamples;
+    const newest = s[s.length - 1];
+    const lastSecond = (i: number) => (s.length > 1 ? newest[i] - s[s.length - 2][i] : 0);
+    const lastMinute = (i: number) => (s.length > 1 ? Math.round((newest[i] - s[0][i]) / (s.length - 1)) : 0);
+    const params: Record<string, string | number> = {
+      connection_ping: this.pingMs.toFixed(4),
+      connection_ping_deviation: this.pingDeviationMs.toFixed(4),
+    };
+    STAT_KINDS.forEach((k, i) => (params[`connection_packets_sent_${k}`] = this.statSentPackets[i]));
+    STAT_KINDS.forEach((k, i) => (params[`connection_bytes_sent_${k}`] = this.statSentBytes[i]));
+    STAT_KINDS.forEach((k, i) => (params[`connection_packets_received_${k}`] = this.statRecvPackets[i]));
+    STAT_KINDS.forEach((k, i) => (params[`connection_bytes_received_${k}`] = this.statRecvBytes[i]));
+    // shortcut: server-to-bot loss is not measured (the bot only sends audio; the
+    // server measures bot-to-server loss itself), track incoming packet ids if it matters
+    for (const k of [...STAT_KINDS, "total"]) params[`connection_server2client_packetloss_${k}`] = "0.0000";
+    STAT_KINDS.forEach((k, i) => (params[`connection_bandwidth_sent_last_second_${k}`] = lastSecond(i)));
+    STAT_KINDS.forEach((k, i) => (params[`connection_bandwidth_sent_last_minute_${k}`] = lastMinute(i)));
+    STAT_KINDS.forEach((k, i) => (params[`connection_bandwidth_received_last_second_${k}`] = lastSecond(i + 3)));
+    STAT_KINDS.forEach((k, i) => (params[`connection_bandwidth_received_last_minute_${k}`] = lastMinute(i + 3)));
+    this.sendCommand(buildCommand("setconnectioninfo", params));
   }
 
   private handleAck(data: Buffer): void {
@@ -811,6 +880,9 @@ export class Ts3Client extends EventEmitter {
       case "notifytextmessage":
         this.emit("textMessage", parsed.params);
         break;
+      case "notifyconnectioninforequest":
+        this.sendConnectionInfo();
+        break;
       case "error": {
         this.emit("ts3error", parsed.params);
         // Fatal TS3 errors: reject connect promise and disconnect immediately
@@ -969,7 +1041,10 @@ export class Ts3Client extends EventEmitter {
     // Start ping timer (every 1 second)
     this.pingTimer = setInterval(() => {
       if (this.state === "connected") {
+        this.lastPing = { id: this.getPacketCounter(PacketType.Ping).id, at: performance.now() };
         this.sendOutgoing(Buffer.alloc(0), PacketType.Ping);
+        this.byteSamples.push([...this.statSentBytes, ...this.statRecvBytes]);
+        if (this.byteSamples.length > 61) this.byteSamples.shift();
       }
     }, 1000);
 

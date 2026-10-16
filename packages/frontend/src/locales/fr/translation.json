@@ -1028,6 +1028,7 @@
       "connectionFailedDescription": "Impossible de se connecter au serveur TeamSpeak. Vérifiez vos paramètres de connexion.",
       "widgets": "Widgets intégrables",
       "liveMonitoring": "Surveillance en direct",
+      "onlineCount": "Comptage en ligne",
       "lead": {
         "peopleHere_one": "{{count}} personne est là en ce moment",
         "peopleHere_other": "{{count}} personnes sont là en ce moment",
@@ -1071,6 +1072,8 @@
         "hide": "Masquer {{name}}",
         "show": "Afficher {{name}}",
         "hiddenBadge": "Masquée",
+        "inLeadBadge": "Dans la phrase",
+        "inLeadHint": "Dans la disposition Lounge, ce nombre fait partie de la phrase en haut, la tuile n'y apparaît donc pas. Dans la disposition Cockpit, l'interrupteur fonctionne comme d'habitude.",
         "width": "Largeur de {{name}}",
         "widthLabel": "Largeur",
         "width1": "1/3",
@@ -2070,6 +2073,21 @@
     }
   },
   "components": {
+    "onlineCountFilter": {
+      "title": {
+        "dashboard": "Qui compte comme en ligne",
+        "widgets": "Comptage en ligne des widgets intégrés"
+      },
+      "description": {
+        "dashboard": "S'applique à la tuile Utilisateurs en ligne et à la phrase de la disposition Lounge sur ce serveur virtuel, pour tous les utilisateurs. La capacité du serveur compte toujours tous les emplacements occupés.",
+        "widgets": "S'applique à tous les widgets intégrés de ce serveur virtuel. L'arborescence des salons du widget affiche toujours tous les clients."
+      },
+      "excludeMusicBots": "Ne pas compter les bots musicaux de ce gestionnaire",
+      "groupsLabel": "Ne pas compter les clients de ces groupes de serveur :",
+      "noGroups": "Ce serveur n'a pas de groupes de serveur ordinaires.",
+      "saved": "Comptage en ligne enregistré",
+      "saveFailed": "Impossible d'enregistrer le comptage en ligne"
+    },
     "serverSelector": {
       "selectServer": "Sélectionner un serveur...",
       "selectVirtualServer": "Serveur virtuel..."

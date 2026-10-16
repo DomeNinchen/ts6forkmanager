@@ -55,7 +55,7 @@ All five permission layers, with a side-by-side comparison that highlights the d
 
 ## Why This Fork Exists
 
-Upstream had a video/audio streaming stutter that was never resolved and security findings nobody had triaged. This fork fixed the stutter at its root, hardened the security and has since added many features and fixes of its own. [CHANGELOG.md](CHANGELOG.md) lists every change.
+Upstream had a video/audio streaming stutter that was never resolved and security findings nobody had triaged. This fork fixed the stutter at its root, hardened the security and has since added many features and fixes of its own. [CHANGELOG.md](CHANGELOG.md) lists every change, newest first.
 
 ## Requirements
 
@@ -114,7 +114,7 @@ Upstream had a video/audio streaming stutter that was never resolved and securit
 
 **Server management**
 
-- **Dashboard and statistics**: live stats, tiles each user arranges for themselves, and up to a month of history. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Dashboard)
+- **Dashboard and statistics**: live stats, tiles each user arranges for themselves, up to a month of history, and an online count that can leave out chosen server groups and the music bots. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Dashboard)
 - **Channels and clients**: a drag-and-drop channel tree, bulk actions on online clients, and a searchable, exportable database of every client the server has seen. → [Channels](https://github.com/DomeNinchen/ts6forkmanager/wiki/Channels), [Clients](https://github.com/DomeNinchen/ts6forkmanager/wiki/Clients), [Client Database](https://github.com/DomeNinchen/ts6forkmanager/wiki/Client-Database)
 - **Files and icons**: browse, upload and download channel files, and manage the icon pool. → [Files](https://github.com/DomeNinchen/ts6forkmanager/wiki/Files), [Icons](https://github.com/DomeNinchen/ts6forkmanager/wiki/Icons)
 - **Permissions and groups**: all five layers, offline clients included, with bulk apply, compare and a per-client overview; server and channel groups with export/import. → [Permissions](https://github.com/DomeNinchen/ts6forkmanager/wiki/Permissions), [Groups](https://github.com/DomeNinchen/ts6forkmanager/wiki/Server-and-Channel-Groups)
@@ -128,7 +128,7 @@ Upstream had a video/audio streaming stutter that was never resolved and securit
 - **Music bots**: several bots per server playing radio, YouTube, Spotify links and your own library, controlled in the browser or with chat commands such as `!play`. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots)
 - **Video streaming**: YouTube, Twitch, direct URLs or library videos into a channel over WebRTC, with a queue and a browser preview. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots#video-streaming)
 - **Bot flows**: a visual automation editor with triggers from server events, schedules, webhooks and chat commands, plus ready-made templates. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Bot-Flows)
-- **Server widgets**: status banners for websites and forums, as a live page, SVG or PNG. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
+- **Server widgets**: status banners for websites and forums, as a live page, SVG or PNG, with their own online-count filter. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
 
 **Access and appearance**
 

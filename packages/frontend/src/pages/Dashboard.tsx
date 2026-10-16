@@ -8,20 +8,18 @@ import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
-import { DEFAULT_LAYOUT, TILE_WIDTH_CLASS, isDefaultLayout, resolveLayout, tileDef } from '@/components/dashboard/tile-registry';
+import { DEFAULT_LAYOUT, LOUNGE_LEAD_TILES, TILE_WIDTH_CLASS, isDefaultLayout, resolveLayout, tileDef } from '@/components/dashboard/tile-registry';
 import { TileLayoutEditor } from '@/components/dashboard/TileLayoutEditor';
-import { Wifi, Server, LayoutGrid, Lock, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Wifi, Server, LayoutGrid, Lock, SlidersHorizontal, RotateCcw, UserMinus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { OnlineCountFilterEditor } from '@/components/dashboard/OnlineCountFilterEditor';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { toast } from 'sonner';
 import type { DashboardTileSetting } from '@ts6/common';
-import { useClients } from '@/hooks/use-clients';
 import { useDesign } from '@/hooks/use-webgui-theme';
 import { cn } from '@/lib/utils';
-
-/** The single-number tiles; Lounge's lead sentence says all of them, so its tile grid leaves them out. */
-const SAID_IN_LEAD = new Set(['onlineUsers', 'channels', 'uptime', 'ping']);
 
 /** How long the server has been up, in its largest whole unit, as a phrase. */
 function uptimePhrase(t: TFunction, seconds: number) {
@@ -33,13 +31,11 @@ function uptimePhrase(t: TFunction, seconds: number) {
 }
 
 /**
- * The Lounge dashboard's opening sentence: who is here (voice clients only, no query logins),
- * how long the server has been up, channels and ping - in words instead of tiles.
+ * The Lounge dashboard's opening sentence: who is here (the same filtered number as the Online
+ * Users tile), how long the server has been up, channels and ping - in words instead of tiles.
  */
-function Lead({ uptime, channelCount, ping }: { uptime: number; channelCount: number; ping: number }) {
+function Lead({ people, uptime, channelCount, ping }: { people: number; uptime: number; channelCount: number; ping: number }) {
   const { t } = useTranslation();
-  const { data: clients } = useClients();
-  const people = ((clients ?? []) as any[]).filter((c) => String(c.client_type) === '0').length;
 
   return (
     <p className="mt-6 max-w-[30ch] font-display text-3xl font-medium leading-snug sm:text-[2.6rem]">
@@ -65,6 +61,7 @@ export default function Dashboard() {
   const { error: virtualServersError } = useVirtualServers();
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const [showWidgets, setShowWidgets] = useState(false);
+  const [showOnlineFilter, setShowOnlineFilter] = useState(false);
 
   // The user's own tile layout. If it cannot be loaded the default is shown - the dashboard itself still works.
   const { data: settings, isLoading: settingsLoading } = useUserSettings();
@@ -126,7 +123,7 @@ export default function Dashboard() {
         {lounge ? (
           <div className="min-w-0">
             <h1 data-hero className="font-display text-5xl font-bold leading-[0.95] tracking-tight sm:text-7xl">{data.serverName}</h1>
-            <Lead uptime={data.uptime} channelCount={data.channelCount} ping={data.ping} />
+            <Lead people={data.onlineUsers} uptime={data.uptime}channelCount={data.channelCount} ping={data.ping} />
             <p className="mt-5 text-sm text-muted-foreground">TeamSpeak {data.version}, {data.platform}</p>
           </div>
         ) : (
@@ -157,6 +154,11 @@ export default function Dashboard() {
                 <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" /> {t('pages.dashboard.tiles.customise')}
               </Button>
               {isAdmin && (
+                <Button size="sm" variant="outline" onClick={() => setShowOnlineFilter(true)}>
+                  <UserMinus className="h-3.5 w-3.5 mr-1.5" /> {t('pages.dashboard.onlineCount')}
+                </Button>
+              )}
+              {isAdmin && (
                 <Button size="sm" variant="outline" onClick={() => setShowWidgets(true)}>
                   <LayoutGrid className="h-3.5 w-3.5 mr-1.5" /> {t('pages.dashboard.widgets')}
                 </Button>
@@ -184,7 +186,7 @@ export default function Dashboard() {
         /* The tiles. Each loads its own data and renders nothing when it has nothing to show.
            Lounge leaves out the four single-number tiles - its lead sentence says what they say. */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lounge:gap-x-10 lounge:gap-y-8 lounge:pt-4">
-          {layout.filter((tile) => !tile.hidden && !(lounge && SAID_IN_LEAD.has(tile.id))).map(({ id, width }) => {
+          {layout.filter((tile) => !tile.hidden && !(lounge && LOUNGE_LEAD_TILES.has(tile.id))).map(({ id, width }) => {
             const Tile = tileDef(id)?.component;
             return Tile && <Tile key={id} className={TILE_WIDTH_CLASS[width]} />;
           })}
@@ -193,6 +195,17 @@ export default function Dashboard() {
 
       {/* The dialog loads the widget list the moment it mounts, and only an admin may read it - the button that opens it is admin-only too. */}
       {isAdmin && <WidgetManagerModal open={showWidgets} onOpenChange={setShowWidgets} />}
+      {isAdmin && (
+        <Dialog open={showOnlineFilter} onOpenChange={setShowOnlineFilter}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{t('pages.dashboard.onlineCount')}</DialogTitle>
+            </DialogHeader>
+            {/* Mounted only while open: it loads an admin-only route. */}
+            {showOnlineFilter && <OnlineCountFilterEditor configId={selectedConfigId} sid={selectedSid} scope="dashboard" />}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

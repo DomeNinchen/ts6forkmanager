@@ -17,16 +17,16 @@ export function CapacityTile({ className }: TileProps) {
         <div>
           <div className="flex items-center justify-between text-xs mb-1.5">
             <span className="text-muted-foreground">{t('pages.dashboard.userSlots')}</span>
-            <span className="font-mono-data">{data.onlineUsers} / {data.maxClients}</span>
+            <span className="font-mono-data">{data.slotsUsed} / {data.maxClients}</span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full rounded-full bg-linear-to-r from-primary to-primary/60 transition-all duration-500"
-              style={{ width: `${Math.min((data.onlineUsers / data.maxClients) * 100, 100)}%` }}
+              style={{ width: `${Math.min((data.slotsUsed / data.maxClients) * 100, 100)}%` }}
             />
           </div>
           <p className="text-[10px] text-muted-foreground mt-1 font-mono-data">
-            {t('pages.dashboard.utilized', { percent: ((data.onlineUsers / data.maxClients) * 100).toFixed(1) })}
+            {t('pages.dashboard.utilized', { percent: ((data.slotsUsed / data.maxClients) * 100).toFixed(1) })}
           </p>
         </div>
 
