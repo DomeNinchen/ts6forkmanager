@@ -2092,6 +2092,7 @@
       "connectionFailedDescription": "Verbindung zum TeamSpeak-Server fehlgeschlagen. Bitte die Verbindungseinstellungen prüfen.",
       "widgets": "Einbettungs-Widgets",
       "liveMonitoring": "Live-Überwachung",
+      "onlineCount": "Online-Zählung",
       "lead": {
         "peopleHere_one": "{{count}} Person ist gerade da",
         "peopleHere_other": "{{count}} Leute sind gerade da",
@@ -2145,6 +2146,8 @@
         "hide": "{{name}} ausblenden",
         "show": "{{name}} einblenden",
         "hiddenBadge": "Ausgeblendet",
+        "inLeadBadge": "Im Satz oben",
+        "inLeadHint": "Im Lounge-Layout steht diese Zahl im Satz oben, deshalb erscheint die Kachel dort nicht. Im Cockpit-Layout gilt der Schalter wie gewohnt.",
         "width": "Breite von {{name}}",
         "widthLabel": "Breite",
         "width1": "1/3",
@@ -3155,6 +3158,21 @@
     }
   },
   "components": {
+    "onlineCountFilter": {
+      "title": {
+        "dashboard": "Wer bei „Online“ mitzählt",
+        "widgets": "Online-Zählung der Einbettungs-Widgets"
+      },
+      "description": {
+        "dashboard": "Gilt für die Kachel „Online-Nutzer“ und den Satz im Lounge-Layout auf diesem virtuellen Server, für alle Benutzer. Die Kapazitätsanzeige zählt weiter alle belegten Plätze.",
+        "widgets": "Gilt für alle Einbettungs-Widgets dieses virtuellen Servers. Der Channel-Baum im Widget zeigt weiterhin alle Clients."
+      },
+      "excludeMusicBots": "Musik-Bots dieses Managers nicht mitzählen",
+      "groupsLabel": "Clients in diesen Servergruppen nicht mitzählen:",
+      "noGroups": "Dieser Server hat keine regulären Servergruppen.",
+      "saved": "Online-Zählung gespeichert",
+      "saveFailed": "Online-Zählung konnte nicht gespeichert werden"
+    },
     "serverSelector": {
       "selectServer": "Server auswählen...",
       "selectVirtualServer": "Virtueller Server..."

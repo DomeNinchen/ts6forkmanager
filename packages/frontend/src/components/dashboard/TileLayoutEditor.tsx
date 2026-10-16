@@ -9,7 +9,8 @@ import type { DashboardTileSetting, DashboardTileWidth } from '@ts6/common';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { TILE_WIDTH_CLASS, tileDef } from './tile-registry';
+import { LOUNGE_LEAD_TILES, TILE_WIDTH_CLASS, tileDef } from './tile-registry';
+import { useDesign } from '@/hooks/use-webgui-theme';
 
 const WIDTHS: DashboardTileWidth[] = [1, 2, 3];
 
@@ -96,6 +97,9 @@ function EditableTile({ tile, isFirst, isLast, onMove, onChange }: EditableTileP
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: tile.id });
   const def = tileDef(tile.id);
   const name = def ? t(def.labelKey) : tile.id;
+  // In Lounge this tile's number is in the lead sentence and the tile never shows; its
+  // visibility switch would do nothing there, so it is locked and the reason shown instead.
+  const inLead = useDesign() === 'lounge' && LOUNGE_LEAD_TILES.has(tile.id);
 
   return (
     <div
@@ -104,7 +108,7 @@ function EditableTile({ tile, isFirst, isLast, onMove, onChange }: EditableTileP
       className={cn(
         TILE_WIDTH_CLASS[tile.width],
         'flex flex-col gap-3 rounded-lg border bg-card p-4',
-        tile.hidden ? 'border-dashed border-muted-foreground/40' : 'border-border',
+        tile.hidden || inLead ? 'border-dashed border-muted-foreground/40' : 'border-border',
         isDragging && 'relative z-10 shadow-lg ring-2 ring-primary',
       )}
     >
@@ -120,8 +124,10 @@ function EditableTile({ tile, isFirst, isLast, onMove, onChange }: EditableTileP
         >
           <GripVertical className="h-4 w-4" />
         </button>
-        <span className={cn('truncate text-sm font-medium', tile.hidden && 'text-muted-foreground')}>{name}</span>
-        {tile.hidden && <Badge variant="secondary" className="shrink-0 text-[10px]">{t('pages.dashboard.tiles.hiddenBadge')}</Badge>}
+        <span className={cn('truncate text-sm font-medium', (tile.hidden || inLead) && 'text-muted-foreground')}>{name}</span>
+        {inLead
+          ? <Badge variant="secondary" className="shrink-0 text-[10px]">{t('pages.dashboard.tiles.inLeadBadge')}</Badge>
+          : tile.hidden && <Badge variant="secondary" className="shrink-0 text-[10px]">{t('pages.dashboard.tiles.hiddenBadge')}</Badge>}
         <div className="ml-auto flex shrink-0 items-center">
           <Button size="icon" variant="ghost" className="h-7 w-7" disabled={isFirst} onClick={() => onMove(-1)}
             aria-label={t('pages.dashboard.tiles.moveEarlier', { name })} title={t('pages.dashboard.tiles.moveEarlier', { name })}>
@@ -131,7 +137,7 @@ function EditableTile({ tile, isFirst, isLast, onMove, onChange }: EditableTileP
             aria-label={t('pages.dashboard.tiles.moveLater', { name })} title={t('pages.dashboard.tiles.moveLater', { name })}>
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onChange({ hidden: !tile.hidden })}
+          <Button size="icon" variant="ghost" className="h-7 w-7" disabled={inLead} onClick={() => onChange({ hidden: !tile.hidden })}
             aria-label={t(tile.hidden ? 'pages.dashboard.tiles.show' : 'pages.dashboard.tiles.hide', { name })}
             title={t(tile.hidden ? 'pages.dashboard.tiles.show' : 'pages.dashboard.tiles.hide', { name })}>
             {tile.hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -149,6 +155,7 @@ function EditableTile({ tile, isFirst, isLast, onMove, onChange }: EditableTileP
         ))}
       </div>
 
+      {inLead && <p className="text-[11px] text-muted-foreground">{t('pages.dashboard.tiles.inLeadHint')}</p>}
       {def?.hintKey && <p className="text-[11px] text-muted-foreground">{t(def.hintKey)}</p>}
     </div>
   );

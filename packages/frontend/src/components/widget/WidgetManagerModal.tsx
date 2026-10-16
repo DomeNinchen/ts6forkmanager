@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { useWidgets, useCreateWidget, useUpdateWidget, useDeleteWidget, useRegenerateWidgetToken } from '@/hooks/use-widgets';
 import { useQuery } from '@tanstack/react-query';
 import { serversApi } from '@/api/servers.api';
+import { OnlineCountFilterEditor } from '@/components/dashboard/OnlineCountFilterEditor';
 import type { WidgetConfig, WidgetTheme, ServerConfig } from '@ts6/common';
 import { WIDGET_THEME_LABELS } from '@ts6/common';
 import { Copy, ExternalLink, Plus, Trash2, Pencil, RefreshCw, ArrowLeft, Code2, Image } from 'lucide-react';
@@ -263,6 +264,14 @@ export function WidgetManagerModal({ open, onOpenChange }: Props) {
                   {view === 'create' ? t('common.create') : t('common.save')}
                 </Button>
               </div>
+
+              {/* Belongs to the virtual server, not to this one widget, and saves on its own button. */}
+              {view === 'edit' && editTarget && (
+                <>
+                  <Separator />
+                  <OnlineCountFilterEditor configId={editTarget.serverConfigId} sid={editTarget.virtualServerId} scope="widgets" />
+                </>
+              )}
             </div>
           )}
 

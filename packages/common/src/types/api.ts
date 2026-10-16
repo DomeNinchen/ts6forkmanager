@@ -70,7 +70,10 @@ export interface DashboardData {
   serverName: string;
   platform: string;
   version: string;
+  /** Real users, minus whoever the admin's dashboard filter leaves out (see OnlineCountFilter). */
   onlineUsers: number;
+  /** Every connected voice client, filter or not - what occupies slots. */
+  slotsUsed: number;
   maxClients: number;
   uptime: number;
   channelCount: number;

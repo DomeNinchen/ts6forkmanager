@@ -27,6 +27,12 @@ const DASHBOARD_TILES: Record<string, TileDef> = {
   botFlows: { component: BotFlowsTile, labelKey: 'pages.dashboard.botFlows', hintKey: 'pages.dashboard.tiles.botFlowsHint' },
 };
 
+/**
+ * The single-number tiles. The Lounge layout says all four in its lead sentence, so it never
+ * shows them; its customise mode marks them instead of offering a switch that does nothing.
+ */
+export const LOUNGE_LEAD_TILES: ReadonlySet<string> = new Set(['onlineUsers', 'channels', 'uptime', 'ping']);
+
 /** Own keys only: a stored id like "constructor" must not resolve to something on Object.prototype. */
 export function tileDef(id: string): TileDef | undefined {
   return Object.prototype.hasOwnProperty.call(DASHBOARD_TILES, id) ? DASHBOARD_TILES[id] : undefined;
