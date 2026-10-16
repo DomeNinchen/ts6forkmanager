@@ -30,7 +30,7 @@ export function AppLayout() {
         <YtCookieBanner />
         {lounge ? <LoungeHeader /> : <Header />}
         <main className={cn('flex-1 overflow-auto', !lounge && 'grid-bg')}>
-          <div className={lounge ? 'mx-auto max-w-[1600px] px-4 py-6 sm:px-6' : 'p-5 fade-in'}>
+          <div className={lounge ? 'max-w-[1600px] px-4 py-6 sm:px-6' : 'p-5 fade-in'}>
             <Outlet />
           </div>
         </main>
