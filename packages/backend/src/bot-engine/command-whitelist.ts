@@ -54,9 +54,9 @@ export const ALLOWED_WEBQUERY_COMMANDS = new Set([
   'bandel',
   'banadd',
 
-  // Tokens
-  'tokenadd',
-  'tokenlist',
+  // Tokens: only deleting. A flow that could create or read privilege keys (tokenadd, tokenlist -
+  // and their TS6 names privilegekeyadd/privilegekeylist, which were never listed) would hand a
+  // bot operator keys to any group, admin included, that only admins may see in the interface.
   'tokendelete',
 
   // Complaints
