@@ -52,7 +52,7 @@ Edit all five permission layers for online and offline clients alike, set many p
 
 Upstream had a persistent video/audio streaming stutter that was never resolved, plus a pile of security findings nobody had triaged. This fork root-caused and fixed the streaming stutter, did a full security-hardening pass, and has since grown a considerable number of its own features and upstream-requested fixes on top.
 
-**See [CHANGELOG.md](CHANGELOG.md)** for the full history — a short summary of the headline changes, followed by every individual change in the order it shipped.
+**See [CHANGELOG.md](CHANGELOG.md)** for the full history — every change, newest first, grouped by month, each linking the pull request with the details.
 
 ## Requirements
 

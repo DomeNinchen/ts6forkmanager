@@ -33,7 +33,7 @@ For the sidecar, work in `packages/sidecar` directly with the normal Go toolchai
 - `pnpm typecheck` (from the repo root) is the main automated check for backend/frontend/common — there's no JS/TS test suite yet. The Go sidecar does have tests: `cd packages/sidecar && go test ./...`.
 - If you can, actually run the feature you changed against a real TeamSpeak server rather than relying on typecheck alone — a surprising number of bugs here only show up against the real protocol.
 - Keep PRs focused on one change. A bug fix doesn't need to bring along an unrelated refactor.
-- Update [CHANGELOG.md](CHANGELOG.md) with a short entry describing what changed and why, in the same style as the existing entries near the bottom of the "Individual Changes" section. If you're not sure how to phrase it, a rough description is still helpful — it can be tightened up in review.
+- Update [CHANGELOG.md](CHANGELOG.md) with a short entry (one or two sentences: what changed for the people using it, the component versions, and a link to the PR) at the top of the current month's section, in the same style as the existing entries — details belong in the PR description. If you're not sure how to phrase it, a rough description is still helpful — it can be tightened up in review.
 - If your change is user-visible, mention in the PR description whether backend, frontend, and/or sidecar need a version bump (each is versioned independently) — again, doesn't have to be exact, just flag it.
 
 ## Code style
