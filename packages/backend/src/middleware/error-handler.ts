@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 
 export class AppError extends Error {
   constructor(
@@ -55,12 +56,24 @@ function bodyErrorStatus(err: Error): number | undefined {
   return typeof type === 'string' && typeof status === 'number' && status >= 400 && status < 500 ? status : undefined;
 }
 
-export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
-  console.error(`[Error] ${err.name}: ${err.message}`);
+export function errorHandler(err: Error, _req: Request, res: Response, next: NextFunction) {
+  // The answer has started already: only Express's own handler can still end it (it closes the connection)
+  if (res.headersSent) return next(err);
 
   const bodyStatus = bodyErrorStatus(err);
   if (bodyStatus) {
-    res.status(bodyStatus).json({ error: BODY_ERROR_MESSAGES[(err as Error & { type: string }).type] ?? 'Invalid request body' });
+    // Logged without the parser's message: that one quotes the body, which can be a password
+    const type = (err as Error & { type: string }).type;
+    console.error(`[Error] Unreadable request body: ${type} (${bodyStatus})`);
+    res.status(bodyStatus).json({ error: BODY_ERROR_MESSAGES[type] ?? 'Invalid request body' });
+    return;
+  }
+
+  console.error(`[Error] ${err.name}: ${err.message}`);
+
+  // An upload the client got wrong (too large, wrong field, too many files) - multer's messages are fixed texts
+  if (err instanceof multer.MulterError) {
+    res.status(err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ error: err.message, code: err.code });
     return;
   }
 

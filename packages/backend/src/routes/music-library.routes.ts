@@ -31,7 +31,7 @@ const upload = multer({
     if (ALL_EXTENSIONS.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error(`Unsupported file type: ${ext}`));
+      cb(new AppError(400, `Unsupported file type: ${ext}`));
     }
   },
 });
@@ -134,14 +134,16 @@ musicLibraryRoutes.delete('/songs/:id', async (req: Request, res: Response, next
     const song = await prisma.song.findFirst({ where: { id, serverConfigId: parseInt(req.params.configId as string) } });
     if (!song) throw new AppError(404, 'Song not found');
 
-    // Remove file from disk
+    await prisma.song.delete({ where: { id } });
+
+    // Remove the file unless another song still plays it: a YouTube download is stored once per
+    // video and shared by every server's library entry for it
+    const stillUsed = await prisma.song.count({ where: { filePath: song.filePath } });
     try {
-      if (fs.existsSync(song.filePath)) {
+      if (stillUsed === 0 && fs.existsSync(song.filePath)) {
         fs.unlinkSync(song.filePath);
       }
     } catch { /* ignore file deletion failure */ }
-
-    await prisma.song.delete({ where: { id } });
     res.json({ success: true });
   } catch (err) { next(err); }
 });

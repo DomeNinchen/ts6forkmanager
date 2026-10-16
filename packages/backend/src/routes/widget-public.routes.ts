@@ -21,10 +21,22 @@ setInterval(() => {
   }
 }, 60_000);
 
+/** Fetches that are under way: requests arriving meanwhile wait for that one instead of each asking the server. */
+const inFlight = new Map<string, Promise<WidgetData | null>>();
+
 async function getWidgetData(token: string, req: Request): Promise<WidgetData | null> {
   const cached = widgetDataCache.get(token);
   if (cached && cached.expiresAt > Date.now()) return cached.data;
 
+  let pending = inFlight.get(token);
+  if (!pending) {
+    pending = fetchWidgetData(token, req).finally(() => inFlight.delete(token));
+    inFlight.set(token, pending);
+  }
+  return pending;
+}
+
+async function fetchWidgetData(token: string, req: Request): Promise<WidgetData | null> {
   const prisma = req.app.locals.prisma;
   const widget = await prisma.widget.findUnique({
     where: { token },

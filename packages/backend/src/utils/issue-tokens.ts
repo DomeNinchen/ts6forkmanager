@@ -22,8 +22,7 @@ export async function issueTokensForUser(
   const refreshToken = crypto.randomBytes(64).toString('hex');
   const family = nanoid();
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
+  const expiresAt = new Date(Date.now() + config.jwtRefreshExpiryMs);
 
   await prisma.refreshToken.create({
     data: { token: refreshToken, userId: user.id, expiresAt, family },

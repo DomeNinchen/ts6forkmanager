@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { nanoid } from 'nanoid';
 import { config } from '../config.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
@@ -194,8 +193,7 @@ authRoutes.post('/refresh', async (req: Request, res: Response, next) => {
     }
 
     const newRefreshToken = crypto.randomBytes(64).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    const expiresAt = new Date(Date.now() + config.jwtRefreshExpiryMs);
 
     // Claimed with a conditional update: of two requests that read the row above before either
     // rotated it, only one wins - the other presented a token that is used by now.
