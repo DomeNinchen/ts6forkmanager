@@ -27,6 +27,13 @@ const IDLE_CHECK_INTERVAL_MS = 5000;
  */
 const IDLE_PLAYBACK_GAP_MS = 30_000;
 
+/**
+ * How far behind its clock the playback loop may fall (after the event loop
+ * stalled) and still catch up by sending the late frames back to back. A
+ * longer stall drops the backlog of send slots - never audio - and continues.
+ */
+const MAX_CATCHUP_MS = 200;
+
 export type VoiceBotStatus = 'stopped' | 'starting' | 'connected' | 'playing' | 'paused' | 'error';
 
 export interface PlaybackProgress {
@@ -729,11 +736,8 @@ export class VoiceBot extends EventEmitter {
           return;
         }
 
-        // If we're behind, resync clock (no bursts)
-        const lagMs = now - nextDue;
-        if (lagMs >= FRAME_MS) {
-          nextDue = now + FRAME_MS;
-        }
+        // Behind after a stall: catch up on what ffmpeg already buffered (see startPlaybackLoop)
+        if (now - nextDue > MAX_CATCHUP_MS) nextDue = now;
 
         // Send exactly one frame if available
         const frame = this.takeFromStreamChunks(BYTES_PER_FRAME);
@@ -744,11 +748,6 @@ export class VoiceBot extends EventEmitter {
 
         // Next slot
         nextDue += FRAME_MS;
-
-        // If we fell way behind, resync to avoid long "catch-up"
-        if (now - nextDue > 5 * FRAME_MS) {
-          nextDue = now + FRAME_MS;
-        }
 
         const delay = nextDue - performance.now();
 
@@ -955,17 +954,10 @@ export class VoiceBot extends EventEmitter {
         return;
       }
 
-      // If we're behind, skip frames (never burst-send)
-      const lagMs = now - nextDue;
-      if (lagMs >= FRAME_MS) {
-        const skipFrames = Math.floor(lagMs / FRAME_MS);
-
-        // skip frames in data to catch up without bursts
-        this.frameIndex = Math.min(this.frameIndex + skipFrames, this.pcmFrames.length);
-
-        // IMPORTANT: resync clock so next send is ~20ms in the future (prevents immediate burst)
-        nextDue = now + FRAME_MS;
-      }
+      // Behind after an event-loop stall: the frames still due go out back to
+      // back (the listener's jitter buffer absorbs that), the audio itself is
+      // never skipped - a skipped frame is an audible click.
+      if (now - nextDue > MAX_CATCHUP_MS) nextDue = now;
 
       // Send exactly ONE frame (if available)
       if (this.frameIndex < this.pcmFrames.length) {
@@ -999,11 +991,6 @@ export class VoiceBot extends EventEmitter {
 
       // Schedule next tick for the next 20ms slot
       nextDue += FRAME_MS;
-
-      // If we fell way behind, resync to avoid long "catch-up"
-      if (now - nextDue > 5 * FRAME_MS) {
-        nextDue = now + FRAME_MS;
-      }
 
       const delay = nextDue - performance.now();
 
