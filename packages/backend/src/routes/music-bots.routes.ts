@@ -21,7 +21,7 @@ const avatarUpload = multer({
   limits: { fileSize: MAX_AVATAR_SIZE },
   fileFilter: (_req, file, cb) => {
     if (AVATAR_MIME_TYPES.includes(file.mimetype)) cb(null, true);
-    else cb(new Error(`Unsupported image type: ${file.mimetype}`));
+    else cb(new AppError(400, `Unsupported image type: ${file.mimetype}`));
   },
 });
 

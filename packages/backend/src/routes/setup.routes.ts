@@ -14,8 +14,16 @@ setupRoutes.get('/status', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
+// One setup at a time: two requests arriving together would both still see no users and each
+// create an admin. shortcut: in-process only, which is enough for the one backend process this runs as.
+let setupTurn: Promise<unknown> = Promise.resolve();
+
 // POST /api/setup/init — Create the first admin user
-setupRoutes.post('/init', async (req: Request, res: Response, next) => {
+setupRoutes.post('/init', (req: Request, res: Response, next) => {
+  setupTurn = setupTurn.then(() => createFirstAdmin(req, res, next));
+});
+
+async function createFirstAdmin(req: Request, res: Response, next: (err: unknown) => void): Promise<void> {
   try {
     const prisma = req.app.locals.prisma;
 
@@ -41,4 +49,4 @@ setupRoutes.post('/init', async (req: Request, res: Response, next) => {
 
     res.status(201).json({ success: true, message: 'Admin account created. You can now log in.' });
   } catch (err) { next(err); }
-});
+}
