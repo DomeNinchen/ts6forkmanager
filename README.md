@@ -23,10 +23,6 @@ Live users, channels, uptime, ping and bandwidth of a virtual server, with tiles
 
 ![Dashboard](docs/dashboard.png)
 
-The same dashboard in the **Lounge** layout, the alternative to the default Cockpit layout:
-
-![Dashboard in the Lounge layout](docs/dashboard-lounge.png)
-
 ### Music Bots
 Several bots per server, each with its own queue and volume, playing radio, YouTube or your own library.
 
