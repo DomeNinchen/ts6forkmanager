@@ -17,7 +17,7 @@ Built on the **WebQuery HTTP API** (the ServerQuery replacement in modern TeamSp
 <summary><b>Dashboard, music bots, video streaming, the visual bot flow editor, ready-made flow templates, and the permission editor</b> — click to expand</summary>
 
 ### Dashboard
-Live overview of a virtual server: online users, channels, uptime, ping, bandwidth and capacity. The charts show the last 20 minutes the moment the page opens, a card charts the users of the last 24 hours, and the Statistics page keeps users, bandwidth and ping for up to a month. Every user can arrange the dashboard's tiles for themselves — order, width and which ones are shown — and the layout is stored on their account, so it follows them to every browser.
+Live overview of a virtual server: online users, channels, uptime, ping, bandwidth and capacity. The charts show the last 20 minutes the moment the page opens, a card charts the users of the last 24 hours, and the Statistics page keeps users, bandwidth and ping for up to a month. Every user can arrange the dashboard's tiles for themselves — order, width and which ones are shown — and the layout is stored on their account, so it follows them to every browser. An admin can choose which server groups, and whether the manager's own music bots, the online-users number leaves out.
 
 ![Dashboard](docs/dashboard.png)
 
@@ -153,7 +153,7 @@ Running it behind a reverse proxy, or on Coolify? See [Deployment](https://githu
 - **Music bots** — several bots per server with independent queues, radio, YouTube (via yt-dlp) and Spotify links, a media library with playlists, autoplay on connect, pausing when alone, and chat commands whose access can be restricted per command to server groups. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots)
 - **Video streaming** — WebRTC streaming from YouTube, Twitch, direct URLs or your library into a channel, with a queue, quality defaults, an in-browser preview, a live viewer list and an optional end after nobody has watched for a while.
 - **Bot flows** — a visual editor for automation: triggers from TeamSpeak events, cron schedules, webhooks and chat commands; actions for kick, ban, move, messages, channel management, HTTP requests and WebQuery commands; conditions, variables, loops and placeholders; ready-made templates. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Bot-Flows)
-- **Server widgets** — embeddable status banners for websites and forums, as a live page, SVG or PNG, with public token-based access. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
+- **Server widgets** — embeddable status banners for websites and forums, as a live page, SVG or PNG, with public token-based access; their online count can leave out chosen server groups and the manager's music bots, separately from the dashboard. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
 
 **Access, privacy and looks**
 
