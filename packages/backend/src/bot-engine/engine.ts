@@ -190,7 +190,7 @@ function normalizeFlowData(raw: any): FlowDefinition {
       data = { actionType: 'generateCode', label, length: parseInt(config.length, 10) || 5, storeAs: config.storeAs || 'code', numericOnly: config.numericOnly !== false, };
     } else if (nodeType === 'action_countOnlineInGroups') {
       type = 'action';
-      data = { actionType: 'countOnlineInGroups', label, groupIds: config.groupIds || '', storeAs: config.storeAs || 'onlineCount' };
+      data = { actionType: 'countOnlineInGroups', label, groupIds: config.groupIds || '', excludeChannelIds: config.excludeChannelIds || '', storeAs: config.storeAs || 'onlineCount' };
     } else if (nodeType === 'action_listMembership') {
       type = 'action';
       data = { actionType: 'listMembership', label, listName: config.listName || '', operation: config.operation || 'add', value: config.value || '' };

@@ -2274,6 +2274,10 @@ export default function BotEditor() {
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="6,7" value={selectedNodeData.config.groupIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, groupIds: e.target.value } } : n))} />
                       </div>
                       <div>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionCountOnlineInGroups.excludeChannelIdsLabel')}</Label>
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="12" value={selectedNodeData.config.excludeChannelIds || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, excludeChannelIds: e.target.value } } : n))} />
+                      </div>
+                      <div>
                         <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="teamOnline" value={selectedNodeData.config.storeAs || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, storeAs: e.target.value } } : n))} />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">
