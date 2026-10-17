@@ -1553,7 +1553,8 @@
           "alphanumericOption": "Alphanumérique"
         },
         "actionCountOnlineInGroups": {
-          "groupIdsLabel": "ID de groupes serveur (séparés par des virgules)"
+          "groupIdsLabel": "ID de groupes serveur (séparés par des virgules)",
+          "excludeChannelIdsLabel": "ID des salons AFK / exclus (séparés par des virgules, optionnel)"
         },
         "actionListMembership": {
           "listNameLabel": "Nom de la liste",
@@ -2713,17 +2714,32 @@
         },
         "supportSystem": {
           "name": "Système de support",
-          "description": "Notifie les admins lorsqu’un client rejoint le salon de support.",
+          "description": "Quand un client rejoint le salon de support : vérifie qu’un support est en ligne, notifie l’utilisateur et les supports, crée un salon de support personnel et y déplace l’utilisateur, et peut garder la salle d’attente ouverte ou fermée selon la disponibilité. Basé sur le script SinusBot de Mortis & Andreas Fink (github.com/mortisdotpro/support-channel-mover, MIT).",
+          "variablesHint": [
+            "{{temp.client.0.client_nickname}} — nom du client en attente",
+            "{{temp.client.0.client_country}} — code pays",
+            "{{temp.client.0.client_version}} — version TeamSpeak",
+            "{{temp.client.0.client_platform}} — système d’exploitation",
+            "{{temp.client.0.client_totalconnections}} — connexions totales"
+          ],
           "fields": {
-            "supportChannelId": {
-              "label": "ID du salon de support"
-            },
-            "adminGroupId": {
-              "label": "ID du groupe admin"
-            },
-            "message": {
-              "label": "Message de notification"
-            }
+            "supportChannelId": { "label": "ID du salon de support (attente)" },
+            "parentChannelId": { "label": "Salon parent pour les salons créés (optionnel)" },
+            "supporterGroupIds": { "label": "ID des groupes de support (séparés par des virgules)" },
+            "afkChannelId": { "label": "Salon AFK — les supports qui s’y trouvent ne comptent pas comme disponibles (optionnel)" },
+            "roomName": { "label": "Nom du salon de support" },
+            "roomType": { "label": "Type de salon de support", "options": ["Temporaire (supprimé quand vide)", "Semi-permanent", "Permanent"] },
+            "notifyMethod": { "label": "Comment notifier l’utilisateur", "options": ["Poke", "Chat"] },
+            "userMessage": { "label": "Message à l’utilisateur (vide = aucun)" },
+            "supporterMessage": { "label": "Poke aux supports (vide = aucun)" },
+            "offlineMessage": { "label": "Message quand aucun support n’est en ligne (vide = aucun)" },
+            "listMode": { "label": "Filtre par groupe", "options": ["Désactivé", "Liste blanche (seulement ces groupes)", "Liste noire (bloquer ces groupes)"] },
+            "listGroupIdsWhitelist": { "label": "ID des groupes autorisés (séparés par des virgules)" },
+            "listGroupIdsBlacklist": { "label": "ID des groupes bloqués (séparés par des virgules)" },
+            "blockedMessage": { "label": "Message à un utilisateur bloqué (vide = aucun)" },
+            "waitingRoomToggle": { "label": "Renommer la salle d’attente selon la disponibilité", "options": ["Non", "Oui"] },
+            "waitingRoomOpenName": { "label": "Nom de la salle d’attente quand un support est en ligne" },
+            "waitingRoomClosedName": { "label": "Nom de la salle d’attente quand aucun support n’est en ligne" }
           }
         },
         "privateChannelCreator": {

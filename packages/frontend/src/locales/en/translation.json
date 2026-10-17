@@ -2630,7 +2630,8 @@
           "alphanumericOption": "Alphanumeric"
         },
         "actionCountOnlineInGroups": {
-          "groupIdsLabel": "Server Group IDs (comma-separated)"
+          "groupIdsLabel": "Server Group IDs (comma-separated)",
+          "excludeChannelIdsLabel": "AFK / excluded channel IDs (comma-separated, optional)"
         },
         "actionListMembership": {
           "listNameLabel": "List Name",
@@ -3798,17 +3799,32 @@
         },
         "supportSystem": {
           "name": "Support System",
-          "description": "Notifies admins when a client joins the support channel.",
+          "description": "When a client joins the support channel: checks whether a supporter is online, notifies the user and the supporters, opens a personal support room and moves the user in, and can keep the waiting room open or closed by availability. Based on the SinusBot script by Mortis & Andreas Fink (github.com/mortisdotpro/support-channel-mover, MIT).",
+          "variablesHint": [
+            "{{temp.client.0.client_nickname}} — the waiting client's name",
+            "{{temp.client.0.client_country}} — country code",
+            "{{temp.client.0.client_version}} — TeamSpeak version",
+            "{{temp.client.0.client_platform}} — operating system",
+            "{{temp.client.0.client_totalconnections}} — total connections"
+          ],
           "fields": {
-            "supportChannelId": {
-              "label": "Support Channel ID"
-            },
-            "adminGroupId": {
-              "label": "Admin Group ID"
-            },
-            "message": {
-              "label": "Notification Message"
-            }
+            "supportChannelId": { "label": "Support (waiting) channel ID" },
+            "parentChannelId": { "label": "Parent channel for the created rooms (optional)" },
+            "supporterGroupIds": { "label": "Supporter server group IDs (comma-separated)" },
+            "afkChannelId": { "label": "AFK channel — supporters in it don't count as available (optional)" },
+            "roomName": { "label": "Support room name" },
+            "roomType": { "label": "Support room type", "options": ["Temporary (deleted when empty)", "Semi-permanent", "Permanent"] },
+            "notifyMethod": { "label": "How to message the user", "options": ["Poke", "Chat"] },
+            "userMessage": { "label": "Message to the user (empty = none)" },
+            "supporterMessage": { "label": "Poke to the supporters (empty = none)" },
+            "offlineMessage": { "label": "Message when no supporter is online (empty = none)" },
+            "listMode": { "label": "Group filter", "options": ["Off", "Whitelist (only these groups)", "Blacklist (block these groups)"] },
+            "listGroupIdsWhitelist": { "label": "Allowed server group IDs (comma-separated)" },
+            "listGroupIdsBlacklist": { "label": "Blocked server group IDs (comma-separated)" },
+            "blockedMessage": { "label": "Message to a blocked user (empty = none)" },
+            "waitingRoomToggle": { "label": "Rename waiting room by availability", "options": ["No", "Yes"] },
+            "waitingRoomOpenName": { "label": "Waiting room name when a supporter is online" },
+            "waitingRoomClosedName": { "label": "Waiting room name when no supporter is online" }
           }
         },
         "privateChannelCreator": {
