@@ -293,32 +293,208 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
     },
   },
   {
+    // Rebuilt from the ground up, inspired by (and adapted for this app's own
+    // engine from) the SinusBot script "Support Channel notifier + channel
+    // creator" (v1.4) by Mortis and Andreas Fink
+    // (https://github.com/mortisdotpro/support-channel-mover, MIT) - credit to
+    // the original authors whose idea this template's behaviour is based on.
     id: 'support-system',
     name: t('data.botTemplates.items.supportSystem.name'),
     description: t('data.botTemplates.items.supportSystem.description'),
     category: 'automation',
     icon: Megaphone,
+    variablesHint: t('data.botTemplates.items.supportSystem.variablesHint', { returnObjects: true }) as string[],
     configFields: [
       { key: 'supportChannelId', label: t('data.botTemplates.items.supportSystem.fields.supportChannelId.label'), type: 'number', placeholder: '15', required: true },
-      { key: 'adminGroupId', label: t('data.botTemplates.items.supportSystem.fields.adminGroupId.label'), type: 'number', placeholder: '6', required: true },
-      { key: 'message', label: t('data.botTemplates.items.supportSystem.fields.message.label'), type: 'text', placeholder: 'Support needed by {{event.client_nickname}}!' },
+      { key: 'parentChannelId', label: t('data.botTemplates.items.supportSystem.fields.parentChannelId.label'), type: 'number', placeholder: 'e.g. 19' },
+      { key: 'supporterGroupIds', label: t('data.botTemplates.items.supportSystem.fields.supporterGroupIds.label'), type: 'text', placeholder: '6,7', required: true },
+      { key: 'afkChannelId', label: t('data.botTemplates.items.supportSystem.fields.afkChannelId.label'), type: 'number', placeholder: 'e.g. 12' },
+      { key: 'roomName', label: t('data.botTemplates.items.supportSystem.fields.roomName.label'), type: 'text', defaultValue: 'Support » {{temp.client.0.client_nickname}}' },
+      { key: 'roomType', label: t('data.botTemplates.items.supportSystem.fields.roomType.label'), type: 'select', defaultValue: 'temporary', options: [
+        { label: t('data.botTemplates.items.supportSystem.fields.roomType.options.0'), value: 'temporary' },
+        { label: t('data.botTemplates.items.supportSystem.fields.roomType.options.1'), value: 'semipermanent' },
+        { label: t('data.botTemplates.items.supportSystem.fields.roomType.options.2'), value: 'permanent' },
+      ] },
+      { key: 'notifyMethod', label: t('data.botTemplates.items.supportSystem.fields.notifyMethod.label'), type: 'select', defaultValue: 'poke', options: [
+        { label: t('data.botTemplates.items.supportSystem.fields.notifyMethod.options.0'), value: 'poke' },
+        { label: t('data.botTemplates.items.supportSystem.fields.notifyMethod.options.1'), value: 'chat' },
+      ] },
+      { key: 'userMessage', label: t('data.botTemplates.items.supportSystem.fields.userMessage.label'), type: 'text', defaultValue: 'A supporter has been notified.' },
+      { key: 'supporterMessage', label: t('data.botTemplates.items.supportSystem.fields.supporterMessage.label'), type: 'text', defaultValue: 'A user needs help in the support channel.' },
+      { key: 'offlineMessage', label: t('data.botTemplates.items.supportSystem.fields.offlineMessage.label'), type: 'text', defaultValue: 'No supporter is available right now, please try again later.' },
+      { key: 'listMode', label: t('data.botTemplates.items.supportSystem.fields.listMode.label'), type: 'select', defaultValue: 'none', options: [
+        { label: t('data.botTemplates.items.supportSystem.fields.listMode.options.0'), value: 'none' },
+        { label: t('data.botTemplates.items.supportSystem.fields.listMode.options.1'), value: 'whitelist' },
+        { label: t('data.botTemplates.items.supportSystem.fields.listMode.options.2'), value: 'blacklist' },
+      ] },
+      { key: 'listGroupIds', label: t('data.botTemplates.items.supportSystem.fields.listGroupIdsWhitelist.label'), type: 'text', placeholder: '8', required: true, indent: 1, conditions: [{ field: 'listMode', value: 'whitelist' }] },
+      { key: 'listGroupIds', label: t('data.botTemplates.items.supportSystem.fields.listGroupIdsBlacklist.label'), type: 'text', placeholder: '9', required: true, indent: 1, conditions: [{ field: 'listMode', value: 'blacklist' }] },
+      { key: 'blockedMessage', label: t('data.botTemplates.items.supportSystem.fields.blockedMessage.label'), type: 'text', defaultValue: 'You are not allowed to use the support channel.', indent: 1, conditions: [{ field: 'listMode', value: 'whitelist' }] },
+      { key: 'blockedMessage', label: t('data.botTemplates.items.supportSystem.fields.blockedMessage.label'), type: 'text', defaultValue: 'You are not allowed to use the support channel.', indent: 1, conditions: [{ field: 'listMode', value: 'blacklist' }] },
+      { key: 'waitingRoomToggle', label: t('data.botTemplates.items.supportSystem.fields.waitingRoomToggle.label'), type: 'select', defaultValue: 'no', options: [
+        { label: t('data.botTemplates.items.supportSystem.fields.waitingRoomToggle.options.0'), value: 'no' },
+        { label: t('data.botTemplates.items.supportSystem.fields.waitingRoomToggle.options.1'), value: 'yes' },
+      ] },
+      { key: 'waitingRoomOpenName', label: t('data.botTemplates.items.supportSystem.fields.waitingRoomOpenName.label'), type: 'text', defaultValue: 'Support — OPEN', indent: 1, conditions: [{ field: 'waitingRoomToggle', value: 'yes' }] },
+      { key: 'waitingRoomClosedName', label: t('data.botTemplates.items.supportSystem.fields.waitingRoomClosedName.label'), type: 'text', defaultValue: 'Support — CLOSED', indent: 1, conditions: [{ field: 'waitingRoomToggle', value: 'yes' }] },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
-      const n1 = nid(), n2 = nid(), n3 = nid(), n4 = nid();
-      return {
-        nodes: [
-          makeNode(n1, 'trigger_event', 'Client Moved', { eventName: 'notifyclientmoved' }, 60, 80),
-          makeNode(n2, 'condition', 'Joined Support?', { expression: `event.ctid == ${cfg.supportChannelId}` }, 300, 80),
-          makeNode(n3, 'action_webquery', 'Get Client Info', { command: 'clientinfo clid={{event.clid}}', storeAs: 'client' }, 540, 40),
-          makeNode(n4, 'action_pokeGroup', 'Notify Admins', { groupId: cfg.adminGroupId, message: cfg.message || 'Support needed by {{temp.client.0.client_nickname}}!' }, 780, 40),
-        ],
-        edges: [
-          makeEdge(eid(), n1, n2),
-          makeEdge(eid(), n2, n3, 'true', 'in'),
-          makeEdge(eid(), n3, n4),
-        ],
+      const nodes: any[] = [];
+      const edges: any[] = [];
+      const notifyType = cfg.notifyMethod === 'chat' ? 'action_message' : 'action_poke';
+      const supporterGroups = String(cfg.supporterGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
+      const listGroups = String(cfg.listGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
+      // Count real supporters online, parked-in-AFK ones excluded, shared by both branches.
+      const countParams = { groupIds: cfg.supporterGroupIds || '', excludeChannelIds: cfg.afkChannelId || '', storeAs: 'supporters' };
+
+      // A message to the user (the client who just joined), via the chosen method.
+      const notifyUser = (id: string, label: string, message: string, x: number, y: number) =>
+        nodes.push(makeNode(id, notifyType, label, { message }, x, y));
+
+      // ===== Branch 1: a client joins the support channel =====
+      const nTrigger = nid();
+      nodes.push(makeNode(nTrigger, 'trigger_event', 'Client Joins Support', { eventName: 'notifyclientmoved' }, 40, 320));
+      const nJoined = nid();
+      nodes.push(makeNode(nJoined, 'condition', 'Joined Support?', { expression: `event.ctid == ${cfg.supportChannelId || 0}` }, 280, 320));
+      edges.push(makeEdge(eid(), nTrigger, nJoined));
+      // notifyclientmoved carries clid/ctid but not nickname/groups/db-id - one clientinfo
+      // lookup fills temp.client for the name placeholders, the list check and the move.
+      const nInfo = nid();
+      nodes.push(makeNode(nInfo, 'action_webquery', 'Get Client Info', { command: 'clientinfo', params: { clid: '{{event.clid}}' }, storeAs: 'client' }, 520, 320));
+      edges.push(makeEdge(eid(), nJoined, nInfo, 'true', 'in'));
+
+      let last = nInfo;
+      let lastPort: string | undefined = undefined;
+      let x = 760;
+
+      // White-/blacklist by server group (group IDs known now, folded into one expression).
+      if ((cfg.listMode === 'whitelist' || cfg.listMode === 'blacklist') && listGroups.length) {
+        const inList = listGroups.map((g) => `hasGroup(temp.client.0.client_servergroups, '${g}')`).join(' || ');
+        const nList = nid();
+        const label = cfg.listMode === 'whitelist' ? 'Allowed In?' : 'On Blacklist?';
+        nodes.push(makeNode(nList, 'condition', label, { expression: inList }, x, 320));
+        edges.push(makeEdge(eid(), last, nList, lastPort, 'in'));
+        // The port that means "refused": false for a whitelist, true for a blacklist.
+        const refusedPort = cfg.listMode === 'whitelist' ? 'false' : 'true';
+        const allowedPort = cfg.listMode === 'whitelist' ? 'true' : 'false';
+        if (cfg.blockedMessage) {
+          const nBlocked = nid();
+          notifyUser(nBlocked, 'Tell Blocked User', cfg.blockedMessage, x, 140);
+          edges.push(makeEdge(eid(), nList, nBlocked, refusedPort, 'in'));
+        }
+        last = nList;
+        lastPort = allowedPort;
+        x += 240;
+      }
+
+      // Supporters online?
+      const nCount = nid();
+      nodes.push(makeNode(nCount, 'action_countOnlineInGroups', 'Count Supporters Online', countParams, x, 320));
+      edges.push(makeEdge(eid(), last, nCount, lastPort, 'in'));
+      x += 240;
+      const nOnline = nid();
+      nodes.push(makeNode(nOnline, 'condition', 'Supporter Available?', { expression: 'temp.supporters > 0' }, x, 320));
+      edges.push(makeEdge(eid(), nCount, nOnline));
+      x += 240;
+
+      // No supporter online -> tell the user, stop.
+      if (cfg.offlineMessage) {
+        const nOffline = nid();
+        notifyUser(nOffline, 'No Supporter Online', cfg.offlineMessage, x, 160);
+        edges.push(makeEdge(eid(), nOnline, nOffline, 'false', 'in'));
+      }
+
+      // Supporter online -> notify user, notify supporters, create the room, move the user in.
+      last = nOnline;
+      lastPort = 'true';
+      if (cfg.userMessage) {
+        const nUser = nid();
+        notifyUser(nUser, 'Reassure User', cfg.userMessage, x, 320);
+        edges.push(makeEdge(eid(), last, nUser, lastPort, 'in'));
+        last = nUser;
+        lastPort = undefined;
+      }
+      if (cfg.supporterMessage) {
+        for (const g of supporterGroups) {
+          const nPoke = nid();
+          nodes.push(makeNode(nPoke, 'action_pokeGroup', `Notify Supporters (${g})`, { groupId: g, message: cfg.supporterMessage }, x, 320));
+          edges.push(makeEdge(eid(), last, nPoke, lastPort, 'in'));
+          last = nPoke;
+          lastPort = undefined;
+          x += 240;
+        }
+      }
+
+      const channelParams: Record<string, string> = {
+        channel_name: cfg.roomName || 'Support » {{temp.client.0.client_nickname}}',
+        channel_codec: '4',
+        channel_codec_quality: '6',
+        channel_flag_maxclients_unlimited: '1',
+        channel_codec_is_unencrypted: '1',
       };
+      if (cfg.parentChannelId) channelParams.cpid = cfg.parentChannelId;
+      if (cfg.roomType === 'permanent') channelParams.channel_flag_permanent = '1';
+      else if (cfg.roomType === 'semipermanent') channelParams.channel_flag_semi_permanent = '1';
+      else { channelParams.channel_flag_temporary = '1'; channelParams.channel_delete_delay = '0'; }
+
+      const nCreate = nid();
+      nodes.push(makeNode(nCreate, 'action_channelCreate', 'Create Support Room', { params: channelParams }, x, 320));
+      edges.push(makeEdge(eid(), last, nCreate, lastPort, 'in'));
+      x += 240;
+      // If the room can't be created (e.g. a bad parent channel), tell the user instead of
+      // failing silently.
+      const nCreateErr = nid();
+      notifyUser(nCreateErr, 'Creation Failed', 'Your support room could not be created, please contact an admin.', x, 160);
+      edges.push(makeEdge(eid(), nCreate, nCreateErr, 'error', 'in'));
+      const nMove = nid();
+      nodes.push(makeNode(nMove, 'action_move', 'Move User Into Room', { channelId: '{{temp.lastCreatedChannelId}}' }, x, 320));
+      edges.push(makeEdge(eid(), nCreate, nMove));
+
+      // ===== Branch 2: keep the waiting room OPEN/CLOSED by supporter availability =====
+      // Runs on a timer (not only when someone joins) - otherwise a closed room nobody can
+      // enter would never re-open. A stored state avoids renaming the channel every minute.
+      if (cfg.waitingRoomToggle === 'yes') {
+        const wrVar = 'supportWaitingRoomState';
+        const nCron = nid();
+        nodes.push(makeNode(nCron, 'trigger_cron', 'Every Minute', { cron: '* * * * *' }, 40, 760));
+        const nCronCount = nid();
+        nodes.push(makeNode(nCronCount, 'action_countOnlineInGroups', 'Count Supporters Online', countParams, 280, 760));
+        edges.push(makeEdge(eid(), nCron, nCronCount));
+        const nCronOnline = nid();
+        nodes.push(makeNode(nCronOnline, 'condition', 'Supporter Available?', { expression: 'temp.supporters > 0' }, 520, 760));
+        edges.push(makeEdge(eid(), nCronCount, nCronOnline));
+
+        // Open branch
+        const nReadOpen = nid();
+        nodes.push(makeNode(nReadOpen, 'variable', 'Read State', { operation: 'get', name: wrVar, storeAs: 'wrState' }, 760, 640));
+        edges.push(makeEdge(eid(), nCronOnline, nReadOpen, 'true', 'in'));
+        const nNeedOpen = nid();
+        nodes.push(makeNode(nNeedOpen, 'condition', 'Not Open Yet?', { expression: 'temp.wrState != "open"' }, 1000, 640));
+        edges.push(makeEdge(eid(), nReadOpen, nNeedOpen));
+        const nOpen = nid();
+        nodes.push(makeNode(nOpen, 'action_channelEdit', 'Open Waiting Room', { channelId: String(cfg.supportChannelId || 0), params: { channel_name: cfg.waitingRoomOpenName || 'Support — OPEN', channel_flag_maxclients_unlimited: '1' } }, 1240, 640));
+        edges.push(makeEdge(eid(), nNeedOpen, nOpen, 'true', 'in'));
+        const nMarkOpen = nid();
+        nodes.push(makeNode(nMarkOpen, 'variable', 'Mark Open', { operation: 'set', name: wrVar, value: 'open' }, 1480, 640));
+        edges.push(makeEdge(eid(), nOpen, nMarkOpen));
+
+        // Closed branch
+        const nReadClosed = nid();
+        nodes.push(makeNode(nReadClosed, 'variable', 'Read State', { operation: 'get', name: wrVar, storeAs: 'wrState' }, 760, 880));
+        edges.push(makeEdge(eid(), nCronOnline, nReadClosed, 'false', 'in'));
+        const nNeedClosed = nid();
+        nodes.push(makeNode(nNeedClosed, 'condition', 'Not Closed Yet?', { expression: 'temp.wrState != "closed"' }, 1000, 880));
+        edges.push(makeEdge(eid(), nReadClosed, nNeedClosed));
+        const nClosed = nid();
+        nodes.push(makeNode(nClosed, 'action_channelEdit', 'Close Waiting Room', { channelId: String(cfg.supportChannelId || 0), params: { channel_name: cfg.waitingRoomClosedName || 'Support — CLOSED', channel_maxclients: '0', channel_flag_maxclients_unlimited: '0' } }, 1240, 880));
+        edges.push(makeEdge(eid(), nNeedClosed, nClosed, 'true', 'in'));
+        const nMarkClosed = nid();
+        nodes.push(makeNode(nMarkClosed, 'variable', 'Mark Closed', { operation: 'set', name: wrVar, value: 'closed' }, 1480, 880));
+        edges.push(makeEdge(eid(), nClosed, nMarkClosed));
+      }
+
+      return { nodes, edges };
     },
   },
   {

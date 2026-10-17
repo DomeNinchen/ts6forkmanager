@@ -244,6 +244,8 @@ export interface CountOnlineInGroupsActionData {
   label: string;
   /** Comma-separated server group IDs - counts online clients belonging to any of them. */
   groupIds: string;
+  /** Comma-separated channel IDs whose clients are not counted (e.g. an AFK channel). Optional. */
+  excludeChannelIds?: string;
   /** Temp variable name to store the resulting count under (as a number, referenced via {{temp.<storeAs>}}). */
   storeAs: string;
 }

@@ -2630,7 +2630,8 @@
           "alphanumericOption": "Alphanumerisch"
         },
         "actionCountOnlineInGroups": {
-          "groupIdsLabel": "Servergruppen-IDs (kommagetrennt)"
+          "groupIdsLabel": "Servergruppen-IDs (kommagetrennt)",
+          "excludeChannelIdsLabel": "AFK-/ausgeschlossene Channel-IDs (kommagetrennt, optional)"
         },
         "actionListMembership": {
           "listNameLabel": "Listenname",
@@ -3798,17 +3799,32 @@
         },
         "supportSystem": {
           "name": "Support-System",
-          "description": "Benachrichtigt Admins, wenn ein Client den Support-Channel betritt.",
+          "description": "Betritt ein Client den Support-Channel: prüft, ob ein Supporter online ist, benachrichtigt den Nutzer und die Supporter, legt einen eigenen Support-Raum an und zieht den Nutzer hinein, und kann den Warteraum je nach Verfügbarkeit offen oder geschlossen halten. Basiert auf dem SinusBot-Skript von Mortis & Andreas Fink (github.com/mortisdotpro/support-channel-mover, MIT).",
+          "variablesHint": [
+            "{{temp.client.0.client_nickname}} — Name des Hilfesuchenden",
+            "{{temp.client.0.client_country}} — Ländercode",
+            "{{temp.client.0.client_version}} — TeamSpeak-Version",
+            "{{temp.client.0.client_platform}} — Betriebssystem",
+            "{{temp.client.0.client_totalconnections}} — Gesamtverbindungen"
+          ],
           "fields": {
-            "supportChannelId": {
-              "label": "Support-Channel-ID"
-            },
-            "adminGroupId": {
-              "label": "Admin-Gruppen-ID"
-            },
-            "message": {
-              "label": "Benachrichtigungsnachricht"
-            }
+            "supportChannelId": { "label": "Support-(Warte-)Channel-ID" },
+            "parentChannelId": { "label": "Eltern-Channel für die erstellten Räume (optional)" },
+            "supporterGroupIds": { "label": "Supporter-Servergruppen-IDs (kommagetrennt)" },
+            "afkChannelId": { "label": "AFK-Channel — Supporter darin zählen nicht als verfügbar (optional)" },
+            "roomName": { "label": "Name des Support-Raums" },
+            "roomType": { "label": "Art des Support-Raums", "options": ["Temporär (wird gelöscht, wenn leer)", "Semi-permanent", "Permanent"] },
+            "notifyMethod": { "label": "Wie wird der Nutzer benachrichtigt", "options": ["Poke", "Chat"] },
+            "userMessage": { "label": "Nachricht an den Nutzer (leer = keine)" },
+            "supporterMessage": { "label": "Poke an die Supporter (leer = keine)" },
+            "offlineMessage": { "label": "Nachricht, wenn kein Supporter online ist (leer = keine)" },
+            "listMode": { "label": "Gruppenfilter", "options": ["Aus", "Whitelist (nur diese Gruppen)", "Blacklist (diese Gruppen sperren)"] },
+            "listGroupIdsWhitelist": { "label": "Erlaubte Servergruppen-IDs (kommagetrennt)" },
+            "listGroupIdsBlacklist": { "label": "Gesperrte Servergruppen-IDs (kommagetrennt)" },
+            "blockedMessage": { "label": "Nachricht an einen abgewiesenen Nutzer (leer = keine)" },
+            "waitingRoomToggle": { "label": "Warteraum je nach Verfügbarkeit umbenennen", "options": ["Nein", "Ja"] },
+            "waitingRoomOpenName": { "label": "Warteraum-Name, wenn ein Supporter online ist" },
+            "waitingRoomClosedName": { "label": "Warteraum-Name, wenn kein Supporter online ist" }
           }
         },
         "privateChannelCreator": {

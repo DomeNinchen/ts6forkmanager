@@ -1052,6 +1052,11 @@ export class FlowRunner {
   private async executeCountOnlineInGroups(data: CountOnlineInGroupsActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
     const groupIds = await ctx.resolveTemplate(data.groupIds);
     const storeAs = data.storeAs || 'onlineCount';
+    // Channels whose clients are not counted (e.g. an AFK channel where a supporter is parked
+    // but not actually available) - the Support template's "supporters online" check uses this.
+    const excludeChannelIds = data.excludeChannelIds
+      ? (await ctx.resolveTemplate(data.excludeChannelIds)).split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
 
     const clients = await client.executePost(ctx.sid, 'clientlist', { '-groups': '' });
     const list = Array.isArray(clients) ? clients : [];
@@ -1065,11 +1070,12 @@ export class FlowRunner {
     let count = 0;
     for (const cl of list) {
       if (String(cl.client_type) === '1') continue; // skip ServerQuery clients
+      if (excludeChannelIds.length && excludeChannelIds.includes(String(cl.cid))) continue;
       if (!groupIds || commaListsIntersect(String(cl.client_servergroups || ''), groupIds)) count++;
     }
 
     ctx.setTemp(storeAs, count);
-    await this.log(ctx, null, 'info', `Counted ${count} online client(s)${groupIds ? ` in group(s) '${groupIds}'` : ' (all real users)'}, stored as temp.${storeAs}`);
+    await this.log(ctx, null, 'info', `Counted ${count} online client(s)${groupIds ? ` in group(s) '${groupIds}'` : ' (all real users)'}${excludeChannelIds.length ? `, excluding channel(s) '${excludeChannelIds.join(',')}'` : ''}, stored as temp.${storeAs}`);
   }
 
   // Backs a persistent, JSON-array-shaped BotVariable (e.g. an "ignore list" clients
