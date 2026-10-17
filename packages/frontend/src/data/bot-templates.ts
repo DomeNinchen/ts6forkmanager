@@ -352,56 +352,70 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       const notifyUser = (id: string, label: string, message: string, x: number, y: number) =>
         nodes.push(makeNode(id, notifyType, label, { message }, x, y));
 
+      // Layout as a branched tree: the happy path runs along one horizontal spine (SPINE_Y),
+      // every node in its own column (COL apart), and each dead-end offshoot (refused / no
+      // supporter / creation failed) sits one clear row above its branching node (UP_Y), so the
+      // structure reads as a tree rather than a single row. The waiting-room timer below uses
+      // the same grid.
+      const COL = 240;
+      const SPINE_Y = 360;
+      const UP_Y = 120;
+
       // ===== Branch 1: a client joins the support channel =====
+      let x = 40;
       const nTrigger = nid();
-      nodes.push(makeNode(nTrigger, 'trigger_event', 'Client Joins Support', { eventName: 'notifyclientmoved' }, 40, 320));
+      nodes.push(makeNode(nTrigger, 'trigger_event', 'Client Joins Support', { eventName: 'notifyclientmoved' }, x, SPINE_Y));
+      x += COL;
       const nJoined = nid();
-      nodes.push(makeNode(nJoined, 'condition', 'Joined Support?', { expression: `event.ctid == ${cfg.supportChannelId || 0}` }, 280, 320));
+      nodes.push(makeNode(nJoined, 'condition', 'Joined Support?', { expression: `event.ctid == ${cfg.supportChannelId || 0}` }, x, SPINE_Y));
       edges.push(makeEdge(eid(), nTrigger, nJoined));
+      x += COL;
       // notifyclientmoved carries clid/ctid but not nickname/groups/db-id - one clientinfo
       // lookup fills temp.client for the name placeholders, the list check and the move.
       const nInfo = nid();
-      nodes.push(makeNode(nInfo, 'action_webquery', 'Get Client Info', { command: 'clientinfo', params: { clid: '{{event.clid}}' }, storeAs: 'client' }, 520, 320));
+      nodes.push(makeNode(nInfo, 'action_webquery', 'Get Client Info', { command: 'clientinfo', params: { clid: '{{event.clid}}' }, storeAs: 'client' }, x, SPINE_Y));
       edges.push(makeEdge(eid(), nJoined, nInfo, 'true', 'in'));
+      x += COL;
 
       let last = nInfo;
       let lastPort: string | undefined = undefined;
-      let x = 760;
 
       // White-/blacklist by server group (group IDs known now, folded into one expression).
       if ((cfg.listMode === 'whitelist' || cfg.listMode === 'blacklist') && listGroups.length) {
         const inList = listGroups.map((g) => `hasGroup(temp.client.0.client_servergroups, '${g}')`).join(' || ');
+        const listX = x;
         const nList = nid();
         const label = cfg.listMode === 'whitelist' ? 'Allowed In?' : 'On Blacklist?';
-        nodes.push(makeNode(nList, 'condition', label, { expression: inList }, x, 320));
+        nodes.push(makeNode(nList, 'condition', label, { expression: inList }, listX, SPINE_Y));
         edges.push(makeEdge(eid(), last, nList, lastPort, 'in'));
         // The port that means "refused": false for a whitelist, true for a blacklist.
         const refusedPort = cfg.listMode === 'whitelist' ? 'false' : 'true';
         const allowedPort = cfg.listMode === 'whitelist' ? 'true' : 'false';
         if (cfg.blockedMessage) {
           const nBlocked = nid();
-          notifyUser(nBlocked, 'Tell Blocked User', cfg.blockedMessage, x, 140);
+          notifyUser(nBlocked, 'Tell Blocked User', cfg.blockedMessage, listX, UP_Y);
           edges.push(makeEdge(eid(), nList, nBlocked, refusedPort, 'in'));
         }
         last = nList;
         lastPort = allowedPort;
-        x += 240;
+        x += COL;
       }
 
       // Supporters online?
       const nCount = nid();
-      nodes.push(makeNode(nCount, 'action_countOnlineInGroups', 'Count Supporters Online', countParams, x, 320));
+      nodes.push(makeNode(nCount, 'action_countOnlineInGroups', 'Count Supporters Online', countParams, x, SPINE_Y));
       edges.push(makeEdge(eid(), last, nCount, lastPort, 'in'));
-      x += 240;
+      x += COL;
+      const onlineX = x;
       const nOnline = nid();
-      nodes.push(makeNode(nOnline, 'condition', 'Supporter Available?', { expression: 'temp.supporters > 0' }, x, 320));
+      nodes.push(makeNode(nOnline, 'condition', 'Supporter Available?', { expression: 'temp.supporters > 0' }, onlineX, SPINE_Y));
       edges.push(makeEdge(eid(), nCount, nOnline));
-      x += 240;
+      x += COL;
 
       // No supporter online -> tell the user, stop.
       if (cfg.offlineMessage) {
         const nOffline = nid();
-        notifyUser(nOffline, 'No Supporter Online', cfg.offlineMessage, x, 160);
+        notifyUser(nOffline, 'No Supporter Online', cfg.offlineMessage, onlineX, UP_Y);
         edges.push(makeEdge(eid(), nOnline, nOffline, 'false', 'in'));
       }
 
@@ -410,19 +424,20 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       lastPort = 'true';
       if (cfg.userMessage) {
         const nUser = nid();
-        notifyUser(nUser, 'Reassure User', cfg.userMessage, x, 320);
+        notifyUser(nUser, 'Reassure User', cfg.userMessage, x, SPINE_Y);
         edges.push(makeEdge(eid(), last, nUser, lastPort, 'in'));
         last = nUser;
         lastPort = undefined;
+        x += COL;
       }
       if (cfg.supporterMessage) {
         for (const g of supporterGroups) {
           const nPoke = nid();
-          nodes.push(makeNode(nPoke, 'action_pokeGroup', `Notify Supporters (${g})`, { groupId: g, message: cfg.supporterMessage }, x, 320));
+          nodes.push(makeNode(nPoke, 'action_pokeGroup', `Notify Supporters (${g})`, { groupId: g, message: cfg.supporterMessage }, x, SPINE_Y));
           edges.push(makeEdge(eid(), last, nPoke, lastPort, 'in'));
           last = nPoke;
           lastPort = undefined;
-          x += 240;
+          x += COL;
         }
       }
 
@@ -438,17 +453,18 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       else if (cfg.roomType === 'semipermanent') channelParams.channel_flag_semi_permanent = '1';
       else { channelParams.channel_flag_temporary = '1'; channelParams.channel_delete_delay = '0'; }
 
+      const createX = x;
       const nCreate = nid();
-      nodes.push(makeNode(nCreate, 'action_channelCreate', 'Create Support Room', { params: channelParams }, x, 320));
+      nodes.push(makeNode(nCreate, 'action_channelCreate', 'Create Support Room', { params: channelParams }, createX, SPINE_Y));
       edges.push(makeEdge(eid(), last, nCreate, lastPort, 'in'));
-      x += 240;
+      x += COL;
       // If the room can't be created (e.g. a bad parent channel), tell the user instead of
       // failing silently.
       const nCreateErr = nid();
-      notifyUser(nCreateErr, 'Creation Failed', 'Your support room could not be created, please contact an admin.', x, 160);
+      notifyUser(nCreateErr, 'Creation Failed', 'Your support room could not be created, please contact an admin.', createX, UP_Y);
       edges.push(makeEdge(eid(), nCreate, nCreateErr, 'error', 'in'));
       const nMove = nid();
-      nodes.push(makeNode(nMove, 'action_move', 'Move User Into Room', { channelId: '{{temp.lastCreatedChannelId}}' }, x, 320));
+      nodes.push(makeNode(nMove, 'action_move', 'Move User Into Room', { channelId: '{{temp.lastCreatedChannelId}}' }, x, SPINE_Y));
       edges.push(makeEdge(eid(), nCreate, nMove));
 
       // ===== Branch 2: keep the waiting room OPEN/CLOSED by supporter availability =====
@@ -456,41 +472,56 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       // enter would never re-open. A stored state avoids renaming the channel every minute.
       if (cfg.waitingRoomToggle === 'yes') {
         const wrVar = 'supportWaitingRoomState';
+        const CRON_Y = 780; // its own spine, well below branch 1
+        const OPEN_Y = CRON_Y - 160; // true  -> open, one row up
+        const CLOSED_Y = CRON_Y + 160; // false -> closed, one row down
+        let cx = 40;
         const nCron = nid();
-        nodes.push(makeNode(nCron, 'trigger_cron', 'Every Minute', { cron: '* * * * *' }, 40, 760));
+        nodes.push(makeNode(nCron, 'trigger_cron', 'Every Minute', { cron: '* * * * *' }, cx, CRON_Y));
+        cx += COL;
         const nCronCount = nid();
-        nodes.push(makeNode(nCronCount, 'action_countOnlineInGroups', 'Count Supporters Online', countParams, 280, 760));
+        nodes.push(makeNode(nCronCount, 'action_countOnlineInGroups', 'Count Supporters Online', countParams, cx, CRON_Y));
         edges.push(makeEdge(eid(), nCron, nCronCount));
+        cx += COL;
         const nCronOnline = nid();
-        nodes.push(makeNode(nCronOnline, 'condition', 'Supporter Available?', { expression: 'temp.supporters > 0' }, 520, 760));
+        nodes.push(makeNode(nCronOnline, 'condition', 'Supporter Available?', { expression: 'temp.supporters > 0' }, cx, CRON_Y));
         edges.push(makeEdge(eid(), nCronCount, nCronOnline));
+        const splitX = cx + COL; // both sub-branches start one column after the split
 
-        // Open branch
+        // Open branch (supporters online -> room stays/becomes OPEN)
+        let ox = splitX;
         const nReadOpen = nid();
-        nodes.push(makeNode(nReadOpen, 'variable', 'Read State', { operation: 'get', name: wrVar, storeAs: 'wrState' }, 760, 640));
+        nodes.push(makeNode(nReadOpen, 'variable', 'Read State', { operation: 'get', name: wrVar, storeAs: 'wrState' }, ox, OPEN_Y));
         edges.push(makeEdge(eid(), nCronOnline, nReadOpen, 'true', 'in'));
+        ox += COL;
         const nNeedOpen = nid();
-        nodes.push(makeNode(nNeedOpen, 'condition', 'Not Open Yet?', { expression: 'temp.wrState != "open"' }, 1000, 640));
+        nodes.push(makeNode(nNeedOpen, 'condition', 'Not Open Yet?', { expression: 'temp.wrState != "open"' }, ox, OPEN_Y));
         edges.push(makeEdge(eid(), nReadOpen, nNeedOpen));
+        ox += COL;
         const nOpen = nid();
-        nodes.push(makeNode(nOpen, 'action_channelEdit', 'Open Waiting Room', { channelId: String(cfg.supportChannelId || 0), params: { channel_name: cfg.waitingRoomOpenName || 'Support — OPEN', channel_flag_maxclients_unlimited: '1' } }, 1240, 640));
+        nodes.push(makeNode(nOpen, 'action_channelEdit', 'Open Waiting Room', { channelId: String(cfg.supportChannelId || 0), params: { channel_name: cfg.waitingRoomOpenName || 'Support — OPEN', channel_flag_maxclients_unlimited: '1' } }, ox, OPEN_Y));
         edges.push(makeEdge(eid(), nNeedOpen, nOpen, 'true', 'in'));
+        ox += COL;
         const nMarkOpen = nid();
-        nodes.push(makeNode(nMarkOpen, 'variable', 'Mark Open', { operation: 'set', name: wrVar, value: 'open' }, 1480, 640));
+        nodes.push(makeNode(nMarkOpen, 'variable', 'Mark Open', { operation: 'set', name: wrVar, value: 'open' }, ox, OPEN_Y));
         edges.push(makeEdge(eid(), nOpen, nMarkOpen));
 
-        // Closed branch
+        // Closed branch (no supporter -> room becomes CLOSED)
+        let clx = splitX;
         const nReadClosed = nid();
-        nodes.push(makeNode(nReadClosed, 'variable', 'Read State', { operation: 'get', name: wrVar, storeAs: 'wrState' }, 760, 880));
+        nodes.push(makeNode(nReadClosed, 'variable', 'Read State', { operation: 'get', name: wrVar, storeAs: 'wrState' }, clx, CLOSED_Y));
         edges.push(makeEdge(eid(), nCronOnline, nReadClosed, 'false', 'in'));
+        clx += COL;
         const nNeedClosed = nid();
-        nodes.push(makeNode(nNeedClosed, 'condition', 'Not Closed Yet?', { expression: 'temp.wrState != "closed"' }, 1000, 880));
+        nodes.push(makeNode(nNeedClosed, 'condition', 'Not Closed Yet?', { expression: 'temp.wrState != "closed"' }, clx, CLOSED_Y));
         edges.push(makeEdge(eid(), nReadClosed, nNeedClosed));
+        clx += COL;
         const nClosed = nid();
-        nodes.push(makeNode(nClosed, 'action_channelEdit', 'Close Waiting Room', { channelId: String(cfg.supportChannelId || 0), params: { channel_name: cfg.waitingRoomClosedName || 'Support — CLOSED', channel_maxclients: '0', channel_flag_maxclients_unlimited: '0' } }, 1240, 880));
+        nodes.push(makeNode(nClosed, 'action_channelEdit', 'Close Waiting Room', { channelId: String(cfg.supportChannelId || 0), params: { channel_name: cfg.waitingRoomClosedName || 'Support — CLOSED', channel_maxclients: '0', channel_flag_maxclients_unlimited: '0' } }, clx, CLOSED_Y));
         edges.push(makeEdge(eid(), nNeedClosed, nClosed, 'true', 'in'));
+        clx += COL;
         const nMarkClosed = nid();
-        nodes.push(makeNode(nMarkClosed, 'variable', 'Mark Closed', { operation: 'set', name: wrVar, value: 'closed' }, 1480, 880));
+        nodes.push(makeNode(nMarkClosed, 'variable', 'Mark Closed', { operation: 'set', name: wrVar, value: 'closed' }, clx, CLOSED_Y));
         edges.push(makeEdge(eid(), nClosed, nMarkClosed));
       }
 
