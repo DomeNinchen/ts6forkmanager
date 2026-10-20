@@ -2404,7 +2404,7 @@
       "dontShowAgain": "Dies beim Öffnen eines Flows nicht mehr anzeigen",
       "gotIt": "Verstanden",
       "flowSaved": "Flow gespeichert",
-      "needsSshHint": "Braucht einen SSH-Login an der Serververbindung",
+      "templateConfig": "Vorlage konfigurieren",      "needsSshHint": "Braucht einen SSH-Login an der Serververbindung",
       "noSshNotice": "Diese Serververbindung hat keinen SSH-Login, deshalb sind Event- und Befehlsauslöser nicht verfügbar. Cron- und Webhook-Auslöser funktionieren weiter.",
       "noWebQueryNotice": "Diese Serververbindung hat keinen WebQuery-API-Schlüssel: Aktionen, die mit TeamSpeak sprechen, schlagen fehl. Voice-, HTTP-, Log-, Delay-, Variablen- und Schleifen-Nodes funktionieren.",
       "flowSaveFailed": "Flow konnte nicht gespeichert werden",
@@ -3311,7 +3311,9 @@
       "configureTitle": "Konfigurieren: {{name}}",
       "availableVariables": "Verfügbare Variablen",
       "noConfigNeeded": "Keine Konfiguration nötig — bereit zum Erstellen.",
-      "createBot": "Bot erstellen"
+      "createBot": "Bot erstellen",
+      "rebuildWarning": "Übernehmen baut den Flow aus der Vorlage neu auf. Von Hand geänderte Nodes werden dabei ersetzt. Gespeichert wird erst mit „Speichern“ im Editor.",
+      "rebuildFlow": "Flow neu aufbauen"
     },
     "placeholderReference": {
       "dialogTitle": "Platzhalter-Referenz",
@@ -3811,7 +3813,7 @@
             "supportChannelId": { "label": "Support-(Warte-)Channel-ID" },
             "parentChannelId": { "label": "Eltern-Channel für die erstellten Räume (optional)" },
             "supporterGroupIds": { "label": "Supporter-Servergruppen-IDs (kommagetrennt)" },
-            "afkChannelId": { "label": "AFK-Channel — Supporter darin zählen nicht als verfügbar (optional)" },
+            "afkChannelIds": { "label": "AFK-Channels, kommagetrennt — Supporter darin zählen nicht als verfügbar (optional)" },
             "roomName": { "label": "Name des Support-Raums" },
             "roomType": { "label": "Art des Support-Raums", "options": ["Temporär (wird gelöscht, wenn leer)", "Semi-permanent", "Permanent"] },
             "notifyMethod": { "label": "Wie wird der Nutzer benachrichtigt", "options": ["Poke", "Chat"] },

@@ -46,6 +46,8 @@ interface FlowInfo {
 
 export class FlowRunner {
   private voiceBotManager: VoiceBotManager | null = null;
+  /** "configId:sid" -> tail of the queue of executions waiting to create a channel there. */
+  private channelLocks = new Map<string, Promise<void>>();
 
   constructor(
     private prisma: PrismaClient,
@@ -120,7 +122,11 @@ export class FlowRunner {
         await this.processNode(node, flow.flowData, ctx, client, visitNode);
       };
 
-      await visitNode(triggerNode);
+      try {
+        await visitNode(triggerNode);
+      } finally {
+        await this.leaveCreatedChannels(ctx, client);
+      }
 
       await this.prisma.botExecution.update({
         where: { id: execution.id },
@@ -394,6 +400,8 @@ export class FlowRunner {
     const clid = ctx.eventData.clid;
     const cid = await ctx.resolveTemplate(data.channelId);
     await client.executePost(ctx.sid, 'clientmove', { clid, cid });
+    // Someone is in a channel this execution created: the query client can leave it now.
+    if (ctx.createdChannels.some((c) => c.cid === String(cid))) await this.leaveCreatedChannels(ctx, client);
   }
 
   private async executeMessage(data: MessageActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
@@ -447,9 +455,62 @@ export class FlowRunner {
     for (const [key, val] of Object.entries(data.params || {})) {
       resolved[key] = await ctx.resolveTemplate(val);
     }
-    const result = await client.executePost(ctx.sid, 'channelcreate', resolved);
+    // TeamSpeak moves the creating query client into the new channel, and while it sits there
+    // a temporary channel is never empty, so never deleted. Leaving right away would delete it
+    // before a "Move" node puts anyone in, so it leaves once someone is moved in or the
+    // execution ends (leaveCreatedChannels). Until then no other execution on this server may
+    // create a channel: that would pull the shared query client out and delete this one.
+    if (!ctx.releaseChannelLock) ctx.releaseChannelLock = await this.acquireChannelLock(`${ctx.configId}:${ctx.sid}`);
+    let result: any;
+    let who: any;
+    try {
+      who = (await client.execute(ctx.sid, 'whoami'))?.[0];
+      result = await client.executePost(ctx.sid, 'channelcreate', resolved);
+    } finally {
+      if (!result?.[0]?.cid && !ctx.createdChannels.length) this.releaseChannelLock(ctx);
+    }
     if (result?.[0]?.cid) {
-      ctx.setTemp('lastCreatedChannelId', result[0].cid);
+      const cid = String(result[0].cid);
+      ctx.setTemp('lastCreatedChannelId', cid);
+      if (who?.client_id && who.client_channel_id !== undefined) {
+        const now = String(who.client_channel_id);
+        // A second create in the same execution starts from inside the first one.
+        const home = ctx.createdChannels.find((c) => c.cid === now)?.home ?? now;
+        ctx.createdChannels.push({ cid, home, clid: String(who.client_id) });
+      } else if (!ctx.createdChannels.length) {
+        this.releaseChannelLock(ctx);
+      }
+    }
+  }
+
+  /** Serializes channel creation per virtual server; resolves with the release function. */
+  private async acquireChannelLock(key: string): Promise<() => void> {
+    const prev = this.channelLocks.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const tail = prev.then(() => new Promise<void>((r) => { release = r; }));
+    this.channelLocks.set(key, tail);
+    void tail.then(() => { if (this.channelLocks.get(key) === tail) this.channelLocks.delete(key); });
+    await prev;
+    return release;
+  }
+
+  private releaseChannelLock(ctx: ExecutionContext): void {
+    ctx.releaseChannelLock?.();
+    ctx.releaseChannelLock = undefined;
+  }
+
+  /** Moves the query client out of the channels this execution created, back to where it was before. */
+  private async leaveCreatedChannels(ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
+    // The query client can only be in the newest one; every entry's home leads back to the first home.
+    const last = ctx.createdChannels.splice(0).pop();
+    try {
+      if (!last) return;
+      const now = (await client.execute(ctx.sid, 'whoami'))?.[0]?.client_channel_id;
+      if (String(now) === last.cid) await this.clientMoveTolerating770(client, ctx.sid, last.clid, last.home);
+    } catch (err: any) {
+      await this.log(ctx, null, 'warn', `Could not move the query client out of created channel ${last?.cid}: ${err.message}`);
+    } finally {
+      this.releaseChannelLock(ctx);
     }
   }
 
