@@ -2103,6 +2103,10 @@
       "message": "Cette interface ne conserve dans votre navigateur que les données nécessaires à son fonctionnement, par exemple votre connexion, la langue et l'affichage. L'application ne dépose pas de cookies elle-même et n'utilise aucun service de suivi ou d'analyse. Les polices sont servies depuis ce serveur.",
       "dismiss": "Compris"
     },
+    "restartNotice": {
+      "title": "Le gestionnaire est injoignable",
+      "message": "Il redémarre probablement, par exemple pour une mise à jour. Cette page reprend d'elle-même dès qu'il répond à nouveau."
+    },
     "ytCookieBanner": {
       "message": "Les cookies YouTube ne fonctionnent plus — le contenu réservé aux adultes/aux membres et les recherches peuvent échouer jusqu’à leur actualisation dans <1>Paramètres → YouTube</1>."
     },

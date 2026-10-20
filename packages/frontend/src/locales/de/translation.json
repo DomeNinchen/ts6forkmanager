@@ -3188,6 +3188,10 @@
       "message": "Diese Oberfläche speichert in deinem Browser nur Daten, die für den Betrieb nötig sind, etwa Anmeldung, Sprache und Darstellung. Die Anwendung setzt selbst keine Cookies und nutzt keine Tracking- oder Analysedienste. Schriften werden vom eigenen Server geladen.",
       "dismiss": "Verstanden"
     },
+    "restartNotice": {
+      "title": "Der Manager ist nicht erreichbar",
+      "message": "Wahrscheinlich startet er gerade neu, zum Beispiel für ein Update. Diese Seite macht von selbst weiter, sobald er wieder antwortet."
+    },
     "ytCookieBanner": {
       "message": "YouTube-Cookies funktionieren nicht mehr — altersbeschränkte/mitgliederexklusive Inhalte und Suchen können fehlschlagen, bis sie unter <1>Einstellungen → YouTube</1> aktualisiert wurden."
     },
