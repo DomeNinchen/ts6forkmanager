@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/auth.store';
+import { useRestartStore } from '../stores/restart.store';
 
 const api = axios.create({
   baseURL: '/api',
@@ -65,6 +66,11 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${token}`;
         return api(original);
       }
+    }
+    // Nobody answered, or a proxy in front of the backend could not reach it: maybe a restart
+    const status = error.response?.status;
+    if (error.code === 'ERR_NETWORK' || status === 502 || status === 503 || status === 504) {
+      useRestartStore.getState().suspect();
     }
     return Promise.reject(error);
   },

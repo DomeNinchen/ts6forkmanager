@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { PrivacyNotice } from '@/components/layout/PrivacyNotice';
+import { RestartNotice } from '@/components/layout/RestartNotice';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLanguageSync } from '@/hooks/use-language';
 import { useSelectedServer } from '@/hooks/use-servers';
@@ -127,6 +128,7 @@ export function App() {
           </Routes>
         </Suspense>
         <PrivacyNotice />
+        <RestartNotice />
       </BrowserRouter>
     </QueryClientProvider>
   );
