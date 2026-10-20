@@ -636,7 +636,7 @@ musicBotRoutes.post('/:id/queue', async (req: Request, res: Response, next) => {
     const song = await prisma.song.findFirst({ where: { id: parseInt(songId), ...onCallersServers(req) } });
     if (!song) throw new AppError(404, 'Song not found');
 
-    bot.queue.add({
+    const queueItem = {
       id: String(song.id),
       title: song.title,
       artist: song.artist ?? undefined,
@@ -644,9 +644,19 @@ musicBotRoutes.post('/:id/queue', async (req: Request, res: Response, next) => {
       filePath: song.filePath,
       source: song.source as any,
       sourceUrl: song.sourceUrl ?? undefined,
-    });
+    };
 
-    res.json({ success: true, queueLength: bot.queue.length });
+    // Queueing into silence starts playback, the same as play-url's 'queue'
+    // mode - otherwise the bot would sit idle with a track waiting.
+    const queued = bot.status !== 'connected';
+    if (queued) {
+      bot.queue.add(queueItem);
+    } else {
+      bot.queue.insertNext(queueItem);
+      await bot.play(queueItem);
+    }
+
+    res.json({ success: true, queued, queueLength: bot.queue.length });
   } catch (err) { next(err); }
 });
 
@@ -679,6 +689,13 @@ musicBotRoutes.post('/:id/queue/playlist', async (req: Request, res: Response, n
     }));
 
     bot.queue.addMany(items);
+    // A replaced queue ("load & play") starts on its first track, and so does
+    // an idle bot - otherwise the playlist would just sit there.
+    const status = bot.status;
+    if (status === 'connected' || (clearFirst && (status === 'playing' || status === 'paused'))) {
+      const first = bot.queue.next();
+      if (first) await (first.streamUrl ? bot.playStream(first) : bot.play(first));
+    }
     res.json({ success: true, queueLength: bot.queue.length });
   } catch (err) { next(err); }
 });
@@ -734,7 +751,8 @@ musicBotRoutes.post('/:id/queue/repeat', async (req: Request, res: Response, nex
   } catch (err) { next(err); }
 });
 
-// POST /:id/queue/:index/play — Play track at queue index
+// POST /:id/queue/:index/play — Play track at queue index now, moving it to
+// right after the current track so the tracks in between aren't skipped
 musicBotRoutes.post('/:id/queue/:index/play', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
@@ -742,7 +760,7 @@ musicBotRoutes.post('/:id/queue/:index/play', async (req: Request, res: Response
     if (!bot) throw new AppError(404, 'Music bot not found');
 
     const index = parseInt(req.params.index as string);
-    const item = bot.queue.playAt(index);
+    const item = bot.queue.playNow(index);
     if (!item) throw new AppError(400, 'Invalid queue index');
 
     if (item.streamUrl) {

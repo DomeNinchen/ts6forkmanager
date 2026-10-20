@@ -3137,7 +3137,8 @@
         "clear": "Leeren",
         "selectBotHint": "Wähle einen Bot, um seine Warteschlange zu verwalten",
         "queueEmpty": "Warteschlange ist leer",
-        "clickToPlay": "Zum Abspielen klicken",
+        "clickToPlay": "Jetzt abspielen – rückt nach vorn",
+        "playQueue": "Warteschlange abspielen",
         "moveUp": "Nach oben verschieben",
         "moveDown": "Nach unten verschieben",
         "removeFromQueue": "Aus Warteschlange entfernen"

@@ -3137,7 +3137,8 @@
         "clear": "Clear",
         "selectBotHint": "Select a bot to manage its queue",
         "queueEmpty": "Queue is empty",
-        "clickToPlay": "Click to play",
+        "clickToPlay": "Play now – moves it to the front",
+        "playQueue": "Play queue",
         "moveUp": "Move up",
         "moveDown": "Move down",
         "removeFromQueue": "Remove from queue"

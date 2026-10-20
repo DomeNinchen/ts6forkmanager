@@ -157,6 +157,22 @@ export class PlayQueue extends EventEmitter {
     return this.current;
   }
 
+  /** Move the track at playback position `index` to right after the current
+   * track (the front if nothing is current) and make it current - "play this
+   * one now" from the queue. Unlike playAt(), the tracks queued between the
+   * old current track and this one stay upcoming instead of being skipped. */
+  playNow(index: number): QueueItem | null {
+    if (index < 0 || index >= this.items.length) return null;
+    if (index === this.currentIndex) return this.current;
+    // Playback order is shuffleOrder when shuffling, `items` otherwise.
+    const order: unknown[] = this._shuffle ? this.shuffleOrder : this.items;
+    const [entry] = order.splice(index, 1);
+    if (index < this.currentIndex) this.currentIndex--;
+    this.currentIndex++;
+    order.splice(this.currentIndex, 0, entry);
+    return this.current;
+  }
+
   previous(): QueueItem | null {
     if (this.items.length === 0) return null;
 
