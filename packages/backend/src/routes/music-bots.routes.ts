@@ -707,11 +707,8 @@ musicBotRoutes.delete('/:id/queue/:index', async (req: Request, res: Response, n
     const bot = manager.getBot(parseInt(req.params.id as string));
     if (!bot) throw new AppError(404, 'Music bot not found');
 
-    const items = bot.queue.getAll();
-    const index = parseInt(req.params.index as string);
-    if (index >= 0 && index < items.length) {
-      bot.queue.remove(items[index].id);
-    }
+    // By position, not id: the same song can be queued twice
+    bot.queue.removeAt(parseInt(req.params.index as string));
     res.json({ success: true });
   } catch (err) { next(err); }
 });
@@ -745,14 +742,15 @@ musicBotRoutes.post('/:id/queue/repeat', async (req: Request, res: Response, nex
     const bot = manager.getBot(parseInt(req.params.id as string));
     if (!bot) throw new AppError(404, 'Music bot not found');
     const mode = req.body.mode ?? 'off';
-    if (!['off', 'track', 'queue'].includes(mode)) throw new AppError(400, 'Invalid repeat mode');
+    // No 'queue' mode: played tracks leave the queue, so there is nothing to loop over
+    if (!['off', 'track'].includes(mode)) throw new AppError(400, 'Invalid repeat mode');
     bot.queue.setRepeat(mode);
     res.json({ success: true, repeat: bot.queue.repeat });
   } catch (err) { next(err); }
 });
 
-// POST /:id/queue/:index/play — Play track at queue index now, moving it to
-// right after the current track so the tracks in between aren't skipped
+// POST /:id/queue/:index/play — Play track at queue index now, pulling it to
+// the front so the tracks that were ahead of it aren't skipped
 musicBotRoutes.post('/:id/queue/:index/play', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;

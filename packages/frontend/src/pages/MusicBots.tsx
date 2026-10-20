@@ -130,7 +130,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   const isPlaying = state?.status === 'playing';
   const isPaused = state?.status === 'paused';
   const isStreaming = state?.isStreaming ?? false;
-  const hasUpcoming = !!state && state.queue.length > state.currentIndex + 1;
+  const hasQueue = (state?.queue.length ?? 0) > 0;
 
   return (
     <Card className="card-hero group hover:border-primary/30 transition-colors">
@@ -179,9 +179,9 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
         {/* Play button when connected but idle */}
         {isRunning && !state?.nowPlaying && (
           <div className="flex gap-2">
-            {hasUpcoming && (
+            {hasQueue && (
               <Button variant="outline" size="sm" className="flex-1 h-8 text-xs"
-                onClick={() => playFromQueue.mutate({ botId: bot.id, index: (state?.currentIndex ?? -1) + 1 })}>
+                onClick={() => playFromQueue.mutate({ botId: bot.id, index: 0 })}>
                 <ListMusic className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.queueTab.playQueue')}
               </Button>
             )}
@@ -255,16 +255,12 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
                 <SkipForward className="h-3.5 w-3.5" />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7"
-                onClick={() => {
-                  const modes = ['off', 'track', 'queue'] as const;
-                  const idx = modes.indexOf(state.repeat);
-                  repeatMut.mutate({ botId: bot.id, mode: modes[(idx + 1) % 3] });
-                }}
+                onClick={() => repeatMut.mutate({ botId: bot.id, mode: state.repeat === 'track' ? 'off' : 'track' })}
               >
                 {state.repeat === 'track' ? (
                   <Repeat1 className="h-3.5 w-3.5 text-primary" />
                 ) : (
-                  <Repeat className={`h-3.5 w-3.5 ${state.repeat === 'queue' ? 'text-primary' : ''}`} />
+                  <Repeat className="h-3.5 w-3.5" />
                 )}
               </Button>
             </div>
@@ -290,7 +286,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
 
         {/* Queue preview - only what's still upcoming, matching the
             {queue_length} count in the bot's own TeamSpeak description;
-            state.queue itself is the full history+upcoming array. */}
+            state.queue also holds the current track first. */}
         {state?.queue && state.queue.length > state.currentIndex + 1 && (() => {
           const upcoming = state.queue.slice(state.currentIndex + 1);
           return (
@@ -2174,9 +2170,9 @@ function QueueTab() {
         </Select>
         {queue.length > 0 && (
           <div className="flex items-center gap-2 ml-auto">
-            {/* Idle bot with tracks still ahead (stopped mid-queue, or queued while offline) */}
-            {state?.status === 'connected' && queue.length > currentIndex + 1 && (
-              <Button size="sm" className="h-7 text-xs" onClick={() => selectedBot && playFromQueue.mutate({ botId: selectedBot, index: currentIndex + 1 })}>
+            {/* Idle bot with tracks left (playback stopped, or queued while offline): index 0 is a stopped track or the next one */}
+            {state?.status === 'connected' && (
+              <Button size="sm" className="h-7 text-xs" onClick={() => selectedBot && playFromQueue.mutate({ botId: selectedBot, index: 0 })}>
                 <Play className="h-3 w-3 mr-1" /> {t('pages.musicBots.queueTab.playQueue')}
               </Button>
             )}
@@ -2242,7 +2238,7 @@ function QueueTab() {
                       <Badge variant="outline" className="text-[9px] h-4 px-1">{item.source}</Badge>
                     </div>
                     <div className="flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {i > 0 && (
+                      {i > currentIndex + 1 && (
                         <button
                           className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i - 1 })}
@@ -2251,7 +2247,7 @@ function QueueTab() {
                           <GripVertical className="h-3 w-3 rotate-180" />
                         </button>
                       )}
-                      {i < queue.length - 1 && (
+                      {i > currentIndex && i < queue.length - 1 && (
                         <button
                           className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i + 1 })}
