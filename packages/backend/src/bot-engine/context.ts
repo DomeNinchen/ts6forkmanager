@@ -62,6 +62,10 @@ function getTimeValues(timezone?: string): Record<string, string | number> {
 export class ExecutionContext {
   private tempVars: Map<string, any> = new Map();
   private exprParser: Parser;
+  /** Channels this execution created while its query client got moved in; see FlowRunner.executeChannelCreate. */
+  readonly createdChannels: { cid: string; home: string; clid: string }[] = [];
+  /** Set while this execution holds its server's channel-creation lock. */
+  releaseChannelLock?: () => void;
 
   constructor(
     private prisma: PrismaClient,

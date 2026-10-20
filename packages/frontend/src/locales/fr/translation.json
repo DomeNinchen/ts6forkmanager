@@ -1330,7 +1330,7 @@
       "dontShowAgain": "Ne pas afficher ceci à l’ouverture d’un flux",
       "gotIt": "Compris",
       "flowSaved": "Flux enregistré",
-      "flowSaveFailed": "Échec de l’enregistrement du flux",
+      "templateConfig": "Configurer le modèle",      "flowSaveFailed": "Échec de l’enregistrement du flux",
       "placeholderReference": "Référence des placeholders",
       "save": "Enregistrer",
       "connectHint": "Cliquez sur un port d’entrée ou un nœud pour connecter — Échap pour annuler",
@@ -2227,7 +2227,9 @@
       "configureTitle": "Configurer : {{name}}",
       "availableVariables": "Variables disponibles",
       "noConfigNeeded": "Aucune configuration nécessaire — prêt à créer.",
-      "createBot": "Créer un bot"
+      "createBot": "Créer un bot",
+      "rebuildWarning": "Appliquer reconstruit le flux à partir du modèle. Les nœuds modifiés à la main sont remplacés. Rien n’est enregistré avant de cliquer sur Enregistrer dans l’éditeur.",
+      "rebuildFlow": "Reconstruire le flux"
     },
     "placeholderReference": {
       "dialogTitle": "Référence des placeholders",
@@ -2727,7 +2729,7 @@
             "supportChannelId": { "label": "ID du salon de support (attente)" },
             "parentChannelId": { "label": "Salon parent pour les salons créés (optionnel)" },
             "supporterGroupIds": { "label": "ID des groupes de support (séparés par des virgules)" },
-            "afkChannelId": { "label": "Salon AFK — les supports qui s’y trouvent ne comptent pas comme disponibles (optionnel)" },
+            "afkChannelIds": { "label": "Salons AFK, séparés par des virgules — les supports qui s’y trouvent ne comptent pas comme disponibles (optionnel)" },
             "roomName": { "label": "Nom du salon de support" },
             "roomType": { "label": "Type de salon de support", "options": ["Temporaire (supprimé quand vide)", "Semi-permanent", "Permanent"] },
             "notifyMethod": { "label": "Comment notifier l’utilisateur", "options": ["Poke", "Chat"] },
