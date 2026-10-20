@@ -3189,6 +3189,10 @@
       "message": "This interface only stores data in your browser that it needs to work, such as your login, language and display settings. The application sets no cookies of its own and uses no tracking or analytics services. Fonts are served from this server.",
       "dismiss": "Got it"
     },
+    "restartNotice": {
+      "title": "The manager is not reachable",
+      "message": "It is most likely restarting, for example for an update. This page carries on by itself as soon as it answers again."
+    },
     "ytCookieBanner": {
       "message": "YouTube cookies stopped working — age-restricted/member-only content and searches may fail until they're refreshed in <1>Settings → YouTube</1>."
     },
