@@ -43,6 +43,12 @@ export const LANGUAGE_STORAGE_KEY = 'ts6-language';
 // browser - the page still reads a stored language, it just never writes one.
 const isWidgetPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/widget/');
 
+// Keep <html lang> on the language actually shown (screen readers, hyphenation,
+// browser translate prompts). Registered before init so the first detection counts.
+i18n.on('languageChanged', (lng) => {
+  document.documentElement.lang = i18n.resolvedLanguage ?? lng;
+});
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
