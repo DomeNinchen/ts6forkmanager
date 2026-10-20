@@ -2054,7 +2054,8 @@
         "clear": "Effacer",
         "selectBotHint": "Sélectionnez un bot pour gérer sa file d’attente",
         "queueEmpty": "La file d’attente est vide",
-        "clickToPlay": "Cliquer pour lire",
+        "clickToPlay": "Lire maintenant – passe en tête",
+        "playQueue": "Lire la file d’attente",
         "moveUp": "Déplacer vers le haut",
         "moveDown": "Déplacer vers le bas",
         "removeFromQueue": "Retirer de la file d’attente"

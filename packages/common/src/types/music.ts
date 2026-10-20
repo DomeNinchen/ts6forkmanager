@@ -119,7 +119,7 @@ export interface QueueItemInfo {
   streamUrl?: string;
 }
 
-export type RepeatMode = 'off' | 'track' | 'queue';
+export type RepeatMode = 'off' | 'track';
 
 export interface PlaybackState {
   status: VoiceBotStatus;

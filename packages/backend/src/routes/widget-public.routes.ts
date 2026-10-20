@@ -185,7 +185,7 @@ widgetPublicRoutes.get('/player/:botId/data', async (req: Request, res: Response
 
     const nowPlaying = bot.nowPlaying;
     const progress = bot.playbackProgress;
-    const queueItems = bot.queue.getAll();
+    const queueItems = bot.queue.getAll().slice(bot.queue.index + 1); // the current track is nowPlaying
     const upcoming = queueItems.slice(0, 5);
 
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -215,7 +215,7 @@ widgetPublicRoutes.get('/player/:botId/bbcode', async (req: Request, res: Respon
 
     const nowPlaying = bot.nowPlaying;
     const progress = bot.playbackProgress;
-    const queueItems = bot.queue.getAll();
+    const queueItems = bot.queue.getAll().slice(bot.queue.index + 1); // the current track is nowPlaying
     const upcoming = queueItems.slice(0, 5);
 
     let bb = '[b]🎵 Now Playing[/b]\n';
