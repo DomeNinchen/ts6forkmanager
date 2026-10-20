@@ -354,12 +354,13 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
 
       // Layout as a branched tree: the happy path runs along one horizontal spine (SPINE_Y),
       // every node in its own column (COL apart), and each dead-end offshoot (refused / no
-      // supporter / creation failed) sits one clear row above its branching node (UP_Y), so the
-      // structure reads as a tree rather than a single row. The waiting-room timer below uses
+      // supporter / creation failed) sits one column further and one clear row away - above
+      // for the upper port (true), below for the lower one (false/error) - so no line has to
+      // cross another or loop back around its own node. The waiting-room timer below uses
       // the same grid.
       const COL = 240;
-      const SPINE_Y = 360;
-      const UP_Y = 120;
+      const SPINE_Y = 240;
+      const offshootY = (port: string) => (port === 'true' ? SPINE_Y - 160 : SPINE_Y + 160);
 
       // ===== Branch 1: a client joins the support channel =====
       let x = 40;
@@ -393,7 +394,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
         const allowedPort = cfg.listMode === 'whitelist' ? 'true' : 'false';
         if (cfg.blockedMessage) {
           const nBlocked = nid();
-          notifyUser(nBlocked, 'Tell Blocked User', cfg.blockedMessage, listX, UP_Y);
+          notifyUser(nBlocked, 'Tell Blocked User', cfg.blockedMessage, listX + COL, offshootY(refusedPort));
           edges.push(makeEdge(eid(), nList, nBlocked, refusedPort, 'in'));
         }
         last = nList;
@@ -415,7 +416,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       // No supporter online -> tell the user, stop.
       if (cfg.offlineMessage) {
         const nOffline = nid();
-        notifyUser(nOffline, 'No Supporter Online', cfg.offlineMessage, onlineX, UP_Y);
+        notifyUser(nOffline, 'No Supporter Online', cfg.offlineMessage, onlineX + COL, offshootY('false'));
         edges.push(makeEdge(eid(), nOnline, nOffline, 'false', 'in'));
       }
 
@@ -461,7 +462,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       // If the room can't be created (e.g. a bad parent channel), tell the user instead of
       // failing silently.
       const nCreateErr = nid();
-      notifyUser(nCreateErr, 'Creation Failed', 'Your support room could not be created, please contact an admin.', createX, UP_Y);
+      notifyUser(nCreateErr, 'Creation Failed', 'Your support room could not be created, please contact an admin.', createX + COL, offshootY('error'));
       edges.push(makeEdge(eid(), nCreate, nCreateErr, 'error', 'in'));
       const nMove = nid();
       nodes.push(makeNode(nMove, 'action_move', 'Move User Into Room', { channelId: '{{temp.lastCreatedChannelId}}' }, x, SPINE_Y));
@@ -472,7 +473,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       // enter would never re-open. A stored state avoids renaming the channel every minute.
       if (cfg.waitingRoomToggle === 'yes') {
         const wrVar = 'supportWaitingRoomState';
-        const CRON_Y = 780; // its own spine, well below branch 1
+        const CRON_Y = 820; // its own spine, well below branch 1 and its lower offshoots
         const OPEN_Y = CRON_Y - 160; // true  -> open, one row up
         const CLOSED_Y = CRON_Y + 160; // false -> closed, one row down
         let cx = 40;
@@ -633,11 +634,12 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       let createLast = nAlreadyOwns;
       let createPort: string | undefined = 'false';
 
-      // Declared now, wired to below - every WebQuery step in this branch that
+      // Declared now, wired at the end - every WebQuery step in this branch that
       // can realistically fail from a config mistake (a bad Parent Channel ID
       // override, a channel group the current identity can't actually assign)
       // reports it here instead of aborting the whole flow silently.
       const nCreateError = nid();
+      const errorSources: { id: string; x: number }[] = [];
 
       let cpidExpr: string;
       if (isSubchannel) {
@@ -646,7 +648,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
         const nLobbyInfo = nid();
         nodes.push(makeNode(nLobbyInfo, 'action_webquery', 'Get Lobby Parent', { command: 'channelinfo', params: { cid: effectiveLobbyId }, storeAs: 'lobbyInfo' }, createX, 400));
         edges.push(makeEdge(eid(), createLast, nLobbyInfo, createPort, 'in'));
-        edges.push(makeEdge(eid(), nLobbyInfo, nCreateError, 'error', 'in'));
+        errorSources.push({ id: nLobbyInfo, x: createX });
         createLast = nLobbyInfo;
         createPort = undefined;
         createX += 240;
@@ -679,13 +681,14 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       const nCreateChannel = nid();
       nodes.push(makeNode(nCreateChannel, 'action_channelCreate', 'Create Private Channel', { params: channelParams }, createX, 400));
       edges.push(makeEdge(eid(), createLast, nCreateChannel, createPort, 'in'));
-      edges.push(makeEdge(eid(), nCreateChannel, nCreateError, 'error', 'in'));
+      errorSources.push({ id: nCreateChannel, x: createX });
       createX += 240;
 
       const nSetOwner = nid();
       nodes.push(makeNode(nSetOwner, 'action_webquery', 'Set Owner', { command: 'setclientchannelgroup', params: { cgid: cfg.channelAdminGroupId, cid: '{{temp.lastCreatedChannelId}}', cldbid: '{{temp.joinerInfo.0.client_database_id}}' } }, createX, 400));
       edges.push(makeEdge(eid(), nCreateChannel, nSetOwner));
-      edges.push(makeEdge(eid(), nSetOwner, nCreateError, 'error', 'in'));
+      errorSources.push({ id: nSetOwner, x: createX });
+      const errorX = createX + 240;
       createX += 240;
 
       const nMoveNew = nid();
@@ -704,9 +707,23 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
         edges.push(makeEdge(eid(), nCreateMsg, nPasswordMsg));
       }
 
-      // Error branch node - see the three error edges wired above (Get Lobby
-      // Parent, Create Private Channel, Set Owner all point here on failure).
-      nodes.push(makeNode(nCreateError, 'action_message', 'Send Error Message', { message: cfg.channelErrorMessage || 'Your channel could not be created. Please try again, or contact an admin if this keeps happening.' }, createX, 560));
+      // Error branch node, one row below the step right after Set Owner. Get Lobby Parent,
+      // Create Private Channel and Set Owner all point here on failure. Set Owner, the
+      // nearest, takes the automatic route; the others each get their own lane further
+      // down and come up just before the input, so the orange lines only meet there. A
+      // deeper lane comes up closer to the input, so no lane crosses another one's way up.
+      const ERROR_Y = 560;
+      nodes.push(makeNode(nCreateError, 'action_message', 'Send Error Message', { message: cfg.channelErrorMessage || 'Your channel could not be created. Please try again, or contact an admin if this keeps happening.' }, errorX, ERROR_Y));
+      const laned = errorSources.length - 1;
+      errorSources.reverse().forEach((src, lane) => {
+        const edge: any = makeEdge(eid(), src.id, nCreateError, 'error', 'in');
+        if (lane > 0) {
+          const laneY = ERROR_Y + 40 + lane * 30;
+          const stubX = src.x + 180 + 24; // where the error line leaves its node (editor's NODE_W + lead)
+          edge.waypoints = [{ x: stubX, y: laneY }, { x: errorX - 30 - (laned - lane + 1) * 10, y: laneY }];
+        }
+        edges.push(edge);
+      });
 
       return { nodes, edges };
     },
@@ -827,8 +844,8 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
         nodes: [
           makeNode(n1, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 60, 80),
           makeNode(n2, 'condition', 'Is Human?', { expression: 'event.client_type == 0' }, 300, 80),
-          makeNode(n3, 'condition', 'Bad Name?', { expression: expr }, 540, 40),
-          makeNode(n4, 'action_kick', 'Kick Bad Name', { reasonid: '5', reason: cfg.reason || 'Forbidden nickname' }, 780, 0),
+          makeNode(n3, 'condition', 'Bad Name?', { expression: expr }, 540, 80),
+          makeNode(n4, 'action_kick', 'Kick Bad Name', { reasonid: '5', reason: cfg.reason || 'Forbidden nickname' }, 780, 80),
         ],
         edges: [
           makeEdge(eid(), n1, n2),
@@ -853,14 +870,14 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       resetIds();
       const n1 = nid(), n2 = nid(), n3 = nid(), n4 = nid();
       const actionNode = cfg.action === 'remove'
-        ? makeNode(n4, 'action_groupRemove', 'Remove Group', { groupId: cfg.protectedGroupId }, 780, 0)
-        : makeNode(n4, 'action_kick', 'Kick Intruder', { reasonid: '5', reason: 'Unauthorized group' }, 780, 0);
+        ? makeNode(n4, 'action_groupRemove', 'Remove Group', { groupId: cfg.protectedGroupId }, 780, 80)
+        : makeNode(n4, 'action_kick', 'Kick Intruder', { reasonid: '5', reason: 'Unauthorized group' }, 780, 80);
 
       return {
         nodes: [
           makeNode(n1, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 60, 80),
           makeNode(n2, 'condition', 'Has Protected?', { expression: `contains(event.client_servergroups,'${cfg.protectedGroupId}')` }, 300, 80),
-          makeNode(n3, 'condition', 'Missing Auth?', { expression: `contains(event.client_servergroups,'${cfg.allowedGroupId}') == 0` }, 540, 40),
+          makeNode(n3, 'condition', 'Missing Auth?', { expression: `contains(event.client_servergroups,'${cfg.allowedGroupId}') == 0` }, 540, 80),
           actionNode,
         ],
         edges: [
@@ -958,15 +975,15 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       const n1 = nid(), n2 = nid(), n3 = nid(), n4 = nid(), n5 = nid();
       const url = (cfg.apiUrl || '').replace('{{ip}}', '{{event.connection_client_ip}}');
       const actionNode = cfg.action === 'ban'
-        ? makeNode(n5, 'action_ban', 'Ban VPN', { time: 3600, reason: 'VPN detected' }, 780, 0)
-        : makeNode(n5, 'action_kick', 'Kick VPN', { reasonid: '5', reason: 'VPN detected' }, 780, 0);
+        ? makeNode(n5, 'action_ban', 'Ban VPN', { time: 3600, reason: 'VPN detected' }, 1020, 80)
+        : makeNode(n5, 'action_kick', 'Kick VPN', { reasonid: '5', reason: 'VPN detected' }, 1020, 80);
 
       return {
         nodes: [
           makeNode(n1, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 60, 80),
           makeNode(n2, 'condition', 'Is Human?', { expression: 'event.client_type == 0' }, 300, 80),
-          makeNode(n3, 'action_httpRequest', 'Check VPN API', { url, method: 'GET', storeAs: 'vpn' }, 540, 40),
-          makeNode(n4, 'condition', 'Is VPN?', { expression: "temp.vpn.security.vpn == true or temp.vpn.security.proxy == true" }, 540, 120),
+          makeNode(n3, 'action_httpRequest', 'Check VPN API', { url, method: 'GET', storeAs: 'vpn' }, 540, 80),
+          makeNode(n4, 'condition', 'Is VPN?', { expression: "temp.vpn.security.vpn == true or temp.vpn.security.proxy == true" }, 780, 80),
           actionNode,
         ],
         edges: [
