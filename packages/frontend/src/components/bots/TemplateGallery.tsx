@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getBotTemplates, getTemplateCategories, type BotTemplate, type TemplateConfigField } from '@/data/bot-templates';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -14,10 +14,16 @@ import { cn } from '@/lib/utils';
 interface TemplateGalleryProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (name: string, description: string, flowData: { nodes: any[]; edges: any[] }) => void;
+  onSelect: (name: string, description: string, flowData: TemplateFlowData) => void;
+  /** Opens straight into the config step of this template with these values, to rebuild an existing flow. */
+  reconfigure?: TemplateRef;
 }
 
-export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGalleryProps) {
+/** Which template a flow was built from and with what values, stored in its flowData. */
+export interface TemplateRef { id: string; config: Record<string, string> }
+export interface TemplateFlowData { nodes: any[]; edges: any[]; template?: TemplateRef }
+
+export function TemplateGallery({ open, onOpenChange, onSelect, reconfigure }: TemplateGalleryProps) {
   const { t } = useTranslation();
   const botTemplates = useMemo(() => getBotTemplates(t), [t]);
   const templateCategories = useMemo(() => getTemplateCategories(t), [t]);
@@ -37,19 +43,26 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
     onOpenChange(v);
   };
 
-  const handleSelectTemplate = (template: BotTemplate) => {
+  const handleSelectTemplate = (template: BotTemplate, stored?: Record<string, string>) => {
     setSelected(template);
     // Initialize default values
     const defaults: Record<string, string> = {};
     for (const field of template.configFields) {
       if (field.defaultValue) defaults[field.key] = field.defaultValue;
     }
-    setConfig(defaults);
+    setConfig({ ...defaults, ...stored });
   };
+
+  useEffect(() => {
+    if (!open || !reconfigure) return;
+    const template = botTemplates.find((tpl) => tpl.id === reconfigure.id);
+    if (template) handleSelectTemplate(template, reconfigure.config);
+  }, [open, reconfigure, botTemplates]);
 
   const handleCreate = () => {
     if (!selected) return;
-    const flowData = selected.flowDataFactory(config);
+    const flowData: TemplateFlowData = selected.flowDataFactory(config);
+    if (selected.configFields.length > 0) flowData.template = { id: selected.id, config };
     onSelect(selected.name, selected.description, flowData);
     handleClose(false);
   };
@@ -73,7 +86,7 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {selected && (
+              {selected && !reconfigure && (
                 <Button variant="ghost" size="icon" className="h-6 w-6 mr-1" onClick={handleBack}>
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -136,6 +149,10 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
               <div className="space-y-4 pb-2">
                 <p className="text-xs text-muted-foreground">{selected.description}</p>
 
+                {reconfigure && (
+                  <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-500">{t('components.templateGallery.rebuildWarning')}</p>
+                )}
+
                 {selected.variablesHint && selected.variablesHint.length > 0 && (
                   <div className="rounded-md border border-border bg-muted/30 p-2.5">
                     <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">{t('components.templateGallery.availableVariables')}</p>
@@ -193,9 +210,11 @@ export function TemplateGallery({ open, onOpenChange, onSelect }: TemplateGaller
 
             <div className="p-6 pt-2">
               <DialogFooter>
-                <Button variant="outline" size="sm" onClick={handleBack}>{t('common.back')}</Button>
+                {reconfigure
+                  ? <Button variant="outline" size="sm" onClick={() => handleClose(false)}>{t('common.cancel')}</Button>
+                  : <Button variant="outline" size="sm" onClick={handleBack}>{t('common.back')}</Button>}
                 <Button size="sm" onClick={handleCreate} disabled={selected.configFields.length > 0 && !isValid}>
-                  {t('components.templateGallery.createBot')}
+                  {reconfigure ? t('components.templateGallery.rebuildFlow') : t('components.templateGallery.createBot')}
                 </Button>
               </DialogFooter>
             </div>
