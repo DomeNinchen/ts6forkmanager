@@ -2404,7 +2404,7 @@
       "dontShowAgain": "Don't show this when opening a flow",
       "gotIt": "Got it",
       "flowSaved": "Flow saved",
-      "needsSshHint": "Needs an SSH login on the server connection",
+      "templateConfig": "Configure template",      "needsSshHint": "Needs an SSH login on the server connection",
       "noSshNotice": "This server connection has no SSH login, so event and command triggers are unavailable. Cron and webhook triggers still work.",
       "noWebQueryNotice": "This server connection has no WebQuery API key: actions that talk to TeamSpeak fail. Voice, HTTP, log, delay, variable and loop nodes work.",
       "flowSaveFailed": "Failed to save flow",
@@ -3312,7 +3312,9 @@
       "configureTitle": "Configure: {{name}}",
       "availableVariables": "Available Variables",
       "noConfigNeeded": "No configuration needed — ready to create.",
-      "createBot": "Create Bot"
+      "createBot": "Create Bot",
+      "rebuildWarning": "Applying rebuilds the flow from the template. Nodes you changed by hand are replaced. Nothing is stored until you click Save in the editor.",
+      "rebuildFlow": "Rebuild flow"
     },
     "placeholderReference": {
       "dialogTitle": "Placeholder Reference",
@@ -3812,7 +3814,7 @@
             "supportChannelId": { "label": "Support (waiting) channel ID" },
             "parentChannelId": { "label": "Parent channel for the created rooms (optional)" },
             "supporterGroupIds": { "label": "Supporter server group IDs (comma-separated)" },
-            "afkChannelId": { "label": "AFK channel — supporters in it don't count as available (optional)" },
+            "afkChannelIds": { "label": "AFK channels, comma-separated — supporters in them don't count as available (optional)" },
             "roomName": { "label": "Support room name" },
             "roomType": { "label": "Support room type", "options": ["Temporary (deleted when empty)", "Semi-permanent", "Permanent"] },
             "notifyMethod": { "label": "How to message the user", "options": ["Poke", "Chat"] },

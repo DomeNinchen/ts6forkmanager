@@ -16,8 +16,9 @@ import {
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
-  BookOpen, Info,
+  BookOpen, Info, SlidersHorizontal,
 } from 'lucide-react';
+import { TemplateGallery, type TemplateRef } from '@/components/bots/TemplateGallery';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PlaceholderReference, PlaceholderReferenceContent } from '@/components/bots/PlaceholderReference';
@@ -694,6 +695,8 @@ export default function BotEditor() {
   const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [botName, setBotName] = useState('');
+  const [template, setTemplate] = useState<TemplateRef | undefined>();
+  const [showTemplateConfig, setShowTemplateConfig] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   // Greets each person once when they open a flow; the button in the
   // toolbar brings it back afterwards.
@@ -739,9 +742,11 @@ export default function BotEditor() {
         });
         setNodes(loadedNodes);
         setEdges(loadedEdges);
+        setTemplate(flow?.template);
       } catch {
         setNodes([]);
         setEdges([]);
+        setTemplate(undefined);
       }
     }
   }, [bot]);
@@ -750,7 +755,7 @@ export default function BotEditor() {
     if (!botId) return;
     updateBot.mutate({
       id: parseInt(botId),
-      data: { name: botName, flowData: { nodes, edges } },
+      data: { name: botName, flowData: { nodes, edges, ...(template ? { template } : {}) } },
     }, {
       onSuccess: () => toast.success(t('pages.botEditor.flowSaved')),
       onError: () => toast.error(t('pages.botEditor.flowSaveFailed')),
@@ -1021,6 +1026,11 @@ export default function BotEditor() {
           <Badge variant="outline" className="text-[10px]">{t('pages.botEditor.edgesCount', { count: edges.length })}</Badge>
         </div>
         <div className="flex items-center gap-2">
+          {template && (
+            <Button variant="outline" size="sm" className="h-8" onClick={() => setShowTemplateConfig(true)}>
+              <SlidersHorizontal className="h-4 w-4 mr-1" /> {t('pages.botEditor.templateConfig')}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -2385,6 +2395,19 @@ export default function BotEditor() {
       </div>
 
       <PlaceholderReference open={showHelp} onOpenChange={setShowHelp} />
+      {template && (
+        <TemplateGallery
+          open={showTemplateConfig}
+          onOpenChange={setShowTemplateConfig}
+          reconfigure={template}
+          onSelect={(_name, _description, flowData) => {
+            setNodes(flowData.nodes);
+            setEdges(flowData.edges);
+            setTemplate(flowData.template);
+            setSelectedNode(null);
+          }}
+        />
+      )}
       <EditorHelpDialog
         open={showEditorHelp}
         onOpenChange={setShowEditorHelp}

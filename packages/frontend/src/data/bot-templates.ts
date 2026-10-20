@@ -308,7 +308,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       { key: 'supportChannelId', label: t('data.botTemplates.items.supportSystem.fields.supportChannelId.label'), type: 'number', placeholder: '15', required: true },
       { key: 'parentChannelId', label: t('data.botTemplates.items.supportSystem.fields.parentChannelId.label'), type: 'number', placeholder: 'e.g. 19' },
       { key: 'supporterGroupIds', label: t('data.botTemplates.items.supportSystem.fields.supporterGroupIds.label'), type: 'text', placeholder: '6,7', required: true },
-      { key: 'afkChannelId', label: t('data.botTemplates.items.supportSystem.fields.afkChannelId.label'), type: 'number', placeholder: 'e.g. 12' },
+      { key: 'afkChannelIds', label: t('data.botTemplates.items.supportSystem.fields.afkChannelIds.label'), type: 'text', placeholder: 'e.g. 12,13' },
       { key: 'roomName', label: t('data.botTemplates.items.supportSystem.fields.roomName.label'), type: 'text', defaultValue: 'Support » {{temp.client.0.client_nickname}}' },
       { key: 'roomType', label: t('data.botTemplates.items.supportSystem.fields.roomType.label'), type: 'select', defaultValue: 'temporary', options: [
         { label: t('data.botTemplates.items.supportSystem.fields.roomType.options.0'), value: 'temporary' },
@@ -346,7 +346,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       const supporterGroups = String(cfg.supporterGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
       const listGroups = String(cfg.listGroupIds || '').split(',').map((s) => s.trim()).filter(Boolean);
       // Count real supporters online, parked-in-AFK ones excluded, shared by both branches.
-      const countParams = { groupIds: cfg.supporterGroupIds || '', excludeChannelIds: cfg.afkChannelId || '', storeAs: 'supporters' };
+      const countParams = { groupIds: cfg.supporterGroupIds || '', excludeChannelIds: cfg.afkChannelIds || '', storeAs: 'supporters' };
 
       // A message to the user (the client who just joined), via the chosen method.
       const notifyUser = (id: string, label: string, message: string, x: number, y: number) =>
