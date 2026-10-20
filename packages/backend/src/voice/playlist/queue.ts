@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 
-export type RepeatMode = "off" | "track" | "queue";
+export type RepeatMode = "off" | "track";
 
 export interface QueueItem {
   id: string;
@@ -13,30 +13,38 @@ export interface QueueItem {
   streamUrl?: string; // If set, play as live stream (radio) instead of file
 }
 
-/** Emits 'lengthChange' whenever add/remove/clear actually changes the
- * queue's length (not on move/shuffle/repeat, which don't) - lets callers
- * (e.g. a description-template's {queue_length}) react without polling. */
+/** How many finished tracks previous() can step back through. */
+const HISTORY_LIMIT = 50;
+
+/** The tracks still to play. The current track, if there is one, is always
+ * items[0]; once it is done (next(), or another track started via
+ * insertNext()/playNow()) it leaves the queue for a hidden history that only
+ * previous() reads, so the queue never fills up with played tracks.
+ *
+ * Emits 'lengthChange' whenever the queue's length actually changes (not on
+ * move/shuffle/repeat, which don't) - lets callers (e.g. a description-
+ * template's {queue_length}) react without polling. */
 export class PlayQueue extends EventEmitter {
   private items: QueueItem[] = [];
-  private currentIndex = -1;
+  private hasCurrent = false;
+  private history: QueueItem[] = [];
   private _shuffle = false;
   private _repeat: RepeatMode = "off";
-  private shuffleOrder: number[] = [];
+  // Insertion order, so turning shuffle off can restore it
+  private seq = new WeakMap<QueueItem, number>();
+  private nextSeq = 0;
 
   get current(): QueueItem | null {
-    if (this.currentIndex < 0 || this.currentIndex >= this.items.length) {
-      return null;
-    }
-    const idx = this._shuffle ? this.shuffleOrder[this.currentIndex] : this.currentIndex;
-    return this.items[idx] ?? null;
+    return this.hasCurrent ? this.items[0] : null;
   }
 
   get length(): number {
     return this.items.length;
   }
 
+  /** Position of the current track: 0, or -1 when nothing is current. */
   get index(): number {
-    return this.currentIndex;
+    return this.hasCurrent ? 0 : -1;
   }
 
   get repeat(): RepeatMode {
@@ -48,24 +56,32 @@ export class PlayQueue extends EventEmitter {
   }
 
   getAll(): QueueItem[] {
-    if (this._shuffle) {
-      return this.shuffleOrder.map((i) => this.items[i]);
-    }
     return [...this.items];
   }
 
+  private get firstUpcoming(): number {
+    return this.hasCurrent ? 1 : 0;
+  }
+
+  private changed(): void {
+    this.emit("lengthChange", this.items.length);
+  }
+
   private addOne(item: QueueItem): void {
-    this.items.push(item);
+    this.seq.set(item, this.nextSeq++);
     if (this._shuffle) {
-      // Insert new item at random position in shuffle order
-      const pos = Math.floor(Math.random() * (this.shuffleOrder.length + 1));
-      this.shuffleOrder.splice(pos, 0, this.items.length - 1);
+      // Random spot among the upcoming tracks, never ahead of the current one
+      const start = this.firstUpcoming;
+      const pos = start + Math.floor(Math.random() * (this.items.length - start + 1));
+      this.items.splice(pos, 0, item);
+    } else {
+      this.items.push(item);
     }
   }
 
   add(item: QueueItem): void {
     this.addOne(item);
-    this.emit('lengthChange', this.items.length);
+    this.changed();
   }
 
   addMany(items: QueueItem[]): void {
@@ -73,127 +89,90 @@ export class PlayQueue extends EventEmitter {
     for (const item of items) {
       this.addOne(item);
     }
-    this.emit('lengthChange', this.items.length);
+    this.changed();
   }
 
-  /** Insert an item right after the current track (or at the front if
-   * nothing is playing) and jump to it - for "play this now" call sites.
-   * Unlike add()+playAt(length-1), which appends behind everything and then
-   * jumps past it, this leaves whatever was already queued after the old
-   * current track queued after the new one too, instead of stranding it
-   * behind the new current index where {queue_length}/next() can't reach it. */
+  /** The current track is done: move it into the history. */
+  private retireCurrent(): void {
+    if (!this.hasCurrent) return;
+    this.history.push(this.items.shift()!);
+    if (this.history.length > HISTORY_LIMIT) this.history.shift();
+    this.hasCurrent = false;
+  }
+
+  /** Make `item` the current track - for "play this now" call sites. The
+   * track that was current counts as played; everything queued stays queued
+   * behind the new one. */
   insertNext(item: QueueItem): void {
-    if (this._shuffle) {
-      // Playback order lives in shuffleOrder, not `items` order, so
-      // appending here is fine - only shuffleOrder's insertion point matters.
-      this.items.push(item);
-      const insertAt = this.currentIndex + 1;
-      this.shuffleOrder.splice(insertAt, 0, this.items.length - 1);
-      this.currentIndex = insertAt;
-    } else {
-      const insertAt = this.currentIndex + 1;
-      this.items.splice(insertAt, 0, item);
-      this.currentIndex = insertAt;
-    }
-    this.emit('lengthChange', this.items.length);
+    this.retireCurrent();
+    this.seq.set(item, this.nextSeq++);
+    this.items.unshift(item);
+    this.hasCurrent = true;
+    this.changed();
   }
 
-  remove(id: string): boolean {
-    const idx = this.items.findIndex((item) => item.id === id);
-    if (idx < 0) return false;
+  /** Make the track at `index` current right away, pulling it to the front.
+   * The tracks that were ahead of it stay queued instead of being skipped;
+   * the one that was current counts as played. */
+  playNow(index: number): QueueItem | null {
+    if (index < 0 || index >= this.items.length) return null;
+    if (index === 0 && this.hasCurrent) return this.current;
+    const [item] = this.items.splice(index, 1);
+    this.retireCurrent();
+    this.items.unshift(item);
+    this.hasCurrent = true;
+    this.changed();
+    return item;
+  }
 
-    this.items.splice(idx, 1);
-
-    // Update shuffle order
-    if (this._shuffle) {
-      this.shuffleOrder = this.shuffleOrder
-        .filter((i) => i !== idx)
-        .map((i) => (i > idx ? i - 1 : i));
-    }
-
-    // Adjust current index
-    if (idx < this.currentIndex) {
-      this.currentIndex--;
-    } else if (idx === this.currentIndex) {
-      this.currentIndex = Math.min(this.currentIndex, this.items.length - 1);
-    }
-
-    this.emit('lengthChange', this.items.length);
-    return true;
+  removeAt(index: number): QueueItem | null {
+    if (index < 0 || index >= this.items.length) return null;
+    const [item] = this.items.splice(index, 1);
+    // A removed current track keeps playing; when it ends, next() starts the
+    // first one left instead of treating that one as already played.
+    if (index === 0) this.hasCurrent = false;
+    this.changed();
+    return item;
   }
 
   clear(): void {
     const hadItems = this.items.length > 0;
     this.items = [];
-    this.currentIndex = -1;
-    this.shuffleOrder = [];
-    if (hadItems) this.emit('lengthChange', 0);
+    this.history = [];
+    this.hasCurrent = false;
+    if (hadItems) this.changed();
   }
 
+  /** The current track has finished (or is skipped): drop it and make the
+   * next one current. Track repeat is handled by VoiceBot directly. */
   next(): QueueItem | null {
-    if (this.items.length === 0) return null;
-
-    // Track repeat is handled by VoiceBot directly — here we just advance
-    this.currentIndex++;
-
-    if (this.currentIndex >= this.items.length) {
-      if (this._repeat === "queue") {
-        this.currentIndex = 0;
-        if (this._shuffle) {
-          this.regenerateShuffleOrder();
-        }
-      } else {
-        this.currentIndex = -1;
-        return null;
-      }
-    }
-
+    const before = this.items.length;
+    this.retireCurrent();
+    this.hasCurrent = this.items.length > 0;
+    if (this.items.length !== before) this.changed();
     return this.current;
   }
 
-  playAt(index: number): QueueItem | null {
-    if (index < 0 || index >= this.items.length) return null;
-    this.currentIndex = index;
-    return this.current;
-  }
-
+  /** Step back: the last finished track becomes current again and the one
+   * that was current is next. Without history the current track restarts. */
   previous(): QueueItem | null {
-    if (this.items.length === 0) return null;
-
-    this.currentIndex--;
-    if (this.currentIndex < 0) {
-      if (this._repeat === "queue") {
-        this.currentIndex = this.items.length - 1;
-      } else {
-        this.currentIndex = 0;
-      }
-    }
-
-    return this.current;
+    const prev = this.history.pop();
+    if (!prev) return this.current;
+    this.items.unshift(prev);
+    this.hasCurrent = true;
+    this.changed();
+    return prev;
   }
 
+  /** Reorder the upcoming tracks; the current track stays first. */
   move(fromIndex: number, toIndex: number): boolean {
-    if (fromIndex < 0 || fromIndex >= this.items.length) return false;
-    if (toIndex < 0 || toIndex >= this.items.length) return false;
+    const start = this.firstUpcoming;
+    if (fromIndex < start || fromIndex >= this.items.length) return false;
+    if (toIndex < start || toIndex >= this.items.length) return false;
     if (fromIndex === toIndex) return true;
 
     const [item] = this.items.splice(fromIndex, 1);
     this.items.splice(toIndex, 0, item);
-
-    // Adjust currentIndex to follow the currently playing track
-    if (this.currentIndex === fromIndex) {
-      this.currentIndex = toIndex;
-    } else if (fromIndex < this.currentIndex && toIndex >= this.currentIndex) {
-      this.currentIndex--;
-    } else if (fromIndex > this.currentIndex && toIndex <= this.currentIndex) {
-      this.currentIndex++;
-    }
-
-    // Regenerate shuffle order since indices changed
-    if (this._shuffle) {
-      this.regenerateShuffleOrder();
-    }
-
     return true;
   }
 
@@ -201,19 +180,21 @@ export class PlayQueue extends EventEmitter {
     this._repeat = mode;
   }
 
+  /** Shuffles the upcoming tracks (again, if already on); turning it off puts
+   * them back in the order they were added. */
   setShuffle(enabled: boolean): void {
     this._shuffle = enabled;
+    const start = this.firstUpcoming;
+    const upcoming = this.items.slice(start);
     if (enabled) {
-      this.regenerateShuffleOrder();
+      // Fisher-Yates shuffle
+      for (let i = upcoming.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [upcoming[i], upcoming[j]] = [upcoming[j], upcoming[i]];
+      }
+    } else {
+      upcoming.sort((a, b) => (this.seq.get(a) ?? 0) - (this.seq.get(b) ?? 0));
     }
-  }
-
-  private regenerateShuffleOrder(): void {
-    this.shuffleOrder = Array.from({ length: this.items.length }, (_, i) => i);
-    // Fisher-Yates shuffle
-    for (let i = this.shuffleOrder.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [this.shuffleOrder[i], this.shuffleOrder[j]] = [this.shuffleOrder[j], this.shuffleOrder[i]];
-    }
+    this.items.splice(start, upcoming.length, ...upcoming);
   }
 }

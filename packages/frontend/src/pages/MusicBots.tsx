@@ -108,6 +108,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   const seekMut = useSeek();
   const shuffleMut = useSetShuffle();
   const repeatMut = useSetRepeat();
+  const playFromQueue = usePlayFromQueue();
 
   // Widget token dialog
   const [showWidget, setShowWidget] = useState(false);
@@ -129,6 +130,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   const isPlaying = state?.status === 'playing';
   const isPaused = state?.status === 'paused';
   const isStreaming = state?.isStreaming ?? false;
+  const hasQueue = (state?.queue.length ?? 0) > 0;
 
   return (
     <Card className="card-hero group hover:border-primary/30 transition-colors">
@@ -176,9 +178,17 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
 
         {/* Play button when connected but idle */}
         {isRunning && !state?.nowPlaying && (
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={onPlay}>
-            <Play className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.botPlayerCard.playSongEllipsis')}
-          </Button>
+          <div className="flex gap-2">
+            {hasQueue && (
+              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs"
+                onClick={() => playFromQueue.mutate({ botId: bot.id, index: 0 })}>
+                <ListMusic className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.queueTab.playQueue')}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" onClick={onPlay}>
+              <Play className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.botPlayerCard.playSongEllipsis')}
+            </Button>
+          </div>
         )}
 
         {/* Now Playing */}
@@ -245,16 +255,12 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
                 <SkipForward className="h-3.5 w-3.5" />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7"
-                onClick={() => {
-                  const modes = ['off', 'track', 'queue'] as const;
-                  const idx = modes.indexOf(state.repeat);
-                  repeatMut.mutate({ botId: bot.id, mode: modes[(idx + 1) % 3] });
-                }}
+                onClick={() => repeatMut.mutate({ botId: bot.id, mode: state.repeat === 'track' ? 'off' : 'track' })}
               >
                 {state.repeat === 'track' ? (
                   <Repeat1 className="h-3.5 w-3.5 text-primary" />
                 ) : (
-                  <Repeat className={`h-3.5 w-3.5 ${state.repeat === 'queue' ? 'text-primary' : ''}`} />
+                  <Repeat className="h-3.5 w-3.5" />
                 )}
               </Button>
             </div>
@@ -280,7 +286,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
 
         {/* Queue preview - only what's still upcoming, matching the
             {queue_length} count in the bot's own TeamSpeak description;
-            state.queue itself is the full history+upcoming array. */}
+            state.queue also holds the current track first. */}
         {state?.queue && state.queue.length > state.currentIndex + 1 && (() => {
           const upcoming = state.queue.slice(state.currentIndex + 1);
           return (
@@ -1031,7 +1037,8 @@ function BotsTab() {
         onEnqueue={(songId) => {
           if (showPlayDialog) {
             enqueueSong.mutate({ botId: showPlayDialog, songId }, {
-              onSuccess: () => toast.success(t('pages.musicBots.botsTab.addedToQueue')),
+              // An idle bot starts the track straight away instead of queueing it
+              onSuccess: (res) => toast.success(res?.queued === false ? t('pages.musicBots.botsTab.playing') : t('pages.musicBots.botsTab.addedToQueue')),
               onError: () => toast.error(t('pages.musicBots.botsTab.enqueueFailed')),
             });
           }
@@ -1106,7 +1113,9 @@ function LibraryTab() {
   const handleEnqueueSong = (song: SongInfo) => {
     if (!selectedBotId) return;
     enqueueSong.mutate({ botId: selectedBotId, songId: song.id }, {
-      onSuccess: () => toast.success(t('pages.musicBots.libraryTab.addedToQueueTitle', { title: song.title })),
+      onSuccess: (res) => toast.success(res?.queued === false
+        ? t('pages.musicBots.libraryTab.playingTitle', { title: song.title })
+        : t('pages.musicBots.libraryTab.addedToQueueTitle', { title: song.title })),
       onError: () => toast.error(t('pages.musicBots.libraryTab.addToQueueFailed')),
     });
   };
@@ -2161,6 +2170,12 @@ function QueueTab() {
         </Select>
         {queue.length > 0 && (
           <div className="flex items-center gap-2 ml-auto">
+            {/* Idle bot with tracks left (playback stopped, or queued while offline): index 0 is a stopped track or the next one */}
+            {state?.status === 'connected' && (
+              <Button size="sm" className="h-7 text-xs" onClick={() => selectedBot && playFromQueue.mutate({ botId: selectedBot, index: 0 })}>
+                <Play className="h-3 w-3 mr-1" /> {t('pages.musicBots.queueTab.playQueue')}
+              </Button>
+            )}
             <Badge variant="secondary" className="text-[10px]">{t('pages.musicBots.queueTab.tracksCount', { count: queue.length })}</Badge>
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => selectedBot && clearQueue.mutate(selectedBot)}>
               <Trash2 className="h-3 w-3 mr-1" /> {t('pages.musicBots.queueTab.clear')}
@@ -2194,7 +2209,17 @@ function QueueTab() {
                     className={`grid grid-cols-[2rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-2 px-3 py-1.5 items-center group transition-colors ${isActive ? 'bg-primary/10' : 'hover:bg-muted/30'}`}
                   >
                     <div className="text-xs text-muted-foreground font-mono-data">
-                      {isActive ? <Play className="h-3 w-3 text-primary" /> : i + 1}
+                      {isActive ? <Play className="h-3 w-3 text-primary" /> : (
+                        <button
+                          className="w-full text-left hover:text-primary"
+                          onClick={() => selectedBot && playFromQueue.mutate({ botId: selectedBot, index: i })}
+                          title={t('pages.musicBots.queueTab.clickToPlay')}
+                          aria-label={t('pages.musicBots.queueTab.clickToPlay')}
+                        >
+                          <span className="group-hover:hidden">{i + 1}</span>
+                          <Play className="h-3 w-3 hidden group-hover:block" />
+                        </button>
+                      )}
                     </div>
                     <div className="min-w-0">
                       <button
@@ -2213,7 +2238,7 @@ function QueueTab() {
                       <Badge variant="outline" className="text-[9px] h-4 px-1">{item.source}</Badge>
                     </div>
                     <div className="flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {i > 0 && (
+                      {i > currentIndex + 1 && (
                         <button
                           className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i - 1 })}
@@ -2222,7 +2247,7 @@ function QueueTab() {
                           <GripVertical className="h-3 w-3 rotate-180" />
                         </button>
                       )}
-                      {i < queue.length - 1 && (
+                      {i > currentIndex && i < queue.length - 1 && (
                         <button
                           className="p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
                           onClick={() => selectedBot && moveQueueItem.mutate({ botId: selectedBot, from: i, to: i + 1 })}

@@ -364,13 +364,11 @@ export class MusicCommandHandler {
     // !queue remove <index>
     if (args.toLowerCase().startsWith('remove ')) {
       const idx = parseInt(args.substring(7).trim()) - 1; // 1-based to 0-based
-      const items = bot.queue.getAll();
-      if (isNaN(idx) || idx < 0 || idx >= items.length) {
-        this.reply(bot, userClid, `Invalid index. Queue has ${items.length} tracks.`);
+      const removed = isNaN(idx) ? null : bot.queue.removeAt(idx);
+      if (!removed) {
+        this.reply(bot, userClid, `Invalid index. Queue has ${bot.queue.length} tracks.`);
         return;
       }
-      const removed = items[idx];
-      bot.queue.remove(removed.id);
       this.reply(bot, userClid, `Removed #${idx + 1}: ${removed.title}`);
       return;
     }
@@ -378,7 +376,7 @@ export class MusicCommandHandler {
     // !queue play <index>
     if (args.toLowerCase().startsWith('play ')) {
       const idx = parseInt(args.substring(5).trim()) - 1; // 1-based to 0-based
-      const item = bot.queue.playAt(idx);
+      const item = bot.queue.playNow(idx);
       if (!item) {
         this.reply(bot, userClid, `Invalid index. Queue has ${bot.queue.length} tracks.`);
         return;
