@@ -60,6 +60,12 @@ async function main() {
 
   const adapter = new PrismaBetterSqlite3({ url: config.databaseUrl });
   const prisma = new PrismaClient({ adapter });
+  // better-sqlite3 runs on the main thread: in the default journal mode every
+  // write waits there for several fsyncs, which on a slow disk stalls music
+  // bot playback. WAL + NORMAL commits without an fsync (crash-safe; a power
+  // loss can only cost the last transactions).
+  await prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL');
+  await prisma.$executeRawUnsafe('PRAGMA synchronous = NORMAL');
   await loadDebugFlags(prisma);
   startScheduledRestartChecker(prisma);
   startUpdateChecker(prisma);
