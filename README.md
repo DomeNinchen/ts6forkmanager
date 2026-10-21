@@ -57,7 +57,7 @@ Upstream had a video/audio streaming stutter that was never resolved and securit
 
 **Where the manager runs:** Docker with the Compose plugin. ffmpeg, yt-dlp and everything else are part of the images.
 
-**Memory:** about 250 MB for the manager, plus about 60 MB for each music bot while it plays (a song or a radio station). With a few bots, 1 GB of free memory leaves room to spare; a TeamSpeak server on the same machine needs its own share on top.
+**Memory:** at least 1 GB free for the manager. It uses about 250–350 MB itself, plus about 60 MB for each music bot while it plays (a song or a radio station). A TeamSpeak server on the same machine needs its own share on top.
 
 **On the TeamSpeak server** (it can be a different machine):
 
