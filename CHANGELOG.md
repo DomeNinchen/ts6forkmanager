@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.69.2 · frontend 3.86.1 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.69.3 · frontend 3.86.1 · sidecar 2.1.4**
 
 ### New Features
 
@@ -37,6 +37,7 @@ Versions at the end of the month: **backend 2.69.2 · frontend 3.86.1 · sidecar
 
 ### Improvements
 
+- **Music bots decode songs while they play** — A song no longer sits in memory as a whole: a 26-minute mix used to take about 300 MB per bot (twice that while loading) and several seconds before the first note. Now each playing bot needs only its decoder (about 50 MB, like a radio bot), whatever the song's length, and starts within a fraction of a second. Seeking during playback leaves a short gap of about 65 ms. *backend 2.69.3* [#311](https://github.com/DomeNinchen/ts6forkmanager/pull/311)
 - **Smoother music bot playback on slow disks** — The database runs in SQLite's WAL mode, so background writes (such as the dashboard's bandwidth samples every 30 seconds) no longer hold up a bot's audio for up to a tenth of a second. *backend 2.69.2* [#309](https://github.com/DomeNinchen/ts6forkmanager/pull/309)
 - **Compose files without `version:`** — Both compose files drop the unused `version: '3.8'` line, so Docker Compose v2 stops warning that it is obsolete; the stack itself is unchanged. [#308](https://github.com/DomeNinchen/ts6forkmanager/pull/308)
 - **Template layouts** — Bot-flow templates are laid out without crossing or overlapping lines (Support System, Private Channel Creator, Anti-VPN, Bad Name Checker, Group Protector), for new template flows and for those rebuilt with **Configure template**. *frontend 3.86.1* [#306](https://github.com/DomeNinchen/ts6forkmanager/pull/306)
@@ -67,6 +68,7 @@ Versions at the end of the month: **backend 2.69.2 · frontend 3.86.1 · sidecar
 
 ### Bug Fixes
 
+- Fixed other music bots stuttering for a moment whenever one bot started a long song, and a song staying in memory after the queue had ended or for as long as it was paused. *backend 2.69.3* [#311](https://github.com/DomeNinchen/ts6forkmanager/pull/311)
 - Fixed temporary channels created by bot flows staying forever because the bot's own query connection sat in them; the bot now leaves once the user is moved in, and two support requests at the same moment both get their room. *backend 2.69.1* [#304](https://github.com/DomeNinchen/ts6forkmanager/pull/304)
 - Fixed the page's language tag always saying German; it now names the interface language actually shown, so screen readers pronounce it correctly and browsers stop offering to translate. *frontend 3.83.1* [#301](https://github.com/DomeNinchen/ts6forkmanager/pull/301)
 - Fixed music bots showing zeros in TeamSpeak's connection info; ping, packets, bytes and bandwidth are real now. *backend 2.66.6* [#297](https://github.com/DomeNinchen/ts6forkmanager/pull/297)

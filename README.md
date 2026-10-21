@@ -57,6 +57,8 @@ Upstream had a video/audio streaming stutter that was never resolved and securit
 
 **Where the manager runs:** Docker with the Compose plugin. ffmpeg, yt-dlp and everything else are part of the images.
 
+**Memory:** about 250 MB for the manager, plus about 60 MB for each music bot while it plays (a song or a radio station). With a few bots, 1 GB of free memory leaves room to spare; a TeamSpeak server on the same machine needs its own share on top.
+
 **On the TeamSpeak server** (it can be a different machine):
 
 - **WebQuery over HTTP is switched on.** It is off by default. `query_protocols` has to include `http`, set in `tsserver.yaml`, as a command-line flag or, for the official Docker image, with `TSSERVER_QUERY_HTTP_ENABLED=1`. On a rented server your host may have to do this.
