@@ -70,6 +70,8 @@ Upstream had a video/audio streaming stutter that was never resolved and securit
 
 ## Quick Start (Docker)
 
+Starting from a fresh server? The wiki's [Install on Debian 13](https://github.com/DomeNinchen/ts6forkmanager/wiki/Install-on-Debian-13) walks through every step from the first login, Docker included.
+
 1. Clone the repository. The images are built from source, so the compose file alone is not enough.
 
    ```bash
