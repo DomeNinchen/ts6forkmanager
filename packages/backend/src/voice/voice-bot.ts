@@ -4,6 +4,7 @@ import { renderDescriptionTemplate, renderIdleDescriptionTemplate } from './desc
 import { AudioPipeline, FRAME_MS, BYTES_PER_FRAME } from './audio/pipeline.js';
 import { PlayQueue, type QueueItem } from './playlist/queue.js';
 import { fetchIcyMetadata } from './audio/icy-metadata.js';
+import { getAudioDuration } from './audio/music-library-scan.js';
 import { StreamSignaling, type ActiveStream, type SignalingMessage } from './streaming/stream-signaling.js';
 import { SidecarClient } from './streaming/sidecar-client.js';
 import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.js';
@@ -33,6 +34,9 @@ const IDLE_PLAYBACK_GAP_MS = 30_000;
  * longer stall drops the backlog of send slots - never audio - and continues.
  */
 const MAX_CATCHUP_MS = 200;
+
+/** How much decoded song audio a bot buffers ahead of playback (5 s of 48 kHz stereo PCM). */
+const SONG_BUFFER_BYTES = 5 * 48000 * 2 * 2;
 
 export type VoiceBotStatus = 'stopped' | 'starting' | 'connected' | 'playing' | 'paused' | 'error';
 
@@ -92,10 +96,10 @@ export class VoiceBot extends EventEmitter {
   private playbackTimer: ReturnType<typeof setTimeout> | null = null;
   private _nowPlaying: QueueItem | null = null;
 
-  // PCM-level playback state
-  private pcmFrames: Buffer[] = [];
-  private frameIndex: number = 0;
-  private pausedAtFrame: number = 0;
+  // Song playback state: a song is decoded while it plays (see startSong)
+  private songDuration = 0;      // seconds, 0 if unknown
+  private songOffset = 0;        // seconds into the song where the current decode started
+  private songFramesSent = 0;    // frames sent since songOffset
   private loopEpoch: number = 0;
 
   private lastVoiceSendAt = 0;       // performance.now() timestamp
@@ -297,11 +301,12 @@ export class VoiceBot extends EventEmitter {
         duration: 0, // Live stream — no known duration
       };
     }
-    if (this.pcmFrames.length === 0) return null;
-    return {
-      position: (this.frameIndex * FRAME_MS) / 1000,
-      duration: (this.pcmFrames.length * FRAME_MS) / 1000,
-    };
+    if (this._pausedStream) return null;
+    return { position: this.songPosition, duration: this.songDuration };
+  }
+
+  private get songPosition(): number {
+    return this.songOffset + (this.songFramesSent * FRAME_MS) / 1000;
   }
 
   get lastError(): string {
@@ -647,6 +652,7 @@ export class VoiceBot extends EventEmitter {
 
     this.stopIcyPolling();
     this.stopPlayback();
+    const epoch = this.loopEpoch;
     this._nowPlaying = item;
     this._status = 'playing';
     this.emit('statusChange', this._status);
@@ -655,10 +661,13 @@ export class VoiceBot extends EventEmitter {
     this.updateDescription();
 
     try {
-      const pcmData = await this.pipeline.toPcm(item.filePath);
-      this.pcmFrames = this.pipeline.splitFrames(pcmData);
-      this.frameIndex = 0;
-      this.startPlaybackLoop();
+      // Decoding while playing gives no frame count up front: the length comes from the song's metadata
+      const duration = item.duration && item.duration > 0
+        ? item.duration
+        : await getAudioDuration(item.filePath).catch(() => 0);
+      if (epoch !== this.loopEpoch) return; // a newer play/stop took over while ffprobe ran
+      this.songDuration = duration;
+      await this.startSong(item.filePath, 0);
     } catch (err) {
       this._status = 'connected';
       this._nowPlaying = null;
@@ -736,7 +745,7 @@ export class VoiceBot extends EventEmitter {
           return;
         }
 
-        // Behind after a stall: catch up on what ffmpeg already buffered (see startPlaybackLoop)
+        // Behind after a stall: catch up on what ffmpeg already buffered (see startSong)
         if (now - nextDue > MAX_CATCHUP_MS) nextDue = now;
 
         // Send exactly one frame if available
@@ -778,16 +787,12 @@ export class VoiceBot extends EventEmitter {
       this._pausedStream = this._nowPlaying;
       this.clearTimer();
       this.stopIcyPolling();
-      if (this.streamKill) {
-        this.streamKill();
-        this.streamKill = null;
-      }
+      this.stopDecoder();
       this._isStreaming = false;
-      this.streamChunks = [];
-      this.streamChunksSize = 0;
     } else {
-      this.pausedAtFrame = this.frameIndex;
+      // The song's position is kept, its decoder is not: resume() decodes on from there
       this.clearTimer();
+      this.stopDecoder();
     }
     this.client.sendVoiceStop();
     this._status = 'paused';
@@ -803,28 +808,26 @@ export class VoiceBot extends EventEmitter {
       this.playStream(station).catch((err) => this.emit('error', err));
       return;
     }
-    this.frameIndex = this.pausedAtFrame;
+    const item = this._nowPlaying;
+    if (!item) return;
     this._status = 'playing';
     this.emit('statusChange', this._status);
-    this.startPlaybackLoop();
+    this.startSong(item.filePath, this.songPosition).catch((err) => this.emit('error', err));
   }
 
   seek(seconds: number): void {
     if (this._status !== 'playing' && this._status !== 'paused') return;
-    if (this.pcmFrames.length === 0) return;
+    const item = this._nowPlaying;
+    if (!item || this._isStreaming || this._pausedStream) return;
 
-    const targetFrame = Math.max(0, Math.min(
-      Math.floor(seconds / (FRAME_MS / 1000)),
-      this.pcmFrames.length - 1
-    ));
+    // Past the end decodes nothing, which ends the track like before
+    const target = Math.max(0, this.songDuration > 0 ? Math.min(seconds, this.songDuration) : seconds);
 
     if (this._status === 'playing') {
-      this.clearTimer();
-      this.frameIndex = targetFrame;
-      this.startPlaybackLoop();
+      this.startSong(item.filePath, target).catch((err) => this.emit('error', err));
     } else {
-      this.frameIndex = targetFrame;
-      this.pausedAtFrame = targetFrame;
+      this.songOffset = target;
+      this.songFramesSent = 0;
     }
   }
 
@@ -936,11 +939,24 @@ export class VoiceBot extends EventEmitter {
     this.client.sendVoice(opusFrame);
   }
 
-  private startPlaybackLoop(): void {
-    const epoch = ++this.loopEpoch;
+  /**
+   * Plays the current song from `startSec` on, decoding it while it plays and
+   * keeping only a few seconds buffered. Resolves once audio flows (or the song
+   * turned out empty), rejects if ffmpeg fails before that. A later
+   * play/seek/pause/stop supersedes it: its decoder is killed and it resolves.
+   */
+  private startSong(filePath: string, startSec: number): Promise<void> {
+    this.clearTimer();
+    this.stopDecoder();
+    const epoch = this.loopEpoch;
+    const stream = this.pipeline.fileToPcmStream(filePath, startSec);
+    this.streamKill = stream.kill;
+    this.songOffset = startSec;
+    this.songFramesSent = 0;
+    let decodeDone = false;
 
     // "Audio clock": next frame is due at this timestamp
-    let nextDue = performance.now();
+    let nextDue = 0;
 
     const tick = () => {
       if (epoch !== this.loopEpoch) return;
@@ -959,15 +975,20 @@ export class VoiceBot extends EventEmitter {
       // never skipped - a skipped frame is an audible click.
       if (now - nextDue > MAX_CATCHUP_MS) nextDue = now;
 
-      // Send exactly ONE frame (if available)
-      if (this.frameIndex < this.pcmFrames.length) {
-        const opusFrame = this.pipeline.encodeFrame(this.pcmFrames[this.frameIndex], this.config.volume);
-        this.sendVoiceFrame(opusFrame);
-        this.frameIndex++;
+      // Send exactly ONE frame (if available); a song's last one is padded with silence
+      let frame = this.takeFromStreamChunks(BYTES_PER_FRAME);
+      if (!frame && decodeDone && this.streamChunksSize > 0) {
+        frame = Buffer.alloc(BYTES_PER_FRAME);
+        this.takeFromStreamChunks(this.streamChunksSize)!.copy(frame);
+      }
+      if (frame) {
+        this.sendVoiceFrame(this.pipeline.encodeFrame(frame, this.config.volume));
+        this.songFramesSent++;
+        if (stream.stdout.isPaused() && this.streamChunksSize < SONG_BUFFER_BYTES / 2) stream.stdout.resume();
       }
 
       // End-of-track handling
-      if (this.frameIndex >= this.pcmFrames.length) {
+      if (!frame && decodeDone) {
         this.client.sendVoiceStop();
         this.clearTimer();
 
@@ -1001,7 +1022,50 @@ export class VoiceBot extends EventEmitter {
       }
     };
 
-    this.playbackTimer = setTimeout(tick, 0);
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const settle = (err?: Error) => {
+        if (settled) return;
+        settled = true;
+        if (err) return reject(err);
+        resolve();
+        if (epoch !== this.loopEpoch) return;
+        nextDue = performance.now();
+        this.playbackTimer = setTimeout(tick, 0);
+      };
+
+      stream.stdout.on('data', (chunk: Buffer) => {
+        if (epoch !== this.loopEpoch) return;
+        this.streamChunks.push(chunk);
+        this.streamChunksSize += chunk.length;
+        // ffmpeg decodes far faster than real time; the pipe holds it back until the tick drains the buffer
+        if (this.streamChunksSize >= SONG_BUFFER_BYTES) stream.stdout.pause();
+        settle();
+      });
+
+      stream.process.on('close', (code) => {
+        if (epoch !== this.loopEpoch) return settle(); // killed by whatever superseded it
+        decodeDone = true;
+        if (this.streamKill === stream.kill) this.streamKill = null;
+        if (code === 0) return settle(); // a song without any audio ends right away
+        if (settled) console.warn(`[VoiceBot ${this.config.id}] ffmpeg stopped with code ${code} while decoding ${filePath}`);
+        settle(new Error(`FFmpeg exited with code ${code}`));
+      });
+
+      stream.process.on('error', (err) => {
+        settle(epoch === this.loopEpoch ? new Error(`FFmpeg not found or failed to start: ${err.message}`) : undefined);
+      });
+    });
+  }
+
+  /** Kills the running ffmpeg (song or radio) and drops what it had buffered. */
+  private stopDecoder(): void {
+    if (this.streamKill) {
+      this.streamKill();
+      this.streamKill = null;
+    }
+    this.streamChunks = [];
+    this.streamChunksSize = 0;
   }
 
   private clearTimer(): void {
@@ -1014,21 +1078,14 @@ export class VoiceBot extends EventEmitter {
 
   private stopPlayback(): void {
     this.clearTimer();
-    this.pcmFrames = [];
-    this.frameIndex = 0;
-    this.pausedAtFrame = 0;
+    this.songDuration = 0;
+    this.songOffset = 0;
+    this.songFramesSent = 0;
     // Whatever was paused is over now (a new track, Stop, a disconnect): there is nothing left to resume
     this._pausedStream = null;
     this._idlePaused = false;
-
-    // Kill streaming FFmpeg if active
-    if (this.streamKill) {
-      this.streamKill();
-      this.streamKill = null;
-    }
+    this.stopDecoder();
     this._isStreaming = false;
-    this.streamChunks = [];
-    this.streamChunksSize = 0;
   }
 
   // ─── Pause when alone ───────────────────────────────────────

@@ -37,30 +37,6 @@ export class AudioPipeline {
   }
 
   /**
-   * Convert audio file to raw PCM (48kHz, mono, s16le) at full volume.
-   */
-  toPcm(filePath: string): Promise<Buffer> {
-    return this.ffmpegToPcm(filePath);
-  }
-
-  /**
-   * Split raw PCM buffer into 960-sample frames.
-   */
-  splitFrames(pcmData: Buffer): Buffer[] {
-    const frames: Buffer[] = [];
-    for (let offset = 0; offset < pcmData.length; offset += BYTES_PER_FRAME) {
-      let frame = pcmData.subarray(offset, offset + BYTES_PER_FRAME);
-      if (frame.length < BYTES_PER_FRAME) {
-        const padded = Buffer.alloc(BYTES_PER_FRAME, 0);
-        frame.copy(padded);
-        frame = padded;
-      }
-      frames.push(frame);
-    }
-    return frames;
-  }
-
-  /**
    * Encode a single PCM frame to Opus, applying volume scaling in real-time.
    */
   encodeFrame(pcmFrame: Buffer, volume: number): Buffer {
@@ -101,20 +77,36 @@ export class AudioPipeline {
       throw new Error(`Stream URL blocked: ${urlCheck.error}`);
     }
 
-    const args = [
+    return this.spawnPcm([
       "-reconnect", "1",
       "-reconnect_streamed", "1",
       "-reconnect_delay_max", "5",
       "-i", url,
+    ]);
+  }
+
+  /**
+   * Decode an audio file to raw PCM as a stream, from `startSec` on. Songs are
+   * decoded while they play instead of up front, so a bot never holds a whole
+   * song in memory (a 26-minute mix is ~300 MB of PCM).
+   */
+  fileToPcmStream(filePath: string, startSec = 0): { stdout: Readable; process: ChildProcess; kill: () => void } {
+    // -ss before -i seeks the input; for audio that is sample-accurate
+    return this.spawnPcm([...(startSec > 0 ? ["-ss", startSec.toFixed(3)] : []), "-i", filePath]);
+  }
+
+  private spawnPcm(inputArgs: string[]): { stdout: Readable; process: ChildProcess; kill: () => void } {
+    const ffmpeg = spawn("ffmpeg", [
+      ...inputArgs,
       "-f", "s16le",
       "-acodec", "pcm_s16le",
       "-ar", String(SAMPLE_RATE),
       "-ac", String(CHANNELS),
       "-loglevel", "error",
       "pipe:1",
-    ];
-
-    const ffmpeg = spawn("ffmpeg", args, { shell: false });
+    ], { shell: false });
+    // An unread stderr pipe that fills up (a damaged file logs per frame) would stall ffmpeg
+    ffmpeg.stderr.resume();
     return {
       stdout: ffmpeg.stdout,
       process: ffmpeg,
@@ -122,40 +114,5 @@ export class AudioPipeline {
         try { ffmpeg.kill("SIGKILL"); } catch { }
       },
     };
-  }
-
-  private ffmpegToPcm(input: string): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const args = [
-        "-i", input,
-        "-f", "s16le",
-        "-acodec", "pcm_s16le",
-        "-ar", String(SAMPLE_RATE),
-        "-ac", String(CHANNELS),
-        "-loglevel", "error",
-        "pipe:1",
-      ];
-
-      const ffmpeg = spawn("ffmpeg", args, { shell: false });
-      const chunks: Buffer[] = [];
-
-      ffmpeg.stdout.on("data", (chunk: Buffer) => {
-        chunks.push(chunk);
-      });
-
-      ffmpeg.stderr.on("data", () => { });
-
-      ffmpeg.on("close", (code) => {
-        if (code === 0) {
-          resolve(Buffer.concat(chunks));
-        } else {
-          reject(new Error(`FFmpeg exited with code ${code}`));
-        }
-      });
-
-      ffmpeg.on("error", (err) => {
-        reject(new Error(`FFmpeg not found or failed to start: ${err.message}`));
-      });
-    });
   }
 }
