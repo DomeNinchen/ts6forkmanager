@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # The backend and the sidecar run as an unprivileged user (uid/gid 1000).
   # Volumes of an installation from before that belong to root, so this hands
