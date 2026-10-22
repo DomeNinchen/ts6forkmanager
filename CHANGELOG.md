@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.69.5 · frontend 3.87.1 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.69.6 · frontend 3.87.1 · sidecar 2.1.4**
 
 ### New Features
 
@@ -53,6 +53,7 @@ Versions at the end of the month: **backend 2.69.5 · frontend 3.87.1 · sidecar
 
 ### Security
 
+- **Dependency update** — `ip-address` 10.7.4 (pulled in by `express-rate-limit`) closes one Dependabot alert; it was not reachable in this app. *backend 2.69.6* [#316](https://github.com/DomeNinchen/ts6forkmanager/pull/316)
 - **Secrets masked in the query debug log** — With the "query" debug flag on, passwords, API keys, privilege keys, file-transfer keys and other credentials in logged WebQuery and SSH commands and answers are written as `***`; the log and the query console share one list of secret fields, which now also covers `jwt`. *backend 2.69.5, frontend 3.87.1* [#315](https://github.com/DomeNinchen/ts6forkmanager/pull/315)
 - **Dependency updates** — `follow-redirects` 1.16.1 (pulled in by `axios`) and `vite` 8.3.4 close three Dependabot alerts; none was reachable in this app. *backend 2.68.1, frontend 3.83.2* [#303](https://github.com/DomeNinchen/ts6forkmanager/pull/303)
 - **No privilege keys from bot flows** — `tokenadd` and `tokenlist` are removed from the WebQuery action's allow-list. *backend 2.66.3* [#291](https://github.com/DomeNinchen/ts6forkmanager/pull/291)
