@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { requireRole } from '../middleware/rbac.js';
+import { MUSIC_REQUEST_HISTORY_LIMIT } from '../voice/music-request-history.js';
 
 export const musicRequestRoutes: Router = Router({ mergeParams: true });
 
@@ -16,7 +17,7 @@ musicRequestRoutes.get('/', async (req: Request, res: Response, next: NextFuncti
         const requests = await req.app.locals.prisma.musicRequest.findMany({
             where: { serverConfigId: configId },
             orderBy: { requestedAt: 'desc' },
-            take: 100,
+            take: MUSIC_REQUEST_HISTORY_LIMIT,
         });
 
         res.json(requests);

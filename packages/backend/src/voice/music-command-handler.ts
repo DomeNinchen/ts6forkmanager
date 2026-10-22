@@ -3,6 +3,7 @@ import { VoiceBotManager } from './voice-bot-manager.js';
 import type { VoiceBot } from './voice-bot.js';
 import type { QueueItem } from './playlist/queue.js';
 import { downloadYouTube } from './audio/youtube.js';
+import { saveMusicRequest } from './music-request-history.js';
 import { STREAM_PRESETS } from './streaming/types.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
 import { canRunCommand } from '../utils/command-permissions.js';
@@ -649,24 +650,7 @@ export class MusicCommandHandler {
 
   private saveMusicRequest(bot: VoiceBot, item: QueueItem): void {
     if (!item.sourceUrl || !bot.currentConfig.serverConfigId) return;
-    this.prisma.musicRequest.upsert({
-      where: {
-        serverConfigId_url: {
-          serverConfigId: bot.currentConfig.serverConfigId,
-          url: item.sourceUrl,
-        },
-      },
-      update: {
-        requestedAt: new Date(),
-        title: item.title || 'Unknown Title',
-      },
-      create: {
-        serverConfigId: bot.currentConfig.serverConfigId,
-        url: item.sourceUrl,
-        title: item.title || 'Unknown Title',
-        requestedAt: new Date(),
-      },
-    }).catch((err) => {
+    saveMusicRequest(this.prisma, bot.currentConfig.serverConfigId, item.sourceUrl, item.title).catch((err) => {
       console.error('[MusicCmd] Failed to save music request history:', err.message);
     });
   }

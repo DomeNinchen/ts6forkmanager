@@ -1458,10 +1458,13 @@
       "notAvailable": "Widget not available"
     },
     "musicRequests": {
-      "description": "History of songs requested via the <1>!play</1> command on this server.",
+      "description": "The last 25 songs requested on this server, via <1>!play</1> or here in the web interface.",
       "noneYetTitle": "No music requests yet",
       "noneYetDescription": "When users request songs using the !play command, they will appear here as a history log.",
-      "requested": "Requested {{time}}"
+      "requested": "Requested {{time}}",
+      "botPlaceholder": "Choose a bot",
+      "noConnectedBot": "No bot of this server is connected",
+      "openLink": "Open link"
     },
     "settings": {
       "webgui": {
@@ -2939,6 +2942,7 @@
         "noHistory": "No music requests found. Use !play in chat to build history.",
         "playNowHint": "Play this now, interrupting whatever is running",
         "queueAfterHint": "Play this after whatever is running",
+        "loading": "Loading…",
         "close": "Close"
       },
       "avatarPicker": {

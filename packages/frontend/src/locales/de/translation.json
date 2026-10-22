@@ -1458,10 +1458,13 @@
       "notAvailable": "Widget nicht verfügbar"
     },
     "musicRequests": {
-      "description": "Verlauf der Songs, die über den Befehl <1>!play</1> auf diesem Server angefragt wurden.",
+      "description": "Die letzten 25 Songs, die auf diesem Server angefragt wurden, per <1>!play</1> oder hier im Webinterface.",
       "noneYetTitle": "Noch keine Musikanfragen",
       "noneYetDescription": "Wenn Nutzer mit dem !play-Befehl Songs anfragen, erscheinen sie hier als Verlaufsprotokoll.",
-      "requested": "Angefragt {{time}}"
+      "requested": "Angefragt {{time}}",
+      "botPlaceholder": "Bot wählen",
+      "noConnectedBot": "Kein Bot dieses Servers ist verbunden",
+      "openLink": "Link öffnen"
     },
     "settings": {
       "webgui": {
@@ -2939,6 +2942,7 @@
         "noHistory": "Keine Musikanfragen gefunden. Nutze !play im Chat, um einen Verlauf aufzubauen.",
         "playNowHint": "Jetzt abspielen und dabei das Laufende unterbrechen",
         "queueAfterHint": "Nach dem Laufenden abspielen",
+        "loading": "Lädt…",
         "close": "Schließen"
       },
       "avatarPicker": {

@@ -403,12 +403,14 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
 
 // ─── Play Song Dialog ─────────────────────────────────────────────────────────
 
-function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onEnqueue, onLoadPlaylist }: {
+function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, pendingUrl, onEnqueue, onLoadPlaylist }: {
   botId: number | null;
   onClose: () => void;
   onPlaySong: (songId: number) => void;
   onPlayUrl: (url: string) => void;
   onQueueUrl: (url: string) => void;
+  /** The history link being loaded right now - yt-dlp can take a while before playback starts. */
+  pendingUrl: { url: string; mode?: 'now' | 'queue' } | null;
   onEnqueue: (songId: number) => void;
   onLoadPlaylist: (playlistId: number) => void;
 }) {
@@ -533,28 +535,35 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, onE
           <div className="flex-1 max-h-[400px] overflow-y-auto">
             {history.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">{t('pages.musicBots.playSongDialog.noHistory')}</p>
-            ) : history.map((req: any) => (
+            ) : history.map((req: any) => {
+              const loading = pendingUrl && pendingUrl.url === req.url ? (pendingUrl.mode ?? 'now') : null;
+              return (
               <div key={req.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 transition-colors rounded-sm group">
                 <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate" title={req.title}>{req.title}</p>
                 </div>
-                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={`flex items-center gap-1 shrink-0 transition-opacity ${loading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                   <Button variant="default" size="sm" className="h-6 text-[10px] px-2"
+                    disabled={!!pendingUrl}
                     onClick={() => onPlayUrl(req.url)}
                     title={t('pages.musicBots.playSongDialog.playNowHint')}
                   >
-                    <Play className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.playSongDialog.play')}
+                    {loading === 'now' ? <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> : <Play className="h-3 w-3 mr-0.5" />}
+                    {loading === 'now' ? t('pages.musicBots.playSongDialog.loading') : t('pages.musicBots.playSongDialog.play')}
                   </Button>
                   <Button variant="outline" size="sm" className="h-6 text-[10px] px-2"
+                    disabled={!!pendingUrl}
                     onClick={() => onQueueUrl(req.url)}
                     title={t('pages.musicBots.playSongDialog.queueAfterHint')}
                   >
-                    <Plus className="h-3 w-3 mr-0.5" /> {t('pages.musicBots.playSongDialog.queue')}
+                    {loading === 'queue' ? <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> : <Plus className="h-3 w-3 mr-0.5" />}
+                    {loading === 'queue' ? t('pages.musicBots.playSongDialog.loading') : t('pages.musicBots.playSongDialog.queue')}
                   </Button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -1022,6 +1031,7 @@ function BotsTab() {
             });
           }
         }}
+        pendingUrl={playUrl.isPending ? playUrl.variables : null}
         onQueueUrl={(url) => {
           if (showPlayDialog) {
             playUrl.mutate({ botId: showPlayDialog, url, mode: 'queue' }, {
