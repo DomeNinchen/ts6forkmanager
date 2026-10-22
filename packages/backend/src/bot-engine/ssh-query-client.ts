@@ -4,6 +4,7 @@ import { parseQueryResponse } from '@ts6/common';
 import { TS_EVENT_TYPES } from '@ts6/common';
 import crypto from 'crypto';
 import { isDebugEnabled } from '../utils/debug-flags.js';
+import { maskSecretsInLine } from '../utils/mask-secrets.js';
 
 export interface SshQueryClientOptions {
   host: string;
@@ -451,7 +452,7 @@ export class SshQueryClient extends EventEmitter {
     if (errorId === 0) {
       // Success
       if (isDebugEnabled('query')) {
-        console.log(`[SSH Query ${this.options.host}:${this.options.port}] ← ok ${cmd.responseLines.join(' | ') || '(empty)'}`);
+        console.log(`[SSH Query ${this.options.host}:${this.options.port}] ← ok ${maskSecretsInLine(cmd.responseLines.join(' | ')) || '(empty)'}`);
       }
       cmd.resolve(cmd.responseLines.join('\n'));
     } else {
@@ -471,7 +472,7 @@ export class SshQueryClient extends EventEmitter {
     this.currentCommand = this.commandQueue.shift()!;
     this.currentCommand.responseLines = [];
     if (isDebugEnabled('query')) {
-      console.log(`[SSH Query ${this.options.host}:${this.options.port}] → ${this.currentCommand.command}`);
+      console.log(`[SSH Query ${this.options.host}:${this.options.port}] → ${maskSecretsInLine(this.currentCommand.command)}`);
     }
     this.shell.write(this.currentCommand.command + '\n');
   }
