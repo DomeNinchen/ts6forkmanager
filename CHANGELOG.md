@@ -8,7 +8,7 @@ Versions at the end of the month: **backend 2.69.4 · frontend 3.87.0 · sidecar
 
 ### New Features
 
-- **Play from the Music Request History** — The page gets a bot selector (the server's connected music bots) and **Play** / **Queue** buttons on every entry, next to the YouTube link. *frontend 3.87.0*
+- **Play from the Music Request History** — The page gets a bot selector (the server's connected music bots) and **Play** / **Queue** buttons on every entry, next to the YouTube link. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - **Restart notice** — While the manager restarts, for example during an update, open pages show a short notice and carry on by themselves once it is back: they reload if the update brought a new frontend, otherwise they only fetch fresh data. A host reverse proxy can show a self-reloading page instead of a bare 502 ([Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment)). *frontend 3.86.0* [#305](https://github.com/DomeNinchen/ts6forkmanager/pull/305)
 - **Reconfigurable template flows** — A flow created from a template gets a **Configure template** button that reopens the setup dialog with its values and rebuilds the flow. The Support System template takes several AFK channels. *backend 2.69.1, frontend 3.85.0* [#304](https://github.com/DomeNinchen/ts6forkmanager/pull/304)
 - **Support System template, reworked** — A setup dialog for support channel, supporter groups, messages, an optional white-/blacklist and an optional waiting room. The flow creates a personal support room, counts supporters who are really online (an AFK channel can be left out), pokes the supporter groups or tells the user that nobody is there, and can rename a waiting room OPEN/CLOSED. Modelled on the SinusBot script by Mortis & Andreas Fink ([support-channel-mover](https://github.com/mortisdotpro/support-channel-mover), MIT). **Count Online in Groups** gains an "exclude channels" field. *backend 2.68.0, frontend 3.83.0* [#300](https://github.com/DomeNinchen/ts6forkmanager/pull/300)
@@ -38,7 +38,7 @@ Versions at the end of the month: **backend 2.69.4 · frontend 3.87.0 · sidecar
 
 ### Improvements
 
-- **Music request history keeps the last 25 songs** — Per server, for `!play`, `!queue` and songs started from the web interface; older entries are deleted. The play dialog's history tab and the Music Request History page show the same 25. *backend 2.69.4, frontend 3.87.0*
+- **Music request history keeps the last 25 songs** — Per server, for `!play`, `!queue` and songs started from the web interface; older entries are deleted. The play dialog's history tab and the Music Request History page show the same 25. *backend 2.69.4, frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - **Music bots decode songs while they play** — A song no longer sits in memory as a whole: a 26-minute mix used to take about 300 MB per bot (twice that while loading) and several seconds before the first note. Now each playing bot needs only its decoder (about 50 MB, like a radio bot), whatever the song's length, and starts within a fraction of a second. Seeking during playback leaves a short gap of about 65 ms. *backend 2.69.3* [#311](https://github.com/DomeNinchen/ts6forkmanager/pull/311)
 - **Smoother music bot playback on slow disks** — The database runs in SQLite's WAL mode, so background writes (such as the dashboard's bandwidth samples every 30 seconds) no longer hold up a bot's audio for up to a tenth of a second. *backend 2.69.2* [#309](https://github.com/DomeNinchen/ts6forkmanager/pull/309)
 - **Compose files without `version:`** — Both compose files drop the unused `version: '3.8'` line, so Docker Compose v2 stops warning that it is obsolete; the stack itself is unchanged. [#308](https://github.com/DomeNinchen/ts6forkmanager/pull/308)
@@ -70,7 +70,7 @@ Versions at the end of the month: **backend 2.69.4 · frontend 3.87.0 · sidecar
 
 ### Bug Fixes
 
-- Fixed **Play** in the play dialog's history tab looking as if it did nothing: a song that is not downloaded yet takes several seconds to load, and the clicked button now shows a spinner until it starts. *frontend 3.87.0*
+- Fixed **Play** in the play dialog's history tab looking as if it did nothing: a song that is not downloaded yet takes several seconds to load, and the clicked button now shows a spinner until it starts. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - Fixed other music bots stuttering for a moment whenever one bot started a long song, and a song staying in memory after the queue had ended or for as long as it was paused. *backend 2.69.3* [#311](https://github.com/DomeNinchen/ts6forkmanager/pull/311)
 - Fixed temporary channels created by bot flows staying forever because the bot's own query connection sat in them; the bot now leaves once the user is moved in, and two support requests at the same moment both get their room. *backend 2.69.1* [#304](https://github.com/DomeNinchen/ts6forkmanager/pull/304)
 - Fixed the page's language tag always saying German; it now names the interface language actually shown, so screen readers pronounce it correctly and browsers stop offering to translate. *frontend 3.83.1* [#301](https://github.com/DomeNinchen/ts6forkmanager/pull/301)
@@ -110,7 +110,7 @@ Versions at the end of the month: **backend 2.69.4 · frontend 3.87.0 · sidecar
 
 **Bot flows & music bots**
 
-- The music request history keeps only the newest 25 entries per server; older ones are deleted with the next request.
+- The music request history keeps only the newest 25 entries per server; older ones are deleted with the next request. [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - Flows that use `tokenadd` or `tokenlist` now stop at that step with an error in their log. [#291](https://github.com/DomeNinchen/ts6forkmanager/pull/291)
 - **Configure template** replaces hand-made node changes in that flow. [#304](https://github.com/DomeNinchen/ts6forkmanager/pull/304)
 - The "repeat queue" mode is gone; repeat track stays. [#302](https://github.com/DomeNinchen/ts6forkmanager/pull/302)
