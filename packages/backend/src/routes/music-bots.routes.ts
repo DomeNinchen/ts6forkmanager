@@ -5,6 +5,7 @@ import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 import { downloadYouTube } from '../voice/audio/youtube.js';
 import { playerWidgetToken } from './widget-public.routes.js';
 import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
+import { saveMusicRequest } from '../voice/music-request-history.js';
 import { DESCRIPTION_PLACEHOLDERS } from '../voice/description-template.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
 import multer from 'multer';
@@ -434,26 +435,8 @@ musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) =
 
     // Save to MusicRequest History
     try {
-      const prisma = req.app.locals.prisma;
       if (queueItem.sourceUrl && bot.currentConfig.serverConfigId) {
-        await prisma.musicRequest.upsert({
-          where: {
-            serverConfigId_url: {
-              serverConfigId: bot.currentConfig.serverConfigId,
-              url: queueItem.sourceUrl,
-            },
-          },
-          update: {
-            requestedAt: new Date(),
-            title: queueItem.title || 'Unknown Title',
-          },
-          create: {
-            serverConfigId: bot.currentConfig.serverConfigId,
-            url: queueItem.sourceUrl,
-            title: queueItem.title || 'Unknown Title',
-            requestedAt: new Date(),
-          },
-        });
+        await saveMusicRequest(req.app.locals.prisma, bot.currentConfig.serverConfigId, queueItem.sourceUrl, queueItem.title);
       }
     } catch (saveErr) {
       console.error('[music-bots.routes] Failed to save music request history:', saveErr);

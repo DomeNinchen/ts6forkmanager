@@ -134,6 +134,8 @@ export function usePlayUrl() {
     onSuccess: (_, { botId }) => {
       qc.invalidateQueries({ queryKey: ['music-bot-state', botId] });
       qc.invalidateQueries({ queryKey: ['music-bot-queue', botId] });
+      // The track moved to the top of the request history.
+      qc.invalidateQueries({ queryKey: ['music-requests'] });
     },
   });
 }
