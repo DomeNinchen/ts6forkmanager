@@ -4,6 +4,7 @@ import https from 'https';
 import { TSApiError } from '../middleware/error-handler.js';
 import { config } from '../config.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
+import { maskSecrets } from '../utils/mask-secrets.js';
 
 /** TeamSpeak's answer to one command, as WebQuery delivered it. */
 export interface WebQueryEnvelope {
@@ -91,7 +92,7 @@ export class WebQueryClient {
     const cleaned = this.cleanParams(params);
     const debug = isDebugEnabled('query');
     if (debug) {
-      console.log(`[WebQuery ${this.target}] → GET sid=${sid} ${command}${cleaned ? ' ' + JSON.stringify(cleaned) : ''}`);
+      console.log(`[WebQuery ${this.target}] → GET sid=${sid} ${command}${cleaned ? ' ' + JSON.stringify(maskSecrets(cleaned)) : ''}`);
     }
     try {
       // WebQuery URL pattern: /{sid}/{command}
@@ -115,7 +116,7 @@ export class WebQueryClient {
         throw tsApiErrorFrom(data.status);
       }
 
-      if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(data.body ?? data)}`);
+      if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(maskSecrets(data.body ?? data))}`);
       return data.body || data;
     } catch (error: any) {
       if (error instanceof TSApiError) throw error;
@@ -132,7 +133,7 @@ export class WebQueryClient {
     const cleaned = this.cleanParams(params);
     const debug = isDebugEnabled('query');
     if (debug) {
-      console.log(`[WebQuery ${this.target}] → POST sid=${sid} ${command}${cleaned ? ' ' + JSON.stringify(cleaned) : ''}`);
+      console.log(`[WebQuery ${this.target}] → POST sid=${sid} ${command}${cleaned ? ' ' + JSON.stringify(maskSecrets(cleaned)) : ''}`);
     }
     try {
       const path = sid > 0 ? `/${sid}/${command}` : `/${command}`;
@@ -148,7 +149,7 @@ export class WebQueryClient {
         throw tsApiErrorFrom(data.status);
       }
 
-      if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(data.body ?? data)}`);
+      if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(maskSecrets(data.body ?? data))}`);
       return data.body || data;
     } catch (error: any) {
       if (error instanceof TSApiError) throw error;
@@ -174,7 +175,7 @@ export class WebQueryClient {
   async executeJsonBody(sid: number, command: string, body: Record<string, any>): Promise<any> {
     const debug = isDebugEnabled('query');
     if (debug) {
-      console.log(`[WebQuery ${this.target}] → POST(json) sid=${sid} ${command} ${JSON.stringify(body)}`);
+      console.log(`[WebQuery ${this.target}] → POST(json) sid=${sid} ${command} ${JSON.stringify(maskSecrets(body))}`);
     }
     try {
       const path = sid > 0 ? `/${sid}/${command}` : `/${command}`;
@@ -190,7 +191,7 @@ export class WebQueryClient {
         throw tsApiErrorFrom(data.status);
       }
 
-      if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(data.body ?? data)}`);
+      if (debug) console.log(`[WebQuery ${this.target}] ← ok ${JSON.stringify(maskSecrets(data.body ?? data))}`);
       return data.body || data;
     } catch (error: any) {
       if (error instanceof TSApiError) throw error;

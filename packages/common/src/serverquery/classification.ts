@@ -142,6 +142,7 @@ const SECRET_KEYS: ReadonlySet<string> = new Set([
   'token', // privilege keys: tokenadd, tokenlist, permreset, servercreate, ...
   'forauthenticationtoken', // permget
   'ftkey', // ftinitupload / ftinitdownload
+  'jwt', // ftgetchannelfilehttptoken
   'virtualserver_password',
   'channel_password',
 ]);
