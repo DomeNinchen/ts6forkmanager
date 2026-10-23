@@ -368,7 +368,6 @@ export class BotEngine {
     this.webhookEntries = [];
     this.eventBridge.removeAllListeners('tsEvent');
     this.flows.clear();
-    this.executionCounts.clear();
     await Promise.all([...this.dropWindows.keys()].map(key => this.closeDropWindow(key)));
   }
 
@@ -455,7 +454,8 @@ export class BotEngine {
     this.teardownCronJobs(flowId);
     this.webhookEntries = this.webhookEntries.filter(w => w.flowId !== flowId);
     this.flows.delete(flowId);
-    this.executionCounts.delete(flowId);
+    // executionCounts stays: executions already running finish after a disable and still
+    // count against the limit when the flow is enabled again; the entry goes once they are done.
 
     // Check if any remaining flows use the same SSH connections
     await this.cleanupUnusedSshConnections();
@@ -775,8 +775,9 @@ export class BotEngine {
         console.error(`[BotEngine] Flow ${flow.id} execution error: ${err.message}`);
       })
       .finally(() => {
-        const count = this.executionCounts.get(flow.id) || 1;
-        this.executionCounts.set(flow.id, count - 1);
+        const count = (this.executionCounts.get(flow.id) || 1) - 1;
+        if (count > 0) this.executionCounts.set(flow.id, count);
+        else this.executionCounts.delete(flow.id);
       });
     return true;
   }

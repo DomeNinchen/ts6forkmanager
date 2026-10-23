@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.70.0 · frontend 3.88.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.70.1 · frontend 3.88.0 · sidecar 2.1.4**
 
 ### New Features
 
@@ -73,6 +73,7 @@ Versions at the end of the month: **backend 2.70.0 · frontend 3.88.0 · sidecar
 
 ### Bug Fixes
 
+- Fixed a bot flow exceeding its concurrency limit after being switched off and on (or saved) while executions were still running; those executions now keep counting until they end. *backend 2.70.1*
 - Fixed bot-flow triggers beyond the concurrency limit being dropped silently while a webhook still answered `triggered`; the webhook now counts only started executions and reports `dropped` separately, and the flow's card on the Bot Flows page shows how many triggers were dropped in the last 24 hours. *backend 2.70.0, frontend 3.88.0* [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - Fixed **Play** in the play dialog's history tab looking as if it did nothing: a song that is not downloaded yet takes several seconds to load, and the clicked button now shows a spinner until it starts. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - Fixed other music bots stuttering for a moment whenever one bot started a long song, and a song staying in memory after the queue had ended or for as long as it was paused. *backend 2.69.3* [#311](https://github.com/DomeNinchen/ts6forkmanager/pull/311)
