@@ -2335,6 +2335,24 @@
       "bulkUpdatedCount_other": "Updated {{count}} channels"
     },
     "botEditor": {
+      "executions": {
+        "button": "Executions",
+        "title": "Last 50 executions",
+        "empty": "This flow has not run yet.",
+        "pickOne": "Click an execution to see its log.",
+        "logTitle": "Log of #{{id}}",
+        "noLogs": "No log lines.",
+        "droppedRow_one": "{{count}} {{trigger}} trigger dropped",
+        "droppedRow_other": "{{count}} {{trigger}} triggers dropped",
+        "droppedDetail_one": "{{count}} trigger in this minute did not run: the flow was already running its maximum number of concurrent executions.",
+        "droppedDetail_other": "{{count}} triggers in this minute did not run: the flow was already running its maximum number of concurrent executions.",
+        "status": {
+          "running": "Running",
+          "completed": "Completed",
+          "failed": "Failed",
+          "dropped": "Dropped"
+        }
+      },
       "nodeLabels": {
         "trigger_event": "TS Event",
         "trigger_cron": "Cron Timer",

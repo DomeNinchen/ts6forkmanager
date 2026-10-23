@@ -1261,6 +1261,24 @@
       "bulkUpdatedCount_other": "{{count}} salons mis à jour"
     },
     "botEditor": {
+      "executions": {
+        "button": "Exécutions",
+        "title": "50 dernières exécutions",
+        "empty": "Ce flux ne s'est pas encore exécuté.",
+        "pickOne": "Cliquez sur une exécution pour voir son journal.",
+        "logTitle": "Journal de #{{id}}",
+        "noLogs": "Aucune ligne de journal.",
+        "droppedRow_one": "{{count}} déclenchement {{trigger}} rejeté",
+        "droppedRow_other": "{{count}} déclenchements {{trigger}} rejetés",
+        "droppedDetail_one": "{{count}} déclenchement de cette minute n'a pas été exécuté : le flux exécutait déjà son nombre maximal d'exécutions simultanées.",
+        "droppedDetail_other": "{{count}} déclenchements de cette minute n'ont pas été exécutés : le flux exécutait déjà son nombre maximal d'exécutions simultanées.",
+        "status": {
+          "running": "En cours",
+          "completed": "Terminée",
+          "failed": "Échec",
+          "dropped": "Rejetée"
+        }
+      },
       "nodeLabels": {
         "trigger_event": "Événement TS",
         "trigger_cron": "Timer Cron",

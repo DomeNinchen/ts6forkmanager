@@ -16,8 +16,9 @@ import {
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
-  BookOpen, Info, SlidersHorizontal,
+  BookOpen, Info, SlidersHorizontal, History,
 } from 'lucide-react';
+import { ExecutionsPanel } from '@/components/bots/ExecutionsPanel';
 import { TemplateGallery, type TemplateRef } from '@/components/bots/TemplateGallery';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -698,6 +699,7 @@ export default function BotEditor() {
   const [template, setTemplate] = useState<TemplateRef | undefined>();
   const [showTemplateConfig, setShowTemplateConfig] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showExecutions, setShowExecutions] = useState(false);
   // Greets each person once when they open a flow; the button in the
   // toolbar brings it back afterwards.
   const [showEditorHelp, setShowEditorHelp] = useState(() => !hasSeenEditorHelp());
@@ -1031,6 +1033,15 @@ export default function BotEditor() {
               <SlidersHorizontal className="h-4 w-4 mr-1" /> {t('pages.botEditor.templateConfig')}
             </Button>
           )}
+          <Button
+            variant={showExecutions ? 'secondary' : 'outline'}
+            size="sm"
+            className="h-8"
+            onClick={() => setShowExecutions((v) => !v)}
+            aria-pressed={showExecutions}
+          >
+            <History className="h-4 w-4 mr-1" /> {t('pages.botEditor.executions.button')}
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -2391,6 +2402,10 @@ export default function BotEditor() {
               </div>
             </ScrollArea>
           </div>
+        )}
+
+        {showExecutions && botId && (
+          <ExecutionsPanel key={botId} botId={parseInt(botId)} onClose={() => setShowExecutions(false)} />
         )}
       </div>
 

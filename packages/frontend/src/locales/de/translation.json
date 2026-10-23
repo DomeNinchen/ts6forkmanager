@@ -2335,6 +2335,24 @@
       "bulkUpdatedCount_other": "{{count}} Channels aktualisiert"
     },
     "botEditor": {
+      "executions": {
+        "button": "Ausführungen",
+        "title": "Letzte 50 Ausführungen",
+        "empty": "Dieser Flow ist noch nicht gelaufen.",
+        "pickOne": "Eine Ausführung anklicken, um ihr Log zu sehen.",
+        "logTitle": "Log von #{{id}}",
+        "noLogs": "Keine Logzeilen.",
+        "droppedRow_one": "{{count}} {{trigger}}-Auslösung verworfen",
+        "droppedRow_other": "{{count}} {{trigger}}-Auslösungen verworfen",
+        "droppedDetail_one": "{{count}} Auslösung in dieser Minute wurde nicht ausgeführt: Der Flow lief bereits mit der Höchstzahl gleichzeitiger Ausführungen.",
+        "droppedDetail_other": "{{count}} Auslösungen in dieser Minute wurden nicht ausgeführt: Der Flow lief bereits mit der Höchstzahl gleichzeitiger Ausführungen.",
+        "status": {
+          "running": "Läuft",
+          "completed": "Fertig",
+          "failed": "Fehlgeschlagen",
+          "dropped": "Verworfen"
+        }
+      },
       "nodeLabels": {
         "trigger_event": "TS-Ereignis",
         "trigger_cron": "Cron-Timer",
