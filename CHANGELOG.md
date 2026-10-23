@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.71.0 · frontend 3.89.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.72.0 · frontend 3.89.0 · sidecar 2.1.4**
 
 ### New Features
 
@@ -40,6 +40,7 @@ Versions at the end of the month: **backend 2.71.0 · frontend 3.89.0 · sidecar
 
 ### Improvements
 
+- **Versioned database migrations** — The backend keeps its database schema in versioned Prisma migrations and applies the pending ones on start, instead of forcing the schema into shape on every start. A new install is built from the migrations; a database from before this change is adopted into the migration history on the first start after updating (its schema is checked first, and a mismatch stops the start rather than altering data). Destructive schema changes now ship as reviewed migration files, and the database backup before a schema change still runs. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) *backend 2.72.0* [#NNN](https://github.com/DomeNinchen/ts6forkmanager/pull/NNN)
 - **Database backup before schema changes** — When a container start would change the database schema (an update that adds, alters or removes columns), the backend first copies the database to `data/backups/` on the `backend-data` volume and only then syncs the schema. The newest 5 copies are kept (`DB_BACKUP_KEEP`); if the copy cannot be written, the container stops before the sync. Starts without a schema change take no copy. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) *backend 2.71.0* [#320](https://github.com/DomeNinchen/ts6forkmanager/pull/320)
 - **Music request history keeps the last 25 songs** — Per server, for `!play`, `!queue` and songs started from the web interface; older entries are deleted. The play dialog's history tab and the Music Request History page show the same 25. *backend 2.69.4, frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - **Music bots decode songs while they play** — A song no longer sits in memory as a whole: a 26-minute mix used to take about 300 MB per bot (twice that while loading) and several seconds before the first note. Now each playing bot needs only its decoder (about 50 MB, like a radio bot), whatever the song's length, and starts within a fraction of a second. Seeking during playback leaves a short gap of about 65 ms. *backend 2.69.3* [#311](https://github.com/DomeNinchen/ts6forkmanager/pull/311)
@@ -116,6 +117,10 @@ Versions at the end of the month: **backend 2.71.0 · frontend 3.89.0 · sidecar
 
 - Before each start that changes the schema, a copy of the database lands in `data/backups/` on the `backend-data` volume, readable only by the backend user; keep it private, as it holds password hashes and encrypted credentials. Plan room for `DB_BACKUP_KEEP` (default 5) copies of the database's size. A copy is only useful together with the `ENCRYPTION_KEY` (or `JWT_SECRET`) from your `.env`. Both compose files gain the optional `DB_BACKUP_KEEP` line. [#320](https://github.com/DomeNinchen/ts6forkmanager/pull/320)
 - Back up the whole `data/` directory as before; it now also holds the `ts6webui.db-wal` and `ts6webui.db-shm` files. [#309](https://github.com/DomeNinchen/ts6forkmanager/pull/309)
+
+**Database**
+
+- The first start after this update adopts your existing database into the new migration history (a one-time, automatic baseline) and writes a backup to `data/backups/` beforehand; no action is needed, and all your data is kept. Schema changes are applied as versioned migrations from now on. If a start ever reports a schema mismatch it stops instead of changing data — restore from `data/backups/` and check the logs. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) [#NNN](https://github.com/DomeNinchen/ts6forkmanager/pull/NNN)
 
 **Bot flows & music bots**
 

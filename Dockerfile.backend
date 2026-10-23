@@ -65,7 +65,7 @@ RUN pnpm --filter @ts6/backend run build
 # again; --frozen-lockfile keeps it to the versions that were just built, and
 # --filter @ts6/backend... limits it to the backend and @ts6/common. Beyond the
 # backend's own dependencies, what stays is what those need at runtime: the
-# prisma CLI and its dependencies (`prisma db push`), tsx and its esbuild
+# prisma CLI and its dependencies (`prisma migrate deploy`), tsx and its esbuild
 # (`prisma db seed`).
 RUN rm -rf node_modules packages/*/node_modules && \
     pnpm install --prod --frozen-lockfile --filter @ts6/backend...
@@ -146,29 +146,26 @@ ENV SIDECAR_URL=http://ts6-sidecar:9800
 # newer yt-dlp into the user's own (~/.local, "Defaulting to user installation"),
 # which Python looks at before the system copy.
 #
-# `prisma db push --accept-data-loss`: this project has no formal migrations -
-# db push IS the schema-sync step, applied on every start, and every schema
-# change is already reviewed as a PR before it ships, so the interactive
-# data-loss confirmation prisma would otherwise demand can never actually be
-# answered here anyway. --accept-data-loss unblocks that stuck prompt.
-# Without it, db push exits non-zero on a column removal - and the `&&`/`||`
-# chaining below it MUST leave that failure fatal (stop the container),
-# not fall through to starting the backend against an unmigrated schema: a
-# real production deploy hit exactly this - db push failed, got silently
-# swallowed by `... || true && exec node ...` (the `|| true` was only meant
-# to tolerate `db seed` failing, e.g. on a re-run where seed rows already
-# exist, but its scope leaked to the whole left-hand chain including db push
-# itself) - and the backend booted anyway with a stale schema. The explicit
-# `(... || true)` grouping below scopes that tolerance to db seed only.
-#
-# Before the sync, `prisma migrate diff --exit-code` asks whether it would change
-# the schema (0 = no). If it would (2), or the question itself fails (1), the
-# database is copied to data/backups/ first (dist/db-backup.js, keeps
-# DB_BACKUP_KEEP copies). Only on a schema change, and once per backend
-# version, so a container that keeps crashing or failing the sync after an
-# update cannot push the copy from before it out of the rotation. A failed
-# backup stops the container like a failed db push: the sync it would have
-# protected does not run without it. The diff's stderr is
-# dropped: on a first start it reports the missing database (P1003), and any
-# real error resurfaces from db push.
-CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; { prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code 2>/dev/null || node dist/db-backup.js; } && prisma db push --accept-data-loss && (prisma db seed || true) && exec node dist/index.js"]
+# `node dist/db-migrate.js`: the schema-sync step, applied on every start via
+# versioned Prisma migrations (prisma/migrations, copied above). It measures the
+# database and does the right thing for each of three states - fresh install
+# (migrate deploy builds everything), an existing database from the old
+# `db push` era with no migration history (baselined against the committed
+# migrations, but only if it actually matches them; a drifted one is refused,
+# never silently changed), and a database already on migrations (migrate deploy
+# applies what is pending). See packages/backend/src/db-migrate.ts.
+#   - No `--accept-data-loss`: a destructive change is now a reviewed SQL file in
+#     a migration, not an unattended force at start. A failed migration exits
+#     non-zero and the `&&` chain below leaves that failure FATAL (stop the
+#     container), never falling through to start the backend against a
+#     half-migrated schema. The explicit `(... || true)` grouping scopes the
+#     tolerate-a-failure to `db seed` only (seed re-runs harmlessly when rows
+#     already exist) - a real production deploy once booted on a stale schema
+#     because that `|| true` leaked onto the whole left-hand chain.
+#   - The R3 backup (dist/db-backup.js, keeps DB_BACKUP_KEEP copies, once per
+#     backend version) still runs before a deploy that would really change an
+#     existing populated database; a failed backup stops the container like a
+#     failed migration. db-migrate.js invokes it for exactly that case.
+#   - DB_MIGRATE_SKIP is an emergency escape: set it and the backend starts
+#     without touching the database. Leave it unset in normal operation.
+CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; node dist/db-migrate.js && (prisma db seed || true) && exec node dist/index.js"]
