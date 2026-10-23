@@ -90,6 +90,11 @@ export default function BotList() {
                   <Badge variant={bot.enabled ? 'success' : 'secondary'} className="text-[10px]">
                     {bot.enabled ? t('common.active') : t('common.inactive')}
                   </Badge>
+                  {bot.droppedLast24h > 0 && (
+                    <Badge variant="warning" className="text-[10px] gap-1" title={t('pages.botList.droppedHint')}>
+                      <AlertTriangle className="h-3 w-3" /> {t('pages.botList.dropped', { count: bot.droppedLast24h })}
+                    </Badge>
+                  )}
                   {bot.serverConfigId && (
                     <Badge variant="outline" className="text-[10px]">{t('pages.botList.serverHash', { id: bot.serverConfigId })}</Badge>
                   )}

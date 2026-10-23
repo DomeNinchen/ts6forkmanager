@@ -4,10 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.69.6 · frontend 3.87.1 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.70.0 · frontend 3.88.0 · sidecar 2.1.4**
 
 ### New Features
 
+- **Adjustable bot-flow concurrency limit** — How many executions of one flow may run at the same time (20 by default, 1 to 200) is set on the Bot Flows page, on the card now called **Executions: retention and limit**. *backend 2.70.0, frontend 3.88.0* [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - **Play from the Music Request History** — The page gets a bot selector (the server's connected music bots) and **Play** / **Queue** buttons on every entry, next to the YouTube link. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - **Restart notice** — While the manager restarts, for example during an update, open pages show a short notice and carry on by themselves once it is back: they reload if the update brought a new frontend, otherwise they only fetch fresh data. A host reverse proxy can show a self-reloading page instead of a bare 502 ([Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment)). *frontend 3.86.0* [#305](https://github.com/DomeNinchen/ts6forkmanager/pull/305)
 - **Reconfigurable template flows** — A flow created from a template gets a **Configure template** button that reopens the setup dialog with its values and rebuilds the flow. The Support System template takes several AFK channels. *backend 2.69.1, frontend 3.85.0* [#304](https://github.com/DomeNinchen/ts6forkmanager/pull/304)
@@ -72,6 +73,7 @@ Versions at the end of the month: **backend 2.69.6 · frontend 3.87.1 · sidecar
 
 ### Bug Fixes
 
+- Fixed bot-flow triggers beyond the concurrency limit being dropped silently while a webhook still answered `triggered`; the webhook now counts only started executions and reports `dropped` separately, and the flow's card on the Bot Flows page shows how many triggers were dropped in the last 24 hours. *backend 2.70.0, frontend 3.88.0* [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - Fixed **Play** in the play dialog's history tab looking as if it did nothing: a song that is not downloaded yet takes several seconds to load, and the clicked button now shows a spinner until it starts. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - Fixed other music bots stuttering for a moment whenever one bot started a long song, and a song staying in memory after the queue had ended or for as long as it was paused. *backend 2.69.3* [#311](https://github.com/DomeNinchen/ts6forkmanager/pull/311)
 - Fixed temporary channels created by bot flows staying forever because the bot's own query connection sat in them; the bot now leaves once the user is moved in, and two support requests at the same moment both get their room. *backend 2.69.1* [#304](https://github.com/DomeNinchen/ts6forkmanager/pull/304)
@@ -112,6 +114,7 @@ Versions at the end of the month: **backend 2.69.6 · frontend 3.87.1 · sidecar
 
 **Bot flows & music bots**
 
+- External callers of a bot-flow webhook can now get **429** (with `Retry-After: 5`) when every flow on that path is already running its maximum number of executions; the answer is `{ "triggered": n, "dropped": m }` instead of `{ "triggered": n }`. Unknown paths and wrong secrets still get 404. [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - The music request history keeps only the newest 25 entries per server; older ones are deleted with the next request. [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - Flows that use `tokenadd` or `tokenlist` now stop at that step with an error in their log. [#291](https://github.com/DomeNinchen/ts6forkmanager/pull/291)
 - **Configure template** replaces hand-made node changes in that flow. [#304](https://github.com/DomeNinchen/ts6forkmanager/pull/304)

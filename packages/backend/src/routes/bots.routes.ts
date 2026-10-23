@@ -26,14 +26,25 @@ botRoutes.get('/', async (req: Request, res: Response, next) => {
       where: req.user!.role === 'admin' ? undefined : {
         serverConfig: { userAccess: { some: { userId: req.user!.id } } },
       },
-      include: { _count: { select: { executions: true } } },
+      include: { _count: { select: { executions: { where: { status: { not: 'dropped' } } } } } },
       orderBy: { id: 'asc' },
     });
+    // Triggers dropped at the concurrency limit, one row per flow, trigger type and minute (see BotEngine.recordDrop).
+    const dropRows = await prisma.botExecution.findMany({
+      where: { status: 'dropped', startedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, flowId: { in: bots.map((b: any) => b.id) } },
+      select: { flowId: true, triggerData: true },
+    });
+    const dropped = new Map<number, number>();
+    for (const row of dropRows) {
+      const count = Number(JSON.parse(row.triggerData || '{}').dropped) || 0;
+      dropped.set(row.flowId, (dropped.get(row.flowId) || 0) + count);
+    }
     res.json(bots.map((b: any) => ({
       id: b.id, name: b.name, description: b.description,
       serverConfigId: b.serverConfigId, virtualServerId: b.virtualServerId,
       enabled: b.enabled, createdAt: b.createdAt, updatedAt: b.updatedAt,
       executionCount: b._count.executions,
+      droppedLast24h: dropped.get(b.id) || 0,
     })));
   } catch (err) { next(err); }
 });

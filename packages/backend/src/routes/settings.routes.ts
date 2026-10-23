@@ -33,8 +33,9 @@ import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
 import { CONSOLE_AUDIT_RETENTION_BOUNDS } from '@ts6/common';
 import { getConsoleSettings, setConsoleSettings } from '../utils/console-settings.js';
 import {
-  getBotLogSettings, setBotLogSettings, isValidBotLogRetention, isValidBotLogMaxRows,
+  getBotLogSettings, setBotLogSettings, isValidBotLogRetention, isValidBotLogMaxRows, isValidBotFlowMaxConcurrent,
   BOT_LOG_RETENTION_MIN_DAYS, BOT_LOG_RETENTION_MAX_DAYS, BOT_LOG_MAX_ROWS_MIN, BOT_LOG_MAX_ROWS_MAX, BOT_LOG_DEFAULTS,
+  BOT_FLOW_MAX_CONCURRENT_MIN, BOT_FLOW_MAX_CONCURRENT_MAX,
   type BotLogSettings,
 } from '../utils/bot-log-settings.js';
 import { pruneBotLogs, botLogStats } from '../utils/bot-log-retention.js';
@@ -570,6 +571,8 @@ const botLogSettingsResponse = async (prisma: any, settings: BotLogSettings) => 
     retentionMax: BOT_LOG_RETENTION_MAX_DAYS,
     maxRowsMin: BOT_LOG_MAX_ROWS_MIN,
     maxRowsMax: BOT_LOG_MAX_ROWS_MAX,
+    maxConcurrentMin: BOT_FLOW_MAX_CONCURRENT_MIN,
+    maxConcurrentMax: BOT_FLOW_MAX_CONCURRENT_MAX,
   },
   ...(await botLogStats(prisma)),
 });
@@ -585,17 +588,21 @@ settingsRoutes.get('/bot-logs', requireAdmin, async (req: Request, res: Response
 // PUT /api/settings/bot-logs - applies at once: a shorter retention or lower cap prunes now
 settingsRoutes.put('/bot-logs', requireAdmin, async (req: Request, res: Response, next) => {
   try {
-    const { retentionDays, maxRows } = req.body ?? {};
+    const { retentionDays, maxRows, maxConcurrentPerFlow } = req.body ?? {};
     if (!isValidBotLogRetention(retentionDays)) {
       throw new AppError(400, `retentionDays must be a whole number between ${BOT_LOG_RETENTION_MIN_DAYS} and ${BOT_LOG_RETENTION_MAX_DAYS}`);
     }
     if (!isValidBotLogMaxRows(maxRows)) {
       throw new AppError(400, `maxRows must be a whole number between ${BOT_LOG_MAX_ROWS_MIN} and ${BOT_LOG_MAX_ROWS_MAX}`);
     }
+    if (!isValidBotFlowMaxConcurrent(maxConcurrentPerFlow)) {
+      throw new AppError(400, `maxConcurrentPerFlow must be a whole number between ${BOT_FLOW_MAX_CONCURRENT_MIN} and ${BOT_FLOW_MAX_CONCURRENT_MAX}`);
+    }
     const prisma = req.app.locals.prisma;
-    const saved = await setBotLogSettings(prisma, { retentionDays, maxRows });
+    const saved = await setBotLogSettings(prisma, { retentionDays, maxRows, maxConcurrentPerFlow });
+    req.app.locals.botEngine?.setMaxConcurrentPerFlow(saved.maxConcurrentPerFlow);
     await pruneBotLogs(prisma);
-    console.log(`[Settings] Bot logs kept ${saved.retentionDays} day(s), capped at ${saved.maxRows} rows per table`);
+    console.log(`[Settings] Bot logs kept ${saved.retentionDays} day(s), capped at ${saved.maxRows} rows per table; ${saved.maxConcurrentPerFlow} concurrent executions per flow`);
     res.json(await botLogSettingsResponse(prisma, saved));
   } catch (err) { next(err); }
 });
