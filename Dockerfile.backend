@@ -160,4 +160,15 @@ ENV SIDECAR_URL=http://ts6-sidecar:9800
 # exist, but its scope leaked to the whole left-hand chain including db push
 # itself) - and the backend booted anyway with a stale schema. The explicit
 # `(... || true)` grouping below scopes that tolerance to db seed only.
-CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; prisma db push --accept-data-loss && (prisma db seed || true) && exec node dist/index.js"]
+#
+# Before the sync, `prisma migrate diff --exit-code` asks whether it would change
+# the schema (0 = no). If it would (2), or the question itself fails (1), the
+# database is copied to data/backups/ first (dist/db-backup.js, keeps
+# DB_BACKUP_KEEP copies). Only on a schema change, and once per backend
+# version, so a container that keeps crashing or failing the sync after an
+# update cannot push the copy from before it out of the rotation. A failed
+# backup stops the container like a failed db push: the sync it would have
+# protected does not run without it. The diff's stderr is
+# dropped: on a first start it reports the missing database (P1003), and any
+# real error resurfaces from db push.
+CMD ["sh", "-c", "(python3 -m pip install --break-system-packages --no-cache-dir -U yt-dlp && echo \"[yt-dlp] $(yt-dlp --version)\") || echo '[yt-dlp] Update check failed, continuing with existing version'; { prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code 2>/dev/null || node dist/db-backup.js; } && prisma db push --accept-data-loss && (prisma db seed || true) && exec node dist/index.js"]
