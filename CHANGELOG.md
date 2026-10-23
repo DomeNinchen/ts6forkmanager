@@ -4,10 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.70.1 · frontend 3.88.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.70.2 · frontend 3.89.0 · sidecar 2.1.4**
 
 ### New Features
 
+- **Execution list in the flow editor** — An **Executions** button opens a side panel with the flow's last 50 runs (running, completed, failed with the error, or dropped at the concurrency limit) and, on a click, the run's log line by line. It refreshes every 5 seconds while open; admins and bot operators see it. *backend 2.70.2, frontend 3.89.0* [#319](https://github.com/DomeNinchen/ts6forkmanager/pull/319)
 - **Adjustable bot-flow concurrency limit** — How many executions of one flow may run at the same time (20 by default, 1 to 200) is set on the Bot Flows page, on the card now called **Executions: retention and limit**. *backend 2.70.0, frontend 3.88.0* [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - **Play from the Music Request History** — The page gets a bot selector (the server's connected music bots) and **Play** / **Queue** buttons on every entry, next to the YouTube link. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - **Restart notice** — While the manager restarts, for example during an update, open pages show a short notice and carry on by themselves once it is back: they reload if the update brought a new frontend, otherwise they only fetch fresh data. A host reverse proxy can show a self-reloading page instead of a bare 502 ([Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment)). *frontend 3.86.0* [#305](https://github.com/DomeNinchen/ts6forkmanager/pull/305)
@@ -54,6 +55,7 @@ Versions at the end of the month: **backend 2.70.1 · frontend 3.88.0 · sidecar
 
 ### Security
 
+- **Execution logs only through their own flow** — A flow's execution log can now only be read through the flow it belongs to, so access to one server's flows no longer gives access to the logs of another server's flows. *backend 2.70.2* [#319](https://github.com/DomeNinchen/ts6forkmanager/pull/319)
 - **Dependency update** — `ip-address` 10.7.4 (pulled in by `express-rate-limit`) closes one Dependabot alert; it was not reachable in this app. *backend 2.69.6* [#316](https://github.com/DomeNinchen/ts6forkmanager/pull/316)
 - **Secrets masked in the query debug log** — With the "query" debug flag on, passwords, API keys, privilege keys, file-transfer keys and other credentials in logged WebQuery and SSH commands and answers are written as `***`; the log and the query console share one list of secret fields, which now also covers `jwt`. *backend 2.69.5, frontend 3.87.1* [#315](https://github.com/DomeNinchen/ts6forkmanager/pull/315)
 - **Dependency updates** — `follow-redirects` 1.16.1 (pulled in by `axios`) and `vite` 8.3.4 close three Dependabot alerts; none was reachable in this app. *backend 2.68.1, frontend 3.83.2* [#303](https://github.com/DomeNinchen/ts6forkmanager/pull/303)

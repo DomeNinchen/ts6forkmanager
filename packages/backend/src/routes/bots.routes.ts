@@ -205,7 +205,8 @@ botRoutes.get('/:botId/executions/:execId/logs', requireRole('admin', 'bot-opera
     await assertServerAccess(req, prisma, flow.serverConfigId);
 
     const logs = await prisma.botExecutionLog.findMany({
-      where: { executionId: parseInt(String(req.params.execId)) },
+      // flowId too: the access check above is for this flow, so another flow's execution must not be readable through it.
+      where: { executionId: parseInt(String(req.params.execId)), execution: { flowId } },
       orderBy: { timestamp: 'asc' },
     });
     res.json(logs);
