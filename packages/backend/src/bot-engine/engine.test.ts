@@ -79,3 +79,22 @@ test('a partial answer when only one of two flows on a path is full', async () =
   assert.deepEqual(call(), { status: 200, body: { triggered: 1, dropped: 1 }, retryAfter: undefined });
   await engine.stop();
 });
+
+test('disabling and enabling a flow keeps counting the executions still running', async () => {
+  const { engine, call, finishAll } = setup(1);
+  engine.webhookEntries = engine.webhookEntries.filter((w: any) => w.flowId === 1);
+  const [flow, entry] = [engine.flows.get(1), engine.webhookEntries[0]];
+  assert.equal(call().status, 200);
+
+  // What a quick off/on does to the registrations, with the first execution still running.
+  await engine.disableFlow(1);
+  engine.flows.set(1, flow);
+  engine.webhookEntries.push(entry);
+  assert.equal(call().status, 429);
+
+  await finishAll();
+  assert.equal(call().status, 200);
+  await finishAll();
+  assert.equal(engine.executionCounts.size, 0);
+  await engine.stop();
+});
