@@ -13,6 +13,7 @@ import type {
 import { AnimationManager } from './animation-manager.js';
 import type { AnimationConfig } from './animation-manager.js';
 import { instanceAudience, sendToAudience } from '../utils/ws-audience.js';
+import { BOT_LOG_DEFAULTS, getBotLogSettings } from '../utils/bot-log-settings.js';
 import crypto from 'crypto';
 
 /**
@@ -244,7 +245,14 @@ interface WebhookEntry {
   secret?: string;
 }
 
-const MAX_CONCURRENT_PER_FLOW = 20;
+/** Dropped triggers of one flow and trigger type inside this window share one 'dropped' execution row. */
+const DROP_WINDOW_MS = 60_000;
+
+interface DropWindow {
+  count: number;
+  executionId: Promise<number | null>;
+  timer: NodeJS.Timeout;
+}
 
 export class BotEngine {
   private flows: Map<number, LoadedFlow> = new Map();
@@ -254,6 +262,8 @@ export class BotEngine {
   private cronJobs: CronEntry[] = [];
   private webhookEntries: WebhookEntry[] = [];
   private executionCounts: Map<number, number> = new Map();
+  private dropWindows: Map<string, DropWindow> = new Map();
+  private maxConcurrentPerFlow: number = BOT_LOG_DEFAULTS.maxConcurrentPerFlow;
   private running: boolean = false;
 
   constructor(
@@ -320,6 +330,7 @@ export class BotEngine {
     // Always register event listener (even if no flows yet — flows can be enabled later)
     this.eventBridge.on('tsEvent', this.onTsEvent.bind(this));
 
+    this.maxConcurrentPerFlow = (await getBotLogSettings(this.prisma)).maxConcurrentPerFlow;
     await this.loadFlows();
 
     if (this.flows.size === 0) {
@@ -358,6 +369,11 @@ export class BotEngine {
     this.eventBridge.removeAllListeners('tsEvent');
     this.flows.clear();
     this.executionCounts.clear();
+    await Promise.all([...this.dropWindows.keys()].map(key => this.closeDropWindow(key)));
+  }
+
+  setMaxConcurrentPerFlow(limit: number): void {
+    this.maxConcurrentPerFlow = limit;
   }
 
   async enableFlow(flowId: number): Promise<void> {
@@ -478,6 +494,7 @@ export class BotEngine {
     }
 
     let triggered = 0;
+    let dropped = 0;
     for (const wh of matching) {
       // H6: Mandatory webhook secrets — skip webhooks without secrets configured
       if (!wh.secret) continue;
@@ -499,17 +516,23 @@ export class BotEngine {
         webhook_query: JSON.stringify(req.query || {}),
       };
 
-      this.executeFlow(flow, wh.nodeId, 'webhook', webhookData);
-      triggered++;
+      if (this.executeFlow(flow, wh.nodeId, 'webhook', webhookData)) triggered++;
+      else dropped++;
     }
 
     // Same response regardless of reason (not found / wrong secret)
-    if (triggered === 0) {
+    if (triggered === 0 && dropped === 0) {
       res.status(404).json({ error: 'Not found' });
       return;
     }
 
-    res.json({ triggered });
+    // Only reached with a valid secret, so a 429 tells nothing to someone guessing paths.
+    if (triggered === 0) {
+      res.status(429).set('Retry-After', '5').json({ triggered, dropped });
+      return;
+    }
+
+    res.json({ triggered, dropped });
   }
 
   getFlow(flowId: number): LoadedFlow | undefined {
@@ -732,15 +755,14 @@ export class BotEngine {
   }
 
 
-  private executeFlow(flow: LoadedFlow, triggerNodeId: string, triggerType: string, eventData: Record<string, string>): void {
-    console.log(`[BotEngine] Executing flow ${flow.id} ('${flow.name}') triggered by ${triggerType}`);
-
-    // Rate limiting
+  /** Starts one execution; false when the flow already runs its limit and the trigger was dropped. */
+  private executeFlow(flow: LoadedFlow, triggerNodeId: string, triggerType: string, eventData: Record<string, string>): boolean {
     const current = this.executionCounts.get(flow.id) || 0;
-    if (current >= MAX_CONCURRENT_PER_FLOW) {
-      console.warn(`[BotEngine] Flow ${flow.id} rate limited (${current} concurrent executions)`);
-      return;
+    if (current >= this.maxConcurrentPerFlow) {
+      this.recordDrop(flow, triggerType, current);
+      return false;
     }
+    console.log(`[BotEngine] Executing flow ${flow.id} ('${flow.name}') triggered by ${triggerType}`);
     this.executionCounts.set(flow.id, current + 1);
 
     // Extract timezone from the trigger node (if cron trigger has one)
@@ -756,6 +778,54 @@ export class BotEngine {
         const count = this.executionCounts.get(flow.id) || 1;
         this.executionCounts.set(flow.id, count - 1);
       });
+    return true;
+  }
+
+  /**
+   * Leaves a trace of a dropped trigger in the flow's execution history. Under
+   * overload a row per dropped trigger would add to the very load that caused
+   * it, so all drops of one flow and trigger type within a minute share one
+   * 'dropped' row: written at the first drop, its count updated when the
+   * minute is over.
+   */
+  private recordDrop(flow: LoadedFlow, triggerType: string, running: number): void {
+    console.warn(`[BotEngine] Flow ${flow.id} ('${flow.name}') dropped a ${triggerType} trigger: ${running} of ${this.maxConcurrentPerFlow} concurrent executions already running`);
+
+    const key = `${flow.id}:${triggerType}`;
+    const open = this.dropWindows.get(key);
+    if (open) {
+      open.count++;
+      return;
+    }
+    const executionId = this.prisma.botExecution.create({
+      data: {
+        flowId: flow.id,
+        triggeredBy: triggerType,
+        triggerData: JSON.stringify({ dropped: 1 }),
+        status: 'dropped',
+        endedAt: new Date(),
+        error: `Concurrency limit reached (${this.maxConcurrentPerFlow} executions running)`,
+      },
+    }).then(row => row.id, err => {
+      console.error(`[BotEngine] Could not record dropped trigger of flow ${flow.id}: ${err.message}`);
+      return null;
+    });
+    const timer = setTimeout(() => { void this.closeDropWindow(key); }, DROP_WINDOW_MS);
+    timer.unref();
+    this.dropWindows.set(key, { count: 1, executionId, timer });
+  }
+
+  private async closeDropWindow(key: string): Promise<void> {
+    const window = this.dropWindows.get(key);
+    if (!window) return;
+    this.dropWindows.delete(key);
+    clearTimeout(window.timer);
+    const id = await window.executionId;
+    if (id === null || window.count === 1) return;
+    await this.prisma.botExecution.update({
+      where: { id },
+      data: { triggerData: JSON.stringify({ dropped: window.count }), endedAt: new Date() },
+    }).catch(err => console.error(`[BotEngine] Could not update dropped count of execution ${id}: ${err.message}`));
   }
 
   private setupCronJobs(): void {

@@ -238,11 +238,16 @@ export interface BotLogSettings {
   retentionDays: number;
   /** Largest number of rows kept in the execution and the log table each. */
   maxRows: number;
+  /** Executions of one flow that may run at once; further triggers are dropped. */
+  maxConcurrentPerFlow: number;
 }
 
 export interface BotLogSettingsResponse extends BotLogSettings {
   defaults: BotLogSettings;
-  bounds: { retentionMin: number; retentionMax: number; maxRowsMin: number; maxRowsMax: number };
+  bounds: {
+    retentionMin: number; retentionMax: number; maxRowsMin: number; maxRowsMax: number;
+    maxConcurrentMin: number; maxConcurrentMax: number;
+  };
   /** Current row counts, for the panel. */
   executionCount: number;
   logCount: number;

@@ -37,13 +37,18 @@ export function BotLogSettingsCard() {
 
   if (isLoading || !data) return <LoadingSpinner />;
 
-  const active: BotLogSettings = draft ?? { retentionDays: data.retentionDays, maxRows: data.maxRows };
-  const { retentionMin, retentionMax, maxRowsMin, maxRowsMax } = data.bounds;
+  const active: BotLogSettings = draft ?? {
+    retentionDays: data.retentionDays, maxRows: data.maxRows, maxConcurrentPerFlow: data.maxConcurrentPerFlow,
+  };
+  const { retentionMin, retentionMax, maxRowsMin, maxRowsMax, maxConcurrentMin, maxConcurrentMax } = data.bounds;
   const valid =
     Number.isInteger(active.retentionDays) && active.retentionDays >= retentionMin && active.retentionDays <= retentionMax &&
-    Number.isInteger(active.maxRows) && active.maxRows >= maxRowsMin && active.maxRows <= maxRowsMax;
+    Number.isInteger(active.maxRows) && active.maxRows >= maxRowsMin && active.maxRows <= maxRowsMax &&
+    Number.isInteger(active.maxConcurrentPerFlow) &&
+    active.maxConcurrentPerFlow >= maxConcurrentMin && active.maxConcurrentPerFlow <= maxConcurrentMax;
   const matchesDefaults =
-    active.retentionDays === data.defaults.retentionDays && active.maxRows === data.defaults.maxRows;
+    active.retentionDays === data.defaults.retentionDays && active.maxRows === data.defaults.maxRows &&
+    active.maxConcurrentPerFlow === data.defaults.maxConcurrentPerFlow;
 
   return (
     <Card className="card-hero">
@@ -55,7 +60,7 @@ export function BotLogSettingsCard() {
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground">{t('pages.botList.retention.description')}</p>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <Label className="text-xs" htmlFor="bot-log-retention">{t('pages.botList.retention.retentionLabel')}</Label>
             <Input
@@ -83,6 +88,21 @@ export function BotLogSettingsCard() {
             />
             <p className="text-[11px] text-muted-foreground">
               {t('pages.botList.retention.maxRowsHint', { min: maxRowsMin, max: maxRowsMax })}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs" htmlFor="bot-flow-max-concurrent">{t('pages.botList.retention.maxConcurrentLabel')}</Label>
+            <Input
+              id="bot-flow-max-concurrent"
+              type="number"
+              min={maxConcurrentMin}
+              max={maxConcurrentMax}
+              value={active.maxConcurrentPerFlow}
+              onChange={(e) => setDraft({ ...active, maxConcurrentPerFlow: Number(e.target.value) })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {t('pages.botList.retention.maxConcurrentHint', { min: maxConcurrentMin, max: maxConcurrentMax })}
             </p>
           </div>
         </div>
