@@ -37,6 +37,8 @@ services:
       - TRUST_PROXY=${TRUST_PROXY:-1}
       # Emergency switch: true = no address is turned away, whatever the ban list says.
       - IP_BANS_DISABLED=${IP_BANS_DISABLED:-false}
+      # Database backups in data/backups/ to keep (one is taken before each schema change at start).
+      - DB_BACKUP_KEEP=${DB_BACKUP_KEEP:-5}
       - MUSIC_DIR=/data/music
       - SIDECAR_URL=http://ts6-sidecar:9800
     volumes:
