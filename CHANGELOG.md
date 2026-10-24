@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.75.0 · frontend 3.92.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.75.1 · frontend 3.92.0 · sidecar 2.1.4**
 
 ### New Features
 
@@ -80,6 +80,7 @@ Versions at the end of the month: **backend 2.75.0 · frontend 3.92.0 · sidecar
 
 ### Bug Fixes
 
+- Fixed `pnpm typecheck` letting unknown or outdated database fields in the backend's queries through (TypeScript 6 and later stopped reporting them), so they only failed at runtime; the backend is compiled with TypeScript 5.9 again, and `pnpm typecheck` and the backend's `pnpm dev` regenerate the Prisma client first. *backend 2.75.1* [#326](https://github.com/DomeNinchen/ts6forkmanager/pull/326)
 - Fixed a temporary channel created by a flow staying forever when the backend was restarted or crashed while the flow still sat in it; the next start moves the flow's connection out, so TeamSpeak deletes the empty channel. *backend 2.75.0* [#325](https://github.com/DomeNinchen/ts6forkmanager/pull/325)
 - Fixed a flow with several Animated Channel nodes animating only the last one's channel; every node runs now. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - Fixed the Animated Channel speeds 0.5 s and 0.25 s, which ran every 3 seconds. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
