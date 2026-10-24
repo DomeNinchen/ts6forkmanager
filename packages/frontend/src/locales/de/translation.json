@@ -2350,7 +2350,8 @@
           "running": "Läuft",
           "completed": "Fertig",
           "failed": "Fehlgeschlagen",
-          "dropped": "Verworfen"
+          "dropped": "Verworfen",
+          "interrupted": "Unterbrochen"
         }
       },
       "nodeLabels": {

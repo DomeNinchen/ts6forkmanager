@@ -8,6 +8,7 @@ import { BandwidthSampler } from './ts-client/bandwidth-sampler.js';
 import { UserHistorySampler } from './ts-client/user-history-sampler.js';
 import { ServerLifecycle } from './ts-client/server-lifecycle.js';
 import { BotEngine } from './bot-engine/engine.js';
+import { markExecutionsInterrupted } from './bot-engine/flow-runner.js';
 import { EventSessionManager } from './console/event-sessions.js';
 import { VoiceBotManager } from './voice/voice-bot-manager.js';
 import { MusicCommandHandler } from './voice/music-command-handler.js';
@@ -161,6 +162,8 @@ async function main() {
   app.locals.consoleEvents = consoleEvents;
 
   // Initialize Bot Engine
+  // Nothing runs yet, so an execution still 'running' was cut off with the previous process (a crash, a kill).
+  await markExecutionsInterrupted(prisma, 'Interrupted by a backend restart');
   const botEngine = new BotEngine(prisma, connectionPool, wss, app);
   app.locals.botEngine = botEngine;
   await botEngine.start();
@@ -218,6 +221,8 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     console.log('\n[TS6 WebUI] Shutting down...');
+    // First: flow executions finishing during its grace period still need the music bots and connections they act with.
+    await botEngine.destroy();
     // Ends the streams and says `quit` to TeamSpeak for each listener, instead of dropping the connections.
     await consoleEvents.destroy();
     // Stops listening; sessions stay open in the database, the next start finds them again.
@@ -225,7 +230,6 @@ async function main() {
     geoIp.destroy();
     await ipBans.destroy();
     await voiceBotManager.stopAll();
-    await botEngine.destroy();
     (app.locals.bandwidthSampler as BandwidthSampler).destroy();
     const history = app.locals.userHistorySampler as UserHistorySampler;
     history.destroy();

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle2, Loader2, X, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleSlash, Loader2, X, XCircle } from 'lucide-react';
 import { botsApi } from '@/api/bots.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ interface Execution {
   id: number;
   triggeredBy: string;
   triggerData: string | null;
-  status: 'running' | 'completed' | 'failed' | 'dropped' | string;
+  status: 'running' | 'completed' | 'failed' | 'dropped' | 'interrupted' | string;
   startedAt: string;
   endedAt: string | null;
   error: string | null;
@@ -34,6 +34,7 @@ const STATUS_ICON: Record<string, { icon: typeof CheckCircle2; className: string
   completed: { icon: CheckCircle2, className: 'text-emerald-400' },
   failed: { icon: XCircle, className: 'text-destructive' },
   dropped: { icon: AlertTriangle, className: 'text-amber-400' },
+  interrupted: { icon: CircleSlash, className: 'text-orange-400' },
 };
 
 const LEVEL_VARIANT: Record<string, 'secondary' | 'warning' | 'destructive'> = {
@@ -115,10 +116,16 @@ export function ExecutionsPanel({ botId, onClose }: { botId: number; onClose: ()
                   </span>
                   <span className="block text-[10px] text-muted-foreground">
                     {t(`pages.botEditor.executions.status.${e.status}`, { defaultValue: e.status })}
-                    {took && e.status !== 'dropped' && ` · ${took}`}
+                    {/* An interrupted row's endedAt is when the interruption was noticed (after a crash: the next start), not when it stopped. */}
+                    {took && e.status !== 'dropped' && e.status !== 'interrupted' && ` · ${took}`}
                   </span>
-                  {e.error && e.status === 'failed' && (
-                    <span className="block truncate text-[10px] text-destructive" title={e.error}>{e.error}</span>
+                  {e.error && (e.status === 'failed' || e.status === 'interrupted') && (
+                    <span
+                      className={cn('block truncate text-[10px]', e.status === 'failed' ? 'text-destructive' : 'text-orange-400')}
+                      title={e.error}
+                    >
+                      {e.error}
+                    </span>
                   )}
                 </span>
               </button>

@@ -2350,7 +2350,8 @@
           "running": "Running",
           "completed": "Completed",
           "failed": "Failed",
-          "dropped": "Dropped"
+          "dropped": "Dropped",
+          "interrupted": "Interrupted"
         }
       },
       "nodeLabels": {
