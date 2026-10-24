@@ -237,6 +237,8 @@ export interface AnimatedChannelActionData {
   style: 'scroll' | 'typewriter' | 'bounce' | 'blink' | 'wave' | 'alternateCase';
   intervalSeconds: string;
   prefix: string;
+  /** For {{time.*}} in the text; unset is the backend's own clock. */
+  timezone?: string;
 }
 
 export interface CountOnlineInGroupsActionData {

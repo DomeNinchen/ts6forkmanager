@@ -4,10 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.73.0 · frontend 3.90.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.74.0 · frontend 3.91.0 · sidecar 2.1.4**
 
 ### New Features
 
+- **Time zone for Animated Channel** — The Animated Channel node and its template get a time zone setting, like the cron trigger, so `{{time.*}}` in the animated text shows that zone's time instead of the backend's clock (UTC in Docker). *backend 2.74.0, frontend 3.91.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - **Execution list in the flow editor** — An **Executions** button opens a side panel with the flow's last 50 runs (running, completed, failed with the error, or dropped at the concurrency limit) and, on a click, the run's log line by line. It refreshes every 5 seconds while open; admins and bot operators see it. *backend 2.70.2, frontend 3.89.0* [#319](https://github.com/DomeNinchen/ts6forkmanager/pull/319)
 - **Adjustable bot-flow concurrency limit** — How many executions of one flow may run at the same time (20 by default, 1 to 200) is set on the Bot Flows page, on the card now called **Executions: retention and limit**. *backend 2.70.0, frontend 3.88.0* [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - **Play from the Music Request History** — The page gets a bot selector (the server's connected music bots) and **Play** / **Queue** buttons on every entry, next to the YouTube link. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
@@ -40,6 +41,7 @@ Versions at the end of the month: **backend 2.73.0 · frontend 3.90.0 · sidecar
 
 ### Improvements
 
+- **Animated channels run under the Bot Identity** — Like every other flow action, an Animated Channel renames its channel through the connection's Bot Identity when one is set, so the renames show up under its name in TeamSpeak. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - **Interrupted flow executions** — An execution cut off by a backend restart, crash or shutdown no longer stays "running" forever: the flow editor's execution list shows it as **Interrupted**, with the node it had started last. On a regular stop or update, executions busy with a node get up to 5 seconds to finish; one waiting in a Delay does not hold the stop up, is marked interrupted and does not continue after the restart. *backend 2.73.0, frontend 3.90.0* [#323](https://github.com/DomeNinchen/ts6forkmanager/pull/323)
 - **Versioned database migrations** — The backend keeps its database schema in versioned Prisma migrations and applies the pending ones on start, instead of forcing the schema into shape on every start. A new install is built from the migrations; a database from before this change is adopted into the migration history on the first start after updating (its schema is checked first, and a mismatch stops the start rather than altering data). Destructive schema changes now ship as reviewed migration files, and the database backup before a schema change still runs. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) *backend 2.72.0* [#321](https://github.com/DomeNinchen/ts6forkmanager/pull/321)
 - **Database backup before schema changes** — When a container start would change the database schema (an update that adds, alters or removes columns), the backend first copies the database to `data/backups/` on the `backend-data` volume and only then syncs the schema. The newest 5 copies are kept (`DB_BACKUP_KEEP`); if the copy cannot be written, the container stops before the sync. Starts without a schema change take no copy. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) *backend 2.71.0* [#320](https://github.com/DomeNinchen/ts6forkmanager/pull/320)
@@ -78,6 +80,9 @@ Versions at the end of the month: **backend 2.73.0 · frontend 3.90.0 · sidecar
 
 ### Bug Fixes
 
+- Fixed a flow with several Animated Channel nodes animating only the last one's channel; every node runs now. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
+- Fixed the Animated Channel speeds 0.5 s and 0.25 s, which ran every 3 seconds. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
+- Fixed an Animated Channel prefix that was cleared on purpose coming back as `[cspacer]`. Without a prefix, the blank frames of the blink and typewriter styles are skipped, since TeamSpeak refuses a name of only spaces. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - Fixed a bot flow exceeding its concurrency limit after being switched off and on (or saved) while executions were still running; those executions now keep counting until they end. *backend 2.70.1* [#318](https://github.com/DomeNinchen/ts6forkmanager/pull/318)
 - Fixed bot-flow triggers beyond the concurrency limit being dropped silently while a webhook still answered `triggered`; the webhook now counts only started executions and reports `dropped` separately, and the flow's card on the Bot Flows page shows how many triggers were dropped in the last 24 hours. *backend 2.70.0, frontend 3.88.0* [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - Fixed **Play** in the play dialog's history tab looking as if it did nothing: a song that is not downloaded yet takes several seconds to load, and the clicked button now shows a spinner until it starts. *frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
@@ -125,6 +130,7 @@ Versions at the end of the month: **backend 2.73.0 · frontend 3.90.0 · sidecar
 
 **Bot flows & music bots**
 
+- On a connection with a Bot Identity, Animated Channel nodes now rename through that identity: it needs the permission to rename those channels, as it already does for a Channel Edit node. [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - Stopping or updating the backend can take up to 5 seconds longer while flow executions finish their current step. Executions that earlier restarts left on "running" show as **Interrupted** after the first start. [#323](https://github.com/DomeNinchen/ts6forkmanager/pull/323)
 - External callers of a bot-flow webhook can now get **429** (with `Retry-After: 5`) when every flow on that path is already running its maximum number of executions; the answer is `{ "triggered": n, "dropped": m }` instead of `{ "triggered": n }`. Unknown paths and wrong secrets still get 404. [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - The music request history keeps only the newest 25 entries per server; older ones are deleted with the next request. [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)

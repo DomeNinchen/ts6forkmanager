@@ -170,7 +170,8 @@ function resolveTimeVars(text: string, timezone?: string): string {
 }
 
 export class AnimationManager {
-  private animations: Map<number, ActiveAnimation> = new Map();
+  /** "flowId:nodeId" -> its timer: a flow can animate several channels, one per Animated Channel node. */
+  private animations: Map<string, ActiveAnimation> = new Map();
 
   /**
    * `getClient` is asked again on every frame instead of being handed a client
@@ -180,12 +181,13 @@ export class AnimationManager {
    */
   startAnimation(
     flowId: number,
+    nodeId: string,
     sid: number,
     config: AnimationConfig,
     getClient: () => WebQueryClient,
   ): void {
-    // Stop existing animation for this flow
-    this.stopAnimation(flowId);
+    const key = `${flowId}:${nodeId}`;
+    this.stopKey(key);
 
     const intervalMs = Math.max(250, config.intervalSeconds * 1000);
     let frameIndex = 0;
@@ -199,6 +201,8 @@ export class AnimationManager {
 
         const channelName = frames[frameIndex % frames.length];
         frameIndex++;
+        // TeamSpeak refuses a name of only spaces - the blank frames of blink and typewriter when there is no prefix.
+        if (!channelName.trim()) return;
 
         await getClient().executePost(sid, 'channeledit', {
           cid: config.channelId,
@@ -216,22 +220,29 @@ export class AnimationManager {
     tick();
 
     const timer = setInterval(tick, intervalMs);
-    this.animations.set(flowId, { timer, frameIndex });
+    this.animations.set(key, { timer, frameIndex });
 
-    console.log(`[AnimationManager] Started animation for flow ${flowId}: style=${config.style}, interval=${config.intervalSeconds}s, channel=${config.channelId}`);
+    console.log(`[AnimationManager] Started animation for flow ${flowId} (node ${nodeId}): style=${config.style}, interval=${config.intervalSeconds}s, channel=${config.channelId}`);
   }
 
+  /** Stops every animation of the flow. */
   stopAnimation(flowId: number): void {
-    const anim = this.animations.get(flowId);
+    for (const key of [...this.animations.keys()]) {
+      if (key.startsWith(`${flowId}:`)) this.stopKey(key);
+    }
+  }
+
+  private stopKey(key: string): void {
+    const anim = this.animations.get(key);
     if (anim) {
       clearInterval(anim.timer);
-      this.animations.delete(flowId);
-      console.log(`[AnimationManager] Stopped animation for flow ${flowId}`);
+      this.animations.delete(key);
+      console.log(`[AnimationManager] Stopped animation ${key}`);
     }
   }
 
   stopAll(): void {
-    for (const [flowId, anim] of this.animations) {
+    for (const anim of this.animations.values()) {
       clearInterval(anim.timer);
     }
     this.animations.clear();
