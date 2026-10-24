@@ -1276,7 +1276,8 @@
           "running": "En cours",
           "completed": "Terminée",
           "failed": "Échec",
-          "dropped": "Rejetée"
+          "dropped": "Rejetée",
+          "interrupted": "Interrompue"
         }
       },
       "nodeLabels": {

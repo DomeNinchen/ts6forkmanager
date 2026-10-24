@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.72.0 · frontend 3.89.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.73.0 · frontend 3.90.0 · sidecar 2.1.4**
 
 ### New Features
 
@@ -40,6 +40,7 @@ Versions at the end of the month: **backend 2.72.0 · frontend 3.89.0 · sidecar
 
 ### Improvements
 
+- **Interrupted flow executions** — An execution cut off by a backend restart, crash or shutdown no longer stays "running" forever: the flow editor's execution list shows it as **Interrupted**, with the node it had started last. On a regular stop or update, executions busy with a node get up to 5 seconds to finish; one waiting in a Delay does not hold the stop up, is marked interrupted and does not continue after the restart. *backend 2.73.0, frontend 3.90.0*
 - **Versioned database migrations** — The backend keeps its database schema in versioned Prisma migrations and applies the pending ones on start, instead of forcing the schema into shape on every start. A new install is built from the migrations; a database from before this change is adopted into the migration history on the first start after updating (its schema is checked first, and a mismatch stops the start rather than altering data). Destructive schema changes now ship as reviewed migration files, and the database backup before a schema change still runs. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) *backend 2.72.0* [#321](https://github.com/DomeNinchen/ts6forkmanager/pull/321)
 - **Database backup before schema changes** — When a container start would change the database schema (an update that adds, alters or removes columns), the backend first copies the database to `data/backups/` on the `backend-data` volume and only then syncs the schema. The newest 5 copies are kept (`DB_BACKUP_KEEP`); if the copy cannot be written, the container stops before the sync. Starts without a schema change take no copy. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) *backend 2.71.0* [#320](https://github.com/DomeNinchen/ts6forkmanager/pull/320)
 - **Music request history keeps the last 25 songs** — Per server, for `!play`, `!queue` and songs started from the web interface; older entries are deleted. The play dialog's history tab and the Music Request History page show the same 25. *backend 2.69.4, frontend 3.87.0* [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
@@ -124,6 +125,7 @@ Versions at the end of the month: **backend 2.72.0 · frontend 3.89.0 · sidecar
 
 **Bot flows & music bots**
 
+- Stopping or updating the backend can take up to 5 seconds longer while flow executions finish their current step. Executions that earlier restarts left on "running" show as **Interrupted** after the first start.
 - External callers of a bot-flow webhook can now get **429** (with `Retry-After: 5`) when every flow on that path is already running its maximum number of executions; the answer is `{ "triggered": n, "dropped": m }` instead of `{ "triggered": n }`. Unknown paths and wrong secrets still get 404. [#317](https://github.com/DomeNinchen/ts6forkmanager/pull/317)
 - The music request history keeps only the newest 25 entries per server; older ones are deleted with the next request. [#314](https://github.com/DomeNinchen/ts6forkmanager/pull/314)
 - Flows that use `tokenadd` or `tokenlist` now stop at that step with an error in their log. [#291](https://github.com/DomeNinchen/ts6forkmanager/pull/291)

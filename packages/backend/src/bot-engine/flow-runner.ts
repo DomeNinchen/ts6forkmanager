@@ -44,10 +44,34 @@ interface FlowInfo {
   flowData: FlowDefinition;
 }
 
+/**
+ * Marks every execution still 'running' as 'interrupted', naming the node it started last
+ * (its newest log row with a node - every node logs when it starts). Only for moments when
+ * no execution can go on: at startup before the engine runs, and at shutdown.
+ */
+export async function markExecutionsInterrupted(prisma: PrismaClient, reason: string): Promise<number> {
+  const rows = await prisma.botExecution.findMany({
+    where: { status: 'running' },
+    select: { id: true, logs: { where: { nodeId: { not: null } }, orderBy: { id: 'desc' }, take: 1, select: { nodeId: true, nodeName: true } } },
+  });
+  const endedAt = new Date();
+  for (const { id, logs: [last] } of rows) {
+    const error = last ? `${reason} (last node started: '${last.nodeName || last.nodeId}')` : reason;
+    // updateMany with the status in the filter: one that finished meanwhile keeps its own status.
+    await prisma.botExecution.updateMany({ where: { id, status: 'running' }, data: { status: 'interrupted', endedAt, error } });
+  }
+  if (rows.length) console.log(`[BotEngine] ${rows.length} execution(s) marked interrupted: ${reason}`);
+  return rows.length;
+}
+
 export class FlowRunner {
   private voiceBotManager: VoiceBotManager | null = null;
   /** "configId:sid" -> tail of the queue of executions waiting to create a channel there. */
   private channelLocks = new Map<string, Promise<void>>();
+  /** Executions busy with a node right now - running and not waiting in a Delay. Shutdown waits for these. */
+  private working = 0;
+  /** Set at shutdown: no execution starts another node. */
+  private stopping = false;
 
   constructor(
     private prisma: PrismaClient,
@@ -60,6 +84,33 @@ export class FlowRunner {
   }
 
   async execute(
+    flow: FlowInfo,
+    triggerNodeId: string,
+    triggerType: string,
+    eventData: Record<string, string>,
+    timezone?: string,
+  ): Promise<void> {
+    this.working++;
+    try {
+      await this.run(flow, triggerNodeId, triggerType, eventData, timezone);
+    } finally {
+      this.working--;
+    }
+  }
+
+  /**
+   * At shutdown, once no new trigger can arrive: gives the executions busy with a node up to
+   * graceMs to finish (one waiting in a Delay doesn't hold this up), then lets no execution
+   * start another node and marks the ones still running interrupted.
+   */
+  async shutdown(graceMs: number): Promise<void> {
+    const until = Date.now() + graceMs;
+    while (this.working > 0 && Date.now() < until) await new Promise((r) => setTimeout(r, 50));
+    this.stopping = true;
+    await markExecutionsInterrupted(this.prisma, 'Interrupted by a backend shutdown');
+  }
+
+  private async run(
     flow: FlowInfo,
     triggerNodeId: string,
     triggerType: string,
@@ -115,6 +166,7 @@ export class FlowRunner {
 
       let nodeVisits = 0;
       const visitNode = async (node: FlowNode): Promise<void> => {
+        if (this.stopping) throw new Error('The backend is shutting down');
         nodeVisits++;
         if (nodeVisits > MAX_NODE_VISITS) {
           throw new Error(`Max node visits (${MAX_NODE_VISITS}) exceeded — possible infinite loop`);
@@ -139,6 +191,8 @@ export class FlowRunner {
         duration: Date.now() - startTime,
       }, flow.serverConfigId);
     } catch (err: any) {
+      // Stopped by the shutdown, or failing while it closes things down: shutdown() marks the row interrupted.
+      if (this.stopping) return;
       await this.log(ctx, null, 'error', `Flow execution failed: ${err.message}`);
 
       await this.prisma.botExecution.update({
@@ -228,7 +282,9 @@ export class FlowRunner {
         const delayData = node.data as DelayNodeData;
         const delayMs = Math.min(delayData.delayMs, MAX_DELAY_MS);
         await this.log(ctx, node, 'info', `Delaying ${delayMs}ms`);
+        this.working--;
         await new Promise(resolve => setTimeout(resolve, delayMs));
+        this.working++;
         const edges = this.getOutgoingEdges(node.id, flowDef);
         for (const edge of edges) {
           const target = this.findNode(edge.target, flowDef);

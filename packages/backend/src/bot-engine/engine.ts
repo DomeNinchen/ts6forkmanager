@@ -248,6 +248,9 @@ interface WebhookEntry {
 /** Dropped triggers of one flow and trigger type inside this window share one 'dropped' execution row. */
 const DROP_WINDOW_MS = 60_000;
 
+/** How long a shutdown waits for executions busy with a node; well inside Docker's 10 s before it kills the process. */
+const SHUTDOWN_GRACE_MS = 5_000;
+
 interface DropWindow {
   count: number;
   executionId: Promise<number | null>;
@@ -541,6 +544,7 @@ export class BotEngine {
 
   async destroy(): Promise<void> {
     await this.stop();
+    await this.flowRunner.shutdown(SHUTDOWN_GRACE_MS);
     await this.eventBridge.destroy();
     this.broadcast('bot:engine:stopped', {});
   }
