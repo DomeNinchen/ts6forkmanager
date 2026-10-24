@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle2, CircleSlash, Loader2, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Ban, CheckCircle2, CircleSlash, Hourglass, Loader2, X, XCircle } from 'lucide-react';
 import { botsApi } from '@/api/bots.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,12 @@ interface Execution {
   id: number;
   triggeredBy: string;
   triggerData: string | null;
-  status: 'running' | 'completed' | 'failed' | 'dropped' | 'interrupted' | string;
+  status: 'running' | 'waiting' | 'completed' | 'failed' | 'dropped' | 'interrupted' | 'cancelled' | string;
   startedAt: string;
   endedAt: string | null;
   error: string | null;
+  /** When the Delay a 'waiting' execution sits in ends. */
+  resumeAt: string | null;
 }
 
 interface ExecutionLog {
@@ -31,10 +33,12 @@ const POLL_MS = 5000;
 
 const STATUS_ICON: Record<string, { icon: typeof CheckCircle2; className: string }> = {
   running: { icon: Loader2, className: 'text-primary animate-spin' },
+  waiting: { icon: Hourglass, className: 'text-sky-400' },
   completed: { icon: CheckCircle2, className: 'text-emerald-400' },
   failed: { icon: XCircle, className: 'text-destructive' },
   dropped: { icon: AlertTriangle, className: 'text-amber-400' },
   interrupted: { icon: CircleSlash, className: 'text-orange-400' },
+  cancelled: { icon: Ban, className: 'text-muted-foreground' },
 };
 
 const LEVEL_VARIANT: Record<string, 'secondary' | 'warning' | 'destructive'> = {
@@ -73,7 +77,7 @@ export function ExecutionsPanel({ botId, onClose }: { botId: number; onClose: ()
     queryKey: ['bot-execution-logs', botId, selectedId],
     queryFn: () => botsApi.executionLogs(botId, selectedId!),
     enabled: !!selected && selected.status !== 'dropped',
-    refetchInterval: selected?.status === 'running' ? POLL_MS : false,
+    refetchInterval: selected?.status === 'running' || selected?.status === 'waiting' ? POLL_MS : false,
   });
 
   return (
@@ -116,12 +120,13 @@ export function ExecutionsPanel({ botId, onClose }: { botId: number; onClose: ()
                   </span>
                   <span className="block text-[10px] text-muted-foreground">
                     {t(`pages.botEditor.executions.status.${e.status}`, { defaultValue: e.status })}
-                    {/* An interrupted row's endedAt is when the interruption was noticed (after a crash: the next start), not when it stopped. */}
-                    {took && e.status !== 'dropped' && e.status !== 'interrupted' && ` · ${took}`}
+                    {e.status === 'waiting' && e.resumeAt && ` · ${t('pages.botEditor.executions.waitingUntil', { time: new Date(e.resumeAt).toLocaleTimeString() })}`}
+                    {/* Only for these: an interrupted or cancelled row's endedAt can be the next start after a crash, not when it stopped. */}
+                    {took && (e.status === 'completed' || e.status === 'failed') && ` · ${took}`}
                   </span>
-                  {e.error && (e.status === 'failed' || e.status === 'interrupted') && (
+                  {e.error && (e.status === 'failed' || e.status === 'interrupted' || e.status === 'cancelled') && (
                     <span
-                      className={cn('block truncate text-[10px]', e.status === 'failed' ? 'text-destructive' : 'text-orange-400')}
+                      className={cn('block truncate text-[10px]', e.status === 'failed' ? 'text-destructive' : e.status === 'interrupted' ? 'text-orange-400' : 'text-muted-foreground')}
                       title={e.error}
                     >
                       {e.error}
