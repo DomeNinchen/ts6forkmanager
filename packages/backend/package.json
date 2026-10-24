@@ -1,6 +1,6 @@
 {
   "name": "@ts6/backend",
-  "version": "2.75.1",
+  "version": "2.75.2",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -27,7 +27,7 @@
     "jsonwebtoken": "^9.0.3",
     "libsodium-wrappers-sumo": "^0.8.4",
     "maxmind": "5.0.7",
-    "multer": "^2.4.0",
+    "multer": "^2.5.0",
     "nanoid": "^6.0.1",
     "node-cron": "^4.6.0",
     "openid-client": "6.8.8",
