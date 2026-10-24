@@ -74,7 +74,8 @@ RUN if ls node_modules/.pnpm | grep -q -E '^(vite|rolldown|tailwindcss)@'; then 
       echo 'frontend build tooling is still in node_modules' >&2; exit 1; fi
 # Two more things pnpm installs although nothing here ever runs them:
 #   - typescript, only because prisma (and valibot) list it as an optional peer
-#     dependency. TypeScript 7 is a native Go compiler (`tsc` in
+#     dependency (the backend's TypeScript 5.9). Should that become TypeScript
+#     7 again, it is a native Go compiler (`tsc` in
 #     @typescript/typescript-<platform>), built with an older Go standard
 #     library than the one the Go advisories are already fixed in, and the
 #     scanner counted every one of those advisories against this image. The
