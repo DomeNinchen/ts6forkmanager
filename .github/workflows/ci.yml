@@ -1,0 +1,28 @@
+name: CI
+
+# Typecheck and tests on every PR and on main. The test suite includes the
+# schema-migrations-synced check, so a schema.prisma change without a matching
+# migration fails CI (packages/backend/src/schema-migrations-synced.test.ts).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          # node:sqlite (used by the backend and its tests) is stable on Node 24.
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ts6/common run build
+      - run: pnpm --filter @ts6/backend exec prisma generate
+      - run: pnpm typecheck
+      - run: pnpm test
