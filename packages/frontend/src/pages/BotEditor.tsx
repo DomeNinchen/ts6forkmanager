@@ -98,6 +98,9 @@ function getSmartActionNodes(t: TFunction): NodeTypeDef[] {
   ];
 }
 
+/** The time zones the Cron trigger and Animated Channel nodes offer for {{time.*}}. */
+const TIMEZONES = ['Europe/Berlin', 'Europe/London', 'Europe/Paris', 'Europe/Moscow', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'Asia/Tokyo', 'UTC'];
+
 function getLogicNodes(t: TFunction): NodeTypeDef[] {
   const l = (type: string) => t(`pages.botEditor.nodeLabels.${type}`);
   return [
@@ -1450,15 +1453,7 @@ export default function BotEditor() {
                         >
                           <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Europe/Berlin">Europe/Berlin</SelectItem>
-                            <SelectItem value="Europe/London">Europe/London</SelectItem>
-                            <SelectItem value="Europe/Paris">Europe/Paris</SelectItem>
-                            <SelectItem value="Europe/Moscow">Europe/Moscow</SelectItem>
-                            <SelectItem value="America/New_York">America/New_York</SelectItem>
-                            <SelectItem value="America/Chicago">America/Chicago</SelectItem>
-                            <SelectItem value="America/Los_Angeles">America/Los_Angeles</SelectItem>
-                            <SelectItem value="Asia/Tokyo">Asia/Tokyo</SelectItem>
-                            <SelectItem value="UTC">UTC</SelectItem>
+                            {TIMEZONES.map((tz) => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1991,6 +1986,15 @@ export default function BotEditor() {
                         <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.actionAnimatedChannel.prefixLabel')}</Label>
                         <Input className="h-7 text-xs mt-1 font-mono-data" placeholder="[cspacer]" value={selectedNodeData.config.prefix ?? '[cspacer]'} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, prefix: e.target.value } } : n))} />
                         <p className="text-[9px] text-muted-foreground mt-1">{t('pages.botEditor.config.actionAnimatedChannel.prefixHint')}</p>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerCron.timezoneLabel')}</Label>
+                        <Select value={selectedNodeData.config.timezone || 'UTC'} onValueChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, timezone: v } } : n))}>
+                          <SelectTrigger className="h-7 text-xs mt-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {TIMEZONES.map((tz) => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   )}

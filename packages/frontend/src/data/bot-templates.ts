@@ -52,6 +52,18 @@ const DEFAULT_WELCOME_MESSAGE = 'Welcome {{event.client_nickname}}!\nOnline: {{t
 // become the actual bot flow the admin can freely rename/edit afterward, and
 // message/channel-name defaults are TeamSpeak-facing bot output (same class
 // as music-command-handler's replies), so both stay English like those do.
+const TIMEZONE_OPTIONS = [
+  { label: 'Europe/Berlin (CET/CEST)', value: 'Europe/Berlin' },
+  { label: 'Europe/London (GMT/BST)', value: 'Europe/London' },
+  { label: 'Europe/Paris (CET/CEST)', value: 'Europe/Paris' },
+  { label: 'Europe/Moscow (MSK)', value: 'Europe/Moscow' },
+  { label: 'America/New_York (EST/EDT)', value: 'America/New_York' },
+  { label: 'America/Chicago (CST/CDT)', value: 'America/Chicago' },
+  { label: 'America/Los_Angeles (PST/PDT)', value: 'America/Los_Angeles' },
+  { label: 'Asia/Tokyo (JST)', value: 'Asia/Tokyo' },
+  { label: 'UTC', value: 'UTC' },
+];
+
 export function getBotTemplates(t: TFunction): BotTemplate[] { return [
   // ===== INFO CHANNELS =====
   {
@@ -62,17 +74,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
     icon: Clock,
     configFields: [
       { key: 'channelId', label: t('data.botTemplates.items.clockChannel.fields.channelId.label'), type: 'number', placeholder: '42', required: true },
-      { key: 'timezone', label: t('data.botTemplates.items.clockChannel.fields.timezone.label'), type: 'select', defaultValue: 'Europe/Berlin', options: [
-        { label: 'Europe/Berlin (CET/CEST)', value: 'Europe/Berlin' },
-        { label: 'Europe/London (GMT/BST)', value: 'Europe/London' },
-        { label: 'Europe/Paris (CET/CEST)', value: 'Europe/Paris' },
-        { label: 'Europe/Moscow (MSK)', value: 'Europe/Moscow' },
-        { label: 'America/New_York (EST/EDT)', value: 'America/New_York' },
-        { label: 'America/Chicago (CST/CDT)', value: 'America/Chicago' },
-        { label: 'America/Los_Angeles (PST/PDT)', value: 'America/Los_Angeles' },
-        { label: 'Asia/Tokyo (JST)', value: 'Asia/Tokyo' },
-        { label: 'UTC', value: 'UTC' },
-      ] },
+      { key: 'timezone', label: t('data.botTemplates.items.clockChannel.fields.timezone.label'), type: 'select', defaultValue: 'Europe/Berlin', options: TIMEZONE_OPTIONS },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -166,6 +168,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
         { label: t('data.botTemplates.items.animatedChannel.fields.intervalSeconds.options.5'), value: '0.25' },
       ] },
       { key: 'prefix', label: t('data.botTemplates.items.animatedChannel.fields.prefix.label'), type: 'text', placeholder: '[cspacer]', defaultValue: '[cspacer]' },
+      { key: 'timezone', label: t('data.botTemplates.items.clockChannel.fields.timezone.label'), type: 'select', defaultValue: 'Europe/Berlin', options: TIMEZONE_OPTIONS },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -178,6 +181,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
             style: cfg.style || 'scroll',
             intervalSeconds: cfg.intervalSeconds || '3',
             prefix: cfg.prefix || '[cspacer]',
+            timezone: cfg.timezone || 'Europe/Berlin',
           }, 200, 100),
         ],
         edges: [],
