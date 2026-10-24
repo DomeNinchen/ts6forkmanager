@@ -19,18 +19,22 @@ This is a pnpm workspace with four packages under `packages/*`:
 pnpm install
 cp .env.example .env   # then set JWT_SECRET at minimum
 pnpm db:generate
-pnpm db:push
+pnpm db:deploy         # apply the committed migrations to your dev database
 pnpm db:seed
 pnpm dev                # runs backend + frontend together
 ```
 
 `common` needs to be built (or run via `pnpm dev`, which watches it) before backend/frontend pick up changes to it — they import its compiled output, not its source.
 
+### Changing the database schema
+
+The schema (`packages/backend/prisma/schema.prisma`) is applied through versioned Prisma migrations in `packages/backend/prisma/migrations/`. After editing the schema, create a migration with `pnpm db:migrate` (Prisma asks for a name, applies it to your dev database and generates the client) and commit the new `prisma/migrations/` folder with your change. Never run `prisma db push` against a database you care about. CI (and `pnpm test`) fails if `schema.prisma` has changes no migration captures.
+
 For the sidecar, work in `packages/sidecar` directly with the normal Go toolchain (`go build`, `go test ./...`) — it isn't wired into the pnpm scripts.
 
 ## Before opening a PR
 
-- `pnpm typecheck` (from the repo root) is the main automated check for backend/frontend/common. `pnpm test` runs the backend's unit tests (`*.test.ts` next to the code, Node's built-in `node:test` via `tsx`); frontend and common have none yet. The Go sidecar has its own tests: `cd packages/sidecar && go test ./...`.
+- `pnpm typecheck` (from the repo root) is the main automated check for backend/frontend/common. `pnpm test` runs the backend's unit tests (`*.test.ts` next to the code, Node's built-in `node:test` via `tsx`); frontend and common have none yet. The Go sidecar has its own tests: `cd packages/sidecar && go test ./...`. Both `pnpm typecheck` and `pnpm test` also run in CI on every PR (`.github/workflows/ci.yml`).
 - If you can, actually run the feature you changed against a real TeamSpeak server rather than relying on typecheck alone — a surprising number of bugs here only show up against the real protocol.
 - Keep PRs focused on one change. A bug fix doesn't need to bring along an unrelated refactor.
 - Update [CHANGELOG.md](CHANGELOG.md) with a short entry (one or two sentences: what changed for the people using it, the component versions, and a link to the PR) at the top of the current month's section, in the same style as the existing entries — details belong in the PR description. If you're not sure how to phrase it, a rough description is still helpful — it can be tightened up in review.
