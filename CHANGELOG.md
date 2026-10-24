@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.75.1 · frontend 3.92.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.75.2 · frontend 3.92.0 · sidecar 2.1.4**
 
 ### New Features
 
@@ -60,6 +60,7 @@ Versions at the end of the month: **backend 2.75.1 · frontend 3.92.0 · sidecar
 
 ### Security
 
+- **Dependency updates** — `multer` 2.5.0, `body-parser` 2.4.0 and `fast-uri` 3.1.9 close six Dependabot alerts. The `body-parser` update removes a way to crash the backend with a crafted compressed request body; the `multer` (asynchronous upload filter) and `fast-uri` (Prisma's internal tooling) ones were not reachable in this app. *backend 2.75.2* [#327](https://github.com/DomeNinchen/ts6forkmanager/pull/327)
 - **Execution logs only through their own flow** — A flow's execution log can now only be read through the flow it belongs to, so access to one server's flows no longer gives access to the logs of another server's flows. *backend 2.70.2* [#319](https://github.com/DomeNinchen/ts6forkmanager/pull/319)
 - **Dependency update** — `ip-address` 10.7.4 (pulled in by `express-rate-limit`) closes one Dependabot alert; it was not reachable in this app. *backend 2.69.6* [#316](https://github.com/DomeNinchen/ts6forkmanager/pull/316)
 - **Secrets masked in the query debug log** — With the "query" debug flag on, passwords, API keys, privilege keys, file-transfer keys and other credentials in logged WebQuery and SSH commands and answers are written as `***`; the log and the query console share one list of secret fields, which now also covers `jwt`. *backend 2.69.5, frontend 3.87.1* [#315](https://github.com/DomeNinchen/ts6forkmanager/pull/315)
