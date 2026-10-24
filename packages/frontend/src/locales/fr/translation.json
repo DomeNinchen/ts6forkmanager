@@ -1274,11 +1274,14 @@
         "droppedDetail_other": "{{count}} déclenchements de cette minute n'ont pas été exécutés : le flux exécutait déjà son nombre maximal d'exécutions simultanées.",
         "status": {
           "running": "En cours",
+          "waiting": "En attente",
           "completed": "Terminée",
           "failed": "Échec",
           "dropped": "Rejetée",
-          "interrupted": "Interrompue"
-        }
+          "interrupted": "Interrompue",
+          "cancelled": "Annulée"
+        },
+        "waitingUntil": "jusqu'à {{time}}"
       },
       "nodeLabels": {
         "trigger_event": "Événement TS",

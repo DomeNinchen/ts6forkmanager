@@ -2348,11 +2348,14 @@
         "droppedDetail_other": "{{count}} triggers in this minute did not run: the flow was already running its maximum number of concurrent executions.",
         "status": {
           "running": "Running",
+          "waiting": "Waiting",
           "completed": "Completed",
           "failed": "Failed",
           "dropped": "Dropped",
-          "interrupted": "Interrupted"
-        }
+          "interrupted": "Interrupted",
+          "cancelled": "Cancelled"
+        },
+        "waitingUntil": "until {{time}}"
       },
       "nodeLabels": {
         "trigger_event": "TS Event",

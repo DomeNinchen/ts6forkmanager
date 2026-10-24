@@ -214,6 +214,14 @@ model BotExecution {
   startedAt   DateTime  @default(now())
   endedAt     DateTime?
   error       String?
+  // While status is 'waiting' (a Delay a restart can go on after, see FlowRunner): the Delay
+  // node, when it ends, and the execution's state as JSON. state is cleared when it goes on.
+  resumeNodeId String?
+  resumeAt     DateTime?
+  state        String?
+  // JSON of the channels the execution created while its query client sat in them, so the start
+  // after a crash can get the query client out again (see markExecutionsInterrupted).
+  createdChannels String?
 
   logs BotExecutionLog[]
 }
