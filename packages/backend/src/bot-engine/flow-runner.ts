@@ -30,11 +30,18 @@ import crypto from 'crypto';
 // caught, just a bit later.
 const MAX_NODE_VISITS = 500;
 const MAX_DELAY_MS = 300000; // 5 minutes
+/** How late a Delay that a restart left waiting may still go on; later than this it is interrupted. */
+const MAX_RESUME_LATE_MS = MAX_DELAY_MS;
 const MAX_LOOP_ITERATIONS_DEFAULT = 50;
 const MAX_LOOP_ITERATIONS_HARD_CAP = 500; // absolute ceiling regardless of node config
 
+export const FLOW_OFF_WHILE_WAITING = 'Cancelled: the flow was switched off while this execution waited';
+
 /** The two WebQuery calls the flow actions make - what they get instead of a client, see FlowRunner.execute. */
 type FlowQueryClient = Pick<WebQueryClient, 'execute' | 'executePost'>;
+
+/** `tail`: nothing of the execution waits on the call stack behind this node - no sibling branch, no loop iteration. */
+type VisitNode = (node: FlowNode, flowDef: FlowDefinition, tail: boolean) => Promise<void>;
 
 interface FlowInfo {
   id: number;
@@ -44,24 +51,62 @@ interface FlowInfo {
   flowData: FlowDefinition;
 }
 
+/** An execution the previous process left waiting in a Delay, as stored. */
+export interface WaitingExecution {
+  id: number;
+  triggeredBy: string;
+  triggerData: string | null;
+  resumeNodeId: string | null;
+  resumeAt: Date | null;
+  state: string | null;
+}
+
+/** Ends an execution whose row already has its final status (cancelled, interrupted). */
+class ExecutionEnded extends Error {}
+
 /**
  * Marks every execution still 'running' as 'interrupted', naming the node it started last
  * (its newest log row with a node - every node logs when it starts). Only for moments when
- * no execution can go on: at startup before the engine runs, and at shutdown.
+ * no execution can go on: at startup before the engine runs, and at shutdown. A 'waiting'
+ * one is left alone: it goes on after the restart (see FlowRunner.resume).
  */
-export async function markExecutionsInterrupted(prisma: PrismaClient, reason: string): Promise<number> {
+export async function markExecutionsInterrupted(prisma: PrismaClient, reason: string, pool: ConnectionPool): Promise<number> {
   const rows = await prisma.botExecution.findMany({
     where: { status: 'running' },
-    select: { id: true, logs: { where: { nodeId: { not: null } }, orderBy: { id: 'desc' }, take: 1, select: { nodeId: true, nodeName: true } } },
+    select: {
+      id: true, createdChannels: true, flow: { select: { serverConfigId: true, virtualServerId: true } },
+      logs: { where: { nodeId: { not: null } }, orderBy: { id: 'desc' }, take: 1, select: { nodeId: true, nodeName: true } },
+    },
   });
   const endedAt = new Date();
-  for (const { id, logs: [last] } of rows) {
+  for (const { id, createdChannels, flow, logs: [last] } of rows) {
     const error = last ? `${reason} (last node started: '${last.nodeName || last.nodeId}')` : reason;
     // updateMany with the status in the filter: one that finished meanwhile keeps its own status.
     await prisma.botExecution.updateMany({ where: { id, status: 'running' }, data: { status: 'interrupted', endedAt, error } });
+    if (createdChannels) await leaveCreatedChannelAfterCut(pool, flow.serverConfigId, flow.virtualServerId, createdChannels);
   }
   if (rows.length) console.log(`[BotEngine] ${rows.length} execution(s) marked interrupted: ${reason}`);
   return rows.length;
+}
+
+/**
+ * The query client of a cut-off execution can still sit in the channel it created last, and a
+ * temporary channel is never deleted while it does: moves it back to where it came from, like
+ * FlowRunner.leaveCreatedChannels would have at the end of the execution.
+ */
+async function leaveCreatedChannelAfterCut(pool: ConnectionPool, configId: number, sid: number, createdChannels: string): Promise<void> {
+  try {
+    const last = (JSON.parse(createdChannels) as { cid: string; home: string; clid: string }[]).pop();
+    if (!last) return;
+    const client = pool.getBotClient(configId);
+    // Only if that client is still there (gone: nothing to do), as a clid is handed out again once its client is gone.
+    const info = (await client.execute(sid, 'clientinfo', { clid: last.clid }).catch(() => null))?.[0];
+    if (String(info?.cid) !== last.cid) return;
+    await client.executePost(sid, 'clientmove', { clid: last.clid, cid: last.home });
+    console.log(`[BotEngine] Moved query client ${last.clid} out of channel ${last.cid}, created by a cut-off execution`);
+  } catch (err: any) {
+    console.warn(`[BotEngine] Could not move the query client out of a channel a cut-off execution created: ${err.message}`);
+  }
 }
 
 export class FlowRunner {
@@ -77,6 +122,8 @@ export class FlowRunner {
     private prisma: PrismaClient,
     private connectionPool: ConnectionPool,
     private wss: WebSocketServer,
+    /** The flow as it is loaded now, or undefined when it is switched off or deleted - asked when a Delay ends. */
+    private getFlow: (flowId: number) => FlowInfo | undefined = () => undefined,
   ) { }
 
   setVoiceBotManager(manager: VoiceBotManager): void {
@@ -107,7 +154,33 @@ export class FlowRunner {
     const until = Date.now() + graceMs;
     while (this.working > 0 && Date.now() < until) await new Promise((r) => setTimeout(r, 50));
     this.stopping = true;
-    await markExecutionsInterrupted(this.prisma, 'Interrupted by a backend shutdown');
+    await markExecutionsInterrupted(this.prisma, 'Interrupted by a backend shutdown', this.connectionPool);
+  }
+
+  /**
+   * Goes on with an execution the previous process left waiting in a Delay: waits out what is
+   * left of it, then continues after that Delay as the execution would have. Too late (the
+   * backend was down well past the end of the Delay), it is interrupted instead.
+   */
+  async resume(flow: FlowInfo, row: WaitingExecution): Promise<void> {
+    this.working++;
+    try {
+      const late = Date.now() - (row.resumeAt?.getTime() ?? 0);
+      let state: any;
+      try { state = JSON.parse(row.state!); } catch { /* handled below */ }
+      if (late > MAX_RESUME_LATE_MS || !state || !row.resumeNodeId) {
+        const error = state ? `Interrupted: the backend was not running when its Delay ended, ${Math.round(late / 60_000)} min ago` : 'Interrupted: its saved state could not be read';
+        await this.prisma.botExecution.updateMany({ where: { id: row.id, status: 'waiting' }, data: { status: 'interrupted', endedAt: new Date(), error, state: null } });
+        return;
+      }
+      const ctx = new ExecutionContext(this.prisma, flow.id, row.id, flow.serverConfigId, flow.virtualServerId,
+        row.triggeredBy, JSON.parse(row.triggerData || '{}'), state.timezone);
+      ctx.restoreState(state);
+      await this.log(ctx, null, 'info', `Resuming after a backend restart: the Delay ${late > 0 ? `ended ${Math.round(late / 1000)} s ago` : `ends in ${Math.round(-late / 1000)} s`}`);
+      await this.drive(flow, ctx, (visit) => this.afterDelay(row.resumeNodeId!, Math.max(0, -late), true, ctx, flow.flowData, true, visit));
+    } finally {
+      this.working--;
+    }
   }
 
   private async run(
@@ -143,6 +216,20 @@ export class FlowRunner {
       triggeredBy: triggerType,
     }, flow.serverConfigId);
 
+    await this.drive(flow, ctx, async (visit) => {
+      const triggerNode = flow.flowData.nodes.find(n => n.id === triggerNodeId);
+
+      if (!triggerNode) {
+        throw new Error(`Trigger node ${triggerNodeId} not found in flow ${flow.id}`);
+      }
+
+      await this.log(ctx, triggerNode, 'info', `Flow '${flow.name}' triggered by ${triggerType}`);
+      await visit(triggerNode, flow.flowData, true);
+    });
+  }
+
+  /** Runs an execution from `start` until it ends, and records how it ended - for a new one and for one a restart left waiting. */
+  private async drive(flow: FlowInfo, ctx: ExecutionContext, start: (visit: VisitNode) => Promise<void>): Promise<void> {
     const startTime = Date.now();
 
     try {
@@ -156,55 +243,94 @@ export class FlowRunner {
         execute: (...args) => pool.getBotClient(configId).execute(...args),
         executePost: (...args) => pool.getBotClient(configId).executePost(...args),
       };
-      const triggerNode = flow.flowData.nodes.find(n => n.id === triggerNodeId);
 
-      if (!triggerNode) {
-        throw new Error(`Trigger node ${triggerNodeId} not found in flow ${flow.id}`);
-      }
-
-      await this.log(ctx, triggerNode, 'info', `Flow '${flow.name}' triggered by ${triggerType}`);
-
-      let nodeVisits = 0;
-      const visitNode = async (node: FlowNode): Promise<void> => {
+      const visitNode: VisitNode = async (node, flowDef, tail) => {
         if (this.stopping) throw new Error('The backend is shutting down');
-        nodeVisits++;
-        if (nodeVisits > MAX_NODE_VISITS) {
+        ctx.nodeVisits++;
+        if (ctx.nodeVisits > MAX_NODE_VISITS) {
           throw new Error(`Max node visits (${MAX_NODE_VISITS}) exceeded — possible infinite loop`);
         }
-        await this.processNode(node, flow.flowData, ctx, client, visitNode);
+        await this.processNode(node, flowDef, ctx, client, visitNode, tail);
       };
 
       try {
-        await visitNode(triggerNode);
+        await start(visitNode);
       } finally {
         await this.leaveCreatedChannels(ctx, client);
       }
 
       await this.prisma.botExecution.update({
-        where: { id: execution.id },
+        where: { id: ctx.executionId },
         data: { status: 'completed', endedAt: new Date() },
       });
 
       this.broadcast('bot:execution:complete', {
         flowId: flow.id,
-        executionId: execution.id,
+        executionId: ctx.executionId,
         duration: Date.now() - startTime,
       }, flow.serverConfigId);
     } catch (err: any) {
-      // Stopped by the shutdown, or failing while it closes things down: shutdown() marks the row interrupted.
-      if (this.stopping) return;
+      // Stopped by the shutdown, or failing while it closes things down: shutdown() marks the row
+      // interrupted (or leaves it waiting). Ended early: the row has its status already.
+      if (this.stopping || err instanceof ExecutionEnded) return;
       await this.log(ctx, null, 'error', `Flow execution failed: ${err.message}`);
 
       await this.prisma.botExecution.update({
-        where: { id: execution.id },
+        where: { id: ctx.executionId },
         data: { status: 'failed', error: err.message, endedAt: new Date() },
       });
 
       this.broadcast('bot:execution:failed', {
         flowId: flow.id,
-        executionId: execution.id,
+        executionId: ctx.executionId,
         error: err.message,
       }, flow.serverConfigId);
+    }
+  }
+
+  /**
+   * Waits out a Delay, then goes on with the nodes after it - unless the flow was switched off or
+   * deleted meanwhile (cancelled) or its Delay node is gone from it (interrupted). With nothing
+   * waiting behind the Delay (tail), the rest comes from the flow as it is now, edits included;
+   * otherwise from the graph the execution started with, which its pending branches belong to.
+   */
+  private async afterDelay(
+    nodeId: string, ms: number, waiting: boolean, ctx: ExecutionContext,
+    flowDef: FlowDefinition, tail: boolean, visitNode: VisitNode,
+  ): Promise<void> {
+    this.working--;
+    await new Promise((resolve) => setTimeout(resolve, ms));
+    this.working++;
+    // A 'waiting' row stays so through the shutdown and goes on after the next start.
+    if (this.stopping) throw new Error('The backend is shutting down');
+
+    const current = this.getFlow(ctx.flowId);
+    if (!current) return this.endEarly(ctx, 'cancelled', FLOW_OFF_WHILE_WAITING);
+    if (!current.flowData.nodes.some((n) => n.id === nodeId)) {
+      return this.endEarly(ctx, 'interrupted', 'Interrupted: the flow was changed while this execution waited, and its Delay node is gone');
+    }
+    // Written before the next node runs: a crash from here on interrupts the execution, it never repeats an action.
+    if (waiting) await this.prisma.botExecution.update({ where: { id: ctx.executionId }, data: { status: 'running', state: null } });
+
+    const def = tail ? current.flowData : flowDef;
+    await this.visitEdges(this.getOutgoingEdges(nodeId, def), def, tail, visitNode);
+  }
+
+  private async endEarly(ctx: ExecutionContext, status: 'cancelled' | 'interrupted', error: string): Promise<never> {
+    // A deleted flow took the row with it; then nothing is left to update.
+    await this.prisma.botExecution.updateMany({
+      where: { id: ctx.executionId, status: { in: ['running', 'waiting'] } },
+      data: { status, error, endedAt: new Date(), state: null },
+    });
+    await this.log(ctx, null, 'warn', error);
+    throw new ExecutionEnded(error);
+  }
+
+  /** Visits the targets of these edges in order; only the last one inherits the parent's tail position. */
+  private async visitEdges(edges: FlowEdge[], flowDef: FlowDefinition, tail: boolean, visitNode: VisitNode): Promise<void> {
+    for (let i = 0; i < edges.length; i++) {
+      const target = this.findNode(edges[i].target, flowDef);
+      if (target) await visitNode(target, flowDef, tail && i === edges.length - 1);
     }
   }
 
@@ -213,17 +339,14 @@ export class FlowRunner {
     flowDef: FlowDefinition,
     ctx: ExecutionContext,
     client: FlowQueryClient,
-    visitNode: (node: FlowNode) => Promise<void>,
+    visitNode: VisitNode,
+    tail: boolean,
   ): Promise<void> {
     await this.log(ctx, node, 'debug', `Processing node '${node.data.label}' (type=${node.type})`);
 
     switch (node.type) {
       case 'trigger': {
-        const edges = this.getOutgoingEdges(node.id, flowDef);
-        for (const edge of edges) {
-          const target = this.findNode(edge.target, flowDef);
-          if (target) await visitNode(target);
-        }
+        await this.visitEdges(this.getOutgoingEdges(node.id, flowDef), flowDef, tail, visitNode);
         break;
       }
 
@@ -242,11 +365,7 @@ export class FlowRunner {
         await this.log(ctx, node, 'info', `Condition '${condData.expression}' → ${result}`);
 
         const handle = result ? 'true' : 'false';
-        const edges = this.getOutgoingEdges(node.id, flowDef, handle);
-        for (const edge of edges) {
-          const target = this.findNode(edge.target, flowDef);
-          if (target) await visitNode(target);
-        }
+        await this.visitEdges(this.getOutgoingEdges(node.id, flowDef, handle), flowDef, tail, visitNode);
         break;
       }
 
@@ -264,17 +383,10 @@ export class FlowRunner {
 
           ctx.setTemp('lastError', err.message);
           await this.log(ctx, node, 'warn', `Action '${(node.data as any).actionType}' failed, following its error branch: ${err.message}`);
-          for (const edge of errorEdges) {
-            const target = this.findNode(edge.target, flowDef);
-            if (target) await visitNode(target);
-          }
+          await this.visitEdges(errorEdges, flowDef, tail, visitNode);
           break;
         }
-        const edges = this.getOutgoingEdges(node.id, flowDef);
-        for (const edge of edges) {
-          const target = this.findNode(edge.target, flowDef);
-          if (target) await visitNode(target);
-        }
+        await this.visitEdges(this.getOutgoingEdges(node.id, flowDef), flowDef, tail, visitNode);
         break;
       }
 
@@ -282,14 +394,17 @@ export class FlowRunner {
         const delayData = node.data as DelayNodeData;
         const delayMs = Math.min(delayData.delayMs, MAX_DELAY_MS);
         await this.log(ctx, node, 'info', `Delaying ${delayMs}ms`);
-        this.working--;
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-        this.working++;
-        const edges = this.getOutgoingEdges(node.id, flowDef);
-        for (const edge of edges) {
-          const target = this.findNode(edge.target, flowDef);
-          if (target) await visitNode(target);
+        // Only a Delay with nothing behind it on the call stack can go on after a restart (a pending
+        // sibling branch or loop iteration would be lost), and none whose execution still sits in a
+        // channel it created (its creation lock and the query client's place do not survive one).
+        const resumable = tail && ctx.createdChannels.length === 0;
+        if (resumable) {
+          await this.prisma.botExecution.update({
+            where: { id: ctx.executionId },
+            data: { status: 'waiting', resumeNodeId: node.id, resumeAt: new Date(Date.now() + delayMs), state: ctx.saveState() },
+          });
         }
+        await this.afterDelay(node.id, delayMs, resumable, ctx, flowDef, tail, visitNode);
         break;
       }
 
@@ -311,11 +426,7 @@ export class FlowRunner {
           }
           await this.log(ctx, node, 'info', `Variable '${name}' ${varData.operation} = '${value}'`);
         }
-        const edges = this.getOutgoingEdges(node.id, flowDef);
-        for (const edge of edges) {
-          const target = this.findNode(edge.target, flowDef);
-          if (target) await visitNode(target);
-        }
+        await this.visitEdges(this.getOutgoingEdges(node.id, flowDef), flowDef, tail, visitNode);
         break;
       }
 
@@ -323,11 +434,7 @@ export class FlowRunner {
         const logData = node.data as LogNodeData;
         const message = await ctx.resolveTemplate(logData.message);
         await this.log(ctx, node, logData.level, message);
-        const edges = this.getOutgoingEdges(node.id, flowDef);
-        for (const edge of edges) {
-          const target = this.findNode(edge.target, flowDef);
-          if (target) await visitNode(target);
-        }
+        await this.visitEdges(this.getOutgoingEdges(node.id, flowDef), flowDef, tail, visitNode);
         break;
       }
 
@@ -358,20 +465,14 @@ export class FlowRunner {
           ctx.setTemp(loopData.itemVariable, toProcess[i]);
           ctx.setTemp(`${loopData.itemVariable}_index`, i);
           await this.log(ctx, node, 'debug', `Loop: iteration ${i + 1}/${toProcess.length}`);
-          for (const edge of bodyEdges) {
-            const target = this.findNode(edge.target, flowDef);
-            if (target) await visitNode(target);
-          }
+          // Never tail: the next iteration and the 'after' branch still wait behind the body.
+          await this.visitEdges(bodyEdges, flowDef, false, visitNode);
         }
 
         ctx.setTemp(loopData.itemVariable, previousItem);
         ctx.setTemp(`${loopData.itemVariable}_index`, previousIndex);
 
-        const afterEdges = this.getOutgoingEdges(node.id, flowDef, 'after');
-        for (const edge of afterEdges) {
-          const target = this.findNode(edge.target, flowDef);
-          if (target) await visitNode(target);
-        }
+        await this.visitEdges(this.getOutgoingEdges(node.id, flowDef, 'after'), flowDef, tail, visitNode);
         break;
       }
     }
@@ -533,6 +634,12 @@ export class FlowRunner {
         // A second create in the same execution starts from inside the first one.
         const home = ctx.createdChannels.find((c) => c.cid === now)?.home ?? now;
         ctx.createdChannels.push({ cid, home, clid: String(who.client_id) });
+        // Kept on the row as well, so that after a crash the next start can still get the query client out (see markExecutionsInterrupted).
+        try {
+          await this.prisma.botExecution.update({ where: { id: ctx.executionId }, data: { createdChannels: JSON.stringify(ctx.createdChannels) } });
+        } catch (err: any) {
+          console.warn(`[BotEngine] Could not record channel ${cid} created by execution ${ctx.executionId}: ${err.message}`);
+        }
       } else if (!ctx.createdChannels.length) {
         this.releaseChannelLock(ctx);
       }

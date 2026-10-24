@@ -1,7 +1,7 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { EventBridge } from './event-bridge.js';
-import { FlowRunner } from './flow-runner.js';
+import { FlowRunner, FLOW_OFF_WHILE_WAITING } from './flow-runner.js';
 import type { Express, Request, Response } from 'express';
 import type { WebSocketServer } from 'ws';
 import cron, { type ScheduledTask } from 'node-cron';
@@ -276,7 +276,7 @@ export class BotEngine {
     private app: Express,
   ) {
     this.eventBridge = new EventBridge(prisma);
-    this.flowRunner = new FlowRunner(prisma, connectionPool, wss);
+    this.flowRunner = new FlowRunner(prisma, connectionPool, wss, (flowId) => this.flows.get(flowId));
     this.animationManager = new AnimationManager();
   }
 
@@ -767,23 +767,49 @@ export class BotEngine {
       return false;
     }
     console.log(`[BotEngine] Executing flow ${flow.id} ('${flow.name}') triggered by ${triggerType}`);
-    this.executionCounts.set(flow.id, current + 1);
 
     // Extract timezone from the trigger node (if cron trigger has one)
     const triggerNode = flow.flowData.nodes.find(n => n.id === triggerNodeId);
     const triggerData = triggerNode?.data as any;
     const timezone = triggerData?.timezone as string | undefined;
 
-    this.flowRunner.execute(flow, triggerNodeId, triggerType, eventData, timezone)
+    this.track(flow.id, () => this.flowRunner.execute(flow, triggerNodeId, triggerType, eventData, timezone));
+    return true;
+  }
+
+  /** Counts an execution against its flow's limit while it runs. */
+  private track(flowId: number, run: () => Promise<void>): void {
+    this.executionCounts.set(flowId, (this.executionCounts.get(flowId) || 0) + 1);
+    run()
       .catch(err => {
-        console.error(`[BotEngine] Flow ${flow.id} execution error: ${err.message}`);
+        console.error(`[BotEngine] Flow ${flowId} execution error: ${err.message}`);
       })
       .finally(() => {
-        const count = (this.executionCounts.get(flow.id) || 1) - 1;
-        if (count > 0) this.executionCounts.set(flow.id, count);
-        else this.executionCounts.delete(flow.id);
+        const count = (this.executionCounts.get(flowId) || 1) - 1;
+        if (count > 0) this.executionCounts.set(flowId, count);
+        else this.executionCounts.delete(flowId);
       });
-    return true;
+  }
+
+  /**
+   * Goes on with the executions the previous process left waiting in a Delay. They count against
+   * their flow's limit again, as they did before the restart, but are never dropped by it. Run
+   * once at startup, after start() and once the music bots are wired in.
+   */
+  async resumeWaitingExecutions(): Promise<void> {
+    const rows = await this.prisma.botExecution.findMany({
+      where: { status: 'waiting' },
+      select: { id: true, flowId: true, triggeredBy: true, triggerData: true, resumeNodeId: true, resumeAt: true, state: true },
+    });
+    for (const row of rows) {
+      const flow = this.flows.get(row.flowId);
+      if (!flow) {
+        await this.prisma.botExecution.update({ where: { id: row.id }, data: { status: 'cancelled', endedAt: new Date(), error: FLOW_OFF_WHILE_WAITING, state: null } });
+        continue;
+      }
+      this.track(flow.id, () => this.flowRunner.resume(flow, row));
+    }
+    if (rows.length) console.log(`[BotEngine] ${rows.length} execution(s) found waiting in a Delay after the restart`);
   }
 
   /**

@@ -15,9 +15,12 @@ export async function pruneBotLogs(prisma: PrismaClient): Promise<number> {
   const cutoff = new Date(Date.now() - retentionDays * DAY_MS);
   let removed = 0;
 
+  // A waiting execution is kept either way: a restart goes on with it (see FlowRunner.resume).
+  const notWaiting = { status: { not: 'waiting' } };
+
   // By age: executions first (cascades their logs), then any logs left behind
   // (executionId null, or already-detached) by their own timestamp.
-  removed += (await prisma.botExecution.deleteMany({ where: { startedAt: { lt: cutoff } } })).count;
+  removed += (await prisma.botExecution.deleteMany({ where: { startedAt: { lt: cutoff }, ...notWaiting } })).count;
   removed += (await prisma.botExecutionLog.deleteMany({ where: { timestamp: { lt: cutoff } } })).count;
 
   // By row cap: ids only ever grow, so "the newest maxRows rows" is
@@ -27,7 +30,7 @@ export async function pruneBotLogs(prisma: PrismaClient): Promise<number> {
     orderBy: { id: 'desc' }, skip: maxRows - 1, select: { id: true },
   });
   if (execBoundary) {
-    removed += (await prisma.botExecution.deleteMany({ where: { id: { lt: execBoundary.id } } })).count;
+    removed += (await prisma.botExecution.deleteMany({ where: { id: { lt: execBoundary.id }, ...notWaiting } })).count;
   }
   const logBoundary = await prisma.botExecutionLog.findFirst({
     orderBy: { id: 'desc' }, skip: maxRows - 1, select: { id: true },

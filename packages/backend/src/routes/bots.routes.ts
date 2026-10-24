@@ -191,6 +191,8 @@ botRoutes.get('/:botId/executions', requireRole('admin', 'bot-operator'), async 
       where: { flowId },
       orderBy: { startedAt: 'desc' },
       take: 50,
+      // A waiting execution's variables (stored WebQuery results, HTTP answers) can be large; the list shows none of them.
+      omit: { state: true, createdChannels: true },
     });
     res.json(executions);
   } catch (err) { next(err); }

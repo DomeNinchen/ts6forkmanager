@@ -2348,11 +2348,14 @@
         "droppedDetail_other": "{{count}} Auslösungen in dieser Minute wurden nicht ausgeführt: Der Flow lief bereits mit der Höchstzahl gleichzeitiger Ausführungen.",
         "status": {
           "running": "Läuft",
+          "waiting": "Wartet",
           "completed": "Fertig",
           "failed": "Fehlgeschlagen",
           "dropped": "Verworfen",
-          "interrupted": "Unterbrochen"
-        }
+          "interrupted": "Unterbrochen",
+          "cancelled": "Abgebrochen"
+        },
+        "waitingUntil": "bis {{time}}"
       },
       "nodeLabels": {
         "trigger_event": "TS-Ereignis",

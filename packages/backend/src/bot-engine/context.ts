@@ -66,6 +66,8 @@ export class ExecutionContext {
   readonly createdChannels: { cid: string; home: string; clid: string }[] = [];
   /** Set while this execution holds its server's channel-creation lock. */
   releaseChannelLock?: () => void;
+  /** Nodes visited so far, against FlowRunner's MAX_NODE_VISITS; carried over a restart. */
+  nodeVisits = 0;
 
   constructor(
     private prisma: PrismaClient,
@@ -255,6 +257,18 @@ export class ExecutionContext {
 
   getTemp(name: string): any {
     return this.tempVars.get(name);
+  }
+
+  /** What a waiting execution keeps in the database so a restart can go on with it (see FlowRunner's Delay). */
+  saveState(): string {
+    // undefined would come back as null; left out, it stays undefined.
+    const temp = [...this.tempVars].filter(([, value]) => value !== undefined);
+    return JSON.stringify({ temp, nodeVisits: this.nodeVisits, timezone: this.timezone });
+  }
+
+  restoreState(state: { temp?: [string, any][]; nodeVisits?: number }): void {
+    this.tempVars = new Map(state.temp ?? []);
+    this.nodeVisits = state.nodeVisits ?? 0;
   }
 
   private async buildExpressionScope(): Promise<Record<string, any>> {

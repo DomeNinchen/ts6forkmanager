@@ -163,7 +163,7 @@ async function main() {
 
   // Initialize Bot Engine
   // Nothing runs yet, so an execution still 'running' was cut off with the previous process (a crash, a kill).
-  await markExecutionsInterrupted(prisma, 'Interrupted by a backend restart');
+  await markExecutionsInterrupted(prisma, 'Interrupted by a backend restart', connectionPool);
   const botEngine = new BotEngine(prisma, connectionPool, wss, app);
   app.locals.botEngine = botEngine;
   await botEngine.start();
@@ -192,6 +192,8 @@ async function main() {
 
   // Wire VoiceBotManager into BotEngine for voice action nodes in flows
   botEngine.setVoiceBotManager(voiceBotManager);
+  // Only now: an execution going on after its Delay may use a music bot.
+  await botEngine.resumeWaitingExecutions();
 
   // Wire Music Command Handler for text-based music bot control (!radio, !play, etc.)
   // Listens directly on each VoiceBot's TS3 connection (no SSH needed)

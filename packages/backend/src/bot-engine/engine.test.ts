@@ -80,6 +80,30 @@ test('a partial answer when only one of two flows on a path is full', async () =
   await engine.stop();
 });
 
+test('after a restart, waiting executions go on and count against the limit; one of a switched-off flow is cancelled', async () => {
+  const { engine, rows, call, finishAll } = setup(1);
+  engine.webhookEntries = engine.webhookEntries.filter((w: any) => w.flowId === 1);
+  rows.push(
+    { id: 1, flowId: 1, status: 'waiting', resumeNodeId: 'n0', resumeAt: new Date(), state: '{}' },
+    { id: 2, flowId: 9, status: 'waiting', resumeNodeId: 'n0', resumeAt: new Date(), state: '{}' },
+  );
+  engine.prisma.botExecution.findMany = async ({ where }: any) => rows.filter((r) => r.status === where.status);
+  const resumed: number[] = [];
+  const pending: Array<() => void> = [];
+  engine.flowRunner.resume = (_flow: any, row: any) => { resumed.push(row.id); return new Promise<void>((r) => pending.push(r)); };
+
+  await engine.resumeWaitingExecutions();
+  assert.deepEqual(resumed, [1]);
+  assert.equal(rows[1].status, 'cancelled');
+  // The resumed one fills flow 1's limit of 1.
+  assert.equal(call().status, 429);
+  pending.forEach((f) => f());
+  await finishAll();
+  assert.equal(call().status, 200);
+  await finishAll();
+  await engine.stop();
+});
+
 test('every Animated Channel node of a flow runs, at its speed, in its time zone, under the bot identity', async () => {
   const names = new Map<string, string[]>();
   const client = { executePost: async (_sid: number, _cmd: string, p: any) => { names.set(p.cid, [...(names.get(p.cid) ?? []), p.channel_name]); return []; } };
