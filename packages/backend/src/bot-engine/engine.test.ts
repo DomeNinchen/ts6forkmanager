@@ -104,6 +104,33 @@ test('after a restart, waiting executions go on and count against the limit; one
   await engine.stop();
 });
 
+test('every Animated Channel node of a flow runs, at its speed, in its time zone, under the bot identity', async () => {
+  const names = new Map<string, string[]>();
+  const client = { executePost: async (_sid: number, _cmd: string, p: any) => { names.set(p.cid, [...(names.get(p.cid) ?? []), p.channel_name]); return []; } };
+  // Only the bot identity exists here: an animation asking for the admin client would fail.
+  const engine = new BotEngine({} as any, { getBotClient: () => client } as any, {} as any, {} as any) as any;
+  const node = (id: string, channelId: string, timezone: string) => ({
+    id, type: 'action', position: { x: 0, y: 0 },
+    data: { actionType: 'animatedChannel', label: id, channelId, text: '{{time.hours}}', style: 'blink', intervalSeconds: '0.25', prefix: '', timezone },
+  });
+  engine.flows.set(1, { id: 1, flowData: { nodes: [node('a', '10', 'Asia/Tokyo'), node('b', '20', 'America/Los_Angeles')], edges: [] }, triggerNodes: [] });
+
+  engine.startAnimationsForFlow(1, 1, 1);
+  await new Promise((r) => setTimeout(r, 600));
+  engine.animationManager.stopAnimation(1);
+  const hour = (timeZone: string) => String(Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone }).format(new Date()))).padStart(2, '0');
+
+  // Both channels, more than the first frame each (0.25 s, not the 3 s fallback), each in its own zone.
+  assert.ok((names.get('10')?.length ?? 0) >= 2 && (names.get('20')?.length ?? 0) >= 2, JSON.stringify([...names]));
+  assert.equal(names.get('10')![0], hour('Asia/Tokyo'));
+  assert.equal(names.get('20')![0], hour('America/Los_Angeles'));
+
+  // Stopped for good: no more renames.
+  const count = names.get('10')!.length + names.get('20')!.length;
+  await new Promise((r) => setTimeout(r, 400));
+  assert.equal(names.get('10')!.length + names.get('20')!.length, count);
+});
+
 test('disabling and enabling a flow keeps counting the executions still running', async () => {
   const { engine, call, finishAll } = setup(1);
   engine.webhookEntries = engine.webhookEntries.filter((w: any) => w.flowId === 1);

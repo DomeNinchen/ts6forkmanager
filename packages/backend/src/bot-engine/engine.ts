@@ -176,7 +176,7 @@ function normalizeFlowData(raw: any): FlowDefinition {
       data = { actionType: 'voiceTts', label, botId: config.botId || '', text: config.text || '', language: config.language || '' };
     } else if (nodeType === 'action_animatedChannel') {
       type = 'action';
-      data = { actionType: 'animatedChannel', label, channelId: config.channelId || '', text: config.text || '', style: config.style || 'scroll', intervalSeconds: config.intervalSeconds || '3', prefix: config.prefix || '[cspacer]' };
+      data = { actionType: 'animatedChannel', label, channelId: config.channelId || '', text: config.text || '', style: config.style || 'scroll', intervalSeconds: config.intervalSeconds || '3', prefix: config.prefix ?? '[cspacer]', timezone: config.timezone || undefined };
     } else if (nodeType === 'condition') {
       type = 'condition';
       data = { nodeType: 'condition', label, expression: config.expression || '' };
@@ -938,18 +938,23 @@ export class BotEngine {
 
     if (animNodes.length === 0) return;
 
+    this.animationManager.stopAnimation(flowId);
     for (const node of animNodes) {
       const d = node.data as AnimatedChannelActionData;
       const config: AnimationConfig = {
         channelId: d.channelId,
         text: d.text,
         style: d.style || 'scroll',
-        intervalSeconds: parseInt(d.intervalSeconds) || 3,
-        prefix: d.prefix || '[cspacer]',
+        // parseFloat: the editor offers 0.5 s and 0.25 s.
+        intervalSeconds: parseFloat(d.intervalSeconds) || 3,
+        // ?? keeps a prefix cleared on purpose; only a missing one gets the default, as in the editor.
+        prefix: d.prefix ?? '[cspacer]',
+        timezone: d.timezone,
       };
 
       // Looked up per frame, not captured here: the connection can be edited while the animation runs.
-      this.animationManager.startAnimation(flowId, virtualServerId, config, () => this.connectionPool.getClient(serverConfigId));
+      // The bot identity, like every other flow action, so the renames show up under its name in TeamSpeak's logs.
+      this.animationManager.startAnimation(flowId, node.id, virtualServerId, config, () => this.connectionPool.getBotClient(serverConfigId));
     }
   }
 
