@@ -461,6 +461,51 @@ model QueryConsoleLog {
   @@index([serverConfigId, createdAt])
 }
 
+// Every change a web user makes through the normal interface (R6). The query
+// console has its own trail (QueryConsoleLog above); this covers everything
+// else - one row per writing request (POST/PUT/PATCH/DELETE), written by a
+// single middleware (see utils/change-log.ts). serverConfigId is the raw id
+// from the URL; the server's name is resolved when the page is read, so the
+// hot path never does an extra lookup (a name is lost only if the connection
+// is later deleted). Secrets never reach the `body`: see the masking in that
+// util. Rows older than the retention setting, or beyond the row cap, are
+// pruned as new ones are written (utils/change-log-settings.ts).
+model UiChangeLog {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  userId          Int?
+  username        String
+  // The caller's role at the time (admin | viewer | bot-operator | music-operator).
+  role            String
+  // The visitor's address (see TRUST_PROXY); null when IP recording is off.
+  ip              String?
+  method          String
+  // The route group this hit, for the "area" filter (e.g. "channels", "users", "settings").
+  area            String
+  // The matched path with ids replaced by their names (e.g.
+  // "/servers/:configId/vs/:sid/channels/:id"), never the raw URL.
+  routePattern    String
+  // Target ids pulled from the path; all null for routes that carry none.
+  serverConfigId  Int?
+  virtualServerId Int?
+  // The leaf id (channel, group, user, ...) as text, since it is not always numeric.
+  targetId        String?
+  // The request body with secret fields reduced to "(changed)" - never a value.
+  body            String?
+  // "pending" (written before a security-critical change, like QueryConsoleLog),
+  // then "ok" | "error" | "denied" (turned away by the role check, 403).
+  status          String   @default("pending")
+  httpStatus      Int?
+  errorMessage    String?
+  durationMs      Int?
+  // Whether a line went into the TeamSpeak server log as well (logadd).
+  loggedToTeamSpeak Boolean @default(false)
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([serverConfigId, createdAt])
+}
+
 // === Dashboard metric history ===
 // One row per bandwidth/ping measurement taken by BandwidthSampler. This
 // exists so the dashboard's charts can show a full time window the moment

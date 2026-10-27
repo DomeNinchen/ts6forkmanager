@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.75.2 · frontend 3.92.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.76.0 · frontend 3.93.0 · sidecar 2.1.4**
 
 ### New Features
+
+- **Change Log page** (Security, admins) — Records every change a web user makes through the interface: who, the area and target, the values sent (secrets only as "(changed)", never their value), the result with TeamSpeak's own reason, the duration and the address, including attempts the role check refused. Filters for period, area, method, result, server and text; retention, row cap, address recording and an optional copy in the TeamSpeak server log are set on the page ([Change Log](https://github.com/DomeNinchen/ts6forkmanager/wiki/Change-Log)). *backend 2.76.0, frontend 3.93.0* [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
 
 - **Time zone for Animated Channel** — The Animated Channel node and its template get a time zone setting, like the cron trigger, so `{{time.*}}` in the animated text shows that zone's time instead of the backend's clock (UTC in Docker). *backend 2.74.0, frontend 3.91.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - **Execution list in the flow editor** — An **Executions** button opens a side panel with the flow's last 50 runs (running, completed, failed with the error, or dropped at the concurrency limit) and, on a click, the run's log line by line. It refreshes every 5 seconds while open; admins and bot operators see it. *backend 2.70.2, frontend 3.89.0* [#319](https://github.com/DomeNinchen/ts6forkmanager/pull/319)
@@ -81,6 +83,7 @@ Versions at the end of the month: **backend 2.75.2 · frontend 3.92.0 · sidecar
 
 ### Bug Fixes
 
+- Fixed the page controls of the Connection Journal running off the right edge on phone-width screens; they wrap now. *frontend 3.93.0* [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
 - Fixed `pnpm typecheck` letting unknown or outdated database fields in the backend's queries through (TypeScript 6 and later stopped reporting them), so they only failed at runtime; the backend is compiled with TypeScript 5.9 again, and `pnpm typecheck` and the backend's `pnpm dev` regenerate the Prisma client first. *backend 2.75.1* [#326](https://github.com/DomeNinchen/ts6forkmanager/pull/326)
 - Fixed a temporary channel created by a flow staying forever when the backend was restarted or crashed while the flow still sat in it; the next start moves the flow's connection out, so TeamSpeak deletes the empty channel. *backend 2.75.0* [#325](https://github.com/DomeNinchen/ts6forkmanager/pull/325)
 - Fixed a flow with several Animated Channel nodes animating only the last one's channel; every node runs now. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
@@ -129,7 +132,13 @@ Versions at the end of the month: **backend 2.75.2 · frontend 3.92.0 · sidecar
 
 **Database**
 
+- The first start after this update applies a database migration (one new table for the change log, nothing removed), with the usual backup to `data/backups/` beforehand. [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
 - The first start after this update adopts your existing database into the new migration history (a one-time, automatic baseline) and writes a backup to `data/backups/` beforehand; no action is needed, and all your data is kept. Schema changes are applied as versioned migrations from now on. If a start ever reports a schema mismatch it stops instead of changing data — restore from `data/backups/` and check the logs. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) [#321](https://github.com/DomeNinchen/ts6forkmanager/pull/321)
+
+**Change log**
+
+- The change log is on by default and stores the address each change came from; switch the address (or the whole log) off on its Settings tab if you do not want that, and mention it in your privacy information where that applies. Entries are kept 30 days, at most 100 000. [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
+- While it is on, a change to users and roles, server connections, instance settings or the app's own settings is refused with an error if its entry cannot be written (a full disk, a locked database); other changes still go through. [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
 
 **Bot flows & music bots**
 

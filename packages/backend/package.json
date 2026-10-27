@@ -1,6 +1,6 @@
 {
   "name": "@ts6/backend",
-  "version": "2.75.2",
+  "version": "2.76.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -9,7 +9,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "prisma generate && tsc --noEmit",
-    "test": "tsx --test \"src/**/*.test.ts\""
+    "test": "tsx --test --test-force-exit \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.10.0",

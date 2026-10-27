@@ -102,6 +102,7 @@
       "bans": "Sperren",
       "tokens": "Tokens",
       "connectionJournal": "Verbindungsjournal",
+      "changeLog": "Änderungsprotokoll",
       "files": "Dateien",
       "icons": "Icons",
       "complaints": "Beschwerden",
@@ -467,6 +468,84 @@
       "signingIn": "Anmeldung läuft...",
       "signIn": "Anmelden",
       "or": "oder"
+    },
+    "changeLog": {
+      "title": "Änderungsprotokoll",
+      "subtitle": "Was Webbenutzer über diese Oberfläche geändert haben: wer, an welchem Ziel, mit welchen Angaben und mit welchem Ergebnis. Geheimnisse wie Passwörter und API-Keys stehen nie darin, nur dass sie geändert wurden. Nur für Admins sichtbar; Befehle der Query-Konsole stehen in deren eigenem Protokoll.",
+      "tabs": {
+        "log": "Protokoll",
+        "settings": "Einstellungen"
+      },
+      "searchPlaceholder": "Benutzer, Route oder Ziel-ID suchen",
+      "filters": {
+        "range": "Zeitraum",
+        "area": "Bereich",
+        "anyArea": "Alle Bereiche",
+        "method": "Methode",
+        "anyMethod": "Alle Methoden",
+        "result": "Ergebnis",
+        "anyResult": "Alle Ergebnisse",
+        "server": "Server",
+        "anyServer": "Alle Server",
+        "pageSize": "Einträge pro Seite",
+        "reset": "Filter zurücksetzen"
+      },
+      "range": {
+        "24h": "Letzte 24 Stunden",
+        "7d": "Letzte 7 Tage",
+        "30d": "Letzte 30 Tage",
+        "all": "Gesamter Zeitraum"
+      },
+      "status": {
+        "pending": "offen",
+        "ok": "erfolgreich",
+        "error": "fehlgeschlagen",
+        "denied": "abgewiesen"
+      },
+      "columns": {
+        "time": "Zeit",
+        "user": "Benutzer",
+        "action": "Änderung",
+        "target": "Ziel",
+        "result": "Ergebnis",
+        "address": "Adresse"
+      },
+      "virtualServer": "Virtueller Server {{id}}",
+      "body": "Gesendete Angaben",
+      "tsLogged": "Auch im TeamSpeak-Serverlog vermerkt",
+      "ipNotRecorded": "nicht gespeichert",
+      "empty": "Keine Änderungen für diese Filter.",
+      "loadFailed": "Das Änderungsprotokoll konnte nicht geladen werden.",
+      "resultCount_one": "{{count}} Eintrag",
+      "resultCount_other": "{{count}} Einträge",
+      "perPage": "{{count}} pro Seite",
+      "settings": {
+        "title": "Aufzeichnung und Aufbewahrung",
+        "description": "Das Protokoll speichert zu jeder Änderung über die Oberfläche Zeit, Benutzer und Rolle, Bereich und Ziel, die gesendeten Angaben (Geheimnisse nur als „geändert“), das Ergebnis und auf Wunsch die Adresse. Adressen sind vielerorts personenbezogene Daten: Bewahre sie nur so lange auf, wie du sie brauchst. Das ist keine Rechtsberatung.",
+        "enabledLabel": "Änderungen aufzeichnen",
+        "enabledHint": "Ausgeschaltet wird nichts Neues aufgezeichnet; Gespeichertes bleibt, bis es aufgeräumt oder gelöscht wird. Solange es an ist, wird eine Änderung an Benutzern, Server-Verbindungen, Instanz- oder App-Einstellungen abgelehnt, wenn ihr Eintrag nicht geschrieben werden kann.",
+        "recordIpLabel": "Adresse des Webbenutzers speichern",
+        "recordIpHint": "Die Adresse, von der eine Änderung kam (siehe TRUST_PROXY). Gilt für neue Einträge.",
+        "tsLogLabel": "Zusätzlich ins TeamSpeak-Serverlog schreiben",
+        "tsLogHint": "Standardmäßig aus: Für jede erfolgreiche Änderung an einem TeamSpeak-Server kommt eine Zeile ins Serverlog. Das kostet je Änderung eine zusätzliche Abfrage, die gegen die Flood-Grenze des Servers zählt.",
+        "retentionLabel": "Aufbewahren für (Tage)",
+        "retentionHint": "{{min}} bis {{max}} Tage. Ältere Einträge werden jede Stunde entfernt.",
+        "maxRowsLabel": "Höchstens aufbewahren (Einträge)",
+        "maxRowsHint": "{{min}} bis {{max}}. Darüber hinaus gehen die ältesten Einträge zuerst, egal wie alt sie sind.",
+        "saved": "Einstellungen des Änderungsprotokolls gespeichert",
+        "saveFailed": "Einstellungen des Änderungsprotokolls konnten nicht gespeichert werden",
+        "storedTitle": "Gespeichert",
+        "stored_one": "{{count}} Eintrag gespeichert.",
+        "stored_other": "{{count}} Einträge gespeichert.",
+        "oldest": "Der älteste ist vom {{date}}.",
+        "clear": "Protokoll leeren",
+        "clearTitle": "Änderungsprotokoll leeren?",
+        "clearDescription_one": "{{count}} Eintrag wird endgültig gelöscht. Das Leeren selbst wird danach als neue Änderung festgehalten.",
+        "clearDescription_other": "{{count}} Einträge werden endgültig gelöscht. Das Leeren selbst wird danach als neue Änderung festgehalten.",
+        "cleared_one": "{{count}} Eintrag gelöscht",
+        "cleared_other": "{{count}} Einträge gelöscht",
+        "clearFailed": "Das Protokoll konnte nicht geleert werden"
+      }
     },
     "connectionJournal": {
       "title": "Verbindungsjournal",

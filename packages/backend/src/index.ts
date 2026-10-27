@@ -21,6 +21,7 @@ import { startUpdateChecker } from './utils/update-check.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
 import { startJournalPruner } from './utils/connection-journal.js';
+import { flushChangeLog, startChangeLogPruner } from './utils/change-log.js';
 import { startBotLogPruner } from './utils/bot-log-retention.js';
 import { TsLoginJournal } from './ts-client/ts-login-journal.js';
 import { GeoIpService } from './utils/geoip.js';
@@ -72,6 +73,7 @@ async function main() {
   startUpdateChecker(prisma);
   startPlayedSongCleanup(prisma);
   startJournalPruner(prisma);
+  startChangeLogPruner(prisma);
   startBotLogPruner(prisma);
   startYtCookieChecker();
 
@@ -238,6 +240,8 @@ async function main() {
     // The bandwidth/ping windows still being filled are written out now;
     // after the database connection is closed there would be no way to.
     await history.flush();
+    // Change-log rows still waiting for their batch.
+    await flushChangeLog(prisma);
     connectionPool.destroy();
     wsAudience.stop();
     wss.close();
