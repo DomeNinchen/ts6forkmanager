@@ -55,6 +55,24 @@ test('every critical area is also a known area', () => {
   for (const area of CRITICAL_AREAS) assert.ok(KNOWN_AREAS.has(area), area);
 });
 
+test('a privilege key or temporary password in the path never reaches the row', () => {
+  // A word and an all-digit value: the second would otherwise have passed as ":id" and target id.
+  for (const secret of ['AbC+dEf/gHi=', 'hunter2', '482913']) {
+    const encoded = encodeURIComponent(secret);
+    const token = classifyChange('DELETE', `/api/servers/1/vs/1/tokens/${encoded}`);
+    const pw = classifyChange('DELETE', `/api/servers/1/vs/1/tokens/temp-passwords/${encoded}`);
+    assert.equal(token.kind === 'log' && token.target.routePattern, '/servers/:configId/vs/:sid/tokens/:token');
+    assert.equal(pw.kind === 'log' && pw.target.routePattern, '/servers/:configId/vs/:sid/tokens/temp-passwords/:pw');
+    for (const d of [token, pw]) {
+      assert.ok(!JSON.stringify(d).includes(encoded) && !JSON.stringify(d).includes(secret), `${secret} leaked: ${JSON.stringify(d)}`);
+      if (d.kind === 'log') assert.equal(d.target.targetId, null);
+    }
+  }
+  // Creating a temporary password is not mistaken for deleting a key called "temp-passwords".
+  const create = classifyChange('POST', '/api/servers/1/vs/1/tokens/temp-passwords');
+  assert.equal(create.kind === 'log' && create.target.routePattern, '/servers/:configId/vs/:sid/tokens/temp-passwords');
+});
+
 // --- Coverage: no writing route escapes the middleware -------------------------
 // Build the real app, capturing every top-level mount in order (app.use's path +
 // handlers). A router mount is covered when the change-log middleware was mounted
@@ -129,4 +147,35 @@ test('every writing router mount is covered by the change log or explicitly exem
 
   assert.deepEqual(publicUnlisted, [], `Writing mount(s) the change log never sees; mount it in front or add to PUBLIC_PREFIXES: ${publicUnlisted.join(', ')}`);
   assert.deepEqual(unclassified, [], `Writing mount(s) with no known change-log area; classify them in change-log-policy.ts: ${unclassified.join(', ')}`);
+});
+
+// A path parameter named like a secret must not carry its value into a row. Every writing route
+// of every covered router is filled in with a marker for such a parameter (once as text, once as
+// digits) and must come out without it. Routes of routers nested inside another router are
+// skipped: their mount path inside the parent is not readable from Express.
+const SECRET_PARAM_NAME = /token|pw|pass|secret|key/i;
+
+test('no path parameter named like a secret reaches a row', () => {
+  const logMounts = mounts.filter((m) => m.handle === changeLogMiddleware);
+  const checked: string[] = [];
+  const leaked: string[] = [];
+  for (const m of mounts) {
+    if (!isRouter(m.handle) || !logMounts.some((l) => l.order < m.order && underPrefix(m.path, l.path))) continue;
+    for (const layer of m.handle.stack) {
+      if (!layer.route || typeof layer.route.path !== 'string') continue;
+      const full = `${m.path}${layer.route.path === '/' ? '' : layer.route.path}`;
+      const params = full.match(/:[A-Za-z]+/g) ?? [];
+      if (!params.some((p) => SECRET_PARAM_NAME.test(p))) continue;
+      for (const method of MUTATING.filter((x) => layer.route.methods?.[x]).map((x) => x.toUpperCase())) {
+        for (const marker of ['Zq7SecretMarker', '7319468250']) {
+          const url = full.replace(/:[A-Za-z]+/g, (p) => (SECRET_PARAM_NAME.test(p) ? marker : '3'));
+          const decision = classifyChange(method, url);
+          checked.push(`${method} ${full}`);
+          if (JSON.stringify(decision).includes(marker)) leaked.push(`${method} ${full} -> ${JSON.stringify(decision)}`);
+        }
+      }
+    }
+  }
+  assert.ok(checked.some((c) => c.includes('/tokens/:token')), 'the token route was not found - did the router layout change?');
+  assert.deepEqual(leaked, [], `Add the parameter to SECRET_PATH_PARAMS in change-log-policy.ts: ${leaked.join('; ')}`);
 });

@@ -4,11 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.76.0 · frontend 3.93.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.76.1 · frontend 3.93.0 · sidecar 2.1.4**
 
 ### New Features
 
-- **Change Log page** (Security, admins) — Records every change a web user makes through the interface: who, the area and target, the values sent (secrets only as "(changed)", never their value), the result with TeamSpeak's own reason, the duration and the address, including attempts the role check refused. Filters for period, area, method, result, server and text; retention, row cap, address recording and an optional copy in the TeamSpeak server log are set on the page ([Change Log](https://github.com/DomeNinchen/ts6forkmanager/wiki/Change-Log)). *backend 2.76.0, frontend 3.93.0* [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
+- **Change Log page** (Security, admins) — Records every change a web user makes through the interface: who, the area and target, the values sent (secrets only as "(changed)", never their value; a privilege key or temporary password that is part of the address is shown only by name), the result with TeamSpeak's own reason, the duration and the address, including attempts the role check refused. Filters for period, area, method, result, server and text; retention, row cap, address recording and an optional copy in the TeamSpeak server log are set on the page ([Change Log](https://github.com/DomeNinchen/ts6forkmanager/wiki/Change-Log)). *backend 2.76.0–2.76.1, frontend 3.93.0* [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
 
 - **Time zone for Animated Channel** — The Animated Channel node and its template get a time zone setting, like the cron trigger, so `{{time.*}}` in the animated text shows that zone's time instead of the backend's clock (UTC in Docker). *backend 2.74.0, frontend 3.91.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - **Execution list in the flow editor** — An **Executions** button opens a side panel with the flow's last 50 runs (running, completed, failed with the error, or dropped at the concurrency limit) and, on a click, the run's log line by line. It refreshes every 5 seconds while open; admins and bot operators see it. *backend 2.70.2, frontend 3.89.0* [#319](https://github.com/DomeNinchen/ts6forkmanager/pull/319)
