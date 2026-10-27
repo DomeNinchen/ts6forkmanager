@@ -28,7 +28,7 @@ virtualServerRoutes.get('/:sid/info', requireRole('admin'), async (req: Request,
 });
 
 // M3: Whitelist safe parameters for serveredit
-const ALLOWED_SERVER_EDIT_PARAMS = new Set([
+export const ALLOWED_SERVER_EDIT_PARAMS = new Set([
   'virtualserver_name', 'virtualserver_welcomemessage', 'virtualserver_maxclients',
   'virtualserver_password', 'virtualserver_hostmessage', 'virtualserver_hostmessage_mode',
   'virtualserver_default_server_group', 'virtualserver_default_channel_group',

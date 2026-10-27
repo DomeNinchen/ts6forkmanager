@@ -1,4 +1,5 @@
 import type {
+  UiChangeDiff,
   UiChangeLogEntry,
   UiChangeLogPage,
   UiChangeMethod,
@@ -26,7 +27,7 @@ const VALUE_MAX_LENGTH = 512;
 /** Body fields that are secret but whose name ends in none of the suffixes below (`code` is the 2FA code of /api/auth/totp). */
 const APP_SECRET_FIELDS: ReadonlySet<string> = new Set(['identitydata', 'cookiefile', 'cookies', 'cookiecontent', 'code']);
 
-function isSecretField(key: string): boolean {
+export function isSecretField(key: string): boolean {
   const k = key.toLowerCase();
   if (isSecretKey(k) || APP_SECRET_FIELDS.has(k)) return true;
   // `channel_flag_password` is a 0/1 flag, not a secret - keep it readable (same carve-out as classification.ts).
@@ -79,6 +80,8 @@ export interface ChangeOutcome {
   errorMessage: string | null;
   durationMs: number;
   loggedToTeamSpeak: boolean;
+  /** Before and after as JSON (UiChangeDiff), for a successful change to a target that is read first. */
+  changes: string | null;
 }
 
 /**
@@ -205,6 +208,7 @@ export async function listChangeLog(
     virtualServerId: row.virtualServerId,
     targetId: row.targetId,
     body: row.body,
+    changes: parseDiff(row.changes),
     status: row.status as UiChangeStatus,
     httpStatus: row.httpStatus,
     errorMessage: row.errorMessage,
@@ -212,6 +216,15 @@ export async function listChangeLog(
     loggedToTeamSpeak: row.loggedToTeamSpeak,
   }));
   return { entries, total, page, pageSize };
+}
+
+function parseDiff(json: string | null): UiChangeDiff | null {
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as UiChangeDiff;
+  } catch {
+    return null;
+  }
 }
 
 /** The areas that occur in the log, most entries first - what the area filter offers. */

@@ -492,6 +492,9 @@ model UiChangeLog {
   targetId        String?
   // The request body with secret fields reduced to "(changed)" - never a value.
   body            String?
+  // Before and after for the targets that are read before they change (R6 stage 2), as
+  // JSON (UiChangeDiff in common); null for every other change and for a failed one.
+  changes         String?
   // "pending" (written before a security-critical change, like QueryConsoleLog),
   // then "ok" | "error" | "denied" (turned away by the role check, 403).
   status          String   @default("pending")
