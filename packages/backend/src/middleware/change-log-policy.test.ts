@@ -1,9 +1,11 @@
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import express from 'express';
 import { classifyChange, KNOWN_AREAS, CRITICAL_AREAS } from './change-log-policy.js';
 import { changeLogMiddleware } from './change-log.js';
-import { createApp } from '../app.js';
 
 // --- classifyChange unit tests -------------------------------------------------
 
@@ -69,6 +71,16 @@ appProto.use = function (...args: any[]) {
   for (const handle of typeof args[0] === 'string' ? args.slice(1) : args) mounts.push({ order: order++, path, handle });
   return originalUse.apply(this, args);
 };
+// Importing the app creates the music folders at MUSIC_DIR (voice/audio/media-dirs.ts), /data/music by
+// default - not writable on a CI runner. The test only needs the routes, so they go to a temp dir; the
+// import is dynamic because a static one would run before this line.
+let tempMusicDir: string | null = null;
+if (!process.env.MUSIC_DIR) {
+  tempMusicDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts6-change-log-test-'));
+  process.env.MUSIC_DIR = tempMusicDir;
+}
+after(() => { if (tempMusicDir) fs.rmSync(tempMusicDir, { recursive: true, force: true }); });
+const { createApp } = await import('../app.js');
 // createApp is only called here (importing it mounts nothing), so the patch is in place in time.
 try {
   createApp();
