@@ -72,9 +72,29 @@ function isId(segment: string): boolean {
   return /^\d+$/.test(segment);
 }
 
-/** Builds a readable pattern from the segments below a mount: ids become ":id", words stay as they are. */
-function leafPattern(leaf: string[]): string {
-  return leaf.map((s) => (isId(s) ? ':id' : s)).map((s) => `/${s}`).join('');
+/**
+ * Path parameters whose value is a secret: the key of a privilege key, a temporary server
+ * password. The body masking cannot see them, so their position is named here and the value
+ * never reaches the row (pattern, target id, or the TeamSpeak log line). The completeness test
+ * fails when a route gains a parameter with a secret-sounding name that this list misses.
+ */
+export const SECRET_PATH_PARAMS: ReadonlyArray<{ method: UiChangeMethod; area: string; leaf: readonly string[] }> = [
+  { method: 'DELETE', area: 'tokens', leaf: [':token'] },
+  { method: 'DELETE', area: 'tokens', leaf: ['temp-passwords', ':pw'] },
+];
+
+/**
+ * The pattern and target id of the segments below a mount: ids become ":id", words stay as
+ * they are, and a secret parameter becomes its name.
+ */
+function leafOf(method: UiChangeMethod, area: string, leaf: string[]): { pattern: string; targetId: string | null } {
+  const secret = SECRET_PATH_PARAMS.find((s) =>
+    s.method === method && s.area === area && s.leaf.length === leaf.length && s.leaf.every((p, i) => p.startsWith(':') || p === leaf[i]));
+  const shown = leaf.map((s, i) => (secret?.leaf[i].startsWith(':') ? secret.leaf[i] : s));
+  return {
+    pattern: shown.map((s) => `/${isId(s) ? ':id' : s}`).join(''),
+    targetId: shown.find(isId) ?? null,
+  };
 }
 
 /** The handful of writing routes that are deliberately not logged (decision 2). */
@@ -116,19 +136,19 @@ export function classifyChange(method: string, path: string): ChangeDecision {
     if (after[0] === 'vs') {
       const virtualServerId = isId(after[1]) ? Number(after[1]) : null;
       const area = after[2] ?? 'vs';
-      const leaf = after.slice(3);
-      return { kind: 'log', target: { area, routePattern: `/servers/:configId/vs/:sid/${area}${leafPattern(leaf)}`, serverConfigId, virtualServerId, targetId: leaf.find(isId) ?? null, critical: critical(area) } };
+      const { pattern, targetId } = leafOf(method, area, after.slice(3));
+      return { kind: 'log', target: { area, routePattern: `/servers/:configId/vs/:sid/${area}${pattern}`, serverConfigId, virtualServerId, targetId, critical: critical(area) } };
     }
     if (SERVER_SCOPED.has(after[0])) {
       const area = after[0];
-      const leaf = after.slice(1);
-      return { kind: 'log', target: { area, routePattern: `/servers/:configId/${area}${leafPattern(leaf)}`, serverConfigId, virtualServerId: null, targetId: leaf.find(isId) ?? null, critical: critical(area) } };
+      const { pattern, targetId } = leafOf(method, area, after.slice(1));
+      return { kind: 'log', target: { area, routePattern: `/servers/:configId/${area}${pattern}`, serverConfigId, virtualServerId: null, targetId, critical: critical(area) } };
     }
     // A sub-resource of the connection (identity, bot-identity, global-message).
-    return { kind: 'log', target: { area: 'servers', routePattern: `/servers/:configId${leafPattern(after)}`, serverConfigId, virtualServerId: null, targetId: null, critical: true } };
+    return { kind: 'log', target: { area: 'servers', routePattern: `/servers/:configId${leafOf(method, 'servers', after).pattern}`, serverConfigId, virtualServerId: null, targetId: null, critical: true } };
   }
 
   const area = rest[0];
-  const leaf = rest.slice(1);
-  return { kind: 'log', target: { area, routePattern: `/${area}${leafPattern(leaf)}`, serverConfigId: null, virtualServerId: null, targetId: leaf.find(isId) ?? null, critical: critical(area) } };
+  const { pattern, targetId } = leafOf(method, area, rest.slice(1));
+  return { kind: 'log', target: { area, routePattern: `/${area}${pattern}`, serverConfigId: null, virtualServerId: null, targetId, critical: critical(area) } };
 }
