@@ -58,6 +58,7 @@ const Channels = lazy(() => import('@/pages/Channels'));
 const Clients = lazy(() => import('@/pages/Clients'));
 const ClientDatabase = lazy(() => import('@/pages/ClientDatabase'));
 const ConnectionJournal = lazy(() => import('@/pages/ConnectionJournal'));
+const ChangeLog = lazy(() => import('@/pages/ChangeLog'));
 const ServerGroups = lazy(() => import('@/pages/ServerGroups'));
 const ChannelGroups = lazy(() => import('@/pages/ChannelGroups'));
 const Permissions = lazy(() => import('@/pages/Permissions'));
@@ -109,6 +110,7 @@ export function App() {
               <Route path="/bans" element={<AdminRoute><WebQueryRoute><Bans /></WebQueryRoute></AdminRoute>} />
               <Route path="/tokens" element={<AdminRoute><WebQueryRoute><Tokens /></WebQueryRoute></AdminRoute>} />
               <Route path="/connection-journal" element={<AdminRoute><ConnectionJournal /></AdminRoute>} />
+              <Route path="/change-log" element={<AdminRoute><ChangeLog /></AdminRoute>} />
               <Route path="/files" element={<AdminRoute><WebQueryRoute><Files /></WebQueryRoute></AdminRoute>} />
               <Route path="/icons" element={<WebQueryRoute><Icons /></WebQueryRoute>} />
               <Route path="/complaints" element={<AdminRoute><WebQueryRoute><Complaints /></WebQueryRoute></AdminRoute>} />

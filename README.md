@@ -105,7 +105,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 
 **Good to know before you go live:**
 
-- **Behind a reverse proxy, set `TRUST_PROXY`** to the number of proxies in front of the backend: `1` (default) for the frontend container alone, `2` with a host nginx or Coolify in front. **Settings → Network** shows the right value. A wrong value makes rate limits, the Connection Journal and IP bans see the wrong address. See [Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment) and, if you ever ban yourself, [Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting#an-ip-ban-locked-me-out-or-does-not-catch-the-visitor).
+- **Behind a reverse proxy, set `TRUST_PROXY`** to the number of proxies in front of the backend: `1` (default) for the frontend container alone, `2` with a host nginx or Coolify in front. **Settings → Network** shows the right value. A wrong value makes rate limits, the Connection Journal, the Change Log and IP bans see the wrong address. See [Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment) and, if you ever ban yourself, [Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting#an-ip-ban-locked-me-out-or-does-not-catch-the-visitor).
 - **The containers run without root.** The frontend's nginx listens on port `8080` inside its container. The `volume-init` service fixes the volume ownership on every start and then exits, so `Exited (0)` for it is normal. Bind mounts need a one-time `chown -R 1000:1000`. See [Running unprivileged](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment#running-unprivileged).
 
 [Configuration](https://github.com/DomeNinchen/ts6forkmanager/wiki/Configuration) lists every environment variable.
@@ -122,6 +122,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 - **Virtual servers and the instance**: start, stop and create servers, edit settings, read logs, take snapshots. → [Virtual Servers and Instance](https://github.com/DomeNinchen/ts6forkmanager/wiki/Virtual-Servers-and-Instance), [Server Logs](https://github.com/DomeNinchen/ts6forkmanager/wiki/Server-Logs), [Server Maintenance](https://github.com/DomeNinchen/ts6forkmanager/wiki/Server-Maintenance)
 - **Query console**: any ServerQuery command with completion, help and a safety check for dangerous commands. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Query-Console)
 - **Connection journal**: who signed in to the web interface or joined TeamSpeak, from where, with one-click IP bans. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Connection-Journal)
+- **Change log**: every change made through the interface, with user, target, values sent (secrets masked), result and address. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Change-Log)
 
 **Automation and media**
 

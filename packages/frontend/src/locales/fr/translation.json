@@ -100,6 +100,7 @@
       "permissions": "Autorisations",
       "bans": "Bannissements",
       "tokens": "Jetons",
+      "changeLog": "Journal des modifications",
       "files": "Fichiers",
       "icons": "Icônes",
       "complaints": "Plaintes",
@@ -116,6 +117,84 @@
   "layout": {},
   "pages": {
     "noServerSelected": "Aucun serveur sélectionné",
+    "changeLog": {
+      "title": "Journal des modifications",
+      "subtitle": "Ce que les utilisateurs web ont modifié via cette interface : qui, sur quelle cible, avec quelles valeurs et avec quel résultat. Les secrets comme les mots de passe et les clés API n'y figurent jamais, seulement le fait qu'ils ont été modifiés. Réservé aux admins ; les commandes de la console query ont leur propre journal.",
+      "tabs": {
+        "log": "Journal",
+        "settings": "Paramètres"
+      },
+      "searchPlaceholder": "Rechercher un utilisateur, une route ou un ID cible",
+      "filters": {
+        "range": "Période",
+        "area": "Domaine",
+        "anyArea": "Tous les domaines",
+        "method": "Méthode",
+        "anyMethod": "Toutes les méthodes",
+        "result": "Résultat",
+        "anyResult": "Tous les résultats",
+        "server": "Serveur",
+        "anyServer": "Tous les serveurs",
+        "pageSize": "Entrées par page",
+        "reset": "Réinitialiser les filtres"
+      },
+      "range": {
+        "24h": "Dernières 24 heures",
+        "7d": "7 derniers jours",
+        "30d": "30 derniers jours",
+        "all": "Toute la période"
+      },
+      "status": {
+        "pending": "en attente",
+        "ok": "réussi",
+        "error": "échoué",
+        "denied": "refusé"
+      },
+      "columns": {
+        "time": "Heure",
+        "user": "Utilisateur",
+        "action": "Modification",
+        "target": "Cible",
+        "result": "Résultat",
+        "address": "Adresse"
+      },
+      "virtualServer": "Serveur virtuel {{id}}",
+      "body": "Valeurs envoyées",
+      "tsLogged": "Également noté dans le log du serveur TeamSpeak",
+      "ipNotRecorded": "non enregistrée",
+      "empty": "Aucune modification pour ces filtres.",
+      "loadFailed": "Le journal des modifications n'a pas pu être chargé.",
+      "resultCount_one": "{{count}} entrée",
+      "resultCount_other": "{{count}} entrées",
+      "perPage": "{{count}} par page",
+      "settings": {
+        "title": "Enregistrement et conservation",
+        "description": "Pour chaque modification faite via l'interface, le journal conserve l'heure, l'utilisateur et son rôle, le domaine et la cible, les valeurs envoyées (les secrets seulement comme « modifié »), le résultat et, si activé, l'adresse. Dans de nombreux pays, les adresses sont des données personnelles : ne les conserve que le temps nécessaire. Ceci n'est pas un conseil juridique.",
+        "enabledLabel": "Enregistrer les modifications",
+        "enabledHint": "Désactivé, rien de nouveau n'est enregistré ; ce qui est stocké reste jusqu'à son nettoyage ou sa suppression. Tant qu'il est actif, une modification des utilisateurs, des connexions serveur, de l'instance ou des paramètres de l'application est refusée si son entrée ne peut pas être écrite.",
+        "recordIpLabel": "Enregistrer l'adresse de l'utilisateur web",
+        "recordIpHint": "L'adresse d'où vient une modification (voir TRUST_PROXY). S'applique aux nouvelles entrées.",
+        "tsLogLabel": "Écrire aussi dans le log du serveur TeamSpeak",
+        "tsLogHint": "Désactivé par défaut : chaque modification réussie sur un serveur TeamSpeak ajoute une ligne à son log. Cela coûte une requête supplémentaire par modification, qui compte dans la limite anti-flood du serveur.",
+        "retentionLabel": "Conserver pendant (jours)",
+        "retentionHint": "{{min}} à {{max}} jours. Les entrées plus anciennes sont supprimées toutes les heures.",
+        "maxRowsLabel": "Conserver au maximum (entrées)",
+        "maxRowsHint": "{{min}} à {{max}}. Au-delà, les entrées les plus anciennes partent en premier, quel que soit leur âge.",
+        "saved": "Paramètres du journal des modifications enregistrés",
+        "saveFailed": "Les paramètres du journal des modifications n'ont pas pu être enregistrés",
+        "storedTitle": "Stocké",
+        "stored_one": "{{count}} entrée stockée.",
+        "stored_other": "{{count}} entrées stockées.",
+        "oldest": "La plus ancienne date du {{date}}.",
+        "clear": "Vider le journal",
+        "clearTitle": "Vider le journal des modifications ?",
+        "clearDescription_one": "{{count}} entrée sera supprimée définitivement. Le vidage est ensuite enregistré comme une nouvelle modification.",
+        "clearDescription_other": "{{count}} entrées seront supprimées définitivement. Le vidage est ensuite enregistré comme une nouvelle modification.",
+        "cleared_one": "{{count}} entrée supprimée",
+        "cleared_other": "{{count}} entrées supprimées",
+        "clearFailed": "Le journal n'a pas pu être vidé"
+      }
+    },
     "bans": {
       "lastNickname": "Dernier pseudo",
       "reason": "Raison",

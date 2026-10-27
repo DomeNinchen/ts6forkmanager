@@ -35,20 +35,22 @@ export function SortHeader<C extends string>({
 }
 
 export function Pager({
-  page, pageSize, total, onPage, extra,
+  page, pageSize, total, onPage, extra, countText,
 }: {
   page: number;
   pageSize: number;
   total: number;
   onPage: (page: number) => void;
   extra?: ReactNode;
+  /** The "N entries" line in the using page's own words; the journal's by default. */
+  countText?: string;
 }) {
   const { t } = useTranslation();
   const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <p className="text-xs text-muted-foreground">{t('pages.connectionJournal.resultCount', { count: total })}</p>
-      <div className="flex items-center gap-2">
+      <p className="text-xs text-muted-foreground">{countText ?? t('pages.connectionJournal.resultCount', { count: total })}</p>
+      <div className="flex flex-wrap items-center gap-2">
         {extra}
         <Button variant="outline" size="sm" onClick={() => onPage(page - 1)} disabled={page <= 1}>
           {t('components.dataTable.previous')}

@@ -102,6 +102,7 @@
       "bans": "Bans",
       "tokens": "Tokens",
       "connectionJournal": "Connection Journal",
+      "changeLog": "Change Log",
       "files": "Files",
       "icons": "Icons",
       "complaints": "Complaints",
@@ -467,6 +468,84 @@
       "signingIn": "Signing in...",
       "signIn": "Sign In",
       "or": "or"
+    },
+    "changeLog": {
+      "title": "Change Log",
+      "subtitle": "What web users changed through this interface: who, on which target, with which values, and how it ended. Secrets such as passwords and API keys are never in it, only the fact that they were changed. Admins only; commands from the query console are in its own log.",
+      "tabs": {
+        "log": "Log",
+        "settings": "Settings"
+      },
+      "searchPlaceholder": "Search user, route or target ID",
+      "filters": {
+        "range": "Period",
+        "area": "Area",
+        "anyArea": "All areas",
+        "method": "Method",
+        "anyMethod": "All methods",
+        "result": "Result",
+        "anyResult": "All results",
+        "server": "Server",
+        "anyServer": "All servers",
+        "pageSize": "Entries per page",
+        "reset": "Reset filters"
+      },
+      "range": {
+        "24h": "Last 24 hours",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "all": "All time"
+      },
+      "status": {
+        "pending": "pending",
+        "ok": "succeeded",
+        "error": "failed",
+        "denied": "denied"
+      },
+      "columns": {
+        "time": "Time",
+        "user": "User",
+        "action": "Change",
+        "target": "Target",
+        "result": "Result",
+        "address": "Address"
+      },
+      "virtualServer": "Virtual server {{id}}",
+      "body": "Values sent",
+      "tsLogged": "Also noted in the TeamSpeak server log",
+      "ipNotRecorded": "not recorded",
+      "empty": "No changes for these filters.",
+      "loadFailed": "The change log could not be loaded.",
+      "resultCount_one": "{{count}} entry",
+      "resultCount_other": "{{count}} entries",
+      "perPage": "{{count}} per page",
+      "settings": {
+        "title": "Recording and retention",
+        "description": "For every change made through the interface the log keeps the time, the user and their role, the area and target, the values sent (secrets only as \"changed\"), the result and, if enabled, the address. In many places addresses are personal data: keep them only as long as you need them. This is not legal advice.",
+        "enabledLabel": "Record changes",
+        "enabledHint": "When off, nothing new is recorded; what is stored stays until it is pruned or cleared. While it is on, a change to users, server connections, instance or app settings is refused if its entry cannot be written.",
+        "recordIpLabel": "Store the web user's address",
+        "recordIpHint": "The address a change came from (see TRUST_PROXY). Applies to new entries.",
+        "tsLogLabel": "Also write to the TeamSpeak server log",
+        "tsLogHint": "Off by default: every successful change on a TeamSpeak server adds a line to its server log. That costs one extra query per change, which counts against the server's flood limit.",
+        "retentionLabel": "Keep for (days)",
+        "retentionHint": "{{min}} to {{max}} days. Older entries are removed every hour.",
+        "maxRowsLabel": "Keep at most (entries)",
+        "maxRowsHint": "{{min}} to {{max}}. Beyond that the oldest entries go first, however old they are.",
+        "saved": "Change log settings saved",
+        "saveFailed": "Change log settings could not be saved",
+        "storedTitle": "Stored",
+        "stored_one": "{{count}} entry stored.",
+        "stored_other": "{{count}} entries stored.",
+        "oldest": "The oldest is from {{date}}.",
+        "clear": "Clear log",
+        "clearTitle": "Clear the change log?",
+        "clearDescription_one": "{{count}} entry will be deleted for good. Clearing it is then recorded as a new change.",
+        "clearDescription_other": "{{count}} entries will be deleted for good. Clearing it is then recorded as a new change.",
+        "cleared_one": "{{count}} entry deleted",
+        "cleared_other": "{{count}} entries deleted",
+        "clearFailed": "The log could not be cleared"
+      }
     },
     "connectionJournal": {
       "title": "Connection Journal",
