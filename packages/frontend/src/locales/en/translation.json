@@ -516,6 +516,17 @@
       "ipNotRecorded": "not recorded",
       "empty": "No changes for these filters.",
       "loadFailed": "The change log could not be loaded.",
+      "diff": {
+        "title": "Before / after",
+        "before": "Before",
+        "after": "After",
+        "notSet": "not set",
+        "noField": "No field changed.",
+        "deleted": "Deleted:",
+        "deletedList_one": "{{count}} entry deleted, {{shown}} of them kept here:",
+        "deletedList_other": "{{count}} entries deleted, {{shown}} of them kept here:",
+        "unavailable": "The state before could not be read ({{reason}}); the change went ahead anyway."
+      },
       "resultCount_one": "{{count}} entry",
       "resultCount_other": "{{count}} entries",
       "perPage": "{{count}} per page",

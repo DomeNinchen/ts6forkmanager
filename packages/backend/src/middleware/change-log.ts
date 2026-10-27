@@ -14,6 +14,14 @@ import {
   type ChangeOutcome,
 } from '../utils/change-log.js';
 import { buildLogMessage, writeTeamSpeakLog } from '../console/ts-log.js';
+import type { WebQueryClient } from '../ts-client/webquery-client.js';
+import {
+  diffJson,
+  snapshotRuleFor,
+  takeSnapshot,
+  type Snapshot,
+  type SnapshotContext,
+} from '../utils/change-log-snapshots.js';
 
 /**
  * 403 is a change the role check turned away. Everything else from 4xx up failed - including a
@@ -37,7 +45,7 @@ async function writeTsLog(req: Request, base: ChangeBase): Promise<boolean> {
   }
 }
 
-function outcome(httpStatus: number, startedAt: number, errorMessage: string | null, loggedToTeamSpeak: boolean): ChangeOutcome {
+function outcome(httpStatus: number, startedAt: number, errorMessage: string | null, loggedToTeamSpeak: boolean, changes: string | null): ChangeOutcome {
   const status = statusOf(httpStatus);
   return {
     status,
@@ -45,7 +53,43 @@ function outcome(httpStatus: number, startedAt: number, errorMessage: string | n
     errorMessage: status === 'ok' ? null : errorMessage,
     durationMs: Date.now() - startedAt,
     loggedToTeamSpeak,
+    changes: status === 'ok' ? changes : null,
   };
+}
+
+/** The path segments below the area, decoded: what a snapshot rule finds its target by. */
+function rawLeaf(url: string, area: string): string[] {
+  const rest = url.split('?')[0].split('/').filter(Boolean).slice(1);
+  const at = rest.indexOf(area, 2);
+  return (at < 0 ? [] : rest.slice(at + 1)).map((s) => {
+    try { return decodeURIComponent(s); } catch { return s; }
+  });
+}
+
+type Before = { ctx: SnapshotContext; snap: Snapshot } | null;
+
+/** Reads the target of a change before it runs (R6 stage 2). Never throws and never blocks longer than the snapshot timeout. */
+async function readBefore(req: Request, prisma: PrismaClient, rule: NonNullable<ReturnType<typeof snapshotRuleFor>>, target: ChangeTarget): Promise<Before> {
+  try {
+    if (!(await getChangeLogSettings(prisma)).enabled) return null;
+  } catch {
+    return null;
+  }
+  let client: WebQueryClient | undefined;
+  try {
+    client = target.serverConfigId === null ? undefined : (req.app.locals.connectionPool as ConnectionPool | undefined)?.getClient(target.serverConfigId);
+  } catch {
+    client = undefined;
+  }
+  const ctx: SnapshotContext = {
+    // Only read when there is a client; without one the rule is never asked (the snapshot is "unavailable").
+    client: client as WebQueryClient,
+    sid: target.virtualServerId ?? 0,
+    leaf: rawLeaf(req.originalUrl, target.area),
+    body: req.body && typeof req.body === 'object' ? req.body : {},
+  };
+  if (!client) return { ctx, snap: { ok: false, reason: 'no connection to this server' } };
+  return { ctx, snap: await takeSnapshot(rule, ctx) };
 }
 
 /**
@@ -96,6 +140,17 @@ export function changeLogMiddleware(req: Request, res: Response, next: NextFunct
     body: maskedBody,
   });
 
+  // Stage 2: the targets with a snapshot rule are read before they change. Only for an admin -
+  // every such route is admin-only, so another role's attempt is turned away and costs the
+  // TeamSpeak server no read. Everything else keeps its hot path untouched.
+  const rule = req.user?.role === 'admin' ? snapshotRuleFor(req.method, target.routePattern) : undefined;
+  const before: Promise<Before> = rule ? readBefore(req, prisma, rule, target) : Promise.resolve(null);
+  const changesOf = async (httpStatus: number): Promise<string | null> => {
+    if (!rule || httpStatus >= 400) return null;
+    const b = await before;
+    return b ? diffJson(rule, b.snap, b.ctx) : null;
+  };
+
   if (target.critical) {
     // Every critical area sits behind the global login check, so the caller is known here.
     const user = req.user;
@@ -110,6 +165,7 @@ export function changeLogMiddleware(req: Request, res: Response, next: NextFunct
         settings = null;
       }
       if (settings && !settings.enabled) return next();
+      await before;
       const base = baseOf(user, settings?.recordIp === false ? null : clientIpOf(req));
       let id: number;
       try {
@@ -120,7 +176,7 @@ export function changeLogMiddleware(req: Request, res: Response, next: NextFunct
       res.on('finish', () => {
         void (async () => {
           const loggedToTeamSpeak = settings?.writeToTsLog && res.statusCode < 400 ? await writeTsLog(req, base) : false;
-          await finishChange(prisma, id, outcome(res.statusCode, startedAt, sentError, loggedToTeamSpeak));
+          await finishChange(prisma, id, outcome(res.statusCode, startedAt, sentError, loggedToTeamSpeak, await changesOf(res.statusCode)));
         })();
       });
       next();
@@ -143,8 +199,10 @@ export function changeLogMiddleware(req: Request, res: Response, next: NextFunct
       if (!settings.enabled) return;
       const base = baseOf(user, settings.recordIp ? clientIpOf(req) : null);
       const loggedToTeamSpeak = settings.writeToTsLog && res.statusCode < 400 ? await writeTsLog(req, base) : false;
-      recordChange(prisma, { ...base, ...outcome(res.statusCode, startedAt, sentError, loggedToTeamSpeak) });
+      recordChange(prisma, { ...base, ...outcome(res.statusCode, startedAt, sentError, loggedToTeamSpeak, await changesOf(res.statusCode)) });
     })();
   });
-  next();
+  // A route with a snapshot rule waits for its read (at most the snapshot timeout); the rest goes on at once.
+  if (rule) void before.then(() => next());
+  else next();
 }

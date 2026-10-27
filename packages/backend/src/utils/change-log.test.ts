@@ -52,7 +52,7 @@ test('non-critical rows are written as one batch, and a flush with nothing waiti
   const row = (n: number): ChangeBase & ChangeOutcome => ({
     createdAt: new Date(), userId: 1, username: 'a', role: 'admin', ip: null, method: 'PUT', area: 'channels',
     routePattern: '/x', serverConfigId: null, virtualServerId: null, targetId: String(n), body: null,
-    status: 'ok', httpStatus: 200, errorMessage: null, durationMs: 1, loggedToTeamSpeak: false,
+    status: 'ok', httpStatus: 200, errorMessage: null, durationMs: 1, loggedToTeamSpeak: false, changes: null,
   });
   recordChange(prisma, row(1));
   recordChange(prisma, row(2));

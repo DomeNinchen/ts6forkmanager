@@ -164,6 +164,17 @@
       "ipNotRecorded": "non enregistrée",
       "empty": "Aucune modification pour ces filtres.",
       "loadFailed": "Le journal des modifications n'a pas pu être chargé.",
+      "diff": {
+        "title": "Avant / après",
+        "before": "Avant",
+        "after": "Après",
+        "notSet": "non défini",
+        "noField": "Aucun champ n'a changé.",
+        "deleted": "Supprimé :",
+        "deletedList_one": "{{count}} entrée supprimée, dont {{shown}} conservée ici :",
+        "deletedList_other": "{{count}} entrées supprimées, dont {{shown}} conservées ici :",
+        "unavailable": "L'état avant n'a pas pu être lu ({{reason}}) ; la modification a quand même été effectuée."
+      },
       "resultCount_one": "{{count}} entrée",
       "resultCount_other": "{{count}} entrées",
       "perPage": "{{count}} par page",

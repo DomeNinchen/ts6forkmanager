@@ -4,11 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.76.1 · frontend 3.93.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.77.0 · frontend 3.94.0 · sidecar 2.1.4**
 
 ### New Features
 
-- **Change Log page** (Security, admins) — Records every change a web user makes through the interface: who, the area and target, the values sent (secrets only as "(changed)", never their value; a privilege key or temporary password that is part of the address is shown only by name), the result with TeamSpeak's own reason, the duration and the address, including attempts the role check refused. Filters for period, area, method, result, server and text; retention, row cap, address recording and an optional copy in the TeamSpeak server log are set on the page ([Change Log](https://github.com/DomeNinchen/ts6forkmanager/wiki/Change-Log)). *backend 2.76.0–2.76.1, frontend 3.93.0* [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328), [#329](https://github.com/DomeNinchen/ts6forkmanager/pull/329)
+- **Change Log page** (Security, admins) — Records every change a web user makes through the interface: who, the area and target, the values sent (secrets only as "(changed)", never their value; a privilege key or temporary password that is part of the address is shown only by name), the result with TeamSpeak's own reason, the duration and the address, including attempts the role check refused. For channels, server and channel groups, permissions, virtual server and instance settings, bans, privilege keys and temporary passwords it also shows before and after (only the fields that changed, or what was deleted). Filters for period, area, method, result, server and text; retention, row cap, address recording and an optional copy in the TeamSpeak server log are set on the page ([Change Log](https://github.com/DomeNinchen/ts6forkmanager/wiki/Change-Log)). *backend 2.76.0–2.77.0, frontend 3.93.0–3.94.0* [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328), [#329](https://github.com/DomeNinchen/ts6forkmanager/pull/329), [#330](https://github.com/DomeNinchen/ts6forkmanager/pull/330)
 
 - **Time zone for Animated Channel** — The Animated Channel node and its template get a time zone setting, like the cron trigger, so `{{time.*}}` in the animated text shows that zone's time instead of the backend's clock (UTC in Docker). *backend 2.74.0, frontend 3.91.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)
 - **Execution list in the flow editor** — An **Executions** button opens a side panel with the flow's last 50 runs (running, completed, failed with the error, or dropped at the concurrency limit) and, on a click, the run's log line by line. It refreshes every 5 seconds while open; admins and bot operators see it. *backend 2.70.2, frontend 3.89.0* [#319](https://github.com/DomeNinchen/ts6forkmanager/pull/319)
@@ -132,13 +132,14 @@ Versions at the end of the month: **backend 2.76.1 · frontend 3.93.0 · sidecar
 
 **Database**
 
-- The first start after this update applies a database migration (one new table for the change log, nothing removed), with the usual backup to `data/backups/` beforehand. [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
+- The first start after this update applies a database migration (one new table for the change log and one column for its before/after, nothing removed), with the usual backup to `data/backups/` beforehand. [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328), [#330](https://github.com/DomeNinchen/ts6forkmanager/pull/330)
 - The first start after this update adopts your existing database into the new migration history (a one-time, automatic baseline) and writes a backup to `data/backups/` beforehand; no action is needed, and all your data is kept. Schema changes are applied as versioned migrations from now on. If a start ever reports a schema mismatch it stops instead of changing data — restore from `data/backups/` and check the logs. ([Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting)) [#321](https://github.com/DomeNinchen/ts6forkmanager/pull/321)
 
 **Change log**
 
 - The change log is on by default and stores the address each change came from; switch the address (or the whole log) off on its Settings tab if you do not want that, and mention it in your privacy information where that applies. Entries are kept 30 days, at most 100 000. [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
 - While it is on, a change to users and roles, server connections, instance settings or the app's own settings is refused with an error if its entry cannot be written (a full disk, a locked database); other changes still go through. [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
+- A change to a channel, group, permission, virtual server or instance setting, ban or privilege key reads its target once before it runs, for the before/after: one extra query to the TeamSpeak server per such change, which counts against its flood limits. If that read fails or takes longer than 3 seconds, the change runs anyway, without its before/after. [#330](https://github.com/DomeNinchen/ts6forkmanager/pull/330)
 
 **Bot flows & music bots**
 

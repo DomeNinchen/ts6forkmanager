@@ -6,6 +6,7 @@ import {
   UI_CHANGE_METHODS,
   UI_CHANGE_RANGES,
   UI_CHANGE_STATUSES,
+  type UiChangeDiff,
   type UiChangeLogEntry,
   type UiChangeMethod,
   type UiChangeRange,
@@ -237,6 +238,55 @@ function prettyBody(body: string): string {
   }
 }
 
+/** Before and after of a change (R6 stage 2): the changed fields, or what was deleted, or why the state before is missing. */
+function DiffView({ diff }: { diff: UiChangeDiff }) {
+  const { t } = useTranslation();
+  const value = (v: string | null) =>
+    v === null ? <span className="italic text-muted-foreground">{t('pages.changeLog.diff.notSet')}</span> : <span className="break-all">{v}</span>;
+  const pairs = (row: Record<string, string>) => Object.entries(row).map(([k, v]) => `${k}=${v}`).join(' · ');
+
+  return (
+    <div className="mt-1 space-y-1 rounded bg-muted/40 p-2">
+      {diff.unavailable && <p className="text-muted-foreground">{t('pages.changeLog.diff.unavailable', { reason: diff.unavailable })}</p>}
+      {diff.fields && (diff.fields.length === 0 ? (
+        <p className="text-muted-foreground">{t('pages.changeLog.diff.noField')}</p>
+      ) : (
+        // Stacked rather than a table: the column is narrow, and a permission name is long.
+        <ul className="space-y-1 font-mono-data">
+          {diff.fields.map((f) => (
+            <li key={f.field}>
+              <div className="break-words text-muted-foreground">{f.field}</div>
+              <div className="pl-2">
+                <span className="sr-only">{t('pages.changeLog.diff.before')}: </span>{value(f.before)}
+                <span aria-hidden="true" className="px-1 text-muted-foreground">→</span>
+                <span className="sr-only">{t('pages.changeLog.diff.after')}: </span>{value(f.after)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ))}
+      {diff.deleted && (
+        <div>
+          <p className="text-muted-foreground">{t('pages.changeLog.diff.deleted')}</p>
+          <dl className="font-mono-data">
+            {Object.entries(diff.deleted).map(([k, v]) => (
+              <div key={k} className="flex gap-2"><dt className="text-muted-foreground">{k}</dt><dd className="break-all">{v}</dd></div>
+            ))}
+          </dl>
+        </div>
+      )}
+      {diff.deletedList && (
+        <div>
+          <p className="text-muted-foreground">{t('pages.changeLog.diff.deletedList', { count: diff.deletedList.count, shown: diff.deletedList.items.length })}</p>
+          <ul className="max-h-48 overflow-auto font-mono-data">
+            {diff.deletedList.items.map((row, i) => <li key={i} className="break-all">{pairs(row)}</li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChangeRow({ entry }: { entry: UiChangeLogEntry }) {
   const { t } = useTranslation();
   const server = entry.serverConfigId !== null ? entry.serverName ?? `#${entry.serverConfigId}` : null;
@@ -259,6 +309,12 @@ function ChangeRow({ entry }: { entry: UiChangeLogEntry }) {
           <span>{entry.area}</span>
         </div>
         <div className="font-mono-data text-[11px] text-muted-foreground break-all mt-1">{entry.routePattern}</div>
+        {entry.changes && (
+          <details className="mt-1 text-[11px]" data-testid="change-log-diff">
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t('pages.changeLog.diff.title')}</summary>
+            <DiffView diff={entry.changes} />
+          </details>
+        )}
         {entry.body && (
           <details className="mt-1 text-[11px]">
             <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t('pages.changeLog.body')}</summary>

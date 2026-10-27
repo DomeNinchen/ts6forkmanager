@@ -516,6 +516,17 @@
       "ipNotRecorded": "nicht gespeichert",
       "empty": "Keine Änderungen für diese Filter.",
       "loadFailed": "Das Änderungsprotokoll konnte nicht geladen werden.",
+      "diff": {
+        "title": "Vorher / Nachher",
+        "before": "Vorher",
+        "after": "Nachher",
+        "notSet": "nicht gesetzt",
+        "noField": "Kein Feld hat sich geändert.",
+        "deleted": "Gelöscht wurde:",
+        "deletedList_one": "{{count}} Eintrag gelöscht, davon {{shown}} aufbewahrt:",
+        "deletedList_other": "{{count}} Einträge gelöscht, davon {{shown}} aufbewahrt:",
+        "unavailable": "Der Zustand vorher konnte nicht gelesen werden ({{reason}}); die Änderung wurde trotzdem ausgeführt."
+      },
       "resultCount_one": "{{count}} Eintrag",
       "resultCount_other": "{{count}} Einträge",
       "perPage": "{{count}} pro Seite",

@@ -20,7 +20,7 @@ instanceRoutes.get('/', async (req: Request, res: Response, next) => {
 });
 
 // M3: Whitelist safe parameters for instanceedit
-const ALLOWED_INSTANCE_PARAMS = new Set([
+export const ALLOWED_INSTANCE_PARAMS = new Set([
   'serverinstance_guest_serverquery_group',
   'serverinstance_template_serveradmin_group',
   'serverinstance_template_serverdefault_group',
