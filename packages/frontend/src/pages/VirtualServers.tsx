@@ -133,8 +133,8 @@ export default function VirtualServers() {
               )}
             >
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-4">
                     <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
                       <Server className="h-5 w-5 text-muted-foreground" />
                     </div>
@@ -146,7 +146,7 @@ export default function VirtualServers() {
                         </Badge>
                         {isSelected && <Badge variant="outline" className="text-[10px] border-primary text-primary">{t('pages.virtualServers.selected')}</Badge>}
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
                         <span className="font-mono-data">SID: {vs.virtualserver_id}</span>
                         <span className="font-mono-data">{t('pages.serverStats.port')}: {vs.virtualserver_port}</span>
                         {vs.virtualserver_status === 'online' && (

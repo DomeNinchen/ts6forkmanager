@@ -278,7 +278,7 @@ export default function ChannelGroups() {
         )}
       </div>
 
-      <div className="flex gap-1 p-1 bg-muted/30 rounded-lg w-fit">
+      <div className="flex gap-1 p-1 bg-muted/30 rounded-lg w-fit max-w-full overflow-x-auto">
         <button
           onClick={() => setTab('groups')}
           className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', tab === 'groups' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground')}

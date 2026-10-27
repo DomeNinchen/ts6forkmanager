@@ -1194,7 +1194,7 @@ export default function Permissions() {
       </div>
 
       {/* Layer Tabs */}
-      <div className="flex gap-1 p-1 bg-muted/30 rounded-lg w-fit">
+      <div className="flex gap-1 p-1 bg-muted/30 rounded-lg w-fit max-w-full overflow-x-auto">
         {layers.map(({ key, label, icon: Icon }) => (
           <button
             key={key}

@@ -98,9 +98,9 @@ export default function ServerLogs() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">{t('nav.items.serverLogs')}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setShowAddEntry(true)}>
             <Plus className="h-4 w-4 mr-1" /> {t('pages.serverLogs.addEntry')}
           </Button>
