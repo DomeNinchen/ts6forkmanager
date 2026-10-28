@@ -5,8 +5,10 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, DatabaseBackup,
+  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, DatabaseBackup, X,
 } from 'lucide-react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { Dialog, DialogDrawerContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/ui.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -140,9 +142,46 @@ export function useVisibleNavSections() {
     .filter((section) => section.items.length > 0);
 }
 
+// Tailwind's md breakpoint: below it the sidebar would squeeze a phone-width page, so it becomes a drawer.
+const PHONE_QUERY = '(max-width: 767.98px)';
+const subscribePhone = (onChange: () => void) => {
+  const mq = window.matchMedia(PHONE_QUERY);
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+};
+const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
+
 export function Sidebar() {
   const { t } = useTranslation();
-  const { sidebarCollapsed, toggleSidebar, collapsedSections, toggleSection } = useUiStore();
+  const phone = useSyncExternalStore(subscribePhone, isPhone);
+  const { sidebarCollapsed, mobileNavOpen, setMobileNavOpen } = useUiStore();
+  const location = useLocation();
+
+  // Any navigation (location.key also changes on a click on the current page) or crossing the breakpoint closes the drawer.
+  useEffect(() => setMobileNavOpen(false), [location.key, phone, setMobileNavOpen]);
+
+  if (!phone) return <SidebarPanel collapsed={sidebarCollapsed} />;
+  return (
+    <Dialog open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+      <DialogDrawerContent
+        aria-describedby={undefined}
+        // The opener sits in the Header, outside this Dialog, so Radix cannot hand focus back to it by itself.
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          document.querySelector<HTMLElement>('[data-mobile-nav-trigger]')?.focus();
+        }}
+      >
+        <DialogTitle className="sr-only">{t('nav.menu')}</DialogTitle>
+        <SidebarPanel collapsed={false} onClose={() => setMobileNavOpen(false)} />
+      </DialogDrawerContent>
+    </Dialog>
+  );
+}
+
+/** The sidebar itself; `onClose` turns it into the phone drawer, where the collapse button becomes a close button. */
+function SidebarPanel({ collapsed: sidebarCollapsed, onClose }: { collapsed: boolean; onClose?: () => void }) {
+  const { t } = useTranslation();
+  const { toggleSidebar, collapsedSections, toggleSection } = useUiStore();
   const location = useLocation();
   const navSections = getNavSections(t);
   const navCtx = useNavContext();
@@ -246,14 +285,14 @@ export function Sidebar() {
           </NavLink>
 
           <button
-            onClick={toggleSidebar}
+            onClick={onClose ?? toggleSidebar}
             className={cn(
               'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full',
               sidebarCollapsed && 'justify-center px-0 py-2',
             )}
           >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            {!sidebarCollapsed && <span>{t('nav.collapse')}</span>}
+            {onClose ? <X className="h-4 w-4" /> : sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {!sidebarCollapsed && <span>{t(onClose ? 'nav.closeMenu' : 'nav.collapse')}</span>}
           </button>
         </div>
       </aside>

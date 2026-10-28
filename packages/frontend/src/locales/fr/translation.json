@@ -81,6 +81,9 @@
   },
   "nav": {
     "collapse": "Réduire",
+    "menu": "Navigation",
+    "openMenu": "Ouvrir la navigation",
+    "closeMenu": "Fermer la navigation",
     "sections": {
       "overview": "Vue d'ensemble",
       "management": "Gestion",
