@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { Worker } from 'node:worker_threads';
+import { fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import type {
   BackupCheckResult,
@@ -170,17 +170,24 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // Built: backup-worker.js next to this file. Under tsx (dev) only the .ts exists, which Node runs itself (type stripping).
 const WORKER_FILE = fs.existsSync(path.join(here, 'backup-worker.js')) ? path.join(here, 'backup-worker.js') : path.join(here, 'backup-worker.ts');
 
+/**
+ * Runs a job in a child process. Not a worker thread: SQLite's file locks are per process, so a
+ * connection from node:sqlite inside the backend's own process cannot see Prisma's better-sqlite3
+ * connection, takes the WAL for unused when it closes, and deletes it - the backend then writes
+ * into a file nobody else sees, lost on a crash and missing from every later backup.
+ */
 function runWorker(job: BackupJob): Promise<InspectedDb> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(WORKER_FILE, { workerData: job });
+    const child = fork(WORKER_FILE, [], { stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });
     let settled = false;
-    worker.once('message', (msg: { ok: true; result: InspectedDb } | { ok: false; error: string }) => {
+    child.once('message', (msg: { ok: true; result: InspectedDb } | { ok: false; error: string }) => {
       settled = true;
       if (msg.ok) resolve(msg.result);
       else reject(new Error(msg.error));
     });
-    worker.once('error', (err) => { settled = true; reject(err); });
-    worker.once('exit', (code) => { if (!settled) reject(new Error(`Backup worker exited with code ${code}`)); });
+    child.once('error', (err) => { if (!settled) { settled = true; reject(err); } });
+    child.once('exit', (code) => { if (!settled) { settled = true; reject(new Error(`Backup process exited with code ${code}`)); } });
+    child.send(job);
   });
 }
 

@@ -1,7 +1,7 @@
-// The SQLite and hashing work of a backup, off the main thread: VACUUM INTO and an
-// integrity check of a 100 MB database take seconds of synchronous work, and the main
-// thread also feeds the music bots (see backups.ts).
-import { workerData, parentPort } from 'worker_threads';
+// The SQLite and hashing work of a backup, in a child process of its own (see backups.ts):
+// VACUUM INTO and an integrity check of a 100 MB database take seconds of synchronous work
+// that must not stall the music bots, and the database has to be opened from another process,
+// never from a second SQLite library inside the backend's own.
 import { DatabaseSync } from 'node:sqlite';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -101,9 +101,12 @@ async function run(job: BackupJob): Promise<InspectedDb> {
   return { ...checked, sha256: await sha256(job.file), size: fs.statSync(job.file).size };
 }
 
-if (parentPort && workerData) {
-  run(workerData as BackupJob).then(
-    (result) => parentPort!.postMessage({ ok: true, result }),
-    (err: Error) => parentPort!.postMessage({ ok: false, error: err.message }),
-  );
+// Started by backups.ts with an IPC channel: one job in, one answer out, then the process ends.
+if (process.send) {
+  process.once('message', (job: BackupJob) => {
+    run(job).then(
+      (result) => process.send!({ ok: true, result }, () => process.disconnect()),
+      (err: Error) => process.send!({ ok: false, error: err.message }, () => process.disconnect()),
+    );
+  });
 }
