@@ -1,4 +1,5 @@
-import { LogOut, User } from 'lucide-react';
+import { LogOut, Menu, User } from 'lucide-react';
+import { useUiStore } from '@/stores/ui.store';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,12 +13,27 @@ export function Header() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const logout = useLogout();
+  const { mobileNavOpen, setMobileNavOpen } = useUiStore();
 
   return (
-    <header className="flex items-center justify-between h-14 px-5 border-b border-border bg-card/50 backdrop-blur-xs">
-      <ServerSelector />
+    <header className="flex items-center justify-between gap-2 h-14 px-3 md:px-5 border-b border-border bg-card/50 backdrop-blur-xs">
+      <div className="flex min-w-0 items-center gap-2">
+        {/* Below md the sidebar is a drawer (see Sidebar), opened from here. */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 shrink-0 p-0 md:hidden"
+          aria-label={t('nav.openMenu')}
+          aria-expanded={mobileNavOpen}
+          data-mobile-nav-trigger
+          onClick={() => setMobileNavOpen(true)}
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+        <ServerSelector />
+      </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <ThemeToggle />
 
         <DropdownMenu>
@@ -26,7 +42,7 @@ export function Header() {
               <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
                 <User className="h-3 w-3 text-primary" />
               </div>
-              <span className="text-xs">{user?.displayName}</span>
+              <span className="hidden text-xs sm:inline">{user?.displayName}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
