@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { SshQueryClient } from './ssh-query-client.js';
-import { decrypt } from '../utils/crypto.js';
+import { REENTER_ON_CONNECTION, decryptOrNull } from '../utils/crypto.js';
 
 export declare interface EventBridge {
   on(event: 'tsEvent', listener: (configId: number, sid: number, eventName: string, data: Record<string, string>) => void): this;
@@ -43,11 +43,14 @@ export class EventBridge extends EventEmitter {
       return;
     }
 
+    const password = decryptOrNull(serverConfig.sshPassword, `The SSH password of server connection ${configId}`, REENTER_ON_CONNECTION);
+    if (password === null) return;
+
     const client = new SshQueryClient({
       host: serverConfig.host,
       port: serverConfig.sshPort,
       username: serverConfig.sshUsername,
-      password: decrypt(serverConfig.sshPassword),
+      password,
     });
 
     client.on('ready', async () => {
@@ -166,12 +169,14 @@ export class EventBridge extends EventEmitter {
 
     const serverConfig = await this.prisma.tsServerConfig.findUnique({ where: { id: configId } });
     if (!serverConfig?.sshUsername || !serverConfig.sshPassword || !serverConfig.sshPort) return;
+    const password = decryptOrNull(serverConfig.sshPassword, `The SSH password of server connection ${configId}`, REENTER_ON_CONNECTION);
+    if (password === null) return;
 
     const client = new SshQueryClient({
       host: serverConfig.host,
       port: serverConfig.sshPort,
       username: serverConfig.sshUsername,
-      password: decrypt(serverConfig.sshPassword),
+      password,
     });
 
     client.on('ready', async () => {

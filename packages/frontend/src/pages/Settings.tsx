@@ -722,7 +722,8 @@ function ConnectionsTab() {
                   title={server.hasWebQuery === false ? t('pages.settings.connections.needsApiKey') : undefined}
                   onClick={() => testServer.mutate(server.id, {
                   onSuccess: (data: any) => data?.success ? toast.success(t('pages.settings.connections.connectionSuccessful')) : toast.error(data?.error ? t('pages.settings.connections.connectionFailedWithError', { error: data.error }) : t('pages.settings.connections.connectionFailed')),
-                  onError: () => toast.error(t('pages.settings.connections.connectionFailed')),
+                  // The backend's reason (a stored key it cannot decrypt, say) is more use than "failed".
+                  onError: (err: any) => toast.error(err?.response?.data?.error ? t('pages.settings.connections.connectionFailedWithError', { error: err.response.data.error }) : t('pages.settings.connections.connectionFailed')),
                 })}>
                   <TestTube className="h-3 w-3 mr-1" /> {t('pages.settings.connections.test')}
                 </Button>

@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.78.0 · frontend 3.96.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.78.1 · frontend 3.96.1 · sidecar 2.1.4**
 
 ### New Features
 
@@ -44,6 +44,7 @@ Versions at the end of the month: **backend 2.78.0 · frontend 3.96.0 · sidecar
 
 ### Improvements
 
+- **Credentials from another key** — A stored WebQuery API key, Bot Identity key, SSH password, music bot identity or two-factor secret that the current `ENCRYPTION_KEY` (or `JWT_SECRET`) cannot decrypt, as in a database restored without its key, now only takes out what needs it: that connection runs without WebQuery until its key is set again, the bot is not loaded (its stored identity is kept), and the user signs in with a recovery code. The log names each one and what to do, and **Test** on a connection shows the reason. *backend 2.78.1, frontend 3.96.1*
 - **Cockpit navigation on phones** — Below 768 px the sidebar no longer sits next to the page (which left it about 145 px wide on a phone); a menu button in the header opens it as a drawer that closes on navigation, Escape or a tap beside it. Wider screens keep the sidebar and its collapsed or expanded choice as before. Tab bars and page toolbars that were wider than a phone (Settings, Music Bots, Permissions, Server Logs and others) now wrap or scroll on their own instead of widening the page. *frontend 3.95.0* [#331](https://github.com/DomeNinchen/ts6forkmanager/pull/331)
 - **Flow executions across a backend restart** — An execution waiting in a Delay with nothing else pending behind it goes on after a restart, crash or update, with its variables, and runs its next action once; if the backend comes back more than 5 minutes after the Delay ended, it is marked interrupted instead. An execution a restart cuts off anywhere else no longer stays "running" forever: the execution list shows it as **Interrupted**, with the node it had started last, and nothing is repeated. Switching a flow off while an execution waits cancels it (**Cancelled**), and one that waits shows when its Delay ends. On a regular stop or update, executions busy with a node get up to 5 seconds to finish. *backend 2.73.0–2.75.0, frontend 3.90.0–3.92.0* [#323](https://github.com/DomeNinchen/ts6forkmanager/pull/323), [#325](https://github.com/DomeNinchen/ts6forkmanager/pull/325)
 - **Animated channels run under the Bot Identity** — Like every other flow action, an Animated Channel renames its channel through the connection's Bot Identity when one is set, so the renames show up under its name in TeamSpeak. *backend 2.74.0* [#324](https://github.com/DomeNinchen/ts6forkmanager/pull/324)

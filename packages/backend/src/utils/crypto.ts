@@ -37,6 +37,26 @@ export function encrypt(plaintext: string): string {
   return `enc:${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
 }
 
+/** What to tell an admin when a stored secret cannot be decrypted. */
+export const UNDECRYPTABLE_HINT = 'cannot be decrypted with the current ENCRYPTION_KEY (or JWT_SECRET): it was stored with another key, for example in a restored database';
+
+/**
+ * `decrypt()` for a stored credential that one feature needs: null, with an error in the log,
+ * when it cannot be decrypted. A database restored without its key then disables that one
+ * connection, bot or login instead of stopping the backend. `remedy` tells the admin what to do.
+ */
+export function decryptOrNull(encrypted: string, what: string, remedy: string): string | null {
+  try {
+    return decrypt(encrypted);
+  } catch {
+    console.error(`[Crypto] ${what} ${UNDECRYPTABLE_HINT}. ${remedy}`);
+    return null;
+  }
+}
+
+/** For the stored logins of a server connection. */
+export const REENTER_ON_CONNECTION = 'Put the original key back, or set it again in the connection\'s settings.';
+
 /**
  * Decrypt a string encrypted by `encrypt()`.
  * If the string doesn't start with `enc:`, returns it as-is (plaintext migration).
