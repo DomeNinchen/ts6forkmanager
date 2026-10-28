@@ -17,6 +17,7 @@ import { setYtCookieFile } from './voice/audio/youtube.js';
 import { sweepStreamTempFiles } from './voice/streaming/video-download.js';
 import { loadDebugFlags } from './utils/debug-flags.js';
 import { startScheduledRestartChecker } from './utils/scheduled-restart.js';
+import { startBackupScheduler } from './utils/backups.js';
 import { startUpdateChecker } from './utils/update-check.js';
 import { scanMusicLibrary } from './voice/audio/music-library-scan.js';
 import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
@@ -70,6 +71,7 @@ async function main() {
   await prisma.$executeRawUnsafe('PRAGMA synchronous = NORMAL');
   await loadDebugFlags(prisma);
   startScheduledRestartChecker(prisma);
+  startBackupScheduler(prisma);
   startUpdateChecker(prisma);
   startPlayedSongCleanup(prisma);
   startJournalPruner(prisma);

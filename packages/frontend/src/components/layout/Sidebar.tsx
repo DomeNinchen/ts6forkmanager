@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, X,
+  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, DatabaseBackup, X,
 } from 'lucide-react';
 import { useEffect, useSyncExternalStore } from 'react';
 import { Dialog, DialogDrawerContent, DialogTitle } from '@/components/ui/dialog';
@@ -71,6 +71,8 @@ function getNavSections(t: TFunction) {
         { to: '/connection-journal', icon: Fingerprint, label: t('nav.items.connectionJournal'), visible: adminOnly },
         // Changes made through this app, on any connection or none, so it needs no WebQuery either.
         { to: '/change-log', icon: History, label: t('nav.items.changeLog'), visible: adminOnly },
+        // The manager's own database, not the selected server's.
+        { to: '/backups', icon: DatabaseBackup, label: t('nav.items.backups'), visible: adminOnly },
       ],
     },
     {

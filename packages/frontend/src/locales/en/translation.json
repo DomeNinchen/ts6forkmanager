@@ -106,6 +106,7 @@
       "tokens": "Tokens",
       "connectionJournal": "Connection Journal",
       "changeLog": "Change Log",
+      "backups": "Backups",
       "files": "Files",
       "icons": "Icons",
       "complaints": "Complaints",
@@ -559,6 +560,94 @@
         "cleared_one": "{{count}} entry deleted",
         "cleared_other": "{{count}} entries deleted",
         "clearFailed": "The log could not be cleared"
+      }
+    },
+    "backups": {
+      "title": "Backups",
+      "subtitle": "Backups of the manager's database: users, server connections, flows, music bots, settings and logs. Admins only, because a backup holds password hashes and the encrypted TeamSpeak credentials. The music files themselves are not included.",
+      "loadFailed": "Could not load the backups.",
+      "created": "Backup written ({{size}}).",
+      "createFailed": "The backup failed.",
+      "checkFailed": "Could not test the backup.",
+      "downloadStarted": "The download is starting.",
+      "downloadFailed": "Could not start the download.",
+      "deleted": "Backup deleted.",
+      "deleteFailed": "Could not delete the backup.",
+      "deleteTitle": "Delete backup?",
+      "deleteDescription": "The backup from {{time}} will be deleted for good.",
+      "empty": "No backups yet.",
+      "beforeVersion": "before {{version}}",
+      "beforeUpdateNote": "\"Before update\" copies are taken by the container itself before it applies database migrations. It keeps DB_BACKUP_KEEP of them; here they can be tested and downloaded, but not deleted.",
+      "lastFailed": {
+        "manual": "The backup from {{time}} failed.",
+        "scheduled": "The scheduled backup from {{time}} failed."
+      },
+      "now": {
+        "title": "Back up now",
+        "description": "Writes a copy of the running database to data/backups/managed/ in the backend-data volume. The app keeps running meanwhile. It first checks that at least twice the database's size is free.",
+        "databaseSize": "Database",
+        "freeSpace": "Free in the volume",
+        "lastRun": "Last backup",
+        "keyNote": "The key (ENCRYPTION_KEY, otherwise JWT_SECRET from the .env) is not in the backup. Without it, a backup's stored credentials and 2FA secrets cannot be used: keep it somewhere else. A backup in the volume is lost with the volume, so download the ones that matter.",
+        "button": "Back up now",
+        "running": "Backing up …"
+      },
+      "schedule": {
+        "title": "Schedule",
+        "enabledLabel": "Back up automatically",
+        "enabledHint": "At the chosen time (server time) on the chosen days.",
+        "timeLabel": "Time",
+        "daysLabel": "Days",
+        "serverTime": "Server time, now {{time}}.",
+        "keepLabel": "Scheduled backups to keep",
+        "keepHint": "The newest {{min}} to {{max}}. Manual backups stay until you delete them.",
+        "maxAgeLabel": "Maximum age in days",
+        "maxAgeNone": "no maximum age",
+        "maxAgeHint": "Empty = by count only. Otherwise {{min}} to {{max}}; older scheduled backups are deleted.",
+        "noDays": "Choose at least one day.",
+        "save": "Save",
+        "saved": "Schedule saved.",
+        "saveFailed": "Could not save the schedule."
+      },
+      "columns": {
+        "time": "Time",
+        "kind": "Kind",
+        "size": "Size",
+        "version": "Backend version",
+        "actions": "Actions"
+      },
+      "kind": {
+        "manual": "Manual",
+        "scheduled": "Scheduled",
+        "before-update": "Before update"
+      },
+      "actions": {
+        "check": "Test",
+        "checking": "Testing …",
+        "download": "Download",
+        "delete": "Delete"
+      },
+      "check": {
+        "title": "Test backup",
+        "integrityOk": "The file is a complete, undamaged database.",
+        "integrityFailed": "The file is damaged or not a database.",
+        "checksumOk": "The checksum matches the manifest.",
+        "checksumFailed": "The checksum does not match the manifest: the file was changed or is incomplete.",
+        "noManifest": "No manifest (a copy taken before an update), so there is no checksum to compare.",
+        "migrations": {
+          "ok": "Matches this backend version exactly.",
+          "older_one": "From an older version: {{count}} migration would be applied when it is restored.",
+          "older_other": "From an older version: {{count}} migrations would be applied when it is restored.",
+          "newer_one": "From a newer backend version ({{count}} unknown migration): this version cannot restore it.",
+          "newer_other": "From a newer backend version ({{count}} unknown migrations): this version cannot restore it.",
+          "no-history": "From before versioned migrations: the start checks whether its schema matches."
+        },
+        "keyOk_one": "The running key decrypts the sampled value.",
+        "keyOk_other": "The running key decrypts all {{count}} sampled values.",
+        "keyFailed": "The running key does not decrypt {{failed}} of {{count}} values: this backup was written with a different ENCRYPTION_KEY/JWT_SECRET.",
+        "keyNothing": "The backup holds no encrypted values.",
+        "verdictOk": "This backend can restore this backup.",
+        "verdictFailed": "This backup cannot be restored as it is."
       }
     },
     "connectionJournal": {

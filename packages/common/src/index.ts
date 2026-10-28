@@ -8,6 +8,7 @@ export * from './types/client-database.js';
 export * from './types/console.js';
 export * from './types/connection-journal.js';
 export * from './types/ui-change-log.js';
+export * from './types/backups.js';
 export * from './types/online-count.js';
 export * from './constants/events.js';
 export * from './utils/ts-escape.js';

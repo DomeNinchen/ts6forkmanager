@@ -49,6 +49,7 @@ import { requireRole } from './middleware/rbac.js';
 import { adminExcept, BOT_FLOW_ROLES, EVERY_ROLE, MUSIC_ROLES, type OpenRoute } from './middleware/access-policy.js';
 import { connectionJournalRoutes } from './routes/connection-journal.routes.js';
 import { changeLogRoutes } from './routes/change-log.routes.js';
+import { backupRoutes, backupDownloadRoutes } from './routes/backups.routes.js';
 import { changeLogMiddleware } from './middleware/change-log.js';
 import { recordRateLimitHit } from './utils/connection-journal.js';
 
@@ -112,7 +113,9 @@ export function createApp(): Express {
 
   // One-time file download links (unauthenticated — the link itself is the
   // credential, see file-downloads.routes.ts)
-  app.use('/api/file-downloads', fileDownloadRoutes);  // Protected routes
+  app.use('/api/file-downloads', fileDownloadRoutes);
+  // Same for backup downloads (see backups.routes.ts)
+  app.use('/api/backup-downloads', backupDownloadRoutes);  // Protected routes
   app.use('/api', authMiddleware);
   // Records every writing request a web user makes (R6). This mount covers all
   // of them behind the login check, before the route handlers, so no handler has
@@ -189,6 +192,7 @@ export function createApp(): Express {
     { method: 'GET', path: '/webgui-design', roles: EVERY_ROLE },
   ]), settingsRoutes);
   app.use('/api/connection-journal', requireRole('admin'), connectionJournalRoutes);
+  app.use('/api/backups', requireRole('admin'), backupRoutes);
   app.use('/api/change-log', requireRole('admin'), changeLogRoutes);  // The banners in the layout read the cached results for every role; forcing a fresh check is an admin's.
   app.use('/api/update-check', adminExcept([{ method: 'GET', path: '/', roles: EVERY_ROLE }]), updateCheckRoutes);
   app.use('/api/yt-cookie-check', adminExcept([{ method: 'GET', path: '/', roles: EVERY_ROLE }]), ytCookieCheckRoutes);
