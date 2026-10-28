@@ -676,7 +676,7 @@
         "integrityFailed": "The file is damaged or not a database.",
         "checksumOk": "The checksum matches the manifest.",
         "checksumFailed": "The checksum does not match the manifest: the file was changed or is incomplete.",
-        "noManifest": "No manifest (a copy taken before an update), so there is no checksum to compare.",
+        "noManifest": "No manifest (a copy taken before an update, or an uploaded .db file), so there is no checksum to compare.",
         "migrations": {
           "ok": "Matches this backend version exactly.",
           "older_one": "From an older version: {{count}} migration would be applied when it is restored.",

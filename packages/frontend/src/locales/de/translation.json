@@ -676,7 +676,7 @@
         "integrityFailed": "Die Datei ist beschädigt oder keine Datenbank.",
         "checksumOk": "Die Prüfsumme stimmt mit dem Manifest überein.",
         "checksumFailed": "Die Prüfsumme stimmt nicht mit dem Manifest überein: Die Datei wurde verändert oder ist unvollständig.",
-        "noManifest": "Kein Manifest (Kopie vor einem Update), die Prüfsumme lässt sich nicht vergleichen.",
+        "noManifest": "Kein Manifest (Kopie vor einem Update oder hochgeladene .db-Datei), die Prüfsumme lässt sich nicht vergleichen.",
         "migrations": {
           "ok": "Passt genau zu dieser Backend-Version.",
           "older_one": "Aus einer älteren Version: {{count}} Migration würde beim Einspielen nachgeholt.",

@@ -333,8 +333,10 @@ export async function checkBackup(kind: string, name: string): Promise<BackupChe
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'ts6-backup-check-'));
   try {
     const inspected = await runWorker({ job: 'inspect', file: backup.file, copy: path.join(work, 'check.db') });
-    const manifest = readManifest(backup.manifest);
-    const checksum = backup.manifest === null ? null : { ok: manifest !== null && manifest.sha256 === inspected.sha256 && manifest.size === inspected.size };
+    // No manifest (a before-update copy, an uploaded bare .db): nothing to compare. One that exists but cannot be read is a mismatch.
+    const hasManifest = backup.manifest !== null && fs.existsSync(backup.manifest);
+    const manifest = hasManifest ? readManifest(backup.manifest) : null;
+    const checksum = hasManifest ? { ok: manifest !== null && manifest.sha256 === inspected.sha256 && manifest.size === inspected.size } : null;
     const migrations = compareMigrations(inspected.integrity.ok ? inspected.migrations : null, migrationNames());
     const key = checkKey(inspected.encrypted);
     return {

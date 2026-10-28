@@ -8,7 +8,7 @@ import { migrationNames } from '../db-migrate.js';
 import { readPending } from '../db-restore.js';
 import { createCipheriv, randomBytes, scryptSync } from 'node:crypto';
 import { encrypt } from './crypto.js';
-import { cancelRestore, createBackup, deleteBackup, importUpload, listBackups, requestRestore, uploadTempFile } from './backups.js';
+import { cancelRestore, checkBackup, createBackup, deleteBackup, importUpload, listBackups, requestRestore, uploadTempFile } from './backups.js';
 import { ZipWriter } from './zip-stream.js';
 import { extractZipEntry, listZip } from './zip-read.js';
 
@@ -100,6 +100,11 @@ test('upload: a downloaded ZIP and a bare .db become "uploaded" backups; anythin
     const bare = importUpload(dbTmp, new Date('2026-10-28T12:00:00.000Z'));
     assert.equal(bare.kind, 'uploaded');
     assert.equal(bare.backendVersion, null); // no manifest
+    // ...so there is no checksum to compare, which is not a failure
+    const bareCheck = await checkBackup('uploaded', bare.name);
+    assert.equal(bareCheck.checksum, null);
+    assert.equal(bareCheck.ok, true, JSON.stringify(bareCheck));
+    assert.deepEqual((await checkBackup('uploaded', fromZip.name)).checksum, { ok: true });
 
     const junk = uploadTempFile();
     fs.writeFileSync(junk, 'hello');

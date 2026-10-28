@@ -324,7 +324,7 @@
         "integrityFailed": "Le fichier est endommagé ou n'est pas une base de données.",
         "checksumOk": "La somme de contrôle correspond au manifeste.",
         "checksumFailed": "La somme de contrôle ne correspond pas au manifeste : le fichier a été modifié ou est incomplet.",
-        "noManifest": "Pas de manifeste (copie avant une mise à jour), aucune somme de contrôle à comparer.",
+        "noManifest": "Pas de manifeste (copie avant une mise à jour ou fichier .db téléversé), aucune somme de contrôle à comparer.",
         "migrations": {
           "ok": "Correspond exactement à cette version du backend.",
           "older_one": "D'une version plus ancienne : {{count}} migration serait appliquée lors de la restauration.",
