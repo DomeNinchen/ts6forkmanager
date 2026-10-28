@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.78.1 · frontend 3.96.1 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.78.2 · frontend 3.96.1 · sidecar 2.1.4**
 
 ### New Features
 
@@ -86,6 +86,7 @@ Versions at the end of the month: **backend 2.78.1 · frontend 3.96.1 · sidecar
 
 ### Bug Fixes
 
+- Fixed the Backups page's backups: after one had been taken, changes made later could be missing from the next backup and could be lost if the backend then stopped abruptly (crash, power loss), because the backup reached into the running database from inside the backend. Backups are now taken in a separate process. *backend 2.78.2*
 - Fixed the page controls of the Connection Journal running off the right edge on phone-width screens; they wrap now. *frontend 3.93.0* [#328](https://github.com/DomeNinchen/ts6forkmanager/pull/328)
 - Fixed `pnpm typecheck` letting unknown or outdated database fields in the backend's queries through (TypeScript 6 and later stopped reporting them), so they only failed at runtime; the backend is compiled with TypeScript 5.9 again, and `pnpm typecheck` and the backend's `pnpm dev` regenerate the Prisma client first. *backend 2.75.1* [#326](https://github.com/DomeNinchen/ts6forkmanager/pull/326)
 - Fixed a temporary channel created by a flow staying forever when the backend was restarted or crashed while the flow still sat in it; the next start moves the flow's connection out, so TeamSpeak deletes the empty channel. *backend 2.75.0* [#325](https://github.com/DomeNinchen/ts6forkmanager/pull/325)
@@ -130,6 +131,7 @@ Versions at the end of the month: **backend 2.78.1 · frontend 3.96.1 · sidecar
 
 **Backups**
 
+- If you have used **Back up now** or the backup schedule since updating to backend 2.78.0, update right away: the normal update restart keeps everything written so far. Take a new backup afterwards, because a backup taken after the first one since the last restart may lack recent changes.
 - The Backups page writes to `data/backups/managed/` on the `backend-data` volume, next to the copies taken before an update; it refuses to start a backup with less than twice the database's size free. Backups in the volume are lost with the volume, so download the ones that matter. They hold password hashes and encrypted credentials and are useless without the `ENCRYPTION_KEY` (or `JWT_SECRET`) from your `.env`, which is never part of a backup: keep it separately. The schedule runs on the container's clock, usually UTC; the page shows it. [#332](https://github.com/DomeNinchen/ts6forkmanager/pull/332)
 - Before each start that changes the schema, a copy of the database lands in `data/backups/` on the `backend-data` volume, readable only by the backend user; keep it private, as it holds password hashes and encrypted credentials. Plan room for `DB_BACKUP_KEEP` (default 5) copies of the database's size. A copy is only useful together with the `ENCRYPTION_KEY` (or `JWT_SECRET`) from your `.env`. Both compose files gain the optional `DB_BACKUP_KEEP` line. [#320](https://github.com/DomeNinchen/ts6forkmanager/pull/320)
 - Back up the whole `data/` directory as before; it now also holds the `ts6webui.db-wal` and `ts6webui.db-shm` files. [#309](https://github.com/DomeNinchen/ts6forkmanager/pull/309)
