@@ -36,7 +36,9 @@ async function overview(req: Request): Promise<BackupOverview> {
   const prisma = req.app.locals.prisma;
   const [settings, lastRun] = await Promise.all([getBackupSettings(prisma), getLastRun(prisma)]);
   const dbFile = databaseFile();
+  const now = new Date();
   return {
+    serverTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`,
     backups: listBackups(),
     settings,
     lastRun,

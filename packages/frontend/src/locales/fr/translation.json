@@ -243,6 +243,7 @@
         "enabledHint": "À l'heure choisie (heure du serveur), les jours choisis.",
         "timeLabel": "Heure",
         "daysLabel": "Jours",
+        "serverTime": "Heure du serveur, actuellement {{time}}.",
         "keepLabel": "Sauvegardes planifiées à garder",
         "keepHint": "Les {{min}} à {{max}} plus récentes. Les sauvegardes manuelles restent jusqu'à ce que vous les supprimiez.",
         "maxAgeLabel": "Âge maximal en jours",

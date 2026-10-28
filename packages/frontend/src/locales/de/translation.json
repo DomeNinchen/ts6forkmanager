@@ -595,6 +595,7 @@
         "enabledHint": "Zur gewählten Uhrzeit (Serverzeit) an den gewählten Tagen.",
         "timeLabel": "Uhrzeit",
         "daysLabel": "Tage",
+        "serverTime": "Serverzeit, gerade {{time}}.",
         "keepLabel": "Geplante Sicherungen behalten",
         "keepHint": "Die neuesten {{min}} bis {{max}}. Manuelle Sicherungen bleiben, bis du sie löschst.",
         "maxAgeLabel": "Höchstalter in Tagen",

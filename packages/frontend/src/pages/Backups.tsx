@@ -116,7 +116,7 @@ export default function Backups() {
           </CardContent>
         </Card>
 
-        <ScheduleCard settings={data.settings} bounds={data.bounds} />
+        <ScheduleCard settings={data.settings} bounds={data.bounds} serverTime={data.serverTime} />
       </div>
 
       <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
@@ -244,7 +244,7 @@ function CheckView({ result, entry }: { result: BackupCheckResult; entry: Backup
   );
 }
 
-function ScheduleCard({ settings, bounds }: { settings: BackupSettings; bounds: { keepMin: number; keepMax: number; maxAgeMin: number; maxAgeMax: number } }) {
+function ScheduleCard({ settings, bounds, serverTime }: { settings: BackupSettings; bounds: { keepMin: number; keepMax: number; maxAgeMin: number; maxAgeMax: number }; serverTime: string }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [enabled, setEnabled] = useState(settings.scheduleEnabled);
@@ -296,6 +296,7 @@ function ScheduleCard({ settings, bounds }: { settings: BackupSettings; bounds: 
           <div className="space-y-1">
             <Label className="text-xs" htmlFor="backup-time">{t('pages.backups.schedule.timeLabel')}</Label>
             <Input id="backup-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} data-testid="backup-time" />
+            <p className="text-[11px] text-muted-foreground" data-testid="backup-server-time">{t('pages.backups.schedule.serverTime', { time: serverTime })}</p>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">{t('pages.backups.schedule.daysLabel')}</Label>

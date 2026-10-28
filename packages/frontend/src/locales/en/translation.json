@@ -595,6 +595,7 @@
         "enabledHint": "At the chosen time (server time) on the chosen days.",
         "timeLabel": "Time",
         "daysLabel": "Days",
+        "serverTime": "Server time, now {{time}}.",
         "keepLabel": "Scheduled backups to keep",
         "keepHint": "The newest {{min}} to {{max}}. Manual backups stay until you delete them.",
         "maxAgeLabel": "Maximum age in days",

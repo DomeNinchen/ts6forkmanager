@@ -68,6 +68,8 @@ export interface BackupOverview {
   freeBytes: number | null;
   /** The live database including its write-ahead log. */
   databaseBytes: number;
+  /** The backend's clock the schedule runs on, e.g. "17:39 (UTC)" - a container is often not in the admin's time zone. */
+  serverTime: string;
   bounds: { keepMin: number; keepMax: number; maxAgeMin: number; maxAgeMax: number };
 }
 

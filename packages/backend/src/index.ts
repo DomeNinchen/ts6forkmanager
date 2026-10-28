@@ -72,7 +72,6 @@ async function main() {
   await loadDebugFlags(prisma);
   startScheduledRestartChecker(prisma);
   startBackupScheduler(prisma);
-  startBackupScheduler(prisma);
   startUpdateChecker(prisma);
   startPlayedSongCleanup(prisma);
   startJournalPruner(prisma);
