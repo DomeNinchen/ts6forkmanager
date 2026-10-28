@@ -609,6 +609,46 @@
         "saved": "Schedule saved.",
         "saveFailed": "Could not save the schedule."
       },
+      "restore": {
+        "title": "Restore backup",
+        "whatHappens": "What happens",
+        "replaces": "The current database ({{now}}) is replaced by the backup from {{time}} ({{size}}): users, connections, flows, music bots, settings and logs are as they were in the backup.",
+        "savesCurrent": "The current state is saved first, as a \"Before restore\" backup, so the step can be undone.",
+        "migrates_one": "The backup is from an older version: {{count}} migration is applied at the start. If it fails, the previous state is put back automatically.",
+        "migrates_other": "The backup is from an older version: {{count}} migrations are applied at the start. If they fail, the previous state is put back automatically.",
+        "signsOut": "Everybody is signed out, you too. Devices remembered for two-factor sign-in are forgotten.",
+        "restarts": "The backend restarts for this and is unreachable for about a minute.",
+        "acceptKey": "The running key cannot read values in this backup. I know that the affected API keys and SSH passwords then have to be entered again, the affected music bots are not loaded, and users with two-factor sign-in need a recovery code.",
+        "understood": "I understand that the current database will be replaced.",
+        "noHistory": "Backups from before versioned migrations cannot be restored here. The wiki (Troubleshooting) describes the way by hand.",
+        "confirm": "Restore and restart",
+        "running": "Marking …",
+        "failed": "The restore could not be marked.",
+        "started": "The restore is marked and the backend is restarting.",
+        "startedHint": "The start saves the current state first, then puts the backup in place. Sign in again afterwards. If the backend is not restarted by itself (outside Docker), start it yourself.",
+        "pending": "A restore is marked ({{time}}, {{user}}).",
+        "pendingHint": "It is applied the next time the backend starts.",
+        "cancel": "Cancel",
+        "cancelled": "The marked restore is cancelled.",
+        "cancelFailed": "The restore could not be cancelled.",
+        "lastOk": "Restored on {{time}} (requested by {{user}}).",
+        "lastRolledBack": "The restore on {{time}} failed; the previous state was put back.",
+        "lastFailed": "The restore on {{time}} was not applied.",
+        "beforeRestoreSaved": "The state before it is kept as a \"Before restore\" backup: {{name}}"
+      },
+      "upload": {
+        "title": "Upload a backup",
+        "description": "A ZIP downloaded from this page, or a .db file. It then appears in the list as \"Uploaded\" and can be tested and restored.",
+        "button": "Choose file",
+        "running": "Uploading …",
+        "done": "Backup uploaded.",
+        "failed": "The upload failed.",
+        "proxyTooLarge": "A reverse proxy in front of the app rejected the file (HTTP 413). Raise its request size limit (nginx: client_max_body_size).",
+        "tooLarge": "The file is {{size}}, the limit is {{limit}} MB.",
+        "limitLabel": "Largest backup to upload (MB)",
+        "limitHint": "{{min}} to {{max}} MB. A reverse proxy in front of the app needs a limit at least as high.",
+        "limitSaved": "Upload limit saved."
+      },
       "columns": {
         "time": "Time",
         "kind": "Kind",
@@ -619,12 +659,15 @@
       "kind": {
         "manual": "Manual",
         "scheduled": "Scheduled",
+        "uploaded": "Uploaded",
+        "before-restore": "Before restore",
         "before-update": "Before update"
       },
       "actions": {
         "check": "Test",
         "checking": "Testing …",
         "download": "Download",
+        "restore": "Restore",
         "delete": "Delete"
       },
       "check": {

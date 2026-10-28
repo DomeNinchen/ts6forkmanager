@@ -1,15 +1,26 @@
 import { Router, type Request, type Response } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
+import { Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import type { BackupOverview } from '@ts6/common';
 import { AppError } from '../middleware/error-handler.js';
+import { allowSlowBody } from '../middleware/request-timeout.js';
 import {
   BACKUP_KEEP_MAX,
   BACKUP_KEEP_MIN,
   BACKUP_MAX_AGE_MAX,
   BACKUP_MAX_AGE_MIN,
+  BACKUP_UPLOAD_MB_MAX,
+  BACKUP_UPLOAD_MB_MIN,
   backupDownloadLinks,
+  cancelRestore,
   checkBackup,
+  importUpload,
+  lastRestoreView,
+  pendingRestoreView,
+  requestRestore,
+  uploadTempFile,
   createBackup,
   databaseBytes,
   databaseFile,
@@ -44,9 +55,79 @@ async function overview(req: Request): Promise<BackupOverview> {
     lastRun,
     freeBytes: freeBytes(path.dirname(dbFile)),
     databaseBytes: databaseBytes(dbFile),
-    bounds: { keepMin: BACKUP_KEEP_MIN, keepMax: BACKUP_KEEP_MAX, maxAgeMin: BACKUP_MAX_AGE_MIN, maxAgeMax: BACKUP_MAX_AGE_MAX },
+    bounds: {
+      keepMin: BACKUP_KEEP_MIN, keepMax: BACKUP_KEEP_MAX, maxAgeMin: BACKUP_MAX_AGE_MIN, maxAgeMax: BACKUP_MAX_AGE_MAX,
+      uploadMbMin: BACKUP_UPLOAD_MB_MIN, uploadMbMax: BACKUP_UPLOAD_MB_MAX,
+    },
+    pendingRestore: pendingRestoreView(),
+    lastRestore: lastRestoreView(),
   };
 }
+
+// PUT /api/backups/uploads - a backup file as the raw request body (a ZIP from this page, or a .db)
+backupRoutes.put('/uploads', async (req: Request, res: Response, next) => {
+  let tmp: string | null = null;
+  try {
+    const size = Number(req.headers['content-length']);
+    if (!Number.isSafeInteger(size) || size <= 0) {
+      res.setHeader('Connection', 'close');
+      throw new AppError(411, 'The upload needs a Content-Length');
+    }
+    const { maxUploadMb } = await getBackupSettings(req.app.locals.prisma);
+    if (size > maxUploadMb * 1024 * 1024) {
+      res.setHeader('Connection', 'close');
+      throw new AppError(413, 'The file is larger than the upload limit for backups', `${size} bytes, the limit is ${maxUploadMb} MB (set on the Backups page)`);
+    }
+    tmp = uploadTempFile();
+    // The upload, and the .db unpacked from it next to it.
+    const free = freeBytes(path.dirname(tmp));
+    if (free !== null && free < 2 * size) {
+      res.setHeader('Connection', 'close');
+      throw new AppError(507, 'Not enough free space for this upload', `${(free / 1048576).toFixed(1)} MB free, ${((2 * size) / 1048576).toFixed(1)} MB needed`);
+    }
+    allowSlowBody(req);
+    let received = 0;
+    const counter = new Transform({
+      transform(chunk: Buffer, _enc, cb) {
+        received += chunk.length;
+        cb(received > size ? new Error('The body is longer than announced') : null, chunk);
+      },
+    });
+    await pipeline(req, counter, fs.createWriteStream(tmp, { mode: 0o600 }));
+    if (received !== size) throw new AppError(400, `The upload broke off (${received} of ${size} bytes)`);
+    const entry = importUpload(tmp);
+    tmp = null;
+    console.log(`[Backups] ${entry.name} uploaded by ${req.user?.username} (${size} bytes)`);
+    res.status(201).json(entry);
+  } catch (err) {
+    if (tmp) fs.rmSync(tmp, { force: true });
+    if (res.headersSent || res.destroyed) return;
+    next(err);
+  }
+});
+
+// POST /api/backups/:kind/:name/restore - checks it, marks it for the next start, then restarts the backend
+backupRoutes.post('/:kind/:name/restore', async (req: Request, res: Response, next) => {
+  try {
+    const acceptKeyMismatch = req.body?.acceptKeyMismatch === true;
+    const check = await requestRestore(String(req.params.kind), String(req.params.name), req.user!.username, acceptKeyMismatch);
+    res.status(202).json({ check, restarting: true });
+    // Same mechanism as the scheduled restart: the container's restart policy brings it back, and the start applies the restore.
+    res.on('finish', () => setTimeout(() => {
+      console.log('[Backups] Restarting the backend to apply the restore');
+      process.kill(process.pid, 'SIGTERM');
+    }, 1500));
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/backups/restore - a marked restore is not applied after all
+backupRoutes.delete('/restore', async (req: Request, res: Response, next) => {
+  try {
+    if (!cancelRestore()) throw new AppError(404, 'No restore is marked');
+    console.log(`[Backups] Marked restore cancelled by ${req.user?.username}`);
+    res.status(204).end();
+  } catch (err) { next(err); }
+});
 
 // GET /api/backups - list, schedule, last run, free space
 backupRoutes.get('/', async (req: Request, res: Response, next) => {
@@ -64,10 +145,10 @@ backupRoutes.post('/', async (req: Request, res: Response, next) => {
 backupRoutes.put('/settings', async (req: Request, res: Response, next) => {
   try {
     if (!isValidBackupSettings(req.body)) {
-      throw new AppError(400, `Invalid settings: time "HH:MM", at least one day 0-6, keep ${BACKUP_KEEP_MIN}-${BACKUP_KEEP_MAX}, maxAgeDays null or ${BACKUP_MAX_AGE_MIN}-${BACKUP_MAX_AGE_MAX}`);
+      throw new AppError(400, `Invalid settings: time "HH:MM", at least one day 0-6, keep ${BACKUP_KEEP_MIN}-${BACKUP_KEEP_MAX}, maxAgeDays null or ${BACKUP_MAX_AGE_MIN}-${BACKUP_MAX_AGE_MAX}, maxUploadMb ${BACKUP_UPLOAD_MB_MIN}-${BACKUP_UPLOAD_MB_MAX}`);
     }
     await setBackupSettings(req.app.locals.prisma, req.body);
-    console.log(`[Backups] Schedule updated by ${req.user?.username}: ${req.body.scheduleEnabled ? `on at ${req.body.time}` : 'off'}, keep ${req.body.keep}`);
+    console.log(`[Backups] Settings updated by ${req.user?.username}: schedule ${req.body.scheduleEnabled ? `on at ${req.body.time}` : 'off'}, keep ${req.body.keep}, upload limit ${req.body.maxUploadMb} MB`);
     res.json(await overview(req));
   } catch (err) { next(err); }
 });
