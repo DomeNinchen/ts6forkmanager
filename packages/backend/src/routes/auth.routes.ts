@@ -8,7 +8,7 @@ import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
 import { issueTokensForUser, sameLogin } from '../utils/issue-tokens.js';
 import { recordWebEvent } from '../utils/connection-journal.js';
-import { encrypt, decrypt } from '../utils/crypto.js';
+import { encrypt, decrypt, decryptOrNull } from '../utils/crypto.js';
 import {
   generateTotpSecret, generateTotpQrCode, verifyTotpCode,
   generateRecoveryCodes, hashRecoveryCode, verifyRecoveryCode,
@@ -120,7 +120,9 @@ authRoutes.post('/login/verify-totp', async (req: Request, res: Response, next) 
       throw new AppError(401, 'Invalid credentials');
     }
 
-    let ok = await verifyTotpCode(decrypt(user.totpSecret), code);
+    // A secret stored with another key (a database restored without it) cannot check app codes; recovery codes are hashed, not encrypted, and still work.
+    const totpSecret = decryptOrNull(user.totpSecret, `The two-factor secret of user ${user.id}`, 'The user can sign in with a recovery code, or an admin can reset their two-factor authentication.');
+    let ok = totpSecret !== null && await verifyTotpCode(totpSecret, code);
     let usedRecoveryCode = false;
     if (!ok) {
       // Not a valid TOTP code right now - maybe it's a one-time recovery code instead.

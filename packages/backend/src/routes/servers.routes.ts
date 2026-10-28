@@ -6,7 +6,7 @@ import { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { ServerLifecycle } from '../ts-client/server-lifecycle.js';
 import { widgetDataCache } from './widget-public.routes.js';
-import { encrypt, decrypt } from '../utils/crypto.js';
+import { encrypt, decryptOrNull, REENTER_ON_CONNECTION, UNDECRYPTABLE_HINT } from '../utils/crypto.js';
 
 export const serverRoutes: Router = Router();
 
@@ -256,7 +256,10 @@ serverRoutes.post('/:configId/test', requireRole('admin'), async (req: Request, 
     // Nothing to test over WebQuery: say so, rather than reporting a failed connection.
     if (!server.apiKey) throw new AppError(409, 'This connection has no WebQuery API key, so there is no query connection to test', undefined, 'NO_WEBQUERY');
 
-    const client = new WebQueryClient(server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps);
+    const apiKey = decryptOrNull(server.apiKey, `The WebQuery API key of server connection ${server.id}`, REENTER_ON_CONNECTION);
+    if (apiKey === null) throw new AppError(409, `The stored API key ${UNDECRYPTABLE_HINT}. ${REENTER_ON_CONNECTION}`, undefined, 'UNDECRYPTABLE');
+
+    const client = new WebQueryClient(server.host, server.webqueryPort, apiKey, server.useHttps);
     const result = await client.testConnection();
     client.destroy(); // Close the temporary TCP connection immediately
 

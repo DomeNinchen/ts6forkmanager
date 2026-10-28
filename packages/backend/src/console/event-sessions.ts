@@ -14,7 +14,7 @@ import {
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { SshQueryClient } from '../bot-engine/ssh-query-client.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
-import { decrypt } from '../utils/crypto.js';
+import { REENTER_ON_CONNECTION, UNDECRYPTABLE_HINT, decryptOrNull } from '../utils/crypto.js';
 import { getConsoleSettings } from '../utils/console-settings.js';
 import { MIN_SPACING_MS, consoleFloodGuard } from './flood-guard.js';
 
@@ -190,11 +190,14 @@ class ListenerSession {
       this.spacingMs = settings.floodGuardEnabled ? await consoleFloodGuard.minSpacingMs(pool, this.configId) : MIN_SPACING_MS;
       if (this.state === 'closed') return;
 
+      const password = decryptOrNull(row.sshPassword, `The SSH password of server connection ${this.configId}`, REENTER_ON_CONNECTION);
+      if (password === null) return this.fail('SSH_CONNECT_FAILED', `The stored SSH password ${UNDECRYPTABLE_HINT}. ${REENTER_ON_CONNECTION}`);
+
       const client = new SshQueryClient({
         host: row.host,
         port: row.sshPort,
         username: row.sshUsername,
-        password: decrypt(row.sshPassword),
+        password,
       });
       this.client = client;
       client.on('ready', () => this.onReady());

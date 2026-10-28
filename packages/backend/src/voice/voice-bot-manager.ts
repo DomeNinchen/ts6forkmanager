@@ -7,7 +7,7 @@ import type { QueueItem } from './playlist/queue.js';
 import type { MusicCommandHandler } from './music-command-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
-import { decrypt, encrypt } from '../utils/crypto.js';
+import { UNDECRYPTABLE_HINT, decryptOrNull, encrypt } from '../utils/crypto.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
 import { musicAudience, sendToAudience } from '../utils/ws-audience.js';
 import type { BotConnectionInfo } from '@ts6/common';
@@ -35,6 +35,8 @@ interface ReconnectState {
 
 export class VoiceBotManager extends EventEmitter {
   private bots = new Map<number, VoiceBot>();
+  /** Bots left out at start because their stored identity was encrypted with another key. */
+  private unreadableIdentity = new Set<number>();
   private progressTimers = new Map<number, ReturnType<typeof setInterval>>();
   private reconnectState = new Map<number, ReconnectState>();
   // Per server (host:port), the earliest time the next flood-refused bot may try again
@@ -119,8 +121,14 @@ export class VoiceBotManager extends EventEmitter {
     for (const dbBot of dbBots) {
       let identity: IdentityData | undefined;
       if (dbBot.identityData) {
-        // H8: Decrypt identity data before parsing
-        const parsed = JSON.parse(decrypt(dbBot.identityData));
+        // H8: Decrypt identity data before parsing. Without it the bot is left out, not given a new
+        // identity: a new one would be a different TeamSpeak client, and the stored one would be lost.
+        const plain = decryptOrNull(dbBot.identityData, `The TeamSpeak identity of music bot ${dbBot.id} ("${dbBot.name}")`, 'The bot is not loaded until the key it was stored with is back; its stored identity is kept.');
+        if (plain === null) {
+          this.unreadableIdentity.add(dbBot.id);
+          continue;
+        }
+        const parsed = JSON.parse(plain);
         // Reconstruct KeyObjects from serialized scalar data
         identity = restoreIdentity(parsed);
       }
@@ -475,6 +483,7 @@ export class VoiceBotManager extends EventEmitter {
 
   async startBot(id: number): Promise<void> {
     const bot = this.bots.get(id);
+    if (!bot && this.unreadableIdentity.has(id)) throw new Error(`This bot's TeamSpeak identity ${UNDECRYPTABLE_HINT}. Start the backend with the key it was stored with.`);
     if (!bot) throw new Error(`Music bot ${id} not found`);
     this.clearReconnect(id);
     await bot.start();

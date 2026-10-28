@@ -1,6 +1,6 @@
 import { PrismaClient } from '../generated/prisma/client.js';
 import { WebQueryClient } from './webquery-client.js';
-import { decrypt } from '../utils/crypto.js';
+import { REENTER_ON_CONNECTION, decryptOrNull } from '../utils/crypto.js';
 import { ConnectionUnavailableError } from '../middleware/error-handler.js';
 
 /**
@@ -32,10 +32,13 @@ export class ConnectionPool {
     });
 
     for (const server of servers) {
-      // H8: Decrypt API key before use
-      await this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey!), server.useHttps, server.queryNickname);
-      if (server.botApiKey) {
-        await this.addBotClient(server.id, server.host, server.webqueryPort, decrypt(server.botApiKey), server.useHttps, server.botQueryName);
+      // H8: Decrypt API key before use. A key that cannot be decrypted leaves this connection without WebQuery, not the backend without a start.
+      const apiKey = decryptOrNull(server.apiKey!, `The WebQuery API key of server connection ${server.id}`, REENTER_ON_CONNECTION);
+      if (apiKey === null) continue;
+      await this.addClient(server.id, server.host, server.webqueryPort, apiKey, server.useHttps, server.queryNickname);
+      const botApiKey = server.botApiKey ? decryptOrNull(server.botApiKey, `The Bot Identity API key of server connection ${server.id}`, REENTER_ON_CONNECTION) : null;
+      if (botApiKey !== null) {
+        await this.addBotClient(server.id, server.host, server.webqueryPort, botApiKey, server.useHttps, server.botQueryName);
       }
     }
 
@@ -100,8 +103,9 @@ export class ConnectionPool {
     const server = await this.prisma.tsServerConfig.findUnique({
       where: { id: configId },
     });
-    if (server && server.enabled && server.apiKey) {
-      await this.addClient(server.id, server.host, server.webqueryPort, decrypt(server.apiKey), server.useHttps, server.queryNickname);
+    const apiKey = server && server.enabled && server.apiKey ? decryptOrNull(server.apiKey, `The WebQuery API key of server connection ${configId}`, REENTER_ON_CONNECTION) : null;
+    if (server && apiKey !== null) {
+      await this.addClient(server.id, server.host, server.webqueryPort, apiKey, server.useHttps, server.queryNickname);
     } else {
       this.removeClient(configId);
     }
@@ -144,8 +148,11 @@ export class ConnectionPool {
       where: { id: configId },
     });
     // The bot identity is provisioned through, and belongs to, the connection's own WebQuery access: without that there is none.
-    if (server && server.enabled && server.apiKey && server.botApiKey) {
-      await this.addBotClient(server.id, server.host, server.webqueryPort, decrypt(server.botApiKey), server.useHttps, server.botQueryName);
+    const botApiKey = server && server.enabled && server.apiKey && server.botApiKey
+      ? decryptOrNull(server.botApiKey, `The Bot Identity API key of server connection ${configId}`, REENTER_ON_CONNECTION)
+      : null;
+    if (server && botApiKey !== null) {
+      await this.addBotClient(server.id, server.host, server.webqueryPort, botApiKey, server.useHttps, server.botQueryName);
     } else {
       this.removeBotClient(configId);
     }
