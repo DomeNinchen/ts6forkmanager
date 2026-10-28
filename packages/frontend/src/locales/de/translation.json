@@ -103,6 +103,7 @@
       "tokens": "Tokens",
       "connectionJournal": "Verbindungsjournal",
       "changeLog": "Änderungsprotokoll",
+      "backups": "Backups",
       "files": "Dateien",
       "icons": "Icons",
       "complaints": "Beschwerden",
@@ -556,6 +557,93 @@
         "cleared_one": "{{count}} Eintrag gelöscht",
         "cleared_other": "{{count}} Einträge gelöscht",
         "clearFailed": "Das Protokoll konnte nicht geleert werden"
+      }
+    },
+    "backups": {
+      "title": "Backups",
+      "subtitle": "Sicherungen der Manager-Datenbank: Benutzer, Server-Verbindungen, Flows, Music-Bots, Einstellungen und Protokolle. Nur für Admins, denn eine Sicherung enthält Passwort-Hashes und die verschlüsselten TeamSpeak-Zugangsdaten. Die Musikdateien selbst sind nicht enthalten.",
+      "loadFailed": "Die Backups konnten nicht geladen werden.",
+      "created": "Sicherung geschrieben ({{size}}).",
+      "createFailed": "Die Sicherung ist fehlgeschlagen.",
+      "checkFailed": "Die Sicherung konnte nicht geprüft werden.",
+      "downloadStarted": "Der Download startet.",
+      "downloadFailed": "Der Download konnte nicht gestartet werden.",
+      "deleted": "Sicherung gelöscht.",
+      "deleteFailed": "Die Sicherung konnte nicht gelöscht werden.",
+      "deleteTitle": "Sicherung löschen?",
+      "deleteDescription": "Die Sicherung vom {{time}} wird endgültig gelöscht.",
+      "empty": "Noch keine Sicherungen.",
+      "beforeVersion": "vor {{version}}",
+      "beforeUpdateNote": "„Vor Update“-Kopien legt der Container selbst an, bevor er Datenbank-Migrationen anwendet. Er behält davon DB_BACKUP_KEEP Stück; hier lassen sie sich prüfen und herunterladen, aber nicht löschen.",
+      "lastFailed": {
+        "manual": "Die Sicherung vom {{time}} ist fehlgeschlagen.",
+        "scheduled": "Die geplante Sicherung vom {{time}} ist fehlgeschlagen."
+      },
+      "now": {
+        "title": "Jetzt sichern",
+        "description": "Schreibt eine Kopie der laufenden Datenbank nach data/backups/managed/ im Volume backend-data. Die Anwendung läuft dabei weiter. Vorher wird geprüft, ob mindestens doppelt so viel Platz frei ist, wie die Datenbank groß ist.",
+        "databaseSize": "Datenbank",
+        "freeSpace": "Frei im Volume",
+        "lastRun": "Letzte Sicherung",
+        "keyNote": "Der Schlüssel (ENCRYPTION_KEY, sonst JWT_SECRET aus der .env) steckt nicht in der Sicherung. Ohne ihn lassen sich die gespeicherten Zugangsdaten und 2FA-Geheimnisse einer Sicherung nicht nutzen: Bewahre ihn getrennt auf. Eine Sicherung im Volume geht mit dem Volume verloren, lade wichtige Sicherungen herunter.",
+        "button": "Jetzt sichern",
+        "running": "Sichert …"
+      },
+      "schedule": {
+        "title": "Zeitplan",
+        "enabledLabel": "Automatisch sichern",
+        "enabledHint": "Zur gewählten Uhrzeit (Serverzeit) an den gewählten Tagen.",
+        "timeLabel": "Uhrzeit",
+        "daysLabel": "Tage",
+        "keepLabel": "Geplante Sicherungen behalten",
+        "keepHint": "Die neuesten {{min}} bis {{max}}. Manuelle Sicherungen bleiben, bis du sie löschst.",
+        "maxAgeLabel": "Höchstalter in Tagen",
+        "maxAgeNone": "kein Höchstalter",
+        "maxAgeHint": "Leer = nur nach Anzahl. Sonst {{min}} bis {{max}}; ältere geplante Sicherungen werden gelöscht.",
+        "noDays": "Wähle mindestens einen Tag.",
+        "save": "Speichern",
+        "saved": "Zeitplan gespeichert.",
+        "saveFailed": "Der Zeitplan konnte nicht gespeichert werden."
+      },
+      "columns": {
+        "time": "Zeitpunkt",
+        "kind": "Art",
+        "size": "Größe",
+        "version": "Backend-Version",
+        "actions": "Aktionen"
+      },
+      "kind": {
+        "manual": "Manuell",
+        "scheduled": "Geplant",
+        "before-update": "Vor Update"
+      },
+      "actions": {
+        "check": "Testen",
+        "checking": "Prüft …",
+        "download": "Herunterladen",
+        "delete": "Löschen"
+      },
+      "check": {
+        "title": "Sicherung testen",
+        "integrityOk": "Die Datei ist eine vollständige, unbeschädigte Datenbank.",
+        "integrityFailed": "Die Datei ist beschädigt oder keine Datenbank.",
+        "checksumOk": "Die Prüfsumme stimmt mit dem Manifest überein.",
+        "checksumFailed": "Die Prüfsumme stimmt nicht mit dem Manifest überein: Die Datei wurde verändert oder ist unvollständig.",
+        "noManifest": "Kein Manifest (Kopie vor einem Update), die Prüfsumme lässt sich nicht vergleichen.",
+        "migrations": {
+          "ok": "Passt genau zu dieser Backend-Version.",
+          "older_one": "Aus einer älteren Version: {{count}} Migration würde beim Einspielen nachgeholt.",
+          "older_other": "Aus einer älteren Version: {{count}} Migrationen würden beim Einspielen nachgeholt.",
+          "newer_one": "Aus einer neueren Backend-Version ({{count}} unbekannte Migration): Diese Version kann sie nicht einspielen.",
+          "newer_other": "Aus einer neueren Backend-Version ({{count}} unbekannte Migrationen): Diese Version kann sie nicht einspielen.",
+          "no-history": "Aus der Zeit vor den versionierten Migrationen: Beim Start wird geprüft, ob das Schema passt."
+        },
+        "keyOk_one": "Der laufende Schlüssel entschlüsselt den geprüften Wert.",
+        "keyOk_other": "Der laufende Schlüssel entschlüsselt alle {{count}} geprüften Werte.",
+        "keyFailed": "Der laufende Schlüssel entschlüsselt {{failed}} von {{count}} Werten nicht: Diese Sicherung wurde mit einem anderen ENCRYPTION_KEY/JWT_SECRET geschrieben.",
+        "keyNothing": "Die Sicherung enthält keine verschlüsselten Werte.",
+        "verdictOk": "Diese Sicherung lässt sich mit diesem Backend einspielen.",
+        "verdictFailed": "Diese Sicherung lässt sich so nicht einspielen."
       }
     },
     "connectionJournal": {

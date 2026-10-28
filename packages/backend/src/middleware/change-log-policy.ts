@@ -31,7 +31,7 @@ export type ChangeDecision =
  * connections and their stored credentials, the instance-wide settings, and the
  * app's own settings (which carry the SSO secret and the security switches).
  */
-export const CRITICAL_AREAS: ReadonlySet<string> = new Set(['users', 'servers', 'instance', 'settings']);
+export const CRITICAL_AREAS: ReadonlySet<string> = new Set(['users', 'servers', 'instance', 'settings', 'backups']);
 
 /**
  * Every area the middleware logs. A writing route whose area is not in here
@@ -49,6 +49,8 @@ export const KNOWN_AREAS: ReadonlySet<string> = new Set([
   'servers',
   // top-level mounts
   'users', 'settings', 'bots', 'music-bots', 'playlists', 'widgets', 'connection-journal', 'change-log',
+  // database backups: they hold password hashes and encrypted credentials
+  'backups',
   // a user's own account: password, 2FA, language (signing in and out is excluded below)
   'auth',
 ]);

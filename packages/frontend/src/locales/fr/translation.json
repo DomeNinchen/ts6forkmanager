@@ -101,6 +101,7 @@
       "bans": "Bannissements",
       "tokens": "Jetons",
       "changeLog": "Journal des modifications",
+      "backups": "Sauvegardes",
       "files": "Fichiers",
       "icons": "Icônes",
       "complaints": "Plaintes",
@@ -204,6 +205,93 @@
         "cleared_one": "{{count}} entrée supprimée",
         "cleared_other": "{{count}} entrées supprimées",
         "clearFailed": "Le journal n'a pas pu être vidé"
+      }
+    },
+    "backups": {
+      "title": "Sauvegardes",
+      "subtitle": "Sauvegardes de la base de données du manager : utilisateurs, connexions aux serveurs, flows, bots musicaux, paramètres et journaux. Réservé aux admins, car une sauvegarde contient les hachages des mots de passe et les identifiants TeamSpeak chiffrés. Les fichiers musicaux eux-mêmes n'en font pas partie.",
+      "loadFailed": "Impossible de charger les sauvegardes.",
+      "created": "Sauvegarde écrite ({{size}}).",
+      "createFailed": "La sauvegarde a échoué.",
+      "checkFailed": "Impossible de tester la sauvegarde.",
+      "downloadStarted": "Le téléchargement démarre.",
+      "downloadFailed": "Impossible de lancer le téléchargement.",
+      "deleted": "Sauvegarde supprimée.",
+      "deleteFailed": "Impossible de supprimer la sauvegarde.",
+      "deleteTitle": "Supprimer la sauvegarde ?",
+      "deleteDescription": "La sauvegarde du {{time}} sera supprimée définitivement.",
+      "empty": "Aucune sauvegarde pour l'instant.",
+      "beforeVersion": "avant {{version}}",
+      "beforeUpdateNote": "Les copies « Avant mise à jour » sont faites par le conteneur lui-même avant d'appliquer des migrations de la base. Il en garde DB_BACKUP_KEEP ; ici, on peut les tester et les télécharger, mais pas les supprimer.",
+      "lastFailed": {
+        "manual": "La sauvegarde du {{time}} a échoué.",
+        "scheduled": "La sauvegarde planifiée du {{time}} a échoué."
+      },
+      "now": {
+        "title": "Sauvegarder maintenant",
+        "description": "Écrit une copie de la base en cours d'utilisation dans data/backups/managed/ du volume backend-data. L'application continue de tourner. Elle vérifie d'abord qu'au moins deux fois la taille de la base est libre.",
+        "databaseSize": "Base de données",
+        "freeSpace": "Libre dans le volume",
+        "lastRun": "Dernière sauvegarde",
+        "keyNote": "La clé (ENCRYPTION_KEY, sinon JWT_SECRET du .env) n'est pas dans la sauvegarde. Sans elle, les identifiants et secrets 2FA d'une sauvegarde sont inutilisables : conservez-la ailleurs. Une sauvegarde dans le volume disparaît avec le volume, téléchargez celles qui comptent.",
+        "button": "Sauvegarder maintenant",
+        "running": "Sauvegarde …"
+      },
+      "schedule": {
+        "title": "Planification",
+        "enabledLabel": "Sauvegarder automatiquement",
+        "enabledHint": "À l'heure choisie (heure du serveur), les jours choisis.",
+        "timeLabel": "Heure",
+        "daysLabel": "Jours",
+        "keepLabel": "Sauvegardes planifiées à garder",
+        "keepHint": "Les {{min}} à {{max}} plus récentes. Les sauvegardes manuelles restent jusqu'à ce que vous les supprimiez.",
+        "maxAgeLabel": "Âge maximal en jours",
+        "maxAgeNone": "pas d'âge maximal",
+        "maxAgeHint": "Vide = seulement par nombre. Sinon {{min}} à {{max}} ; les sauvegardes planifiées plus anciennes sont supprimées.",
+        "noDays": "Choisissez au moins un jour.",
+        "save": "Enregistrer",
+        "saved": "Planification enregistrée.",
+        "saveFailed": "Impossible d'enregistrer la planification."
+      },
+      "columns": {
+        "time": "Date",
+        "kind": "Type",
+        "size": "Taille",
+        "version": "Version du backend",
+        "actions": "Actions"
+      },
+      "kind": {
+        "manual": "Manuelle",
+        "scheduled": "Planifiée",
+        "before-update": "Avant mise à jour"
+      },
+      "actions": {
+        "check": "Tester",
+        "checking": "Test …",
+        "download": "Télécharger",
+        "delete": "Supprimer"
+      },
+      "check": {
+        "title": "Tester la sauvegarde",
+        "integrityOk": "Le fichier est une base de données complète et intacte.",
+        "integrityFailed": "Le fichier est endommagé ou n'est pas une base de données.",
+        "checksumOk": "La somme de contrôle correspond au manifeste.",
+        "checksumFailed": "La somme de contrôle ne correspond pas au manifeste : le fichier a été modifié ou est incomplet.",
+        "noManifest": "Pas de manifeste (copie avant une mise à jour), aucune somme de contrôle à comparer.",
+        "migrations": {
+          "ok": "Correspond exactement à cette version du backend.",
+          "older_one": "D'une version plus ancienne : {{count}} migration serait appliquée lors de la restauration.",
+          "older_other": "D'une version plus ancienne : {{count}} migrations seraient appliquées lors de la restauration.",
+          "newer_one": "D'une version plus récente du backend ({{count}} migration inconnue) : cette version ne peut pas la restaurer.",
+          "newer_other": "D'une version plus récente du backend ({{count}} migrations inconnues) : cette version ne peut pas la restaurer.",
+          "no-history": "D'avant les migrations versionnées : le démarrage vérifie si son schéma correspond."
+        },
+        "keyOk_one": "La clé en cours déchiffre la valeur testée.",
+        "keyOk_other": "La clé en cours déchiffre les {{count}} valeurs testées.",
+        "keyFailed": "La clé en cours ne déchiffre pas {{failed}} des {{count}} valeurs : cette sauvegarde a été écrite avec un autre ENCRYPTION_KEY/JWT_SECRET.",
+        "keyNothing": "La sauvegarde ne contient aucune valeur chiffrée.",
+        "verdictOk": "Ce backend peut restaurer cette sauvegarde.",
+        "verdictFailed": "Cette sauvegarde ne peut pas être restaurée telle quelle."
       }
     },
     "bans": {

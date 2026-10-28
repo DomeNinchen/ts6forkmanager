@@ -64,7 +64,7 @@ function prisma(args: string[], capture = false) {
 }
 
 /** Migration directory names, sorted — the order Prisma applies and resolves them in. */
-function migrationNames(): string[] {
+export function migrationNames(): string[] {
   return fs
     .readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
     .filter((e) => e.isDirectory())
