@@ -5,8 +5,10 @@
  * `uploaded` was uploaded there, `before-restore` is the state the start saved before it
  * restored a backup (all in data/backups/managed/); `before-update` is the copy the container
  * takes on its own before it applies a pending migration (data/backups/, see db-backup.ts).
+ * `external` is a copy in the target directory outside the volume whose original is no longer
+ * in the volume (a lost volume, say); while both exist the volume's entry says `external: true`.
  */
-export const BACKUP_KINDS = ['manual', 'scheduled', 'uploaded', 'before-restore', 'before-update'] as const;
+export const BACKUP_KINDS = ['manual', 'scheduled', 'uploaded', 'before-restore', 'before-update', 'external'] as const;
 export type BackupKind = (typeof BACKUP_KINDS)[number];
 
 /** Written next to every backup as `<name>.json`. */
@@ -53,6 +55,8 @@ export interface BackupEntry {
   createdBy: string | null;
   /** TeamSpeak snapshots in it; null when none were taken. */
   tsSnapshots: number | null;
+  /** A copy of it is in the target directory. */
+  external: boolean;
 }
 
 export interface BackupSettings {
@@ -69,6 +73,8 @@ export interface BackupSettings {
   maxUploadMb: number;
   /** Take a snapshot of every reachable virtual server with each backup. */
   includeTsSnapshots: boolean;
+  /** A directory outside the volume (a path inside the container) every backup is copied to as one ZIP; null = none. */
+  targetDir: string | null;
 }
 
 export interface BackupLastRun {
@@ -78,6 +84,8 @@ export interface BackupLastRun {
   ok: boolean;
   name: string | null;
   error: string | null;
+  /** The backup was written, but its copy to the target directory failed. */
+  externalError?: string | null;
 }
 
 export interface BackupOverview {
@@ -95,6 +103,12 @@ export interface BackupOverview {
   pendingRestore: { kind: BackupKind; name: string; requestedBy: string; requestedAt: string } | null;
   /** How the last restore ended. */
   lastRestore: BackupRestoreResult | null;
+  /** Whether a passphrase is set: copies in the target directory and downloads are then encrypted. */
+  passphraseSet: boolean;
+  /** The target directory as the backend sees it right now; null when none is set. */
+  target: { ok: boolean; error: string | null; freeBytes: number | null } | null;
+  /** How to open an encrypted file without the app. */
+  decryptCommand: string;
 }
 
 export interface BackupRestoreResult {

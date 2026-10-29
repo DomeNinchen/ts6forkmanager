@@ -24,8 +24,8 @@ const VALUE_MAX_LENGTH = 512;
 // short extra list below cover sshPassword, newPassword, clientSecret, botApiKey
 // and the rest. A value is never stored, only the fact that the field changed.
 
-/** Body fields that are secret but whose name ends in none of the suffixes below (`code` is the 2FA code of /api/auth/totp). */
-const APP_SECRET_FIELDS: ReadonlySet<string> = new Set(['identitydata', 'cookiefile', 'cookies', 'cookiecontent', 'code']);
+/** Body fields that are secret but whose name ends in none of the suffixes below (`code` is the 2FA code of /api/auth/totp, `passphrase` the backups' one). */
+const APP_SECRET_FIELDS: ReadonlySet<string> = new Set(['identitydata', 'cookiefile', 'cookies', 'cookiecontent', 'code', 'passphrase']);
 
 export function isSecretField(key: string): boolean {
   const k = key.toLowerCase();

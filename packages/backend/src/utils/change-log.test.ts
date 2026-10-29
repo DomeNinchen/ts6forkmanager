@@ -26,6 +26,8 @@ test('secret fields are masked while ordinary fields and the flag stay readable'
 
 test('a nested secret is masked too', () => {
   assert.ok(!maskChangeBody({ sso: { clientSecret: SECRET } })!.includes(SECRET));
+  // The Backups page's passphrase (PUT /api/backups/passphrase)
+  assert.ok(!maskChangeBody({ passphrase: SECRET })!.includes(SECRET));
 });
 
 test('an empty secret (the "leave it unchanged" case) is not reported as changed', () => {

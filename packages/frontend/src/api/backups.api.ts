@@ -36,4 +36,8 @@ export const backupsApi = {
     api.post(`${one(kind, name)}/restore`, { acceptKeyMismatch }, { timeout: 600_000 }).then((r) => r.data),
 
   cancelRestore: (): Promise<void> => api.delete('/backups/restore').then(() => undefined),
+
+  // null removes it. Deriving the key takes the backend a moment.
+  setPassphrase: (passphrase: string | null): Promise<BackupOverview> =>
+    api.put('/backups/passphrase', { passphrase }, { timeout: 60_000 }).then((r) => r.data),
 };
