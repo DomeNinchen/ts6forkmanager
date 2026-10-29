@@ -577,6 +577,8 @@
       "deleteDescription": "The backup from {{time}} will be deleted for good.",
       "empty": "No backups yet.",
       "beforeVersion": "before {{version}}",
+      "tsSnapshotCount_one": "{{count}} TeamSpeak snapshot",
+      "tsSnapshotCount_other": "{{count}} TeamSpeak snapshots",
       "beforeUpdateNote": "\"Before update\" copies are taken by the container itself before it applies database migrations. It keeps DB_BACKUP_KEEP of them; here they can be tested and downloaded, but not deleted.",
       "lastFailed": {
         "manual": "The backup from {{time}} failed.",
@@ -589,6 +591,8 @@
         "freeSpace": "Free in the volume",
         "lastRun": "Last backup",
         "keyNote": "The key (ENCRYPTION_KEY, otherwise JWT_SECRET from the .env) is not in the backup. Without it, a backup's stored credentials and 2FA secrets cannot be used: keep it somewhere else. A backup in the volume is lost with the volume, so download the ones that matter.",
+        "tsSnapshotsLabel": "Include TeamSpeak snapshots",
+        "tsSnapshotsHint": "Adds a snapshot of every virtual server of every connection with WebQuery to each backup (settings, channels, groups, permissions, known client identities). A snapshot is deployed on the Miscellaneous page.",
         "button": "Back up now",
         "running": "Backing up …"
       },
@@ -1298,6 +1302,11 @@
       "resetAllPermissions": "Reset All Permissions",
       "restoreSnapshotTitle": "Restore Snapshot?",
       "restoreSnapshotDescription": "This overwrites the currently selected server's settings, groups, and permissions with the contents of \"{{name}}\". This cannot be undone.",
+      "deployReplaces": "The server's channels, groups, permissions and settings are replaced by the state in the snapshot. Download a current snapshot first to be able to go back.",
+      "deployNewChannelIds": "Every channel gets a new ID. Bot flows, music bots and other settings that use channel IDs have to be adjusted afterwards.",
+      "deployNoPermissionCheck": "TeamSpeak does not check permissions while deploying: a snapshot can grant permissions nobody would otherwise have. Only deploy snapshots from a trusted source.",
+      "deployKeepFiles": "Keep the files in the channels. Without this they are gone after the deploy.",
+      "deployTypeName": "Type the server's name to confirm: {{name}}",
       "restore": "Restore",
       "resetAllPermissionsTitle": "Reset All Permissions?",
       "resetAllPermissionsDescription": "This permanently deletes every server group, channel group, client, and channel permission on the currently selected server, then recreates the default template groups. This cannot be undone."

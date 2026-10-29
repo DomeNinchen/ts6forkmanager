@@ -17,9 +17,11 @@ import type {
   BackupOverview,
   BackupRestoreResult,
   BackupSettings,
+  BackupTsSnapshot,
 } from '@ts6/common';
 import { BACKUP_KINDS } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
+import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { AppError } from '../middleware/error-handler.js';
 import { migrationNames } from '../db-migrate.js';
 import { clearPending, readPending, readResult, sha256File, writePending, type PendingRestore } from '../db-restore.js';
@@ -42,6 +44,8 @@ export const BACKUP_DEFAULTS: BackupSettings = {
   keep: 7,
   maxAgeDays: null,
   maxUploadMb: 2048,
+  // Off until an admin switches it on: a snapshot also holds the server's known client identities.
+  includeTsSnapshots: false,
 };
 export const BACKUP_UPLOAD_MB_MIN = 1;
 /** The ZIPs here have no ZIP64, so 4 GiB is the end of the line anyway. */
@@ -156,6 +160,7 @@ export function listBackups(): BackupEntry[] {
       backendVersion: manifest?.backendVersion ?? null,
       migrationCount: manifest?.migrations.length ?? null,
       createdBy: manifest?.createdBy ?? null,
+      tsSnapshots: manifest?.tsSnapshots ? manifest.tsSnapshots.filter((s) => s.file).length : null,
     });
   }
   const before = beforeUpdatePattern(d.stem);
@@ -170,6 +175,7 @@ export function listBackups(): BackupEntry[] {
       backendVersion: m[2],
       migrationCount: null,
       createdBy: null,
+      tsSnapshots: null,
     });
   }
   return entries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -217,9 +223,52 @@ export function scheduledToDelete(names: string[], stem: string, keep: number, m
     .map((m) => m[0]);
 }
 
+/** The folder with a backup's TeamSpeak snapshots: `<name>.teamspeak/`. */
+export function snapshotDirOf(dbFile: string): string {
+  return `${dbFile.slice(0, -3)}.teamspeak`;
+}
+
 function removeBackupFiles(dir: string, name: string): void {
   fs.rmSync(path.join(dir, name), { force: true });
   fs.rmSync(path.join(dir, `${name.slice(0, -3)}.json`), { force: true });
+  fs.rmSync(snapshotDirOf(path.join(dir, name)), { recursive: true, force: true });
+}
+
+/**
+ * A snapshot of every virtual server of every connection with WebQuery, each into its own file
+ * in the format the Miscellaneous page downloads and deploys. A server that does not answer is
+ * listed with the reason; it never fails the database backup.
+ */
+async function takeTsSnapshots(prisma: PrismaClient, pool: ConnectionPool, folder: string): Promise<BackupTsSnapshot[]> {
+  const out: BackupTsSnapshot[] = [];
+  const configs = await prisma.tsServerConfig.findMany({ where: { enabled: true }, select: { id: true, name: true }, orderBy: { id: 'asc' } });
+  for (const config of configs) {
+    const client = pool.tryGetClient(config.id);
+    if (!client) continue; // no WebQuery on this connection
+    let servers: Array<{ virtualserver_id: string | number; virtualserver_name?: string }>;
+    try {
+      servers = await client.execute(0, 'serverlist');
+    } catch (err) {
+      out.push({ configId: config.id, server: config.name, sid: 0, virtualServer: '', file: null, error: (err as Error).message });
+      continue;
+    }
+    for (const vs of servers) {
+      const sid = Number(vs.virtualserver_id);
+      const entry: BackupTsSnapshot = { configId: config.id, server: config.name, sid, virtualServer: vs.virtualserver_name ?? '', file: null, error: null };
+      try {
+        const result = await client.execute(sid, 'serversnapshotcreate');
+        const snapshot = Array.isArray(result) ? result[0] : result;
+        if (!snapshot?.data) throw new Error('The server returned no snapshot');
+        fs.mkdirSync(folder, { recursive: true, mode: 0o700 });
+        entry.file = `${config.id}-${sid}.json`;
+        fs.writeFileSync(path.join(folder, entry.file), JSON.stringify(snapshot, null, 2), { mode: 0o600 });
+      } catch (err) {
+        entry.error = (err as Error).message;
+      }
+      out.push(entry);
+    }
+  }
+  return out;
 }
 
 let running = false;
@@ -229,7 +278,7 @@ let running = false;
  * size is free (the copy, and room left for the app to keep writing), and never leaves a
  * half-written file under a backup's name.
  */
-export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'scheduled', createdBy: string | null, now = new Date()): Promise<BackupEntry> {
+export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'scheduled', createdBy: string | null, now = new Date(), pool?: ConnectionPool): Promise<BackupEntry> {
   if (running) throw new AppError(409, 'A backup is already being written');
   running = true;
   const d = dirs();
@@ -242,6 +291,10 @@ export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'sched
     // Leftovers of a run that was killed half way: only one backup runs at a time, so none is in use.
     // (An upload on its way has its own temp name, .upload-*.tmp, and is left alone.)
     for (const n of fs.readdirSync(d.managed)) if (/^\..+\.db\.tmp$/.test(n)) fs.rmSync(path.join(d.managed, n), { force: true });
+    // ...and snapshot folders whose backup never got written.
+    for (const n of fs.readdirSync(d.managed)) {
+      if (n.endsWith('.teamspeak') && !fs.existsSync(path.join(d.managed, `${n.slice(0, -'.teamspeak'.length)}.db`))) fs.rmSync(path.join(d.managed, n), { recursive: true, force: true });
+    }
 
     const needed = 2 * databaseBytes(d.dbFile);
     const free = freeBytes(d.managed);
@@ -260,6 +313,8 @@ export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'sched
       throw err;
     }
     fs.chmodSync(tmp, 0o600);
+    const settings = await getBackupSettings(prisma);
+    const tsSnapshots = settings.includeTsSnapshots && pool ? await takeTsSnapshots(prisma, pool, snapshotDirOf(path.join(d.managed, name))) : undefined;
     const manifest: BackupManifest = {
       format: 1,
       createdAt: now.toISOString(),
@@ -270,6 +325,7 @@ export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'sched
       size: inspected.size,
       integrity: 'ok',
       createdBy,
+      ...(tsSnapshots ? { tsSnapshots } : {}),
     };
     const manifestFile = path.join(d.managed, `${name.slice(0, -3)}.json`);
     fs.writeFileSync(`${manifestFile}.tmp`, JSON.stringify(manifest, null, 2), { mode: 0o600 });
@@ -277,11 +333,12 @@ export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'sched
     fs.renameSync(tmp, path.join(d.managed, name));
 
     if (kind === 'scheduled') {
-      const settings = await getBackupSettings(prisma);
       for (const old of scheduledToDelete(fs.readdirSync(d.managed), d.stem, settings.keep, settings.maxAgeDays, now)) removeBackupFiles(d.managed, old);
     }
     await setLastRun(prisma, { at: now.toISOString(), kind, ok: true, name, error: null });
-    console.log(`[Backups] ${kind === 'manual' ? `Backup by ${createdBy}` : 'Scheduled backup'} written: ${name} (${mb(inspected.size)})`);
+    const snapshotNote = tsSnapshots ? `, ${tsSnapshots.filter((s) => s.file).length} of ${tsSnapshots.length} TeamSpeak snapshots` : '';
+    console.log(`[Backups] ${kind === 'manual' ? `Backup by ${createdBy}` : 'Scheduled backup'} written: ${name} (${mb(inspected.size)}${snapshotNote})`);
+    for (const s of tsSnapshots ?? []) if (s.error) console.warn(`[Backups] No snapshot of ${s.server} sid=${s.sid}: ${s.error}`);
     return listBackups().find((b) => b.name === name)!;
   } catch (err) {
     const message = err instanceof AppError && err.details ? `${err.message}: ${err.details}` : (err as Error).message;
@@ -520,7 +577,8 @@ export function isValidBackupSettings(v: unknown): v is BackupSettings {
     Array.isArray(s.days) && s.days.length > 0 && s.days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) &&
     Number.isInteger(s.keep) && s.keep >= BACKUP_KEEP_MIN && s.keep <= BACKUP_KEEP_MAX &&
     (s.maxAgeDays === null || (Number.isInteger(s.maxAgeDays) && s.maxAgeDays >= BACKUP_MAX_AGE_MIN && s.maxAgeDays <= BACKUP_MAX_AGE_MAX)) &&
-    Number.isInteger(s.maxUploadMb) && s.maxUploadMb >= BACKUP_UPLOAD_MB_MIN && s.maxUploadMb <= BACKUP_UPLOAD_MB_MAX
+    Number.isInteger(s.maxUploadMb) && s.maxUploadMb >= BACKUP_UPLOAD_MB_MIN && s.maxUploadMb <= BACKUP_UPLOAD_MB_MAX &&
+    typeof s.includeTsSnapshots === 'boolean'
   );
 }
 
@@ -537,7 +595,7 @@ export async function getBackupSettings(prisma: PrismaClient): Promise<BackupSet
 }
 
 export async function setBackupSettings(prisma: PrismaClient, s: BackupSettings): Promise<void> {
-  const value = JSON.stringify({ scheduleEnabled: s.scheduleEnabled, time: s.time, days: [...new Set(s.days)].sort(), keep: s.keep, maxAgeDays: s.maxAgeDays, maxUploadMb: s.maxUploadMb });
+  const value = JSON.stringify({ scheduleEnabled: s.scheduleEnabled, time: s.time, days: [...new Set(s.days)].sort(), keep: s.keep, maxAgeDays: s.maxAgeDays, maxUploadMb: s.maxUploadMb, includeTsSnapshots: s.includeTsSnapshots });
   await prisma.appSetting.upsert({ where: { key: KEY_SETTINGS }, create: { key: KEY_SETTINGS, value }, update: { value } });
 }
 
@@ -560,7 +618,7 @@ async function setLastRun(prisma: PrismaClient, run: BackupLastRun): Promise<voi
 const CHECK_INTERVAL_MS = 30_000;
 
 /** Same pattern as the scheduled restart: the config is re-read every tick, so a change applies without a restart. */
-export function startBackupScheduler(prisma: PrismaClient): void {
+export function startBackupScheduler(prisma: PrismaClient, pool?: ConnectionPool): void {
   let lastFired: string | null = null;
   const timer = setInterval(async () => {
     let settings: BackupSettings;
@@ -577,7 +635,7 @@ export function startBackupScheduler(prisma: PrismaClient): void {
     lastFired = slot; // claim the slot before anything async
     const startedAt = Date.now();
     try {
-      await createBackup(prisma, 'scheduled', null, now);
+      await createBackup(prisma, 'scheduled', null, now, pool);
     } catch (err) {
       // Shown on the Backups page (last run) and kept in the change log.
       const message = err instanceof AppError && err.details ? `${err.message}: ${err.details}` : (err as Error).message;

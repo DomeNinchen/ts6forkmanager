@@ -100,10 +100,19 @@ virtualServerRoutes.post('/:sid/snapshot', requireRole('admin'), async (req: Req
   } catch (err) { next(err); }
 });
 
+// The snapshot file as the Miscellaneous page / a backup saves it ({version, data[, salt]}), plus
+// `keepFiles`. Sent as a JSON body: a snapshot is far too large for a query string. The deploy
+// recreates every channel with a new id; without -keepfiles their files are gone (measured on TS6).
 virtualServerRoutes.post('/:sid/snapshot/deploy', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const sid = parseInt(String(req.params.sid));
-    const result = await getClient(req).executePost(sid, 'serversnapshotdeploy', req.body);
+    const { version, data, keepFiles } = req.body ?? {};
+    if (typeof data !== 'string' || data === '' || (typeof version !== 'string' && typeof version !== 'number')) {
+      throw new AppError(400, 'Not a server snapshot (version and data are missing)');
+    }
+    const params: Record<string, string> = { version: String(version), data };
+    if (keepFiles === true) params['-keepfiles'] = '';
+    const result = await getClient(req).executePost(sid, 'serversnapshotdeploy', params, true);
     res.json(result);
   } catch (err) { next(err); }
 });

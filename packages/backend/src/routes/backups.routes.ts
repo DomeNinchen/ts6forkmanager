@@ -32,6 +32,7 @@ import {
   listBackups,
   resolveBackup,
   setBackupSettings,
+  snapshotDirOf,
 } from '../utils/backups.js';
 import { ZipWriter, archiveSize } from '../utils/zip-stream.js';
 
@@ -137,7 +138,7 @@ backupRoutes.get('/', async (req: Request, res: Response, next) => {
 // POST /api/backups - back up now
 backupRoutes.post('/', async (req: Request, res: Response, next) => {
   try {
-    res.status(201).json(await createBackup(req.app.locals.prisma, 'manual', req.user?.username ?? null));
+    res.status(201).json(await createBackup(req.app.locals.prisma, 'manual', req.user?.username ?? null, new Date(), req.app.locals.connectionPool));
   } catch (err) { next(err); }
 });
 
@@ -148,7 +149,7 @@ backupRoutes.put('/settings', async (req: Request, res: Response, next) => {
       throw new AppError(400, `Invalid settings: time "HH:MM", at least one day 0-6, keep ${BACKUP_KEEP_MIN}-${BACKUP_KEEP_MAX}, maxAgeDays null or ${BACKUP_MAX_AGE_MIN}-${BACKUP_MAX_AGE_MAX}, maxUploadMb ${BACKUP_UPLOAD_MB_MIN}-${BACKUP_UPLOAD_MB_MAX}`);
     }
     await setBackupSettings(req.app.locals.prisma, req.body);
-    console.log(`[Backups] Settings updated by ${req.user?.username}: schedule ${req.body.scheduleEnabled ? `on at ${req.body.time}` : 'off'}, keep ${req.body.keep}, upload limit ${req.body.maxUploadMb} MB`);
+    console.log(`[Backups] Settings updated by ${req.user?.username}: schedule ${req.body.scheduleEnabled ? `on at ${req.body.time}` : 'off'}, keep ${req.body.keep}, upload limit ${req.body.maxUploadMb} MB, TeamSpeak snapshots ${req.body.includeTsSnapshots ? 'on' : 'off'}`);
     res.json(await overview(req));
   } catch (err) { next(err); }
 });
@@ -193,9 +194,13 @@ backupDownloadRoutes.get('/:token', async (req: Request, res: Response, next) =>
 
     const backup = resolveBackup(link.kind, link.name);
     if (!fs.existsSync(backup.file)) throw new AppError(404, 'No such backup');
-    const files = [backup.file, ...(backup.manifest && fs.existsSync(backup.manifest) ? [backup.manifest] : [])].map((file) => {
+    // The .db, its manifest, and its TeamSpeak snapshots as <name>.teamspeak/<connection>-<sid>.json.
+    const snapshotDir = snapshotDirOf(backup.file);
+    const snapshots = fs.existsSync(snapshotDir) ? fs.readdirSync(snapshotDir).filter((n) => n.endsWith('.json')).map((n) => path.join(snapshotDir, n)) : [];
+    const files = [backup.file, ...(backup.manifest && fs.existsSync(backup.manifest) ? [backup.manifest] : []), ...snapshots].map((file) => {
       const stat = fs.statSync(file);
-      return { file, name: path.basename(file), size: stat.size, modified: stat.mtimeMs, isDirectory: false };
+      const name = path.dirname(file) === snapshotDir ? `${path.basename(snapshotDir)}/${path.basename(file)}` : path.basename(file);
+      return { file, name, size: stat.size, modified: stat.mtimeMs, isDirectory: false };
     });
 
     res.attachment(`${link.name.slice(0, -3)}.zip`);

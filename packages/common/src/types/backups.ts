@@ -25,6 +25,19 @@ export interface BackupManifest {
   /** `PRAGMA integrity_check` of the copy right after it was written. */
   integrity: 'ok';
   createdBy: string | null;
+  /** TeamSpeak snapshots taken with it (when switched on), in the folder `<name>.teamspeak/`. */
+  tsSnapshots?: BackupTsSnapshot[];
+}
+
+/** One virtual server's snapshot in a backup: `file` in the Miscellaneous page's format, or why there is none. */
+export interface BackupTsSnapshot {
+  configId: number;
+  /** The connection's name. */
+  server: string;
+  sid: number;
+  virtualServer: string;
+  file: string | null;
+  error: string | null;
 }
 
 export interface BackupEntry {
@@ -38,6 +51,8 @@ export interface BackupEntry {
   backendVersion: string | null;
   migrationCount: number | null;
   createdBy: string | null;
+  /** TeamSpeak snapshots in it; null when none were taken. */
+  tsSnapshots: number | null;
 }
 
 export interface BackupSettings {
@@ -52,6 +67,8 @@ export interface BackupSettings {
   maxAgeDays: number | null;
   /** Largest backup that may be uploaded, in MiB. */
   maxUploadMb: number;
+  /** Take a snapshot of every reachable virtual server with each backup. */
+  includeTsSnapshots: boolean;
 }
 
 export interface BackupLastRun {
