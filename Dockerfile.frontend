@@ -56,8 +56,34 @@ RUN printf 'server {\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
     }\n\
 \n\
-    # One-time file download links: stream straight through instead of collecting\n\
-    # the whole file in nginx first\n\
+    # A backup uploaded on the Backups page. The backend decides how large it may be\n\
+    # (the limit set on that page, checked against Content-Length and the real body).\n\
+    location = /api/backups/uploads {\n\
+        client_max_body_size 0;\n\
+        proxy_request_buffering off;\n\
+        proxy_read_timeout 3600s;\n\
+        proxy_send_timeout 3600s;\n\
+        proxy_pass http://backend:3001;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
+    # One-time file and backup download links: stream straight through instead of\n\
+    # collecting the whole file in nginx first\n\
+    location /api/backup-downloads/ {\n\
+        proxy_buffering off;\n\
+        proxy_read_timeout 3600s;\n\
+        proxy_pass http://backend:3001;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
     location /api/file-downloads/ {\n\
         proxy_buffering off;\n\
         proxy_read_timeout 3600s;\n\

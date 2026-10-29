@@ -609,6 +609,46 @@
         "saved": "Zeitplan gespeichert.",
         "saveFailed": "Der Zeitplan konnte nicht gespeichert werden."
       },
+      "restore": {
+        "title": "Sicherung wiederherstellen",
+        "whatHappens": "Was passiert",
+        "replaces": "Die aktuelle Datenbank ({{now}}) wird durch die Sicherung vom {{time}} ({{size}}) ersetzt: Benutzer, Verbindungen, Flows, Music-Bots, Einstellungen und Protokolle haben danach den Stand der Sicherung.",
+        "savesCurrent": "Vorher wird der aktuelle Stand als Sicherung „Vor Wiederherstellung“ abgelegt. Damit lässt sich der Schritt rückgängig machen.",
+        "migrates_one": "Die Sicherung stammt aus einer älteren Version: {{count}} Migration wird beim Start nachgeholt. Scheitert sie, wird automatisch der vorherige Stand zurückgespielt.",
+        "migrates_other": "Die Sicherung stammt aus einer älteren Version: {{count}} Migrationen werden beim Start nachgeholt. Scheitern sie, wird automatisch der vorherige Stand zurückgespielt.",
+        "signsOut": "Alle werden abgemeldet, auch du. Für die Zwei-Faktor-Anmeldung gemerkte Geräte werden vergessen.",
+        "restarts": "Das Backend startet dafür neu und ist etwa eine Minute nicht erreichbar.",
+        "acceptKey": "Der laufende Schlüssel kann Werte dieser Sicherung nicht lesen. Ich weiß, dass dann betroffene API-Keys und SSH-Passwörter neu eingetragen werden müssen, betroffene Music-Bots nicht geladen werden und Benutzer mit Zwei-Faktor-Anmeldung einen Wiederherstellungscode brauchen.",
+        "understood": "Ich habe verstanden, dass die aktuelle Datenbank ersetzt wird.",
+        "noHistory": "Sicherungen aus der Zeit vor den versionierten Migrationen lassen sich hier nicht einspielen. Das Wiki (Troubleshooting) beschreibt den Weg von Hand.",
+        "confirm": "Wiederherstellen und neu starten",
+        "running": "Wird vorgemerkt …",
+        "failed": "Die Wiederherstellung konnte nicht vorgemerkt werden.",
+        "started": "Die Wiederherstellung ist vorgemerkt, das Backend startet neu.",
+        "startedHint": "Beim Start wird zuerst der aktuelle Stand gesichert, dann die Sicherung eingespielt. Danach meldest du dich neu an. Startet das Backend nicht von selbst neu (außerhalb von Docker), starte es selbst.",
+        "pending": "Eine Wiederherstellung ist vorgemerkt ({{time}}, {{user}}).",
+        "pendingHint": "Sie wird beim nächsten Start des Backends eingespielt.",
+        "cancel": "Abbrechen",
+        "cancelled": "Die vorgemerkte Wiederherstellung ist abgebrochen.",
+        "cancelFailed": "Die Wiederherstellung konnte nicht abgebrochen werden.",
+        "lastOk": "Wiederhergestellt am {{time}} (angefordert von {{user}}).",
+        "lastRolledBack": "Die Wiederherstellung vom {{time}} ist fehlgeschlagen, der vorherige Stand wurde zurückgespielt.",
+        "lastFailed": "Die Wiederherstellung vom {{time}} wurde nicht eingespielt.",
+        "beforeRestoreSaved": "Der Stand davor liegt als Sicherung „Vor Wiederherstellung“ vor: {{name}}"
+      },
+      "upload": {
+        "title": "Sicherung hochladen",
+        "description": "Eine von dieser Seite heruntergeladene ZIP-Datei oder eine .db-Datei. Sie erscheint danach in der Liste als „Hochgeladen“ und lässt sich testen und wiederherstellen.",
+        "button": "Datei auswählen",
+        "running": "Lädt hoch …",
+        "done": "Sicherung hochgeladen.",
+        "failed": "Das Hochladen ist fehlgeschlagen.",
+        "proxyTooLarge": "Ein Reverse-Proxy vor der App hat die Datei abgelehnt (HTTP 413). Erhöhe dessen Größenlimit für Anfragen (nginx: client_max_body_size).",
+        "tooLarge": "Die Datei ist {{size}} groß, die Grenze liegt bei {{limit}} MB.",
+        "limitLabel": "Größte hochladbare Sicherung (MB)",
+        "limitHint": "{{min}} bis {{max}} MB. Ein Reverse-Proxy vor der App braucht ein mindestens so hohes Limit.",
+        "limitSaved": "Upload-Grenze gespeichert."
+      },
       "columns": {
         "time": "Zeitpunkt",
         "kind": "Art",
@@ -619,12 +659,15 @@
       "kind": {
         "manual": "Manuell",
         "scheduled": "Geplant",
+        "uploaded": "Hochgeladen",
+        "before-restore": "Vor Wiederherstellung",
         "before-update": "Vor Update"
       },
       "actions": {
         "check": "Testen",
         "checking": "Prüft …",
         "download": "Herunterladen",
+        "restore": "Wiederherstellen",
         "delete": "Löschen"
       },
       "check": {
@@ -633,7 +676,7 @@
         "integrityFailed": "Die Datei ist beschädigt oder keine Datenbank.",
         "checksumOk": "Die Prüfsumme stimmt mit dem Manifest überein.",
         "checksumFailed": "Die Prüfsumme stimmt nicht mit dem Manifest überein: Die Datei wurde verändert oder ist unvollständig.",
-        "noManifest": "Kein Manifest (Kopie vor einem Update), die Prüfsumme lässt sich nicht vergleichen.",
+        "noManifest": "Kein Manifest (Kopie vor einem Update oder hochgeladene .db-Datei), die Prüfsumme lässt sich nicht vergleichen.",
         "migrations": {
           "ok": "Passt genau zu dieser Backend-Version.",
           "older_one": "Aus einer älteren Version: {{count}} Migration würde beim Einspielen nachgeholt.",

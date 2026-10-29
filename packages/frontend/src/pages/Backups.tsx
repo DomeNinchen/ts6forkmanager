@@ -1,20 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { AlertTriangle, CheckCircle2, Download, ShieldCheck, Trash2, XCircle } from 'lucide-react';
-import type { BackupCheckResult, BackupEntry, BackupSettings } from '@ts6/common';
+import { AlertTriangle, CheckCircle2, Download, Info, RotateCcw, ShieldCheck, Trash2, Upload, XCircle } from 'lucide-react';
+import type { BackupCheckResult, BackupEntry, BackupOverview, BackupSettings } from '@ts6/common';
 import { backupsApi } from '@/api/backups.api';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { formatBytes } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth.store';
+
+/** How long the outcome of the last restore stays at the top of the page. */
+const RESTORE_NOTICE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
@@ -34,8 +40,15 @@ export default function Backups() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['backups'], queryFn: backupsApi.overview });
   const [toDelete, setToDelete] = useState<BackupEntry | null>(null);
   const [checked, setChecked] = useState<{ entry: BackupEntry; result: BackupCheckResult } | null>(null);
+  const [restoreFor, setRestoreFor] = useState<BackupEntry | null>(null);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['backups'] });
+
+  const cancelRestore = useMutation({
+    mutationFn: backupsApi.cancelRestore,
+    onSuccess: () => { void refresh(); toast.success(t('pages.backups.restore.cancelled')); },
+    onError: (err) => toast.error(errorText(err, t('pages.backups.restore.cancelFailed'))),
+  });
 
   const create = useMutation({
     mutationFn: backupsApi.create,
@@ -72,6 +85,7 @@ export default function Backups() {
   if (isError || !data) return <p className="text-sm text-destructive">{t('pages.backups.loadFailed')}</p>;
 
   const busy = (m: { isPending: boolean; variables?: BackupEntry }, entry: BackupEntry) => m.isPending && m.variables?.name === entry.name;
+  const last = data.lastRestore && Date.now() - Date.parse(data.lastRestore.at) < RESTORE_NOTICE_MS ? data.lastRestore : null;
 
   return (
     <div className="space-y-5">
@@ -79,6 +93,43 @@ export default function Backups() {
         <h1 className="text-xl font-semibold">{t('pages.backups.title')}</h1>
         <p className="text-xs text-muted-foreground mt-1">{t('pages.backups.subtitle')}</p>
       </div>
+
+      {data.pendingRestore && (
+        <div className="flex flex-wrap items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm" role="status" data-testid="backup-pending-restore">
+          <Info className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+          <div className="flex-1 min-w-[200px]">
+            <p className="font-medium">{t('pages.backups.restore.pending', { time: new Date(data.pendingRestore.requestedAt).toLocaleString(), user: data.pendingRestore.requestedBy })}</p>
+            <p className="text-xs text-muted-foreground break-all">{data.pendingRestore.name}</p>
+            <p className="text-xs text-muted-foreground">{t('pages.backups.restore.pendingHint')}</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => cancelRestore.mutate()} disabled={cancelRestore.isPending} data-testid="backup-cancel-restore">
+            {t('pages.backups.restore.cancel')}
+          </Button>
+        </div>
+      )}
+
+      {last && (
+        <div
+          className={`flex gap-2 rounded-md border p-3 text-sm ${last.ok ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-destructive/50 bg-destructive/10'}`}
+          role={last.ok ? 'status' : 'alert'}
+          data-testid="backup-last-restore"
+          data-ok={last.ok}
+        >
+          {last.ok ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500 mt-0.5" /> : <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />}
+          <div className="min-w-0">
+            <p className="font-medium">
+              {last.ok
+                ? t('pages.backups.restore.lastOk', { time: new Date(last.at).toLocaleString(), user: last.requestedBy })
+                : last.rolledBack
+                  ? t('pages.backups.restore.lastRolledBack', { time: new Date(last.at).toLocaleString() })
+                  : t('pages.backups.restore.lastFailed', { time: new Date(last.at).toLocaleString() })}
+            </p>
+            <p className="text-xs text-muted-foreground break-all">{last.name}</p>
+            {last.error && <p className="text-xs text-muted-foreground break-words">{last.error}</p>}
+            {last.beforeRestore && <p className="text-xs text-muted-foreground break-all">{t('pages.backups.restore.beforeRestoreSaved', { name: last.beforeRestore })}</p>}
+          </div>
+        </div>
+      )}
 
       {data.lastRun && !data.lastRun.ok && (
         <div className="flex gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm" role="alert" data-testid="backup-last-failed">
@@ -117,6 +168,7 @@ export default function Backups() {
         </Card>
 
         <ScheduleCard settings={data.settings} bounds={data.bounds} serverTime={data.serverTime} />
+        <UploadCard settings={data.settings} bounds={data.bounds} />
       </div>
 
       <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
@@ -154,6 +206,9 @@ export default function Backups() {
                       <Button variant="ghost" size="sm" onClick={() => download.mutate(entry)} disabled={busy(download, entry)} title={t('pages.backups.actions.download')} aria-label={t('pages.backups.actions.download')} data-testid="backup-download">
                         <Download className="h-4 w-4" />
                       </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setRestoreFor(entry)} title={t('pages.backups.actions.restore')} aria-label={t('pages.backups.actions.restore')} data-testid="backup-restore">
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
                       {entry.kind !== 'before-update' && (
                         <Button variant="ghost" size="sm" onClick={() => setToDelete(entry)} title={t('pages.backups.actions.delete')} aria-label={t('pages.backups.actions.delete')} data-testid="backup-delete">
                           <Trash2 className="h-4 w-4" />
@@ -188,7 +243,170 @@ export default function Backups() {
           {checked && <CheckView result={checked.result} entry={checked.entry} />}
         </DialogContent>
       </Dialog>
+
+      {restoreFor && <RestoreDialog entry={restoreFor} databaseBytes={data.databaseBytes} onClose={() => setRestoreFor(null)} />}
     </div>
+  );
+}
+
+/**
+ * The restore wizard: the checks, what will be replaced, the confirmation. The backend checks
+ * again, marks the backup for the next start and restarts; the start saves the current state
+ * first, puts the backup in place and migrates it.
+ */
+function RestoreDialog({ entry, databaseBytes, onClose }: { entry: BackupEntry; databaseBytes: number; onClose: () => void }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [understood, setUnderstood] = useState(false);
+  const [acceptKey, setAcceptKey] = useState(false);
+  const check = useQuery({
+    queryKey: ['backups', 'restore-check', entry.kind, entry.name],
+    queryFn: () => backupsApi.check(entry.kind, entry.name),
+    gcTime: 0,
+    retry: false,
+  });
+  const restore = useMutation({
+    mutationFn: () => backupsApi.restore(entry.kind, entry.name, acceptKey),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['backups'] }),
+    onError: (err) => toast.error(errorText(err, t('pages.backups.restore.failed'))),
+  });
+
+  const result = check.data;
+  const blocked = !result || !result.integrity.ok || (result.checksum !== null && !result.checksum.ok)
+    || result.migrations.state === 'newer' || result.migrations.state === 'no-history';
+  const keyProblem = !!result && result.key.failed > 0;
+  const canRestore = !blocked && understood && (!keyProblem || acceptKey) && !restore.isPending;
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && !restore.isPending && (restore.isSuccess ? useAuthStore.getState().logout() : onClose())}>
+      <DialogContent className="max-w-lg" data-testid="backup-restore-dialog">
+        <DialogHeader>
+          <DialogTitle>{t('pages.backups.restore.title')}</DialogTitle>
+        </DialogHeader>
+        {restore.isSuccess ? (
+          <div className="space-y-2 text-sm" data-testid="backup-restore-started">
+            <p className="font-medium">{t('pages.backups.restore.started')}</p>
+            <p className="text-xs text-muted-foreground">{t('pages.backups.restore.startedHint')}</p>
+          </div>
+        ) : check.isLoading ? (
+          <p className="text-sm text-muted-foreground">{t('pages.backups.actions.checking')}</p>
+        ) : check.isError || !result ? (
+          <p className="text-sm text-destructive">{errorText(check.error, t('pages.backups.checkFailed'))}</p>
+        ) : (
+          <div className="space-y-4 text-sm">
+            <CheckView result={result} entry={entry} />
+            {result.migrations.state === 'no-history' && <p className="text-xs text-destructive">{t('pages.backups.restore.noHistory')}</p>}
+            {!blocked && (
+              <>
+                <div className="space-y-1">
+                  <p className="font-medium">{t('pages.backups.restore.whatHappens')}</p>
+                  <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-1">
+                    <li>{t('pages.backups.restore.replaces', { now: formatBytes(databaseBytes), time: new Date(entry.createdAt).toLocaleString(), size: formatBytes(entry.size) })}</li>
+                    <li>{t('pages.backups.restore.savesCurrent')}</li>
+                    {result.migrations.state === 'older' && <li>{t('pages.backups.restore.migrates', { count: result.migrations.pending.length })}</li>}
+                    <li>{t('pages.backups.restore.signsOut')}</li>
+                    <li>{t('pages.backups.restore.restarts')}</li>
+                  </ul>
+                </div>
+                {keyProblem && (
+                  <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2">
+                    <Checkbox id="restore-accept-key" checked={acceptKey} onCheckedChange={(v) => setAcceptKey(v === true)} data-testid="backup-restore-accept-key" />
+                    <Label htmlFor="restore-accept-key" className="text-xs leading-snug">{t('pages.backups.restore.acceptKey')}</Label>
+                  </div>
+                )}
+                <div className="flex items-start gap-2">
+                  <Checkbox id="restore-understood" checked={understood} onCheckedChange={(v) => setUnderstood(v === true)} data-testid="backup-restore-understood" />
+                  <Label htmlFor="restore-understood" className="text-xs leading-snug">{t('pages.backups.restore.understood')}</Label>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        <DialogFooter>
+          {/* After a restore every login is void (the backend refuses it from the start on): go to the sign-in page right away instead of on the next request. */}
+          <Button variant="outline" onClick={restore.isSuccess ? () => useAuthStore.getState().logout() : onClose} disabled={restore.isPending}>
+            {restore.isSuccess ? t('common.close') : t('common.cancel')}
+          </Button>
+          {!restore.isSuccess && (
+            <Button variant="destructive" disabled={!canRestore} onClick={() => restore.mutate()} data-testid="backup-restore-confirm">
+              {restore.isPending ? t('pages.backups.restore.running') : t('pages.backups.restore.confirm')}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Upload a backup (a ZIP downloaded from this page, or a .db), and the size limit for that. */
+function UploadCard({ settings, bounds }: { settings: BackupSettings; bounds: BackupOverview['bounds'] }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const input = useRef<HTMLInputElement>(null);
+  const [progress, setProgress] = useState<{ loaded: number; total: number } | null>(null);
+  const [limit, setLimit] = useState(String(settings.maxUploadMb));
+  useEffect(() => setLimit(String(settings.maxUploadMb)), [settings.maxUploadMb]);
+  const limitNum = Number(limit);
+  const limitValid = Number.isInteger(limitNum) && limitNum >= bounds.uploadMbMin && limitNum <= bounds.uploadMbMax;
+
+  const upload = useMutation({
+    mutationFn: (file: File) => {
+      setProgress({ loaded: 0, total: file.size });
+      return backupsApi.upload(file, (loaded) => setProgress({ loaded, total: file.size }));
+    },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['backups'] }); toast.success(t('pages.backups.upload.done')); },
+    onError: (err: any) => toast.error(err?.response?.status === 413 && typeof err.response.data !== 'object'
+      ? t('pages.backups.upload.proxyTooLarge')
+      : errorText(err, t('pages.backups.upload.failed'))),
+    onSettled: () => setProgress(null),
+  });
+
+  const saveLimit = useMutation({
+    mutationFn: () => backupsApi.setSettings({ ...settings, maxUploadMb: limitNum }),
+    onSuccess: (overview) => { qc.setQueryData(['backups'], overview); toast.success(t('pages.backups.upload.limitSaved')); },
+    onError: (err) => toast.error(errorText(err, t('pages.backups.schedule.saveFailed'))),
+  });
+
+  const pick = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > settings.maxUploadMb * 1024 * 1024) {
+      toast.error(t('pages.backups.upload.tooLarge', { size: formatBytes(file.size), limit: settings.maxUploadMb }));
+      return;
+    }
+    upload.mutate(file);
+  };
+
+  return (
+    <Card className="card-hero">
+      <CardHeader>
+        <CardTitle className="text-sm font-medium">{t('pages.backups.upload.title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">{t('pages.backups.upload.description')}</p>
+        <input ref={input} type="file" accept=".zip,.db" className="hidden" data-testid="backup-upload-input"
+          onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
+        <Button size="sm" variant="outline" onClick={() => input.current?.click()} disabled={upload.isPending} data-testid="backup-upload">
+          <Upload className="h-4 w-4 mr-1" />{upload.isPending ? t('pages.backups.upload.running') : t('pages.backups.upload.button')}
+        </Button>
+        {progress && (
+          <div className="space-y-1">
+            <Progress value={progress.total ? (progress.loaded / progress.total) * 100 : 0} />
+            <p className="text-[11px] text-muted-foreground font-mono-data">{formatBytes(progress.loaded)} / {formatBytes(progress.total)}</p>
+          </div>
+        )}
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="backup-upload-limit">{t('pages.backups.upload.limitLabel')}</Label>
+          <div className="flex gap-2">
+            <Input id="backup-upload-limit" type="number" min={bounds.uploadMbMin} max={bounds.uploadMbMax} value={limit}
+              onChange={(e) => setLimit(e.target.value)} aria-invalid={!limitValid} className="max-w-[160px]" data-testid="backup-upload-limit" />
+            <Button size="sm" disabled={!limitValid || limitNum === settings.maxUploadMb || saveLimit.isPending} onClick={() => saveLimit.mutate()} data-testid="backup-upload-limit-save">
+              {t('pages.backups.schedule.save')}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t('pages.backups.upload.limitHint', { min: bounds.uploadMbMin, max: bounds.uploadMbMax })}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -271,7 +489,7 @@ function ScheduleCard({ settings, bounds, serverTime }: { settings: BackupSettin
     || days.join() !== settings.days.join();
 
   const save = useMutation({
-    mutationFn: () => backupsApi.setSettings({ scheduleEnabled: enabled, time, days, keep: keepNum, maxAgeDays: maxAgeNum }),
+    mutationFn: () => backupsApi.setSettings({ ...settings, scheduleEnabled: enabled, time, days, keep: keepNum, maxAgeDays: maxAgeNum }),
     onSuccess: (overview) => { qc.setQueryData(['backups'], overview); toast.success(t('pages.backups.schedule.saved')); },
     onError: (err) => toast.error(errorText(err, t('pages.backups.schedule.saveFailed'))),
   });

@@ -257,6 +257,46 @@
         "saved": "Planification enregistrée.",
         "saveFailed": "Impossible d'enregistrer la planification."
       },
+      "restore": {
+        "title": "Restaurer une sauvegarde",
+        "whatHappens": "Ce qui se passe",
+        "replaces": "La base actuelle ({{now}}) est remplacée par la sauvegarde du {{time}} ({{size}}) : utilisateurs, connexions, flows, bots musicaux, paramètres et journaux reviennent à l'état de la sauvegarde.",
+        "savesCurrent": "L'état actuel est d'abord enregistré comme sauvegarde « Avant restauration », pour pouvoir revenir en arrière.",
+        "migrates_one": "La sauvegarde vient d'une version plus ancienne : {{count}} migration est appliquée au démarrage. En cas d'échec, l'état précédent est remis automatiquement.",
+        "migrates_other": "La sauvegarde vient d'une version plus ancienne : {{count}} migrations sont appliquées au démarrage. En cas d'échec, l'état précédent est remis automatiquement.",
+        "signsOut": "Tout le monde est déconnecté, vous aussi. Les appareils mémorisés pour la connexion à deux facteurs sont oubliés.",
+        "restarts": "Le backend redémarre pour cela et reste injoignable environ une minute.",
+        "acceptKey": "La clé en cours ne peut pas lire des valeurs de cette sauvegarde. Je sais qu'il faudra alors saisir à nouveau les clés API et mots de passe SSH concernés, que les bots musicaux concernés ne seront pas chargés et que les utilisateurs avec connexion à deux facteurs auront besoin d'un code de récupération.",
+        "understood": "J'ai compris que la base actuelle sera remplacée.",
+        "noHistory": "Les sauvegardes d'avant les migrations versionnées ne peuvent pas être restaurées ici. Le wiki (Troubleshooting) décrit la marche à suivre à la main.",
+        "confirm": "Restaurer et redémarrer",
+        "running": "Enregistrement …",
+        "failed": "La restauration n'a pas pu être programmée.",
+        "started": "La restauration est programmée, le backend redémarre.",
+        "startedHint": "Au démarrage, l'état actuel est d'abord sauvegardé, puis la sauvegarde est mise en place. Reconnectez-vous ensuite. Si le backend ne redémarre pas tout seul (hors Docker), démarrez-le vous-même.",
+        "pending": "Une restauration est programmée ({{time}}, {{user}}).",
+        "pendingHint": "Elle sera appliquée au prochain démarrage du backend.",
+        "cancel": "Annuler",
+        "cancelled": "La restauration programmée est annulée.",
+        "cancelFailed": "La restauration n'a pas pu être annulée.",
+        "lastOk": "Restaurée le {{time}} (demandée par {{user}}).",
+        "lastRolledBack": "La restauration du {{time}} a échoué, l'état précédent a été remis.",
+        "lastFailed": "La restauration du {{time}} n'a pas été appliquée.",
+        "beforeRestoreSaved": "L'état d'avant est conservé comme sauvegarde « Avant restauration » : {{name}}"
+      },
+      "upload": {
+        "title": "Téléverser une sauvegarde",
+        "description": "Un ZIP téléchargé depuis cette page, ou un fichier .db. Il apparaît ensuite dans la liste comme « Téléversée » et peut être testé et restauré.",
+        "button": "Choisir un fichier",
+        "running": "Téléversement …",
+        "done": "Sauvegarde téléversée.",
+        "failed": "Le téléversement a échoué.",
+        "proxyTooLarge": "Un reverse proxy devant l'application a refusé le fichier (HTTP 413). Augmentez sa limite de taille des requêtes (nginx : client_max_body_size).",
+        "tooLarge": "Le fichier fait {{size}}, la limite est de {{limit}} Mo.",
+        "limitLabel": "Plus grande sauvegarde téléversable (Mo)",
+        "limitHint": "{{min}} à {{max}} Mo. Un reverse proxy devant l'application doit avoir une limite au moins aussi élevée.",
+        "limitSaved": "Limite de téléversement enregistrée."
+      },
       "columns": {
         "time": "Date",
         "kind": "Type",
@@ -267,12 +307,15 @@
       "kind": {
         "manual": "Manuelle",
         "scheduled": "Planifiée",
+        "uploaded": "Téléversée",
+        "before-restore": "Avant restauration",
         "before-update": "Avant mise à jour"
       },
       "actions": {
         "check": "Tester",
         "checking": "Test …",
         "download": "Télécharger",
+        "restore": "Restaurer",
         "delete": "Supprimer"
       },
       "check": {
@@ -281,7 +324,7 @@
         "integrityFailed": "Le fichier est endommagé ou n'est pas une base de données.",
         "checksumOk": "La somme de contrôle correspond au manifeste.",
         "checksumFailed": "La somme de contrôle ne correspond pas au manifeste : le fichier a été modifié ou est incomplet.",
-        "noManifest": "Pas de manifeste (copie avant une mise à jour), aucune somme de contrôle à comparer.",
+        "noManifest": "Pas de manifeste (copie avant une mise à jour ou fichier .db téléversé), aucune somme de contrôle à comparer.",
         "migrations": {
           "ok": "Correspond exactement à cette version du backend.",
           "older_one": "D'une version plus ancienne : {{count}} migration serait appliquée lors de la restauration.",

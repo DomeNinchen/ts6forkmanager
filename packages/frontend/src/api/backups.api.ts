@@ -19,4 +19,21 @@ export const backupsApi = {
     api.post(`${one(kind, name)}/download-links`).then((r) => r.data),
 
   remove: (kind: BackupKind, name: string): Promise<void> => api.delete(one(kind, name)).then(() => undefined),
+
+  // The file is the raw body: streamed, never read into memory here or in the backend.
+  upload: (file: File, onProgress: (loaded: number) => void, signal?: AbortSignal): Promise<BackupEntry> =>
+    api
+      .put('/backups/uploads', file, {
+        headers: { 'Content-Type': 'application/octet-stream' },
+        timeout: 0,
+        signal,
+        onUploadProgress: (event) => onProgress(event.loaded),
+      })
+      .then((r) => r.data),
+
+  // Checked again by the backend, marked for the next start, then the backend restarts.
+  restore: (kind: BackupKind, name: string, acceptKeyMismatch: boolean): Promise<{ check: BackupCheckResult; restarting: boolean }> =>
+    api.post(`${one(kind, name)}/restore`, { acceptKeyMismatch }, { timeout: 600_000 }).then((r) => r.data),
+
+  cancelRestore: (): Promise<void> => api.delete('/backups/restore').then(() => undefined),
 };

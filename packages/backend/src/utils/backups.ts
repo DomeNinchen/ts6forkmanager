@@ -14,12 +14,16 @@ import type {
   BackupKind,
   BackupLastRun,
   BackupManifest,
+  BackupOverview,
+  BackupRestoreResult,
   BackupSettings,
 } from '@ts6/common';
 import { BACKUP_KINDS } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { AppError } from '../middleware/error-handler.js';
 import { migrationNames } from '../db-migrate.js';
+import { clearPending, readPending, readResult, sha256File, writePending, type PendingRestore } from '../db-restore.js';
+import { extractZipEntry, isZip, listZip } from './zip-read.js';
 import { decrypt } from './crypto.js';
 import { recordChange } from './change-log.js';
 import { getChangeLogSettings } from './change-log-settings.js';
@@ -37,7 +41,11 @@ export const BACKUP_DEFAULTS: BackupSettings = {
   days: [0, 1, 2, 3, 4, 5, 6],
   keep: 7,
   maxAgeDays: null,
+  maxUploadMb: 2048,
 };
+export const BACKUP_UPLOAD_MB_MIN = 1;
+/** The ZIPs here have no ZIP64, so 4 GiB is the end of the line anyway. */
+export const BACKUP_UPLOAD_MB_MAX = 4095;
 
 const KEY_SETTINGS = 'backup_settings';
 const KEY_LAST_RUN = 'backup_last_run';
@@ -59,9 +67,11 @@ function escapeRegExp(s: string): string {
 
 const TIME = '(\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}-\\d{3}Z)';
 
+type ManagedKind = 'manual' | 'scheduled' | 'uploaded' | 'before-restore';
+
 /** `ts6webui-2026-10-28T03-30-00-000Z-scheduled.db` */
 export function managedPattern(stem: string): RegExp {
-  return new RegExp(`^${escapeRegExp(stem)}-${TIME}-(manual|scheduled)\\.db$`);
+  return new RegExp(`^${escapeRegExp(stem)}-${TIME}-(manual|scheduled|uploaded|before-restore)\\.db$`);
 }
 
 /** The copies db-backup.ts takes before an update: `ts6webui-<time>-before-2.71.0.db` */
@@ -74,7 +84,7 @@ export function timeFromStamp(stamp: string): string {
   return stamp.replace(/T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z$/, 'T$1:$2:$3.$4Z');
 }
 
-export function managedName(stem: string, kind: 'manual' | 'scheduled', now: Date): string {
+export function managedName(stem: string, kind: ManagedKind, now: Date): string {
   return `${stem}-${now.toISOString().replace(/[:.]/g, '-')}-${kind}.db`;
 }
 
@@ -89,7 +99,7 @@ export function resolveBackup(kind: string, name: string): { kind: BackupKind; f
   if (!(BACKUP_KINDS as readonly string[]).includes(kind)) throw new AppError(404, 'No such backup');
   const managed = managedPattern(d.stem).exec(name);
   if (kind !== 'before-update' && managed && managed[2] === kind) {
-    return { kind: managed[2] as 'manual' | 'scheduled', file: path.join(d.managed, name), manifest: path.join(d.managed, `${name.slice(0, -3)}.json`) };
+    return { kind: managed[2] as ManagedKind, file: path.join(d.managed, name), manifest: path.join(d.managed, `${name.slice(0, -3)}.json`) };
   }
   if (kind === 'before-update' && beforeUpdatePattern(d.stem).test(name)) {
     return { kind, file: path.join(d.backups, name), manifest: null };
@@ -138,10 +148,11 @@ export function listBackups(): BackupEntry[] {
     if (!m) continue;
     const manifest = readManifest(path.join(d.managed, `${name.slice(0, -3)}.json`));
     entries.push({
-      kind: m[2] as 'manual' | 'scheduled',
+      kind: m[2] as ManagedKind,
       name,
       size: fs.statSync(path.join(d.managed, name)).size,
-      createdAt: timeFromStamp(m[1]),
+      // An upload is named after when it arrived; its manifest knows when it was taken.
+      createdAt: m[2] === 'uploaded' && manifest?.createdAt ? manifest.createdAt : timeFromStamp(m[1]),
       backendVersion: manifest?.backendVersion ?? null,
       migrationCount: manifest?.migrations.length ?? null,
       createdBy: manifest?.createdBy ?? null,
@@ -229,7 +240,8 @@ export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'sched
     fs.mkdirSync(d.managed, { recursive: true, mode: 0o700 });
     fs.chmodSync(d.managed, 0o700);
     // Leftovers of a run that was killed half way: only one backup runs at a time, so none is in use.
-    for (const n of fs.readdirSync(d.managed)) if (/^\..+\.tmp$/.test(n)) fs.rmSync(path.join(d.managed, n), { force: true });
+    // (An upload on its way has its own temp name, .upload-*.tmp, and is left alone.)
+    for (const n of fs.readdirSync(d.managed)) if (/^\..+\.db\.tmp$/.test(n)) fs.rmSync(path.join(d.managed, n), { force: true });
 
     const needed = 2 * databaseBytes(d.dbFile);
     const free = freeBytes(d.managed);
@@ -290,6 +302,7 @@ export function deleteBackup(kind: string, name: string): void {
   // Those belong to the update process (db-backup.ts keeps its own number of them).
   if (backup.kind === 'before-update') throw new AppError(400, 'Copies taken before an update are rotated by the update itself and cannot be deleted here');
   if (!fs.existsSync(backup.file)) throw new AppError(404, 'No such backup');
+  if (pendingFileOf(readPending(databaseFile())) === backup.file) throw new AppError(409, 'This backup is marked for a restore; cancel the restore first');
   removeBackupFiles(path.dirname(backup.file), name);
 }
 
@@ -328,8 +341,10 @@ export async function checkBackup(kind: string, name: string): Promise<BackupChe
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'ts6-backup-check-'));
   try {
     const inspected = await runWorker({ job: 'inspect', file: backup.file, copy: path.join(work, 'check.db') });
-    const manifest = readManifest(backup.manifest);
-    const checksum = backup.manifest === null ? null : { ok: manifest !== null && manifest.sha256 === inspected.sha256 && manifest.size === inspected.size };
+    // No manifest (a before-update copy, an uploaded bare .db): nothing to compare. One that exists but cannot be read is a mismatch.
+    const hasManifest = backup.manifest !== null && fs.existsSync(backup.manifest);
+    const manifest = hasManifest ? readManifest(backup.manifest) : null;
+    const checksum = hasManifest ? { ok: manifest !== null && manifest.sha256 === inspected.sha256 && manifest.size === inspected.size } : null;
     const migrations = compareMigrations(inspected.integrity.ok ? inspected.migrations : null, migrationNames());
     const key = checkKey(inspected.encrypted);
     return {
@@ -349,6 +364,151 @@ export async function checkBackup(kind: string, name: string): Promise<BackupChe
 /** A download link: the browser opens it itself, so the file streams to disk (see backup-downloads.routes.ts). */
 export const backupDownloadLinks = new TicketStore<{ userId: number; kind: BackupKind; name: string }>(60_000);
 
+// --- Uploads ------------------------------------------------------------------------
+
+const SQLITE_HEADER = Buffer.from('SQLite format 3\0', 'latin1');
+
+function startsWith(file: string, prefix: Buffer): boolean {
+  const fd = fs.openSync(file, 'r');
+  try {
+    const head = Buffer.alloc(prefix.length);
+    return fs.readSync(fd, head, 0, head.length, 0) === head.length && head.equals(prefix);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+const UPLOAD_TEMP = /^\.upload-\d+-(\d+)\.tmp$/;
+const UPLOAD_TEMP_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** Where an upload is written while it arrives: hidden, so it never counts as a backup. Leftovers of uploads cut off more than a day ago are cleared here. */
+export function uploadTempFile(now = Date.now()): string {
+  const d = dirs();
+  fs.mkdirSync(d.managed, { recursive: true, mode: 0o700 });
+  for (const n of fs.readdirSync(d.managed)) {
+    const m = UPLOAD_TEMP.exec(n);
+    if (m && now - Number(m[1]) > UPLOAD_TEMP_MAX_AGE_MS) fs.rmSync(path.join(d.managed, n), { force: true });
+  }
+  return path.join(d.managed, `.upload-${process.pid}-${now}.tmp`);
+}
+
+/**
+ * Turns an uploaded file into a backup of kind `uploaded`: a ZIP as the Backups page downloads it
+ * (the .db and its manifest), or a bare .db. Anything else is refused. The temp file is gone afterwards.
+ */
+export function importUpload(tmp: string, now = new Date()): BackupEntry {
+  const d = dirs();
+  const name = managedName(d.stem, 'uploaded', now);
+  const target = path.join(d.managed, name);
+  const manifestTarget = path.join(d.managed, `${name.slice(0, -3)}.json`);
+  const partial = path.join(d.managed, `.${name}.tmp`);
+  try {
+    if (isZip(tmp)) {
+      let entries;
+      try {
+        entries = listZip(tmp);
+      } catch (err) {
+        throw new AppError(400, 'The ZIP file cannot be read', (err as Error).message);
+      }
+      const dbs = entries.filter((e) => e.name.endsWith('.db') && !e.name.includes('/'));
+      if (dbs.length !== 1) throw new AppError(400, 'The ZIP must hold exactly one .db file, as a ZIP downloaded from this page does');
+      try {
+        extractZipEntry(tmp, dbs[0], partial);
+        const json = entries.find((e) => e.name === `${dbs[0].name.slice(0, -3)}.json`);
+        if (json && json.size < 1_000_000) {
+          extractZipEntry(tmp, json, `${manifestTarget}.tmp`);
+          // A manifest that is not one is left out: the checksum is then simply not compared.
+          if (readManifest(`${manifestTarget}.tmp`)?.sha256) fs.renameSync(`${manifestTarget}.tmp`, manifestTarget);
+          else fs.rmSync(`${manifestTarget}.tmp`, { force: true });
+        }
+      } catch (err) {
+        throw err instanceof AppError ? err : new AppError(400, 'The ZIP file is damaged', (err as Error).message);
+      }
+    } else if (startsWith(tmp, SQLITE_HEADER)) {
+      fs.renameSync(tmp, partial);
+    } else {
+      throw new AppError(400, 'This is neither a backup ZIP from this page nor a database file');
+    }
+    if (!startsWith(partial, SQLITE_HEADER)) throw new AppError(400, 'The .db in the ZIP is not a database file');
+    fs.chmodSync(partial, 0o600);
+    fs.renameSync(partial, target);
+    return listBackups().find((b) => b.name === name)!;
+  } catch (err) {
+    fs.rmSync(partial, { force: true });
+    fs.rmSync(`${manifestTarget}.tmp`, { force: true });
+    fs.rmSync(manifestTarget, { force: true });
+    throw err;
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+}
+
+// --- Restore --------------------------------------------------------------------------
+
+function pendingFileOf(pending: PendingRestore | null): string | null {
+  return pending ? path.resolve(dirs().backups, pending.file) : null;
+}
+
+/** The kind and name of a backup file path, if it is one the page lists. */
+function entryOfFile(file: string): { kind: BackupKind; name: string } | null {
+  const d = dirs();
+  const name = path.basename(file);
+  const managed = managedPattern(d.stem).exec(name);
+  if (path.dirname(file) === d.managed && managed) return { kind: managed[2] as ManagedKind, name };
+  if (path.dirname(file) === d.backups && beforeUpdatePattern(d.stem).test(name)) return { kind: 'before-update', name };
+  return null;
+}
+
+export function pendingRestoreView(): BackupOverview['pendingRestore'] {
+  const pending = readPending(databaseFile());
+  const entry = pending ? entryOfFile(pendingFileOf(pending)!) : null;
+  return pending && entry ? { ...entry, requestedBy: pending.requestedBy, requestedAt: pending.requestedAt } : null;
+}
+
+export function lastRestoreView(): BackupRestoreResult | null {
+  const result = readResult(databaseFile());
+  if (!result) return null;
+  const file = path.resolve(dirs().backups, result.file);
+  const entry = fs.existsSync(file) ? entryOfFile(file) : null;
+  return {
+    at: result.at, ok: result.ok, kind: entry?.kind ?? null, name: entry?.name ?? path.basename(result.file),
+    requestedBy: result.requestedBy, beforeRestore: result.beforeRestore, rolledBack: result.rolledBack, error: result.error,
+  };
+}
+
+/**
+ * Marks a backup for restore at the next start (db-restore.ts applies it), after the same checks
+ * as "test backup". Refused: a damaged or changed file, one from a newer backend, one from before
+ * versioned migrations (the start could not adopt it safely), and - unless the admin accepted it -
+ * one whose encrypted values the running key cannot read.
+ */
+export async function requestRestore(kind: string, name: string, requestedBy: string, acceptKeyMismatch: boolean): Promise<BackupCheckResult> {
+  const backup = resolveBackup(kind, name);
+  const check = await checkBackup(kind, name);
+  if (!check.integrity.ok) throw new AppError(409, 'This backup is damaged', check.integrity.message, 'DAMAGED');
+  if (check.checksum && !check.checksum.ok) throw new AppError(409, 'This backup changed after it was written (checksum mismatch)', undefined, 'CHECKSUM');
+  if (check.migrations.state === 'newer') throw new AppError(409, 'This backup was written by a newer backend version; this one cannot take it', check.migrations.unknown.join(', '), 'NEWER');
+  if (check.migrations.state === 'no-history') throw new AppError(409, 'This backup is from before versioned migrations; restore it by hand as described in the wiki (Troubleshooting)', undefined, 'NO_HISTORY');
+  if (check.key.failed > 0 && !acceptKeyMismatch) throw new AppError(409, 'The running key cannot decrypt values in this backup', check.key.failedFields.join(', '), 'KEY_MISMATCH');
+  const dbFile = databaseFile();
+  writePending(dbFile, {
+    file: path.relative(dirs(dbFile).backups, backup.file),
+    // The start restores exactly the file that was checked, or nothing.
+    sha256: sha256File(backup.file),
+    requestedBy,
+    requestedAt: new Date().toISOString(),
+  });
+  console.log(`[Backups] Restore of ${name} marked by ${requestedBy}; applied at the next start`);
+  return check;
+}
+
+export function cancelRestore(): boolean {
+  const dbFile = databaseFile();
+  if (!readPending(dbFile)) return false;
+  clearPending(dbFile);
+  return true;
+}
+
 // --- Settings and last run --------------------------------------------------------
 
 export function isValidBackupSettings(v: unknown): v is BackupSettings {
@@ -359,7 +519,8 @@ export function isValidBackupSettings(v: unknown): v is BackupSettings {
     typeof s.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s.time) &&
     Array.isArray(s.days) && s.days.length > 0 && s.days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) &&
     Number.isInteger(s.keep) && s.keep >= BACKUP_KEEP_MIN && s.keep <= BACKUP_KEEP_MAX &&
-    (s.maxAgeDays === null || (Number.isInteger(s.maxAgeDays) && s.maxAgeDays >= BACKUP_MAX_AGE_MIN && s.maxAgeDays <= BACKUP_MAX_AGE_MAX))
+    (s.maxAgeDays === null || (Number.isInteger(s.maxAgeDays) && s.maxAgeDays >= BACKUP_MAX_AGE_MIN && s.maxAgeDays <= BACKUP_MAX_AGE_MAX)) &&
+    Number.isInteger(s.maxUploadMb) && s.maxUploadMb >= BACKUP_UPLOAD_MB_MIN && s.maxUploadMb <= BACKUP_UPLOAD_MB_MAX
   );
 }
 
@@ -376,7 +537,7 @@ export async function getBackupSettings(prisma: PrismaClient): Promise<BackupSet
 }
 
 export async function setBackupSettings(prisma: PrismaClient, s: BackupSettings): Promise<void> {
-  const value = JSON.stringify({ scheduleEnabled: s.scheduleEnabled, time: s.time, days: [...new Set(s.days)].sort(), keep: s.keep, maxAgeDays: s.maxAgeDays });
+  const value = JSON.stringify({ scheduleEnabled: s.scheduleEnabled, time: s.time, days: [...new Set(s.days)].sort(), keep: s.keep, maxAgeDays: s.maxAgeDays, maxUploadMb: s.maxUploadMb });
   await prisma.appSetting.upsert({ where: { key: KEY_SETTINGS }, create: { key: KEY_SETTINGS, value }, update: { value } });
 }
 

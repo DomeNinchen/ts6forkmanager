@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { applyPendingRestore, recordRestoreInChangeLog, rollbackRestore } from './db-restore.js';
 
 export const MIGRATIONS_DIR = 'prisma/migrations';
 
@@ -81,6 +82,13 @@ function run(): void {
 
   const url = process.env.DATABASE_URL || 'file:./data/ts6webui.db';
   const dbFile = path.resolve(url.replace(/^file:/, ''));
+  // A restore marked on the Backups page goes in first, so the migrations below bring it up to date.
+  const restore = applyPendingRestore(dbFile);
+  // If they fail, the state before the restore goes back in: the start never ends on a half-migrated restore.
+  const fatal = (code: number, reason: string): never => {
+    if (restore.applied) rollbackRestore(dbFile, restore.pending, restore.beforeRestore, reason);
+    process.exit(code);
+  };
   const state = inspectDb(dbFile);
 
   // Schema drift only matters when baselining a database that has no migration history yet:
@@ -90,7 +98,7 @@ function run(): void {
     const diff = prisma(['migrate', 'diff', '--from-config-datasource', '--to-migrations', MIGRATIONS_DIR, '--exit-code'], true).status;
     if (diff === 1) {
       console.error('[db-migrate] FATAL: could not compare the existing database against the migrations.');
-      process.exit(1);
+      fatal(1, 'the database could not be compared against the migrations');
     }
     dbMatchesMigrations = diff === 0;
   }
@@ -101,13 +109,13 @@ function run(): void {
   for (const step of planMigration(state, dbMatchesMigrations, pending)) {
     if (step === 'backup') {
       const r = spawnSync('node', ['dist/db-backup.js'], { stdio: 'inherit' });
-      if (r.status !== 0) process.exit(r.status ?? 1); // db-backup.js has already printed why
+      if (r.status !== 0) fatal(r.status ?? 1, 'the backup before the migrations failed'); // db-backup.js has already printed why
     } else if (step === 'baseline') {
       for (const name of migrationNames()) {
         const r = prisma(['migrate', 'resolve', '--applied', name]);
         if (r.status !== 0) {
           console.error(`[db-migrate] FATAL: could not baseline migration ${name}.`);
-          process.exit(r.status ?? 1);
+          fatal(r.status ?? 1, `migration ${name} could not be baselined`);
         }
       }
       console.log('[db-migrate] Baselined the existing database (no migration history found) against the committed migrations.');
@@ -116,15 +124,16 @@ function run(): void {
       console.error('[db-migrate] It has no migration history and cannot be baselined safely. Differences:');
       prisma(['migrate', 'diff', '--from-migrations', MIGRATIONS_DIR, '--to-config-datasource']);
       console.error('[db-migrate] Restore from data/backups/ or reconcile the schema with a migration, then restart.');
-      process.exit(1);
+      fatal(1, 'the database does not match the expected schema');
     } else if (step === 'deploy') {
       const r = prisma(['migrate', 'deploy']);
       if (r.status !== 0) {
         console.error('[db-migrate] FATAL: migrate deploy failed. The backend will not start against a half-migrated schema.');
-        process.exit(r.status ?? 1);
+        fatal(r.status ?? 1, 'the migrations failed');
       }
     }
   }
+  if (restore.applied) recordRestoreInChangeLog(dbFile, restore.pending, restore.beforeRestore);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

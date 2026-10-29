@@ -1,11 +1,12 @@
 // Shapes exchanged between the backend's backup routes and the Backups page (R7).
 
 /**
- * Where a backup came from. `manual` and `scheduled` are written by the Backups page
- * (data/backups/managed/); `before-update` is the copy the container takes on its own
- * before it applies a pending migration (data/backups/, see db-backup.ts).
+ * Where a backup came from. `manual` and `scheduled` are written by the Backups page,
+ * `uploaded` was uploaded there, `before-restore` is the state the start saved before it
+ * restored a backup (all in data/backups/managed/); `before-update` is the copy the container
+ * takes on its own before it applies a pending migration (data/backups/, see db-backup.ts).
  */
-export const BACKUP_KINDS = ['manual', 'scheduled', 'before-update'] as const;
+export const BACKUP_KINDS = ['manual', 'scheduled', 'uploaded', 'before-restore', 'before-update'] as const;
 export type BackupKind = (typeof BACKUP_KINDS)[number];
 
 /** Written next to every backup as `<name>.json`. */
@@ -49,6 +50,8 @@ export interface BackupSettings {
   keep: number;
   /** Scheduled backups older than this are deleted too; null = by count only. */
   maxAgeDays: number | null;
+  /** Largest backup that may be uploaded, in MiB. */
+  maxUploadMb: number;
 }
 
 export interface BackupLastRun {
@@ -70,7 +73,26 @@ export interface BackupOverview {
   databaseBytes: number;
   /** The backend's clock the schedule runs on, e.g. "17:39 (UTC)" - a container is often not in the admin's time zone. */
   serverTime: string;
-  bounds: { keepMin: number; keepMax: number; maxAgeMin: number; maxAgeMax: number };
+  bounds: { keepMin: number; keepMax: number; maxAgeMin: number; maxAgeMax: number; uploadMbMin: number; uploadMbMax: number };
+  /** A restore marked for the next start, not applied yet. */
+  pendingRestore: { kind: BackupKind; name: string; requestedBy: string; requestedAt: string } | null;
+  /** How the last restore ended. */
+  lastRestore: BackupRestoreResult | null;
+}
+
+export interface BackupRestoreResult {
+  /** ISO 8601. */
+  at: string;
+  ok: boolean;
+  /** The backup, null when it no longer exists. */
+  kind: BackupKind | null;
+  name: string;
+  requestedBy: string;
+  /** The copy of the state before the restore, kind `before-restore`. */
+  beforeRestore: string | null;
+  /** The restore ran but the migrations after it failed, and the state before was put back. */
+  rolledBack: boolean;
+  error: string | null;
 }
 
 /** Result of "test backup": the same checks a restore will run, on a throwaway copy. */
