@@ -16,6 +16,7 @@ import { config } from './config.js';
 import { setYtCookieFile } from './voice/audio/youtube.js';
 import { sweepStreamTempFiles } from './voice/streaming/video-download.js';
 import { loadDebugFlags } from './utils/debug-flags.js';
+import { issuedBeforeCutoff, loadSessionCutoff } from './utils/session-cutoff.js';
 import { startScheduledRestartChecker } from './utils/scheduled-restart.js';
 import { startBackupScheduler } from './utils/backups.js';
 import { startUpdateChecker } from './utils/update-check.js';
@@ -70,6 +71,7 @@ async function main() {
   await prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL');
   await prisma.$executeRawUnsafe('PRAGMA synchronous = NORMAL');
   await loadDebugFlags(prisma);
+  await loadSessionCutoff(prisma);
   startScheduledRestartChecker(prisma);
   startBackupScheduler(prisma);
   startUpdateChecker(prisma);
@@ -124,6 +126,7 @@ async function main() {
         const token = wsUrl.searchParams.get('token');
         if (!token) return done(false, 401, 'Missing token');
         const payload = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }) as JwtPayload;
+        if (issuedBeforeCutoff((payload as { iat?: number }).iat)) return done(false, 401, 'Invalid token');
         // Who the socket belongs to: ws-audience.ts decides from it which events the socket receives.
         (req as UpgradeRequest).wsUserId = payload.id;
         done(true);

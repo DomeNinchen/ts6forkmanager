@@ -151,7 +151,8 @@ export function listBackups(): BackupEntry[] {
       kind: m[2] as ManagedKind,
       name,
       size: fs.statSync(path.join(d.managed, name)).size,
-      createdAt: timeFromStamp(m[1]),
+      // An upload is named after when it arrived; its manifest knows when it was taken.
+      createdAt: m[2] === 'uploaded' && manifest?.createdAt ? manifest.createdAt : timeFromStamp(m[1]),
       backendVersion: manifest?.backendVersion ?? null,
       migrationCount: manifest?.migrations.length ?? null,
       createdBy: manifest?.createdBy ?? null,

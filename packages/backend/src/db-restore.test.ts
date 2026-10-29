@@ -13,6 +13,7 @@ function makeDb(file: string, who: string): DatabaseSync {
   db.exec('CREATE TABLE IF NOT EXISTS User (id INTEGER PRIMARY KEY, username TEXT)');
   db.exec('CREATE TABLE IF NOT EXISTS RefreshToken (id INTEGER PRIMARY KEY, token TEXT)');
   db.exec('CREATE TABLE IF NOT EXISTS TrustedDevice (id INTEGER PRIMARY KEY, token TEXT)');
+  db.exec('CREATE TABLE IF NOT EXISTS AppSetting (key TEXT PRIMARY KEY, value TEXT, updatedAt TEXT)');
   db.prepare('INSERT INTO User (username) VALUES (?)').run(who);
   db.exec("INSERT INTO RefreshToken (token) VALUES ('t'); INSERT INTO TrustedDevice (token) VALUES ('d')");
   return db;
@@ -75,11 +76,18 @@ test('a restore: the backup is in place, the state before (WAL rows included) is
   const r = rig();
   try {
     writePending(r.dbFile, r.pending);
+    // What a start killed during the copy of the current state leaves behind
+    const leftover = path.join(r.managed, '.ts6webui-2026-10-27T00-00-00-000Z-before-restore.db.tmp');
+    fs.writeFileSync(leftover, 'half a copy');
     const out = applyPendingRestore(r.dbFile, new Date('2026-10-28T10:00:00.000Z'));
     assert.equal(out.applied, true);
+    assert.ok(!fs.existsSync(leftover), 'the half copy of an earlier attempt is cleared');
     assert.deepEqual(users(r.dbFile), ['restored']);
     assert.equal(count(r.dbFile, 'RefreshToken'), 0);
     assert.equal(count(r.dbFile, 'TrustedDevice'), 0);
+    const cutoff = new DatabaseSync(r.dbFile, { readOnly: true });
+    assert.equal((cutoff.prepare("SELECT value FROM AppSetting WHERE key = 'sessions_valid_after'").get() as { value: string }).value, String(Date.parse('2026-10-28T10:00:00.000Z')));
+    cutoff.close();
     assert.ok(!fs.existsSync(`${r.dbFile}-wal`) || fs.statSync(`${r.dbFile}-wal`).size === 0);
     const copies = beforeRestoreCopies(r.managed);
     assert.equal(copies.length, 1);

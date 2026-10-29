@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 import type { JwtPayload } from '@ts6/common';
+import { issuedBeforeCutoff } from '../utils/session-cutoff.js';
 
 declare global {
   namespace Express {
@@ -21,6 +22,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   const token = authHeader.substring(7);
   try {
     const payload = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }) as JwtPayload;
+    if (issuedBeforeCutoff((payload as { iat?: number }).iat)) {
+      res.status(401).json({ error: 'Invalid or expired token' });
+      return;
+    }
 
     // H4+M5: Lightweight DB check — verify user still exists, is enabled, and get fresh role
     const prisma = req.app.locals.prisma;

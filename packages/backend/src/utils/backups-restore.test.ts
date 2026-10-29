@@ -93,6 +93,7 @@ test('upload: a downloaded ZIP and a bare .db become "uploaded" backups; anythin
     const fromZip = importUpload(zipTmp, new Date('2026-10-28T11:00:00.000Z'));
     assert.equal(fromZip.kind, 'uploaded');
     assert.equal(fromZip.createdBy, 'testadmin'); // from the manifest that came along
+    assert.equal(fromZip.createdAt, '2026-10-28T10:00:00.000Z'); // when it was taken, not when it arrived
     assert.ok(!fs.existsSync(zipTmp));
 
     const dbTmp = uploadTempFile();

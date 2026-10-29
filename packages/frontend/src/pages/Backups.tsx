@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { formatBytes } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth.store';
 
 /** How long the outcome of the last restore stays at the top of the page. */
 const RESTORE_NOTICE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -277,7 +278,7 @@ function RestoreDialog({ entry, databaseBytes, onClose }: { entry: BackupEntry; 
   const canRestore = !blocked && understood && (!keyProblem || acceptKey) && !restore.isPending;
 
   return (
-    <Dialog open onOpenChange={(open) => !open && !restore.isPending && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && !restore.isPending && (restore.isSuccess ? useAuthStore.getState().logout() : onClose())}>
       <DialogContent className="max-w-lg" data-testid="backup-restore-dialog">
         <DialogHeader>
           <DialogTitle>{t('pages.backups.restore.title')}</DialogTitle>
@@ -322,7 +323,10 @@ function RestoreDialog({ entry, databaseBytes, onClose }: { entry: BackupEntry; 
           </div>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={restore.isPending}>{restore.isSuccess ? t('common.close') : t('common.cancel')}</Button>
+          {/* After a restore every login is void (the backend refuses it from the start on): go to the sign-in page right away instead of on the next request. */}
+          <Button variant="outline" onClick={restore.isSuccess ? () => useAuthStore.getState().logout() : onClose} disabled={restore.isPending}>
+            {restore.isSuccess ? t('common.close') : t('common.cancel')}
+          </Button>
           {!restore.isSuccess && (
             <Button variant="destructive" disabled={!canRestore} onClick={() => restore.mutate()} data-testid="backup-restore-confirm">
               {restore.isPending ? t('pages.backups.restore.running') : t('pages.backups.restore.confirm')}

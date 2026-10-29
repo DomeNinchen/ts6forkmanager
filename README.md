@@ -122,7 +122,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 - **Virtual servers and the instance**: start, stop and create servers, edit settings, read logs, take snapshots. → [Virtual Servers and Instance](https://github.com/DomeNinchen/ts6forkmanager/wiki/Virtual-Servers-and-Instance), [Server Logs](https://github.com/DomeNinchen/ts6forkmanager/wiki/Server-Logs), [Server Maintenance](https://github.com/DomeNinchen/ts6forkmanager/wiki/Server-Maintenance)
 - **Query console**: any ServerQuery command with completion, help and a safety check for dangerous commands. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Query-Console)
 - **Connection journal**: who signed in to the web interface or joined TeamSpeak, from where, with one-click IP bans. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Connection-Journal)
-- **Backups**: back up the manager's database now or on a schedule, with retention, a test that checks a backup without replacing anything, and ZIP download. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Backups)
+- **Backups**: back up the manager's database now or on a schedule, with retention, a test that checks a backup without replacing anything, ZIP download and upload, and a guided restore that keeps the state before it. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Backups)
 - **Change log**: every change made through the interface, with user, target, values sent (secrets masked), result and address, and before/after for channels, groups, permissions, server settings, bans and privilege keys. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Change-Log)
 
 **Automation and media**

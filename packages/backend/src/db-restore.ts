@@ -113,6 +113,8 @@ function copyCurrentState(dbFile: string, requestedBy: string, now: Date): strin
   fs.mkdirSync(managed, { recursive: true, mode: 0o700 });
   const stem = path.basename(dbFile, path.extname(dbFile));
   const name = `${stem}-${now.toISOString().replace(/[:.]/g, '-')}-before-restore.db`;
+  // Half a copy from a start that was cut off: only takes the space this one needs.
+  for (const n of fs.readdirSync(managed)) if (/^\..+-before-restore\.db\.tmp$/.test(n)) fs.rmSync(path.join(managed, n), { force: true });
   const tmp = path.join(managed, `.${name}.tmp`);
   const db = new DatabaseSync(dbFile);
   try {
@@ -170,8 +172,12 @@ function swapIn(dbFile: string, source: string): void {
   fs.renameSync(tmp, dbFile);
 }
 
-/** Everybody signs in again: sessions and remembered devices of the restored state would otherwise come back to life. */
-function dropSessions(dbFile: string): void {
+/**
+ * Everybody signs in again: sessions and remembered devices of the restored state would otherwise
+ * come back to life, and access tokens issued before now are refused from the start on
+ * (sessions_valid_after, read by utils/session-cutoff.ts).
+ */
+function dropSessions(dbFile: string, now: Date): void {
   const db = new DatabaseSync(dbFile);
   try {
     for (const table of ['RefreshToken', 'TrustedDevice']) {
@@ -180,6 +186,13 @@ function dropSessions(dbFile: string): void {
       } catch {
         // not in this schema version
       }
+    }
+    try {
+      db.prepare(`INSERT INTO AppSetting (key, value, updatedAt) VALUES ('sessions_valid_after', ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updatedAt = excluded.updatedAt`)
+        .run(String(now.getTime()), now.toISOString().replace('Z', '+00:00'));
+    } catch (err) {
+      console.warn(`[db-restore] Could not set the session cut-off; access tokens from before run out on their own: ${(err as Error).message}`);
     }
   } finally {
     db.close();
@@ -228,7 +241,7 @@ export function applyPendingRestore(
 
   swapIn(dbFile, source);
   afterStep('swapped');
-  dropSessions(dbFile);
+  dropSessions(dbFile, now);
   clearPending(dbFile);
   writeResult(dbFile, { at: now.toISOString(), ok: true, file: pending.file, requestedBy: pending.requestedBy, beforeRestore, rolledBack: false, error: null });
   console.log(`[db-restore] Restored ${pending.file} (requested by ${pending.requestedBy}); everybody has to sign in again.`);
