@@ -73,7 +73,6 @@ async function main() {
   await loadDebugFlags(prisma);
   await loadSessionCutoff(prisma);
   startScheduledRestartChecker(prisma);
-  startBackupScheduler(prisma);
   startUpdateChecker(prisma);
   startPlayedSongCleanup(prisma);
   startJournalPruner(prisma);
@@ -139,6 +138,8 @@ async function main() {
   // Initialize TS connection pool
   const connectionPool = new ConnectionPool(prisma);
   await connectionPool.initialize();
+  // After the pool: a scheduled backup can take TeamSpeak snapshots through it.
+  startBackupScheduler(prisma, connectionPool);
 
   // Make services available via app.locals
   app.locals.prisma = prisma;

@@ -225,6 +225,8 @@
       "deleteDescription": "La sauvegarde du {{time}} sera supprimée définitivement.",
       "empty": "Aucune sauvegarde pour l'instant.",
       "beforeVersion": "avant {{version}}",
+      "tsSnapshotCount_one": "{{count}} snapshot TeamSpeak",
+      "tsSnapshotCount_other": "{{count}} snapshots TeamSpeak",
       "beforeUpdateNote": "Les copies « Avant mise à jour » sont faites par le conteneur lui-même avant d'appliquer des migrations de la base. Il en garde DB_BACKUP_KEEP ; ici, on peut les tester et les télécharger, mais pas les supprimer.",
       "lastFailed": {
         "manual": "La sauvegarde du {{time}} a échoué.",
@@ -237,6 +239,8 @@
         "freeSpace": "Libre dans le volume",
         "lastRun": "Dernière sauvegarde",
         "keyNote": "La clé (ENCRYPTION_KEY, sinon JWT_SECRET du .env) n'est pas dans la sauvegarde. Sans elle, les identifiants et secrets 2FA d'une sauvegarde sont inutilisables : conservez-la ailleurs. Une sauvegarde dans le volume disparaît avec le volume, téléchargez celles qui comptent.",
+        "tsSnapshotsLabel": "Inclure les snapshots TeamSpeak",
+        "tsSnapshotsHint": "Ajoute à chaque sauvegarde un snapshot de chaque serveur virtuel de toutes les connexions avec WebQuery (paramètres, canaux, groupes, permissions, identités client connues). Un snapshot se déploie sur la page « Divers ».",
         "button": "Sauvegarder maintenant",
         "running": "Sauvegarde …"
       },
@@ -623,6 +627,11 @@
       "resetAllPermissions": "Réinitialiser toutes les permissions",
       "restoreSnapshotTitle": "Restaurer le snapshot ?",
       "restoreSnapshotDescription": "Cela écrase les paramètres, groupes et permissions du serveur actuellement sélectionné avec le contenu de \"{{name}}\". Impossible à annuler.",
+      "deployReplaces": "Les canaux, groupes, permissions et paramètres du serveur sont remplacés par l'état du snapshot. Téléchargez d'abord un snapshot actuel pour pouvoir revenir en arrière.",
+      "deployNewChannelIds": "Tous les canaux reçoivent de nouveaux ID. Les flows, bots musicaux et autres réglages qui utilisent des ID de canal doivent être adaptés ensuite.",
+      "deployNoPermissionCheck": "TeamSpeak ne vérifie pas les permissions lors du déploiement : un snapshot peut accorder des permissions que personne n'aurait autrement. Ne déployez que des snapshots de source sûre.",
+      "deployKeepFiles": "Conserver les fichiers des canaux. Sans cela, ils disparaissent après le déploiement.",
+      "deployTypeName": "Saisissez le nom du serveur pour confirmer : {{name}}",
       "restore": "Restaurer",
       "resetAllPermissionsTitle": "Réinitialiser toutes les permissions ?",
       "resetAllPermissionsDescription": "Cela supprime définitivement chaque groupe serveur, groupe de salon, client et permission de salon sur le serveur actuellement sélectionné, puis recrée les groupes modèles par défaut. Impossible à annuler."

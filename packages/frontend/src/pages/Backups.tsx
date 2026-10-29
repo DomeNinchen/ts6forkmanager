@@ -44,6 +44,12 @@ export default function Backups() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['backups'] });
 
+  const saveSnapshots = useMutation({
+    mutationFn: (on: boolean) => backupsApi.setSettings({ ...data!.settings, includeTsSnapshots: on }),
+    onSuccess: (overview) => qc.setQueryData(['backups'], overview),
+    onError: (err) => toast.error(errorText(err, t('pages.backups.schedule.saveFailed'))),
+  });
+
   const cancelRestore = useMutation({
     mutationFn: backupsApi.cancelRestore,
     onSuccess: () => { void refresh(); toast.success(t('pages.backups.restore.cancelled')); },
@@ -161,6 +167,14 @@ export default function Backups() {
               )}
             </dl>
             <p className="text-[11px] text-muted-foreground">{t('pages.backups.now.keyNote')}</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label className="text-xs" htmlFor="backup-ts-snapshots">{t('pages.backups.now.tsSnapshotsLabel')}</Label>
+                <p className="text-[11px] text-muted-foreground">{t('pages.backups.now.tsSnapshotsHint')}</p>
+              </div>
+              <Switch id="backup-ts-snapshots" checked={data.settings.includeTsSnapshots} disabled={saveSnapshots.isPending}
+                onCheckedChange={(v) => saveSnapshots.mutate(v)} data-testid="backup-ts-snapshots" />
+            </div>
             <Button size="sm" onClick={() => create.mutate()} disabled={create.isPending} data-testid="backup-now">
               {create.isPending ? t('pages.backups.now.running') : t('pages.backups.now.button')}
             </Button>
@@ -192,7 +206,12 @@ export default function Backups() {
                     {new Date(entry.createdAt).toLocaleString()}
                     {entry.createdBy && <div className="text-[11px] text-muted-foreground">{entry.createdBy}</div>}
                   </td>
-                  <td className="px-3 py-2.5"><Badge variant="outline">{t(`pages.backups.kind.${entry.kind}`)}</Badge></td>
+                  <td className="px-3 py-2.5">
+                    <Badge variant="outline">{t(`pages.backups.kind.${entry.kind}`)}</Badge>
+                    {entry.tsSnapshots !== null && (
+                      <div className="text-[11px] text-muted-foreground mt-1" data-testid="backup-ts-count">{t('pages.backups.tsSnapshotCount', { count: entry.tsSnapshots })}</div>
+                    )}
+                  </td>
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono-data text-xs">{formatBytes(entry.size)}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono-data text-xs">
                     {entry.backendVersion === null ? '–' : entry.kind === 'before-update' ? t('pages.backups.beforeVersion', { version: entry.backendVersion }) : entry.backendVersion}

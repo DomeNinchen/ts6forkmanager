@@ -11,6 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useVirtualServerInfo } from '@/hooks/use-servers';
 import { MessageSquare, UserRound, Camera, AlertTriangle, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -65,12 +68,18 @@ export default function Miscellaneous() {
   });
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [typedName, setTypedName] = useState('');
+  // Files in channels survive only with -keepfiles (without it they are gone after the deploy).
+  const [keepFiles, setKeepFiles] = useState(true);
+  const { data: vsInfo } = useVirtualServerInfo();
+  const vsName: string = (Array.isArray(vsInfo) ? vsInfo[0] : vsInfo)?.virtualserver_name ?? '';
   const deploySnapshot = useMutation({
     mutationFn: (data: any) => serversApi.deploySnapshot(selectedConfigId!, selectedSid!, data),
     onSuccess: () => {
       toast.success(t('pages.misc.snapshotRestored'));
       setShowRestoreConfirm(false);
       setRestoreFile(null);
+      setTypedName('');
       qc.invalidateQueries({ queryKey: ['virtual-server-info'] });
     },
     onError: (err: any) => {
@@ -117,7 +126,7 @@ export default function Miscellaneous() {
     const text = await restoreFile.text();
     try {
       const data = JSON.parse(text);
-      deploySnapshot.mutate(data);
+      deploySnapshot.mutate({ version: data.version, data: data.data, keepFiles });
     } catch {
       toast.error(t('pages.misc.notValidSnapshot'));
       setShowRestoreConfirm(false);
@@ -218,16 +227,34 @@ export default function Miscellaneous() {
         </Card>
       </div>
 
-      <ConfirmDialog
-        open={showRestoreConfirm}
-        onOpenChange={(v) => { if (!v) { setShowRestoreConfirm(false); setRestoreFile(null); } }}
-        title={t('pages.misc.restoreSnapshotTitle')}
-        description={t('pages.misc.restoreSnapshotDescription', { name: restoreFile?.name })}
-        confirmLabel={t('pages.misc.restore')}
-        destructive
-        onConfirm={confirmRestore}
-        loading={deploySnapshot.isPending}
-      />
+      {/* Second confirmation: the server's name typed in. A deploy replaces the virtual server's configuration, gives every channel a new id, and TS6 does not check permissions while deploying. */}
+      <Dialog open={showRestoreConfirm} onOpenChange={(v) => { if (!v && !deploySnapshot.isPending) { setShowRestoreConfirm(false); setRestoreFile(null); setTypedName(''); } }}>
+        <DialogContent data-testid="snapshot-deploy-dialog">
+          <DialogHeader>
+            <DialogTitle>{t('pages.misc.restoreSnapshotTitle')}</DialogTitle>
+            <DialogDescription>{t('pages.misc.restoreSnapshotDescription', { name: restoreFile?.name })}</DialogDescription>
+          </DialogHeader>
+          <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-1">
+            <li>{t('pages.misc.deployReplaces')}</li>
+            <li>{t('pages.misc.deployNewChannelIds')}</li>
+            <li>{t('pages.misc.deployNoPermissionCheck')}</li>
+          </ul>
+          <div className="flex items-start gap-2">
+            <Checkbox id="deploy-keep-files" checked={keepFiles} onCheckedChange={(v) => setKeepFiles(v === true)} data-testid="snapshot-keep-files" />
+            <Label htmlFor="deploy-keep-files" className="text-xs leading-snug">{t('pages.misc.deployKeepFiles')}</Label>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="deploy-confirm-name" className="text-xs">{t('pages.misc.deployTypeName', { name: vsName })}</Label>
+            <Input id="deploy-confirm-name" value={typedName} onChange={(e) => setTypedName(e.target.value)} autoComplete="off" data-testid="snapshot-confirm-name" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowRestoreConfirm(false); setRestoreFile(null); setTypedName(''); }} disabled={deploySnapshot.isPending}>{t('common.cancel')}</Button>
+            <Button variant="destructive" onClick={confirmRestore} disabled={!vsName || typedName.trim() !== vsName || deploySnapshot.isPending} data-testid="snapshot-deploy-confirm">
+              {deploySnapshot.isPending ? t('components.confirmDialog.processing') : t('pages.misc.restore')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={showPermResetConfirm}

@@ -129,7 +129,11 @@ export class WebQueryClient {
     }
   }
 
-  async executePost(sid: number, command: string, params?: Record<string, any>): Promise<any> {
+  /**
+   * `inBody` sends the parameters as a JSON body instead of the query string - for values too
+   * large for a URL (a server snapshot). Flags such as `-keepfiles` are then keys with an empty value.
+   */
+  async executePost(sid: number, command: string, params?: Record<string, any>, inBody = false): Promise<any> {
     const cleaned = this.cleanParams(params);
     const debug = isDebugEnabled('query');
     if (debug) {
@@ -137,7 +141,10 @@ export class WebQueryClient {
     }
     try {
       const path = sid > 0 ? `/${sid}/${command}` : `/${command}`;
-      const response = await this.http.post(path, null, { params: cleaned });
+      // A large snapshot: no 10 MB body cap (follow-redirects' default), and time for the server to rebuild itself.
+      const response = inBody
+        ? await this.http.post(path, cleaned ?? {}, { maxBodyLength: Infinity, timeout: 120_000 })
+        : await this.http.post(path, null, { params: cleaned });
 
       const data = response.data;
       if (data.status && data.status.code !== 0) {

@@ -577,6 +577,8 @@
       "deleteDescription": "Die Sicherung vom {{time}} wird endgültig gelöscht.",
       "empty": "Noch keine Sicherungen.",
       "beforeVersion": "vor {{version}}",
+      "tsSnapshotCount_one": "{{count}} TeamSpeak-Snapshot",
+      "tsSnapshotCount_other": "{{count}} TeamSpeak-Snapshots",
       "beforeUpdateNote": "„Vor Update“-Kopien legt der Container selbst an, bevor er Datenbank-Migrationen anwendet. Er behält davon DB_BACKUP_KEEP Stück; hier lassen sie sich prüfen und herunterladen, aber nicht löschen.",
       "lastFailed": {
         "manual": "Die Sicherung vom {{time}} ist fehlgeschlagen.",
@@ -589,6 +591,8 @@
         "freeSpace": "Frei im Volume",
         "lastRun": "Letzte Sicherung",
         "keyNote": "Der Schlüssel (ENCRYPTION_KEY, sonst JWT_SECRET aus der .env) steckt nicht in der Sicherung. Ohne ihn lassen sich die gespeicherten Zugangsdaten und 2FA-Geheimnisse einer Sicherung nicht nutzen: Bewahre ihn getrennt auf. Eine Sicherung im Volume geht mit dem Volume verloren, lade wichtige Sicherungen herunter.",
+        "tsSnapshotsLabel": "TeamSpeak-Snapshots mitsichern",
+        "tsSnapshotsHint": "Legt bei jeder Sicherung einen Snapshot jedes virtuellen Servers aller Verbindungen mit WebQuery dazu (Einstellungen, Kanäle, Gruppen, Rechte, bekannte Client-Identitäten). Eingespielt wird ein Snapshot auf der Seite „Sonstiges“.",
         "button": "Jetzt sichern",
         "running": "Sichert …"
       },
@@ -1298,6 +1302,11 @@
       "resetAllPermissions": "Alle Berechtigungen zurücksetzen",
       "restoreSnapshotTitle": "Snapshot wiederherstellen?",
       "restoreSnapshotDescription": "Dies überschreibt die Einstellungen, Gruppen und Berechtigungen des aktuell ausgewählten Servers mit dem Inhalt von \"{{name}}\". Dies kann nicht rückgängig gemacht werden.",
+      "deployReplaces": "Kanäle, Gruppen, Rechte und Einstellungen des Servers werden durch den Stand im Snapshot ersetzt. Lade vorher einen aktuellen Snapshot herunter, um zurückzukönnen.",
+      "deployNewChannelIds": "Alle Kanäle bekommen neue IDs. Bot-Flows, Music-Bots und andere Einstellungen, die Kanal-IDs verwenden, müssen danach angepasst werden.",
+      "deployNoPermissionCheck": "TeamSpeak prüft beim Einspielen keine Rechte: Ein Snapshot kann Rechte vergeben, die sonst niemand hätte. Spiele nur Snapshots aus sicherer Quelle ein.",
+      "deployKeepFiles": "Dateien in den Kanälen behalten. Ohne dieses Häkchen sind sie nach dem Einspielen weg.",
+      "deployTypeName": "Zur Bestätigung den Namen des Servers eintippen: {{name}}",
       "restore": "Wiederherstellen",
       "resetAllPermissionsTitle": "Alle Berechtigungen zurücksetzen?",
       "resetAllPermissionsDescription": "Dies löscht dauerhaft jede Servergruppen-, Channel-Gruppen-, Client- und Channel-Berechtigung auf dem aktuell ausgewählten Server und erstellt anschließend die Standard-Vorlagengruppen neu. Dies kann nicht rückgängig gemacht werden."
