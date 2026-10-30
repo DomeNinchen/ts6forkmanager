@@ -60,6 +60,7 @@ export default function ServerGroups() {
     onSuccess: (_d, { value }) => {
       toast.success(t(value ? 'pages.serverGroups.protectedOn' : 'pages.serverGroups.protectedOff'));
       queryClient.invalidateQueries({ queryKey: ['protected-server-groups', selectedConfigId, selectedSid] });
+      queryClient.invalidateQueries({ queryKey: ['protected-groups-summary'] }); // the role preview's warning
     },
     onError: (err: any) => toast.error(err?.response?.data?.error || t('pages.serverGroups.protectedFailed')),
   });
@@ -297,9 +298,10 @@ export default function ServerGroups() {
                   {isAdmin && (
                     <label className="flex items-center gap-1.5 text-xs" title={t('pages.serverGroups.protectedHint')}>
                       <Switch
-                        checked={protectedSet.has(selectedGroup)}
+                        // TeamSpeak hands group ids out as strings; the protected list holds numbers.
+                        checked={protectedSet.has(Number(selectedGroup))}
                         disabled={setProtected.isPending || protectedSgids === undefined}
-                        onCheckedChange={(value) => setProtected.mutate({ sgid: selectedGroup, value })}
+                        onCheckedChange={(value) => setProtected.mutate({ sgid: Number(selectedGroup), value })}
                         data-testid="group-protected-switch"
                       />
                       {t('pages.serverGroups.protectedLabel')}
