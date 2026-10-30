@@ -642,7 +642,7 @@
       },
       "upload": {
         "title": "Sicherung hochladen",
-        "description": "Eine von dieser Seite heruntergeladene ZIP-Datei oder eine .db-Datei. Sie erscheint danach in der Liste als „Hochgeladen“ und lässt sich testen und wiederherstellen.",
+        "description": "Eine von dieser Seite heruntergeladene ZIP-Datei (auch verschlüsselt, .zip.enc) oder eine .db-Datei. Sie erscheint danach in der Liste als „Hochgeladen“ und lässt sich testen und wiederherstellen. Verschlüsselte Dateien öffnet die hier eingestellte Passphrase.",
         "button": "Datei auswählen",
         "running": "Lädt hoch …",
         "done": "Sicherung hochgeladen.",
@@ -652,6 +652,25 @@
         "limitLabel": "Größte hochladbare Sicherung (MB)",
         "limitHint": "{{min}} bis {{max}} MB. Ein Reverse-Proxy vor der App braucht ein mindestens so hohes Limit.",
         "limitSaved": "Upload-Grenze gespeichert."
+      },
+      "target": {
+        "title": "Ablage außerhalb",
+        "description": "Ein Verzeichnis außerhalb des Volumes, in das jede Sicherung zusätzlich als ZIP kopiert wird (Kopien vor einem Update bleiben im Volume). Aufbewahrung und Löschen gelten an beiden Orten. So bleiben Sicherungen erhalten, wenn das Volume verloren geht; sie erscheinen dann als „Extern“ in der Liste.",
+        "dirLabel": "Zielverzeichnis (Pfad im Container)",
+        "dirHint": "Das Verzeichnis muss im Container eingebunden sein, z. B. als Bind-Mount oder NFS-Freigabe über eine eigene docker-compose.override.yml, und für das Backend (uid 1000) beschreibbar sein. Leer lassen und speichern schaltet die Ablage ab.",
+        "ok": "Erreichbar und beschreibbar, {{free}} frei.",
+        "saved": "Zielverzeichnis gespeichert.",
+        "copyFailed": "Die Sicherung vom {{time}} wurde geschrieben, aber nicht ins Zielverzeichnis kopiert.",
+        "alsoThere": "auch im Zielverzeichnis",
+        "passphraseLabel": "Passphrase für Kopien und Downloads",
+        "passphraseOn": "Gesetzt: Kopien im Zielverzeichnis und Downloads werden verschlüsselt.",
+        "passphraseOff": "Nicht gesetzt: Kopien und Downloads sind unverschlüsselt.",
+        "passphraseSet": "Passphrase setzen",
+        "passphraseRemove": "Entfernen",
+        "passphraseSaved": "Passphrase gesetzt.",
+        "passphraseRemoved": "Passphrase entfernt.",
+        "passphraseHint": "Mindestens 12 Zeichen. Sie wird hier verschlüsselt gespeichert, aber nie angezeigt: Bewahre sie getrennt auf. Ohne sie lässt sich eine verschlüsselte Sicherung nicht öffnen, auch nicht von dieser App.",
+        "decryptHint": "Ohne diese App öffnet openssl eine verschlüsselte Datei:"
       },
       "columns": {
         "time": "Zeitpunkt",
@@ -664,6 +683,7 @@
         "manual": "Manuell",
         "scheduled": "Geplant",
         "uploaded": "Hochgeladen",
+        "external": "Extern",
         "before-restore": "Vor Wiederherstellung",
         "before-update": "Vor Update"
       },

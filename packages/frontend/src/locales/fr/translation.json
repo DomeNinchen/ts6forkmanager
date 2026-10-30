@@ -290,7 +290,7 @@
       },
       "upload": {
         "title": "Téléverser une sauvegarde",
-        "description": "Un ZIP téléchargé depuis cette page, ou un fichier .db. Il apparaît ensuite dans la liste comme « Téléversée » et peut être testé et restauré.",
+        "description": "Un ZIP téléchargé depuis cette page (chiffré aussi, .zip.enc), ou un fichier .db. Il apparaît ensuite dans la liste comme « Téléversée » et peut être testé et restauré. Les fichiers chiffrés s'ouvrent avec la phrase secrète définie ici.",
         "button": "Choisir un fichier",
         "running": "Téléversement …",
         "done": "Sauvegarde téléversée.",
@@ -300,6 +300,25 @@
         "limitLabel": "Plus grande sauvegarde téléversable (Mo)",
         "limitHint": "{{min}} à {{max}} Mo. Un reverse proxy devant l'application doit avoir une limite au moins aussi élevée.",
         "limitSaved": "Limite de téléversement enregistrée."
+      },
+      "target": {
+        "title": "Copies hors du volume",
+        "description": "Un répertoire hors du volume où chaque sauvegarde est aussi copiée en ZIP (les copies avant mise à jour restent dans le volume). La conservation et la suppression s'appliquent aux deux endroits. Les sauvegardes survivent ainsi à la perte du volume ; elles apparaissent alors comme « Externe » dans la liste.",
+        "dirLabel": "Répertoire cible (chemin dans le conteneur)",
+        "dirHint": "Le répertoire doit être monté dans le conteneur, par exemple en bind mount ou partage NFS via votre propre docker-compose.override.yml, et accessible en écriture au backend (uid 1000). L'enregistrer vide désactive les copies.",
+        "ok": "Accessible en écriture, {{free}} libres.",
+        "saved": "Répertoire cible enregistré.",
+        "copyFailed": "La sauvegarde du {{time}} a été écrite, mais pas copiée dans le répertoire cible.",
+        "alsoThere": "aussi dans le répertoire cible",
+        "passphraseLabel": "Phrase secrète pour les copies et téléchargements",
+        "passphraseOn": "Définie : les copies du répertoire cible et les téléchargements sont chiffrés.",
+        "passphraseOff": "Non définie : copies et téléchargements ne sont pas chiffrés.",
+        "passphraseSet": "Définir la phrase secrète",
+        "passphraseRemove": "Supprimer",
+        "passphraseSaved": "Phrase secrète définie.",
+        "passphraseRemoved": "Phrase secrète supprimée.",
+        "passphraseHint": "Au moins 12 caractères. Elle est stockée chiffrée ici mais jamais affichée : conservez-la ailleurs. Sans elle, une sauvegarde chiffrée ne peut pas être ouverte, même par cette application.",
+        "decryptHint": "Sans cette application, openssl ouvre un fichier chiffré :"
       },
       "columns": {
         "time": "Date",
@@ -312,6 +331,7 @@
         "manual": "Manuelle",
         "scheduled": "Planifiée",
         "uploaded": "Téléversée",
+        "external": "Externe",
         "before-restore": "Avant restauration",
         "before-update": "Avant mise à jour"
       },

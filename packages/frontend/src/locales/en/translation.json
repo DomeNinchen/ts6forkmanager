@@ -642,7 +642,7 @@
       },
       "upload": {
         "title": "Upload a backup",
-        "description": "A ZIP downloaded from this page, or a .db file. It then appears in the list as \"Uploaded\" and can be tested and restored.",
+        "description": "A ZIP downloaded from this page (encrypted ones too, .zip.enc), or a .db file. It then appears in the list as \"Uploaded\" and can be tested and restored. Encrypted files are opened with the passphrase set here.",
         "button": "Choose file",
         "running": "Uploading …",
         "done": "Backup uploaded.",
@@ -652,6 +652,25 @@
         "limitLabel": "Largest backup to upload (MB)",
         "limitHint": "{{min}} to {{max}} MB. A reverse proxy in front of the app needs a limit at least as high.",
         "limitSaved": "Upload limit saved."
+      },
+      "target": {
+        "title": "Copies outside the volume",
+        "description": "A directory outside the volume every backup is also copied to as a ZIP (copies taken before an update stay in the volume). Retention and deleting apply in both places. Backups survive losing the volume this way; they then appear as \"External\" in the list.",
+        "dirLabel": "Target directory (path inside the container)",
+        "dirHint": "The directory has to be mounted into the container, e.g. as a bind mount or NFS share through a docker-compose.override.yml of your own, and writable for the backend (uid 1000). Saving it empty switches the copies off.",
+        "ok": "Reachable and writable, {{free}} free.",
+        "saved": "Target directory saved.",
+        "copyFailed": "The backup from {{time}} was written, but not copied to the target directory.",
+        "alsoThere": "also in the target directory",
+        "passphraseLabel": "Passphrase for copies and downloads",
+        "passphraseOn": "Set: copies in the target directory and downloads are encrypted.",
+        "passphraseOff": "Not set: copies and downloads are unencrypted.",
+        "passphraseSet": "Set passphrase",
+        "passphraseRemove": "Remove",
+        "passphraseSaved": "Passphrase set.",
+        "passphraseRemoved": "Passphrase removed.",
+        "passphraseHint": "At least 12 characters. It is stored encrypted here but never shown: keep it somewhere else. Without it an encrypted backup cannot be opened, not even by this app.",
+        "decryptHint": "Without this app, openssl opens an encrypted file:"
       },
       "columns": {
         "time": "Time",
@@ -664,6 +683,7 @@
         "manual": "Manual",
         "scheduled": "Scheduled",
         "uploaded": "Uploaded",
+        "external": "External",
         "before-restore": "Before restore",
         "before-update": "Before update"
       },

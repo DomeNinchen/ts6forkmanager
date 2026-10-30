@@ -147,6 +147,16 @@ export default function Backups() {
         </div>
       )}
 
+      {data.lastRun?.ok && data.lastRun.externalError && (
+        <div className="flex gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm" role="alert" data-testid="backup-external-failed">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+          <div>
+            <p className="font-medium">{t('pages.backups.target.copyFailed', { time: new Date(data.lastRun.at).toLocaleString() })}</p>
+            <p className="text-xs text-muted-foreground break-words">{data.lastRun.externalError}</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="card-hero">
           <CardHeader>
@@ -183,6 +193,7 @@ export default function Backups() {
 
         <ScheduleCard settings={data.settings} bounds={data.bounds} serverTime={data.serverTime} />
         <UploadCard settings={data.settings} bounds={data.bounds} />
+        <TargetCard overview={data} />
       </div>
 
       <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
@@ -210,6 +221,9 @@ export default function Backups() {
                     <Badge variant="outline">{t(`pages.backups.kind.${entry.kind}`)}</Badge>
                     {entry.tsSnapshots !== null && (
                       <div className="text-[11px] text-muted-foreground mt-1" data-testid="backup-ts-count">{t('pages.backups.tsSnapshotCount', { count: entry.tsSnapshots })}</div>
+                    )}
+                    {entry.external && entry.kind !== 'external' && (
+                      <div className="text-[11px] text-muted-foreground mt-1" data-testid="backup-also-external">{t('pages.backups.target.alsoThere')}</div>
                     )}
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono-data text-xs">{formatBytes(entry.size)}</td>
@@ -358,6 +372,76 @@ function RestoreDialog({ entry, databaseBytes, onClose }: { entry: BackupEntry; 
 }
 
 /** Upload a backup (a ZIP downloaded from this page, or a .db), and the size limit for that. */
+/** The directory outside the volume every backup is copied to, and the passphrase that encrypts what leaves the volume. */
+function TargetCard({ overview }: { overview: BackupOverview }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [dir, setDir] = useState(overview.settings.targetDir ?? '');
+  useEffect(() => setDir(overview.settings.targetDir ?? ''), [overview.settings.targetDir]);
+  const [passphrase, setPassphraseText] = useState('');
+  const dirValue = dir.trim() === '' ? null : dir.trim();
+
+  const saveDir = useMutation({
+    mutationFn: () => backupsApi.setSettings({ ...overview.settings, targetDir: dirValue }),
+    onSuccess: (o) => { qc.setQueryData(['backups'], o); toast.success(t('pages.backups.target.saved')); },
+    onError: (err) => toast.error(errorText(err, t('pages.backups.schedule.saveFailed'))),
+  });
+  const savePassphrase = useMutation({
+    mutationFn: (p: string | null) => backupsApi.setPassphrase(p),
+    onSuccess: (o, p) => { qc.setQueryData(['backups'], o); setPassphraseText(''); toast.success(t(p === null ? 'pages.backups.target.passphraseRemoved' : 'pages.backups.target.passphraseSaved')); },
+    onError: (err) => toast.error(errorText(err, t('pages.backups.schedule.saveFailed'))),
+  });
+
+  return (
+    <Card className="card-hero">
+      <CardHeader>
+        <CardTitle className="text-sm font-medium">{t('pages.backups.target.title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">{t('pages.backups.target.description')}</p>
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="backup-target-dir">{t('pages.backups.target.dirLabel')}</Label>
+          <div className="flex gap-2">
+            <Input id="backup-target-dir" value={dir} placeholder="/backups-external" onChange={(e) => setDir(e.target.value)} className="font-mono-data" data-testid="backup-target-dir" />
+            <Button size="sm" disabled={dirValue === overview.settings.targetDir || saveDir.isPending} onClick={() => saveDir.mutate()} data-testid="backup-target-save">
+              {t('pages.backups.schedule.save')}
+            </Button>
+          </div>
+          {overview.target && (
+            <p className={`text-[11px] ${overview.target.ok ? 'text-muted-foreground' : 'text-destructive'}`} data-testid="backup-target-status">
+              {overview.target.ok
+                ? t('pages.backups.target.ok', { free: overview.target.freeBytes === null ? '–' : formatBytes(overview.target.freeBytes) })
+                : overview.target.error}
+            </p>
+          )}
+          <p className="text-[11px] text-muted-foreground">{t('pages.backups.target.dirHint')}</p>
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="backup-passphrase">{t('pages.backups.target.passphraseLabel')}</Label>
+          <p className="text-[11px] text-muted-foreground" data-testid="backup-passphrase-state">
+            {overview.passphraseSet ? t('pages.backups.target.passphraseOn') : t('pages.backups.target.passphraseOff')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Input id="backup-passphrase" type="password" autoComplete="new-password" value={passphrase} onChange={(e) => setPassphraseText(e.target.value)} className="max-w-xs" data-testid="backup-passphrase" />
+            <Button size="sm" disabled={passphrase.length < 12 || savePassphrase.isPending} onClick={() => savePassphrase.mutate(passphrase)} data-testid="backup-passphrase-save">
+              {t('pages.backups.target.passphraseSet')}
+            </Button>
+            {overview.passphraseSet && (
+              <Button size="sm" variant="outline" disabled={savePassphrase.isPending} onClick={() => savePassphrase.mutate(null)} data-testid="backup-passphrase-remove">
+                {t('pages.backups.target.passphraseRemove')}
+              </Button>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t('pages.backups.target.passphraseHint')}</p>
+          <p className="text-[11px] text-muted-foreground">{t('pages.backups.target.decryptHint')}</p>
+          <code className="block text-[11px] font-mono-data break-all rounded bg-muted/40 p-2" data-testid="backup-decrypt-command">{overview.decryptCommand}</code>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function UploadCard({ settings, bounds }: { settings: BackupSettings; bounds: BackupOverview['bounds'] }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -402,7 +486,7 @@ function UploadCard({ settings, bounds }: { settings: BackupSettings; bounds: Ba
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground">{t('pages.backups.upload.description')}</p>
-        <input ref={input} type="file" accept=".zip,.db" className="hidden" data-testid="backup-upload-input"
+        <input ref={input} type="file" accept=".zip,.db,.enc" className="hidden" data-testid="backup-upload-input"
           onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
         <Button size="sm" variant="outline" onClick={() => input.current?.click()} disabled={upload.isPending} data-testid="backup-upload">
           <Upload className="h-4 w-4 mr-1" />{upload.isPending ? t('pages.backups.upload.running') : t('pages.backups.upload.button')}
