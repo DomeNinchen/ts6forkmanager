@@ -1931,7 +1931,8 @@
           "heading": "On the assigned servers this role may:",
           "adminAll": "Everything, including the instance, server connections, users, settings and backups.",
           "escalating": "can raise privileges",
-          "moderatorWarning": "Can kick, ban and move any client, including members of admin groups.",
+          "protectedInfo": "Clients in server groups marked as protected on the Server Groups page cannot be kicked, banned or moved by this role.",
+          "unprotectedWarning": "No server group is protected yet on {{servers}}: there this role can kick, ban and move any client, admins included.",
           "changeRoleTitle": "Change the role of {{username}}",
           "changeRoleConfirm": "Change role",
           "labels": {
@@ -2464,6 +2465,12 @@
       }
     },
     "serverGroups": {
+      "protectedLabel": "Protected",
+      "protectedHint": "Only admins can kick, ban or move members of a protected group.",
+      "protectedBadge": "Protected group",
+      "protectedOn": "Group is protected now",
+      "protectedOff": "Group is no longer protected",
+      "protectedFailed": "Could not change the protection",
       "exportSelected": "Export Selected",
       "deleteSelected": "Delete Selected",
       "import": "Import",
@@ -4390,6 +4397,7 @@
     }
   },
   "errors": {
+    "protectedTarget": "In a protected server group - only an admin may do this: {{names}}",
     "ts": {
       "groupNameExists": "A group with this name already exists",
       "invalidGroup": "Invalid group - it may have been deleted",

@@ -171,6 +171,7 @@ export function createApp(): Express {
   ]);
   serverScoped('vs/:sid/server-groups', serverGroupRoutes, [
     { method: 'GET', path: '/', permission: 'groups.view' },
+    { method: 'GET', path: '/protected', permission: 'groups.view' }, // marking a group protected stays admin-only
     { method: 'POST', path: '/', permission: 'groups.edit' },
     { method: 'PUT', path: '/:sgid', permission: 'groups.edit' },
     { method: 'DELETE', path: '/:sgid', permission: 'groups.edit' },

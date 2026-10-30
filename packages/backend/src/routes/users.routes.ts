@@ -23,6 +23,15 @@ userRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /protected-groups - per server connection, how many server groups are marked protected (any
+// virtual server). Lets the role dialog warn before a moderator gets a connection with none.
+userRoutes.get('/protected-groups', async (req: Request, res: Response, next) => {
+  try {
+    const rows = await req.app.locals.prisma.protectedServerGroup.groupBy({ by: ['serverConfigId'], _count: { _all: true } });
+    res.json(rows.map((r: { serverConfigId: number; _count: { _all: number } }) => ({ serverConfigId: r.serverConfigId, count: r._count._all })));
+  } catch (err) { next(err); }
+});
+
 userRoutes.post('/', async (req: Request, res: Response, next) => {
   try {
     const { username, password, displayName, role } = req.body;

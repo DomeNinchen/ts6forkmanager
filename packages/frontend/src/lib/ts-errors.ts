@@ -21,6 +21,8 @@ const KNOWN_TS_ERROR_KEYS: Record<number, string> = {
 /** Extracts a human-readable message from an axios error against this app's API. */
 export function tsErrorMessage(err: any, fallback: string, t: TFunction): string {
   const code = err?.response?.data?.code;
+  // The manager's own refusal: the target is in a server group an admin marked protected.
+  if (code === 'PROTECTED_TARGET') return t('errors.protectedTarget', { names: err.response.data.details });
   if (typeof code === 'number' && KNOWN_TS_ERROR_KEYS[code]) {
     return t(KNOWN_TS_ERROR_KEYS[code]);
   }

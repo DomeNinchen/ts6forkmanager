@@ -102,6 +102,19 @@ model UserServerAccess {
   @@unique([userId, serverConfigId])
 }
 
+// A server group whose members no non-admin web user may kick, ban or move
+// (R8). Per virtual server, because group ids only mean something inside one.
+model ProtectedServerGroup {
+  id             Int            @id @default(autoincrement())
+  serverConfigId Int
+  sid            Int
+  sgid           Int
+  createdAt      DateTime       @default(now())
+  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([serverConfigId, sid, sgid])
+}
+
 model TsServerConfig {
   id           Int      @id @default(autoincrement())
   name         String
@@ -163,6 +176,7 @@ model TsServerConfig {
   botCldbid    Int?
 
   userAccess    UserServerAccess[]
+  protectedGroups ProtectedServerGroup[]
   botFlows      BotFlow[]
   botLogs       BotExecutionLog[]
   musicBots     MusicBot[]
