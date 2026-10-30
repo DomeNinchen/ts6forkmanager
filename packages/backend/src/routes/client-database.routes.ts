@@ -16,7 +16,7 @@ import {
   type ClientDbProfile,
   type ClientDbSearchResult,
 } from '@ts6/common';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
@@ -25,7 +25,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 // .../clients/database. Admin-only as a whole: the rows carry each client's last IP address, which
 // the live client list deliberately hides from everyone else.
 export const clientDatabaseRoutes: Router = Router({ mergeParams: true });
-clientDatabaseRoutes.use(requireRole('admin'));
+clientDatabaseRoutes.use(requirePermission('clients.database'));
 
 const getClient = (req: Request) => {
   const pool: ConnectionPool = req.app.locals.connectionPool;

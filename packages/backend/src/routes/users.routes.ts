@@ -4,8 +4,9 @@ import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
 import { sameLogin } from '../utils/issue-tokens.js';
+import { USER_ROLES } from '@ts6/common';
 
-const VALID_ROLES = ['admin', 'viewer', 'bot-operator', 'music-operator'];
+const VALID_ROLES: readonly string[] = USER_ROLES;
 
 export const userRoutes: Router = Router();
 

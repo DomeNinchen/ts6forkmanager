@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
 import { downloadYouTube } from '../voice/audio/youtube.js';
@@ -32,7 +32,7 @@ export const musicBotRoutes: Router = Router();
 // servers they've been granted access to, enforced below via the ':id'
 // param handler so every /:id/... route in this file (there are ~40) gets
 // the check automatically instead of needing it copy-pasted into each one.
-musicBotRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
+musicBotRoutes.use(requirePermission('music.manage'));
 
 musicBotRoutes.param('id', async (req: Request, res: Response, next, idParam) => {
   try {

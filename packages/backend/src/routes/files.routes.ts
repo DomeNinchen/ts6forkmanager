@@ -7,7 +7,7 @@ import {
   type RepositoryPathProblem,
 } from '@ts6/common';
 import { config } from '../config.js';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 import { allowSlowBody } from '../middleware/request-timeout.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
@@ -36,7 +36,7 @@ export const fileRoutes: Router = Router({ mergeParams: true });
 // The Files page is admin-only, and so is everything behind it: browsing a
 // channel's file repository, and above all moving bytes in and out of it, is
 // not something the other roles get to do through the API either.
-fileRoutes.use(requireRole('admin'));
+fileRoutes.use(requirePermission('files.manage'));
 
 const PROBLEM_TEXT: Record<RepositoryPathProblem, string> = {
   empty: 'it is empty',

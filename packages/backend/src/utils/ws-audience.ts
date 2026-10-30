@@ -1,30 +1,29 @@
 import type { IncomingMessage } from 'node:http';
 import type { WebSocket, WebSocketServer } from 'ws';
-import type { UserRole } from '@ts6/common';
+import { roleHasPermission, type UserPermission, type UserRole } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
-import { BOT_FLOW_ROLES, MUSIC_ROLES } from '../middleware/access-policy.js';
 
 /**
  * Who a WebSocket event is for.
  *
  * Every socket belongs to a signed-in user, and an event used to go to all of them whatever
  * their role or server access. Now an event names its audience: an admin always receives it;
- * any other role only if the role is one of `roles` AND the user has been granted the server
- * connection the event is about. An event without a `serverConfigId` is instance-wide and for
+ * any other role only if it holds `permission` AND the user has been granted the server
+ * connection the event is about. An event without a `serverConfigId` or `permission` is for
  * admins only. A socket whose user is not known yet (or no longer) receives nothing: this
  * fails closed.
  */
 export interface Audience {
-  roles: readonly UserRole[];
+  permission?: UserPermission;
   serverConfigId?: number;
 }
 
-/** Music bot events: the Music Bots page's roles, on the bot's own server connection. */
-export const musicAudience = (serverConfigId: number | undefined): Audience => ({ roles: MUSIC_ROLES, serverConfigId });
-/** Bot flow events: the Bot Flows editor's roles, on the flow's own server connection. */
-export const botFlowAudience = (serverConfigId: number | undefined): Audience => ({ roles: BOT_FLOW_ROLES, serverConfigId });
+/** Music bot events: whoever runs the Music Bots page, on the bot's own server connection. */
+export const musicAudience = (serverConfigId: number | undefined): Audience => ({ permission: 'music.manage', serverConfigId });
+/** Bot flow events: whoever runs the Bot Flows editor, on the flow's own server connection. */
+export const botFlowAudience = (serverConfigId: number | undefined): Audience => ({ permission: 'bots.manage', serverConfigId });
 /** Instance-wide events (the flow engine starting or stopping): admins only. */
-export const instanceAudience: Audience = { roles: [] };
+export const instanceAudience: Audience = {};
 
 /** The upgrade request, tagged by the JWT check in index.ts with the user the token belongs to. */
 export type UpgradeRequest = IncomingMessage & { wsUserId?: number };
@@ -45,8 +44,8 @@ export function mayReceive(socket: WebSocket, audience: Audience): boolean {
   const user = users.get(socket);
   if (!user) return false;
   if (user.role === 'admin') return true;
-  if (audience.serverConfigId === undefined) return false;
-  return audience.roles.includes(user.role) && user.access.has(audience.serverConfigId);
+  if (audience.serverConfigId === undefined || !audience.permission) return false;
+  return roleHasPermission(user.role, audience.permission) && user.access.has(audience.serverConfigId);
 }
 
 /** Sends the event to the sockets whose user may receive it. */

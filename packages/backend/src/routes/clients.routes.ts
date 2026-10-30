@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { TSApiError, AppError } from '../middleware/error-handler.js';
 import { clientDatabaseRoutes } from './client-database.routes.js';
@@ -33,7 +33,7 @@ clientRoutes.use('/database', clientDatabaseRoutes);
 // Bulk routes - registered before the generic /:clid routes below, since
 // Express would otherwise match e.g. "/bulk/move" as "/:clid/move" with
 // clid="bulk" (the same ordering gotcha as elsewhere in this codebase).
-clientRoutes.post('/bulk/move', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/bulk/move', requirePermission('clients.move'), async (req: Request, res: Response, next) => {
   try {
     const { clids, cid, cpw } = req.body as { clids: number[]; cid: number; cpw?: string };
     if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
@@ -42,7 +42,7 @@ clientRoutes.post('/bulk/move', requireRole('admin'), async (req: Request, res: 
   } catch (err) { next(err); }
 });
 
-clientRoutes.post('/bulk/kick', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/bulk/kick', requirePermission('clients.kick'), async (req: Request, res: Response, next) => {
   try {
     const { clids, reasonid, reasonmsg } = req.body as { clids: number[]; reasonid?: number; reasonmsg?: string };
     if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
@@ -51,7 +51,7 @@ clientRoutes.post('/bulk/kick', requireRole('admin'), async (req: Request, res: 
   } catch (err) { next(err); }
 });
 
-clientRoutes.post('/bulk/ban', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/bulk/ban', requirePermission('clients.ban'), async (req: Request, res: Response, next) => {
   try {
     const { clids, time, banreason } = req.body as { clids: number[]; time?: number; banreason?: string };
     if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
@@ -62,7 +62,7 @@ clientRoutes.post('/bulk/ban', requireRole('admin'), async (req: Request, res: R
 
 // clientedit (unlike move/kick/ban) has no documented multi-clid form, so this
 // applies the same description to each selected client with its own call.
-clientRoutes.post('/bulk/describe', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/bulk/describe', requirePermission('clients.manage'), async (req: Request, res: Response, next) => {
   try {
     const { clids, description } = req.body as { clids: number[]; description: string };
     if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
@@ -77,14 +77,14 @@ clientRoutes.post('/bulk/describe', requireRole('admin'), async (req: Request, r
 // clientinfo carries the client's address (connection_client_ip), which the list
 // above deliberately withholds from non-admins (M2) - and no page reads a single
 // client's info through here anyway.
-clientRoutes.get('/:clid', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.get('/:clid', requirePermission('clients.manage'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'clientinfo', { clid: String(req.params.clid) });
     res.json(result);
   } catch (err) { next(err); }
 });
 
-clientRoutes.post('/:clid/kick', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/:clid/kick', requirePermission('clients.kick'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'clientkick', {
       clid: String(req.params.clid), reasonid: req.body.reasonid || 5, reasonmsg: req.body.reasonmsg,
@@ -93,7 +93,7 @@ clientRoutes.post('/:clid/kick', requireRole('admin'), async (req: Request, res:
   } catch (err) { next(err); }
 });
 
-clientRoutes.post('/:clid/ban', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/:clid/ban', requirePermission('clients.ban'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'banclient', {
       clid: String(req.params.clid), time: req.body.time || 0, banreason: req.body.banreason,
@@ -102,7 +102,7 @@ clientRoutes.post('/:clid/ban', requireRole('admin'), async (req: Request, res: 
   } catch (err) { next(err); }
 });
 
-clientRoutes.post('/:clid/move', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/:clid/move', requirePermission('clients.move'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'clientmove', {
       clid: String(req.params.clid), cid: req.body.cid, cpw: req.body.cpw,
@@ -111,7 +111,7 @@ clientRoutes.post('/:clid/move', requireRole('admin'), async (req: Request, res:
   } catch (err) { next(err); }
 });
 
-clientRoutes.post('/:clid/poke', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/:clid/poke', requirePermission('clients.message'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'clientpoke', {
       clid: String(req.params.clid), msg: req.body.msg,
@@ -120,7 +120,7 @@ clientRoutes.post('/:clid/poke', requireRole('admin'), async (req: Request, res:
   } catch (err) { next(err); }
 });
 
-clientRoutes.post('/:clid/message', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.post('/:clid/message', requirePermission('clients.message'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'sendtextmessage', {
       targetmode: 1, target: String(req.params.clid), msg: req.body.msg,
@@ -129,7 +129,7 @@ clientRoutes.post('/:clid/message', requireRole('admin'), async (req: Request, r
   } catch (err) { next(err); }
 });
 
-clientRoutes.get('/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.get('/:cldbid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'clientpermlist', {
       cldbid: String(req.params.cldbid), '-permsid': '',
@@ -145,7 +145,7 @@ clientRoutes.get('/:cldbid/permissions', requireRole('admin'), async (req: Reque
   }
 });
 
-clientRoutes.put('/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.put('/:cldbid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const cldbid = String(req.params.cldbid);
     const { permsid, permvalue, permnegated, permskip } = req.body;
@@ -161,7 +161,7 @@ clientRoutes.put('/:cldbid/permissions', requireRole('admin'), async (req: Reque
   } catch (err) { next(err); }
 });
 
-clientRoutes.delete('/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.delete('/:cldbid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const cldbid = String(req.params.cldbid);
     const { permsid } = req.body;
@@ -175,7 +175,7 @@ clientRoutes.delete('/:cldbid/permissions', requireRole('admin'), async (req: Re
   } catch (err) { next(err); }
 });
 
-clientRoutes.get('/:clid/groups', requireRole('admin'), async (req: Request, res: Response, next) => {
+clientRoutes.get('/:clid/groups', requirePermission('clients.manage'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'servergroupsbyclientid', {
       cldbid: String(req.params.clid),

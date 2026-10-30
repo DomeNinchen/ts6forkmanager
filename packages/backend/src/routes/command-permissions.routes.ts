@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 
 // Chat-command permissions for TeamSpeak bot commands (MusicBot's `!play`
 // etc.) - DomeNinchen/ts6forkmanager#184. Scoped by serverConfigId only, not
@@ -12,7 +12,7 @@ const getConfigId = (req: Request) => parseInt(String(req.params.configId));
 
 // Only the Music Bots page (its Permissions tab) reads this, and that page is
 // open to admins, bot operators and music operators - not to viewers.
-commandPermissionRoutes.get('/', requireRole('admin', 'bot-operator', 'music-operator'), async (req: Request, res: Response, next) => {
+commandPermissionRoutes.get('/', requirePermission('music.manage'), async (req: Request, res: Response, next) => {
   try {
     const serverConfigId = getConfigId(req);
     const [permissions, adminGroups] = await Promise.all([

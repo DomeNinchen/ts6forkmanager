@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const logRoutes: Router = Router({ mergeParams: true });
@@ -12,9 +12,8 @@ const getSid = (req: Request) => parseInt(String(req.params.sid));
 
 // The server log carries client addresses and the actions of every admin. The
 // Server Logs page is admin-only in the UI, so the whole router is - reads included.
-logRoutes.use(requireRole('admin'));
 
-logRoutes.get('/', async (req: Request, res: Response, next) => {
+logRoutes.get('/', requirePermission('logs.view'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'logview', {
       lines: req.query.lines || 100,
@@ -25,7 +24,7 @@ logRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-logRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
+logRoutes.post('/', requirePermission('vserver.edit'), async (req: Request, res: Response, next) => {
   try {
     const { loglevel, logmsg } = req.body;
     res.json(await getClient(req).execute(getSid(req), 'logadd', { loglevel, logmsg }));

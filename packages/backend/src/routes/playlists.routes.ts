@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 
 export const playlistRoutes: Router = Router();
 
-playlistRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
+playlistRoutes.use(requirePermission('music.manage'));
 
 /**
  * Playlists aren't mounted per-server (musicBotId is optional - a playlist

@@ -6,12 +6,6 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: UserInfo;
-}
-
 export interface RefreshRequest {
   refreshToken: string;
 }
@@ -19,14 +13,6 @@ export interface RefreshRequest {
 export interface RefreshResponse {
   accessToken: string;
   refreshToken: string;
-}
-
-export interface UserInfo {
-  id: number;
-  username: string;
-  displayName: string;
-  role: 'admin' | 'moderator' | 'viewer';
-  language?: string | null;
 }
 
 // Server Connection Config
@@ -169,21 +155,6 @@ export interface SetPermissionRequest {
   permvalue: number;
   permnegated?: number;
   permskip?: number;
-}
-
-// User management (webapp)
-export interface CreateUserRequest {
-  username: string;
-  password: string;
-  displayName: string;
-  role: 'admin' | 'moderator' | 'viewer';
-}
-
-export interface UpdateUserRequest {
-  displayName?: string;
-  role?: 'admin' | 'moderator' | 'viewer';
-  enabled?: boolean;
-  password?: string;
 }
 
 // Generic API response wrapper

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
@@ -19,7 +19,7 @@ virtualServerRoutes.get('/', async (req: Request, res: Response, next) => {
 
 // Only the admin pages (Statistics, Advanced Settings) read the full server
 // info / connection info; the server list above is what every role needs.
-virtualServerRoutes.get('/:sid/info', requireRole('admin'), async (req: Request, res: Response, next) => {
+virtualServerRoutes.get('/:sid/info', requirePermission('vserver.edit'), async (req: Request, res: Response, next) => {
   try {
     const sid = parseInt(String(req.params.sid));
     const result = await getClient(req).execute(sid, 'serverinfo');
@@ -49,7 +49,7 @@ export const ALLOWED_SERVER_EDIT_PARAMS = new Set([
   'virtualserver_max_download_total_bandwidth', 'virtualserver_max_upload_total_bandwidth',
 ]);
 
-virtualServerRoutes.put('/:sid', requireRole('admin'), async (req: Request, res: Response, next) => {
+virtualServerRoutes.put('/:sid', requirePermission('vserver.edit'), async (req: Request, res: Response, next) => {
   try {
     const sid = parseInt(String(req.params.sid));
     const filtered: Record<string, unknown> = {};
@@ -117,7 +117,7 @@ virtualServerRoutes.post('/:sid/snapshot/deploy', requireRole('admin'), async (r
   } catch (err) { next(err); }
 });
 
-virtualServerRoutes.get('/:sid/connection-info', requireRole('admin'), async (req: Request, res: Response, next) => {
+virtualServerRoutes.get('/:sid/connection-info', requirePermission('vserver.edit'), async (req: Request, res: Response, next) => {
   try {
     const sid = parseInt(String(req.params.sid));
     const result = await getClient(req).execute(sid, 'serverrequestconnectioninfo');
@@ -128,7 +128,7 @@ virtualServerRoutes.get('/:sid/connection-info', requireRole('admin'), async (re
 // Sends a text message to every client on this ONE virtual server, under the
 // connection's own current query nickname - unlike `gm` (instance-wide,
 // always shown anonymously as "server"), this is not anonymous.
-virtualServerRoutes.post('/:sid/message', requireRole('admin'), async (req: Request, res: Response, next) => {
+virtualServerRoutes.post('/:sid/message', requirePermission('vserver.edit'), async (req: Request, res: Response, next) => {
   try {
     const sid = parseInt(String(req.params.sid));
     const { msg } = req.body;
