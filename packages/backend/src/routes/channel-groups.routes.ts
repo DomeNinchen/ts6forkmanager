@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const channelGroupRoutes: Router = Router({ mergeParams: true });
@@ -13,29 +13,28 @@ const getSid = (req: Request) => parseInt(String(req.params.sid));
 // Channel groups (their members and permissions) are only used by admin pages
 // in the UI (Channel Groups, Tokens, Client Database, Advanced Settings), so the
 // whole router is admin-only - reads included.
-channelGroupRoutes.use(requireRole('admin'));
 
-channelGroupRoutes.get('/', async (req: Request, res: Response, next) => {
+channelGroupRoutes.get('/', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'channelgrouplist')); } catch (err) { next(err); }
 });
 
-channelGroupRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelGroupRoutes.post('/', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try { res.status(201).json(await getClient(req).execute(getSid(req), 'channelgroupadd', req.body)); } catch (err) { next(err); }
 });
 
-channelGroupRoutes.put('/:cgid', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelGroupRoutes.put('/:cgid', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'channelgrouprename', { cgid: String(req.params.cgid), ...req.body }));
   } catch (err) { next(err); }
 });
 
-channelGroupRoutes.delete('/:cgid', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelGroupRoutes.delete('/:cgid', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'channelgroupdel', { cgid: String(req.params.cgid), force: 1 }));
   } catch (err) { next(err); }
 });
 
-channelGroupRoutes.get('/:cgid/clients', async (req: Request, res: Response, next) => {
+channelGroupRoutes.get('/:cgid/clients', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'channelgroupclientlist', { cgid: String(req.params.cgid) }));
   } catch (err) { next(err); }
@@ -43,31 +42,31 @@ channelGroupRoutes.get('/:cgid/clients', async (req: Request, res: Response, nex
 
 // Reverse lookup: every channel-group assignment a given client has, across
 // all channels (channelgroupclientlist's cid/cgid params are both optional).
-channelGroupRoutes.get('/by-client/:cldbid', async (req: Request, res: Response, next) => {
+channelGroupRoutes.get('/by-client/:cldbid', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'channelgroupclientlist', { cldbid: String(req.params.cldbid) }));
   } catch (err) { next(err); }
 });
 
-channelGroupRoutes.post('/:cgid/assign', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelGroupRoutes.post('/:cgid/assign', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'setclientchannelgroup', { cgid: String(req.params.cgid), ...req.body }));
   } catch (err) { next(err); }
 });
 
-channelGroupRoutes.get('/:cgid/permissions', async (req: Request, res: Response, next) => {
+channelGroupRoutes.get('/:cgid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'channelgrouppermlist', { cgid: String(req.params.cgid), '-permsid': '' }));
   } catch (err) { next(err); }
 });
 
-channelGroupRoutes.put('/:cgid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelGroupRoutes.put('/:cgid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'channelgroupaddperm', { cgid: String(req.params.cgid), ...req.body }));
   } catch (err) { next(err); }
 });
 
-channelGroupRoutes.delete('/:cgid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelGroupRoutes.delete('/:cgid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'channelgroupdelperm', { cgid: String(req.params.cgid), ...req.body }));
   } catch (err) { next(err); }

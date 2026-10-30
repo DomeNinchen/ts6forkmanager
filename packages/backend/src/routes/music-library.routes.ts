@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { downloadYouTube, searchYouTube, getYouTubeUrlInfo } from '../voice/audio/youtube.js';
 import { scanMusicLibrary, getAudioDuration } from '../voice/audio/music-library-scan.js';
@@ -41,7 +41,7 @@ export const musicLibraryRoutes: Router = Router({ mergeParams: true });
 // Already scoped to the right server by the requireServerAccess middleware
 // this router is mounted behind (see app.ts) - just need to widen who's
 // allowed through at all.
-musicLibraryRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
+musicLibraryRoutes.use(requirePermission('music.manage'));
 
 // GET /songs — List songs for this server, optionally filtered to one media type
 musicLibraryRoutes.get('/songs', async (req: Request, res: Response, next) => {

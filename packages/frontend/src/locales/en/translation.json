@@ -76,6 +76,8 @@
       "admin": "Admin",
       "viewer": "Viewer",
       "botOperator": "Bot Operator",
+      "serverAdmin": "Server Admin",
+      "moderator": "Moderator",
       "musicOperator": "Music Operator"
     }
   },
@@ -1380,6 +1382,7 @@
       "describeCount_one": "Describe {{count}} client",
       "describeCount_other": "Describe {{count}} clients",
       "descriptionUpdated_one": "Updated description for {{count}} client",
+      "pokeFailed": "Poke failed",
       "descriptionUpdated_other": "Updated description for {{count}} clients"
     },
     "clientDatabase": {
@@ -1924,6 +1927,39 @@
         "userDeleted": "User deleted",
         "deleteUserFailed": "Failed to delete user",
         "resetting": "Resetting...",
+        "permissions": {
+          "heading": "On the assigned servers this role may:",
+          "adminAll": "Everything, including the instance, server connections, users, settings and backups.",
+          "escalating": "can raise privileges",
+          "moderatorWarning": "Can kick, ban and move any client, including members of admin groups.",
+          "changeRoleTitle": "Change the role of {{username}}",
+          "changeRoleConfirm": "Change role",
+          "labels": {
+            "server_view": "View the dashboard, channel and client lists",
+            "groups_view": "View the server group list",
+            "clients_message": "Poke and message clients",
+            "clients_move": "Move clients",
+            "clients_kick": "Kick clients",
+            "clients_ban": "Ban clients",
+            "clients_manage": "Client details incl. IP address, groups and description",
+            "clients_database": "Client database",
+            "bans_view": "View the ban list",
+            "bans_manage": "Add and remove bans",
+            "complaints_manage": "Handle complaints",
+            "channels_edit": "Create, edit and move channels",
+            "channels_delete": "Delete channels",
+            "groups_members": "Change group memberships",
+            "groups_edit": "Create, rename and delete groups",
+            "permissions_edit": "View and change permissions",
+            "tokens_manage": "Tokens and temporary passwords",
+            "files_manage": "Files",
+            "icons_manage": "Upload and delete icons",
+            "messages_manage": "Offline messages",
+            "vserver_edit": "Virtual server settings, server message",
+            "music_manage": "Music bots",
+            "bots_manage": "Bot flows"
+          }
+        },
         "editUserTitle": "Edit User"
       },
       "serverAccess": {

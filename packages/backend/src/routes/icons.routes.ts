@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { normalizeIconId, type IconUsageMap, type IconUsageRef, type ServerIcon } from '@ts6/common';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
@@ -188,7 +188,7 @@ iconRoutes.get('/:iconId/image', async (req: Request, res: Response, next) => {
   }
 });
 
-iconRoutes.post('/', requireRole('admin'), upload.single('file'), async (req: Request, res: Response, next) => {
+iconRoutes.post('/', requirePermission('icons.manage'), upload.single('file'), async (req: Request, res: Response, next) => {
   try {
     const file = req.file;
     if (!file) throw new AppError(400, 'No file uploaded');
@@ -239,7 +239,7 @@ iconRoutes.post('/', requireRole('admin'), upload.single('file'), async (req: Re
 
 // Bulk delete - registered before the generic /:iconId route, since Express
 // would otherwise match "/bulk/delete" as "/:iconId" with iconId="bulk".
-iconRoutes.post('/bulk/delete', requireRole('admin'), async (req: Request, res: Response, next) => {
+iconRoutes.post('/bulk/delete', requirePermission('icons.manage'), async (req: Request, res: Response, next) => {
   try {
     const { iconIds } = req.body as { iconIds: number[] };
     if (!Array.isArray(iconIds) || iconIds.length === 0) {
@@ -258,7 +258,7 @@ iconRoutes.post('/bulk/delete', requireRole('admin'), async (req: Request, res: 
   }
 });
 
-iconRoutes.delete('/:iconId', requireRole('admin'), async (req: Request, res: Response, next) => {
+iconRoutes.delete('/:iconId', requirePermission('icons.manage'), async (req: Request, res: Response, next) => {
   try {
     const iconId = parseInt(String(req.params.iconId), 10);
     if (!Number.isFinite(iconId) || iconId <= 0) throw new AppError(400, 'Invalid icon ID');

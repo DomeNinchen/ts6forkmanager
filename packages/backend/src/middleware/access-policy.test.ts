@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response } from 'express';
 import type { UserRole } from '@ts6/common';
-import { adminExcept, EVERY_ROLE, MUSIC_ROLES, BOT_FLOW_ROLES, type OpenRoute } from './access-policy.js';
+import { adminExcept, SIGNED_IN, type OpenRoute } from './access-policy.js';
 
 /**
  * Runs the adminExcept(open) gate for one request and reports what it did:
@@ -37,38 +37,60 @@ test('a non-admin is refused by default (403) when nothing is opened', () => {
 });
 
 test('an open GET "/" lets the listed roles read it but not write it', () => {
-  const open: OpenRoute[] = [{ method: 'GET', path: '/', roles: EVERY_ROLE }];
+  const open: OpenRoute[] = [{ method: 'GET', path: '/', permission: 'server.view' }];
   assert.equal(run(open, 'viewer', 'GET', '/'), 'next');
   assert.equal(run(open, 'viewer', 'HEAD', '/'), 'next');   // HEAD counts as GET
   assert.equal(run(open, 'viewer', 'POST', '/'), 403);      // method not opened
   assert.equal(run(open, 'viewer', 'GET', '/other'), 403);  // path not opened
 });
 
-test('roles are honoured per open route', () => {
-  const open: OpenRoute[] = [{ method: 'GET', path: '/', roles: MUSIC_ROLES }];
-  assert.equal(run(open, 'music-operator', 'GET', '/'), 'next'); // in MUSIC_ROLES
-  assert.equal(run(open, 'viewer', 'GET', '/'), 403);            // not in MUSIC_ROLES
+test('the permission is honoured per role', () => {
+  const open: OpenRoute[] = [{ method: 'GET', path: '/', permission: 'music.manage' }];
+  assert.equal(run(open, 'music-operator', 'GET', '/'), 'next'); // holds music.manage
+  assert.equal(run(open, 'viewer', 'GET', '/'), 403);            // does not
 });
 
 test('a ":id" segment matches exactly one path segment', () => {
-  const open: OpenRoute[] = [{ method: 'GET', path: '/:botId', roles: BOT_FLOW_ROLES }];
+  const open: OpenRoute[] = [{ method: 'GET', path: '/:botId', permission: 'bots.manage' }];
   assert.equal(run(open, 'bot-operator', 'GET', '/42'), 'next');
   assert.equal(run(open, 'bot-operator', 'GET', '/42/executions'), 403); // deeper path not matched
 });
 
 test('a trailing "/*" opens everything below that prefix', () => {
-  const open: OpenRoute[] = [{ method: '*', path: '/*', roles: MUSIC_ROLES }];
+  const open: OpenRoute[] = [{ method: '*', path: '/*', permission: 'music.manage' }];
   assert.equal(run(open, 'music-operator', 'POST', '/a/b/c'), 'next');
   assert.equal(run(open, 'viewer', 'POST', '/a/b/c'), 403); // role still enforced
 });
 
 test('matching is case-sensitive, so a differently cased path fails closed', () => {
-  const open: OpenRoute[] = [{ method: 'GET', path: '/tokens', roles: EVERY_ROLE }];
+  const open: OpenRoute[] = [{ method: 'GET', path: '/tokens', permission: 'server.view' }];
   assert.equal(run(open, 'viewer', 'GET', '/tokens'), 'next');
   assert.equal(run(open, 'viewer', 'GET', '/Tokens'), 403);
 });
 
 test('a trailing slash on the request path is normalised to the open path', () => {
-  const open: OpenRoute[] = [{ method: 'GET', path: '/usage', roles: EVERY_ROLE }];
+  const open: OpenRoute[] = [{ method: 'GET', path: '/usage', permission: 'server.view' }];
   assert.equal(run(open, 'viewer', 'GET', '/usage/'), 'next');
+});
+
+test('a signed-in route is open to every role, an unknown role gets nothing else', () => {
+  const open: OpenRoute[] = [
+    { method: 'GET', path: '/', permission: SIGNED_IN },
+    { method: 'GET', path: '/list', permission: 'server.view' },
+  ];
+  assert.equal(run(open, 'moderator', 'GET', '/'), 'next');
+  assert.equal(run(open, 'made-up' as UserRole, 'GET', '/'), 'next'); // signed in, so allowed
+  assert.equal(run(open, 'made-up' as UserRole, 'GET', '/list'), 403); // holds no permission
+});
+
+test('moderator may kick but not touch group membership; server-admin may both', () => {
+  const open: OpenRoute[] = [
+    { method: 'POST', path: '/:clid/kick', permission: 'clients.kick' },
+    { method: 'POST', path: '/:sgid/members', permission: 'groups.members' },
+  ];
+  assert.equal(run(open, 'moderator', 'POST', '/5/kick'), 'next');
+  assert.equal(run(open, 'moderator', 'POST', '/6/members'), 403);
+  assert.equal(run(open, 'server-admin', 'POST', '/5/kick'), 'next');
+  assert.equal(run(open, 'server-admin', 'POST', '/6/members'), 'next');
+  assert.equal(run(open, 'viewer', 'POST', '/5/kick'), 403);
 });

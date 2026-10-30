@@ -8,6 +8,7 @@ import { RestartNotice } from '@/components/layout/RestartNotice';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLanguageSync } from '@/hooks/use-language';
 import { useSelectedServer } from '@/hooks/use-servers';
+import type { UserPermission } from '@ts6/common';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const isAdmin = useAuthStore((s) => s.isAdmin());
@@ -15,11 +16,9 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** Same idea as AdminRoute, but for the two routes bot-operator/music-operator also need in. */
-function RoleRoute({ check, children }: { check: 'botFlows' | 'musicBots'; children: React.ReactNode }) {
-  const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
-  const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
-  const allowed = check === 'botFlows' ? canManageBotFlows : canManageMusicBots;
+/** Same idea as AdminRoute, for a page a role may open when it holds the permission (the backend checks every request anyway). */
+function PermissionRoute({ permission, children }: { permission: UserPermission; children: React.ReactNode }) {
+  const allowed = useAuthStore((s) => s.can(permission));
   if (!allowed) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
@@ -104,28 +103,28 @@ export function App() {
               <Route path="/server-stats" element={<AdminRoute><WebQueryRoute><ServerStats /></WebQueryRoute></AdminRoute>} />
               <Route path="/channels" element={<WebQueryRoute><Channels /></WebQueryRoute>} />
               <Route path="/clients" element={<WebQueryRoute><Clients /></WebQueryRoute>} />
-              <Route path="/client-database" element={<AdminRoute><WebQueryRoute><ClientDatabase /></WebQueryRoute></AdminRoute>} />
-              <Route path="/server-groups" element={<AdminRoute><WebQueryRoute><ServerGroups /></WebQueryRoute></AdminRoute>} />
-              <Route path="/channel-groups" element={<AdminRoute><WebQueryRoute><ChannelGroups /></WebQueryRoute></AdminRoute>} />
-              <Route path="/permissions" element={<AdminRoute><WebQueryRoute><Permissions /></WebQueryRoute></AdminRoute>} />
-              <Route path="/bans" element={<AdminRoute><WebQueryRoute><Bans /></WebQueryRoute></AdminRoute>} />
-              <Route path="/tokens" element={<AdminRoute><WebQueryRoute><Tokens /></WebQueryRoute></AdminRoute>} />
+              <Route path="/client-database" element={<PermissionRoute permission="clients.database"><WebQueryRoute><ClientDatabase /></WebQueryRoute></PermissionRoute>} />
+              <Route path="/server-groups" element={<PermissionRoute permission="groups.edit"><WebQueryRoute><ServerGroups /></WebQueryRoute></PermissionRoute>} />
+              <Route path="/channel-groups" element={<PermissionRoute permission="groups.edit"><WebQueryRoute><ChannelGroups /></WebQueryRoute></PermissionRoute>} />
+              <Route path="/permissions" element={<PermissionRoute permission="permissions.edit"><WebQueryRoute><Permissions /></WebQueryRoute></PermissionRoute>} />
+              <Route path="/bans" element={<PermissionRoute permission="bans.view"><WebQueryRoute><Bans /></WebQueryRoute></PermissionRoute>} />
+              <Route path="/tokens" element={<PermissionRoute permission="tokens.manage"><WebQueryRoute><Tokens /></WebQueryRoute></PermissionRoute>} />
               <Route path="/connection-journal" element={<AdminRoute><ConnectionJournal /></AdminRoute>} />
               <Route path="/change-log" element={<AdminRoute><ChangeLog /></AdminRoute>} />
               <Route path="/backups" element={<AdminRoute><Backups /></AdminRoute>} />
-              <Route path="/files" element={<AdminRoute><WebQueryRoute><Files /></WebQueryRoute></AdminRoute>} />
+              <Route path="/files" element={<PermissionRoute permission="files.manage"><WebQueryRoute><Files /></WebQueryRoute></PermissionRoute>} />
               <Route path="/icons" element={<WebQueryRoute><Icons /></WebQueryRoute>} />
-              <Route path="/complaints" element={<AdminRoute><WebQueryRoute><Complaints /></WebQueryRoute></AdminRoute>} />
-              <Route path="/messages" element={<AdminRoute><WebQueryRoute><Messages /></WebQueryRoute></AdminRoute>} />
+              <Route path="/complaints" element={<PermissionRoute permission="complaints.manage"><WebQueryRoute><Complaints /></WebQueryRoute></PermissionRoute>} />
+              <Route path="/messages" element={<PermissionRoute permission="messages.manage"><WebQueryRoute><Messages /></WebQueryRoute></PermissionRoute>} />
               <Route path="/logs" element={<AdminRoute><WebQueryRoute><ServerLogs /></WebQueryRoute></AdminRoute>} />
               <Route path="/console" element={<AdminRoute><WebQueryRoute><Console /></WebQueryRoute></AdminRoute>} />
               <Route path="/instance" element={<AdminRoute><WebQueryRoute><Instance /></WebQueryRoute></AdminRoute>} />
               <Route path="/miscellaneous" element={<AdminRoute><WebQueryRoute><Miscellaneous /></WebQueryRoute></AdminRoute>} />
-              <Route path="/advanced-settings" element={<AdminRoute><WebQueryRoute><AdvancedServerSettings /></WebQueryRoute></AdminRoute>} />
+              <Route path="/advanced-settings" element={<PermissionRoute permission="vserver.edit"><WebQueryRoute><AdvancedServerSettings /></WebQueryRoute></PermissionRoute>} />
               <Route path="/music-requests" element={<AdminRoute><MusicRequests /></AdminRoute>} />
-              <Route path="/bots" element={<RoleRoute check="botFlows"><BotList /></RoleRoute>} />
-              <Route path="/bots/:botId" element={<RoleRoute check="botFlows"><BotEditor /></RoleRoute>} />
-              <Route path="/music-bots" element={<RoleRoute check="musicBots"><MusicBots /></RoleRoute>} />
+              <Route path="/bots" element={<PermissionRoute permission="bots.manage"><BotList /></PermissionRoute>} />
+              <Route path="/bots/:botId" element={<PermissionRoute permission="bots.manage"><BotEditor /></PermissionRoute>} />
+              <Route path="/music-bots" element={<PermissionRoute permission="music.manage"><MusicBots /></PermissionRoute>} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Route>

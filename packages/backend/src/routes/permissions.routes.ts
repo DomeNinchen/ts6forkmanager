@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
-import { requireRole } from '../middleware/rbac.js';
+import { requireRole, requirePermission } from '../middleware/rbac.js';
 
 export const permissionRoutes: Router = Router({ mergeParams: true });
 
@@ -13,7 +13,7 @@ const getSid = (req: Request) => parseInt(String(req.params.sid));
 
 // The Permissions page is admin-only in the UI, so the whole router is - reads
 // included (the permission overview of a client shows what they are allowed to do).
-permissionRoutes.use(requireRole('admin'));
+permissionRoutes.use(requirePermission('permissions.edit'));
 
 permissionRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'permissionlist')); } catch (err) { next(err); }

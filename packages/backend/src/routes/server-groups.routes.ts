@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const serverGroupRoutes: Router = Router({ mergeParams: true });
@@ -12,63 +12,63 @@ const getSid = (req: Request) => parseInt(String(req.params.sid));
 
 // The group list (names, ids, types) is also what the Music Bots permission tab
 // offers its operators; a group's members and permissions are admin-only.
-serverGroupRoutes.get('/', requireRole('admin', 'bot-operator', 'music-operator'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.get('/', requirePermission('groups.view'), async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'servergrouplist')); } catch (err) { next(err); }
 });
 
-serverGroupRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.post('/', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try { res.status(201).json(await getClient(req).execute(getSid(req), 'servergroupadd', req.body)); } catch (err) { next(err); }
 });
 
-serverGroupRoutes.put('/:sgid', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.put('/:sgid', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergrouprename', { sgid: String(req.params.sgid), ...req.body }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.delete('/:sgid', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.delete('/:sgid', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupdel', { sgid: String(req.params.sgid), force: 1 }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.post('/:sgid/copy', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.post('/:sgid/copy', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupcopy', { ssgid: String(req.params.sgid), ...req.body }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.get('/:sgid/members', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.get('/:sgid/members', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupclientlist', { sgid: String(req.params.sgid), '-names': '' }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.post('/:sgid/members', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.post('/:sgid/members', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupaddclient', { sgid: String(req.params.sgid), cldbid: req.body.cldbid }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.delete('/:sgid/members/:cldbid', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.delete('/:sgid/members/:cldbid', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupdelclient', { sgid: String(req.params.sgid), cldbid: String(req.params.cldbid) }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.get('/:sgid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.get('/:sgid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergrouppermlist', { sgid: String(req.params.sgid), '-permsid': '' }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.put('/:sgid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.put('/:sgid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupaddperm', { sgid: String(req.params.sgid), ...req.body }));
   } catch (err) { next(err); }
 });
 
-serverGroupRoutes.delete('/:sgid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+serverGroupRoutes.delete('/:sgid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'servergroupdelperm', { sgid: String(req.params.sgid), ...req.body }));
   } catch (err) { next(err); }

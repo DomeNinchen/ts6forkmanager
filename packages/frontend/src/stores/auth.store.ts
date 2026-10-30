@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { roleHasPermission, type UserPermission, type UserRole } from '@ts6/common';
 
 interface UserInfo {
   id: number;
   username: string;
   displayName: string;
-  role: 'admin' | 'viewer' | 'bot-operator' | 'music-operator';
+  role: UserRole;
   authProvider?: 'local' | 'oidc';
   totpEnabled?: boolean;
   language?: string | null;
@@ -22,9 +23,14 @@ interface AuthStore {
   isAuthenticated: () => boolean;
   isAdmin: () => boolean;
   canWrite: () => boolean;
-  /** admin or bot-operator - full Bot Flow access on their assigned servers */
+  /**
+   * Whether the user's role holds this permission (the admin holds every one). Only decides what
+   * the UI offers - the backend checks every request itself.
+   */
+  can: (permission: UserPermission) => boolean;
+  /** bots.manage - full Bot Flow access on their assigned servers */
   canManageBotFlows: () => boolean;
-  /** admin, bot-operator, or music-operator - Music Bot access on their assigned servers */
+  /** music.manage - Music Bot access on their assigned servers */
   canManageMusicBots: () => boolean;
 }
 
@@ -48,8 +54,9 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: () => !!get().accessToken,
       isAdmin: () => get().user?.role === 'admin',
       canWrite: () => get().user?.role === 'admin',
-      canManageBotFlows: () => ['admin', 'bot-operator'].includes(get().user?.role ?? ''),
-      canManageMusicBots: () => ['admin', 'bot-operator', 'music-operator'].includes(get().user?.role ?? ''),
+      can: (permission) => roleHasPermission(get().user?.role, permission),
+      canManageBotFlows: () => get().can('bots.manage'),
+      canManageMusicBots: () => get().can('music.manage'),
     }),
     { name: 'ts6-auth' },
   ),

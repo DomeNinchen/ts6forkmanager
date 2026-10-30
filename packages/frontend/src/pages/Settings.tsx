@@ -18,9 +18,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { NetworkTab } from '@/components/settings/NetworkTab';
+import { RolePermissions } from '@/components/settings/RolePermissions';
+import { roleLabel } from '@/lib/roles';
 import { Settings as SettingsIcon, Server, Plus, Trash2, Pencil, TestTube, Check, X, KeyRound, Upload, FileText, AlertTriangle, RefreshCw, Search, Monitor, Bot } from 'lucide-react';
 import { toast } from 'sonner';
-import { compareVersions } from '@ts6/common';
+import { compareVersions, USER_ROLES } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { useSetWebguiTheme, useSetWebguiBaseTheme, useSetWebguiDesign } from '@/hooks/use-webgui-theme';
@@ -922,6 +924,8 @@ function UsersTab() {
   const [sessionsUserId, setSessionsUserId] = useState<number | null>(null);
   const [editUser, setEditUser] = useState<{ id: number; username: string; displayName: string } | null>(null);
   const [form, setForm] = useState({ username: '', password: '', displayName: '', role: 'viewer' });
+  // A role change is shown with what the new role may do before it is saved.
+  const [pendingRole, setPendingRole] = useState<{ id: number; username: string; role: string } | null>(null);
 
   const userList = useMemo(() => (Array.isArray(users) ? users : []), [users]);
   const filteredList = useMemo(() => {
@@ -945,7 +949,7 @@ function UsersTab() {
 
   const handleRoleChange = (userId: number, role: string) => {
     updateUser.mutate({ id: userId, data: { role } }, {
-      onSuccess: () => toast.success(t('pages.settings.users.roleUpdated')),
+      onSuccess: () => { toast.success(t('pages.settings.users.roleUpdated')); setPendingRole(null); },
       onError: (err) => toast.error(apiErrorMessage(err, t('pages.settings.users.roleUpdateFailed'))),
     });
   };
@@ -1017,15 +1021,12 @@ function UsersTab() {
                   </td>
                   <td className="px-3 py-2.5">{u.displayName}</td>
                   <td className="px-3 py-2.5">
-                    <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v)} disabled={isSelf}>
-                      <SelectTrigger className="h-7 w-[130px] text-xs" title={isSelf ? t('pages.settings.users.cantChangeOwnRole') : undefined}>
+                    <Select value={u.role} onValueChange={(v) => setPendingRole({ id: u.id, username: u.username, role: v })} disabled={isSelf}>
+                      <SelectTrigger className="h-7 w-[170px] text-xs" title={isSelf ? t('pages.settings.users.cantChangeOwnRole') : undefined}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">{t('common.roles.admin')}</SelectItem>
-                        <SelectItem value="viewer">{t('common.roles.viewer')}</SelectItem>
-                        <SelectItem value="bot-operator">{t('common.roles.botOperator')}</SelectItem>
-                        <SelectItem value="music-operator">{t('common.roles.musicOperator')}</SelectItem>
+                        {USER_ROLES.map((r) => <SelectItem key={r} value={r}>{roleLabel(t, r)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </td>
@@ -1081,17 +1082,32 @@ function UsersTab() {
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">{t('common.roles.admin')}</SelectItem>
-                  <SelectItem value="viewer">{t('common.roles.viewer')}</SelectItem>
-                  <SelectItem value="bot-operator">{t('common.roles.botOperator')}</SelectItem>
-                  <SelectItem value="music-operator">{t('common.roles.musicOperator')}</SelectItem>
+                  {USER_ROLES.map((r) => <SelectItem key={r} value={r}>{roleLabel(t, r)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+            <RolePermissions role={form.role} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreate} disabled={!form.username || !form.password}>{t('common.create')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Role change: what the new role may do, before it is saved */}
+      <Dialog open={pendingRole !== null} onOpenChange={(v) => { if (!v) setPendingRole(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">{t('pages.settings.users.permissions.changeRoleTitle', { username: pendingRole?.username })}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm font-medium">{roleLabel(t, pendingRole?.role)}</p>
+          {pendingRole && <RolePermissions role={pendingRole.role} />}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingRole(null)}>{t('common.cancel')}</Button>
+            <Button onClick={() => pendingRole && handleRoleChange(pendingRole.id, pendingRole.role)} disabled={updateUser.isPending}>
+              {t('pages.settings.users.permissions.changeRoleConfirm')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

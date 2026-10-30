@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const tokenRoutes: Router = Router({ mergeParams: true });
@@ -14,17 +14,17 @@ const getSid = (req: Request) => parseInt(String(req.params.sid));
 // privilege key can redeem it for its server group (Server Admin included),
 // whoever holds a temporary password can join the server. The Tokens page is
 // admin-only in the UI, so the whole router is - reads included.
-tokenRoutes.use(requireRole('admin'));
+tokenRoutes.use(requirePermission('tokens.manage'));
 
 tokenRoutes.get('/', async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'privilegekeylist')); } catch (err) { next(err); }
 });
 
-tokenRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
+tokenRoutes.post('/', requirePermission('tokens.manage'), async (req: Request, res: Response, next) => {
   try { res.status(201).json(await getClient(req).execute(getSid(req), 'privilegekeyadd', req.body)); } catch (err) { next(err); }
 });
 
-tokenRoutes.delete('/:token', requireRole('admin'), async (req: Request, res: Response, next) => {
+tokenRoutes.delete('/:token', requirePermission('tokens.manage'), async (req: Request, res: Response, next) => {
   try { res.json(await getClient(req).execute(getSid(req), 'privilegekeydelete', { token: String(req.params.token) })); } catch (err) { next(err); }
 });
 
@@ -34,7 +34,7 @@ tokenRoutes.get('/temp-passwords', async (req: Request, res: Response, next) => 
   try { res.json(await getClient(req).execute(getSid(req), 'servertemppasswordlist')); } catch (err) { next(err); }
 });
 
-tokenRoutes.post('/temp-passwords', requireRole('admin'), async (req: Request, res: Response, next) => {
+tokenRoutes.post('/temp-passwords', requirePermission('tokens.manage'), async (req: Request, res: Response, next) => {
   try {
     const { pw, desc, duration, tcid, tcpw } = req.body;
     const result = await getClient(req).execute(getSid(req), 'servertemppasswordadd', {
@@ -44,7 +44,7 @@ tokenRoutes.post('/temp-passwords', requireRole('admin'), async (req: Request, r
   } catch (err) { next(err); }
 });
 
-tokenRoutes.delete('/temp-passwords/:pw', requireRole('admin'), async (req: Request, res: Response, next) => {
+tokenRoutes.delete('/temp-passwords/:pw', requirePermission('tokens.manage'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'servertemppassworddel', { pw: String(req.params.pw) });
     res.json(result);

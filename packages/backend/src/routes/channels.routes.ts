@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const channelRoutes: Router = Router({ mergeParams: true });
@@ -22,28 +22,28 @@ channelRoutes.get('/', async (req: Request, res: Response, next) => {
 // The channel list above is what every role's Channels / Clients page needs. A
 // single channel's full info and its permissions are only read by admin UI
 // (the edit / duplicate dialogs, the Permissions page).
-channelRoutes.get('/:cid', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.get('/:cid', requirePermission('channels.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelinfo', { cid: String(req.params.cid) });
     res.json(result);
   } catch (err) { next(err); }
 });
 
-channelRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.post('/', requirePermission('channels.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelcreate', req.body);
     res.status(201).json(result);
   } catch (err) { next(err); }
 });
 
-channelRoutes.put('/:cid', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.put('/:cid', requirePermission('channels.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channeledit', { cid: String(req.params.cid), ...req.body });
     res.json(result);
   } catch (err) { next(err); }
 });
 
-channelRoutes.delete('/:cid', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.delete('/:cid', requirePermission('channels.delete'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channeldelete', {
       cid: String(req.params.cid), force: req.query.force || 1,
@@ -52,7 +52,7 @@ channelRoutes.delete('/:cid', requireRole('admin'), async (req: Request, res: Re
   } catch (err) { next(err); }
 });
 
-channelRoutes.post('/:cid/move', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.post('/:cid/move', requirePermission('channels.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelmove', {
       cid: String(req.params.cid), ...req.body,
@@ -61,7 +61,7 @@ channelRoutes.post('/:cid/move', requireRole('admin'), async (req: Request, res:
   } catch (err) { next(err); }
 });
 
-channelRoutes.get('/:cid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.get('/:cid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelpermlist', {
       cid: String(req.params.cid), '-permsid': '',
@@ -70,7 +70,7 @@ channelRoutes.get('/:cid/permissions', requireRole('admin'), async (req: Request
   } catch (err) { next(err); }
 });
 
-channelRoutes.put('/:cid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.put('/:cid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channeladdperm', {
       cid: String(req.params.cid), ...req.body,
@@ -79,7 +79,7 @@ channelRoutes.put('/:cid/permissions', requireRole('admin'), async (req: Request
   } catch (err) { next(err); }
 });
 
-channelRoutes.delete('/:cid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.delete('/:cid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channeldelperm', {
       cid: String(req.params.cid), ...req.body,
@@ -92,7 +92,7 @@ channelRoutes.delete('/:cid/permissions', requireRole('admin'), async (req: Requ
 // specific channel - the 5th permission tier alongside server group/channel
 // group/channel/client. Unlike those, TS3 has no command to list every such
 // override server-wide; you must already know the (cid, cldbid) pair.
-channelRoutes.get('/:cid/clients/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.get('/:cid/clients/:cldbid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelclientpermlist', {
       cid: String(req.params.cid), cldbid: String(req.params.cldbid), '-permsid': '',
@@ -101,7 +101,7 @@ channelRoutes.get('/:cid/clients/:cldbid/permissions', requireRole('admin'), asy
   } catch (err) { next(err); }
 });
 
-channelRoutes.put('/:cid/clients/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.put('/:cid/clients/:cldbid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     // channelclientaddperm only takes permsid/permvalue - no permnegated/permskip
     const { permsid, permvalue } = req.body;
@@ -112,7 +112,7 @@ channelRoutes.put('/:cid/clients/:cldbid/permissions', requireRole('admin'), asy
   } catch (err) { next(err); }
 });
 
-channelRoutes.delete('/:cid/clients/:cldbid/permissions', requireRole('admin'), async (req: Request, res: Response, next) => {
+channelRoutes.delete('/:cid/clients/:cldbid/permissions', requirePermission('permissions.edit'), async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(getSid(req), 'channelclientdelperm', {
       cid: String(req.params.cid), cldbid: String(req.params.cldbid), ...req.body,

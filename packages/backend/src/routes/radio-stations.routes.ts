@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validateUrl } from '../utils/url-validator.js';
 import type { RadioPreset } from '@ts6/common';
@@ -9,7 +9,7 @@ export const radioStationRoutes: Router = Router({ mergeParams: true });
 // Already scoped to the right server by the requireServerAccess middleware
 // this router is mounted behind (see app.ts) - just need to widen who's
 // allowed through at all.
-radioStationRoutes.use(requireRole('admin', 'bot-operator', 'music-operator'));
+radioStationRoutes.use(requirePermission('music.manage'));
 
 // Built-in radio station presets
 const RADIO_PRESETS: RadioPreset[] = [

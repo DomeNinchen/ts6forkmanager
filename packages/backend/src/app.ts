@@ -46,7 +46,7 @@ import { updateCheckRoutes } from './routes/update-check.routes.js';
 import { ytCookieCheckRoutes } from './routes/yt-cookie-check.routes.js';
 import { requireServerAccess } from './middleware/server-access.js';
 import { requireRole } from './middleware/rbac.js';
-import { adminExcept, BOT_FLOW_ROLES, EVERY_ROLE, MUSIC_ROLES, type OpenRoute } from './middleware/access-policy.js';
+import { adminExcept, SIGNED_IN, type OpenRoute } from './middleware/access-policy.js';
 import { connectionJournalRoutes } from './routes/connection-journal.routes.js';
 import { changeLogRoutes } from './routes/change-log.routes.js';
 import { backupRoutes, backupDownloadRoutes } from './routes/backups.routes.js';
@@ -125,77 +125,145 @@ export function createApp(): Express {
   app.use('/api', changeLogMiddleware);
   app.use('/api/servers', serverRoutes);
 
-  // H9: Server access control on all :configId routes, then the role gate: every mount below is
-  // admin-only except for the requests listed with it. That list is all a viewer, bot operator or
-  // music operator can reach on that mount - a route added to a router later stays admin-only
-  // until it is opened here (see middleware/access-policy.ts).
+  // H9: Server access control on all :configId routes, then the permission gate: every mount below
+  // is admin-only except for the requests listed with it, each for the roles holding the permission
+  // it names (ROLE_PERMISSIONS in @ts6/common). That list is all a non-admin can reach on that
+  // mount - a route added to a router later stays admin-only until it is opened here (see
+  // middleware/access-policy.ts; access-matrix.test.ts pins the result for every route and role).
+  // A trailing '/*' is used only where a whole router belongs to one permission.
   const serverAccess = requireServerAccess();
   const serverScoped = (path: string, router: Router, open: readonly OpenRoute[] = []) =>
     app.use(`/api/servers/:configId/${path}`, serverAccess, adminExcept(open), router);
 
-  serverScoped('virtual-servers', virtualServerRoutes, [{ method: 'GET', path: '/', roles: EVERY_ROLE }]);
-  serverScoped('vs/:sid/channels', channelRoutes, [{ method: 'GET', path: '/', roles: EVERY_ROLE }]);
-  serverScoped('vs/:sid/clients', clientRoutes, [{ method: 'GET', path: '/', roles: EVERY_ROLE }]);
-  serverScoped('vs/:sid/server-groups', serverGroupRoutes, [{ method: 'GET', path: '/', roles: MUSIC_ROLES }]);
-  serverScoped('vs/:sid/channel-groups', channelGroupRoutes);
-  serverScoped('vs/:sid/permissions', permissionRoutes);
-  serverScoped('vs/:sid/bans', banRoutes);
-  serverScoped('vs/:sid/tokens', tokenRoutes);
-  serverScoped('vs/:sid/files', fileRoutes);
-  serverScoped('vs/:sid/icons', iconRoutes, [
-    { method: 'GET', path: '/', roles: EVERY_ROLE },
-    { method: 'GET', path: '/usage', roles: EVERY_ROLE },
-    { method: 'GET', path: '/:iconId/image', roles: EVERY_ROLE },
+  // Creating, starting, stopping, deleting, snapshots and the permission reset stay admin-only.
+  serverScoped('virtual-servers', virtualServerRoutes, [
+    { method: 'GET', path: '/', permission: 'server.view' },
+    { method: 'GET', path: '/:sid/info', permission: 'vserver.edit' },
+    { method: 'PUT', path: '/:sid', permission: 'vserver.edit' },
+    { method: 'GET', path: '/:sid/connection-info', permission: 'vserver.edit' },
+    { method: 'POST', path: '/:sid/message', permission: 'vserver.edit' },
   ]);
-  serverScoped('vs/:sid/complaints', complaintRoutes);
-  serverScoped('vs/:sid/messages', messageRoutes);
+  serverScoped('vs/:sid/channels', channelRoutes, [
+    { method: 'GET', path: '/', permission: 'server.view' },
+    { method: 'GET', path: '/:cid', permission: 'channels.edit' },
+    { method: 'POST', path: '/', permission: 'channels.edit' },
+    { method: 'PUT', path: '/:cid', permission: 'channels.edit' },
+    { method: 'POST', path: '/:cid/move', permission: 'channels.edit' },
+    { method: 'DELETE', path: '/:cid', permission: 'channels.delete' },
+    { method: '*', path: '/:cid/permissions', permission: 'permissions.edit' },
+    { method: '*', path: '/:cid/clients/:cldbid/permissions', permission: 'permissions.edit' },
+  ]);
+  serverScoped('vs/:sid/clients', clientRoutes, [
+    { method: 'GET', path: '/', permission: 'server.view' },
+    { method: 'POST', path: '/:clid/poke', permission: 'clients.message' },
+    { method: 'POST', path: '/:clid/message', permission: 'clients.message' },
+    { method: 'POST', path: '/:clid/move', permission: 'clients.move' },
+    { method: 'POST', path: '/bulk/move', permission: 'clients.move' },
+    { method: 'POST', path: '/:clid/kick', permission: 'clients.kick' },
+    { method: 'POST', path: '/bulk/kick', permission: 'clients.kick' },
+    { method: 'POST', path: '/:clid/ban', permission: 'clients.ban' },
+    { method: 'POST', path: '/bulk/ban', permission: 'clients.ban' },
+    { method: 'GET', path: '/:clid', permission: 'clients.manage' },
+    { method: 'GET', path: '/:clid/groups', permission: 'clients.manage' },
+    { method: 'POST', path: '/bulk/describe', permission: 'clients.manage' },
+    { method: '*', path: '/:cldbid/permissions', permission: 'permissions.edit' },
+    { method: '*', path: '/database/*', permission: 'clients.database' },
+  ]);
+  serverScoped('vs/:sid/server-groups', serverGroupRoutes, [
+    { method: 'GET', path: '/', permission: 'groups.view' },
+    { method: 'POST', path: '/', permission: 'groups.edit' },
+    { method: 'PUT', path: '/:sgid', permission: 'groups.edit' },
+    { method: 'DELETE', path: '/:sgid', permission: 'groups.edit' },
+    { method: 'POST', path: '/:sgid/copy', permission: 'groups.edit' },
+    { method: 'GET', path: '/:sgid/members', permission: 'groups.members' },
+    { method: 'POST', path: '/:sgid/members', permission: 'groups.members' },
+    { method: 'DELETE', path: '/:sgid/members/:cldbid', permission: 'groups.members' },
+    { method: '*', path: '/:sgid/permissions', permission: 'permissions.edit' },
+  ]);
+  serverScoped('vs/:sid/channel-groups', channelGroupRoutes, [
+    { method: 'GET', path: '/', permission: 'groups.members' },
+    { method: 'GET', path: '/:cgid/clients', permission: 'groups.members' },
+    { method: 'GET', path: '/by-client/:cldbid', permission: 'groups.members' },
+    { method: 'POST', path: '/:cgid/assign', permission: 'groups.members' },
+    { method: 'POST', path: '/', permission: 'groups.edit' },
+    { method: 'PUT', path: '/:cgid', permission: 'groups.edit' },
+    { method: 'DELETE', path: '/:cgid', permission: 'groups.edit' },
+    { method: '*', path: '/:cgid/permissions', permission: 'permissions.edit' },
+  ]);
+  // The automatic groups (servergroupautoaddperm) act on every virtual server of the instance: admin-only.
+  serverScoped('vs/:sid/permissions', permissionRoutes, [
+    { method: 'GET', path: '/', permission: 'permissions.edit' },
+    { method: 'GET', path: '/find', permission: 'permissions.edit' },
+    { method: 'GET', path: '/overview/:cldbid', permission: 'permissions.edit' },
+  ]);
+  serverScoped('vs/:sid/bans', banRoutes, [
+    { method: 'GET', path: '/', permission: 'bans.view' },
+    { method: 'POST', path: '/', permission: 'bans.manage' },
+    { method: 'DELETE', path: '/', permission: 'bans.manage' },
+    { method: 'DELETE', path: '/:banid', permission: 'bans.manage' },
+  ]);
+  serverScoped('vs/:sid/tokens', tokenRoutes, [{ method: '*', path: '/*', permission: 'tokens.manage' }]);
+  serverScoped('vs/:sid/files', fileRoutes, [{ method: '*', path: '/*', permission: 'files.manage' }]);
+  serverScoped('vs/:sid/icons', iconRoutes, [
+    { method: 'GET', path: '/', permission: 'server.view' },
+    { method: 'GET', path: '/usage', permission: 'server.view' },
+    { method: 'GET', path: '/:iconId/image', permission: 'server.view' },
+    { method: 'POST', path: '/', permission: 'icons.manage' },
+    { method: 'POST', path: '/bulk/delete', permission: 'icons.manage' },
+    { method: 'DELETE', path: '/:iconId', permission: 'icons.manage' },
+  ]);
+  serverScoped('vs/:sid/complaints', complaintRoutes, [{ method: '*', path: '/*', permission: 'complaints.manage' }]);
+  serverScoped('vs/:sid/messages', messageRoutes, [{ method: '*', path: '/*', permission: 'messages.manage' }]);
+  // The server log carries client IP addresses and every admin's actions: admin-only.
   serverScoped('vs/:sid/logs', logRoutes);
   serverScoped('console', consoleRoutes);
   serverScoped('instance', instanceRoutes);
-  serverScoped('command-permissions', commandPermissionRoutes, [{ method: 'GET', path: '/', roles: MUSIC_ROLES }]);
+  serverScoped('command-permissions', commandPermissionRoutes, [{ method: 'GET', path: '/', permission: 'music.manage' }]);
   serverScoped('vs/:sid/dashboard', dashboardRoutes, [
-    { method: 'GET', path: '/', roles: EVERY_ROLE },
-    { method: 'GET', path: '/bandwidth-history', roles: EVERY_ROLE },
-    { method: 'GET', path: '/user-history', roles: EVERY_ROLE },
+    { method: 'GET', path: '/', permission: 'server.view' },
+    { method: 'GET', path: '/bandwidth-history', permission: 'server.view' },
+    { method: 'GET', path: '/user-history', permission: 'server.view' },
+    { method: '*', path: '/online-filter', permission: 'vserver.edit' },
   ]);
+  // The statistics page also reads the instance's host information, so it stays admin-only as a whole.
   serverScoped('vs/:sid/statistics', statisticsRoutes);
-  // The Music Bots page's own routers: all of it is for the music roles (each router checks that as well).
-  serverScoped('music-library', musicLibraryRoutes, [{ method: '*', path: '/*', roles: MUSIC_ROLES }]);
-  serverScoped('radio-stations', radioStationRoutes, [{ method: '*', path: '/*', roles: MUSIC_ROLES }]);
-  serverScoped('music-requests', musicRequestRoutes, [{ method: 'GET', path: '/', roles: MUSIC_ROLES }]);
+  // The Music Bots page's own routers: all of it is music.manage (each router checks that as well).
+  serverScoped('music-library', musicLibraryRoutes, [{ method: '*', path: '/*', permission: 'music.manage' }]);
+  serverScoped('radio-stations', radioStationRoutes, [{ method: '*', path: '/*', permission: 'music.manage' }]);
+  serverScoped('music-requests', musicRequestRoutes, [{ method: 'GET', path: '/', permission: 'music.manage' }]);
 
   // Not under :configId, same rule: admin-only except what is listed.
   app.use('/api/bots', adminExcept([
-    { method: 'GET', path: '/', roles: EVERY_ROLE }, // the flow list on the Dashboard
-    { method: 'POST', path: '/', roles: BOT_FLOW_ROLES },
-    { method: 'GET', path: '/:botId', roles: BOT_FLOW_ROLES },
-    { method: 'PUT', path: '/:botId', roles: BOT_FLOW_ROLES },
-    { method: 'DELETE', path: '/:botId', roles: BOT_FLOW_ROLES },
-    { method: 'POST', path: '/:botId/enable', roles: BOT_FLOW_ROLES },
-    { method: 'POST', path: '/:botId/disable', roles: BOT_FLOW_ROLES },
-    { method: 'GET', path: '/:botId/executions', roles: BOT_FLOW_ROLES },
-    { method: 'GET', path: '/:botId/executions/:execId/logs', roles: BOT_FLOW_ROLES },
+    { method: 'GET', path: '/', permission: 'server.view' }, // the flow list on the Dashboard
+    { method: 'POST', path: '/', permission: 'bots.manage' },
+    { method: 'GET', path: '/:botId', permission: 'bots.manage' },
+    { method: 'PUT', path: '/:botId', permission: 'bots.manage' },
+    { method: 'DELETE', path: '/:botId', permission: 'bots.manage' },
+    { method: 'POST', path: '/:botId/enable', permission: 'bots.manage' },
+    { method: 'POST', path: '/:botId/disable', permission: 'bots.manage' },
+    { method: 'GET', path: '/:botId/executions', permission: 'bots.manage' },
+    { method: 'GET', path: '/:botId/executions/:execId/logs', permission: 'bots.manage' },
   ]), botRoutes);
   app.use('/api/users', userRoutes);
   // A user's own settings (dashboard layout, ...): every role, but only ever the caller's rows.
   app.use('/api/user-settings', adminExcept([
-    { method: 'GET', path: '/', roles: EVERY_ROLE },
-    { method: 'PUT', path: '/:key', roles: EVERY_ROLE },
-    { method: 'DELETE', path: '/:key', roles: EVERY_ROLE },
+    { method: 'GET', path: '/', permission: SIGNED_IN },
+    { method: 'PUT', path: '/:key', permission: SIGNED_IN },
+    { method: 'DELETE', path: '/:key', permission: SIGNED_IN },
   ]), userSettingsRoutes);
   app.use('/api/music-bots', musicBotRoutes);
   app.use('/api/playlists', playlistRoutes);
   app.use('/api/widgets', requireRole('admin'), widgetRoutes);
   app.use('/api/settings', adminExcept([
-    { method: 'GET', path: '/webgui-theme', roles: EVERY_ROLE },
-    { method: 'GET', path: '/webgui-base-theme', roles: EVERY_ROLE },
-    { method: 'GET', path: '/webgui-design', roles: EVERY_ROLE },
+    { method: 'GET', path: '/webgui-theme', permission: SIGNED_IN },
+    { method: 'GET', path: '/webgui-base-theme', permission: SIGNED_IN },
+    { method: 'GET', path: '/webgui-design', permission: SIGNED_IN },
   ]), settingsRoutes);
   app.use('/api/connection-journal', requireRole('admin'), connectionJournalRoutes);
   app.use('/api/backups', requireRole('admin'), backupRoutes);
   app.use('/api/change-log', requireRole('admin'), changeLogRoutes);  // The banners in the layout read the cached results for every role; forcing a fresh check is an admin's.
-  app.use('/api/update-check', adminExcept([{ method: 'GET', path: '/', roles: EVERY_ROLE }]), updateCheckRoutes);
-  app.use('/api/yt-cookie-check', adminExcept([{ method: 'GET', path: '/', roles: EVERY_ROLE }]), ytCookieCheckRoutes);
+  app.use('/api/update-check', adminExcept([{ method: 'GET', path: '/', permission: SIGNED_IN }]), updateCheckRoutes);
+  app.use('/api/yt-cookie-check', adminExcept([{ method: 'GET', path: '/', permission: SIGNED_IN }]), ytCookieCheckRoutes);
 
   // 404 for unmatched routes. Without this, Express's own default 404
   // page (finalhandler) overwrites helmet's Content-Security-Policy

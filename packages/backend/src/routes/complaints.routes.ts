@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const complaintRoutes: Router = Router({ mergeParams: true });
@@ -11,7 +11,7 @@ const getClient = (req: Request) => {
 const getSid = (req: Request) => parseInt(String(req.params.sid));
 
 // The Complaints page is admin-only in the UI, so the whole router is - reads included.
-complaintRoutes.use(requireRole('admin'));
+complaintRoutes.use(requirePermission('complaints.manage'));
 
 complaintRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
@@ -20,13 +20,13 @@ complaintRoutes.get('/', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-complaintRoutes.post('/', requireRole('admin'), async (req: Request, res: Response, next) => {
+complaintRoutes.post('/', requirePermission('complaints.manage'), async (req: Request, res: Response, next) => {
   try {
     res.status(201).json(await getClient(req).execute(getSid(req), 'complainadd', req.body));
   } catch (err) { next(err); }
 });
 
-complaintRoutes.delete('/:tcldbid/:fcldbid', requireRole('admin'), async (req: Request, res: Response, next) => {
+complaintRoutes.delete('/:tcldbid/:fcldbid', requirePermission('complaints.manage'), async (req: Request, res: Response, next) => {
   try {
     res.json(await getClient(req).execute(getSid(req), 'complaindel', {
       tcldbid: String(req.params.tcldbid), fcldbid: String(req.params.fcldbid),

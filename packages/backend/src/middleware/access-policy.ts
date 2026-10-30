@@ -1,23 +1,21 @@
 import type { Request, Response, NextFunction } from 'express';
-import type { UserRole } from '@ts6/common';
+import { roleHasPermission, type UserPermission } from '@ts6/common';
 
 /**
  * Default-deny access for a router mounted in app.ts.
  *
  * `adminExcept(open)` lets an admin through and refuses every other role - except for the
- * requests listed in `open`. So what a non-admin can reach on a mount is the list at that
- * mount in app.ts and nothing else: a route added to the router later, with or without a
- * `requireRole` of its own, is admin-only until someone opens it there on purpose.
+ * requests listed in `open`, each for the roles that hold the permission it names (ROLE_PERMISSIONS
+ * in @ts6/common). So what a non-admin can reach on a mount is the list at that mount in app.ts
+ * and nothing else: a route added to the router later, with or without a check of its own, is
+ * admin-only until someone opens it there on purpose.
  *
- * The role checks inside the routers stay as a second layer. A router can narrow what its
+ * The checks inside the routers stay as a second layer. A router can narrow what its
  * mount allows, never widen it.
  */
 
-export const EVERY_ROLE: readonly UserRole[] = ['admin', 'viewer', 'bot-operator', 'music-operator'];
-/** The roles that run the Music Bots page. */
-export const MUSIC_ROLES: readonly UserRole[] = ['admin', 'bot-operator', 'music-operator'];
-/** The roles that run the Bot Flows editor. */
-export const BOT_FLOW_ROLES: readonly UserRole[] = ['admin', 'bot-operator'];
+/** For an open route every signed-in user may call whatever their role (their own settings, the theme). */
+export const SIGNED_IN = 'signed-in' as const;
 
 export interface OpenRoute {
   /** A HEAD request counts as GET (Express answers it with the GET handler). */
@@ -25,16 +23,17 @@ export interface OpenRoute {
   /**
    * The path below the mount: '/' is the mount itself, ':name' matches one segment, and a
    * trailing '/*' matches everything below (use it only for a router that is meant to be
-   * reachable as a whole by those roles).
+   * reachable as a whole with that permission).
    */
   path: string;
-  roles: readonly UserRole[];
+  /** What a role needs to hold for this request. */
+  permission: UserPermission | typeof SIGNED_IN;
 }
 
 interface CompiledRoute {
   method: OpenRoute['method'];
   pattern: RegExp;
-  roles: readonly UserRole[];
+  permission: OpenRoute['permission'];
 }
 
 function compile(route: OpenRoute): CompiledRoute {
@@ -46,7 +45,7 @@ function compile(route: OpenRoute): CompiledRoute {
   } else {
     source = escapeSegments(route.path);
   }
-  return { method: route.method, pattern: new RegExp(`^${source}$`), roles: route.roles };
+  return { method: route.method, pattern: new RegExp(`^${source}$`), permission: route.permission };
 }
 
 function escapeSegments(path: string): string {
@@ -76,7 +75,8 @@ export function adminExcept(open: readonly OpenRoute[] = []) {
     const path = normalize(req.path);
     // The patterns are case-sensitive on purpose: Express routes /Tokens like /tokens, so a
     // differently cased spelling of an open path is refused here - failing closed.
-    const allowed = routes.some((r) => (r.method === '*' || r.method === method) && r.pattern.test(path) && r.roles.includes(role));
+    const allowed = routes.some((r) => (r.method === '*' || r.method === method) && r.pattern.test(path)
+      && (r.permission === SIGNED_IN || roleHasPermission(role, r.permission)));
     if (!allowed) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;

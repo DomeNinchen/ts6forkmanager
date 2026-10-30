@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 
 export const botRoutes: Router = Router();
@@ -53,7 +53,7 @@ botRoutes.get('/', async (req: Request, res: Response, next) => {
 // full definition (flowData: node settings, webhook paths, message texts), its
 // executions and their logs are only read by the Bot Flows editor, which is open
 // to admins and bot operators - not to viewers or music operators.
-botRoutes.get('/:botId', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.get('/:botId', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const bot = await prisma.botFlow.findUnique({ where: { id: parseInt(String(req.params.botId)) } });
@@ -66,7 +66,7 @@ botRoutes.get('/:botId', requireRole('admin', 'bot-operator'), async (req: Reque
   } catch (err) { next(err); }
 });
 
-botRoutes.post('/', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.post('/', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const { name, description, serverConfigId, virtualServerId, flowData } = req.body;
@@ -95,7 +95,7 @@ botRoutes.post('/', requireRole('admin', 'bot-operator'), async (req: Request, r
   } catch (err) { next(err); }
 });
 
-botRoutes.put('/:botId', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.put('/:botId', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const botId = parseInt(String(req.params.botId));
@@ -126,7 +126,7 @@ botRoutes.put('/:botId', requireRole('admin', 'bot-operator'), async (req: Reque
   } catch (err) { next(err); }
 });
 
-botRoutes.delete('/:botId', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.delete('/:botId', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const botId = parseInt(String(req.params.botId));
@@ -143,7 +143,7 @@ botRoutes.delete('/:botId', requireRole('admin', 'bot-operator'), async (req: Re
   } catch (err) { next(err); }
 });
 
-botRoutes.post('/:botId/enable', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.post('/:botId/enable', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const botId = parseInt(String(req.params.botId));
@@ -161,7 +161,7 @@ botRoutes.post('/:botId/enable', requireRole('admin', 'bot-operator'), async (re
   } catch (err) { next(err); }
 });
 
-botRoutes.post('/:botId/disable', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.post('/:botId/disable', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const botId = parseInt(String(req.params.botId));
@@ -179,7 +179,7 @@ botRoutes.post('/:botId/disable', requireRole('admin', 'bot-operator'), async (r
   } catch (err) { next(err); }
 });
 
-botRoutes.get('/:botId/executions', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.get('/:botId/executions', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const flowId = parseInt(String(req.params.botId));
@@ -198,7 +198,7 @@ botRoutes.get('/:botId/executions', requireRole('admin', 'bot-operator'), async 
   } catch (err) { next(err); }
 });
 
-botRoutes.get('/:botId/executions/:execId/logs', requireRole('admin', 'bot-operator'), async (req: Request, res: Response, next) => {
+botRoutes.get('/:botId/executions/:execId/logs', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const flowId = parseInt(String(req.params.botId));

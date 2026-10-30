@@ -76,6 +76,8 @@
       "admin": "Administrateur",
       "viewer": "Lecteur",
       "botOperator": "Opérateur de bot",
+      "serverAdmin": "Administrateur du serveur",
+      "moderator": "Modérateur",
       "musicOperator": "Opérateur musique"
     }
   },
@@ -705,6 +707,7 @@
       "describeCount_one": "Décrire {{count}} client",
       "describeCount_other": "Décrire {{count}} clients",
       "descriptionUpdated_one": "Description mise à jour pour {{count}} client",
+      "pokeFailed": "Échec du poke",
       "descriptionUpdated_other": "Description mise à jour pour {{count}} clients"
     },
     "tokens": {
@@ -1020,6 +1023,39 @@
         "userDeleted": "Utilisateur supprimé",
         "deleteUserFailed": "Échec de la suppression de l'utilisateur",
         "resetting": "Réinitialisation...",
+        "permissions": {
+          "heading": "Sur les serveurs attribués, ce rôle peut :",
+          "adminAll": "Tout, y compris l'instance, les connexions serveur, les utilisateurs, les paramètres et les sauvegardes.",
+          "escalating": "peut étendre des droits",
+          "moderatorWarning": "Peut expulser, bannir et déplacer n'importe quel utilisateur, y compris les membres des groupes d'administration.",
+          "changeRoleTitle": "Changer le rôle de {{username}}",
+          "changeRoleConfirm": "Changer le rôle",
+          "labels": {
+            "server_view": "Voir le tableau de bord, les salons et les utilisateurs",
+            "groups_view": "Voir la liste des groupes serveur",
+            "clients_message": "Envoyer un poke ou un message aux utilisateurs",
+            "clients_move": "Déplacer des utilisateurs",
+            "clients_kick": "Expulser des utilisateurs",
+            "clients_ban": "Bannir des utilisateurs",
+            "clients_manage": "Détails des utilisateurs (adresse IP comprise), groupes et description",
+            "clients_database": "Base de données des utilisateurs",
+            "bans_view": "Voir la liste des bannissements",
+            "bans_manage": "Ajouter et lever des bannissements",
+            "complaints_manage": "Traiter les plaintes",
+            "channels_edit": "Créer, modifier et déplacer des salons",
+            "channels_delete": "Supprimer des salons",
+            "groups_members": "Modifier les appartenances aux groupes",
+            "groups_edit": "Créer, renommer et supprimer des groupes",
+            "permissions_edit": "Voir et modifier les autorisations",
+            "tokens_manage": "Jetons et mots de passe temporaires",
+            "files_manage": "Fichiers",
+            "icons_manage": "Téléverser et supprimer des icônes",
+            "messages_manage": "Messages hors ligne",
+            "vserver_edit": "Paramètres du serveur virtuel, message serveur",
+            "music_manage": "Bots musique",
+            "bots_manage": "Flux de bots"
+          }
+        },
         "editUserTitle": "Modifier l'utilisateur"
       },
       "serverAccess": {
