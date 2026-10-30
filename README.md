@@ -134,7 +134,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 
 **Access and appearance**
 
-- **Security**: four roles with per-server access checked by the backend, two-factor sign-in, Single Sign-On via OpenID Connect, and encrypted stored credentials. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
+- **Security**: six roles (admin, server admin, moderator, bot operator, music operator, viewer) built from individual permissions, with per-server access checked by the backend, two-factor sign-in, Single Sign-On via OpenID Connect, and encrypted stored credentials. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
 - **Privacy**: no third-party requests, no HTTP cookies, and only what is needed stored in the browser. This describes the software and is not legal advice. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Privacy-and-Hosting)
 - **Appearance**: two layouts (Cockpit and Lounge), eleven themes and ten accent colours, as an installation default that each user can override. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Themes-and-Appearance)
 - **Language**: English, German and French, with more translated by the community on [Crowdin](https://crowdin.com/project/ts6forkmanager).
