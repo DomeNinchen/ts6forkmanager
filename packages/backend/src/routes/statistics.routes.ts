@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
 import { isUserHistoryRange } from '../utils/user-history-series.js';

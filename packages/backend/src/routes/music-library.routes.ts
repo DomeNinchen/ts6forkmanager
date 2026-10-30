@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { downloadYouTube, searchYouTube, getYouTubeUrlInfo } from '../voice/audio/youtube.js';
 import { scanMusicLibrary, getAudioDuration } from '../voice/audio/music-library-scan.js';

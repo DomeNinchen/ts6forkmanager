@@ -3,13 +3,17 @@
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "POST /api/servers": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/servers/:configId": {
     "admin": "ok",
@@ -19,7 +23,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId": {
     "admin": "ok",
@@ -29,7 +37,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId": {
     "admin": "ok",
@@ -39,7 +51,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/identity": {
     "admin": "ok",
@@ -49,7 +65,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/identity": {
     "admin": "ok",
@@ -59,7 +79,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/global-message": {
     "admin": "ok",
@@ -69,7 +93,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/test": {
     "admin": "ok",
@@ -79,7 +107,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/bot-identity": {
     "admin": "ok",
@@ -89,7 +121,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/virtual-servers": {
     "admin": "ok",
@@ -99,7 +135,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/virtual-servers/:sid/info": {
     "admin": "ok",
@@ -109,7 +149,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/virtual-servers/:sid": {
     "admin": "ok",
@@ -119,7 +163,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/virtual-servers": {
     "admin": "ok",
@@ -129,7 +177,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/virtual-servers/:sid/start": {
     "admin": "ok",
@@ -139,7 +191,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/virtual-servers/:sid/stop": {
     "admin": "ok",
@@ -149,7 +205,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/virtual-servers/:sid": {
     "admin": "ok",
@@ -159,7 +219,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/virtual-servers/:sid/snapshot": {
     "admin": "ok",
@@ -169,7 +233,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/virtual-servers/:sid/snapshot/deploy": {
     "admin": "ok",
@@ -179,7 +247,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/virtual-servers/:sid/connection-info": {
     "admin": "ok",
@@ -189,7 +261,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/virtual-servers/:sid/message": {
     "admin": "ok",
@@ -199,7 +275,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/virtual-servers/:sid/permission-reset": {
     "admin": "ok",
@@ -209,7 +289,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channels": {
     "admin": "ok",
@@ -219,7 +303,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channels/:cid": {
     "admin": "ok",
@@ -229,7 +317,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/channels": {
     "admin": "ok",
@@ -239,7 +331,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/channels/:cid": {
     "admin": "ok",
@@ -249,7 +345,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/channels/:cid": {
     "admin": "ok",
@@ -259,7 +359,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/channels/:cid/move": {
     "admin": "ok",
@@ -269,7 +373,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channels/:cid/permissions": {
     "admin": "ok",
@@ -279,7 +387,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/channels/:cid/permissions": {
     "admin": "ok",
@@ -289,7 +401,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/channels/:cid/permissions": {
     "admin": "ok",
@@ -299,7 +415,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channels/:cid/clients/:cldbid/permissions": {
     "admin": "ok",
@@ -309,7 +429,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/channels/:cid/clients/:cldbid/permissions": {
     "admin": "ok",
@@ -319,7 +443,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/channels/:cid/clients/:cldbid/permissions": {
     "admin": "ok",
@@ -329,7 +457,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients": {
     "admin": "ok",
@@ -339,7 +471,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/database": {
     "admin": "ok",
@@ -349,7 +485,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/database/list": {
     "admin": "ok",
@@ -359,7 +499,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/database/search": {
     "admin": "ok",
@@ -369,7 +513,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/database/groups": {
     "admin": "ok",
@@ -379,7 +527,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/database/:cldbid/details": {
     "admin": "ok",
@@ -389,7 +541,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/database/ban": {
     "admin": "ok",
@@ -399,7 +555,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/database/delete": {
     "admin": "ok",
@@ -409,7 +569,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/database/:cldbid": {
     "admin": "ok",
@@ -419,7 +583,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/bulk/move": {
     "admin": "ok",
@@ -429,7 +597,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/bulk/kick": {
     "admin": "ok",
@@ -439,7 +611,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/bulk/ban": {
     "admin": "ok",
@@ -449,7 +625,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/bulk/describe": {
     "admin": "ok",
@@ -459,7 +639,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/:clid": {
     "admin": "ok",
@@ -469,7 +653,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/:clid/kick": {
     "admin": "ok",
@@ -479,7 +667,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/:clid/ban": {
     "admin": "ok",
@@ -489,7 +681,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/:clid/move": {
     "admin": "ok",
@@ -499,7 +695,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/:clid/poke": {
     "admin": "ok",
@@ -509,7 +709,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/clients/:clid/message": {
     "admin": "ok",
@@ -519,7 +723,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/:cldbid/permissions": {
     "admin": "ok",
@@ -529,7 +737,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/clients/:cldbid/permissions": {
     "admin": "ok",
@@ -539,7 +751,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/clients/:cldbid/permissions": {
     "admin": "ok",
@@ -549,7 +765,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/clients/:clid/groups": {
     "admin": "ok",
@@ -559,7 +779,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/server-groups": {
     "admin": "ok",
@@ -569,7 +793,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/server-groups": {
     "admin": "ok",
@@ -579,7 +807,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/server-groups/:sgid": {
     "admin": "ok",
@@ -589,7 +821,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/server-groups/:sgid": {
     "admin": "ok",
@@ -599,7 +835,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/server-groups/:sgid/copy": {
     "admin": "ok",
@@ -609,7 +849,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/server-groups/:sgid/members": {
     "admin": "ok",
@@ -619,7 +863,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/server-groups/:sgid/members": {
     "admin": "ok",
@@ -629,7 +877,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/server-groups/:sgid/members/:cldbid": {
     "admin": "ok",
@@ -639,7 +891,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/server-groups/:sgid/permissions": {
     "admin": "ok",
@@ -649,7 +905,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/server-groups/:sgid/permissions": {
     "admin": "ok",
@@ -659,7 +919,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/server-groups/:sgid/permissions": {
     "admin": "ok",
@@ -669,7 +933,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channel-groups": {
     "admin": "ok",
@@ -679,7 +947,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/channel-groups": {
     "admin": "ok",
@@ -689,7 +961,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/channel-groups/:cgid": {
     "admin": "ok",
@@ -699,7 +975,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/channel-groups/:cgid": {
     "admin": "ok",
@@ -709,7 +989,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channel-groups/:cgid/clients": {
     "admin": "ok",
@@ -719,7 +1003,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channel-groups/by-client/:cldbid": {
     "admin": "ok",
@@ -729,7 +1017,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/channel-groups/:cgid/assign": {
     "admin": "ok",
@@ -739,7 +1031,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/channel-groups/:cgid/permissions": {
     "admin": "ok",
@@ -749,7 +1045,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/channel-groups/:cgid/permissions": {
     "admin": "ok",
@@ -759,7 +1059,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/channel-groups/:cgid/permissions": {
     "admin": "ok",
@@ -769,7 +1073,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/permissions": {
     "admin": "ok",
@@ -779,7 +1087,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/permissions/find": {
     "admin": "ok",
@@ -789,7 +1101,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/permissions/overview/:cldbid": {
     "admin": "ok",
@@ -799,7 +1115,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/permissions/automatic-groups/add": {
     "admin": "ok",
@@ -809,7 +1129,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/permissions/automatic-groups/remove": {
     "admin": "ok",
@@ -819,7 +1143,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/bans": {
     "admin": "ok",
@@ -829,7 +1157,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/bans": {
     "admin": "ok",
@@ -839,7 +1171,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/bans/:banid": {
     "admin": "ok",
@@ -849,7 +1185,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/bans": {
     "admin": "ok",
@@ -859,7 +1199,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/tokens": {
     "admin": "ok",
@@ -869,7 +1213,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/tokens": {
     "admin": "ok",
@@ -879,7 +1227,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/tokens/:token": {
     "admin": "ok",
@@ -889,7 +1241,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/tokens/temp-passwords": {
     "admin": "ok",
@@ -899,7 +1255,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/tokens/temp-passwords": {
     "admin": "ok",
@@ -909,7 +1269,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/tokens/temp-passwords/:pw": {
     "admin": "ok",
@@ -919,7 +1283,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/files/limits": {
     "admin": "ok",
@@ -929,7 +1297,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/files/:cid": {
     "admin": "ok",
@@ -939,7 +1311,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/files/:cid/mkdir": {
     "admin": "ok",
@@ -949,7 +1325,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/files/:cid/mkdirs": {
     "admin": "ok",
@@ -959,7 +1339,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/files/:cid/file": {
     "admin": "ok",
@@ -969,7 +1353,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/files/:cid/move": {
     "admin": "ok",
@@ -979,7 +1367,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/files/:cid/uploads": {
     "admin": "ok",
@@ -989,7 +1381,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/files/:cid/uploads/:uploadId": {
     "admin": "ok",
@@ -999,7 +1395,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/files/:cid/download-links": {
     "admin": "ok",
@@ -1009,7 +1409,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/files/:cid/preview": {
     "admin": "ok",
@@ -1019,7 +1423,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/icons": {
     "admin": "ok",
@@ -1029,7 +1437,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/icons/usage": {
     "admin": "ok",
@@ -1039,7 +1451,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/icons/:iconId/image": {
     "admin": "ok",
@@ -1049,7 +1465,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/icons": {
     "admin": "ok",
@@ -1059,7 +1479,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/icons/bulk/delete": {
     "admin": "ok",
@@ -1069,7 +1493,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/icons/:iconId": {
     "admin": "ok",
@@ -1079,7 +1507,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/complaints": {
     "admin": "ok",
@@ -1089,7 +1521,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/complaints": {
     "admin": "ok",
@@ -1099,7 +1535,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/complaints/:tcldbid/:fcldbid": {
     "admin": "ok",
@@ -1109,7 +1549,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/messages": {
     "admin": "ok",
@@ -1119,7 +1563,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/messages/:msgid": {
     "admin": "ok",
@@ -1129,7 +1577,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PATCH /api/servers/:configId/vs/:sid/messages/:msgid": {
     "admin": "ok",
@@ -1139,7 +1591,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/messages": {
     "admin": "ok",
@@ -1149,7 +1605,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/vs/:sid/messages/:msgid": {
     "admin": "ok",
@@ -1159,7 +1619,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/logs": {
     "admin": "ok",
@@ -1169,7 +1633,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/logs": {
     "admin": "ok",
@@ -1179,7 +1647,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/console/execute": {
     "admin": "ok",
@@ -1189,7 +1661,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/console/events": {
     "admin": "ok",
@@ -1199,7 +1675,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/console/log": {
     "admin": "ok",
@@ -1209,7 +1689,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/instance": {
     "admin": "ok",
@@ -1219,7 +1703,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/instance": {
     "admin": "ok",
@@ -1229,7 +1717,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/instance/host": {
     "admin": "ok",
@@ -1239,7 +1731,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/instance/version": {
     "admin": "ok",
@@ -1249,7 +1745,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/instance/bindings": {
     "admin": "ok",
@@ -1259,7 +1759,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/command-permissions": {
     "admin": "ok",
@@ -1269,7 +1773,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/command-permissions/admin-groups": {
     "admin": "ok",
@@ -1279,7 +1787,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/command-permissions/:command": {
     "admin": "ok",
@@ -1289,7 +1801,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/command-permissions/:command": {
     "admin": "ok",
@@ -1299,7 +1815,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/dashboard": {
     "admin": "ok",
@@ -1309,7 +1829,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/dashboard/bandwidth-history": {
     "admin": "ok",
@@ -1319,7 +1843,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/dashboard/user-history": {
     "admin": "ok",
@@ -1329,7 +1857,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/dashboard/online-filter": {
     "admin": "ok",
@@ -1339,7 +1871,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "PUT /api/servers/:configId/vs/:sid/dashboard/online-filter": {
     "admin": "ok",
@@ -1349,7 +1885,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/statistics/user-history": {
     "admin": "ok",
@@ -1359,7 +1899,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/vs/:sid/statistics/metric-history": {
     "admin": "ok",
@@ -1369,7 +1913,11 @@
     "bot-operator": "403",
     "bot-operator (no grant)": "403",
     "music-operator": "403",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/music-library/songs": {
     "admin": "ok",
@@ -1379,7 +1927,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/music-library/scan": {
     "admin": "ok",
@@ -1389,7 +1941,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/music-library/upload": {
     "admin": "ok",
@@ -1399,7 +1955,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/music-library/songs/:id": {
     "admin": "ok",
@@ -1409,7 +1969,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/music-library/youtube/search": {
     "admin": "ok",
@@ -1419,7 +1983,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/music-library/youtube/download": {
     "admin": "ok",
@@ -1429,7 +1997,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/music-library/youtube/info": {
     "admin": "ok",
@@ -1439,7 +2011,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/music-library/youtube/download-batch": {
     "admin": "ok",
@@ -1449,7 +2025,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/radio-stations/presets": {
     "admin": "ok",
@@ -1459,7 +2039,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/radio-stations": {
     "admin": "ok",
@@ -1469,7 +2053,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/radio-stations": {
     "admin": "ok",
@@ -1479,7 +2067,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "DELETE /api/servers/:configId/radio-stations/:id": {
     "admin": "ok",
@@ -1489,7 +2081,11 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/servers/:configId/music-requests": {
     "admin": "ok",
@@ -1499,888 +2095,1186 @@
     "bot-operator": "ok",
     "bot-operator (no grant)": "403",
     "music-operator": "ok",
-    "music-operator (no grant)": "403"
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
   },
   "GET /api/bots": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "GET /api/bots/:botId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/bots": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/bots/:botId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/bots/:botId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/bots/:botId/enable": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/bots/:botId/disable": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/bots/:botId/executions": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/bots/:botId/executions/:execId/logs": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/users": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/users": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/users/:userId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/users/:userId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/users/:userId/sessions": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/users/:userId/sessions": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/users/:userId/sessions/:sessionId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/users/:userId/server-access": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/users/:userId/server-access": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/user-settings": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "PUT /api/user-settings/:key": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "DELETE /api/user-settings/:key": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "GET /api/music-bots": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/description-placeholders": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "PUT /api/music-bots/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/avatar": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/:id/avatar": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/music-bots/:id/avatar": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/music-bots/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/start": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stop": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/restart": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/play": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/play-url": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/play-radio": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/pause": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/resume": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stop-playback": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/skip": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/previous": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/seek": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/volume": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/:id/state": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/:id/queue": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/queue": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/queue/playlist": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/music-bots/:id/queue/:index": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/music-bots/:id/queue": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/queue/shuffle": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/queue/repeat": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/queue/:index/play": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "PUT /api/music-bots/:id/queue/move": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/start": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/stop": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/source": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/:id/stream/queue": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/queue": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/music-bots/:id/stream/queue/:itemId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/skip": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/:id/stream/status": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/music-bots/:id/stream/viewer/:clid": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/webrtc/offer": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/webrtc/answer": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/music-bots/:id/stream/webrtc/ice": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/music-bots/:id/player-widget-token": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/playlists": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/playlists/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/playlists": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "PUT /api/playlists/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/playlists/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "POST /api/playlists/:id/songs": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "DELETE /api/playlists/:id/songs/:songId": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "PUT /api/playlists/:id/songs/reorder": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
   },
   "GET /api/widgets": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/widgets": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PATCH /api/widgets/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/widgets/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/widgets/:id/regenerate-token": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/yt-cookies": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/settings/yt-cookies": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/settings/yt-cookies": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/debug-flags": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/debug-flags/:name": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/client-ip": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/settings/reset-radio-station-ids": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/settings/reset-music-bot-ids": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/scheduled-restart": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/scheduled-restart": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/oidc": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/oidc": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/github-token": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/github-token": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/settings/github-token": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/webgui-theme": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "PUT /api/settings/webgui-theme": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/webgui-base-theme": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "PUT /api/settings/webgui-base-theme": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/webgui-design": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "PUT /api/settings/webgui-design": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/privacy-notice": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/music-cache": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/music-cache": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/stream-defaults": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/stream-defaults": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/user-history": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/user-history": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/console": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/console": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/settings/bot-logs": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/settings/bot-logs": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal/geoip": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/connection-journal/geoip/settings": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/connection-journal/geoip/download": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/connection-journal/geoip/upload": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/connection-journal/geoip": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal/bans": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal/bans/check": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/connection-journal/bans": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/connection-journal/bans/:id": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/connection-journal/bans/ts": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal/by-ip": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal/countries": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal/ts-status": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/connection-journal/settings": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/connection-journal/settings": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/connection-journal": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/backups/uploads": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/backups/:kind/:name/restore": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/backups/restore": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/backups": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/backups": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/backups/settings": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/backups/passphrase": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/backups/:kind/:name/check": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "POST /api/backups/:kind/:name/download-links": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/backups/:kind/:name": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/change-log": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/change-log/areas": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/change-log/settings": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "PUT /api/change-log/settings": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "DELETE /api/change-log": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/update-check": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "POST /api/update-check/recheck": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   },
   "GET /api/yt-cookie-check": {
     "admin": "ok",
     "viewer": "ok",
     "bot-operator": "ok",
-    "music-operator": "ok"
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "ok"
   },
   "POST /api/yt-cookie-check/recheck": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",
-    "music-operator": "403"
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
   }
 }

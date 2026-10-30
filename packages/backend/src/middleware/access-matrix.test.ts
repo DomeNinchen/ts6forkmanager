@@ -23,7 +23,7 @@ import { config } from '../config.js';
  */
 
 const SNAPSHOT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'access-matrix.snapshot.json');
-const ROLES = ['admin', 'viewer', 'bot-operator', 'music-operator'] as const;
+const ROLES = ['admin', 'viewer', 'bot-operator', 'music-operator', 'server-admin', 'moderator'] as const;
 const GRANTED_CONFIG = 1;
 const FOREIGN_CONFIG = 2;
 const REACHED = 299;
@@ -160,6 +160,30 @@ test('the access matrix equals the reviewed snapshot', () => {
 test('the matrix found the routes it is meant to guard', () => {
   assert.ok(Object.keys(matrix).length > 150, `only ${Object.keys(matrix).length} routes found - did the router layout change?`);
   assert.equal(matrix['POST /api/servers/:configId/vs/:sid/clients/:clid/kick']?.admin, 'ok');
+});
+
+// Independent of the snapshot: areas no permission can open, whatever the role templates say.
+const ADMIN_ONLY = [
+  /^\/api\/servers\/:configId\/(console|instance)(\/|$)/,
+  /^\/api\/servers\/:configId\/virtual-servers(\/:sid)?(\/(start|stop|snapshot|snapshot\/deploy|permission-reset))?$/,
+  /^\/api\/servers\/:configId\/vs\/:sid\/permissions\/automatic-groups\//,
+  /^\/api\/servers\/:configId\/(identity|global-message|test|bot-identity)$/,
+  /^\/api\/(users|widgets|backups|change-log|connection-journal)(\/|$)/,
+  /^\/api\/settings\/(?!webgui-theme$|webgui-base-theme$|webgui-design$)/,
+];
+const isAdminOnly = (method: string, p: string) =>
+  ADMIN_ONLY.some((re) => re.test(p))
+  && !(method === 'GET' && p === '/api/servers/:configId/virtual-servers') // the list (server.view)
+  && !(method === 'PUT' && p === '/api/servers/:configId/virtual-servers/:sid'); // settings (vserver.edit)
+
+test('no non-admin role reaches an admin-only area', () => {
+  const leaks = Object.entries(matrix).flatMap(([key, row]) => {
+    const [method, p] = key.split(' ');
+    if (!isAdminOnly(method, p) && !(method !== 'GET' && /^\/api\/servers(\/:configId)?$/.test(p))) return [];
+    return Object.entries(row).filter(([who, status]) => !who.startsWith('admin') && status === 'ok').map(([who]) => `${key} as ${who}`);
+  });
+  assert.deepEqual(leaks, []);
+  assert.ok(isAdminOnly('POST', '/api/servers/:configId/console/execute'), 'the admin-only patterns no longer match the console');
 });
 
 test('no route answers a non-admin on a server connection without a grant', () => {

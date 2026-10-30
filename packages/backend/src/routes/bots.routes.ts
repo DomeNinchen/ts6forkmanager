@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 
 export const botRoutes: Router = Router();

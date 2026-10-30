@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 
 export const channelRoutes: Router = Router({ mergeParams: true });

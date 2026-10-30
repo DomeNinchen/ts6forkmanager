@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 
 export const messageRoutes: Router = Router({ mergeParams: true });
 

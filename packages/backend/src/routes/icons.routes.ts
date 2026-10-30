@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { normalizeIconId, type IconUsageMap, type IconUsageRef, type ServerIcon } from '@ts6/common';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';

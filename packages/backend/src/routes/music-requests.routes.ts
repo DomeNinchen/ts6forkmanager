@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { MUSIC_REQUEST_HISTORY_LIMIT } from '../voice/music-request-history.js';
 
 export const musicRequestRoutes: Router = Router({ mergeParams: true });

@@ -7,7 +7,7 @@ import {
   type RepositoryPathProblem,
 } from '@ts6/common';
 import { config } from '../config.js';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { allowSlowBody } from '../middleware/request-timeout.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';

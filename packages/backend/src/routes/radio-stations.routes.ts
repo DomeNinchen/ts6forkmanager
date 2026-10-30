@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validateUrl } from '../utils/url-validator.js';
 import type { RadioPreset } from '@ts6/common';
