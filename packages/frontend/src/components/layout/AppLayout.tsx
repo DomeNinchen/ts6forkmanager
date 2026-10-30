@@ -8,6 +8,7 @@ import { YtCookieBanner } from './YtCookieBanner';
 import { useAuthStore } from '@/stores/auth.store';
 import { useWebguiThemeSync, useWebguiBaseThemeSync, useWebguiDesignSync, useDesign } from '@/hooks/use-webgui-theme';
 import { Toaster } from 'sonner';
+import { BulkResultDialog } from '@/components/shared/BulkResultDialog';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
@@ -35,6 +36,7 @@ export function AppLayout() {
           </div>
         </main>
       </div>
+      <BulkResultDialog />
       <Toaster
         position="top-right"
         toastOptions={{

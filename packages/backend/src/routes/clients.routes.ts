@@ -3,7 +3,9 @@ import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { TSApiError, AppError } from '../middleware/error-handler.js';
 import { clientDatabaseRoutes } from './client-database.routes.js';
-import { assertClientsNotProtected, targetIds } from '../utils/protected-groups.js';
+import type { BulkSkipReason } from '@ts6/common';
+import { assertClientsNotProtected, protectedAmong, targetIds } from '../utils/protected-groups.js';
+import { bulkIds, runPerTarget, sendBulk } from '../utils/bulk.js';
 
 export const clientRoutes: Router = Router({ mergeParams: true });
 
@@ -34,50 +36,62 @@ clientRoutes.use('/database', clientDatabaseRoutes);
 // Bulk routes - registered before the generic /:clid routes below, since
 // Express would otherwise match e.g. "/bulk/move" as "/:clid/move" with
 // clid="bulk" (the same ordering gotcha as elsewhere in this codebase).
+// Each answers one outcome per client (utils/bulk.ts); a protected client is skipped, not a 403 for all.
+
+/** The named clients, read once: nickname, and why one is left out (gone, protected, already in the channel). */
+async function bulkTargets(req: Request, ids: number[], opts: { protect: boolean; cid?: number }) {
+  const list = await getClient(req).execute(getSid(req), 'clientlist', { '-groups': '' }) as Array<Record<string, unknown>>;
+  const rows = Array.isArray(list) ? list : [];
+  const byClid = new Map(rows.map((c) => [Number(c.clid), c]));
+  // Fails closed like assertClientsNotProtected: without the list nothing runs.
+  const protectedIds = opts.protect ? await protectedAmong(req, rows) : new Set<number>();
+  return ids.map((id) => {
+    const c = byClid.get(id);
+    const reason: BulkSkipReason | undefined = !c ? 'not-connected'
+      : protectedIds.has(id) ? 'protected'
+      : opts.cid !== undefined && Number(c.cid) === opts.cid ? 'already-there'
+      : undefined;
+    return { id, name: c ? String(c.client_nickname ?? id) : `#${id}`, reason };
+  });
+}
+
 clientRoutes.post('/bulk/move', requirePermission('clients.move'), async (req: Request, res: Response, next) => {
   try {
-    const { clids, cid, cpw } = req.body as { clids: number[]; cid: number; cpw?: string };
-    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
-    const ids = targetIds(clids, 'clids');
-    await assertClientsNotProtected(req, getClient(req), ids);
-    const result = await getClient(req).executeJsonBody(getSid(req), 'clientmove', { clid: ids, cid, cpw });
-    res.json(result);
+    const ids = bulkIds(req.body?.clids, 'clids');
+    const { cid, cpw } = req.body as { cid: number; cpw?: string };
+    const targets = await bulkTargets(req, ids, { protect: true, cid: Number(cid) });
+    sendBulk(res, await runPerTarget(targets, (clid) => getClient(req).execute(getSid(req), 'clientmove', { clid: String(clid), cid, cpw })));
   } catch (err) { next(err); }
 });
 
 clientRoutes.post('/bulk/kick', requirePermission('clients.kick'), async (req: Request, res: Response, next) => {
   try {
-    const { clids, reasonid, reasonmsg } = req.body as { clids: number[]; reasonid?: number; reasonmsg?: string };
-    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
-    const ids = targetIds(clids, 'clids');
-    await assertClientsNotProtected(req, getClient(req), ids);
-    const result = await getClient(req).executeJsonBody(getSid(req), 'clientkick', { clid: ids, reasonid: reasonid || 5, reasonmsg });
-    res.json(result);
+    const ids = bulkIds(req.body?.clids, 'clids');
+    const { reasonid, reasonmsg } = req.body as { reasonid?: number; reasonmsg?: string };
+    const targets = await bulkTargets(req, ids, { protect: true });
+    sendBulk(res, await runPerTarget(targets, (clid) =>
+      getClient(req).execute(getSid(req), 'clientkick', { clid: String(clid), reasonid: reasonid || 5, reasonmsg })));
   } catch (err) { next(err); }
 });
 
 clientRoutes.post('/bulk/ban', requirePermission('clients.ban'), async (req: Request, res: Response, next) => {
   try {
-    const { clids, time, banreason } = req.body as { clids: number[]; time?: number; banreason?: string };
-    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
-    const ids = targetIds(clids, 'clids');
-    await assertClientsNotProtected(req, getClient(req), ids);
-    const result = await getClient(req).executeJsonBody(getSid(req), 'banclient', { clid: ids, time: time || 0, banreason });
-    res.json(result);
+    const ids = bulkIds(req.body?.clids, 'clids');
+    const { time, banreason } = req.body as { time?: number; banreason?: string };
+    const targets = await bulkTargets(req, ids, { protect: true });
+    sendBulk(res, await runPerTarget(targets, (clid) =>
+      getClient(req).execute(getSid(req), 'banclient', { clid: String(clid), time: time || 0, banreason })));
   } catch (err) { next(err); }
 });
 
-// clientedit (unlike move/kick/ban) has no documented multi-clid form, so this
-// applies the same description to each selected client with its own call.
+// clientedit has no multi-clid form; protection does not apply (it guards kick, ban and move).
 clientRoutes.post('/bulk/describe', requirePermission('clients.manage'), async (req: Request, res: Response, next) => {
   try {
-    const { clids, description } = req.body as { clids: number[]; description: string };
-    if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
-    const results = await Promise.allSettled(
-      clids.map((clid) => getClient(req).execute(getSid(req), 'clientedit', { clid, client_description: description })),
-    );
-    const failed = results.filter((r) => r.status === 'rejected').length;
-    res.json({ succeeded: clids.length - failed, failed });
+    const ids = bulkIds(req.body?.clids, 'clids');
+    const { description } = req.body as { description: string };
+    const targets = await bulkTargets(req, ids, { protect: false });
+    sendBulk(res, await runPerTarget(targets, (clid) =>
+      getClient(req).execute(getSid(req), 'clientedit', { clid: String(clid), client_description: description })));
   } catch (err) { next(err); }
 });
 

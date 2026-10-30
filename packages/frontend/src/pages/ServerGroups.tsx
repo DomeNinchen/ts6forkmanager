@@ -22,6 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { tsErrorMessage } from '@/lib/ts-errors';
+import { reportBulk, settledOutcomes } from '@/components/shared/BulkResultDialog';
 import { Shield, ShieldCheck, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search, Download, Upload } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { groupsApi } from '@/api/groups.api';
@@ -77,12 +78,12 @@ export default function ServerGroups() {
 
   const handleBulkDelete = async () => {
     setBulkDeleting(true);
-    const results = await Promise.allSettled([...checkedIds].map((sgid) => deleteGroup.mutateAsync(sgid)));
-    const failed = results.filter((r) => r.status === 'rejected').length;
+    const targets = [...checkedIds].map((sgid) => ({ id: sgid, name: (Array.isArray(data) ? data : []).find((g: any) => Number(g.sgid) === sgid)?.name ?? `#${sgid}` }));
+    const results = await Promise.allSettled(targets.map((g) => deleteGroup.mutateAsync(g.id)));
     setBulkDeleting(false);
     setShowBulkDelete(false);
-    if (failed > 0) toast.error(t('pages.serverGroups.bulkDeletePartial', { succeeded: results.length - failed, failed }));
-    else toast.success(t('pages.serverGroups.bulkDeleteSuccess', { count: results.length }));
+    reportBulk(t('pages.serverGroups.deleteSelected'), t('pages.serverGroups.bulkDeleteSuccess', { count: results.length }),
+      settledOutcomes(targets, results, (err) => tsErrorMessage(err, t('components.bulkResult.unknownError'), t)));
     if (checkedIds.has(selectedGroup!)) setSelectedGroup(null);
     setCheckedIds(new Set());
   };

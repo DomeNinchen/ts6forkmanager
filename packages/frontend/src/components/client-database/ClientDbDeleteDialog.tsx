@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import type { ClientDbProfile } from '@ts6/common';
+import { clientDbDeleteToBulk, type ClientDbProfile } from '@ts6/common';
+import { reportBulk } from '@/components/shared/BulkResultDialog';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -28,12 +29,10 @@ export function ClientDbDeleteDialog({ profiles, onlineIds, onClose, onDone }: C
   const submit = () => {
     remove.mutate(deletable.map((p) => p.cldbid), {
       onSuccess: (result) => {
-        if (result.deleted.length > 0) toast.success(t('pages.clientDatabase.delete.done', { count: result.deleted.length }));
+        const name = (cldbid: number) => profiles.find((p) => p.cldbid === cldbid)?.nickname || `#${cldbid}`;
         // TeamSpeak can still refuse for a client that connected after the dialog opened.
-        if (result.online.length > 0) toast.warning(t('pages.clientDatabase.delete.skippedOnline', { count: result.online.length }));
-        if (result.failed.length > 0) {
-          toast.error(t('pages.clientDatabase.delete.failedSome', { count: result.failed.length, message: result.failed[0].message }));
-        }
+        reportBulk(t('pages.clientDatabase.delete.title', { count: deletable.length }), t('pages.clientDatabase.delete.done', { count: result.deleted.length }),
+          clientDbDeleteToBulk(result, name));
         if (result.deleted.length > 0) onDone();
         onClose();
       },

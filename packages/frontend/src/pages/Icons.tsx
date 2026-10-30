@@ -6,7 +6,8 @@ import {
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import type { IconUsageRef, ServerIcon } from '@ts6/common';
+import type { BulkResult, IconUsageRef, ServerIcon } from '@ts6/common';
+import { reportBulk } from '@/components/shared/BulkResultDialog';
 import { iconsApi } from '@/api/icons.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -93,11 +94,10 @@ export default function Icons() {
   const deleteMutation = useMutation({
     mutationFn: (iconIds: number[]) =>
       iconIds.length === 1
-        ? iconsApi.delete(c!, s!, iconIds[0]).then(() => ({ succeeded: 1, failed: 0 }))
+        ? iconsApi.delete(c!, s!, iconIds[0]).then((): BulkResult => ({ outcomes: [{ id: iconIds[0], name: String(iconIds[0]), status: 'ok' }] }))
         : iconsApi.bulkDelete(c!, s!, iconIds),
-    onSuccess: ({ succeeded, failed }) => {
-      if (succeeded > 0) toast.success(t('pages.icons.deletedToast', { count: succeeded }));
-      if (failed > 0) toast.error(t('pages.icons.deleteFailedToast', { count: failed }));
+    onSuccess: ({ outcomes }) => {
+      reportBulk(t('pages.icons.deleteSelected'), t('pages.icons.deletedToast', { count: outcomes.length }), outcomes);
       setDeleteTargets(null);
       setSelected(new Set());
       invalidate();

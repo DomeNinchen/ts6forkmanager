@@ -531,6 +531,7 @@
         "deleted": "Deleted:",
         "deletedList_one": "{{count}} entry deleted, {{shown}} of them kept here:",
         "deletedList_other": "{{count}} entries deleted, {{shown}} of them kept here:",
+        "bulk": "Bulk action: {{ok}} done, {{skipped}} skipped, {{failed}} failed. The first {{shown}}:",
         "unavailable": "The state before could not be read ({{reason}}); the change went ahead anyway."
       },
       "resultCount_one": "{{count}} entry",
@@ -1578,10 +1579,6 @@
         "someMissing_other": "{{count}} selected profiles have none and get no rule.",
         "done_one": "Created {{count}} ban rule.",
         "done_other": "Created {{count}} ban rules.",
-        "skipped_one": "{{count}} skipped (nothing to ban).",
-        "skipped_other": "{{count}} skipped (nothing to ban).",
-        "partial": "Created {{created}} ban rules, {{failed}} failed: {{message}}",
-        "failedAll": "No ban rule was created: {{message}}",
         "failed": "Failed to create the ban"
       },
       "delete": {
@@ -1596,10 +1593,6 @@
         "confirm_other": "Delete {{count}} profiles",
         "done_one": "Deleted {{count}} profile",
         "done_other": "Deleted {{count}} profiles",
-        "skippedOnline_one": "{{count}} profile was skipped because its client is connected.",
-        "skippedOnline_other": "{{count}} profiles were skipped because their clients are connected.",
-        "failedSome_one": "{{count}} profile could not be deleted: {{message}}",
-        "failedSome_other": "{{count}} profiles could not be deleted: {{message}}",
         "failed": "Failed to delete the profiles"
       }
     },
@@ -2215,8 +2208,6 @@
       "duplicateToast_other": "{{count}} icons were already in the pool",
       "deletedToast_one": "{{count}} icon deleted",
       "deletedToast_other": "{{count}} icons deleted",
-      "deleteFailedToast_one": "{{count}} icon could not be deleted",
-      "deleteFailedToast_other": "{{count}} icons could not be deleted",
       "tooLargeToast_one": "{{count}} file exceeds this server's icon size limit of {{size}} (i_max_icon_filesize).",
       "tooLargeToast_other": "{{count}} files exceed this server's icon size limit of {{size}} (i_max_icon_filesize)."
     },
@@ -2501,7 +2492,6 @@
       "deleteGroupDescription": "Delete \"{{name}}\"?",
       "groupDeleted": "Group deleted",
       "deleteServerGroupsTitle": "Delete Server Groups",
-      "bulkDeletePartial": "Deleted {{succeeded}}, failed {{failed}}",
       "invalidJson": "This file isn't valid JSON",
       "notValidGroupExport": "Not a valid group export file",
       "wrongExportTypeChannel": "This is a channel group export - import it on the Channel Groups page instead",
@@ -2556,7 +2546,6 @@
       "newGroupPlaceholder": "New Group",
       "groupCreated": "Group created",
       "deleteChannelGroupsTitle": "Delete Channel Groups",
-      "bulkDeletePartial": "Deleted {{succeeded}}, failed {{failed}}",
       "channelGroupUpdated": "Channel group updated",
       "channelGroupUpdateFailed": "Failed to update channel group",
       "channelGroupsUpdateFailed": "Failed to update channel groups",
@@ -2610,8 +2599,6 @@
       "duplicate": "Duplicate",
       "deleteChannelTitle": "Delete Channel",
       "deleteChannelDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-      "createPartialFailure": "{{succeeded}}/{{total}} created, {{failed}} failed",
-      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} updated, {{failed}} failed",
       "duplicateCreated": "Created \"{{newName}}\" from \"{{sourceName}}\"",
       "duplicateFailed": "Failed to duplicate channel",
       "channelDeleted": "Channel deleted",
@@ -3527,6 +3514,23 @@
     },
     "confirmDialog": {
       "processing": "Processing..."
+    },
+    "bulkResult": {
+      "summary": "{{ok}} of {{total}} done.",
+      "counts": "Skipped: {{skipped}}, failed: {{failed}}.",
+      "status": {
+        "ok": "Done",
+        "skipped": "Skipped",
+        "failed": "Failed"
+      },
+      "reason": {
+        "protected": "In a protected server group - only an admin may do this",
+        "not-connected": "No longer connected",
+        "already-there": "Already in that channel",
+        "online": "Connected right now - TeamSpeak does not delete the profile",
+        "no-value": "Nothing to ban (e.g. no IP known)"
+      },
+      "unknownError": "Unknown error"
     },
     "dataTable": {
       "searchPlaceholder": "Search...",

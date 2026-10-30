@@ -18,6 +18,7 @@ import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import {
   diffJson,
   snapshotRuleFor,
+  bulkDiffJson,
   takeSnapshot,
   type Snapshot,
   type SnapshotContext,
@@ -146,6 +147,8 @@ export function changeLogMiddleware(req: Request, res: Response, next: NextFunct
   const rule = req.user?.role === 'admin' ? snapshotRuleFor(req.method, target.routePattern) : undefined;
   const before: Promise<Before> = rule ? readBefore(req, prisma, rule, target) : Promise.resolve(null);
   const changesOf = async (httpStatus: number): Promise<string | null> => {
+    // A bulk action (R9) left its per-target outcomes: one entry with the result list.
+    if (httpStatus < 400 && res.locals.bulkOutcomes) return bulkDiffJson(res.locals.bulkOutcomes);
     if (!rule || httpStatus >= 400) return null;
     const b = await before;
     return b ? diffJson(rule, b.snap, b.ctx) : null;

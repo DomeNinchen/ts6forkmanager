@@ -5,6 +5,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { normalizeIconId, type IconUsageMap, type IconUsageRef, type ServerIcon } from '@ts6/common';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
 import { crc32 } from '../utils/crc32.js';
+import { bulkIds, runPerTarget, sendBulk } from '../utils/bulk.js';
 import { allocateClientFtfid, ftDownloadBytes, ftUploadBytes, resolveFileTransferHost } from '../ts-client/file-transfer.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
@@ -241,18 +242,19 @@ iconRoutes.post('/', requirePermission('icons.manage'), upload.single('file'), a
 // would otherwise match "/bulk/delete" as "/:iconId" with iconId="bulk".
 iconRoutes.post('/bulk/delete', requirePermission('icons.manage'), async (req: Request, res: Response, next) => {
   try {
-    const { iconIds } = req.body as { iconIds: number[] };
-    if (!Array.isArray(iconIds) || iconIds.length === 0) {
-      throw new AppError(400, 'iconIds must be a non-empty array');
-    }
-    const results = await Promise.allSettled(
-      iconIds.map((iconId) =>
-        sshExecute(req, 'ftdeletefile', { cid: ICON_CID, cpw: '', name: iconPath(Number(iconId)) }),
-      ),
-    );
-    const rejected = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
-    if (rejected.length === iconIds.length) throw toSshAppError(rejected[0].reason);
-    res.json({ succeeded: iconIds.length - rejected.length, failed: rejected.length });
+    const iconIds = bulkIds(req.body?.iconIds, 'iconIds');
+    // No SSH connection is one answer for the whole request, not one failed line per icon.
+    let sshMissing: unknown = null;
+    const outcomes = await runPerTarget(iconIds.map((id) => ({ id, name: String(id) })), async (iconId) => {
+      try {
+        await sshExecute(req, 'ftdeletefile', { cid: ICON_CID, cpw: '', name: iconPath(iconId) });
+      } catch (err) {
+        if (toSshAppError(err) !== err) sshMissing = toSshAppError(err);
+        throw err;
+      }
+    });
+    if (sshMissing) throw sshMissing;
+    sendBulk(res, outcomes);
   } catch (err) {
     next(toSshAppError(err));
   }

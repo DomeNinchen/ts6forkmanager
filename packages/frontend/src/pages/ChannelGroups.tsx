@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { tsErrorMessage } from '@/lib/ts-errors';
+import { reportBulk, settledOutcomes } from '@/components/shared/BulkResultDialog';
 import { ShieldCheck, Search, User, Plus, Trash2, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -59,12 +60,12 @@ export default function ChannelGroups() {
 
   const handleBulkDelete = async () => {
     setBulkDeleting(true);
-    const results = await Promise.allSettled([...checkedIds].map((cgid) => deleteGroup.mutateAsync(cgid)));
-    const failed = results.filter((r) => r.status === 'rejected').length;
+    const targets = [...checkedIds].map((cgid) => ({ id: cgid, name: (Array.isArray(data) ? data : []).find((g: any) => Number(g.cgid) === cgid)?.name ?? `#${cgid}` }));
+    const results = await Promise.allSettled(targets.map((g) => deleteGroup.mutateAsync(g.id)));
     setBulkDeleting(false);
     setShowBulkDelete(false);
-    if (failed > 0) toast.error(t('pages.channelGroups.bulkDeletePartial', { succeeded: results.length - failed, failed }));
-    else toast.success(t('pages.channelGroups.bulkDeleteSuccess', { count: results.length }));
+    reportBulk(t('pages.channelGroups.deleteSelected'), t('pages.channelGroups.bulkDeleteSuccess', { count: results.length }),
+      settledOutcomes(targets, results, (err) => tsErrorMessage(err, t('components.bulkResult.unknownError'), t)));
     setCheckedIds(new Set());
   };
 

@@ -1,5 +1,5 @@
 import api from './client';
-import type { IconUsageMap, ServerIcon } from '@ts6/common';
+import type { BulkResult, IconUsageMap, ServerIcon } from '@ts6/common';
 
 const base = (configId: number, sid: number) =>
   `/servers/${configId}/vs/${sid}/icons`;
@@ -37,6 +37,6 @@ export const iconsApi = {
   },
   delete: (configId: number, sid: number, iconId: number) =>
     api.delete(`${base(configId, sid)}/${iconId}`).then((r) => r.data),
-  bulkDelete: (configId: number, sid: number, iconIds: number[]): Promise<{ succeeded: number; failed: number }> =>
+  bulkDelete: (configId: number, sid: number, iconIds: number[]): Promise<BulkResult> =>
     api.post(`${base(configId, sid)}/bulk/delete`, { iconIds }).then((r) => r.data),
 };
