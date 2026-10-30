@@ -85,17 +85,23 @@ function collect(router: any, prefix: string): void {
 }
 for (const m of mounts) if (isRouter(m.handle)) collect(m.handle, m.path);
 
-// --- A database stand-in: users 1-4 have the four roles, each granted server connection 1 only ---
-const roleOfUser = (id: number) => ROLES[id - 1];
+// --- A database stand-in: users 1-6 have the six roles, each granted every virtual server of
+// connection 1 only; user 99 is a server admin granted only virtual server 2 of connection 1 ---
+const RESTRICTED_USER = 99;
+const roleOfUser = (id: number) => (id === RESTRICTED_USER ? 'server-admin' : ROLES[id - 1]);
 const model = (name: string) => new Proxy({}, {
   get: (_t, op: string) => async (args: any) => {
     if (name === 'user' && op === 'findUnique') return roleOfUser(args.where.id) ? { enabled: true, role: roleOfUser(args.where.id) } : null;
     if (name === 'userServerAccess' && op === 'findUnique') {
       const w = args.where.userId_serverConfigId;
-      return w && w.serverConfigId === GRANTED_CONFIG ? { id: 1, ...w } : null;
+      if (!w || w.serverConfigId !== GRANTED_CONFIG) return null;
+      return w.userId === RESTRICTED_USER
+        ? { id: 2, ...w, allVirtualServers: false, virtualServers: [{ sid: 2 }] }
+        : { id: 1, ...w, allVirtualServers: true, virtualServers: [] };
     }
-    // The music bot / playlist with id 3 (what concrete() fills in) belongs to the granted connection.
-    if (name === 'musicBot' && op === 'findUnique') return { id: 3, serverConfigId: GRANTED_CONFIG };
+    // The music bot / playlist with id 3 (what concrete() fills in) belongs to the granted connection,
+    // on voice port 9987 = virtual server 1 (see the connection pool stand-in below).
+    if (name === 'musicBot' && op === 'findUnique') return { id: 3, serverConfigId: GRANTED_CONFIG, voicePort: 9987 };
     if (name === 'playlist' && op === 'findUnique') return { id: 3, musicBotId: 3 };
     if (op === 'findMany') return [];
     if (op === 'count') return 0;
@@ -105,6 +111,11 @@ const model = (name: string) => new Proxy({}, {
   },
 });
 app.locals.prisma = new Proxy({}, { get: (_t, name: string) => (name === 'then' ? undefined : model(name)) });
+// The only TeamSpeak call that runs in front of a stubbed handler: the server list that tells a
+// music bot's virtual server from its voice port.
+app.locals.connectionPool = {
+  tryGetClient: () => ({ execute: async () => [{ virtualserver_id: 1, virtualserver_port: 9987 }, { virtualserver_id: 2, virtualserver_port: 9988 }] }),
+};
 
 const server = app.listen(0);
 await new Promise((r) => server.once('listening', r));
@@ -198,6 +209,27 @@ test('no non-admin role reaches a route on virtual server 0 (the instance) or a 
     }
   }
   assert.deepEqual(leaks, []);
+});
+
+test('a grant limited to one virtual server reaches exactly that one', async () => {
+  const restricted = jwt.sign({ id: RESTRICTED_USER, username: 'restricted', role: 'server-admin' }, config.jwtSecret, { algorithm: 'HS256' });
+  const leaks: string[] = [];
+  const blocked: string[] = [];
+  const sidRoutes = routes.filter((r) => /\/vs\/:sid|virtual-servers\/:sid/.test(r.path));
+  assert.ok(sidRoutes.length > 100, `only ${sidRoutes.length} routes with a virtual server found`);
+  for (const r of sidRoutes) {
+    const url = (sid: string) => concrete(r.path, GRANTED_CONFIG).replace(/\/(vs|virtual-servers)\/1(\/|$)/, `/$1/${sid}$2`);
+    // Virtual server 1 is not covered: nothing may answer.
+    if (await call(r.method, url('1'), restricted) === 'ok') leaks.push(`${r.method} ${r.path}`);
+    // Virtual server 2 is: the same as an unrestricted server admin on the route.
+    const expected = matrix[`${r.method} ${r.path}`]?.['server-admin'];
+    if (await call(r.method, url('2'), restricted) !== expected) blocked.push(`${r.method} ${r.path} (expected ${expected})`);
+  }
+  assert.deepEqual(leaks, [], 'reachable on a virtual server the grant does not cover');
+  assert.deepEqual(blocked, [], 'answered differently on the covered virtual server');
+  // A music bot belongs to the virtual server of its voice port (9987 = 1, not covered).
+  assert.equal(await call('GET', '/api/music-bots/3', restricted), '403');
+  assert.equal(await call('GET', '/api/music-bots/3', tokens[ROLES.indexOf('server-admin')]), 'ok');
 });
 
 test('no route answers a non-admin on a server connection without a grant', () => {

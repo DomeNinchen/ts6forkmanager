@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
+import { grantCovers, grantOf, type Grant } from '../utils/vs-access.js';
 
 export const botRoutes: Router = Router();
 
@@ -9,26 +10,32 @@ export const botRoutes: Router = Router();
  * they don't get the requireServerAccess middleware other per-server
  * resources do. Same check, applied manually once the target
  * serverConfigId is known (from the request body for create, or looked up
- * from the existing row for everything else).
+ * from the existing row for everything else). A flow runs on one virtual
+ * server, so the grant has to cover that one too (utils/vs-access.ts).
  */
-async function assertServerAccess(req: Request, prisma: any, serverConfigId: number): Promise<void> {
+async function assertServerAccess(req: Request, prisma: any, serverConfigId: number, virtualServerId: number): Promise<void> {
   if (req.user!.role === 'admin') return;
-  const access = await prisma.userServerAccess.findUnique({
-    where: { userId_serverConfigId: { userId: req.user!.id, serverConfigId } },
-  });
-  if (!access) throw new AppError(403, 'No access to this server');
+  const grant = await grantOf(prisma, req.user!.id, serverConfigId);
+  if (!grant) throw new AppError(403, 'No access to this server');
+  if (!grantCovers(grant, virtualServerId)) throw new AppError(403, 'No access to this virtual server');
 }
 
 botRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
-    const bots = await prisma.botFlow.findMany({
-      where: req.user!.role === 'admin' ? undefined : {
+    const isAdmin = req.user!.role === 'admin';
+    const all = await prisma.botFlow.findMany({
+      where: isAdmin ? undefined : {
         serverConfig: { userAccess: { some: { userId: req.user!.id } } },
       },
       include: { _count: { select: { executions: { where: { status: { not: 'dropped' } } } } } },
       orderBy: { id: 'asc' },
     });
+    const grants = new Map<number, Grant | null>();
+    for (const id of new Set<number>(all.map((b: any) => b.serverConfigId))) {
+      grants.set(id, isAdmin ? null : await grantOf(prisma, req.user!.id, id));
+    }
+    const bots = isAdmin ? all : all.filter((b: any) => grantCovers(grants.get(b.serverConfigId) ?? null, b.virtualServerId));
     // Triggers dropped at the concurrency limit, one row per flow, trigger type and minute (see BotEngine.recordDrop).
     const dropRows = await prisma.botExecution.findMany({
       where: { status: 'dropped', startedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, flowId: { in: bots.map((b: any) => b.id) } },
@@ -58,7 +65,7 @@ botRoutes.get('/:botId', requirePermission('bots.manage'), async (req: Request, 
     const prisma = req.app.locals.prisma;
     const bot = await prisma.botFlow.findUnique({ where: { id: parseInt(String(req.params.botId)) } });
     if (!bot) throw new AppError(404, 'Bot flow not found');
-    await assertServerAccess(req, prisma, bot.serverConfigId);
+    await assertServerAccess(req, prisma, bot.serverConfigId, bot.virtualServerId);
     res.json({
       ...bot,
       flowData: JSON.parse(bot.flowData),
@@ -75,7 +82,8 @@ botRoutes.post('/', requirePermission('bots.manage'), async (req: Request, res: 
     if (!name || isNaN(parsedConfigId)) {
       return res.status(400).json({ error: 'Name and valid serverConfigId are required' });
     }
-    await assertServerAccess(req, prisma, parsedConfigId);
+    const parsedSid = parseInt(virtualServerId) || 1;
+    await assertServerAccess(req, prisma, parsedConfigId, parsedSid);
 
     // Verify server config exists
     const serverConfig = await prisma.tsServerConfig.findUnique({ where: { id: parsedConfigId } });
@@ -87,7 +95,7 @@ botRoutes.post('/', requirePermission('bots.manage'), async (req: Request, res: 
       data: {
         name, description,
         serverConfigId: parsedConfigId,
-        virtualServerId: parseInt(virtualServerId) || 1,
+        virtualServerId: parsedSid,
         flowData: flowData ? JSON.stringify(flowData) : '{"nodes":[],"edges":[]}',
       },
     });
@@ -101,17 +109,18 @@ botRoutes.put('/:botId', requirePermission('bots.manage'), async (req: Request, 
     const botId = parseInt(String(req.params.botId));
     const existing = await prisma.botFlow.findUnique({ where: { id: botId } });
     if (!existing) throw new AppError(404, 'Bot flow not found');
-    await assertServerAccess(req, prisma, existing.serverConfigId);
+    await assertServerAccess(req, prisma, existing.serverConfigId, existing.virtualServerId);
 
     const data: any = {};
     if (req.body.name !== undefined) data.name = req.body.name;
     if (req.body.description !== undefined) data.description = req.body.description;
     if (req.body.flowData !== undefined) data.flowData = JSON.stringify(req.body.flowData);
-    if (req.body.serverConfigId !== undefined) {
-      data.serverConfigId = parseInt(req.body.serverConfigId);
-      await assertServerAccess(req, prisma, data.serverConfigId); // moving it to a server they also need access to
-    }
+    if (req.body.serverConfigId !== undefined) data.serverConfigId = parseInt(req.body.serverConfigId);
     if (req.body.virtualServerId !== undefined) data.virtualServerId = parseInt(req.body.virtualServerId);
+    if (data.serverConfigId !== undefined || data.virtualServerId !== undefined) {
+      // Moving it: they need access to where it goes, too.
+      await assertServerAccess(req, prisma, data.serverConfigId ?? existing.serverConfigId, data.virtualServerId ?? existing.virtualServerId);
+    }
 
     const bot = await prisma.botFlow.update({
       where: { id: botId },
@@ -132,7 +141,7 @@ botRoutes.delete('/:botId', requirePermission('bots.manage'), async (req: Reques
     const botId = parseInt(String(req.params.botId));
     const existing = await prisma.botFlow.findUnique({ where: { id: botId } });
     if (!existing) throw new AppError(404, 'Bot flow not found');
-    await assertServerAccess(req, prisma, existing.serverConfigId);
+    await assertServerAccess(req, prisma, existing.serverConfigId, existing.virtualServerId);
 
     // Disable in engine before deleting
     const botEngine = req.app.locals.botEngine;
@@ -149,7 +158,7 @@ botRoutes.post('/:botId/enable', requirePermission('bots.manage'), async (req: R
     const botId = parseInt(String(req.params.botId));
     const existing = await prisma.botFlow.findUnique({ where: { id: botId } });
     if (!existing) throw new AppError(404, 'Bot flow not found');
-    await assertServerAccess(req, prisma, existing.serverConfigId);
+    await assertServerAccess(req, prisma, existing.serverConfigId, existing.virtualServerId);
 
     await prisma.botFlow.update({ where: { id: botId }, data: { enabled: true } });
 
@@ -167,7 +176,7 @@ botRoutes.post('/:botId/disable', requirePermission('bots.manage'), async (req: 
     const botId = parseInt(String(req.params.botId));
     const existing = await prisma.botFlow.findUnique({ where: { id: botId } });
     if (!existing) throw new AppError(404, 'Bot flow not found');
-    await assertServerAccess(req, prisma, existing.serverConfigId);
+    await assertServerAccess(req, prisma, existing.serverConfigId, existing.virtualServerId);
 
     await prisma.botFlow.update({ where: { id: botId }, data: { enabled: false } });
 
@@ -185,7 +194,7 @@ botRoutes.get('/:botId/executions', requirePermission('bots.manage'), async (req
     const flowId = parseInt(String(req.params.botId));
     const flow = await prisma.botFlow.findUnique({ where: { id: flowId } });
     if (!flow) throw new AppError(404, 'Bot flow not found');
-    await assertServerAccess(req, prisma, flow.serverConfigId);
+    await assertServerAccess(req, prisma, flow.serverConfigId, flow.virtualServerId);
 
     const executions = await prisma.botExecution.findMany({
       where: { flowId },
@@ -204,7 +213,7 @@ botRoutes.get('/:botId/executions/:execId/logs', requirePermission('bots.manage'
     const flowId = parseInt(String(req.params.botId));
     const flow = await prisma.botFlow.findUnique({ where: { id: flowId } });
     if (!flow) throw new AppError(404, 'Bot flow not found');
-    await assertServerAccess(req, prisma, flow.serverConfigId);
+    await assertServerAccess(req, prisma, flow.serverConfigId, flow.virtualServerId);
 
     const logs = await prisma.botExecutionLog.findMany({
       // flowId too: the access check above is for this flow, so another flow's execution must not be readable through it.

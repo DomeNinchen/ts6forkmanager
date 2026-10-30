@@ -1957,6 +1957,10 @@
         "editUserTitle": "Edit User"
       },
       "serverAccess": {
+        "wholeConnection": "This connection has no WebQuery and no list of virtual servers: access covers the whole connection.",
+        "pickVirtualServer": "Tick at least one virtual server for each connection with WebQuery.",
+        "listFailed": "The virtual servers could not be read; ones ticked before stay visible.",
+        "virtualServer": "Virtual server {{sid}}",
         "updated": "Server access updated",
         "updateFailed": "Failed to update server access",
         "title": "Server Access — {{username}}",

@@ -4,10 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.83.0 · frontend 3.101.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.84.0 · frontend 3.102.0 · sidecar 2.1.4**
 
 ### New Features
 
+- **Server access per virtual server** — In Settings → Users → Server access, every virtual server of a connection is ticked one by one; a non-admin account only reaches the ticked ones, including their bot flows, the music bots on their voice ports and the matching live events, and the server selector offers only those. A virtual server added later is not covered until ticked. A connection without WebQuery has no list of virtual servers and is granted as a whole ([Users and Roles](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)). *backend 2.84.0, frontend 3.102.0* [#340](https://github.com/DomeNinchen/ts6forkmanager/pull/340)
 - **Protected server groups** — On the Server Groups page an admin marks groups as protected (a shield in the list). Moderators and server admins cannot kick, ban or move a client in such a group - singly, in a selection or from the client database - and get a message naming the client; poking and messaging stay possible. The user list's role preview says so and warns about connections where no group is protected yet ([Users and Roles](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)). *backend 2.83.0, frontend 3.101.0* [#339](https://github.com/DomeNinchen/ts6forkmanager/pull/339)
 - **Moderator and Server Admin roles** — Two new roles in Settings → Users. A moderator can poke, message, move, kick and ban clients, read the ban list and handle complaints; a server admin can do everything on the assigned servers except bot flows and what is instance- or app-wide (query console, instance, creating, starting and stopping virtual servers, server connections, users, app settings, backups, change log, server log and statistics). Choosing a role for an account first shows what it may do, with the rights that can raise someone's privileges marked ([Users and Roles](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)). *backend 2.82.0, frontend 3.100.0* [#338](https://github.com/DomeNinchen/ts6forkmanager/pull/338)
 - **Backups outside the volume, with a passphrase** — A target directory set on the Backups page (any path you mount into the container) receives a ZIP of every backup; retention and deleting apply there too. If the volume is lost, those copies show as **External** and can be tested and restored on a fresh install. An optional passphrase encrypts these copies and every download in the format of `openssl enc -aes-256-cbc -pbkdf2`, so they open with openssl alone; uploads and the list decrypt them with it. *backend 2.81.0, frontend 3.99.0* [#337](https://github.com/DomeNinchen/ts6forkmanager/pull/337)
@@ -130,6 +131,7 @@ Versions at the end of the month: **backend 2.83.0 · frontend 3.101.0 · sideca
 
 **Users & roles**
 
+- Existing server access keeps covering every virtual server of its connection until the backend has read the connection's list of virtual servers (shortly after the start, then every 10 minutes); from then on it covers the virtual servers that existed at that moment. Update backend and frontend together: the server access dialog and its API changed. [#340](https://github.com/DomeNinchen/ts6forkmanager/pull/340)
 - Existing accounts keep their role and exactly their rights; nothing to do. Moderators and server admins can kick, ban and move any client except members of server groups marked as protected on the Server Groups page, and after the update no group is protected - mark your admin groups before giving these roles out. [#338](https://github.com/DomeNinchen/ts6forkmanager/pull/338), [#339](https://github.com/DomeNinchen/ts6forkmanager/pull/339)
 
 **Docker & reverse proxy**

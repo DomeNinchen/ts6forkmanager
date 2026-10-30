@@ -167,26 +167,57 @@ userRoutes.get('/:userId/server-access', async (req: Request, res: Response, nex
   try {
     const prisma = req.app.locals.prisma;
     const id = parseInt(String(req.params.userId));
-    const rows = await prisma.userServerAccess.findMany({ where: { userId: id }, select: { serverConfigId: true } });
-    res.json({ serverConfigIds: rows.map((r: { serverConfigId: number }) => r.serverConfigId) });
+    const rows = await prisma.userServerAccess.findMany({
+      where: { userId: id },
+      select: { serverConfigId: true, allVirtualServers: true, virtualServers: { select: { sid: true }, orderBy: { sid: 'asc' } } },
+    });
+    res.json({
+      serverConfigIds: rows.map((r: { serverConfigId: number }) => r.serverConfigId),
+      // Per connection: the virtual servers the grant covers, or all of them (utils/vs-access.ts).
+      grants: rows.map((r: { serverConfigId: number; allVirtualServers: boolean; virtualServers: { sid: number }[] }) => ({
+        serverConfigId: r.serverConfigId, allVirtualServers: r.allVirtualServers, sids: r.virtualServers.map((v) => v.sid),
+      })),
+    });
   } catch (err) { next(err); }
 });
 
-// PUT /:userId/server-access - replace the full set of servers this user can access (body: { serverConfigIds: number[] })
+// PUT /:userId/server-access - replace the full set of servers this user can access.
+// Body: { grants: [{ serverConfigId, sids: number[] }] } - each virtual server named one by one. A
+// connection without WebQuery has no server list to pick from; its grant covers the whole connection.
 userRoutes.put('/:userId/server-access', async (req: Request, res: Response, next) => {
   try {
     const id = parseInt(String(req.params.userId));
-    const serverConfigIds = req.body.serverConfigIds;
-    if (!Array.isArray(serverConfigIds) || !serverConfigIds.every((n) => Number.isInteger(n))) {
-      throw new AppError(400, 'serverConfigIds must be an array of integers');
+    const grants = req.body.grants;
+    const isId = (n: unknown) => Number.isInteger(n) && (n as number) > 0;
+    if (!Array.isArray(grants) || !grants.every((g) => g && isId(g.serverConfigId) && Array.isArray(g.sids) && g.sids.every(isId))) {
+      throw new AppError(400, 'grants must be a list of { serverConfigId, sids } with positive whole numbers');
+    }
+    if (new Set(grants.map((g: { serverConfigId: number }) => g.serverConfigId)).size !== grants.length) {
+      throw new AppError(400, 'each server connection may appear once');
     }
 
     const prisma = req.app.locals.prisma;
+    const configs = await prisma.tsServerConfig.findMany({
+      where: { id: { in: grants.map((g: { serverConfigId: number }) => g.serverConfigId) } },
+      select: { id: true, apiKey: true },
+    });
+    const withQuery = new Map(configs.map((c: { id: number; apiKey: string | null }) => [c.id, c.apiKey != null]));
+    for (const g of grants as { serverConfigId: number; sids: number[] }[]) {
+      if (!withQuery.has(g.serverConfigId)) throw new AppError(400, `Server connection ${g.serverConfigId} does not exist`);
+      if (withQuery.get(g.serverConfigId) && g.sids.length === 0) throw new AppError(400, 'pick at least one virtual server for each connection');
+    }
+
     await prisma.$transaction([
       prisma.userServerAccess.deleteMany({ where: { userId: id } }),
-      ...serverConfigIds.map((serverConfigId: number) =>
-        prisma.userServerAccess.create({ data: { userId: id, serverConfigId } })
-      ),
+      ...(grants as { serverConfigId: number; sids: number[] }[]).map((g) => {
+        const all = !withQuery.get(g.serverConfigId);
+        return prisma.userServerAccess.create({
+          data: {
+            userId: id, serverConfigId: g.serverConfigId, allVirtualServers: all,
+            ...(all ? {} : { virtualServers: { create: [...new Set(g.sids)].map((sid) => ({ sid })) } }),
+          },
+        });
+      }),
     ]);
 
     res.status(204).send();
