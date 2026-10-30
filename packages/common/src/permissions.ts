@@ -7,8 +7,9 @@ import type { UserRole } from './types/auth.js';
  *
  * Each route a non-admin may reach names exactly one of these at its mount in the backend's app.ts.
  * Anything not named there stays admin-only: the console, the instance, creating/starting/stopping/
- * deleting virtual servers, the server connections and their API keys, users, app settings,
- * backups, the change log, the connection journal and the embed widgets.
+ * deleting virtual servers, the server log (client IP addresses), the statistics page, the server
+ * connections and their API keys, users, app settings, backups, the change log, the connection
+ * journal and the embed widgets.
  */
 export const USER_PERMISSIONS = [
   'server.view',        // dashboard, channel/client lists, icons, the virtual server list, the flow list
@@ -31,8 +32,6 @@ export const USER_PERMISSIONS = [
   'files.manage',       // the file browser
   'icons.manage',
   'messages.manage',    // offline messages of the query login
-  'logs.view',
-  'statistics.view',
   'vserver.edit',       // virtual server settings, server-wide message, log entries
   'music.manage',       // music bots, library, playlists, radio stations, chat-command permissions
   'bots.manage',        // bot flows
@@ -57,7 +56,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly UserPermission[]> = {
   'server-admin': USER_PERMISSIONS.filter((p) => p !== 'bots.manage'),
   moderator: [
     'server.view', 'groups.view', 'clients.message', 'clients.move', 'clients.kick', 'clients.ban',
-    'bans.view', 'complaints.manage', 'logs.view',
+    'bans.view', 'complaints.manage',
   ],
   'bot-operator': ['server.view', 'groups.view', 'music.manage', 'bots.manage'],
   'music-operator': ['server.view', 'groups.view', 'music.manage'],

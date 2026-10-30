@@ -1634,9 +1634,9 @@
     "bot-operator (no grant)": "403",
     "music-operator": "403",
     "music-operator (no grant)": "403",
-    "server-admin": "ok",
+    "server-admin": "403",
     "server-admin (no grant)": "403",
-    "moderator": "ok",
+    "moderator": "403",
     "moderator (no grant)": "403"
   },
   "POST /api/servers/:configId/vs/:sid/logs": {
@@ -1648,7 +1648,7 @@
     "bot-operator (no grant)": "403",
     "music-operator": "403",
     "music-operator (no grant)": "403",
-    "server-admin": "ok",
+    "server-admin": "403",
     "server-admin (no grant)": "403",
     "moderator": "403",
     "moderator (no grant)": "403"
@@ -1900,7 +1900,7 @@
     "bot-operator (no grant)": "403",
     "music-operator": "403",
     "music-operator (no grant)": "403",
-    "server-admin": "ok",
+    "server-admin": "403",
     "server-admin (no grant)": "403",
     "moderator": "403",
     "moderator (no grant)": "403"
@@ -1914,7 +1914,7 @@
     "bot-operator (no grant)": "403",
     "music-operator": "403",
     "music-operator (no grant)": "403",
-    "server-admin": "ok",
+    "server-admin": "403",
     "server-admin (no grant)": "403",
     "moderator": "403",
     "moderator (no grant)": "403"

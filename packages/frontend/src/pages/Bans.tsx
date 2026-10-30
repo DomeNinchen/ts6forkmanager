@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBans, useAddBan, useDeleteBan } from '@/hooks/use-bans';
 import { useServerStore } from '@/stores/server.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ export default function Bans() {
   const { data, isLoading } = useBans();
   const addBan = useAddBan();
   const deleteBan = useDeleteBan();
+  const canManage = useAuthStore((s) => s.can('bans.manage'));
   const [showAdd, setShowAdd] = useState(false);
   const [banType, setBanType] = useState<'ip' | 'name' | 'uid'>('ip');
   const [banValue, setBanValue] = useState('');
@@ -38,18 +40,18 @@ export default function Bans() {
     { accessorKey: 'duration', header: t('pages.bans.duration'), cell: ({ getValue }) => <span className="font-mono-data text-xs">{formatDuration(getValue() as number)}</span> },
     { accessorKey: 'created', header: t('pages.bans.created'), cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{timeAgo(getValue() as number)}</span> },
     { accessorKey: 'invokername', header: t('pages.bans.by'), cell: ({ getValue }) => <span className="text-xs">{(getValue() as string) || '-'}</span> },
-    {
+    ...(canManage ? [{
       id: 'actions', header: '',
-      cell: ({ row }) => (
+      cell: ({ row }: any) => (
         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => {
           deleteBan.mutate(row.original.banid, { onSuccess: () => toast.success(t('pages.bans.removed')) });
         }}>
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       ),
-    },
+    }] : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [deleteBan, t]);
+  ], [canManage, deleteBan, t]);
 
   if (!selectedConfigId || !selectedSid) return <EmptyState icon={Ban} title={t('pages.noServerSelected')} />;
   if (isLoading) return <PageLoader />;
@@ -67,7 +69,7 @@ export default function Bans() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t('nav.items.bans')}</h1>
-        <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.bans.addBan')}</Button>
+        {canManage && <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.bans.addBan')}</Button>}
       </div>
 
       <DataTable columns={columns} data={bans} searchKey="lastnickname" searchPlaceholder={t('pages.bans.searchPlaceholder')} />

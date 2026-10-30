@@ -16,11 +16,12 @@ import { useServers, useSelectedServer } from '@/hooks/use-servers';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { UserPermission } from '@ts6/common';
 
 interface NavContext {
   isAdmin: boolean;
-  canManageBotFlows: boolean;
-  canManageMusicBots: boolean;
+  /** Whether the role holds the permission (the backend checks every request itself). */
+  can: (permission: UserPermission) => boolean;
   /** True for admin (who always has "access"), or a non-admin with at least one assigned server. */
   hasAnyServerAccess: boolean;
   /** The selected connection has a WebQuery API key; without one only the music bots (voice) work on it. */
@@ -28,6 +29,7 @@ interface NavContext {
 }
 
 const adminOnly = (ctx: NavContext) => ctx.isAdmin;
+const may = (permission: UserPermission) => (ctx: NavContext) => ctx.can(permission);
 
 /**
  * An entry that is only a page when the selected connection has WebQuery: all of
@@ -55,18 +57,19 @@ function getNavSections(t: TFunction) {
       items: [
         { to: '/channels', icon: Hash, label: t('nav.items.channels'), ...needsWebQuery },
         { to: '/clients', icon: Users, label: t('nav.items.clients'), ...needsWebQuery },
-        { to: '/client-database', icon: Database, label: t('nav.items.clientDatabase'), visible: adminOnly, ...needsWebQuery },
-        { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: adminOnly, ...needsWebQuery },
-        { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: adminOnly, ...needsWebQuery },
-        { to: '/permissions', icon: Lock, label: t('nav.items.permissions'), visible: adminOnly, ...needsWebQuery },
+        { to: '/client-database', icon: Database, label: t('nav.items.clientDatabase'), visible: may('clients.database'), ...needsWebQuery },
+        { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: may('groups.edit'), ...needsWebQuery },
+        { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: may('groups.edit'), ...needsWebQuery },
+        { to: '/permissions', icon: Lock, label: t('nav.items.permissions'), visible: may('permissions.edit'), ...needsWebQuery },
       ],
     },
     {
       label: t('nav.sections.security'),
-      visible: adminOnly,
+      // Empty sections are dropped, so this one shows whenever one of its pages does.
+      visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
       items: [
-        { to: '/bans', icon: Ban, label: t('nav.items.bans'), visible: adminOnly, ...needsWebQuery },
-        { to: '/tokens', icon: KeyRound, label: t('nav.items.tokens'), visible: adminOnly, ...needsWebQuery },
+        { to: '/bans', icon: Ban, label: t('nav.items.bans'), visible: may('bans.view'), ...needsWebQuery },
+        { to: '/tokens', icon: KeyRound, label: t('nav.items.tokens'), visible: may('tokens.manage'), ...needsWebQuery },
         // About who signs in to this app, not about the selected server, so it needs no WebQuery.
         { to: '/connection-journal', icon: Fingerprint, label: t('nav.items.connectionJournal'), visible: adminOnly },
         // Changes made through this app, on any connection or none, so it needs no WebQuery either.
@@ -81,30 +84,30 @@ function getNavSections(t: TFunction) {
       // non-admins, since the icon browser is readable by every role.
       visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
       items: [
-        { to: '/files', icon: FolderOpen, label: t('nav.items.files'), visible: adminOnly, ...needsWebQuery },
+        { to: '/files', icon: FolderOpen, label: t('nav.items.files'), visible: may('files.manage'), ...needsWebQuery },
         { to: '/icons', icon: ImageIcon, label: t('nav.items.icons'), ...needsWebQuery },
-        { to: '/complaints', icon: MessageSquareWarning, label: t('nav.items.complaints'), visible: adminOnly, ...needsWebQuery },
-        { to: '/messages', icon: Mail, label: t('nav.items.messages'), visible: adminOnly, ...needsWebQuery },
+        { to: '/complaints', icon: MessageSquareWarning, label: t('nav.items.complaints'), visible: may('complaints.manage'), ...needsWebQuery },
+        { to: '/messages', icon: Mail, label: t('nav.items.messages'), visible: may('messages.manage'), ...needsWebQuery },
       ],
     },
     {
       label: t('nav.sections.system'),
-      visible: adminOnly,
+      visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
       items: [
         { to: '/logs', icon: ScrollText, label: t('nav.items.serverLogs'), visible: adminOnly, ...needsWebQuery },
         { to: '/console', icon: SquareTerminal, label: t('nav.items.queryConsole'), visible: adminOnly, ...needsWebQuery },
         { to: '/instance', icon: Cpu, label: t('nav.items.instance'), visible: adminOnly, ...needsWebQuery },
         { to: '/miscellaneous', icon: Wrench, label: t('nav.items.miscellaneous'), visible: adminOnly, ...needsWebQuery },
-        { to: '/advanced-settings', icon: SlidersHorizontal, label: t('nav.items.advancedSettings'), visible: adminOnly, ...needsWebQuery },
+        { to: '/advanced-settings', icon: SlidersHorizontal, label: t('nav.items.advancedSettings'), visible: may('vserver.edit'), ...needsWebQuery },
         { to: '/music-requests', icon: ListMusic, label: t('nav.items.musicRequestHistory'), visible: adminOnly },
       ],
     },
     {
       label: t('nav.sections.automation'),
-      visible: (ctx: NavContext) => ctx.canManageBotFlows || ctx.canManageMusicBots,
+      visible: (ctx: NavContext) => ctx.can('bots.manage') || ctx.can('music.manage'),
       items: [
-        { to: '/bots', icon: Bot, label: t('nav.items.botFlows'), visible: (ctx: NavContext) => ctx.canManageBotFlows },
-        { to: '/music-bots', icon: Music, label: t('nav.items.musicBots'), visible: (ctx: NavContext) => ctx.canManageMusicBots },
+        { to: '/bots', icon: Bot, label: t('nav.items.botFlows'), visible: may('bots.manage') },
+        { to: '/music-bots', icon: Music, label: t('nav.items.musicBots'), visible: may('music.manage') },
       ],
     },
   ];
@@ -112,14 +115,14 @@ function getNavSections(t: TFunction) {
 
 function useNavContext(): NavContext {
   const isAdmin = useAuthStore((s) => s.isAdmin());
-  const canManageBotFlows = useAuthStore((s) => s.canManageBotFlows());
-  const canManageMusicBots = useAuthStore((s) => s.canManageMusicBots());
+  // Subscribing to the role re-renders the sidebar when it changes; `can` itself is a stable function.
+  useAuthStore((s) => s.user?.role);
+  const can = useAuthStore((s) => s.can);
   const { data: servers } = useServers();
   const { hasWebQuery } = useSelectedServer();
   return {
     isAdmin,
-    canManageBotFlows,
-    canManageMusicBots,
+    can,
     hasAnyServerAccess: isAdmin || (servers?.length ?? 0) > 0,
     hasWebQuery,
   };

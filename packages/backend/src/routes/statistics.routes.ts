@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { requirePermission } from '../middleware/rbac.js';
+import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { UserHistorySampler } from '../ts-client/user-history-sampler.js';
 import { isUserHistoryRange } from '../utils/user-history-series.js';
@@ -12,7 +12,7 @@ export const statisticsRoutes: Router = Router({ mergeParams: true });
 // 24-hour average, the stretches where the server was unreachable or stopped
 // (or nobody was measuring), and the headline figures. Admin only, like the
 // Statistics page it belongs to.
-statisticsRoutes.get('/user-history', requirePermission('statistics.view'), async (req: Request, res: Response, next) => {
+statisticsRoutes.get('/user-history', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const configId = parseInt(String(req.params.configId));
     const sid = parseInt(String(req.params.sid));
@@ -35,7 +35,7 @@ statisticsRoutes.get('/user-history', requirePermission('statistics.view'), asyn
 // GET /metric-history?metric=bandwidth|ping&range=24h|3d|7d|14d|31d — the
 // rolled-up bandwidth or ping of one virtual server for the same chart, on the
 // same buckets, ranges and marks as /user-history. Admin only, for the same reason.
-statisticsRoutes.get('/metric-history', requirePermission('statistics.view'), async (req: Request, res: Response, next) => {
+statisticsRoutes.get('/metric-history', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const configId = parseInt(String(req.params.configId));
     const sid = parseInt(String(req.params.sid));

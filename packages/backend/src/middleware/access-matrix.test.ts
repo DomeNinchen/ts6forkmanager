@@ -165,6 +165,7 @@ test('the matrix found the routes it is meant to guard', () => {
 // Independent of the snapshot: areas no permission can open, whatever the role templates say.
 const ADMIN_ONLY = [
   /^\/api\/servers\/:configId\/(console|instance)(\/|$)/,
+  /^\/api\/servers\/:configId\/vs\/:sid\/(logs|statistics)(\/|$)/,
   /^\/api\/servers\/:configId\/virtual-servers(\/:sid)?(\/(start|stop|snapshot|snapshot\/deploy|permission-reset))?$/,
   /^\/api\/servers\/:configId\/vs\/:sid\/permissions\/automatic-groups\//,
   /^\/api\/servers\/:configId\/(identity|global-message|test|bot-identity)$/,
@@ -184,6 +185,19 @@ test('no non-admin role reaches an admin-only area', () => {
   });
   assert.deepEqual(leaks, []);
   assert.ok(isAdminOnly('POST', '/api/servers/:configId/console/execute'), 'the admin-only patterns no longer match the console');
+});
+
+test('no non-admin role reaches a route on virtual server 0 (the instance) or a malformed sid', async () => {
+  const leaks: string[] = [];
+  for (const r of routes.filter((x) => x.path.includes('/vs/:sid'))) {
+    for (const sid of ['0', '00', '1a', '-1']) {
+      const url = concrete(r.path, GRANTED_CONFIG).replace('/vs/1/', `/vs/${sid}/`).replace(/\/vs\/1$/, `/vs/${sid}`);
+      for (let i = 1; i < ROLES.length; i++) {
+        if (await call(r.method, url, tokens[i]) === 'ok') leaks.push(`${r.method} ${url} as ${ROLES[i]}`);
+      }
+    }
+  }
+  assert.deepEqual(leaks, []);
 });
 
 test('no route answers a non-admin on a server connection without a grant', () => {

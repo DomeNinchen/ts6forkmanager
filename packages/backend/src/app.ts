@@ -214,10 +214,8 @@ export function createApp(): Express {
   ]);
   serverScoped('vs/:sid/complaints', complaintRoutes, [{ method: '*', path: '/*', permission: 'complaints.manage' }]);
   serverScoped('vs/:sid/messages', messageRoutes, [{ method: '*', path: '/*', permission: 'messages.manage' }]);
-  serverScoped('vs/:sid/logs', logRoutes, [
-    { method: 'GET', path: '/', permission: 'logs.view' },
-    { method: 'POST', path: '/', permission: 'vserver.edit' },
-  ]);
+  // The server log carries client IP addresses and every admin's actions: admin-only.
+  serverScoped('vs/:sid/logs', logRoutes);
   serverScoped('console', consoleRoutes);
   serverScoped('instance', instanceRoutes);
   serverScoped('command-permissions', commandPermissionRoutes, [{ method: 'GET', path: '/', permission: 'music.manage' }]);
@@ -227,10 +225,8 @@ export function createApp(): Express {
     { method: 'GET', path: '/user-history', permission: 'server.view' },
     { method: '*', path: '/online-filter', permission: 'vserver.edit' },
   ]);
-  serverScoped('vs/:sid/statistics', statisticsRoutes, [
-    { method: 'GET', path: '/user-history', permission: 'statistics.view' },
-    { method: 'GET', path: '/metric-history', permission: 'statistics.view' },
-  ]);
+  // The statistics page also reads the instance's host information, so it stays admin-only as a whole.
+  serverScoped('vs/:sid/statistics', statisticsRoutes);
   // The Music Bots page's own routers: all of it is music.manage (each router checks that as well).
   serverScoped('music-library', musicLibraryRoutes, [{ method: '*', path: '/*', permission: 'music.manage' }]);
   serverScoped('radio-stations', radioStationRoutes, [{ method: '*', path: '/*', permission: 'music.manage' }]);

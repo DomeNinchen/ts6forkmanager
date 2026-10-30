@@ -28,7 +28,13 @@ type BulkDialog = 'move' | 'kick' | 'ban' | 'describe' | null;
 export default function Clients() {
   const { t } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
-  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const canMessage = useAuthStore((s) => s.can('clients.message'));
+  const canMove = useAuthStore((s) => s.can('clients.move'));
+  const canKick = useAuthStore((s) => s.can('clients.kick'));
+  const canBan = useAuthStore((s) => s.can('clients.ban'));
+  const canDescribe = useAuthStore((s) => s.can('clients.manage'));
+  const canAct = canMessage || canKick || canBan;
+  const canBulk = canMove || canKick || canBan || canDescribe;
   const { data, isLoading } = useClients();
   const { data: channelData } = useChannels();
   const kickClient = useKickClient();
@@ -98,7 +104,7 @@ export default function Clients() {
         },
       },
     ];
-    if (isAdmin) {
+    if (canAct) {
       cols.push({
         id: 'actions',
         header: '',
@@ -112,21 +118,27 @@ export default function Clients() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { setPokeTarget({ clid: c.clid, name: c.client_nickname }); setPokeMsg(''); }}>
-                  <Zap className="mr-2 h-4 w-4" /> {t('pages.clients.poke')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  kickClient.mutate({ clid: c.clid, reasonid: 5, reasonmsg: 'Kicked by admin' });
-                  toast.success(t('pages.clients.kickedName', { name: c.client_nickname }));
-                }}>
-                  <LogOut className="mr-2 h-4 w-4" /> {t('pages.clients.kickFromServer')}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => {
-                  banClient.mutate({ clid: c.clid, time: 3600, banreason: 'Banned by admin' });
-                  toast.success(t('pages.clients.bannedName', { name: c.client_nickname }));
-                }}>
-                  <Ban className="mr-2 h-4 w-4" /> {t('pages.clients.banOneHour')}
-                </DropdownMenuItem>
+                {canMessage && (
+                  <DropdownMenuItem onClick={() => { setPokeTarget({ clid: c.clid, name: c.client_nickname }); setPokeMsg(''); }}>
+                    <Zap className="mr-2 h-4 w-4" /> {t('pages.clients.poke')}
+                  </DropdownMenuItem>
+                )}
+                {canKick && (
+                  <DropdownMenuItem onClick={() => kickClient.mutate({ clid: c.clid, reasonid: 5, reasonmsg: 'Kicked by admin' }, {
+                    onSuccess: () => toast.success(t('pages.clients.kickedName', { name: c.client_nickname })),
+                    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.kickFailed')),
+                  })}>
+                    <LogOut className="mr-2 h-4 w-4" /> {t('pages.clients.kickFromServer')}
+                  </DropdownMenuItem>
+                )}
+                {canBan && (
+                  <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => banClient.mutate({ clid: c.clid, time: 3600, banreason: 'Banned by admin' }, {
+                    onSuccess: () => toast.success(t('pages.clients.bannedName', { name: c.client_nickname })),
+                    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.banFailed')),
+                  })}>
+                    <Ban className="mr-2 h-4 w-4" /> {t('pages.clients.banOneHour')}
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           );
@@ -135,7 +147,7 @@ export default function Clients() {
     }
     return cols;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, kickClient, banClient, t]);
+  }, [canAct, canMessage, canKick, canBan, kickClient, banClient, t]);
 
   if (!selectedConfigId || !selectedSid) return <EmptyState icon={Users} title={t('pages.noServerSelected')} />;
   if (isLoading) return <PageLoader />;
@@ -149,22 +161,30 @@ export default function Clients() {
         </div>
       </div>
 
-      {isAdmin && selected.length > 0 && (
-        <div className="card-hero flex items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-2.5">
+      {canBulk && selected.length > 0 && (
+        <div className="card-hero flex flex-wrap items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-2.5">
           <span className="text-sm font-medium">{t('pages.clients.selectedCount', { count: selected.length })}</span>
           <div className="flex-1" />
-          <Button size="sm" variant="outline" onClick={() => setBulkDialog('move')}>
-            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.move')}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => setBulkDialog('kick')}>
-            <LogOut className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.kick')}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => setBulkDialog('ban')}>
-            <Ban className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.ban')}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => setBulkDialog('describe')}>
-            <Pencil className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.describe')}
-          </Button>
+          {canMove && (
+            <Button size="sm" variant="outline" onClick={() => setBulkDialog('move')}>
+              <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.move')}
+            </Button>
+          )}
+          {canKick && (
+            <Button size="sm" variant="outline" onClick={() => setBulkDialog('kick')}>
+              <LogOut className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.kick')}
+            </Button>
+          )}
+          {canBan && (
+            <Button size="sm" variant="outline" onClick={() => setBulkDialog('ban')}>
+              <Ban className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.ban')}
+            </Button>
+          )}
+          {canDescribe && (
+            <Button size="sm" variant="outline" onClick={() => setBulkDialog('describe')}>
+              <Pencil className="h-3.5 w-3.5 mr-1.5" /> {t('pages.clients.describe')}
+            </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
             <X className="h-3.5 w-3.5 mr-1.5" /> {t('common.clear')}
           </Button>
@@ -176,7 +196,7 @@ export default function Clients() {
         data={clients}
         searchKey="client_nickname"
         searchPlaceholder={t('pages.clients.searchPlaceholder')}
-        enableRowSelection={isAdmin}
+        enableRowSelection={canBulk}
         getRowId={(c: any) => String(c.clid)}
         onSelectionChange={setSelected}
       />
@@ -195,8 +215,11 @@ export default function Clients() {
             <Button variant="outline" onClick={() => setPokeTarget(null)}>{t('common.cancel')}</Button>
             <Button onClick={() => {
               if (pokeTarget && pokeMsg) {
-                pokeClient.mutate({ clid: pokeTarget.clid, msg: pokeMsg });
-                toast.success(t('pages.clients.pokedName', { name: pokeTarget.name }));
+                const { name } = pokeTarget;
+                pokeClient.mutate({ clid: pokeTarget.clid, msg: pokeMsg }, {
+                  onSuccess: () => toast.success(t('pages.clients.pokedName', { name })),
+                  onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.pokeFailed')),
+                });
                 setPokeTarget(null);
               }
             }}>

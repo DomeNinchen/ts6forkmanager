@@ -33,7 +33,7 @@ function describeUsage(refs: IconUsageRef[], t: TFunction): string {
 export default function Icons() {
   const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
-  const isAdmin = useAuthStore((state) => state.isAdmin());
+  const canManage = useAuthStore((state) => state.can('icons.manage'));
   const qc = useQueryClient();
 
   const [search, setSearch] = useState('');
@@ -162,7 +162,7 @@ export default function Icons() {
                 className="pl-8 h-9 w-56"
               />
             </div>
-            {isAdmin && (
+            {canManage && (
               <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>
                 <Upload className="h-4 w-4 mr-1" />
                 {uploadMutation.isPending ? t('pages.icons.uploading') : t('pages.icons.uploadIcons')}
@@ -186,13 +186,13 @@ export default function Icons() {
         <Card
           className={cn('card-hero', dragging && 'border-primary')}
           onDragOver={(e) => {
-            if (!isAdmin) return;
+            if (!canManage) return;
             e.preventDefault();
             setDragging(true);
           }}
           onDragLeave={() => setDragging(false)}
           onDrop={(e) => {
-            if (!isAdmin) return;
+            if (!canManage) return;
             e.preventDefault();
             setDragging(false);
             handleFiles(e.dataTransfer.files);
@@ -226,7 +226,7 @@ export default function Icons() {
                   <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
                     <X className="h-3.5 w-3.5 mr-1" /> {t('pages.icons.clear')}
                   </Button>
-                  {isAdmin && (
+                  {canManage && (
                     <Button variant="destructive" size="sm" onClick={() => setDeleteTargets(selectedIcons)}>
                       <Trash2 className="h-3.5 w-3.5 mr-1" /> {t('pages.icons.deleteSelected')}
                     </Button>
@@ -257,7 +257,7 @@ export default function Icons() {
                   description={
                     search
                       ? t('pages.icons.noMatchingDescription')
-                      : isAdmin
+                      : canManage
                         ? t('pages.icons.uploadHintAdmin')
                         : t('pages.icons.uploadHintViewer')
                   }
@@ -304,7 +304,7 @@ export default function Icons() {
                           </Tooltip>
                         )}
 
-                        {isAdmin && (
+                        {canManage && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -326,7 +326,7 @@ export default function Icons() {
           </CardContent>
         </Card>
 
-        {isAdmin && pool && !error && (
+        {canManage && pool && !error && (
           <p className="text-[11px] text-muted-foreground">
             {t('pages.icons.poolFooter')}
             {pool.maxFileSize ? t('pages.icons.poolFooterMaxSize', { size: formatBytes(pool.maxFileSize) }) : ''}

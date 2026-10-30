@@ -76,6 +76,8 @@
       "admin": "Admin",
       "viewer": "Betrachter",
       "botOperator": "Bot-Operator",
+      "serverAdmin": "Serveradministrator",
+      "moderator": "Moderator",
       "musicOperator": "Musik-Operator"
     }
   },
@@ -1380,6 +1382,7 @@
       "describeCount_one": "{{count}} Client beschreiben",
       "describeCount_other": "{{count}} Clients beschreiben",
       "descriptionUpdated_one": "Beschreibung für {{count}} Client aktualisiert",
+      "pokeFailed": "Anstupsen fehlgeschlagen",
       "descriptionUpdated_other": "Beschreibung für {{count}} Clients aktualisiert"
     },
     "clientDatabase": {
@@ -1924,6 +1927,39 @@
         "userDeleted": "Benutzer gelöscht",
         "deleteUserFailed": "Benutzer konnte nicht gelöscht werden",
         "resetting": "Wird zurückgesetzt...",
+        "permissions": {
+          "heading": "Diese Rolle darf auf den zugewiesenen Servern:",
+          "adminAll": "Alles, auch Instanz, Server-Verbindungen, Benutzer, Einstellungen und Sicherungen.",
+          "escalating": "kann Rechte ausweiten",
+          "moderatorWarning": "Kann jeden Client kicken, bannen und verschieben, auch Mitglieder von Admin-Gruppen.",
+          "changeRoleTitle": "Rolle von {{username}} ändern",
+          "changeRoleConfirm": "Rolle ändern",
+          "labels": {
+            "server_view": "Dashboard, Channel- und Clientliste ansehen",
+            "groups_view": "Servergruppen-Liste ansehen",
+            "clients_message": "Clients anstupsen und anschreiben",
+            "clients_move": "Clients verschieben",
+            "clients_kick": "Clients kicken",
+            "clients_ban": "Clients bannen",
+            "clients_manage": "Client-Details inkl. IP-Adresse, Gruppen und Beschreibung",
+            "clients_database": "Client-Datenbank",
+            "bans_view": "Sperrliste ansehen",
+            "bans_manage": "Sperren anlegen und aufheben",
+            "complaints_manage": "Beschwerden bearbeiten",
+            "channels_edit": "Channels anlegen, bearbeiten und verschieben",
+            "channels_delete": "Channels löschen",
+            "groups_members": "Gruppenmitgliedschaften ändern",
+            "groups_edit": "Gruppen anlegen, umbenennen und löschen",
+            "permissions_edit": "Rechte ansehen und ändern",
+            "tokens_manage": "Tokens und temporäre Passwörter",
+            "files_manage": "Dateien",
+            "icons_manage": "Icons hochladen und löschen",
+            "messages_manage": "Offline-Nachrichten",
+            "vserver_edit": "Einstellungen des virtuellen Servers, Servernachricht",
+            "music_manage": "Musik-Bots",
+            "bots_manage": "Bot-Flows"
+          }
+        },
         "editUserTitle": "Benutzer bearbeiten"
       },
       "serverAccess": {

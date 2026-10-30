@@ -95,7 +95,7 @@ function ClientEntry({ client, depth }: { client: ClientInfo; depth: number }) {
 interface TreeNodeProps {
   node: ChannelNode;
   depth?: number;
-  isAdmin: boolean;
+  canEdit: boolean;
   clientsByChannel: Map<number, ClientInfo[]>;
   onDelete: (cid: number, name: string) => void;
   onEdit: (node: ChannelNode) => void;
@@ -107,7 +107,7 @@ interface TreeNodeProps {
   onToggleSelect: (cid: number) => void;
 }
 
-function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete, onEdit, onDuplicate, onDrop, draggedCid, setDraggedCid, selected, onToggleSelect }: TreeNodeProps) {
+function ChannelTreeNode({ node, depth = 0, canEdit, clientsByChannel, onDelete, onEdit, onDuplicate, onDrop, draggedCid, setDraggedCid, selected, onToggleSelect }: TreeNodeProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const [dropOver, setDropOver] = useState(false);
@@ -158,19 +158,19 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
       <div
         className={cn(
           'flex items-center gap-1 py-1 px-2 rounded-xs hover:bg-muted/30 transition-colors group text-sm',
-          isAdmin && 'cursor-grab active:cursor-grabbing',
+          canEdit && 'cursor-grab active:cursor-grabbing',
           dropOver && 'bg-primary/10 ring-1 ring-primary/40',
           draggedCid === node.cid && 'opacity-40',
         )}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}
-        draggable={isAdmin}
-        onDragStart={isAdmin ? handleDragStart : undefined}
+        draggable={canEdit}
+        onDragStart={canEdit ? handleDragStart : undefined}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onDragEnd={handleDragEnd}
       >
-        {isAdmin && (
+        {canEdit && (
           <Checkbox
             checked={selected.has(node.cid)}
             onCheckedChange={() => onToggleSelect(node.cid)}
@@ -193,7 +193,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
 
         <span className="text-[10px] font-mono-data text-muted-foreground/50 shrink-0">#{node.cid}</span>
 
-        {isAdmin && (
+        {canEdit && (
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onDuplicate(node)}
@@ -238,7 +238,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
               key={child.cid}
               node={child}
               depth={depth + 1}
-              isAdmin={isAdmin}
+              canEdit={canEdit}
               clientsByChannel={clientsByChannel}
               onDelete={onDelete}
               onEdit={onEdit}
@@ -259,7 +259,7 @@ function ChannelTreeNode({ node, depth = 0, isAdmin, clientsByChannel, onDelete,
 export default function Channels() {
   const { t } = useTranslation();
   const { selectedConfigId, selectedSid } = useServerStore();
-  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const canEdit = useAuthStore((s) => s.can('channels.edit'));
   const { data: channelData, isLoading: channelsLoading } = useChannels();
   const { data: clientData } = useClients();
   const createChannel = useCreateChannel();
@@ -416,14 +416,14 @@ export default function Channels() {
             {t('pages.channels.channelCount', { count: Array.isArray(channelData) ? channelData.length : 0 })} · {t('pages.channels.clientsOnlineCount', { count: totalClients })}
           </p>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4 mr-1" /> {t('pages.channels.createChannel')}
           </Button>
         )}
       </div>
 
-      {isAdmin && selected.size > 0 && (
+      {canEdit && selected.size > 0 && (
         <div className="card-hero flex items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-4 py-2.5">
           <span className="text-sm font-medium">{t('pages.channels.selectedCount', { count: selected.size })}</span>
           <div className="flex-1" />
@@ -450,7 +450,7 @@ export default function Channels() {
                 <ChannelTreeNode
                   key={node.cid}
                   node={node}
-                  isAdmin={isAdmin}
+                  canEdit={canEdit}
                   clientsByChannel={clientsByChannel}
                   onDelete={(cid, name) => setDeleteTarget({ cid, name })}
                   onEdit={handleEditOpen}
