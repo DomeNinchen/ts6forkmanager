@@ -26,6 +26,8 @@ export const usersApi = {
   delete: (id: number) => api.delete(`/users/${id}`),
   getServerAccess: (id: number): Promise<{ serverConfigIds: number[] }> => api.get(`/users/${id}/server-access`).then((r) => r.data),
   setServerAccess: (id: number, serverConfigIds: number[]) => api.put(`/users/${id}/server-access`, { serverConfigIds }),
+  /** Per server connection, how many server groups are marked protected (any virtual server). */
+  protectedGroups: (): Promise<{ serverConfigId: number; count: number }[]> => api.get('/users/protected-groups').then((r) => r.data),
   getSessions: (id: number): Promise<UserSession[]> => api.get(`/users/${id}/sessions`).then((r) => r.data),
   revokeSession: (id: number, sessionId: number) => api.delete(`/users/${id}/sessions/${sessionId}`),
   revokeAllSessions: (id: number): Promise<{ revoked: number }> => api.delete(`/users/${id}/sessions`).then((r) => r.data),

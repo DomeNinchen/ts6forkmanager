@@ -22,7 +22,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { tsErrorMessage } from '@/lib/ts-errors';
-import { Shield, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search, Download, Upload } from 'lucide-react';
+import { Shield, ShieldCheck, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search, Download, Upload } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { groupsApi } from '@/api/groups.api';
+import { useAuthStore } from '@/stores/auth.store';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
 export default function ServerGroups() {
@@ -42,6 +46,23 @@ export default function ServerGroups() {
   const [memberSearch, setMemberSearch] = useState('');
   const { data: dbClients } = useClientDatabase();
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const queryClient = useQueryClient();
+  // Groups whose members non-admins may not kick, ban or move (admins mark them here).
+  const { data: protectedSgids } = useQuery({
+    queryKey: ['protected-server-groups', selectedConfigId, selectedSid],
+    queryFn: () => groupsApi.protectedServerGroups(selectedConfigId!, selectedSid!),
+    enabled: !!selectedConfigId && !!selectedSid,
+  });
+  const protectedSet = useMemo(() => new Set(protectedSgids ?? []), [protectedSgids]);
+  const setProtected = useMutation({
+    mutationFn: ({ sgid, value }: { sgid: number; value: boolean }) => groupsApi.setServerGroupProtected(selectedConfigId!, selectedSid!, sgid, value),
+    onSuccess: (_d, { value }) => {
+      toast.success(t(value ? 'pages.serverGroups.protectedOn' : 'pages.serverGroups.protectedOff'));
+      queryClient.invalidateQueries({ queryKey: ['protected-server-groups', selectedConfigId, selectedSid] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || t('pages.serverGroups.protectedFailed')),
+  });
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
@@ -241,7 +262,13 @@ export default function ServerGroups() {
                         onClick={(e) => e.stopPropagation()}
                         aria-label={t('pages.serverGroups.selectForBulkDelete')}
                       />
-                      <Shield className="h-3.5 w-3.5 shrink-0" />
+                      {protectedSet.has(Number(g.sgid)) ? (
+                        <span title={t('pages.serverGroups.protectedBadge')} className="shrink-0" data-testid="group-protected-icon">
+                          <ShieldCheck className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" aria-label={t('pages.serverGroups.protectedBadge')} />
+                        </span>
+                      ) : (
+                        <Shield className="h-3.5 w-3.5 shrink-0" />
+                      )}
                       <span className="truncate">{g.name}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -266,7 +293,18 @@ export default function ServerGroups() {
                 {selectedGroup && <Badge variant="default" className="font-mono-data text-[10px]">{t('pages.serverGroups.sgidLabel', { id: selectedGroup })}</Badge>}
               </CardTitle>
               {selectedGroup && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {isAdmin && (
+                    <label className="flex items-center gap-1.5 text-xs" title={t('pages.serverGroups.protectedHint')}>
+                      <Switch
+                        checked={protectedSet.has(selectedGroup)}
+                        disabled={setProtected.isPending || protectedSgids === undefined}
+                        onCheckedChange={(value) => setProtected.mutate({ sgid: selectedGroup, value })}
+                        data-testid="group-protected-switch"
+                      />
+                      {t('pages.serverGroups.protectedLabel')}
+                    </label>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => { setMemberSearch(''); setShowAddMember(true); }}>
                     <UserPlus className="h-3 w-3 mr-1" /> {t('pages.serverGroups.addMember')}
                   </Button>

@@ -1931,7 +1931,8 @@
           "heading": "Diese Rolle darf auf den zugewiesenen Servern:",
           "adminAll": "Alles, auch Instanz, Server-Verbindungen, Benutzer, Einstellungen und Sicherungen.",
           "escalating": "kann Rechte ausweiten",
-          "moderatorWarning": "Kann jeden Client kicken, bannen und verschieben, auch Mitglieder von Admin-Gruppen.",
+          "protectedInfo": "Clients in Servergruppen, die auf der Seite Servergruppen als geschützt markiert sind, kann diese Rolle nicht kicken, bannen oder verschieben.",
+          "unprotectedWarning": "Auf {{servers}} ist noch keine Servergruppe geschützt: Dort kann diese Rolle jeden Client kicken, bannen und verschieben, auch Admins.",
           "changeRoleTitle": "Rolle von {{username}} ändern",
           "changeRoleConfirm": "Rolle ändern",
           "labels": {
@@ -2464,6 +2465,12 @@
       }
     },
     "serverGroups": {
+      "protectedLabel": "Geschützt",
+      "protectedHint": "Mitglieder einer geschützten Gruppe können nur Admins kicken, bannen oder verschieben.",
+      "protectedBadge": "Geschützte Gruppe",
+      "protectedOn": "Gruppe ist jetzt geschützt",
+      "protectedOff": "Gruppe ist nicht mehr geschützt",
+      "protectedFailed": "Schutz konnte nicht geändert werden",
       "exportSelected": "Auswahl exportieren",
       "deleteSelected": "Auswahl löschen",
       "import": "Import",
@@ -4390,6 +4397,7 @@
     }
   },
   "errors": {
+    "protectedTarget": "In einer geschützten Servergruppe - nur ein Admin darf das: {{names}}",
     "ts": {
       "groupNameExists": "Eine Gruppe mit diesem Namen existiert bereits",
       "invalidGroup": "Ungültige Gruppe - sie wurde möglicherweise gelöscht",

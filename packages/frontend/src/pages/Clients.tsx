@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatUptime } from '@/lib/utils';
+import { tsErrorMessage } from '@/lib/ts-errors';
 import { Users, MoreHorizontal, LogOut, Ban, MessageSquare, Zap, ArrowRightLeft, Pencil, X } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
@@ -57,6 +58,9 @@ export default function Clients() {
 
   const channels = Array.isArray(channelData) ? channelData : [];
   const selectedClids = selected.map((c) => Number(c.clid));
+
+  // Translates a refusal for a protected target (and known TeamSpeak errors) into the user's language.
+  const actionError = (err: any, fallback: string): string => tsErrorMessage(err, fallback, t);
 
   const closeBulkDialog = () => {
     setBulkDialog(null);
@@ -126,7 +130,7 @@ export default function Clients() {
                 {canKick && (
                   <DropdownMenuItem onClick={() => kickClient.mutate({ clid: c.clid, reasonid: 5, reasonmsg: 'Kicked by admin' }, {
                     onSuccess: () => toast.success(t('pages.clients.kickedName', { name: c.client_nickname })),
-                    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.kickFailed')),
+                    onError: (err: any) => toast.error(actionError(err, t('pages.clients.kickFailed'))),
                   })}>
                     <LogOut className="mr-2 h-4 w-4" /> {t('pages.clients.kickFromServer')}
                   </DropdownMenuItem>
@@ -134,7 +138,7 @@ export default function Clients() {
                 {canBan && (
                   <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => banClient.mutate({ clid: c.clid, time: 3600, banreason: 'Banned by admin' }, {
                     onSuccess: () => toast.success(t('pages.clients.bannedName', { name: c.client_nickname })),
-                    onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.banFailed')),
+                    onError: (err: any) => toast.error(actionError(err, t('pages.clients.banFailed'))),
                   })}>
                     <Ban className="mr-2 h-4 w-4" /> {t('pages.clients.banOneHour')}
                   </DropdownMenuItem>
@@ -218,7 +222,7 @@ export default function Clients() {
                 const { name } = pokeTarget;
                 pokeClient.mutate({ clid: pokeTarget.clid, msg: pokeMsg }, {
                   onSuccess: () => toast.success(t('pages.clients.pokedName', { name })),
-                  onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.pokeFailed')),
+                  onError: (err: any) => toast.error(actionError(err, t('pages.clients.pokeFailed'))),
                 });
                 setPokeTarget(null);
               }
@@ -250,7 +254,7 @@ export default function Clients() {
               disabled={!bulkTargetChannel || bulkMove.isPending}
               onClick={() => bulkMove.mutate({ clids: selectedClids, cid: Number(bulkTargetChannel) }, {
                 onSuccess: () => { toast.success(t('pages.clients.movedCount', { count: selected.length })); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.moveFailed')),
+                onError: (err: any) => toast.error(actionError(err, t('pages.clients.moveFailed'))),
               })}
             >
               <ArrowRightLeft className="h-4 w-4 mr-1" /> {t('pages.clients.move')}
@@ -275,7 +279,7 @@ export default function Clients() {
               disabled={bulkKick.isPending}
               onClick={() => bulkKick.mutate({ clids: selectedClids, reasonid: 5, reasonmsg: bulkReason || undefined }, {
                 onSuccess: () => { toast.success(t('pages.clients.kickedCount', { count: selected.length })); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.kickFailed')),
+                onError: (err: any) => toast.error(actionError(err, t('pages.clients.kickFailed'))),
               })}
             >
               <LogOut className="h-4 w-4 mr-1" /> {t('pages.clients.kickFromServer')}
@@ -307,7 +311,7 @@ export default function Clients() {
               disabled={bulkBan.isPending}
               onClick={() => bulkBan.mutate({ clids: selectedClids, time: Number(bulkBanTime) || 0, banreason: bulkReason || undefined }, {
                 onSuccess: () => { toast.success(t('pages.clients.bannedCount', { count: selected.length })); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.banFailed')),
+                onError: (err: any) => toast.error(actionError(err, t('pages.clients.banFailed'))),
               })}
             >
               <Ban className="h-4 w-4 mr-1" /> {t('pages.clients.ban')}
@@ -332,7 +336,7 @@ export default function Clients() {
               disabled={!bulkDescription.trim() || bulkDescribe.isPending}
               onClick={() => bulkDescribe.mutate({ clids: selectedClids, description: bulkDescription.trim() }, {
                 onSuccess: () => { toast.success(t('pages.clients.descriptionUpdated', { count: selected.length })); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(err?.response?.data?.details || err?.response?.data?.error || t('pages.clients.descriptionUpdateFailed')),
+                onError: (err: any) => toast.error(actionError(err, t('pages.clients.descriptionUpdateFailed'))),
               })}
             >
               <Pencil className="h-4 w-4 mr-1" /> {t('common.save')}

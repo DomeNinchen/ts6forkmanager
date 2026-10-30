@@ -20,6 +20,7 @@ import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
+import { assertProfilesNotProtected } from '../utils/protected-groups.js';
 
 // Everything about the profiles a virtual server has ever seen (its client database), mounted at
 // .../clients/database. Admin-only as a whole: the rows carry each client's last IP address, which
@@ -340,6 +341,7 @@ clientDatabaseRoutes.post('/ban', async (req: Request, res: Response, next) => {
     const time = Number(body.time ?? 0);
     if (!Number.isInteger(time) || time < 0 || time > BAN_SECONDS_MAX) throw new AppError(400, 'time must be 0 (permanent) or a number of seconds');
     const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 200) : '';
+    await assertProfilesNotProtected(req, client, cldbids);
 
     const outcomes: ClientDbBanOutcome[] = [];
     for (const cldbid of cldbids) {

@@ -935,6 +935,18 @@ function UsersTab() {
   }, [userList, search]);
   const { data: servers } = useQuery({ queryKey: ['servers'], queryFn: serversApi.list });
   const serverList = useMemo(() => (Array.isArray(servers) ? servers : []), [servers]);
+  // For the role preview: which connections have no protected server group yet.
+  const { data: protectedSummary } = useQuery({ queryKey: ['protected-groups-summary'], queryFn: usersApi.protectedGroups, enabled: showAdd || pendingRole !== null });
+  const { data: pendingAccess } = useQuery({
+    queryKey: ['user-server-access', pendingRole?.id],
+    queryFn: () => usersApi.getServerAccess(pendingRole!.id),
+    enabled: pendingRole !== null,
+  });
+  const unprotectedNames = (ids: number[] | undefined): string[] => {
+    if (!protectedSummary || !ids) return [];
+    const covered = new Set(protectedSummary.filter((r) => r.count > 0).map((r) => r.serverConfigId));
+    return serverList.filter((s: any) => ids.includes(s.id) && !covered.has(s.id)).map((s: any) => s.name);
+  };
 
   if (isLoading) return <PageLoader />;
 
@@ -1086,7 +1098,8 @@ function UsersTab() {
                 </SelectContent>
               </Select>
             </div>
-            <RolePermissions role={form.role} />
+            {/* A new account has no servers yet: warn about every connection without a protected group. */}
+            <RolePermissions role={form.role} unprotected={unprotectedNames(serverList.map((s: any) => s.id))} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>{t('common.cancel')}</Button>
@@ -1102,7 +1115,7 @@ function UsersTab() {
             <DialogTitle className="text-sm">{t('pages.settings.users.permissions.changeRoleTitle', { username: pendingRole?.username })}</DialogTitle>
           </DialogHeader>
           <p className="text-sm font-medium">{roleLabel(t, pendingRole?.role)}</p>
-          {pendingRole && <RolePermissions role={pendingRole.role} />}
+          {pendingRole && <RolePermissions role={pendingRole.role} unprotected={unprotectedNames(pendingAccess?.serverConfigIds)} />}
           <DialogFooter>
             <Button variant="outline" onClick={() => setPendingRole(null)}>{t('common.cancel')}</Button>
             <Button onClick={() => pendingRole && handleRoleChange(pendingRole.id, pendingRole.role)} disabled={updateUser.isPending}>

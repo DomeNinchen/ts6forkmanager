@@ -799,6 +799,34 @@
     "moderator": "ok",
     "moderator (no grant)": "403"
   },
+  "GET /api/servers/:configId/vs/:sid/server-groups/protected": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "403",
+    "viewer (no grant)": "403",
+    "bot-operator": "ok",
+    "bot-operator (no grant)": "403",
+    "music-operator": "ok",
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
+  },
+  "PUT /api/servers/:configId/vs/:sid/server-groups/:sgid/protected": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "403",
+    "viewer (no grant)": "403",
+    "bot-operator": "403",
+    "bot-operator (no grant)": "403",
+    "music-operator": "403",
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
+  },
   "POST /api/servers/:configId/vs/:sid/server-groups": {
     "admin": "ok",
     "admin (no grant)": "ok",
@@ -2174,6 +2202,14 @@
     "moderator": "403"
   },
   "GET /api/users": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "403",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
+  "GET /api/users/protected-groups": {
     "admin": "ok",
     "viewer": "403",
     "bot-operator": "403",

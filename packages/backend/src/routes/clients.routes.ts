@@ -3,6 +3,7 @@ import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { TSApiError, AppError } from '../middleware/error-handler.js';
 import { clientDatabaseRoutes } from './client-database.routes.js';
+import { assertClientsNotProtected, targetIds } from '../utils/protected-groups.js';
 
 export const clientRoutes: Router = Router({ mergeParams: true });
 
@@ -37,7 +38,9 @@ clientRoutes.post('/bulk/move', requirePermission('clients.move'), async (req: R
   try {
     const { clids, cid, cpw } = req.body as { clids: number[]; cid: number; cpw?: string };
     if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
-    const result = await getClient(req).executeJsonBody(getSid(req), 'clientmove', { clid: clids, cid, cpw });
+    const ids = targetIds(clids, 'clids');
+    await assertClientsNotProtected(req, getClient(req), ids);
+    const result = await getClient(req).executeJsonBody(getSid(req), 'clientmove', { clid: ids, cid, cpw });
     res.json(result);
   } catch (err) { next(err); }
 });
@@ -46,7 +49,9 @@ clientRoutes.post('/bulk/kick', requirePermission('clients.kick'), async (req: R
   try {
     const { clids, reasonid, reasonmsg } = req.body as { clids: number[]; reasonid?: number; reasonmsg?: string };
     if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
-    const result = await getClient(req).executeJsonBody(getSid(req), 'clientkick', { clid: clids, reasonid: reasonid || 5, reasonmsg });
+    const ids = targetIds(clids, 'clids');
+    await assertClientsNotProtected(req, getClient(req), ids);
+    const result = await getClient(req).executeJsonBody(getSid(req), 'clientkick', { clid: ids, reasonid: reasonid || 5, reasonmsg });
     res.json(result);
   } catch (err) { next(err); }
 });
@@ -55,7 +60,9 @@ clientRoutes.post('/bulk/ban', requirePermission('clients.ban'), async (req: Req
   try {
     const { clids, time, banreason } = req.body as { clids: number[]; time?: number; banreason?: string };
     if (!Array.isArray(clids) || clids.length === 0) throw new AppError(400, 'clids must be a non-empty array');
-    const result = await getClient(req).executeJsonBody(getSid(req), 'banclient', { clid: clids, time: time || 0, banreason });
+    const ids = targetIds(clids, 'clids');
+    await assertClientsNotProtected(req, getClient(req), ids);
+    const result = await getClient(req).executeJsonBody(getSid(req), 'banclient', { clid: ids, time: time || 0, banreason });
     res.json(result);
   } catch (err) { next(err); }
 });
@@ -84,10 +91,13 @@ clientRoutes.get('/:clid', requirePermission('clients.manage'), async (req: Requ
   } catch (err) { next(err); }
 });
 
+// Kick, ban and move refuse a target in a protected server group for non-admins (utils/protected-groups.ts).
 clientRoutes.post('/:clid/kick', requirePermission('clients.kick'), async (req: Request, res: Response, next) => {
   try {
+    const [clid] = targetIds([req.params.clid], 'clid');
+    await assertClientsNotProtected(req, getClient(req), [clid]);
     const result = await getClient(req).execute(getSid(req), 'clientkick', {
-      clid: String(req.params.clid), reasonid: req.body.reasonid || 5, reasonmsg: req.body.reasonmsg,
+      clid: String(clid), reasonid: req.body.reasonid || 5, reasonmsg: req.body.reasonmsg,
     });
     res.json(result);
   } catch (err) { next(err); }
@@ -95,8 +105,10 @@ clientRoutes.post('/:clid/kick', requirePermission('clients.kick'), async (req: 
 
 clientRoutes.post('/:clid/ban', requirePermission('clients.ban'), async (req: Request, res: Response, next) => {
   try {
+    const [clid] = targetIds([req.params.clid], 'clid');
+    await assertClientsNotProtected(req, getClient(req), [clid]);
     const result = await getClient(req).execute(getSid(req), 'banclient', {
-      clid: String(req.params.clid), time: req.body.time || 0, banreason: req.body.banreason,
+      clid: String(clid), time: req.body.time || 0, banreason: req.body.banreason,
     });
     res.json(result);
   } catch (err) { next(err); }
@@ -104,8 +116,10 @@ clientRoutes.post('/:clid/ban', requirePermission('clients.ban'), async (req: Re
 
 clientRoutes.post('/:clid/move', requirePermission('clients.move'), async (req: Request, res: Response, next) => {
   try {
+    const [clid] = targetIds([req.params.clid], 'clid');
+    await assertClientsNotProtected(req, getClient(req), [clid]);
     const result = await getClient(req).execute(getSid(req), 'clientmove', {
-      clid: String(req.params.clid), cid: req.body.cid, cpw: req.body.cpw,
+      clid: String(clid), cid: req.body.cid, cpw: req.body.cpw,
     });
     res.json(result);
   } catch (err) { next(err); }

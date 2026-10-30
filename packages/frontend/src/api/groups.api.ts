@@ -21,6 +21,10 @@ export const groupsApi = {
     api.post(`${sgBase(configId, sid)}/${sgid}/members`, { cldbid }).then((r) => r.data),
   removeServerGroupMember: (configId: number, sid: number, sgid: number, cldbid: number) =>
     api.delete(`${sgBase(configId, sid)}/${sgid}/members/${cldbid}`),
+  protectedServerGroups: (configId: number, sid: number) =>
+    api.get(`${sgBase(configId, sid)}/protected`).then((r) => r.data.sgids as number[]),
+  setServerGroupProtected: (configId: number, sid: number, sgid: number, isProtected: boolean) =>
+    api.put(`${sgBase(configId, sid)}/${sgid}/protected`, { protected: isProtected }).then((r) => r.data),
   serverGroupPerms: (configId: number, sid: number, sgid: number) =>
     api.get(`${sgBase(configId, sid)}/${sgid}/permissions`).then((r) => r.data),
 

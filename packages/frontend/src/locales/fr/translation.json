@@ -1027,7 +1027,8 @@
           "heading": "Sur les serveurs attribués, ce rôle peut :",
           "adminAll": "Tout, y compris l'instance, les connexions serveur, les utilisateurs, les paramètres et les sauvegardes.",
           "escalating": "peut étendre des droits",
-          "moderatorWarning": "Peut expulser, bannir et déplacer n'importe quel utilisateur, y compris les membres des groupes d'administration.",
+          "protectedInfo": "Les utilisateurs des groupes serveur marqués comme protégés sur la page Groupes serveur ne peuvent pas être expulsés, bannis ou déplacés par ce rôle.",
+          "unprotectedWarning": "Aucun groupe serveur n'est encore protégé sur {{servers}} : ce rôle peut y expulser, bannir et déplacer n'importe quel utilisateur, administrateurs compris.",
           "changeRoleTitle": "Changer le rôle de {{username}}",
           "changeRoleConfirm": "Changer le rôle",
           "labels": {
@@ -1390,6 +1391,12 @@
       }
     },
     "serverGroups": {
+      "protectedLabel": "Protégé",
+      "protectedHint": "Seuls les administrateurs peuvent expulser, bannir ou déplacer les membres d'un groupe protégé.",
+      "protectedBadge": "Groupe protégé",
+      "protectedOn": "Le groupe est maintenant protégé",
+      "protectedOff": "Le groupe n'est plus protégé",
+      "protectedFailed": "Impossible de modifier la protection",
       "exportSelected": "Exporter la sélection",
       "deleteSelected": "Supprimer la sélection",
       "import": "Importer",
@@ -3305,6 +3312,7 @@
     }
   },
   "errors": {
+    "protectedTarget": "Dans un groupe serveur protégé - seul un administrateur peut le faire : {{names}}",
     "ts": {
       "groupNameExists": "Un groupe portant ce nom existe déjà",
       "invalidGroup": "Groupe invalide : il a peut-être été supprimé",
