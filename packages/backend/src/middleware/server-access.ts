@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
+import { grantCovers, grantOf } from '../utils/vs-access.js';
 
 /**
  * H9: Middleware to enforce per-server access control.
- * Admins bypass this check. Viewers must have a UserServerAccess record.
+ * Admins bypass this check. Everyone else needs a UserServerAccess grant on the connection, and on a
+ * /vs/:sid path one that covers that virtual server (utils/vs-access.ts).
  */
 export function requireServerAccess() {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -22,18 +24,13 @@ export function requireServerAccess() {
       return;
     }
 
-    const prisma = req.app.locals.prisma;
-    const access = await prisma.userServerAccess.findUnique({
-      where: {
-        userId_serverConfigId: {
-          userId: req.user!.id,
-          serverConfigId: configId,
-        },
-      },
-    });
-
-    if (!access) {
+    const grant = await grantOf(req.app.locals.prisma, req.user!.id, configId);
+    if (!grant) {
       res.status(403).json({ error: 'No access to this server' });
+      return;
+    }
+    if (sid !== undefined && !grantCovers(grant, Number(sid))) {
+      res.status(403).json({ error: 'No access to this virtual server' });
       return;
     }
 

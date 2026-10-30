@@ -31,6 +31,7 @@ import { canonicalAddress, clientIpOfUpgrade, IpBanService } from './utils/ip-ba
 import { TsBanLookup } from './utils/ts-ip-ban.js';
 import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import { attachWsAudience, type UpgradeRequest } from './utils/ws-audience.js';
+import { startGrantNarrowing } from './utils/vs-access.js';
 import type { JwtPayload } from '@ts6/common';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -165,6 +166,8 @@ async function main() {
   app.locals.wss = wss;
   // Which events each WebSocket gets depends on its user's role and server access (see utils/ws-audience.ts).
   const wsAudience = attachWsAudience(wss, prisma);
+  // Grants from before access per virtual server get their virtual servers once the server list is readable.
+  const grantNarrowing = startGrantNarrowing(prisma, connectionPool);
   // The query console's live events: one shared SSH listener per virtual server, opened when an admin starts listening.
   const consoleEvents = new EventSessionManager(prisma, connectionPool);
   app.locals.consoleEvents = consoleEvents;
@@ -250,6 +253,7 @@ async function main() {
     await flushChangeLog(prisma);
     connectionPool.destroy();
     wsAudience.stop();
+    grantNarrowing.stop();
     wss.close();
     server.close();
     await prisma.$disconnect();

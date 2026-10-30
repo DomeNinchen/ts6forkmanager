@@ -1060,6 +1060,10 @@
         "editUserTitle": "Modifier l'utilisateur"
       },
       "serverAccess": {
+        "wholeConnection": "Cette connexion n'a pas de WebQuery ni de liste de serveurs virtuels : l'accès couvre toute la connexion.",
+        "pickVirtualServer": "Cochez au moins un serveur virtuel pour chaque connexion avec WebQuery.",
+        "listFailed": "Impossible de lire les serveurs virtuels ; ceux déjà cochés restent visibles.",
+        "virtualServer": "Serveur virtuel {{sid}}",
         "updated": "Accès serveur mis à jour",
         "updateFailed": "Échec de la mise à jour de l'accès serveur",
         "title": "Accès serveur — {{username}}",

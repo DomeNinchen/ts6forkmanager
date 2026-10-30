@@ -98,8 +98,23 @@ model UserServerAccess {
   serverConfigId Int
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  // Which virtual servers of the connection the grant covers (R8): the rows in `virtualServers`,
+  // or every one while this is true. True only for a grant that has not been narrowed yet - one
+  // from before per-virtual-server access, until the backend could read the connection's server
+  // list (utils/vs-access.ts) - and for a connection without WebQuery, which has no server list.
+  allVirtualServers Boolean    @default(false)
+  virtualServers UserVirtualServerAccess[]
 
   @@unique([userId, serverConfigId])
+}
+
+model UserVirtualServerAccess {
+  id       Int              @id @default(autoincrement())
+  accessId Int
+  sid      Int
+  access   UserServerAccess @relation(fields: [accessId], references: [id], onDelete: Cascade)
+
+  @@unique([accessId, sid])
 }
 
 // A server group whose members no non-admin web user may kick, ban or move

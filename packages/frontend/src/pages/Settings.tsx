@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/api/bots.api';
 import { authApi } from '@/api/auth.api';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -1208,23 +1209,34 @@ function ServerAccessDialog({ userId, username, servers, onClose }: { userId: nu
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['user-server-access', userId], queryFn: () => usersApi.getServerAccess(userId) });
-  const [selected, setSelected] = useState<Set<number> | null>(null);
+  // connection id -> the virtual servers ticked for it (a connection without WebQuery is granted whole, its set stays empty)
+  const [edited, setEdited] = useState<Map<number, Set<number>> | null>(null);
   const save = useMutation({
-    mutationFn: (serverConfigIds: number[]) => usersApi.setServerAccess(userId, serverConfigIds),
+    mutationFn: (grants: { serverConfigId: number; sids: number[] }[]) => usersApi.setServerAccess(userId, grants),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['user-server-access', userId] });
       toast.success(t('pages.settings.serverAccess.updated'));
       onClose();
     },
-    onError: () => toast.error(t('pages.settings.serverAccess.updateFailed')),
+    onError: (err: any) => toast.error(err?.response?.data?.error || t('pages.settings.serverAccess.updateFailed')),
   });
 
-  const active = selected ?? new Set(data?.serverConfigIds ?? []);
-  const toggle = (id: number) => {
-    const next = new Set(active);
-    next.has(id) ? next.delete(id) : next.add(id);
-    setSelected(next);
+  const initial = useMemo(() => new Map((data?.grants ?? []).map((g) => [g.serverConfigId, new Set(g.sids)])), [data]);
+  const legacyAll = useMemo(() => new Set((data?.grants ?? []).filter((g) => g.allVirtualServers).map((g) => g.serverConfigId)), [data]);
+  const active = edited ?? initial;
+  const update = (fn: (next: Map<number, Set<number>>) => void) => {
+    const next = new Map([...active].map(([k, v]) => [k, new Set(v)]));
+    fn(next);
+    setEdited(next);
   };
+  const toggleConnection = (id: number) => update((next) => { next.has(id) ? next.delete(id) : next.set(id, new Set()); });
+  const toggleSid = (id: number, sid: number) => update((next) => {
+    const sids = next.get(id) ?? new Set<number>();
+    sids.has(sid) ? sids.delete(sid) : sids.add(sid);
+    next.set(id, sids);
+  });
+  // A connection with WebQuery needs at least one virtual server ticked.
+  const incomplete = servers.some((s) => active.has(s.id) && s.hasWebQuery !== false && (active.get(s.id)?.size ?? 0) === 0);
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -1238,24 +1250,75 @@ function ServerAccessDialog({ userId, username, servers, onClose }: { userId: nu
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {servers.length === 0 && <p className="text-xs text-muted-foreground">{t('pages.settings.serverAccess.noConnections')}</p>}
             {servers.map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-4 py-1.5">
-                <div>
-                  <p className="text-xs font-medium">{s.name}</p>
-                  <p className="text-[11px] text-muted-foreground font-mono-data">{s.host}</p>
+              <div key={s.id} className="py-1.5 space-y-1.5" data-testid={`access-connection-${s.id}`}>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-medium">{s.name}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono-data">{s.host}</p>
+                  </div>
+                  <Switch checked={active.has(s.id)} onCheckedChange={() => toggleConnection(s.id)} />
                 </div>
-                <Switch checked={active.has(s.id)} onCheckedChange={() => toggle(s.id)} />
+                {active.has(s.id) && (
+                  s.hasWebQuery === false ? (
+                    <p className="text-[11px] text-muted-foreground pl-3">{t('pages.settings.serverAccess.wholeConnection')}</p>
+                  ) : (
+                    <VirtualServerPicker
+                      configId={s.id}
+                      ticked={active.get(s.id) ?? new Set()}
+                      wasAll={legacyAll.has(s.id) && edited === null}
+                      onToggle={(sid) => toggleSid(s.id, sid)}
+                      onInitAll={(sids) => update((next) => next.set(s.id, new Set(sids)))}
+                    />
+                  )
+                )}
               </div>
             ))}
           </div>
         )}
+        {incomplete && <p className="text-xs text-destructive">{t('pages.settings.serverAccess.pickVirtualServer')}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button disabled={save.isPending} onClick={() => save.mutate(Array.from(active))}>
+          <Button
+            disabled={save.isPending || incomplete}
+            onClick={() => save.mutate([...active].map(([serverConfigId, sids]) => ({ serverConfigId, sids: [...sids] })))}
+          >
             {save.isPending ? t('common.saving') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** The virtual servers of one connection, each ticked one by one (a virtual server added later is not covered until ticked). */
+function VirtualServerPicker({ configId, ticked, wasAll, onToggle, onInitAll }: {
+  configId: number; ticked: Set<number>; wasAll: boolean; onToggle: (sid: number) => void; onInitAll: (sids: number[]) => void;
+}) {
+  const { t } = useTranslation();
+  const { data, isLoading, isError } = useQuery({ queryKey: ['virtual-servers', configId], queryFn: () => serversApi.listVirtual(configId) });
+  const listed = useMemo(() => (Array.isArray(data) ? data : []).map((v: any) => ({
+    sid: Number(v.virtualserver_id), name: String(v.virtualserver_name ?? ''), port: v.virtualserver_port,
+  })), [data]);
+  // A grant from before per-virtual-server access covers every one: show them all ticked.
+  useEffect(() => {
+    if (wasAll && listed.length > 0) onInitAll(listed.map((v) => v.sid));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wasAll, listed]);
+  // Virtual servers ticked earlier that the server no longer lists (or that could not be read) stay visible.
+  const rows = [...listed, ...[...ticked].filter((sid) => !listed.some((v) => v.sid === sid)).map((sid) => ({ sid, name: '', port: undefined }))];
+
+  if (isLoading) return <p className="text-[11px] text-muted-foreground pl-3">{t('common.loading')}</p>;
+  return (
+    <div className="pl-3 space-y-1">
+      {isError && <p className="text-[11px] text-destructive">{t('pages.settings.serverAccess.listFailed')}</p>}
+      {rows.map((v) => (
+        <label key={v.sid} className="flex items-center gap-2 text-xs cursor-pointer">
+          <Checkbox checked={ticked.has(v.sid)} onCheckedChange={() => onToggle(v.sid)} data-testid={`access-sid-${configId}-${v.sid}`} />
+          <span>{v.name || t('pages.settings.serverAccess.virtualServer', { sid: v.sid })}</span>
+          <span className="text-[11px] text-muted-foreground font-mono-data">#{v.sid}{v.port ? ` · ${v.port}` : ''}</span>
+        </label>
+      ))}
+    </div>
   );
 }
 

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
+import { mayUseMusicBot } from '../utils/vs-access.js';
 
 export const playlistRoutes: Router = Router();
 
@@ -12,16 +13,13 @@ playlistRoutes.use(requirePermission('music.manage'));
  * music-library/radio-stations there's no requireServerAccess upstream of
  * this router. For a non-admin: an unassigned playlist is always visible
  * (nothing server-specific to gate), an assigned one only if they have
- * access to that bot's server.
+ * access to that bot (its server and virtual server, utils/vs-access.ts).
  */
 async function assertPlaylistAccess(req: Request, prisma: any, playlist: { musicBotId: number | null }): Promise<void> {
   if (req.user!.role === 'admin' || playlist.musicBotId == null) return;
-  const bot = await prisma.musicBot.findUnique({ where: { id: playlist.musicBotId }, select: { serverConfigId: true } });
+  const bot = await prisma.musicBot.findUnique({ where: { id: playlist.musicBotId }, select: { serverConfigId: true, voicePort: true } });
   if (!bot) return; // dangling reference, nothing to gate against
-  const access = await prisma.userServerAccess.findUnique({
-    where: { userId_serverConfigId: { userId: req.user!.id, serverConfigId: bot.serverConfigId } },
-  });
-  if (!access) throw new AppError(403, 'No access to this server');
+  if (!(await mayUseMusicBot(prisma, req.app.locals.connectionPool, req.user!.id, bot))) throw new AppError(403, 'No access to this server');
 }
 
 // GET / — List playlists
@@ -30,7 +28,7 @@ playlistRoutes.get('/', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const musicBotId = req.query.musicBotId ? parseInt(String(req.query.musicBotId)) : undefined;
     if (musicBotId !== undefined) await assertPlaylistAccess(req, prisma, { musicBotId });
-    const playlists = await prisma.playlist.findMany({
+    const candidates = await prisma.playlist.findMany({
       where: {
         ...(musicBotId ? { musicBotId } : {}),
         ...(req.user!.role === 'admin' ? {} : {
@@ -40,9 +38,13 @@ playlistRoutes.get('/', async (req: Request, res: Response, next) => {
           ],
         }),
       },
-      include: { _count: { select: { songs: true } } },
+      include: { _count: { select: { songs: true } }, musicBot: { select: { serverConfigId: true, voicePort: true } } },
       orderBy: { createdAt: 'desc' },
     });
+    const playlists = [];
+    for (const p of candidates) {
+      if (req.user!.role === 'admin' || !p.musicBot || await mayUseMusicBot(prisma, req.app.locals.connectionPool, req.user!.id, p.musicBot)) playlists.push(p);
+    }
     res.json(playlists.map((p: any) => ({
       id: p.id,
       name: p.name,

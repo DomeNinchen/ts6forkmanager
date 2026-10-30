@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireRole, requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
+import { grantCovers, grantOf } from '../utils/vs-access.js';
 
 export const virtualServerRoutes: Router = Router({ mergeParams: true });
 
@@ -10,10 +11,25 @@ const getClient = (req: Request) => {
   return pool.getClient(parseInt(String(req.params.configId)));
 };
 
+// The mount's server-access check sees no sid here (it is this router's parameter), so a non-admin's
+// grant is checked for every /:sid route, and the list only shows the virtual servers it covers.
+virtualServerRoutes.param('sid', async (req: Request, _res: Response, next, sidParam) => {
+  try {
+    if (req.user!.role === 'admin') return next();
+    const grant = await grantOf(req.app.locals.prisma, req.user!.id, parseInt(String(req.params.configId)));
+    if (!/^[1-9]\d*$/.test(String(sidParam)) || !grantCovers(grant, Number(sidParam))) {
+      return next(new AppError(403, 'No access to this virtual server'));
+    }
+    next();
+  } catch (err) { next(err); }
+});
+
 virtualServerRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     const result = await getClient(req).execute(0, 'serverlist');
-    res.json(result);
+    if (req.user!.role === 'admin') return res.json(result);
+    const grant = await grantOf(req.app.locals.prisma, req.user!.id, parseInt(String(req.params.configId)));
+    res.json((Array.isArray(result) ? result : []).filter((s: { virtualserver_id?: unknown }) => grantCovers(grant, Number(s.virtualserver_id))));
   } catch (err) { next(err); }
 });
 

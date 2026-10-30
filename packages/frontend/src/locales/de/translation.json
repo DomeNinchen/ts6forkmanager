@@ -1964,6 +1964,10 @@
         "editUserTitle": "Benutzer bearbeiten"
       },
       "serverAccess": {
+        "wholeConnection": "Diese Verbindung hat kein WebQuery und keine Liste virtueller Server: Der Zugriff gilt für die ganze Verbindung.",
+        "pickVirtualServer": "Für jede Verbindung mit WebQuery mindestens einen virtuellen Server anhaken.",
+        "listFailed": "Die virtuellen Server konnten nicht gelesen werden; bisher angehakte bleiben sichtbar.",
+        "virtualServer": "Virtueller Server {{sid}}",
         "updated": "Serverzugriff aktualisiert",
         "updateFailed": "Serverzugriff konnte nicht aktualisiert werden",
         "title": "Serverzugriff — {{username}}",

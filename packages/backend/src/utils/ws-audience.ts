@@ -2,6 +2,7 @@ import type { IncomingMessage } from 'node:http';
 import type { WebSocket, WebSocketServer } from 'ws';
 import { roleHasPermission, type UserPermission, type UserRole } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
+import { cachedSidOfPort, grantCovers, type Grant } from './vs-access.js';
 
 /**
  * Who a WebSocket event is for.
@@ -9,19 +10,24 @@ import type { PrismaClient } from '../generated/prisma/client.js';
  * Every socket belongs to a signed-in user, and an event used to go to all of them whatever
  * their role or server access. Now an event names its audience: an admin always receives it;
  * any other role only if it holds `permission` AND the user has been granted the server
- * connection the event is about. An event without a `serverConfigId` or `permission` is for
- * admins only. A socket whose user is not known yet (or no longer) receives nothing: this
- * fails closed.
+ * connection - and virtual server - the event is about (utils/vs-access.ts). An event without a
+ * `serverConfigId` or `permission` is for admins only, and one whose virtual server is not known
+ * reaches only grants covering every virtual server of the connection. A socket whose user is not
+ * known yet (or no longer) receives nothing: this fails closed.
  */
 export interface Audience {
   permission?: UserPermission;
   serverConfigId?: number;
+  sid?: number;
 }
 
-/** Music bot events: whoever runs the Music Bots page, on the bot's own server connection. */
-export const musicAudience = (serverConfigId: number | undefined): Audience => ({ permission: 'music.manage', serverConfigId });
-/** Bot flow events: whoever runs the Bot Flows editor, on the flow's own server connection. */
-export const botFlowAudience = (serverConfigId: number | undefined): Audience => ({ permission: 'bots.manage', serverConfigId });
+/** Music bot events: whoever runs the Music Bots page, on the bot's server connection and virtual server (from its voice port). */
+export const musicAudience = (serverConfigId: number | undefined, voicePort: number | undefined): Audience => ({
+  permission: 'music.manage', serverConfigId,
+  sid: serverConfigId !== undefined && voicePort !== undefined ? cachedSidOfPort(serverConfigId, voicePort) : undefined,
+});
+/** Bot flow events: whoever runs the Bot Flows editor, on the flow's own server connection and virtual server. */
+export const botFlowAudience = (serverConfigId: number | undefined, sid: number | undefined): Audience => ({ permission: 'bots.manage', serverConfigId, sid });
 /** Instance-wide events (the flow engine starting or stopping): admins only. */
 export const instanceAudience: Audience = {};
 
@@ -31,8 +37,8 @@ export type UpgradeRequest = IncomingMessage & { wsUserId?: number };
 interface SocketUser {
   userId: number;
   role: UserRole;
-  /** The server connections a non-admin has been granted. */
-  access: Set<number>;
+  /** The server connections a non-admin has been granted, with the virtual servers each grant covers. */
+  access: Map<number, Grant>;
 }
 
 const users = new WeakMap<WebSocket, SocketUser>();
@@ -45,7 +51,10 @@ export function mayReceive(socket: WebSocket, audience: Audience): boolean {
   if (!user) return false;
   if (user.role === 'admin') return true;
   if (audience.serverConfigId === undefined || !audience.permission) return false;
-  return roleHasPermission(user.role, audience.permission) && user.access.has(audience.serverConfigId);
+  if (!roleHasPermission(user.role, audience.permission)) return false;
+  const grant = user.access.get(audience.serverConfigId);
+  if (!grant) return false;
+  return audience.sid === undefined ? grant.all : grantCovers(grant, audience.sid);
 }
 
 /** Sends the event to the sockets whose user may receive it. */
@@ -67,7 +76,10 @@ export function attachWsAudience(wss: WebSocketServer, prisma: PrismaClient): { 
     const ids = [...new Set(sockets.values())];
     const [accounts, grants] = await Promise.all([
       prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, role: true, enabled: true } }),
-      prisma.userServerAccess.findMany({ where: { userId: { in: ids } }, select: { userId: true, serverConfigId: true } }),
+      prisma.userServerAccess.findMany({
+        where: { userId: { in: ids } },
+        select: { userId: true, serverConfigId: true, allVirtualServers: true, virtualServers: { select: { sid: true } } },
+      }),
     ]);
     const accountById = new Map(accounts.map((a) => [a.id, a]));
     for (const [socket, userId] of sockets) {
@@ -80,7 +92,10 @@ export function attachWsAudience(wss: WebSocketServer, prisma: PrismaClient): { 
       users.set(socket, {
         userId,
         role: account.role as UserRole,
-        access: new Set(grants.filter((g) => g.userId === userId).map((g) => g.serverConfigId)),
+        access: new Map(grants.filter((g) => g.userId === userId).map((g) => [
+          g.serverConfigId,
+          { all: g.allVirtualServers, sids: new Set(g.virtualServers.map((v) => v.sid)) },
+        ])),
       });
     }
   };

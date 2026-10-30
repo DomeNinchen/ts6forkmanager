@@ -21,8 +21,11 @@ export function ServerSelector() {
   // Auto-select first virtual server - every other page requires a real
   // selection to function at all, so this always wins even right after an
   // explicit deselect (see VirtualServers.tsx's Select/Deselect toggle).
+  // The list only holds the virtual servers this account may use, so a remembered one that is not
+  // in it any more (access narrowed to other virtual servers) is replaced the same way.
   useEffect(() => {
-    if (selectedConfigId && !selectedSid && virtualServers?.length > 0) {
+    if (!selectedConfigId || !Array.isArray(virtualServers) || virtualServers.length === 0) return;
+    if (!selectedSid || !virtualServers.some((v: any) => Number(v.virtualserver_id) === Number(selectedSid))) {
       setSid(virtualServers[0].virtualserver_id);
     }
   }, [virtualServers, selectedConfigId, selectedSid, setSid]);
