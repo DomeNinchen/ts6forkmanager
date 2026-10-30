@@ -8,6 +8,7 @@ import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
 import { saveMusicRequest } from '../voice/music-request-history.js';
 import { DESCRIPTION_PLACEHOLDERS } from '../voice/description-template.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
+import { mayUseMusicBot } from '../utils/vs-access.js';
 import multer from 'multer';
 
 // The real limit is the TS server's own i_client_max_avatar_filesize
@@ -40,12 +41,12 @@ musicBotRoutes.param('id', async (req: Request, res: Response, next, idParam) =>
     const id = parseInt(idParam);
     if (isNaN(id)) return next(new AppError(400, 'Invalid bot id'));
     const prisma = req.app.locals.prisma;
-    const bot = await prisma.musicBot.findUnique({ where: { id }, select: { serverConfigId: true } });
+    const bot = await prisma.musicBot.findUnique({ where: { id }, select: { serverConfigId: true, voicePort: true } });
     if (!bot) return next(new AppError(404, 'Music bot not found'));
-    const access = await prisma.userServerAccess.findUnique({
-      where: { userId_serverConfigId: { userId: req.user!.id, serverConfigId: bot.serverConfigId } },
-    });
-    if (!access) return next(new AppError(403, 'No access to this server'));
+    // The grant has to cover the virtual server the bot's voice port belongs to (utils/vs-access.ts).
+    if (!(await mayUseMusicBot(prisma, req.app.locals.connectionPool, req.user!.id, bot))) {
+      return next(new AppError(403, 'No access to this server'));
+    }
     next();
   } catch (err) { next(err); }
 });
@@ -62,13 +63,17 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const dbBots = await prisma.musicBot.findMany({
+    const candidates = await prisma.musicBot.findMany({
       where: req.user!.role === 'admin' ? undefined : {
         serverConfig: { userAccess: { some: { userId: req.user!.id } } },
       },
       include: { serverConfig: { select: { id: true, name: true, host: true } } },
       orderBy: { id: 'asc' },
     });
+    const dbBots = [];
+    for (const b of candidates) {
+      if (req.user!.role === 'admin' || await mayUseMusicBot(prisma, req.app.locals.connectionPool, req.user!.id, b)) dbBots.push(b);
+    }
 
     const runtimeInfo = manager.listBots();
     const runtimeMap = new Map(runtimeInfo.map((b: any) => [b.id, b]));
@@ -142,10 +147,10 @@ musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
     if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
     // The ':id' check above cannot cover a bot that does not exist yet
     if (req.user!.role !== 'admin') {
-      const access = await req.app.locals.prisma.userServerAccess.findUnique({
-        where: { userId_serverConfigId: { userId: req.user!.id, serverConfigId: parseInt(serverConfigId) } },
-      });
-      if (!access) throw new AppError(403, 'No access to this server');
+      const target = { serverConfigId: parseInt(serverConfigId), voicePort: voicePort != null ? parseInt(voicePort) : 9987 }; // 9987: the schema default
+      if (!(await mayUseMusicBot(req.app.locals.prisma, req.app.locals.connectionPool, req.user!.id, target))) {
+        throw new AppError(403, 'No access to this server');
+      }
     }
 
     const result = await manager.createBot({
@@ -177,6 +182,13 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
     const id = parseInt(req.params.id as string);
     const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes } = req.body;
     if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
+    if (voicePort != null && req.user!.role !== 'admin') {
+      // A new port can put the bot on another virtual server; the grant must cover that one too.
+      const current = await prisma.musicBot.findUnique({ where: { id }, select: { serverConfigId: true } });
+      if (!current || !(await mayUseMusicBot(prisma, req.app.locals.connectionPool, req.user!.id, { serverConfigId: current.serverConfigId, voicePort: parseInt(voicePort) }))) {
+        throw new AppError(403, 'No access to this virtual server');
+      }
+    }
 
     const dbBot = await prisma.musicBot.update({
       where: { id },

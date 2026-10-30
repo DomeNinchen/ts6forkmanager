@@ -24,8 +24,10 @@ export const usersApi = {
   create: (data: any) => api.post('/users', data).then((r) => r.data),
   update: (id: number, data: any) => api.put(`/users/${id}`, data),
   delete: (id: number) => api.delete(`/users/${id}`),
-  getServerAccess: (id: number): Promise<{ serverConfigIds: number[] }> => api.get(`/users/${id}/server-access`).then((r) => r.data),
-  setServerAccess: (id: number, serverConfigIds: number[]) => api.put(`/users/${id}/server-access`, { serverConfigIds }),
+  getServerAccess: (id: number): Promise<{ serverConfigIds: number[]; grants: { serverConfigId: number; allVirtualServers: boolean; sids: number[] }[] }> =>
+    api.get(`/users/${id}/server-access`).then((r) => r.data),
+  /** Per connection the virtual servers the account may use (ignored for a connection without WebQuery, which is granted whole). */
+  setServerAccess: (id: number, grants: { serverConfigId: number; sids: number[] }[]) => api.put(`/users/${id}/server-access`, { grants }),
   /** Per server connection, how many server groups are marked protected (any virtual server). */
   protectedGroups: (): Promise<{ serverConfigId: number; count: number }[]> => api.get('/users/protected-groups').then((r) => r.data),
   getSessions: (id: number): Promise<UserSession[]> => api.get(`/users/${id}/sessions`).then((r) => r.data),

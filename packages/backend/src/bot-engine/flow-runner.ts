@@ -214,7 +214,7 @@ export class FlowRunner {
       flowId: flow.id,
       executionId: execution.id,
       triggeredBy: triggerType,
-    }, flow.serverConfigId);
+    }, flow.serverConfigId, flow.virtualServerId);
 
     await this.drive(flow, ctx, async (visit) => {
       const triggerNode = flow.flowData.nodes.find(n => n.id === triggerNodeId);
@@ -268,7 +268,7 @@ export class FlowRunner {
         flowId: flow.id,
         executionId: ctx.executionId,
         duration: Date.now() - startTime,
-      }, flow.serverConfigId);
+      }, flow.serverConfigId, flow.virtualServerId);
     } catch (err: any) {
       // Stopped by the shutdown, or failing while it closes things down: shutdown() marks the row
       // interrupted (or leaves it waiting). Ended early: the row has its status already.
@@ -284,7 +284,7 @@ export class FlowRunner {
         flowId: flow.id,
         executionId: ctx.executionId,
         error: err.message,
-      }, flow.serverConfigId);
+      }, flow.serverConfigId, flow.virtualServerId);
     }
   }
 
@@ -1239,9 +1239,9 @@ export class FlowRunner {
     }
   }
 
-  /** Goes to the sockets of users who may see this flow: admins, and bot operators granted the flow's server connection. */
-  private broadcast(type: string, payload: any, serverConfigId: number): void {
-    sendToAudience(this.wss, type, payload, botFlowAudience(serverConfigId));
+  /** Goes to the sockets of users who may see this flow: admins, and bot operators granted the flow's connection and virtual server. */
+  private broadcast(type: string, payload: any, serverConfigId: number, virtualServerId: number): void {
+    sendToAudience(this.wss, type, payload, botFlowAudience(serverConfigId, virtualServerId));
   }
 
   private async executeGenerateCode(data: any, ctx: ExecutionContext): Promise<void> {

@@ -189,7 +189,7 @@ export class VoiceBotManager extends EventEmitter {
   private createBotInstance(config: VoiceBotConfig): VoiceBot {
     config.getOtherBotClientIds = () => this.otherBotClientIds(config.id);
     // Every event of this bot goes to the users who may see this bot: admins, and the music roles granted its server connection.
-    const broadcast = (type: string, payload: object) => sendToAudience(this.wss, type, payload, musicAudience(config.serverConfigId));
+    const broadcast = (type: string, payload: object) => sendToAudience(this.wss, type, payload, musicAudience(config.serverConfigId, config.serverPort));
     const bot = new VoiceBot(config);
 
     bot.on('statusChange', (status: VoiceBotStatus) => {
@@ -750,6 +750,7 @@ export class VoiceBotManager extends EventEmitter {
    * and the music roles granted its server connection. A bot that is gone is nobody's but the admins'.
    */
   private broadcastForBot(botId: number, type: string, payload: object): void {
-    sendToAudience(this.wss, type, payload, musicAudience(this.bots.get(botId)?.currentConfig.serverConfigId));
+    const cfg = this.bots.get(botId)?.currentConfig;
+    sendToAudience(this.wss, type, payload, musicAudience(cfg?.serverConfigId, cfg?.serverPort));
   }
 }
