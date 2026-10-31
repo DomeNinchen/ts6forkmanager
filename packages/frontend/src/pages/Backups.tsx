@@ -194,6 +194,7 @@ export default function Backups() {
         <ScheduleCard settings={data.settings} bounds={data.bounds} serverTime={data.serverTime} />
         <UploadCard settings={data.settings} bounds={data.bounds} />
         <TargetCard overview={data} />
+        <BulkBackupCard settings={data.settings} bounds={data.bounds} />
       </div>
 
       <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
@@ -507,6 +508,43 @@ function UploadCard({ settings, bounds }: { settings: BackupSettings; bounds: Ba
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">{t('pages.backups.upload.limitHint', { min: bounds.uploadMbMin, max: bounds.uploadMbMax })}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Backups before deletions (R9): groups and channels always, profiles from this many on. */
+function BulkBackupCard({ settings, bounds }: { settings: BackupSettings; bounds: BackupOverview['bounds'] }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [value, setValue] = useState(String(settings.bulkBackupThreshold));
+  useEffect(() => setValue(String(settings.bulkBackupThreshold)), [settings.bulkBackupThreshold]);
+  const num = Number(value);
+  const valid = Number.isInteger(num) && num >= bounds.bulkThresholdMin && num <= bounds.bulkThresholdMax;
+  const save = useMutation({
+    mutationFn: () => backupsApi.setSettings({ ...settings, bulkBackupThreshold: num }),
+    onSuccess: (overview) => { qc.setQueryData(['backups'], overview); toast.success(t('pages.backups.bulk.saved')); },
+    onError: (err) => toast.error(errorText(err, t('pages.backups.schedule.saveFailed'))),
+  });
+
+  return (
+    <Card className="card-hero">
+      <CardHeader>
+        <CardTitle className="text-sm font-medium">{t('pages.backups.bulk.title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">{t('pages.backups.bulk.description')}</p>
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="backup-bulk-threshold">{t('pages.backups.bulk.thresholdLabel')}</Label>
+          <div className="flex gap-2">
+            <Input id="backup-bulk-threshold" type="number" min={bounds.bulkThresholdMin} max={bounds.bulkThresholdMax} value={value}
+              onChange={(e) => setValue(e.target.value)} aria-invalid={!valid} className="max-w-[160px]" data-testid="backup-bulk-threshold" />
+            <Button size="sm" disabled={!valid || num === settings.bulkBackupThreshold || save.isPending} onClick={() => save.mutate()} data-testid="backup-bulk-threshold-save">
+              {t('pages.backups.schedule.save')}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t('pages.backups.bulk.thresholdHint', { min: bounds.bulkThresholdMin, max: bounds.bulkThresholdMax })}</p>
         </div>
       </CardContent>
     </Card>

@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { BackupStep, useBackupStep } from '@/components/shared/BackupStep';
 import { EditChannelDialog } from '@/components/channels/EditChannelDialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -271,6 +272,7 @@ export default function Channels() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ cid: number; name: string } | null>(null);
+  const deleteBackup = useBackupStep('channels', 1, !!deleteTarget);
   const [editTarget, setEditTarget] = useState<ChannelNode | null>(null);
   const [newNames, setNewNames] = useState('');
   const [draggedCid, setDraggedCid] = useState<number | null>(null);
@@ -385,13 +387,14 @@ export default function Channels() {
     }
   };
 
-  const handleDelete = () => {
+  const runDelete = (skipBackup: boolean) => {
     if (!deleteTarget) return;
-    deleteChannel.mutate(deleteTarget.cid, {
+    deleteChannel.mutate({ cid: deleteTarget.cid, skipBackup }, {
       onSuccess: () => { toast.success(t('pages.channels.channelDeleted')); setDeleteTarget(null); },
-      onError: () => toast.error(t('pages.channels.channelDeleteFailed')),
+      onError: (err) => { if (!deleteBackup.caught(err, runDelete)) toast.error(t('pages.channels.channelDeleteFailed')); },
     });
   };
+  const handleDelete = () => void deleteBackup.guard(runDelete);
 
   const handleEditOpen = (node: ChannelNode) => setEditTarget(node);
 
@@ -570,14 +573,17 @@ export default function Channels() {
       {/* Delete Confirm */}
       <ConfirmDialog
         open={!!deleteTarget}
-        onOpenChange={() => setDeleteTarget(null)}
+        onOpenChange={() => { setDeleteTarget(null); deleteBackup.reset(); }}
         title={t('pages.channels.deleteChannelTitle')}
         description={t('pages.channels.deleteChannelDescription', { name: deleteTarget?.name })}
         confirmLabel={t('common.delete')}
         destructive
         onConfirm={handleDelete}
-        loading={deleteChannel.isPending}
-      />
+        loading={deleteChannel.isPending || deleteBackup.busy}
+        confirmDisabled={deleteBackup.canSkip}
+      >
+        <BackupStep step={deleteBackup} disabled={deleteChannel.isPending} />
+      </ConfirmDialog>
     </div>
   );
 }

@@ -110,7 +110,7 @@ export function useDeleteProfiles() {
   const qc = useQueryClient();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   return useMutation({
-    mutationFn: (cldbids: number[]) => clientDatabaseApi.remove(c!, s!, cldbids),
+    mutationFn: ({ cldbids, skipBackup }: { cldbids: number[]; skipBackup?: boolean }) => clientDatabaseApi.remove(c!, s!, cldbids, skipBackup),
     onSuccess: (result) => {
       const gone = new Set(result.deleted);
       if (gone.size > 0) {

@@ -25,6 +25,7 @@ import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { assertProfilesNotProtected } from '../utils/protected-groups.js';
 import { isDryRun, planned, sendPreview } from '../utils/bulk.js';
+import { backupBeforeDeleting } from '../utils/bulk-backup.js';
 
 // Everything about the profiles a virtual server has ever seen (its client database), mounted at
 // .../clients/database. Admin-only as a whole: the rows carry each client's last IP address, which
@@ -394,6 +395,7 @@ clientDatabaseRoutes.post('/delete', async (req: Request, res: Response, next) =
       const live = new Set(rows(await client.execute(sid, 'clientlist')).map((c) => toNumber(c.client_database_id)));
       return sendPreview(res, planned(cldbids.map((id) => ({ id, name: `#${id}`, reason: live.has(id) ? 'online' as const : undefined }))));
     }
+    await backupBeforeDeleting(req, cldbids.length);
 
     const result: ClientDbDeleteResult = { deleted: [], online: [], failed: [] };
     for (const cldbid of cldbids) {

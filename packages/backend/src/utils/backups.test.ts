@@ -8,6 +8,8 @@ import { backupsToDelete } from '../db-backup.js';
 import { migrationNames } from '../db-migrate.js';
 import { encrypt } from './crypto.js';
 import {
+  BACKUP_DEFAULTS,
+  isValidBackupSettings,
   beforeUpdatePattern,
   checkBackup,
   checkKey,
@@ -44,6 +46,26 @@ test('retention: newest `keep` scheduled ones stay, older-than-max-age go, manua
   assert.deepEqual(scheduledToDelete(all, stem, 3, null, day(6)).sort(), [names[0], names[1]].sort());
   // 2 days max age at day 6 03:30: days 1-3 are older
   assert.deepEqual(scheduledToDelete(all, stem, 10, 2, day(6)).sort(), [names[0], names[1], names[2]].sort());
+});
+
+test('before-bulk backups have their own count: they never push out scheduled ones, nor the reverse', () => {
+  const scheduled = [1, 2, 3].map((d) => managedName(stem, 'scheduled', day(d)));
+  const bulk = [4, 5, 6, 7].map((d) => managedName(stem, 'before-bulk', day(d)));
+  const all = [...scheduled, ...bulk];
+  assert.ok(bulk.every((n) => managedPattern(stem).exec(n)?.[2] === 'before-bulk'));
+  // Four newer before-bulk ones leave the three scheduled ones alone...
+  assert.deepEqual(scheduledToDelete(all, stem, 3, null, day(8)), []);
+  // ...and keeping 2 before-bulk ones drops the two oldest of those only.
+  assert.deepEqual(scheduledToDelete(all, stem, 2, null, day(8), 'before-bulk').sort(), [bulk[0], bulk[1]].sort());
+});
+
+test('the backup threshold for deletions is part of valid settings, 1 to 500', () => {
+  const ok = { ...BACKUP_DEFAULTS };
+  assert.equal(ok.bulkBackupThreshold, 10);
+  assert.ok(isValidBackupSettings(ok));
+  for (const bad of [0, 501, 2.5, '10', null]) assert.ok(!isValidBackupSettings({ ...ok, bulkBackupThreshold: bad }), String(bad));
+  const { bulkBackupThreshold: _, ...without } = ok;
+  assert.ok(!isValidBackupSettings(without));
 });
 
 test('names round-trip to their time', () => {

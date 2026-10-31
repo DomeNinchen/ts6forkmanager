@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.86.0 · frontend 3.104.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.87.0 · frontend 3.105.0 · sidecar 2.1.4**
 
 ### New Features
+
+- **Backup before deletions** — Deleting a server or channel group or a channel, or at least 10 client-database profiles at once (adjustable on the Backups page), first takes a backup of the database plus a snapshot of that virtual server, kind **Before deletion**; the newest 10 are kept apart from the scheduled ones. Below the threshold the dialog shows the last backup with a snapshot of this server and a **Back up now** button. If the backup fails, nothing is deleted and the dialog offers **Delete without a backup**, which the Change Log records. Deploying that snapshot on the Miscellaneous page brings deleted groups, channels and profiles back, but it replaces the whole virtual server; bans, icons, kicks and moves get no backup step, as a snapshot cannot bring them back ([Backups](https://github.com/DomeNinchen/ts6forkmanager/wiki/Backups)). *backend 2.87.0, frontend 3.105.0* [#343](https://github.com/DomeNinchen/ts6forkmanager/pull/343)
 
 - **Preview of bulk actions** — With more than one target picked, moving, kicking, banning or describing online clients, deleting icons, and banning or deleting client-database profiles first show what would happen: how many targets will be acted on and which would be skipped, with the reason (not connected, already in that channel, protected, connected right now, nothing to ban, does not exist). The button reads **Check** until then and runs the action on the second press; changing the target channel or the ban targets checks again. A preview changes nothing and leaves no Change Log entry. Icons and profiles that do not exist are now skipped instead of failing. *backend 2.86.0, frontend 3.104.0* [#342](https://github.com/DomeNinchen/ts6forkmanager/pull/342)
 
@@ -134,6 +136,7 @@ Versions at the end of the month: **backend 2.86.0 · frontend 3.104.0 · sideca
 
 **Scripts using the API**
 
+- Deleting a server or channel group or a channel, and `clients/database/delete` from the threshold on, take a backup first and answer **409** with `code: "BACKUP_FAILED"` (nothing deleted) when it fails; `skipBackup: true` in the body deletes without one. The backup settings gain `bulkBackupThreshold` (1 to 500); a settings request without it keeps the current value. [#343](https://github.com/DomeNinchen/ts6forkmanager/pull/343)
 - The bulk routes for online clients, `icons/bulk/delete` and the client database's `ban` and `delete` take `dryRun: true` in the body: same permission and checks, nothing runs, and the answer is `{ outcomes, dryRun: true }` with `status: "ok"` meaning "would run". An icon or profile that does not exist now comes back as skipped (`not-found`) instead of failed. [#342](https://github.com/DomeNinchen/ts6forkmanager/pull/342)
 - The bulk routes for online clients (`clients/bulk/move`, `kick`, `ban`, `describe`) and `icons/bulk/delete` answer `{ outcomes: [{ id, name, status, reason?, message? }] }` instead of TeamSpeak's raw answer or `{ succeeded, failed }`, take at most 500 ids, and send one query per target (counted against the server's flood limits like any other query). [#341](https://github.com/DomeNinchen/ts6forkmanager/pull/341)
 
@@ -153,6 +156,7 @@ Versions at the end of the month: **backend 2.86.0 · frontend 3.104.0 · sideca
 
 **Backups**
 
+- Deleting a group or a channel now waits for a backup of the database plus a snapshot of that virtual server, so it takes as long as a backup does, and the space for up to 10 such backups comes on top of the scheduled ones. The account the manager connects with needs the snapshot permission (`b_virtualserver_snapshot_create`); without it every such deletion asks to go on without a backup. [#343](https://github.com/DomeNinchen/ts6forkmanager/pull/343)
 - To keep backups outside the `backend-data` volume, mount a directory into the backend container yourself (a `docker-compose.override.yml` with a bind mount or NFS share; the repository's compose files stay as they are), make it writable for uid 1000, and enter its path on the Backups page. Keep the backup passphrase somewhere else: without it an encrypted backup cannot be opened by anyone. [#337](https://github.com/DomeNinchen/ts6forkmanager/pull/337)
 - Uploading a backup goes through any reverse proxy of your own in front of the manager: its request size limit (nginx: `client_max_body_size`) has to allow the size of your backups, as for file uploads. The frontend container's own nginx lets uploads and downloads of backups through without buffering them. [#335](https://github.com/DomeNinchen/ts6forkmanager/pull/335)
 - If you have used **Back up now** or the backup schedule since updating to backend 2.78.0, update right away: the normal update restart keeps everything written so far. Take a new backup afterwards, because a backup taken after the first one since the last restart may lack recent changes. [#334](https://github.com/DomeNinchen/ts6forkmanager/pull/334)

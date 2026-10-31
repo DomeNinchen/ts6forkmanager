@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { BackupStep, useBackupStep } from '@/components/shared/BackupStep';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -76,10 +77,20 @@ export default function ServerGroups() {
     });
   };
 
-  const handleBulkDelete = async () => {
+  // Both delete dialogs back up first (R9); the parallel deletes then share that one backup.
+  const deleteBackup = useBackupStep('groups', 1, !!deleteTarget || showBulkDelete);
+  const runDelete = (skipBackup: boolean) => {
+    if (!deleteTarget) return;
+    deleteGroup.mutate({ sgid: deleteTarget.sgid, skipBackup }, {
+      onSuccess: () => { toast.success(t('pages.serverGroups.groupDeleted')); setDeleteTarget(null); setSelectedGroup(null); },
+      onError: (err) => { if (!deleteBackup.caught(err, runDelete)) toast.error(tsErrorMessage(err, t('components.bulkResult.unknownError'), t)); },
+    });
+  };
+
+  const runBulkDelete = async (skipBackup: boolean) => {
     setBulkDeleting(true);
     const targets = [...checkedIds].map((sgid) => ({ id: sgid, name: (Array.isArray(data) ? data : []).find((g: any) => Number(g.sgid) === sgid)?.name ?? `#${sgid}` }));
-    const results = await Promise.allSettled(targets.map((g) => deleteGroup.mutateAsync(g.id)));
+    const results = await Promise.allSettled(targets.map((g) => deleteGroup.mutateAsync({ sgid: g.id, skipBackup })));
     setBulkDeleting(false);
     setShowBulkDelete(false);
     reportBulk(t('pages.serverGroups.deleteSelected'), t('pages.serverGroups.bulkDeleteSuccess', { count: results.length }),
@@ -427,18 +438,33 @@ export default function ServerGroups() {
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title={t('pages.serverGroups.deleteServerGroupTitle')} description={t('pages.serverGroups.deleteGroupDescription', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} destructive onConfirm={() => { if (deleteTarget) deleteGroup.mutate(deleteTarget.sgid, { onSuccess: () => { toast.success(t('pages.serverGroups.groupDeleted')); setDeleteTarget(null); setSelectedGroup(null); } }); }} />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={() => { setDeleteTarget(null); deleteBackup.reset(); }}
+        title={t('pages.serverGroups.deleteServerGroupTitle')}
+        description={t('pages.serverGroups.deleteGroupDescription', { name: deleteTarget?.name })}
+        confirmLabel={t('common.delete')}
+        destructive
+        onConfirm={() => void deleteBackup.guard(runDelete)}
+        loading={deleteGroup.isPending || deleteBackup.busy}
+        confirmDisabled={deleteBackup.canSkip}
+      >
+        <BackupStep step={deleteBackup} disabled={deleteGroup.isPending} />
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={showBulkDelete}
-        onOpenChange={setShowBulkDelete}
+        onOpenChange={(open) => { setShowBulkDelete(open); deleteBackup.reset(); }}
         title={t('pages.serverGroups.deleteServerGroupsTitle')}
         description={t('pages.serverGroups.bulkDeleteDescription', { count: checkedIds.size })}
         confirmLabel={t('common.delete')}
         destructive
-        onConfirm={handleBulkDelete}
-        loading={bulkDeleting}
-      />
+        onConfirm={() => void deleteBackup.guard((skip) => void runBulkDelete(skip))}
+        loading={bulkDeleting || deleteBackup.busy}
+        confirmDisabled={deleteBackup.canSkip}
+      >
+        <BackupStep step={deleteBackup} disabled={bulkDeleting} />
+      </ConfirmDialog>
     </div>
   );
 }

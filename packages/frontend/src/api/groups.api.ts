@@ -11,8 +11,9 @@ export const groupsApi = {
     api.get(sgBase(configId, sid)).then((r) => r.data),
   createServerGroup: (configId: number, sid: number, name: string) =>
     api.post(sgBase(configId, sid), { name }).then((r) => r.data),
-  deleteServerGroup: (configId: number, sid: number, sgid: number) =>
-    api.delete(`${sgBase(configId, sid)}/${sgid}`),
+  /** `skipBackup`: go on after the backup before it failed (R9). */
+  deleteServerGroup: (configId: number, sid: number, sgid: number, skipBackup = false) =>
+    api.delete(`${sgBase(configId, sid)}/${sgid}`, skipBackup ? { data: { skipBackup } } : undefined),
   renameServerGroup: (configId: number, sid: number, sgid: number, name: string) =>
     api.put(`${sgBase(configId, sid)}/${sgid}`, { name }).then((r) => r.data),
   serverGroupMembers: (configId: number, sid: number, sgid: number) =>
@@ -33,8 +34,8 @@ export const groupsApi = {
     api.get(cgBase(configId, sid)).then((r) => r.data),
   createChannelGroup: (configId: number, sid: number, name: string) =>
     api.post(cgBase(configId, sid), { name }).then((r) => r.data),
-  deleteChannelGroup: (configId: number, sid: number, cgid: number) =>
-    api.delete(`${cgBase(configId, sid)}/${cgid}`),
+  deleteChannelGroup: (configId: number, sid: number, cgid: number, skipBackup = false) =>
+    api.delete(`${cgBase(configId, sid)}/${cgid}`, skipBackup ? { data: { skipBackup } } : undefined),
   channelGroupPerms: (configId: number, sid: number, cgid: number) =>
     api.get(`${cgBase(configId, sid)}/${cgid}/permissions`).then((r) => r.data),
   channelGroupsByClient: (configId: number, sid: number, cldbid: number) =>
