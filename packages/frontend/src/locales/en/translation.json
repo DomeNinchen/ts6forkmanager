@@ -586,7 +586,8 @@
       "beforeUpdateNote": "\"Before update\" copies are taken by the container itself before it applies database migrations. It keeps DB_BACKUP_KEEP of them; here they can be tested and downloaded, but not deleted.",
       "lastFailed": {
         "manual": "The backup from {{time}} failed.",
-        "scheduled": "The scheduled backup from {{time}} failed."
+        "scheduled": "The scheduled backup from {{time}} failed.",
+        "before-bulk": "The backup before a deletion at {{time}} failed."
       },
       "now": {
         "title": "Back up now",
@@ -644,6 +645,13 @@
         "lastFailed": "The restore on {{time}} was not applied.",
         "beforeRestoreSaved": "The state before it is kept as a \"Before restore\" backup: {{name}}"
       },
+      "bulk": {
+        "title": "Backup before deletions",
+        "description": "Before someone deletes a server or channel group, a channel or many client profiles, the manager takes a backup: the database plus a snapshot of that virtual server, even when snapshots are switched off above. The newest 10 are kept, apart from the scheduled ones. A snapshot does not bring back bans, icons, kicks or moves, so those have no backup step.",
+        "thresholdLabel": "Back up from this many profiles at once",
+        "thresholdHint": "{{min}} to {{max}}. Below it the dialog shows the last backup and \"Back up now\".",
+        "saved": "Threshold saved"
+      },
       "upload": {
         "title": "Upload a backup",
         "description": "A ZIP downloaded from this page (encrypted ones too, .zip.enc), or a .db file. It then appears in the list as \"Uploaded\" and can be tested and restored. Encrypted files are opened with the passphrase set here.",
@@ -689,6 +697,7 @@
         "uploaded": "Uploaded",
         "external": "External",
         "before-restore": "Before restore",
+        "before-bulk": "Before deletion",
         "before-update": "Before update"
       },
       "actions": {
@@ -3553,6 +3562,16 @@
     },
     "confirmDialog": {
       "processing": "Processing..."
+    },
+    "backupStep": {
+      "auto": "The manager takes a backup first: the database plus a snapshot of this virtual server.",
+      "last": "Last backup with a snapshot of this server: {{time}}.",
+      "none": "There is no backup with a snapshot of this server yet.",
+      "scope": "Deployed on the Miscellaneous page, the snapshot brings deleted groups, channels and profiles back, but it replaces the whole virtual server (channels get new ids). It is not an undo button.",
+      "now": "Back up now",
+      "done": "Backup taken",
+      "failed": "The backup failed: {{reason}}",
+      "skip": "Delete without a backup"
     },
     "bulkResult": {
       "summary": "{{ok}} of {{total}} done.",

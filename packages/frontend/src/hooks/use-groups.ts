@@ -33,7 +33,7 @@ export function useDeleteChannelGroup() {
   const qc = useQueryClient();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   return useMutation({
-    mutationFn: (cgid: number) => groupsApi.deleteChannelGroup(c!, s!, cgid),
+    mutationFn: ({ cgid, skipBackup }: { cgid: number; skipBackup?: boolean }) => groupsApi.deleteChannelGroup(c!, s!, cgid, skipBackup),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['channel-groups'] }),
   });
 }
@@ -60,7 +60,7 @@ export function useDeleteServerGroup() {
   const qc = useQueryClient();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   return useMutation({
-    mutationFn: (sgid: number) => groupsApi.deleteServerGroup(c!, s!, sgid),
+    mutationFn: ({ sgid, skipBackup }: { sgid: number; skipBackup?: boolean }) => groupsApi.deleteServerGroup(c!, s!, sgid, skipBackup),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['server-groups'] }),
   });
 }

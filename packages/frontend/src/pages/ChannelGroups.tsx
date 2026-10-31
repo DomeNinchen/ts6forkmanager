@@ -18,6 +18,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { BackupStep, useBackupStep } from '@/components/shared/BackupStep';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -58,10 +59,12 @@ export default function ChannelGroups() {
     });
   };
 
-  const handleBulkDelete = async () => {
+  // Backed up first (R9); the parallel deletes then share that one backup.
+  const deleteBackup = useBackupStep('groups', 1, showBulkDelete);
+  const runBulkDelete = async (skipBackup: boolean) => {
     setBulkDeleting(true);
     const targets = [...checkedIds].map((cgid) => ({ id: cgid, name: (Array.isArray(data) ? data : []).find((g: any) => Number(g.cgid) === cgid)?.name ?? `#${cgid}` }));
-    const results = await Promise.allSettled(targets.map((g) => deleteGroup.mutateAsync(g.id)));
+    const results = await Promise.allSettled(targets.map((g) => deleteGroup.mutateAsync({ cgid: g.id, skipBackup })));
     setBulkDeleting(false);
     setShowBulkDelete(false);
     reportBulk(t('pages.channelGroups.deleteSelected'), t('pages.channelGroups.bulkDeleteSuccess', { count: results.length }),
@@ -493,14 +496,17 @@ export default function ChannelGroups() {
 
       <ConfirmDialog
         open={showBulkDelete}
-        onOpenChange={setShowBulkDelete}
+        onOpenChange={(open) => { setShowBulkDelete(open); deleteBackup.reset(); }}
         title={t('pages.channelGroups.deleteChannelGroupsTitle')}
         description={t('pages.channelGroups.bulkDeleteDescription', { count: checkedIds.size })}
         confirmLabel={t('common.delete')}
         destructive
-        onConfirm={handleBulkDelete}
-        loading={bulkDeleting}
-      />
+        onConfirm={() => void deleteBackup.guard((skip) => void runBulkDelete(skip))}
+        loading={bulkDeleting || deleteBackup.busy}
+        confirmDisabled={deleteBackup.canSkip}
+      >
+        <BackupStep step={deleteBackup} disabled={bulkDeleting} />
+      </ConfirmDialog>
     </div>
   );
 }

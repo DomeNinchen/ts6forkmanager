@@ -11,6 +11,7 @@ import { authRoutes } from './routes/auth.routes.js';
 import { oidcAuthRoutes } from './routes/oidc-auth.routes.js';
 import { serverRoutes } from './routes/servers.routes.js';
 import { virtualServerRoutes } from './routes/virtual-servers.routes.js';
+import { bulkBackupRoutes } from './routes/bulk-backup.routes.js';
 import { channelRoutes } from './routes/channels.routes.js';
 import { clientRoutes } from './routes/clients.routes.js';
 import { serverGroupRoutes } from './routes/server-groups.routes.js';
@@ -203,6 +204,12 @@ export function createApp(): Express {
     { method: 'POST', path: '/', permission: 'bans.manage' },
     { method: 'DELETE', path: '/', permission: 'bans.manage' },
     { method: 'DELETE', path: '/:banid', permission: 'bans.manage' },
+  ]);
+  // A deletion dialog's backup step (R9): whoever may delete may see the last backup and take a before-bulk one.
+  serverScoped('vs/:sid/bulk-backup', bulkBackupRoutes, [
+    { method: '*', path: '/groups', permission: 'groups.edit' },
+    { method: '*', path: '/channels', permission: 'channels.delete' },
+    { method: '*', path: '/profiles', permission: 'clients.database' },
   ]);
   serverScoped('vs/:sid/tokens', tokenRoutes, [{ method: '*', path: '/*', permission: 'tokens.manage' }]);
   serverScoped('vs/:sid/files', fileRoutes, [{ method: '*', path: '/*', permission: 'files.manage' }]);

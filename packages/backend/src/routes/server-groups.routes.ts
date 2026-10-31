@@ -3,6 +3,7 @@ import { requirePermission, requireRole } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { AppError } from '../middleware/error-handler.js';
 import { protectedGroupIds, targetIds } from '../utils/protected-groups.js';
+import { backupBeforeDeleting } from '../utils/bulk-backup.js';
 
 export const serverGroupRoutes: Router = Router({ mergeParams: true });
 
@@ -54,6 +55,7 @@ serverGroupRoutes.put('/:sgid', requirePermission('groups.edit'), async (req: Re
 
 serverGroupRoutes.delete('/:sgid', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try {
+    await backupBeforeDeleting(req);
     const result = await getClient(req).execute(getSid(req), 'servergroupdel', { sgid: String(req.params.sgid), force: 1 });
     // A deleted group protects nobody; drop its mark so the list stays what the server has.
     const sgid = Number(req.params.sgid);

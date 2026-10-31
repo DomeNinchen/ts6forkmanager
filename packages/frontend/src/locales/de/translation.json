@@ -586,7 +586,8 @@
       "beforeUpdateNote": "„Vor Update“-Kopien legt der Container selbst an, bevor er Datenbank-Migrationen anwendet. Er behält davon DB_BACKUP_KEEP Stück; hier lassen sie sich prüfen und herunterladen, aber nicht löschen.",
       "lastFailed": {
         "manual": "Die Sicherung vom {{time}} ist fehlgeschlagen.",
-        "scheduled": "Die geplante Sicherung vom {{time}} ist fehlgeschlagen."
+        "scheduled": "Die geplante Sicherung vom {{time}} ist fehlgeschlagen.",
+        "before-bulk": "Die Sicherung vor einer Löschung um {{time}} ist fehlgeschlagen."
       },
       "now": {
         "title": "Jetzt sichern",
@@ -644,6 +645,13 @@
         "lastFailed": "Die Wiederherstellung vom {{time}} wurde nicht eingespielt.",
         "beforeRestoreSaved": "Der Stand davor liegt als Sicherung „Vor Wiederherstellung“ vor: {{name}}"
       },
+      "bulk": {
+        "title": "Sicherung vor Löschungen",
+        "description": "Bevor jemand eine Server- oder Kanalgruppe, einen Kanal oder viele Clientprofile löscht, legt der Manager eine Sicherung an: die Datenbank und einen Snapshot dieses virtuellen Servers, auch wenn die Snapshots oben ausgeschaltet sind. Die neuesten 10 bleiben, getrennt von den geplanten. Bans, Icons, Kicks und Verschiebungen holt ein Snapshot nicht zurück; dort gibt es keinen Sicherungsschritt.",
+        "thresholdLabel": "Sichern ab so vielen Profilen auf einmal",
+        "thresholdHint": "{{min}} bis {{max}}. Darunter zeigt der Dialog die letzte Sicherung und „Jetzt sichern“.",
+        "saved": "Schwelle gespeichert"
+      },
       "upload": {
         "title": "Sicherung hochladen",
         "description": "Eine von dieser Seite heruntergeladene ZIP-Datei (auch verschlüsselt, .zip.enc) oder eine .db-Datei. Sie erscheint danach in der Liste als „Hochgeladen“ und lässt sich testen und wiederherstellen. Verschlüsselte Dateien öffnet die hier eingestellte Passphrase.",
@@ -689,6 +697,7 @@
         "uploaded": "Hochgeladen",
         "external": "Extern",
         "before-restore": "Vor Wiederherstellung",
+        "before-bulk": "Vor Löschung",
         "before-update": "Vor Update"
       },
       "actions": {
@@ -3553,6 +3562,16 @@
     },
     "confirmDialog": {
       "processing": "Wird verarbeitet..."
+    },
+    "backupStep": {
+      "auto": "Vorher legt der Manager eine Sicherung an: die Datenbank und einen Snapshot dieses virtuellen Servers.",
+      "last": "Letzte Sicherung mit einem Snapshot dieses Servers: {{time}}.",
+      "none": "Es gibt noch keine Sicherung mit einem Snapshot dieses Servers.",
+      "scope": "Eingespielt auf der Seite „Sonstiges“ bringt der Snapshot gelöschte Gruppen, Kanäle und Profile zurück, ersetzt dabei aber den ganzen virtuellen Server (Kanäle bekommen neue IDs). Kein Rückgängig-Knopf.",
+      "now": "Jetzt sichern",
+      "done": "Sicherung angelegt",
+      "failed": "Die Sicherung ist fehlgeschlagen: {{reason}}",
+      "skip": "Ohne Sicherung löschen"
     },
     "bulkResult": {
       "summary": "{{ok}} von {{total}} erledigt.",

@@ -13,6 +13,8 @@ import {
   BACKUP_MAX_AGE_MIN,
   BACKUP_UPLOAD_MB_MAX,
   BACKUP_UPLOAD_MB_MIN,
+  BULK_THRESHOLD_MAX,
+  BULK_THRESHOLD_MIN,
   backupDownloadLinks,
   cancelRestore,
   checkBackup,
@@ -68,6 +70,7 @@ async function overview(req: Request): Promise<BackupOverview> {
     bounds: {
       keepMin: BACKUP_KEEP_MIN, keepMax: BACKUP_KEEP_MAX, maxAgeMin: BACKUP_MAX_AGE_MIN, maxAgeMax: BACKUP_MAX_AGE_MAX,
       uploadMbMin: BACKUP_UPLOAD_MB_MIN, uploadMbMax: BACKUP_UPLOAD_MB_MAX,
+      bulkThresholdMin: BULK_THRESHOLD_MIN, bulkThresholdMax: BULK_THRESHOLD_MAX,
     },
     pendingRestore: pendingRestoreView(),
     lastRestore: lastRestoreView(),
@@ -171,15 +174,19 @@ backupRoutes.post('/', async (req: Request, res: Response, next) => {
 // PUT /api/backups/settings - schedule and retention
 backupRoutes.put('/settings', async (req: Request, res: Response, next) => {
   try {
-    if (!isValidBackupSettings(req.body)) {
-      throw new AppError(400, `Invalid settings: time "HH:MM", at least one day 0-6, keep ${BACKUP_KEEP_MIN}-${BACKUP_KEEP_MAX}, maxAgeDays null or ${BACKUP_MAX_AGE_MIN}-${BACKUP_MAX_AGE_MAX}, maxUploadMb ${BACKUP_UPLOAD_MB_MIN}-${BACKUP_UPLOAD_MB_MAX}`);
+    // A script that sends the settings as they were before the threshold existed keeps the current one.
+    const body = req.body && typeof req.body === 'object' && !('bulkBackupThreshold' in req.body)
+      ? { ...req.body, bulkBackupThreshold: (await getBackupSettings(req.app.locals.prisma)).bulkBackupThreshold }
+      : req.body;
+    if (!isValidBackupSettings(body)) {
+      throw new AppError(400, `Invalid settings: time "HH:MM", at least one day 0-6, keep ${BACKUP_KEEP_MIN}-${BACKUP_KEEP_MAX}, maxAgeDays null or ${BACKUP_MAX_AGE_MIN}-${BACKUP_MAX_AGE_MAX}, maxUploadMb ${BACKUP_UPLOAD_MB_MIN}-${BACKUP_UPLOAD_MB_MAX}, bulkBackupThreshold ${BULK_THRESHOLD_MIN}-${BULK_THRESHOLD_MAX}`);
     }
-    if (req.body.targetDir !== null) {
-      const problem = checkTargetDir(req.body.targetDir);
+    if (body.targetDir !== null) {
+      const problem = checkTargetDir(body.targetDir);
       if (problem) throw new AppError(400, 'This directory cannot hold the backups', problem);
     }
-    await setBackupSettings(req.app.locals.prisma, req.body);
-    console.log(`[Backups] Settings updated by ${req.user?.username}: schedule ${req.body.scheduleEnabled ? `on at ${req.body.time}` : 'off'}, keep ${req.body.keep}, upload limit ${req.body.maxUploadMb} MB, TeamSpeak snapshots ${req.body.includeTsSnapshots ? 'on' : 'off'}, target ${req.body.targetDir ?? 'none'}`);
+    await setBackupSettings(req.app.locals.prisma, body);
+    console.log(`[Backups] Settings updated by ${req.user?.username}: schedule ${body.scheduleEnabled ? `on at ${body.time}` : 'off'}, keep ${body.keep}, upload limit ${body.maxUploadMb} MB, TeamSpeak snapshots ${body.includeTsSnapshots ? 'on' : 'off'}, target ${body.targetDir ?? 'none'}, backup before deleting ${body.bulkBackupThreshold}+ profiles`);
     res.json(await overview(req));
   } catch (err) { next(err); }
 });

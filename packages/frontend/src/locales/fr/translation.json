@@ -234,7 +234,8 @@
       "beforeUpdateNote": "Les copies « Avant mise à jour » sont faites par le conteneur lui-même avant d'appliquer des migrations de la base. Il en garde DB_BACKUP_KEEP ; ici, on peut les tester et les télécharger, mais pas les supprimer.",
       "lastFailed": {
         "manual": "La sauvegarde du {{time}} a échoué.",
-        "scheduled": "La sauvegarde planifiée du {{time}} a échoué."
+        "scheduled": "La sauvegarde planifiée du {{time}} a échoué.",
+        "before-bulk": "La sauvegarde avant une suppression de {{time}} a échoué."
       },
       "now": {
         "title": "Sauvegarder maintenant",
@@ -292,6 +293,13 @@
         "lastFailed": "La restauration du {{time}} n'a pas été appliquée.",
         "beforeRestoreSaved": "L'état d'avant est conservé comme sauvegarde « Avant restauration » : {{name}}"
       },
+      "bulk": {
+        "title": "Sauvegarde avant les suppressions",
+        "description": "Avant qu'un groupe de serveur ou de canal, un canal ou de nombreux profils clients soient supprimés, le gestionnaire fait une sauvegarde : la base de données et un snapshot de ce serveur virtuel, même si les snapshots sont désactivés plus haut. Les 10 plus récentes sont conservées, à part des sauvegardes planifiées. Un snapshot ne rétablit ni bannissements, ni icônes, ni expulsions, ni déplacements ; ces actions n'ont donc pas d'étape de sauvegarde.",
+        "thresholdLabel": "Sauvegarder à partir de ce nombre de profils à la fois",
+        "thresholdHint": "{{min}} à {{max}}. En dessous, la boîte de dialogue affiche la dernière sauvegarde et « Sauvegarder maintenant ».",
+        "saved": "Seuil enregistré"
+      },
       "upload": {
         "title": "Téléverser une sauvegarde",
         "description": "Un ZIP téléchargé depuis cette page (chiffré aussi, .zip.enc), ou un fichier .db. Il apparaît ensuite dans la liste comme « Téléversée » et peut être testé et restauré. Les fichiers chiffrés s'ouvrent avec la phrase secrète définie ici.",
@@ -337,6 +345,7 @@
         "uploaded": "Téléversée",
         "external": "Externe",
         "before-restore": "Avant restauration",
+        "before-bulk": "Avant suppression",
         "before-update": "Avant mise à jour"
       },
       "actions": {
@@ -2476,6 +2485,16 @@
     },
     "confirmDialog": {
       "processing": "Traitement..."
+    },
+    "backupStep": {
+      "auto": "Le gestionnaire fait d'abord une sauvegarde : la base de données et un snapshot de ce serveur virtuel.",
+      "last": "Dernière sauvegarde avec un snapshot de ce serveur : {{time}}.",
+      "none": "Il n'existe encore aucune sauvegarde avec un snapshot de ce serveur.",
+      "scope": "Déployé sur la page Divers, le snapshot rétablit les groupes, canaux et profils supprimés, mais il remplace tout le serveur virtuel (les canaux reçoivent de nouveaux identifiants). Ce n'est pas un bouton Annuler.",
+      "now": "Sauvegarder maintenant",
+      "done": "Sauvegarde effectuée",
+      "failed": "La sauvegarde a échoué : {{reason}}",
+      "skip": "Supprimer sans sauvegarde"
     },
     "bulkResult": {
       "summary": "{{ok}} sur {{total}} effectué(s).",

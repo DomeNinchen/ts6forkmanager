@@ -25,7 +25,7 @@ export function useDeleteChannel() {
   const qc = useQueryClient();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   return useMutation({
-    mutationFn: (cid: number) => channelsApi.delete(c!, s!, cid),
+    mutationFn: ({ cid, skipBackup }: { cid: number; skipBackup?: boolean }) => channelsApi.delete(c!, s!, cid, skipBackup),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['channels'] }),
   });
 }
