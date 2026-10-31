@@ -1,4 +1,4 @@
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { BULK_MAX, type BulkOutcome, type BulkResult, type BulkSkipReason } from '@ts6/common';
 import { AppError } from '../middleware/error-handler.js';
 import { targetIds } from './protected-groups.js';
@@ -19,13 +19,25 @@ export function bulkIds(values: unknown, label: string): number[] {
   return [...new Set(targetIds(values, label))];
 }
 
+type BulkTarget = { id: number; name: string; reason?: BulkSkipReason };
+
+/** What would happen: a target with a skip reason is skipped, every other one would run. */
+export function planned(targets: BulkTarget[]): BulkOutcome[] {
+  return targets.map(({ id, name, reason }) => reason ? { id, name, status: 'skipped', reason } : { id, name, status: 'ok' });
+}
+
+/** The request only asks what would happen (the preview): same route, same permission and checks, nothing runs. */
+export const isDryRun = (req: Request): boolean => req.body?.dryRun === true;
+
+/** Answers a preview. Marked so the change log records nothing: nothing changed. */
+export function sendPreview(res: Response, outcomes: BulkOutcome[]): void {
+  res.locals.dryRun = true;
+  res.json({ outcomes, dryRun: true } satisfies BulkResult);
+}
+
 /** Runs `run` once per target that has no skip reason and reports every target's own outcome, in the given order. */
-export async function runPerTarget(
-  targets: Array<{ id: number; name: string; reason?: BulkSkipReason }>,
-  run: (id: number) => Promise<unknown>,
-): Promise<BulkOutcome[]> {
-  const outcomes: BulkOutcome[] = targets.map(({ id, name, reason }) =>
-    reason ? { id, name, status: 'skipped', reason } : { id, name, status: 'ok' });
+export async function runPerTarget(targets: BulkTarget[], run: (id: number) => Promise<unknown>): Promise<BulkOutcome[]> {
+  const outcomes = planned(targets);
   const todo = outcomes.filter((o) => o.status === 'ok');
   let next = 0;
   const worker = async () => {

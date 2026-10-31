@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { clientDbDeleteToBulk, type ClientDbProfile } from '@ts6/common';
-import { reportBulk } from '@/components/shared/BulkResultDialog';
+import { BulkPreview, reportBulk, useBulkPreview } from '@/components/shared/BulkResultDialog';
+import { clientDatabaseApi } from '@/api/client-database.api';
+import { useServerStore } from '@/stores/server.store';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -22,11 +24,21 @@ interface ClientDbDeleteDialogProps {
 export function ClientDbDeleteDialog({ profiles, onlineIds, onClose, onDone }: ClientDbDeleteDialogProps) {
   const { t } = useTranslation();
   const remove = useDeleteProfiles();
+  const { selectedConfigId, selectedSid } = useServerStore();
 
   const deletable = profiles.filter((p) => !onlineIds.has(p.cldbid));
   const connected = profiles.length - deletable.length;
+  // Several profiles: the first press shows what would happen (R9), the second deletes.
+  const preview = useBulkPreview();
+  const needsPreview = deletable.length > 1 && !preview.outcomes;
+  const nameOf = (o: { id: number; name: string }) => profiles.find((p) => p.cldbid === o.id)?.nickname || o.name;
 
   const submit = () => {
+    if (needsPreview) {
+      preview.ask(() => clientDatabaseApi.removePreview(selectedConfigId!, selectedSid!, deletable.map((p) => p.cldbid)),
+        (err) => toast.error(tsErrorMessage(err, t('pages.clientDatabase.delete.failed'), t)), nameOf);
+      return;
+    }
     remove.mutate(deletable.map((p) => p.cldbid), {
       onSuccess: (result) => {
         const name = (cldbid: number) => profiles.find((p) => p.cldbid === cldbid)?.nickname || `#${cldbid}`;
@@ -56,13 +68,15 @@ export function ClientDbDeleteDialog({ profiles, onlineIds, onClose, onDone }: C
               {t('pages.clientDatabase.delete.connectedSkipped', { count: connected })}
             </p>
           )}
+          {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={remove.isPending}>{t('common.cancel')}</Button>
-          <Button variant="destructive" onClick={submit} disabled={deletable.length === 0 || remove.isPending}>
+          <Button variant="destructive" onClick={submit} disabled={deletable.length === 0 || remove.isPending || preview.loading || preview.empty}>
             <Trash2 className="h-4 w-4 mr-1" />
-            {remove.isPending ? t('components.confirmDialog.processing') : t('pages.clientDatabase.delete.confirm', { count: deletable.length })}
+            {remove.isPending || preview.loading ? t('components.confirmDialog.processing')
+              : needsPreview ? t('components.bulkResult.preview.check') : t('pages.clientDatabase.delete.confirm', { count: deletable.length })}
           </Button>
         </DialogFooter>
       </DialogContent>

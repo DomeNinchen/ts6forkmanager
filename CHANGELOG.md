@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.85.0 · frontend 3.103.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.86.0 · frontend 3.104.0 · sidecar 2.1.4**
 
 ### New Features
+
+- **Preview of bulk actions** — With more than one target picked, moving, kicking, banning or describing online clients, deleting icons, and banning or deleting client-database profiles first show what would happen: how many targets will be acted on and which would be skipped, with the reason (not connected, already in that channel, protected, connected right now, nothing to ban, does not exist). The button reads **Check** until then and runs the action on the second press; changing the target channel or the ban targets checks again. A preview changes nothing and leaves no Change Log entry. Icons and profiles that do not exist are now skipped instead of failing. *backend 2.86.0, frontend 3.104.0* [#342](https://github.com/DomeNinchen/ts6forkmanager/pull/342)
 
 - **Server access per virtual server** — In Settings → Users → Server access, every virtual server of a connection is ticked one by one; a non-admin account only reaches the ticked ones, including their bot flows, the music bots on their voice ports and the matching live events, and the server selector offers only those. A virtual server added later is not covered until ticked. A connection without WebQuery has no list of virtual servers and is granted as a whole ([Users and Roles](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)). *backend 2.84.0, frontend 3.102.0* [#340](https://github.com/DomeNinchen/ts6forkmanager/pull/340)
 - **Protected server groups** — On the Server Groups page an admin marks groups as protected (a shield in the list). Moderators and server admins cannot kick, ban or move a client in such a group - singly, in a selection or from the client database - and get a message naming the client; poking and messaging stay possible. The user list's role preview says so and warns about connections where no group is protected yet ([Users and Roles](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)). *backend 2.83.0, frontend 3.101.0* [#339](https://github.com/DomeNinchen/ts6forkmanager/pull/339)
@@ -132,6 +134,7 @@ Versions at the end of the month: **backend 2.85.0 · frontend 3.103.0 · sideca
 
 **Scripts using the API**
 
+- The bulk routes for online clients, `icons/bulk/delete` and the client database's `ban` and `delete` take `dryRun: true` in the body: same permission and checks, nothing runs, and the answer is `{ outcomes, dryRun: true }` with `status: "ok"` meaning "would run". An icon or profile that does not exist now comes back as skipped (`not-found`) instead of failed. [#342](https://github.com/DomeNinchen/ts6forkmanager/pull/342)
 - The bulk routes for online clients (`clients/bulk/move`, `kick`, `ban`, `describe`) and `icons/bulk/delete` answer `{ outcomes: [{ id, name, status, reason?, message? }] }` instead of TeamSpeak's raw answer or `{ succeeded, failed }`, take at most 500 ids, and send one query per target (counted against the server's flood limits like any other query). [#341](https://github.com/DomeNinchen/ts6forkmanager/pull/341)
 
 **Users & roles**

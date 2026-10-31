@@ -2455,9 +2455,16 @@
         "not-connected": "N'est plus connecté",
         "already-there": "Déjà dans ce canal",
         "online": "Connecté en ce moment - TeamSpeak ne supprime pas le profil",
-        "no-value": "Rien à bannir (p. ex. aucune IP connue)"
+        "no-value": "Rien à bannir (p. ex. aucune IP connue)",
+        "not-found": "N'existe pas (ou plus)"
       },
-      "unknownError": "Erreur inconnue"
+      "unknownError": "Erreur inconnue",
+      "preview": {
+        "summary": "{{ok}} sur {{total}} seront effectué(s).",
+        "nothing": "Rien à faire : toutes les cibles sélectionnées seraient ignorées.",
+        "skip": "Sera ignoré",
+        "check": "Vérifier"
+      }
     },
     "dataTable": {
       "searchPlaceholder": "Recherche...",

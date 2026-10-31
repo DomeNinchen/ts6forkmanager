@@ -10,7 +10,7 @@ export function clientDbBanToBulk(outcomes: ClientDbBanOutcome[]): BulkOutcome[]
     id: o.cldbid,
     name: `${o.nickname || `#${o.cldbid}`} (${o.target})`,
     ...(o.status === 'created' ? { status: 'ok' as const }
-      : o.status === 'skipped' ? { status: 'skipped' as const, reason: 'no-value' as const }
+      : o.status === 'skipped' ? { status: 'skipped' as const, reason: o.message === 'not-found' ? 'not-found' as const : 'no-value' as const }
       : { status: 'failed' as const, message: o.message }),
   }));
 }

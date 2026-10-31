@@ -20,7 +20,8 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatUptime } from '@/lib/utils';
 import { tsErrorMessage } from '@/lib/ts-errors';
-import { reportBulk } from '@/components/shared/BulkResultDialog';
+import { BulkPreview, reportBulk, useBulkPreview } from '@/components/shared/BulkResultDialog';
+import { clientsApi } from '@/api/clients.api';
 import type { BulkOutcome } from '@ts6/common';
 import { Users, MoreHorizontal, LogOut, Ban, MessageSquare, Zap, ArrowRightLeft, Pencil, X } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
@@ -62,16 +63,27 @@ export default function Clients() {
   const selectedClids = selected.map((c) => Number(c.clid));
   // The dialog's own title names the action in the result; the success text counts what really went through.
   // A client that left meanwhile comes back as "#clid"; the selection still knows its nickname.
+  const nickOf = (o: BulkOutcome) => String(selected.find((c) => Number(c.clid) === o.id)?.client_nickname ?? o.name);
   const reportOutcomes = (titleKey: string, okKey: string, outcomes: BulkOutcome[]) => {
-    const nick = new Map(selected.map((c) => [Number(c.clid), String(c.client_nickname)]));
     reportBulk(t(`pages.clients.${titleKey}`, { count: outcomes.length }), t(`pages.clients.${okKey}`, { count: outcomes.length }),
-      outcomes.map((o) => ({ ...o, name: nick.get(o.id) ?? o.name })));
+      outcomes.map((o) => ({ ...o, name: nickOf(o) })));
   };
 
   // Translates a refusal for a protected target (and known TeamSpeak errors) into the user's language.
   const actionError = (err: any, fallback: string): string => tsErrorMessage(err, fallback, t);
 
+  // More than one client: the first press shows what would happen (R9), the second runs it.
+  const preview = useBulkPreview();
+  const needsPreview = selected.length > 1 && !preview.outcomes;
+  const confirmBulk = (action: 'move' | 'kick' | 'ban' | 'describe', body: object, failKey: string, run: () => void) => {
+    if (!needsPreview) return run();
+    preview.ask(() => clientsApi.bulkPreview(selectedConfigId!, selectedSid!, action, body),
+      (err) => toast.error(actionError(err, t(`pages.clients.${failKey}`))), nickOf);
+  };
+  const confirmLabel = (label: React.ReactNode) => (needsPreview ? t('components.bulkResult.preview.check') : label);
+
   const closeBulkDialog = () => {
+    preview.reset();
     setBulkDialog(null);
     setBulkTargetChannel('');
     setBulkReason('');
@@ -250,23 +262,25 @@ export default function Clients() {
           </DialogHeader>
           <div>
             <Label className="text-xs">{t('pages.clients.targetChannel')}</Label>
-            <Select value={bulkTargetChannel} onValueChange={setBulkTargetChannel}>
+            <Select value={bulkTargetChannel} onValueChange={(v) => { setBulkTargetChannel(v); preview.reset(); }}>
               <SelectTrigger className="mt-1"><SelectValue placeholder={t('pages.clients.chooseChannel')} /></SelectTrigger>
               <SelectContent>
                 {channels.map((ch: any) => <SelectItem key={ch.cid} value={String(ch.cid)}>{ch.channel_name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
+          {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
           <DialogFooter>
             <Button variant="outline" onClick={closeBulkDialog}>{t('common.cancel')}</Button>
             <Button
-              disabled={!bulkTargetChannel || bulkMove.isPending}
-              onClick={() => bulkMove.mutate({ clids: selectedClids, cid: Number(bulkTargetChannel) }, {
-                onSuccess: ({ outcomes }) => { reportOutcomes('moveCount', 'movedCount', outcomes); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(actionError(err, t('pages.clients.moveFailed'))),
-              })}
+              disabled={!bulkTargetChannel || bulkMove.isPending || preview.loading || preview.empty}
+              onClick={() => confirmBulk('move', { clids: selectedClids, cid: Number(bulkTargetChannel) }, 'moveFailed', () =>
+                bulkMove.mutate({ clids: selectedClids, cid: Number(bulkTargetChannel) }, {
+                  onSuccess: ({ outcomes }) => { reportOutcomes('moveCount', 'movedCount', outcomes); setSelected([]); closeBulkDialog(); },
+                  onError: (err: any) => toast.error(actionError(err, t('pages.clients.moveFailed'))),
+                }))}
             >
-              <ArrowRightLeft className="h-4 w-4 mr-1" /> {t('pages.clients.move')}
+              <ArrowRightLeft className="h-4 w-4 mr-1" /> {confirmLabel(t('pages.clients.move'))}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -282,16 +296,18 @@ export default function Clients() {
             <Label className="text-xs">{t('pages.clients.reasonOptional')}</Label>
             <Input value={bulkReason} onChange={(e) => setBulkReason(e.target.value)} placeholder={t('pages.clients.kickedByAdmin')} className="mt-1" autoFocus />
           </div>
+          {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
           <DialogFooter>
             <Button variant="outline" onClick={closeBulkDialog}>{t('common.cancel')}</Button>
             <Button
-              disabled={bulkKick.isPending}
-              onClick={() => bulkKick.mutate({ clids: selectedClids, reasonid: 5, reasonmsg: bulkReason || undefined }, {
-                onSuccess: ({ outcomes }) => { reportOutcomes('kickCount', 'kickedCount', outcomes); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(actionError(err, t('pages.clients.kickFailed'))),
-              })}
+              disabled={bulkKick.isPending || preview.loading || preview.empty}
+              onClick={() => confirmBulk('kick', { clids: selectedClids }, 'kickFailed', () =>
+                bulkKick.mutate({ clids: selectedClids, reasonid: 5, reasonmsg: bulkReason || undefined }, {
+                  onSuccess: ({ outcomes }) => { reportOutcomes('kickCount', 'kickedCount', outcomes); setSelected([]); closeBulkDialog(); },
+                  onError: (err: any) => toast.error(actionError(err, t('pages.clients.kickFailed'))),
+                }))}
             >
-              <LogOut className="h-4 w-4 mr-1" /> {t('pages.clients.kickFromServer')}
+              <LogOut className="h-4 w-4 mr-1" /> {confirmLabel(t('pages.clients.kickFromServer'))}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -313,17 +329,19 @@ export default function Clients() {
               <Input value={bulkReason} onChange={(e) => setBulkReason(e.target.value)} placeholder={t('pages.clients.bannedByAdmin')} className="mt-1" />
             </div>
           </div>
+          {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
           <DialogFooter>
             <Button variant="outline" onClick={closeBulkDialog}>{t('common.cancel')}</Button>
             <Button
               variant="destructive"
-              disabled={bulkBan.isPending}
-              onClick={() => bulkBan.mutate({ clids: selectedClids, time: Number(bulkBanTime) || 0, banreason: bulkReason || undefined }, {
-                onSuccess: ({ outcomes }) => { reportOutcomes('banCount', 'bannedCount', outcomes); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(actionError(err, t('pages.clients.banFailed'))),
-              })}
+              disabled={bulkBan.isPending || preview.loading || preview.empty}
+              onClick={() => confirmBulk('ban', { clids: selectedClids }, 'banFailed', () =>
+                bulkBan.mutate({ clids: selectedClids, time: Number(bulkBanTime) || 0, banreason: bulkReason || undefined }, {
+                  onSuccess: ({ outcomes }) => { reportOutcomes('banCount', 'bannedCount', outcomes); setSelected([]); closeBulkDialog(); },
+                  onError: (err: any) => toast.error(actionError(err, t('pages.clients.banFailed'))),
+                }))}
             >
-              <Ban className="h-4 w-4 mr-1" /> {t('pages.clients.ban')}
+              <Ban className="h-4 w-4 mr-1" /> {confirmLabel(t('pages.clients.ban'))}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -339,16 +357,18 @@ export default function Clients() {
             <Label className="text-xs">{t('pages.clients.descriptionApplied')}</Label>
             <Textarea value={bulkDescription} onChange={(e) => setBulkDescription(e.target.value)} rows={2} className="mt-1" maxLength={200} autoFocus />
           </div>
+          {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
           <DialogFooter>
             <Button variant="outline" onClick={closeBulkDialog}>{t('common.cancel')}</Button>
             <Button
-              disabled={!bulkDescription.trim() || bulkDescribe.isPending}
-              onClick={() => bulkDescribe.mutate({ clids: selectedClids, description: bulkDescription.trim() }, {
-                onSuccess: ({ outcomes }) => { reportOutcomes('describeCount', 'descriptionUpdated', outcomes); setSelected([]); closeBulkDialog(); },
-                onError: (err: any) => toast.error(actionError(err, t('pages.clients.descriptionUpdateFailed'))),
-              })}
+              disabled={!bulkDescription.trim() || bulkDescribe.isPending || preview.loading || preview.empty}
+              onClick={() => confirmBulk('describe', { clids: selectedClids, description: bulkDescription.trim() }, 'descriptionUpdateFailed', () =>
+                bulkDescribe.mutate({ clids: selectedClids, description: bulkDescription.trim() }, {
+                  onSuccess: ({ outcomes }) => { reportOutcomes('describeCount', 'descriptionUpdated', outcomes); setSelected([]); closeBulkDialog(); },
+                  onError: (err: any) => toast.error(actionError(err, t('pages.clients.descriptionUpdateFailed'))),
+                }))}
             >
-              <Pencil className="h-4 w-4 mr-1" /> {t('common.save')}
+              <Pencil className="h-4 w-4 mr-1" /> {confirmLabel(t('common.save'))}
             </Button>
           </DialogFooter>
         </DialogContent>

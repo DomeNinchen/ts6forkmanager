@@ -191,7 +191,8 @@ export function changeLogMiddleware(req: Request, res: Response, next: NextFunct
   // caller is read then too - the /api/auth routes only sign them in inside their router.
   res.on('finish', () => {
     const user = req.user;
-    if (!user) return;
+    // A bulk preview (R9) changed nothing; the handler marks it only after answering without running.
+    if (!user || res.locals.dryRun) return;
     void (async () => {
       let settings;
       try {

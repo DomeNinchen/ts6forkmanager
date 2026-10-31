@@ -3532,9 +3532,16 @@
         "not-connected": "No longer connected",
         "already-there": "Already in that channel",
         "online": "Connected right now - TeamSpeak does not delete the profile",
-        "no-value": "Nothing to ban (e.g. no IP known)"
+        "no-value": "Nothing to ban (e.g. no IP known)",
+        "not-found": "Does not exist (any more)"
       },
-      "unknownError": "Unknown error"
+      "unknownError": "Unknown error",
+      "preview": {
+        "summary": "{{ok}} of {{total}} will be done.",
+        "nothing": "Nothing to do: every selected target would be skipped.",
+        "skip": "Will be skipped",
+        "check": "Check"
+      }
     },
     "dataTable": {
       "searchPlaceholder": "Search...",
