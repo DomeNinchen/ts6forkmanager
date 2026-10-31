@@ -27,8 +27,9 @@ export const clientDatabaseApi = {
     api.get(`${base(configId, sid)}/groups`).then((r) => r.data),
   ban: (configId: number, sid: number, request: ClientDbBanRequest): Promise<ClientDbBanResult> =>
     api.post(`${base(configId, sid)}/ban`, request).then((r) => r.data),
-  remove: (configId: number, sid: number, cldbids: number[]): Promise<ClientDbDeleteResult> =>
-    api.post(`${base(configId, sid)}/delete`, { cldbids }).then((r) => r.data),
+  /** `skipBackup`: go on after the backup before it failed (R9). */
+  remove: (configId: number, sid: number, cldbids: number[], skipBackup = false): Promise<ClientDbDeleteResult> =>
+    api.post(`${base(configId, sid)}/delete`, skipBackup ? { cldbids, skipBackup } : { cldbids }).then((r) => r.data),
   /** Previews (R9): same routes and checks, nothing runs; the answer is one bulk outcome per target. */
   banPreview: (configId: number, sid: number, request: ClientDbBanRequest): Promise<BulkResult> =>
     api.post(`${base(configId, sid)}/ban`, { ...request, dryRun: true }).then((r) => r.data),

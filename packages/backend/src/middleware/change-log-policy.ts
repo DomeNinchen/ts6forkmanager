@@ -43,6 +43,8 @@ export const KNOWN_AREAS: ReadonlySet<string> = new Set([
   // under /servers/:configId/vs/:sid/
   'channels', 'clients', 'server-groups', 'channel-groups', 'permissions', 'bans', 'tokens',
   'files', 'icons', 'complaints', 'messages', 'logs', 'dashboard', 'statistics',
+  // a deletion dialog's "back up now" (R9): only adds a before-bulk backup, nobody can read it there
+  'bulk-backup',
   // under /servers/:configId/
   'virtual-servers', 'console', 'instance', 'command-permissions', 'music-library', 'radio-stations', 'music-requests',
   // the connection itself (add, edit, delete, identity, bot-identity, global message)

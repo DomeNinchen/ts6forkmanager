@@ -51,7 +51,13 @@ export const BACKUP_DEFAULTS: BackupSettings = {
   // Off until an admin switches it on: a snapshot also holds the server's known client identities.
   includeTsSnapshots: false,
   targetDir: null,
+  bulkBackupThreshold: 10,
 };
+export const BULK_THRESHOLD_MIN = 1;
+/** BULK_MAX: a larger deletion is refused anyway. */
+export const BULK_THRESHOLD_MAX = 500;
+/** before-bulk backups kept, apart from the scheduled ones. */
+export const BEFORE_BULK_KEEP = 10;
 export const BACKUP_UPLOAD_MB_MIN = 1;
 /** The ZIPs here have no ZIP64, so 4 GiB is the end of the line anyway. */
 export const BACKUP_UPLOAD_MB_MAX = 4095;
@@ -76,11 +82,12 @@ function escapeRegExp(s: string): string {
 
 const TIME = '(\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}-\\d{3}Z)';
 
-type ManagedKind = 'manual' | 'scheduled' | 'uploaded' | 'before-restore';
+type ManagedKind = 'manual' | 'scheduled' | 'uploaded' | 'before-restore' | 'before-bulk';
+const MANAGED_KINDS = '(manual|scheduled|uploaded|before-restore|before-bulk)';
 
 /** `ts6webui-2026-10-28T03-30-00-000Z-scheduled.db` */
 export function managedPattern(stem: string): RegExp {
-  return new RegExp(`^${escapeRegExp(stem)}-${TIME}-(manual|scheduled|uploaded|before-restore)\\.db$`);
+  return new RegExp(`^${escapeRegExp(stem)}-${TIME}-${MANAGED_KINDS}\\.db$`);
 }
 
 /** The copies db-backup.ts takes before an update: `ts6webui-<time>-before-2.71.0.db` */
@@ -213,6 +220,17 @@ export function listBackups(): BackupEntry[] {
   return entries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+/** The newest backup in the volume that holds a snapshot of this virtual server: what can bring a deleted group, channel or profile back. */
+export function lastBackupWithSnapshot(configId: number, sid: number): { kind: BackupKind; name: string; createdAt: string } | null {
+  const d = dirs();
+  for (const b of listBackups()) {
+    if (b.kind === 'before-update' || b.kind === 'external' || !b.tsSnapshots) continue;
+    const manifest = readManifest(path.join(d.managed, `${b.name.slice(0, -3)}.json`));
+    if (manifest?.tsSnapshots?.some((s) => s.configId === configId && s.sid === sid && s.file)) return { kind: b.kind, name: b.name, createdAt: b.createdAt };
+  }
+  return null;
+}
+
 // --- The target directory outside the volume (stage 3) --------------------------------
 
 /**
@@ -224,7 +242,7 @@ let targetDirCache: string | null = null;
 
 /** `ts6webui-<time>-scheduled.zip` or `….zip.enc` (encrypted with the passphrase). */
 export function externalPattern(stem: string): RegExp {
-  return new RegExp(`^${escapeRegExp(stem)}-${TIME}-(manual|scheduled|uploaded|before-restore)\\.zip(\\.enc)?$`);
+  return new RegExp(`^${escapeRegExp(stem)}-${TIME}-${MANAGED_KINDS}\\.zip(\\.enc)?$`);
 }
 
 /**
@@ -377,12 +395,12 @@ function runWorker(job: BackupJob): Promise<InspectedDb> {
 
 // --- Writing ---------------------------------------------------------------------
 
-/** Scheduled backups to delete: beyond the newest `keep`, or older than `maxAgeDays`. Manual ones are never touched. */
-export function scheduledToDelete(names: string[], stem: string, keep: number, maxAgeDays: number | null, now: Date): string[] {
+/** Scheduled (or `kind`) backups to delete: beyond the newest `keep`, or older than `maxAgeDays`. Manual ones are never touched. */
+export function scheduledToDelete(names: string[], stem: string, keep: number, maxAgeDays: number | null, now: Date, kind: ManagedKind = 'scheduled'): string[] {
   const pattern = managedPattern(stem);
   const scheduled = names
     .map((n) => pattern.exec(n))
-    .filter((m): m is RegExpExecArray => m !== null && m[2] === 'scheduled')
+    .filter((m): m is RegExpExecArray => m !== null && m[2] === kind)
     .sort((a, b) => b[1].localeCompare(a[1])); // newest first
   const cutoff = maxAgeDays === null ? null : now.getTime() - maxAgeDays * 86_400_000;
   return scheduled
@@ -408,9 +426,9 @@ function removeBackupFiles(dir: string, name: string): void {
  * in the format the Miscellaneous page downloads and deploys. A server that does not answer is
  * listed with the reason; it never fails the database backup.
  */
-async function takeTsSnapshots(prisma: PrismaClient, pool: ConnectionPool, folder: string): Promise<BackupTsSnapshot[]> {
+async function takeTsSnapshots(prisma: PrismaClient, pool: ConnectionPool, folder: string, only?: SnapshotTarget): Promise<BackupTsSnapshot[]> {
   const out: BackupTsSnapshot[] = [];
-  const configs = await prisma.tsServerConfig.findMany({ where: { enabled: true }, select: { id: true, name: true }, orderBy: { id: 'asc' } });
+  const configs = await prisma.tsServerConfig.findMany({ where: { enabled: true, ...(only ? { id: only.configId } : {}) }, select: { id: true, name: true }, orderBy: { id: 'asc' } });
   for (const config of configs) {
     const client = pool.tryGetClient(config.id);
     if (!client) continue; // no WebQuery on this connection
@@ -418,9 +436,10 @@ async function takeTsSnapshots(prisma: PrismaClient, pool: ConnectionPool, folde
     try {
       servers = await client.execute(0, 'serverlist');
     } catch (err) {
-      out.push({ configId: config.id, server: config.name, sid: 0, virtualServer: '', file: null, error: (err as Error).message });
+      out.push({ configId: config.id, server: config.name, sid: only?.sid ?? 0, virtualServer: '', file: null, error: (err as Error).message });
       continue;
     }
+    if (only) servers = servers.filter((vs) => Number(vs.virtualserver_id) === only.sid);
     for (const vs of servers) {
       const sid = Number(vs.virtualserver_id);
       const entry: BackupTsSnapshot = { configId: config.id, server: config.name, sid, virtualServer: vs.virtualserver_name ?? '', file: null, error: null };
@@ -442,12 +461,16 @@ async function takeTsSnapshots(prisma: PrismaClient, pool: ConnectionPool, folde
 
 let running = false;
 
+/** The one virtual server a before-bulk backup takes its snapshot of. */
+export interface SnapshotTarget { configId: number; sid: number }
+
 /**
  * Writes a backup and its manifest. Refuses up front when less than twice the database's
  * size is free (the copy, and room left for the app to keep writing), and never leaves a
- * half-written file under a backup's name.
+ * half-written file under a backup's name. A before-bulk backup always snapshots `only`,
+ * whatever the snapshot switch says: that snapshot is the point of it.
  */
-export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'scheduled', createdBy: string | null, now = new Date(), pool?: ConnectionPool): Promise<BackupEntry> {
+export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'scheduled' | 'before-bulk', createdBy: string | null, now = new Date(), pool?: ConnectionPool, only?: SnapshotTarget): Promise<BackupEntry> {
   if (running) throw new AppError(409, 'A backup is already being written');
   running = true;
   const d = dirs();
@@ -483,7 +506,17 @@ export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'sched
     }
     fs.chmodSync(tmp, 0o600);
     const settings = await getBackupSettings(prisma);
-    const tsSnapshots = settings.includeTsSnapshots && pool ? await takeTsSnapshots(prisma, pool, snapshotDirOf(path.join(d.managed, name))) : undefined;
+    const folder = snapshotDirOf(path.join(d.managed, name));
+    const tsSnapshots = !pool ? undefined
+      : kind === 'before-bulk' ? (only ? await takeTsSnapshots(prisma, pool, folder, only) : undefined)
+      : settings.includeTsSnapshots ? await takeTsSnapshots(prisma, pool, folder) : undefined;
+    if (kind === 'before-bulk' && !tsSnapshots?.some((s) => s.file)) {
+      // Without the snapshot it brings nothing back, and kept it would push a useful one out of the ten.
+      fs.rmSync(tmp, { force: true });
+      fs.rmSync(folder, { recursive: true, force: true });
+      const why = tsSnapshots?.find((s) => s.error)?.error ?? (pool ? 'this virtual server was not found or has no WebQuery connection' : 'no connection');
+      throw new AppError(502, 'No snapshot of this virtual server could be taken', why);
+    }
     const manifest: BackupManifest = {
       format: 1,
       createdAt: now.toISOString(),
@@ -516,17 +549,20 @@ export async function createBackup(prisma: PrismaClient, kind: 'manual' | 'sched
       if (externalError) console.error(`[Backups] ${name} was not copied to ${settings.targetDir}: ${externalError}`);
     }
 
-    if (kind === 'scheduled') {
-      for (const old of scheduledToDelete(fs.readdirSync(d.managed), d.stem, settings.keep, settings.maxAgeDays, now)) removeBackupFiles(d.managed, old);
+    if (kind !== 'manual') {
+      // Each kind has its own count, so before-bulk backups never push out scheduled ones.
+      const [keep, maxAgeDays] = kind === 'scheduled' ? [settings.keep, settings.maxAgeDays] : [BEFORE_BULK_KEEP, null];
+      for (const old of scheduledToDelete(fs.readdirSync(d.managed), d.stem, keep, maxAgeDays, now, kind)) removeBackupFiles(d.managed, old);
       // ...and the same rule in the target directory, for copies whose original is no longer in the volume
       if (settings.targetDir && fs.existsSync(settings.targetDir)) {
         const asDb = fs.readdirSync(settings.targetDir).filter((n) => externalPattern(d.stem).test(n)).map((n) => `${n.replace(/\.zip(\.enc)?$/, '')}.db`);
-        for (const old of scheduledToDelete(asDb, d.stem, settings.keep, settings.maxAgeDays, now)) removeExternalCopy(old.slice(0, -3));
+        for (const old of scheduledToDelete(asDb, d.stem, keep, maxAgeDays, now, kind)) removeExternalCopy(old.slice(0, -3));
       }
     }
     await setLastRun(prisma, { at: now.toISOString(), kind, ok: true, name, error: null, externalError });
     const snapshotNote = tsSnapshots ? `, ${tsSnapshots.filter((s) => s.file).length} of ${tsSnapshots.length} TeamSpeak snapshots` : '';
-    console.log(`[Backups] ${kind === 'manual' ? `Backup by ${createdBy}` : 'Scheduled backup'} written: ${name} (${mb(inspected.size)}${snapshotNote})`);
+    const label = kind === 'manual' ? `Backup by ${createdBy}` : kind === 'before-bulk' ? `Backup before a deletion by ${createdBy}` : 'Scheduled backup';
+    console.log(`[Backups] ${label} written: ${name} (${mb(inspected.size)}${snapshotNote})`);
     for (const s of tsSnapshots ?? []) if (s.error) console.warn(`[Backups] No snapshot of ${s.server} sid=${s.sid}: ${s.error}`);
     return listBackups().find((b) => b.name === name)!;
   } catch (err) {
@@ -769,7 +805,8 @@ export function isValidBackupSettings(v: unknown): v is BackupSettings {
     (s.maxAgeDays === null || (Number.isInteger(s.maxAgeDays) && s.maxAgeDays >= BACKUP_MAX_AGE_MIN && s.maxAgeDays <= BACKUP_MAX_AGE_MAX)) &&
     Number.isInteger(s.maxUploadMb) && s.maxUploadMb >= BACKUP_UPLOAD_MB_MIN && s.maxUploadMb <= BACKUP_UPLOAD_MB_MAX &&
     typeof s.includeTsSnapshots === 'boolean' &&
-    (s.targetDir === null || (typeof s.targetDir === 'string' && s.targetDir.length > 0 && s.targetDir.length <= 500))
+    (s.targetDir === null || (typeof s.targetDir === 'string' && s.targetDir.length > 0 && s.targetDir.length <= 500)) &&
+    Number.isInteger(s.bulkBackupThreshold) && s.bulkBackupThreshold >= BULK_THRESHOLD_MIN && s.bulkBackupThreshold <= BULK_THRESHOLD_MAX
   );
 }
 
@@ -790,7 +827,7 @@ export async function getBackupSettings(prisma: PrismaClient): Promise<BackupSet
 }
 
 export async function setBackupSettings(prisma: PrismaClient, s: BackupSettings): Promise<void> {
-  const value = JSON.stringify({ scheduleEnabled: s.scheduleEnabled, time: s.time, days: [...new Set(s.days)].sort(), keep: s.keep, maxAgeDays: s.maxAgeDays, maxUploadMb: s.maxUploadMb, includeTsSnapshots: s.includeTsSnapshots, targetDir: s.targetDir });
+  const value = JSON.stringify({ scheduleEnabled: s.scheduleEnabled, time: s.time, days: [...new Set(s.days)].sort(), keep: s.keep, maxAgeDays: s.maxAgeDays, maxUploadMb: s.maxUploadMb, includeTsSnapshots: s.includeTsSnapshots, targetDir: s.targetDir, bulkBackupThreshold: s.bulkBackupThreshold });
   await prisma.appSetting.upsert({ where: { key: KEY_SETTINGS }, create: { key: KEY_SETTINGS, value }, update: { value } });
   targetDirCache = s.targetDir;
 }

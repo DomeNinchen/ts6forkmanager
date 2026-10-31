@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { clientDbDeleteToBulk, type ClientDbProfile } from '@ts6/common';
 import { BulkPreview, reportBulk, useBulkPreview } from '@/components/shared/BulkResultDialog';
+import { BackupStep, useBackupStep } from '@/components/shared/BackupStep';
 import { clientDatabaseApi } from '@/api/client-database.api';
 import { useServerStore } from '@/stores/server.store';
 import { Trash2 } from 'lucide-react';
@@ -33,13 +34,10 @@ export function ClientDbDeleteDialog({ profiles, onlineIds, onClose, onDone }: C
   const needsPreview = deletable.length > 1 && !preview.outcomes;
   const nameOf = (o: { id: number; name: string }) => profiles.find((p) => p.cldbid === o.id)?.nickname || o.name;
 
-  const submit = () => {
-    if (needsPreview) {
-      preview.ask(() => clientDatabaseApi.removePreview(selectedConfigId!, selectedSid!, deletable.map((p) => p.cldbid)),
-        (err) => toast.error(tsErrorMessage(err, t('pages.clientDatabase.delete.failed'), t)), nameOf);
-      return;
-    }
-    remove.mutate(deletable.map((p) => p.cldbid), {
+  const backup = useBackupStep('profiles', deletable.length, true);
+
+  const run = (skipBackup: boolean) => {
+    remove.mutate({ cldbids: deletable.map((p) => p.cldbid), skipBackup }, {
       onSuccess: (result) => {
         const name = (cldbid: number) => profiles.find((p) => p.cldbid === cldbid)?.nickname || `#${cldbid}`;
         // TeamSpeak can still refuse for a client that connected after the dialog opened.
@@ -48,12 +46,22 @@ export function ClientDbDeleteDialog({ profiles, onlineIds, onClose, onDone }: C
         if (result.deleted.length > 0) onDone();
         onClose();
       },
-      onError: (err) => toast.error(tsErrorMessage(err, t('pages.clientDatabase.delete.failed'), t)),
+      onError: (err) => { if (!backup.caught(err, run)) toast.error(tsErrorMessage(err, t('pages.clientDatabase.delete.failed'), t)); },
     });
   };
 
+  const submit = () => {
+    if (needsPreview) {
+      preview.ask(() => clientDatabaseApi.removePreview(selectedConfigId!, selectedSid!, deletable.map((p) => p.cldbid)),
+        (err) => toast.error(tsErrorMessage(err, t('pages.clientDatabase.delete.failed'), t)), nameOf);
+      return;
+    }
+    void backup.guard(run);
+  };
+  const working = remove.isPending || preview.loading || backup.busy;
+
   return (
-    <Dialog open onOpenChange={(open) => { if (!open && !remove.isPending) onClose(); }}>
+    <Dialog open onOpenChange={(open) => { if (!open && !working) onClose(); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('pages.clientDatabase.delete.title', { count: deletable.length || profiles.length })}</DialogTitle>
@@ -69,13 +77,14 @@ export function ClientDbDeleteDialog({ profiles, onlineIds, onClose, onDone }: C
             </p>
           )}
           {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
+          {deletable.length > 0 && <BackupStep step={backup} disabled={working} />}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={remove.isPending}>{t('common.cancel')}</Button>
-          <Button variant="destructive" onClick={submit} disabled={deletable.length === 0 || remove.isPending || preview.loading || preview.empty}>
+          <Button variant="outline" onClick={onClose} disabled={working}>{t('common.cancel')}</Button>
+          <Button variant="destructive" onClick={submit} disabled={deletable.length === 0 || working || preview.empty || backup.canSkip}>
             <Trash2 className="h-4 w-4 mr-1" />
-            {remove.isPending || preview.loading ? t('components.confirmDialog.processing')
+            {working ? t('components.confirmDialog.processing')
               : needsPreview ? t('components.bulkResult.preview.check') : t('pages.clientDatabase.delete.confirm', { count: deletable.length })}
           </Button>
         </DialogFooter>

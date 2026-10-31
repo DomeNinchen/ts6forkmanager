@@ -3,12 +3,14 @@
 /**
  * Where a backup came from. `manual` and `scheduled` are written by the Backups page,
  * `uploaded` was uploaded there, `before-restore` is the state the start saved before it
- * restored a backup (all in data/backups/managed/); `before-update` is the copy the container
+ * restored a backup, `before-bulk` was taken right before a deletion a TeamSpeak snapshot can
+ * bring back (groups, channels, client profiles; see bulk-backup.ts), with a snapshot of that
+ * virtual server (all in data/backups/managed/); `before-update` is the copy the container
  * takes on its own before it applies a pending migration (data/backups/, see db-backup.ts).
  * `external` is a copy in the target directory outside the volume whose original is no longer
  * in the volume (a lost volume, say); while both exist the volume's entry says `external: true`.
  */
-export const BACKUP_KINDS = ['manual', 'scheduled', 'uploaded', 'before-restore', 'before-update', 'external'] as const;
+export const BACKUP_KINDS = ['manual', 'scheduled', 'uploaded', 'before-restore', 'before-bulk', 'before-update', 'external'] as const;
 export type BackupKind = (typeof BACKUP_KINDS)[number];
 
 /** Written next to every backup as `<name>.json`. */
@@ -75,12 +77,14 @@ export interface BackupSettings {
   includeTsSnapshots: boolean;
   /** A directory outside the volume (a path inside the container) every backup is copied to as one ZIP; null = none. */
   targetDir: string | null;
+  /** Deleting at least this many client profiles at once takes a `before-bulk` backup first (groups and channels always). */
+  bulkBackupThreshold: number;
 }
 
 export interface BackupLastRun {
   /** ISO 8601. */
   at: string;
-  kind: 'manual' | 'scheduled';
+  kind: 'manual' | 'scheduled' | 'before-bulk';
   ok: boolean;
   name: string | null;
   error: string | null;
@@ -98,7 +102,7 @@ export interface BackupOverview {
   databaseBytes: number;
   /** The backend's clock the schedule runs on, e.g. "17:39 (UTC)" - a container is often not in the admin's time zone. */
   serverTime: string;
-  bounds: { keepMin: number; keepMax: number; maxAgeMin: number; maxAgeMax: number; uploadMbMin: number; uploadMbMax: number };
+  bounds: { keepMin: number; keepMax: number; maxAgeMin: number; maxAgeMax: number; uploadMbMin: number; uploadMbMax: number; bulkThresholdMin: number; bulkThresholdMax: number };
   /** A restore marked for the next start, not applied yet. */
   pendingRestore: { kind: BackupKind; name: string; requestedBy: string; requestedAt: string } | null;
   /** How the last restore ended. */
@@ -124,6 +128,18 @@ export interface BackupRestoreResult {
   /** The restore ran but the migrations after it failed, and the state before was put back. */
   rolledBack: boolean;
   error: string | null;
+}
+
+/** Which deletion a backup step belongs to; each is opened with the permission of its action. */
+export const BULK_BACKUP_SCOPES = ['groups', 'channels', 'profiles'] as const;
+export type BulkBackupScope = (typeof BULK_BACKUP_SCOPES)[number];
+
+/** What a deletion dialog shows about backups (GET /servers/:configId/vs/:sid/bulk-backup/:scope). */
+export interface BulkBackupStatus {
+  /** Profiles deleted at once from which the backup is automatic. */
+  threshold: number;
+  /** The newest backup that holds a snapshot of this virtual server, if any. */
+  last: { kind: BackupKind; name: string; createdAt: string } | null;
 }
 
 /** Result of "test backup": the same checks a restore will run, on a throwaway copy. */

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
+import { backupBeforeDeleting } from '../utils/bulk-backup.js';
 
 export const channelGroupRoutes: Router = Router({ mergeParams: true });
 
@@ -30,6 +31,7 @@ channelGroupRoutes.put('/:cgid', requirePermission('groups.edit'), async (req: R
 
 channelGroupRoutes.delete('/:cgid', requirePermission('groups.edit'), async (req: Request, res: Response, next) => {
   try {
+    await backupBeforeDeleting(req);
     res.json(await getClient(req).execute(getSid(req), 'channelgroupdel', { cgid: String(req.params.cgid), force: 1 }));
   } catch (err) { next(err); }
 });
