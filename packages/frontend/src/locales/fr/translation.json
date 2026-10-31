@@ -78,7 +78,8 @@
       "botOperator": "Opérateur de bot",
       "serverAdmin": "Administrateur du serveur",
       "moderator": "Modérateur",
-      "musicOperator": "Opérateur musique"
+      "musicOperator": "Opérateur musique",
+      "custom": "Rôle personnalisé"
     }
   },
   "nav": {
@@ -889,6 +890,7 @@
         "account": "Compte",
         "webgui": "WebGUI",
         "users": "Utilisateurs",
+        "roles": "Rôles",
         "youtube": "YouTube",
         "streaming": "Diffusion",
         "debug": "Débogage",
@@ -1032,6 +1034,7 @@
           "unprotectedWarning": "Aucun groupe serveur n'est encore protégé sur {{servers}} : ce rôle peut y expulser, bannir et déplacer n'importe quel utilisateur, administrateurs compris.",
           "changeRoleTitle": "Changer le rôle de {{username}}",
           "changeRoleConfirm": "Changer le rôle",
+          "none": "Ce rôle ne peut encore rien faire.",
           "labels": {
             "server_view": "Voir le tableau de bord, les salons et les utilisateurs",
             "groups_view": "Voir la liste des groupes serveur",
@@ -1059,6 +1062,38 @@
           }
         },
         "editUserTitle": "Modifier l'utilisateur"
+      },
+      "roles": {
+        "description": "Ce que chaque rôle peut faire sur les serveurs accordés à un utilisateur. Les modifications s'appliquent immédiatement à tous ceux qui ont ce rôle.",
+        "fixedTitle": "Rôles intégrés",
+        "adminFixed": "Tout. Le rôle admin ne peut pas être modifié.",
+        "changed": "modifié",
+        "permissionCount_one": "{{count}} droit",
+        "permissionCount_other": "{{count}} droits",
+        "usersCount_one": "{{count}} utilisateur",
+        "usersCount_other": "{{count}} utilisateurs",
+        "noUsers": "aucun utilisateur",
+        "reset": "Rétablir par défaut",
+        "customTitle": "Rôles personnalisés",
+        "add": "Ajouter un rôle",
+        "noCustom": "Aucun rôle personnalisé pour l'instant.",
+        "saved": "Rôle enregistré",
+        "saveFailed": "Impossible d'enregistrer le rôle",
+        "resetDone": "Rôle rétabli par défaut",
+        "deleted": "Rôle supprimé",
+        "deleteFailed": "Impossible de supprimer le rôle",
+        "inUse": "Ce rôle est encore attribué à : {{users}}. Donnez-leur d'abord un autre rôle.",
+        "resetTitle": "Rétablir {{role}} par défaut ?",
+        "resetDescription": "Le rôle retrouve les droits qu'il a après l'installation. Cela s'applique immédiatement à tous ceux qui ont ce rôle.",
+        "deleteTitle": "Supprimer le rôle {{role}} ?",
+        "deleteDescription": "Ce n'est possible que tant qu'aucun utilisateur n'a ce rôle.",
+        "editFixedTitle": "Droits de {{role}}",
+        "addTitle": "Ajouter un rôle personnalisé",
+        "editCustomTitle": "Modifier {{role}}",
+        "name": "Nom",
+        "namePlaceholder": "p. ex. Support",
+        "customNoEscalating": "Les rôles personnalisés ne peuvent pas recevoir de droits permettant d'étendre des privilèges.",
+        "fixedAppliesNow": "S'applique immédiatement à tous ceux qui ont ce rôle ; les pages ouvertes le prennent en compte en une minute."
       },
       "serverAccess": {
         "wholeConnection": "Cette connexion n'a pas de WebQuery ni de liste de serveurs virtuels : l'accès couvre toute la connexion.",

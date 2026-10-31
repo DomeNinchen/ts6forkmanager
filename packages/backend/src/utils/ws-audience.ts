@@ -1,6 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import type { WebSocket, WebSocketServer } from 'ws';
-import { roleHasPermission, type UserPermission, type UserRole } from '@ts6/common';
+import type { JwtPayload, UserPermission } from '@ts6/common';
+import { mayRole } from './role-table.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { cachedSidOfPort, grantCovers, type Grant } from './vs-access.js';
 
@@ -36,7 +37,7 @@ export type UpgradeRequest = IncomingMessage & { wsUserId?: number };
 
 interface SocketUser {
   userId: number;
-  role: UserRole;
+  role: JwtPayload['role'];
   /** The server connections a non-admin has been granted, with the virtual servers each grant covers. */
   access: Map<number, Grant>;
 }
@@ -51,7 +52,7 @@ export function mayReceive(socket: WebSocket, audience: Audience): boolean {
   if (!user) return false;
   if (user.role === 'admin') return true;
   if (audience.serverConfigId === undefined || !audience.permission) return false;
-  if (!roleHasPermission(user.role, audience.permission)) return false;
+  if (!mayRole(user.role, audience.permission)) return false;
   const grant = user.access.get(audience.serverConfigId);
   if (!grant) return false;
   return audience.sid === undefined ? grant.all : grantCovers(grant, audience.sid);
@@ -91,7 +92,7 @@ export function attachWsAudience(wss: WebSocketServer, prisma: PrismaClient): { 
       }
       users.set(socket, {
         userId,
-        role: account.role as UserRole,
+        role: account.role as JwtPayload['role'],
         access: new Map(grants.filter((g) => g.userId === userId).map((g) => [
           g.serverConfigId,
           { all: g.allVirtualServers, sids: new Set(g.virtualServers.map((v) => v.sid)) },

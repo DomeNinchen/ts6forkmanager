@@ -1,12 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { roleHasPermission, type UserPermission, type UserRole } from '@ts6/common';
+import { ROLE_PERMISSIONS, isUserRole, type JwtPayload, type UserPermission } from '@ts6/common';
 
 interface UserInfo {
   id: number;
   username: string;
   displayName: string;
-  role: UserRole;
+  role: JwtPayload['role'];
+  /** What the role may do as the admin set it up (from login and /auth/me). */
+  permissions?: UserPermission[];
+  /** A custom role's name. */
+  roleName?: string;
   authProvider?: 'local' | 'oidc';
   totpEnabled?: boolean;
   language?: string | null;
@@ -54,7 +58,14 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: () => !!get().accessToken,
       isAdmin: () => get().user?.role === 'admin',
       canWrite: () => get().user?.role === 'admin',
-      can: (permission) => roleHasPermission(get().user?.role, permission),
+      can: (permission) => {
+        const user = get().user;
+        if (!user) return false;
+        if (user.role === 'admin') return true;
+        // A session stored before the backend sent permissions falls back to the role's defaults until /auth/me answers.
+        const list = user.permissions ?? (isUserRole(user.role) ? ROLE_PERMISSIONS[user.role] : []);
+        return list.includes(permission);
+      },
       canManageBotFlows: () => get().can('bots.manage'),
       canManageMusicBots: () => get().can('music.manage'),
     }),

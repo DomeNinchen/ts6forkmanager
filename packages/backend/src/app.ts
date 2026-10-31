@@ -48,6 +48,7 @@ import { requireServerAccess } from './middleware/server-access.js';
 import { requireRole } from './middleware/rbac.js';
 import { adminExcept, SIGNED_IN, type OpenRoute } from './middleware/access-policy.js';
 import { connectionJournalRoutes } from './routes/connection-journal.routes.js';
+import { roleRoutes } from './routes/roles.routes.js';
 import { changeLogRoutes } from './routes/change-log.routes.js';
 import { backupRoutes, backupDownloadRoutes } from './routes/backups.routes.js';
 import { changeLogMiddleware } from './middleware/change-log.js';
@@ -127,7 +128,7 @@ export function createApp(): Express {
 
   // H9: Server access control on all :configId routes, then the permission gate: every mount below
   // is admin-only except for the requests listed with it, each for the roles holding the permission
-  // it names (ROLE_PERMISSIONS in @ts6/common). That list is all a non-admin can reach on that
+  // it names (as the admin set the roles up, utils/role-table.ts). That list is all a non-admin can reach on that
   // mount - a route added to a router later stays admin-only until it is opened here (see
   // middleware/access-policy.ts; access-matrix.test.ts pins the result for every route and role).
   // A trailing '/*' is used only where a whole router belongs to one permission.
@@ -261,6 +262,7 @@ export function createApp(): Express {
     { method: 'GET', path: '/webgui-design', permission: SIGNED_IN },
   ]), settingsRoutes);
   app.use('/api/connection-journal', requireRole('admin'), connectionJournalRoutes);
+  app.use('/api/roles', requireRole('admin'), roleRoutes);
   app.use('/api/backups', requireRole('admin'), backupRoutes);
   app.use('/api/change-log', requireRole('admin'), changeLogRoutes);  // The banners in the layout read the cached results for every role; forcing a fresh check is an admin's.
   app.use('/api/update-check', adminExcept([{ method: 'GET', path: '/', permission: SIGNED_IN }]), updateCheckRoutes);

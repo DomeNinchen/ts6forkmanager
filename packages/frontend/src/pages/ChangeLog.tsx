@@ -23,7 +23,7 @@ import { Pager } from '@/components/connection-journal/table-parts';
 import { PAGE_SIZE_OPTIONS } from '@/components/connection-journal/format';
 import { ChangeLogSettings } from '@/components/change-log/ChangeLogSettings';
 import { useServers } from '@/hooks/use-servers';
-import { roleLabel } from '@/lib/roles';
+import { useRoleSetup } from '@/hooks/use-roles';
 
 interface Filters {
   range: UiChangeRange;
@@ -303,6 +303,7 @@ function DiffView({ diff }: { diff: UiChangeDiff }) {
 
 function ChangeRow({ entry }: { entry: UiChangeLogEntry }) {
   const { t } = useTranslation();
+  const roles = useRoleSetup();
   const server = entry.serverConfigId !== null ? entry.serverName ?? `#${entry.serverConfigId}` : null;
   const target = [
     server,
@@ -315,7 +316,7 @@ function ChangeRow({ entry }: { entry: UiChangeLogEntry }) {
       <td className="px-3 py-2.5 whitespace-nowrap font-mono-data text-xs">{new Date(entry.createdAt).toLocaleString()}</td>
       <td className="px-3 py-2.5">
         <div className="font-mono-data whitespace-nowrap">{entry.username}</div>
-        <div className="text-[11px] text-muted-foreground">{roleLabel(t, entry.role)}</div>
+        <div className="text-[11px] text-muted-foreground">{roles.nameOf(entry.role)}</div>
       </td>
       <td className="px-3 py-2.5 min-w-[220px]">
         <div className="flex items-center gap-2">

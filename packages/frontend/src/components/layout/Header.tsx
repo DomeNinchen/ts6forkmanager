@@ -48,7 +48,7 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel className="font-normal">
               <p className="text-sm font-medium">{user?.displayName}</p>
-              <p className="text-xs text-muted-foreground">{roleLabel(t, user?.role)}</p>
+              <p className="text-xs text-muted-foreground">{roleLabel(t, user?.role, user?.roleName)}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">

@@ -78,7 +78,8 @@
       "botOperator": "Bot Operator",
       "serverAdmin": "Server Admin",
       "moderator": "Moderator",
-      "musicOperator": "Music Operator"
+      "musicOperator": "Music Operator",
+      "custom": "Custom role"
     }
   },
   "nav": {
@@ -1774,6 +1775,7 @@
         "account": "Account",
         "webgui": "WebGui",
         "users": "Users",
+        "roles": "Roles",
         "youtube": "YouTube",
         "streaming": "Streaming",
         "network": "Network",
@@ -1928,6 +1930,7 @@
           "unprotectedWarning": "No server group is protected yet on {{servers}}: there this role can kick, ban and move any client, admins included.",
           "changeRoleTitle": "Change the role of {{username}}",
           "changeRoleConfirm": "Change role",
+          "none": "This role may do nothing yet.",
           "labels": {
             "server_view": "View the dashboard, channel and client lists",
             "groups_view": "View the server group list",
@@ -1955,6 +1958,38 @@
           }
         },
         "editUserTitle": "Edit User"
+      },
+      "roles": {
+        "description": "What each role may do on the servers a user has been granted. Changes apply to everyone with the role at once.",
+        "fixedTitle": "Built-in roles",
+        "adminFixed": "Everything. The admin role cannot be changed.",
+        "changed": "changed",
+        "permissionCount_one": "{{count}} permission",
+        "permissionCount_other": "{{count}} permissions",
+        "usersCount_one": "{{count}} user",
+        "usersCount_other": "{{count}} users",
+        "noUsers": "no users",
+        "reset": "Reset to default",
+        "customTitle": "Custom roles",
+        "add": "Add role",
+        "noCustom": "No custom roles yet.",
+        "saved": "Role saved",
+        "saveFailed": "Failed to save the role",
+        "resetDone": "Role reset to its default",
+        "deleted": "Role deleted",
+        "deleteFailed": "Failed to delete the role",
+        "inUse": "This role is still given to: {{users}}. Give them another role first.",
+        "resetTitle": "Reset {{role}} to its default?",
+        "resetDescription": "The role gets back the permissions it has after installation. Everyone with the role is affected at once.",
+        "deleteTitle": "Delete the role {{role}}?",
+        "deleteDescription": "This only works while no user has the role.",
+        "editFixedTitle": "Permissions of {{role}}",
+        "addTitle": "Add a custom role",
+        "editCustomTitle": "Edit {{role}}",
+        "name": "Name",
+        "namePlaceholder": "e.g. Support",
+        "customNoEscalating": "Custom roles cannot hold permissions that can raise privileges.",
+        "fixedAppliesNow": "Applies to everyone with this role at once; open pages pick it up within a minute."
       },
       "serverAccess": {
         "wholeConnection": "This connection has no WebQuery and no list of virtual servers: access covers the whole connection.",

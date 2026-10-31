@@ -1,3 +1,4 @@
+import type { CustomRoleKey, UserPermission, UserRole } from '@ts6/common';
 import api from './client';
 
 export const botsApi = {
@@ -18,6 +19,20 @@ export interface UserSession {
   createdAt: string;
   expiresAt: string;
 }
+
+export interface FixedRoleSetup { role: UserRole; permissions: UserPermission[]; defaults: UserPermission[]; changed: boolean; users: string[] }
+export interface CustomRoleSetup { id: number; role: CustomRoleKey; name: string; permissions: UserPermission[]; users: string[] }
+
+/** The roles as the admin set them up (admin only). */
+export const rolesApi = {
+  list: (): Promise<{ fixed: FixedRoleSetup[]; custom: CustomRoleSetup[] }> => api.get('/roles').then((r) => r.data),
+  setFixed: (role: UserRole, permissions: UserPermission[]) => api.put(`/roles/fixed/${role}`, { permissions }),
+  resetFixed: (role: UserRole) => api.delete(`/roles/fixed/${role}`),
+  createCustom: (name: string, permissions: UserPermission[]): Promise<{ id: number; role: CustomRoleKey }> =>
+    api.post('/roles/custom', { name, permissions }).then((r) => r.data),
+  updateCustom: (id: number, name: string, permissions: UserPermission[]) => api.put(`/roles/custom/${id}`, { name, permissions }),
+  deleteCustom: (id: number) => api.delete(`/roles/custom/${id}`),
+};
 
 export const usersApi = {
   list: () => api.get('/users').then((r) => r.data),

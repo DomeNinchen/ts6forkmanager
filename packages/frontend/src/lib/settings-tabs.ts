@@ -1,4 +1,4 @@
-import { Server, Lock, Palette, Users, Film, Video, Globe, Bug, Timer, ShieldCheck, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Server, Lock, Palette, Users, UserCog, Film, Video, Globe, Bug, Timer, ShieldCheck, RefreshCw, type LucideIcon } from 'lucide-react';
 
 export interface SettingsTab {
   /** The `?tab=` value in the address. */
@@ -17,6 +17,7 @@ const SETTINGS_TABS: SettingsTab[] = [
   { value: 'account', labelKey: 'pages.settings.tabs.account', icon: Lock, adminOnly: false },
   { value: 'webgui', labelKey: 'pages.settings.tabs.webgui', icon: Palette, adminOnly: false },
   { value: 'users', labelKey: 'pages.settings.tabs.users', icon: Users, adminOnly: true },
+  { value: 'roles', labelKey: 'pages.settings.tabs.roles', icon: UserCog, adminOnly: true },
   { value: 'youtube', labelKey: 'pages.settings.tabs.youtube', icon: Film, adminOnly: true },
   { value: 'streaming', labelKey: 'pages.settings.tabs.streaming', icon: Video, adminOnly: true },
   { value: 'network', labelKey: 'pages.settings.tabs.network', icon: Globe, adminOnly: true },

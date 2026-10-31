@@ -1,4 +1,5 @@
-import { useMutation } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../stores/auth.store';
 import { useNavigate } from 'react-router';
@@ -46,6 +47,21 @@ export function useVerifyTotp() {
       authApi.verifyTotp(ticket, code, rememberDevice),
     onSuccess: completeLogin,
   });
+}
+
+/**
+ * Keeps the signed-in user's role and what it may do current: the admin can change a role's
+ * permissions at any time and the backend applies that to the next request, so the UI asks
+ * again every minute (and when the window gets focus).
+ */
+export function useOwnRoleSync() {
+  const authenticated = useAuthStore((s) => !!s.accessToken);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const { data } = useQuery({ queryKey: ['auth-me'], queryFn: authApi.me, enabled: authenticated, refetchInterval: 60_000 });
+  useEffect(() => {
+    const me = data?.user;
+    if (me) updateUser({ role: me.role, permissions: me.permissions, roleName: me.roleName });
+  }, [data, updateUser]);
 }
 
 export function useLogout() {

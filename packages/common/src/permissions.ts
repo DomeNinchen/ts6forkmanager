@@ -1,9 +1,9 @@
-import type { UserRole } from './types/auth.js';
+import type { CustomRoleKey, UserRole } from './types/auth.js';
 
 /**
  * The actions a non-admin role can be allowed, one name per kind of request. Every TeamSpeak action
  * runs through the server connection's own (highly privileged) query login, so TeamSpeak cannot tell
- * the web users apart: this list and the role templates below are the only thing that limits them.
+ * the web users apart: this list and the roles built from it are the only thing that limits them.
  *
  * Each route a non-admin may reach names exactly one of these at its mount in the backend's app.ts.
  * Anything not named there stays admin-only: the console, the instance, creating/starting/stopping/
@@ -50,7 +50,27 @@ export const ESCALATING_PERMISSIONS: readonly UserPermission[] = [
 /** Every role, in the order the user management shows them. */
 export const USER_ROLES: readonly UserRole[] = ['admin', 'server-admin', 'moderator', 'bot-operator', 'music-operator', 'viewer'];
 
-/** What each role may do. The admin may do everything, including what no permission names. */
+/** The fixed roles whose permissions the admin may change (every one but the admin's). */
+export const EDITABLE_ROLES: readonly UserRole[] = USER_ROLES.filter((r) => r !== 'admin');
+
+/**
+ * A role the admin defined, stored on the user as "custom:<id>". It may hold any permission except
+ * ESCALATING_PERMISSIONS.
+ */
+export function customRoleKey(id: number): CustomRoleKey {
+  return `custom:${id}`;
+}
+
+/** The id of a custom role key, or undefined for anything else. */
+export function customRoleId(role: string | undefined): number | undefined {
+  const m = role?.match(/^custom:([1-9]\d{0,9})$/);
+  return m ? Number(m[1]) : undefined;
+}
+
+/** What each role may do, by role key. */
+export type RoleTable = Readonly<Record<string, readonly UserPermission[]>>;
+
+/** What each fixed role may do by default. The admin may do everything, including what no permission names. */
 export const ROLE_PERMISSIONS: Record<UserRole, readonly UserPermission[]> = {
   admin: USER_PERMISSIONS,
   'server-admin': USER_PERMISSIONS.filter((p) => p !== 'bots.manage'),
@@ -67,7 +87,11 @@ export function isUserRole(value: unknown): value is UserRole {
   return typeof value === 'string' && (USER_ROLES as readonly string[]).includes(value);
 }
 
-/** Whether the role may do this. An unknown role (or none) may do nothing. */
-export function roleHasPermission(role: string | undefined, permission: UserPermission): boolean {
-  return isUserRole(role) && ROLE_PERMISSIONS[role].includes(permission);
+/**
+ * Whether the role may do this, looked up in `table` (the backend passes the roles as the admin
+ * set them up). The admin may do everything; an unknown role (or none) may do nothing.
+ */
+export function roleHasPermission(role: string | undefined, permission: UserPermission, table: RoleTable = ROLE_PERMISSIONS): boolean {
+  if (role === 'admin') return true;
+  return role !== undefined && Object.prototype.hasOwnProperty.call(table, role) && table[role].includes(permission);
 }

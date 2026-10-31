@@ -115,8 +115,10 @@ function getNavSections(t: TFunction) {
 
 function useNavContext(): NavContext {
   const isAdmin = useAuthStore((s) => s.isAdmin());
-  // Subscribing to the role re-renders the sidebar when it changes; `can` itself is a stable function.
+  // Subscribing to the role and its permissions (which the admin can change under the same role)
+  // re-renders the sidebar when they change; `can` itself is a stable function.
   useAuthStore((s) => s.user?.role);
+  useAuthStore((s) => s.user?.permissions);
   const can = useAuthStore((s) => s.can);
   const { data: servers } = useServers();
   const { hasWebQuery } = useSelectedServer();
