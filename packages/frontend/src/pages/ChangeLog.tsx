@@ -275,6 +275,20 @@ function DiffView({ diff }: { diff: UiChangeDiff }) {
           </dl>
         </div>
       )}
+      {diff.bulk && (
+        <div>
+          <p className="text-muted-foreground">
+            {t('pages.changeLog.diff.bulk', { ok: diff.bulk.ok, skipped: diff.bulk.skipped, failed: diff.bulk.failed, shown: diff.bulk.items.length })}
+          </p>
+          <ul className="max-h-48 overflow-auto font-mono-data">
+            {diff.bulk.items.map((o, i) => (
+              <li key={i} className="break-all">
+                {t(`components.bulkResult.status.${o.status}`)} · {o.name}{o.reason ? ` · ${t(`components.bulkResult.reason.${o.reason}`)}` : o.message ? ` · ${o.message}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {diff.deletedList && (
         <div>
           <p className="text-muted-foreground">{t('pages.changeLog.diff.deletedList', { count: diff.deletedList.count, shown: diff.deletedList.items.length })}</p>

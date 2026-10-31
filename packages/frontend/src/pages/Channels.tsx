@@ -23,6 +23,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Hash, Plus, Trash2, Pencil, ChevronRight, ChevronDown, Users, Lock, Volume2, Terminal, Copy, X, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
+import { tsErrorMessage } from '@/lib/ts-errors';
+import { reportBulk, settledOutcomes } from '@/components/shared/BulkResultDialog';
 
 interface ChannelNode {
   cid: number;
@@ -320,18 +322,17 @@ export default function Channels() {
   if (!selectedConfigId || !selectedSid) return <EmptyState icon={Hash} title={t('pages.noServerSelected')} />;
   if (channelsLoading) return <PageLoader />;
 
+  const errorText = (err: unknown) => tsErrorMessage(err, t('components.bulkResult.unknownError'), t);
+
   const handleCreate = async () => {
     const names = newNames.split('\n').map((n) => n.trim()).filter(Boolean);
     if (names.length === 0) return;
     const results = await Promise.allSettled(
       names.map((channel_name) => createChannel.mutateAsync({ channel_name, channel_flag_permanent: 1 })),
     );
-    const failed = results.filter((r) => r.status === 'rejected').length;
-    if (failed === 0) {
-      toast.success(t('pages.channels.channelsCreated', { count: names.length }));
-    } else {
-      toast.error(t('pages.channels.createPartialFailure', { succeeded: names.length - failed, total: names.length, failed }));
-    }
+    // A new channel has no id yet: its line number keeps the rows apart.
+    reportBulk(t('pages.channels.createChannel'), t('pages.channels.channelsCreated', { count: names.length }),
+      settledOutcomes(names.map((name, i) => ({ id: i + 1, name })), results, errorText));
     setShowCreate(false);
     setNewNames('');
   };
@@ -345,13 +346,11 @@ export default function Channels() {
     if (Object.keys(data).length === 0) { setShowBulkEdit(false); return; }
 
     setBulkEditPending(true);
-    const results = await Promise.allSettled(
-      Array.from(selected).map((cid) => editChannel.mutateAsync({ cid, data })),
-    );
+    const targets = Array.from(selected).map((cid) => ({ id: cid, name: (Array.isArray(channelData) ? channelData : []).find((ch: any) => Number(ch.cid) === cid)?.channel_name ?? `#${cid}` }));
+    const results = await Promise.allSettled(targets.map(({ id }) => editChannel.mutateAsync({ cid: id, data })));
     setBulkEditPending(false);
-    const failed = results.filter((r) => r.status === 'rejected').length;
-    if (failed === 0) toast.success(t('pages.channels.bulkUpdatedCount', { count: selected.size }));
-    else toast.error(t('pages.channels.bulkUpdatePartialFailure', { succeeded: selected.size - failed, total: selected.size, failed }));
+    reportBulk(t('pages.channels.editCountTitle', { count: selected.size }), t('pages.channels.bulkUpdatedCount', { count: selected.size }),
+      settledOutcomes(targets, results, errorText));
     setShowBulkEdit(false);
     setSelected(new Set());
   };

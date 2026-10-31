@@ -179,6 +179,7 @@
         "deleted": "Supprimé :",
         "deletedList_one": "{{count}} entrée supprimée, dont {{shown}} conservée ici :",
         "deletedList_other": "{{count}} entrées supprimées, dont {{shown}} conservées ici :",
+        "bulk": "Action groupée : {{ok}} effectué(s), {{skipped}} ignoré(s), {{failed}} échec(s). Les {{shown}} premiers :",
         "unavailable": "L'état avant n'a pas pu être lu ({{reason}}) ; la modification a quand même été effectuée."
       },
       "resultCount_one": "{{count}} entrée",
@@ -1281,8 +1282,6 @@
       "duplicateToast_other": "{{count}} icônes étaient déjà dans le pool",
       "deletedToast_one": "{{count}} icône supprimée",
       "deletedToast_other": "{{count}} icônes supprimées",
-      "deleteFailedToast_one": "{{count}} icône n'a pas pu être supprimée",
-      "deleteFailedToast_other": "{{count}} icônes n'ont pas pu être supprimées",
       "tooLargeToast_one": "{{count}} fichier dépasse la limite de taille d'icône de ce serveur de {{size}} (i_max_icon_filesize).",
       "tooLargeToast_other": "{{count}} fichiers dépassent la limite de taille d'icône de ce serveur de {{size}} (i_max_icon_filesize)."
     },
@@ -1431,7 +1430,6 @@
       "deleteGroupDescription": "Supprimer « {{name}} » ?",
       "groupDeleted": "Groupe supprimé",
       "deleteServerGroupsTitle": "Supprimer des groupes serveur",
-      "bulkDeletePartial": "{{succeeded}} supprimés, {{failed}} échecs",
       "invalidJson": "Ce fichier n’est pas un JSON valide",
       "notValidGroupExport": "Fichier d’export de groupe non valide",
       "wrongExportTypeChannel": "Ceci est un export de groupe de salon - importez-le plutôt sur la page Groupes de salons",
@@ -1486,7 +1484,6 @@
       "newGroupPlaceholder": "Nouveau groupe",
       "groupCreated": "Groupe créé",
       "deleteChannelGroupsTitle": "Supprimer des groupes de salons",
-      "bulkDeletePartial": "{{succeeded}} supprimés, {{failed}} échecs",
       "channelGroupUpdated": "Groupe de salon mis à jour",
       "channelGroupUpdateFailed": "Échec de la mise à jour du groupe de salon",
       "channelGroupsUpdateFailed": "Échec de la mise à jour des groupes de salons",
@@ -1540,8 +1537,6 @@
       "duplicate": "Dupliquer",
       "deleteChannelTitle": "Supprimer le salon",
       "deleteChannelDescription": "Voulez-vous vraiment supprimer « {{name}} » ? Cette action est irréversible.",
-      "createPartialFailure": "{{succeeded}}/{{total}} créés, {{failed}} échecs",
-      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} mis à jour, {{failed}} échecs",
       "duplicateCreated": "« {{newName}} » créé à partir de « {{sourceName}} »",
       "duplicateFailed": "Échec de la duplication du salon",
       "channelDeleted": "Salon supprimé",
@@ -2446,6 +2441,23 @@
     },
     "confirmDialog": {
       "processing": "Traitement..."
+    },
+    "bulkResult": {
+      "summary": "{{ok}} sur {{total}} effectué(s).",
+      "counts": "Ignoré(s) : {{skipped}}, échec(s) : {{failed}}.",
+      "status": {
+        "ok": "Effectué",
+        "skipped": "Ignoré",
+        "failed": "Échec"
+      },
+      "reason": {
+        "protected": "Dans un groupe de serveurs protégé - seul un admin peut faire cela",
+        "not-connected": "N'est plus connecté",
+        "already-there": "Déjà dans ce canal",
+        "online": "Connecté en ce moment - TeamSpeak ne supprime pas le profil",
+        "no-value": "Rien à bannir (p. ex. aucune IP connue)"
+      },
+      "unknownError": "Erreur inconnue"
     },
     "dataTable": {
       "searchPlaceholder": "Recherche...",

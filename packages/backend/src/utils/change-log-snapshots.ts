@@ -4,7 +4,7 @@
 // change and no more). A read that fails or takes too long never holds the change back - the row
 // then says the state before was unavailable.
 
-import type { UiChangeDiff, UiChangeField, UiChangeMethod } from '@ts6/common';
+import type { BulkOutcome, UiChangeDiff, UiChangeField, UiChangeMethod } from '@ts6/common';
 import { UI_CHANGE_SECRET_PLACEHOLDER } from '@ts6/common';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { ALLOWED_INSTANCE_PARAMS } from '../routes/instance.routes.js';
@@ -14,7 +14,7 @@ import { isSecretField } from './change-log.js';
 /** Longer than this and the change goes ahead without its state before. */
 export const SNAPSHOT_TIMEOUT_MS = 3000;
 /** A delete-all keeps the count and this many of the deleted targets. */
-const DELETED_LIST_MAX = 100;
+export const DELETED_LIST_MAX = 100;
 /** One value longer than this keeps only its length (a welcome message, a banner URL list, ...). */
 const VALUE_MAX_LENGTH = 512;
 /** The whole diff, as JSON. */
@@ -221,4 +221,20 @@ export function diffJson(rule: SnapshotRule, snapshot: Snapshot, ctx: SnapshotCo
     json = JSON.stringify(diff);
   }
   return json.length > DIFF_MAX_LENGTH ? JSON.stringify({ unavailable: 'too large to keep' }) : json;
+}
+
+/** A bulk action's outcomes as one entry (R9): the counts, and the first targets - the ones that did not go through first. */
+export function bulkDiffJson(outcomes: BulkOutcome[]): string {
+  const count = (s: BulkOutcome['status']) => outcomes.filter((o) => o.status === s).length;
+  const notOk = outcomes.filter((o) => o.status !== 'ok');
+  const bulk = {
+    ok: count('ok'), skipped: count('skipped'), failed: count('failed'),
+    items: [...notOk, ...outcomes.filter((o) => o.status === 'ok')].slice(0, DELETED_LIST_MAX),
+  };
+  let json = JSON.stringify({ bulk });
+  while (json.length > DIFF_MAX_LENGTH && bulk.items.length > 0) {
+    bulk.items = bulk.items.slice(0, Math.floor(bulk.items.length / 2));
+    json = JSON.stringify({ bulk });
+  }
+  return json;
 }

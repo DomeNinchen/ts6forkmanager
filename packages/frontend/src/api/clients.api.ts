@@ -1,4 +1,5 @@
 import api from './client';
+import type { BulkResult } from '@ts6/common';
 
 const base = (configId: number, sid: number) =>
   `/servers/${configId}/vs/${sid}/clients`;
@@ -23,11 +24,11 @@ export const clientsApi = {
 
   // Bulk actions on multiple selected clients at once
   bulkMove: (configId: number, sid: number, clids: number[], cid: number) =>
-    api.post(`${base(configId, sid)}/bulk/move`, { clids, cid }).then((r) => r.data),
+    api.post(`${base(configId, sid)}/bulk/move`, { clids, cid }).then((r): BulkResult => r.data),
   bulkKick: (configId: number, sid: number, clids: number[], reasonid: number, reasonmsg?: string) =>
-    api.post(`${base(configId, sid)}/bulk/kick`, { clids, reasonid, reasonmsg }).then((r) => r.data),
+    api.post(`${base(configId, sid)}/bulk/kick`, { clids, reasonid, reasonmsg }).then((r): BulkResult => r.data),
   bulkBan: (configId: number, sid: number, clids: number[], time?: number, banreason?: string) =>
-    api.post(`${base(configId, sid)}/bulk/ban`, { clids, time, banreason }).then((r) => r.data),
+    api.post(`${base(configId, sid)}/bulk/ban`, { clids, time, banreason }).then((r): BulkResult => r.data),
   bulkDescribe: (configId: number, sid: number, clids: number[], description: string) =>
-    api.post(`${base(configId, sid)}/bulk/describe`, { clids, description }).then((r) => r.data),
+    api.post(`${base(configId, sid)}/bulk/describe`, { clids, description }).then((r): BulkResult => r.data),
 };

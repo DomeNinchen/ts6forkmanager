@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.84.0 · frontend 3.102.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.85.0 · frontend 3.103.0 · sidecar 2.1.4**
 
 ### New Features
 
@@ -50,6 +50,7 @@ Versions at the end of the month: **backend 2.84.0 · frontend 3.102.0 · sideca
 
 ### Improvements
 
+- **Results of bulk actions** — Moving, kicking, banning or describing several clients, deleting several icons, server or channel groups, creating or editing several channels and banning or deleting client database profiles now report each target on its own: a toast when all went through, otherwise a dialog with how many did and, for every other one, why not (no longer connected, already in that channel, in a protected server group, connected right now, or TeamSpeak's own error). A protected client in a selection is skipped instead of stopping the whole action. Each bulk action is one Change Log entry with its result list; at most 500 targets per action. *backend 2.85.0, frontend 3.103.0* [#341](https://github.com/DomeNinchen/ts6forkmanager/pull/341)
 - **Deploying a snapshot on the Miscellaneous page** — Needs the server's name typed in, says that every channel gets a new ID and that TeamSpeak does not check permissions while deploying, and keeps the files in the channels unless you untick **Keep the files** (without it TeamSpeak drops them). The snapshot is sent in the request body instead of the address. *backend 2.80.0, frontend 3.98.0* [#336](https://github.com/DomeNinchen/ts6forkmanager/pull/336)
 - **Credentials from another key** — A stored WebQuery API key, Bot Identity key, SSH password, music bot identity or two-factor secret that the current `ENCRYPTION_KEY` (or `JWT_SECRET`) cannot decrypt, as in a database restored without its key, now only takes out what needs it: that connection runs without WebQuery until its key is set again, the bot is not loaded (its stored identity is kept), and the user signs in with a recovery code. The log names each one and what to do, and **Test** on a connection shows the reason. *backend 2.78.1, frontend 3.96.1* [#333](https://github.com/DomeNinchen/ts6forkmanager/pull/333)
 - **Cockpit navigation on phones** — Below 768 px the sidebar no longer sits next to the page (which left it about 145 px wide on a phone); a menu button in the header opens it as a drawer that closes on navigation, Escape or a tap beside it. Wider screens keep the sidebar and its collapsed or expanded choice as before. Tab bars and page toolbars that were wider than a phone (Settings, Music Bots, Permissions, Server Logs and others) now wrap or scroll on their own instead of widening the page. *frontend 3.95.0* [#331](https://github.com/DomeNinchen/ts6forkmanager/pull/331)
@@ -128,6 +129,10 @@ Versions at the end of the month: **backend 2.84.0 · frontend 3.102.0 · sideca
 - Fixed the Add Connection dialog not saving the "Dashboard Ping Target". *backend 2.42.1* [#224](https://github.com/DomeNinchen/ts6forkmanager/pull/224)
 
 ### Upgrade Notes
+
+**Scripts using the API**
+
+- The bulk routes for online clients (`clients/bulk/move`, `kick`, `ban`, `describe`) and `icons/bulk/delete` answer `{ outcomes: [{ id, name, status, reason?, message? }] }` instead of TeamSpeak's raw answer or `{ succeeded, failed }`, take at most 500 ids, and send one query per target (counted against the server's flood limits like any other query). [#341](https://github.com/DomeNinchen/ts6forkmanager/pull/341)
 
 **Users & roles**
 

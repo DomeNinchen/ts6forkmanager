@@ -59,6 +59,16 @@ export async function assertClientsNotProtected(req: Request, client: WebQueryCl
   if (hit.length) refuse(hit.map((c) => String(c.client_nickname ?? c.clid)));
 }
 
+/** For a bulk action: the clids among the listed clients that are protected for this caller (none for an admin). */
+export async function protectedAmong(req: Request, clients: Array<Record<string, unknown>>): Promise<Set<number>> {
+  if (req.user?.role === 'admin') return new Set();
+  const { prisma, configId, sid } = context(req);
+  const protectedIds = await protectedGroupIds(prisma, configId, sid);
+  return new Set(clients
+    .filter((c) => groupIds(c.client_servergroups).some((g) => protectedIds.has(g)))
+    .map((c) => Number(c.clid)));
+}
+
 /** The same for client database profiles (offline clients), by database id. */
 export async function assertProfilesNotProtected(req: Request, client: WebQueryClient, cldbids: number[]): Promise<void> {
   if (req.user?.role === 'admin') return;

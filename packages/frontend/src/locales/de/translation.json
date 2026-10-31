@@ -531,6 +531,7 @@
         "deleted": "Gelöscht wurde:",
         "deletedList_one": "{{count}} Eintrag gelöscht, davon {{shown}} aufbewahrt:",
         "deletedList_other": "{{count}} Einträge gelöscht, davon {{shown}} aufbewahrt:",
+        "bulk": "Massenaktion: {{ok}} erledigt, {{skipped}} übersprungen, {{failed}} gescheitert. Die ersten {{shown}}:",
         "unavailable": "Der Zustand vorher konnte nicht gelesen werden ({{reason}}); die Änderung wurde trotzdem ausgeführt."
       },
       "resultCount_one": "{{count}} Eintrag",
@@ -1578,10 +1579,6 @@
         "someMissing_other": "{{count}} ausgewählte Profile haben keinen und bekommen keine Sperre.",
         "done_one": "{{count}} Sperre angelegt.",
         "done_other": "{{count}} Sperren angelegt.",
-        "skipped_one": "{{count}} übersprungen (nichts zu sperren).",
-        "skipped_other": "{{count}} übersprungen (nichts zu sperren).",
-        "partial": "{{created}} Sperren angelegt, {{failed}} fehlgeschlagen: {{message}}",
-        "failedAll": "Es wurde keine Sperre angelegt: {{message}}",
         "failed": "Sperre konnte nicht angelegt werden"
       },
       "delete": {
@@ -1596,10 +1593,6 @@
         "confirm_other": "{{count}} Profile löschen",
         "done_one": "{{count}} Profil gelöscht",
         "done_other": "{{count}} Profile gelöscht",
-        "skippedOnline_one": "{{count}} Profil übersprungen, weil der Client verbunden ist.",
-        "skippedOnline_other": "{{count}} Profile übersprungen, weil die Clients verbunden sind.",
-        "failedSome_one": "{{count}} Profil konnte nicht gelöscht werden: {{message}}",
-        "failedSome_other": "{{count}} Profile konnten nicht gelöscht werden: {{message}}",
         "failed": "Profile konnten nicht gelöscht werden"
       }
     },
@@ -2219,8 +2212,6 @@
       "duplicateToast_other": "{{count}} Icons waren bereits im Pool",
       "deletedToast_one": "{{count}} Icon gelöscht",
       "deletedToast_other": "{{count}} Icons gelöscht",
-      "deleteFailedToast_one": "{{count}} Icon konnte nicht gelöscht werden",
-      "deleteFailedToast_other": "{{count}} Icons konnten nicht gelöscht werden",
       "tooLargeToast_one": "{{count}} Datei überschreitet das Icon-Größenlimit dieses Servers von {{size}} (i_max_icon_filesize).",
       "tooLargeToast_other": "{{count}} Dateien überschreiten das Icon-Größenlimit dieses Servers von {{size}} (i_max_icon_filesize)."
     },
@@ -2505,7 +2496,6 @@
       "deleteGroupDescription": "\"{{name}}\" löschen?",
       "groupDeleted": "Gruppe gelöscht",
       "deleteServerGroupsTitle": "Servergruppen löschen",
-      "bulkDeletePartial": "{{succeeded}} gelöscht, {{failed}} fehlgeschlagen",
       "invalidJson": "Diese Datei ist kein gültiges JSON",
       "notValidGroupExport": "Keine gültige Gruppen-Exportdatei",
       "wrongExportTypeChannel": "Dies ist ein Channel-Gruppen-Export - importiere ihn stattdessen auf der Channel-Gruppen-Seite",
@@ -2560,7 +2550,6 @@
       "newGroupPlaceholder": "Neue Gruppe",
       "groupCreated": "Gruppe erstellt",
       "deleteChannelGroupsTitle": "Channel-Gruppen löschen",
-      "bulkDeletePartial": "{{succeeded}} gelöscht, {{failed}} fehlgeschlagen",
       "channelGroupUpdated": "Channel-Gruppe aktualisiert",
       "channelGroupUpdateFailed": "Channel-Gruppe konnte nicht aktualisiert werden",
       "channelGroupsUpdateFailed": "Channel-Gruppen konnten nicht aktualisiert werden",
@@ -2614,8 +2603,6 @@
       "duplicate": "Duplizieren",
       "deleteChannelTitle": "Channel löschen",
       "deleteChannelDescription": "Bist du sicher, dass du \"{{name}}\" löschen willst? Diese Aktion kann nicht rückgängig gemacht werden.",
-      "createPartialFailure": "{{succeeded}}/{{total}} erstellt, {{failed}} fehlgeschlagen",
-      "bulkUpdatePartialFailure": "{{succeeded}}/{{total}} aktualisiert, {{failed}} fehlgeschlagen",
       "duplicateCreated": "\"{{newName}}\" aus \"{{sourceName}}\" erstellt",
       "duplicateFailed": "Channel konnte nicht dupliziert werden",
       "channelDeleted": "Channel gelöscht",
@@ -3531,6 +3518,23 @@
     },
     "confirmDialog": {
       "processing": "Wird verarbeitet..."
+    },
+    "bulkResult": {
+      "summary": "{{ok}} von {{total}} erledigt.",
+      "counts": "Übersprungen: {{skipped}}, gescheitert: {{failed}}.",
+      "status": {
+        "ok": "Erledigt",
+        "skipped": "Übersprungen",
+        "failed": "Gescheitert"
+      },
+      "reason": {
+        "protected": "In einer geschützten Servergruppe - nur ein Admin darf das",
+        "not-connected": "Nicht mehr verbunden",
+        "already-there": "Bereits in diesem Kanal",
+        "online": "Gerade verbunden - TeamSpeak löscht das Profil nicht",
+        "no-value": "Nichts zu sperren (z. B. keine IP bekannt)"
+      },
+      "unknownError": "Unbekannter Fehler"
     },
     "dataTable": {
       "searchPlaceholder": "Suche...",

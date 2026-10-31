@@ -20,6 +20,8 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatUptime } from '@/lib/utils';
 import { tsErrorMessage } from '@/lib/ts-errors';
+import { reportBulk } from '@/components/shared/BulkResultDialog';
+import type { BulkOutcome } from '@ts6/common';
 import { Users, MoreHorizontal, LogOut, Ban, MessageSquare, Zap, ArrowRightLeft, Pencil, X } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
@@ -58,6 +60,13 @@ export default function Clients() {
 
   const channels = Array.isArray(channelData) ? channelData : [];
   const selectedClids = selected.map((c) => Number(c.clid));
+  // The dialog's own title names the action in the result; the success text counts what really went through.
+  // A client that left meanwhile comes back as "#clid"; the selection still knows its nickname.
+  const reportOutcomes = (titleKey: string, okKey: string, outcomes: BulkOutcome[]) => {
+    const nick = new Map(selected.map((c) => [Number(c.clid), String(c.client_nickname)]));
+    reportBulk(t(`pages.clients.${titleKey}`, { count: outcomes.length }), t(`pages.clients.${okKey}`, { count: outcomes.length }),
+      outcomes.map((o) => ({ ...o, name: nick.get(o.id) ?? o.name })));
+  };
 
   // Translates a refusal for a protected target (and known TeamSpeak errors) into the user's language.
   const actionError = (err: any, fallback: string): string => tsErrorMessage(err, fallback, t);
@@ -253,7 +262,7 @@ export default function Clients() {
             <Button
               disabled={!bulkTargetChannel || bulkMove.isPending}
               onClick={() => bulkMove.mutate({ clids: selectedClids, cid: Number(bulkTargetChannel) }, {
-                onSuccess: () => { toast.success(t('pages.clients.movedCount', { count: selected.length })); setSelected([]); closeBulkDialog(); },
+                onSuccess: ({ outcomes }) => { reportOutcomes('moveCount', 'movedCount', outcomes); setSelected([]); closeBulkDialog(); },
                 onError: (err: any) => toast.error(actionError(err, t('pages.clients.moveFailed'))),
               })}
             >
@@ -278,7 +287,7 @@ export default function Clients() {
             <Button
               disabled={bulkKick.isPending}
               onClick={() => bulkKick.mutate({ clids: selectedClids, reasonid: 5, reasonmsg: bulkReason || undefined }, {
-                onSuccess: () => { toast.success(t('pages.clients.kickedCount', { count: selected.length })); setSelected([]); closeBulkDialog(); },
+                onSuccess: ({ outcomes }) => { reportOutcomes('kickCount', 'kickedCount', outcomes); setSelected([]); closeBulkDialog(); },
                 onError: (err: any) => toast.error(actionError(err, t('pages.clients.kickFailed'))),
               })}
             >
@@ -310,7 +319,7 @@ export default function Clients() {
               variant="destructive"
               disabled={bulkBan.isPending}
               onClick={() => bulkBan.mutate({ clids: selectedClids, time: Number(bulkBanTime) || 0, banreason: bulkReason || undefined }, {
-                onSuccess: () => { toast.success(t('pages.clients.bannedCount', { count: selected.length })); setSelected([]); closeBulkDialog(); },
+                onSuccess: ({ outcomes }) => { reportOutcomes('banCount', 'bannedCount', outcomes); setSelected([]); closeBulkDialog(); },
                 onError: (err: any) => toast.error(actionError(err, t('pages.clients.banFailed'))),
               })}
             >
@@ -335,7 +344,7 @@ export default function Clients() {
             <Button
               disabled={!bulkDescription.trim() || bulkDescribe.isPending}
               onClick={() => bulkDescribe.mutate({ clids: selectedClids, description: bulkDescription.trim() }, {
-                onSuccess: () => { toast.success(t('pages.clients.descriptionUpdated', { count: selected.length })); setSelected([]); closeBulkDialog(); },
+                onSuccess: ({ outcomes }) => { reportOutcomes('describeCount', 'descriptionUpdated', outcomes); setSelected([]); closeBulkDialog(); },
                 onError: (err: any) => toast.error(actionError(err, t('pages.clients.descriptionUpdateFailed'))),
               })}
             >

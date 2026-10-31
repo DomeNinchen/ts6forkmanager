@@ -3,6 +3,8 @@
 // the normal interface - everything the query console's own trail (console.ts)
 // does not cover.
 
+import type { BulkOutcome } from './bulk.js';
+
 /** The methods that change something; a GET never produces a row. */
 export const UI_CHANGE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'] as const;
 export type UiChangeMethod = (typeof UI_CHANGE_METHODS)[number];
@@ -74,6 +76,8 @@ export interface UiChangeDiff {
   deleted?: Record<string, string>;
   /** Several deleted targets (all bans at once): how many, and the first of them. */
   deletedList?: { count: number; items: Record<string, string>[] };
+  /** A bulk action (R9): how many targets ended which way, and the first of them. */
+  bulk?: { ok: number; skipped: number; failed: number; items: BulkOutcome[] };
   /** The state before could not be read (the server did not answer in time, ...); the change itself went ahead. */
   unavailable?: string;
 }

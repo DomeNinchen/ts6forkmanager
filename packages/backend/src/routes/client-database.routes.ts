@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express';
 import {
   banRuleValue,
+  BULK_MAX,
+  clientDbBanToBulk,
+  clientDbDeleteToBulk,
   type ClientDbAssignableGroup,
   type ClientDbBanOutcome,
   type ClientDbBanRequest,
@@ -40,8 +43,6 @@ const LIST_BLOCK_MAX = 200;
 const TS_FIND_CAP = 50;
 /** How many profiles a custom-info or channel-group search lists (each one costs a clientdbinfo call). */
 const SEARCH_LIST_CAP = 100;
-/** Most profiles one ban or delete request may name. */
-const BULK_MAX = 500;
 /** Ten years - longer than any ban that makes sense, short of being a typo for "forever" (which is 0). */
 const BAN_SECONDS_MAX = 315_360_000;
 const ERR_INVALID_CLIENT_ID = 512;
@@ -368,6 +369,7 @@ clientDatabaseRoutes.post('/ban', async (req: Request, res: Response, next) => {
         }
       }
     }
+    res.locals.bulkOutcomes = clientDbBanToBulk(outcomes); // one change-log entry with the result list
     res.json({ outcomes } satisfies ClientDbBanResult);
   } catch (err) { next(err); }
 });
@@ -391,6 +393,7 @@ clientDatabaseRoutes.post('/delete', async (req: Request, res: Response, next) =
         else throw err;
       }
     }
+    res.locals.bulkOutcomes = clientDbDeleteToBulk(result); // one change-log entry with the result list
     res.json(result);
   } catch (err) { next(err); }
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { banRuleValue, type ClientDbBanTarget, type ClientDbProfile } from '@ts6/common';
+import { banRuleValue, clientDbBanToBulk, type ClientDbBanTarget, type ClientDbProfile } from '@ts6/common';
+import { reportBulk } from '@/components/shared/BulkResultDialog';
 import { Ban as BanIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -41,18 +42,9 @@ export function ClientDbBanDialog({ profiles, onClose, onDone }: ClientDbBanDial
       {
         onSuccess: (result) => {
           const created = result.outcomes.filter((o) => o.status === 'created').length;
-          const failed = result.outcomes.filter((o) => o.status === 'failed');
-          const skipped = result.outcomes.filter((o) => o.status === 'skipped').length;
-          if (failed.length > 0 && created === 0) {
-            toast.error(t('pages.clientDatabase.ban.failedAll', { message: failed[0].message }));
-          } else if (failed.length > 0) {
-            toast.warning(t('pages.clientDatabase.ban.partial', { created, failed: failed.length, message: failed[0].message }));
-          } else {
-            toast.success(
-              t('pages.clientDatabase.ban.done', { count: created })
-              + (skipped > 0 ? ` ${t('pages.clientDatabase.ban.skipped', { count: skipped })}` : ''),
-            );
-          }
+          // One line per profile and ban target (a profile banned by IP and by identity has two).
+          reportBulk(t('pages.clientDatabase.ban.title', { count: profiles.length }), t('pages.clientDatabase.ban.done', { count: created }),
+            clientDbBanToBulk(result.outcomes));
           onDone();
           onClose();
         },
