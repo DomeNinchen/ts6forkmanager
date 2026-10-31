@@ -7,9 +7,9 @@ export const BULK_MAX = 500;
 /**
  * Why a target was left out without being run: the manager's own checks (protected, not-connected,
  * already-there) or a skip TeamSpeak reports for the client database (online = connected profile,
- * no-value = nothing to ban by).
+ * no-value = nothing to ban by), or a target that does not exist (not-found: an icon not in the pool, an unknown profile).
  */
-export const BULK_SKIP_REASONS = ['protected', 'not-connected', 'already-there', 'online', 'no-value'] as const;
+export const BULK_SKIP_REASONS = ['protected', 'not-connected', 'already-there', 'online', 'no-value', 'not-found'] as const;
 export type BulkSkipReason = (typeof BULK_SKIP_REASONS)[number];
 
 export interface BulkOutcome {
@@ -25,4 +25,6 @@ export interface BulkOutcome {
 
 export interface BulkResult {
   outcomes: BulkOutcome[];
+  /** A preview (the request asked for dryRun): nothing ran, and 'ok' means "would run". */
+  dryRun?: true;
 }

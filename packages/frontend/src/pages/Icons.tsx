@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { BulkResult, IconUsageRef, ServerIcon } from '@ts6/common';
-import { reportBulk } from '@/components/shared/BulkResultDialog';
+import { BulkPreview, reportBulk, useBulkPreview } from '@/components/shared/BulkResultDialog';
 import { iconsApi } from '@/api/icons.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -91,6 +91,8 @@ export default function Icons() {
     },
   });
 
+  const preview = useBulkPreview();
+  const needsPreview = (deleteTargets?.length ?? 0) > 1 && !preview.outcomes;
   const deleteMutation = useMutation({
     mutationFn: (iconIds: number[]) =>
       iconIds.length === 1
@@ -99,6 +101,7 @@ export default function Icons() {
     onSuccess: ({ outcomes }) => {
       reportBulk(t('pages.icons.deleteSelected'), t('pages.icons.deletedToast', { count: outcomes.length }), outcomes);
       setDeleteTargets(null);
+      preview.reset();
       setSelected(new Set());
       invalidate();
     },
@@ -336,7 +339,7 @@ export default function Icons() {
 
         <ConfirmDialog
           open={!!deleteTargets}
-          onOpenChange={(open) => !open && setDeleteTargets(null)}
+          onOpenChange={(open) => { if (!open) { setDeleteTargets(null); preview.reset(); } }}
           title={t('pages.icons.deleteTitle', { count: deleteTargets?.length ?? 0 })}
           description={
             usedByTargets.length > 0
@@ -348,11 +351,20 @@ export default function Icons() {
                 })
               : t('pages.icons.deleteDescription')
           }
-          confirmLabel={t('common.delete')}
+          confirmLabel={needsPreview ? t('components.bulkResult.preview.check') : t('common.delete')}
           destructive
-          loading={deleteMutation.isPending}
-          onConfirm={() => deleteTargets && deleteMutation.mutate(deleteTargets.map((icon) => icon.iconId))}
-        />
+          loading={deleteMutation.isPending || preview.loading}
+          confirmDisabled={preview.empty}
+          onConfirm={() => {
+            if (!deleteTargets) return;
+            const ids = deleteTargets.map((icon) => icon.iconId);
+            // Several icons: the first press shows what would happen (R9), the second deletes.
+            if (needsPreview) preview.ask(() => iconsApi.bulkDeletePreview(c!, s!, ids), (err: any) => toast.error(err?.response?.data?.error || t('pages.icons.deleteFailed')));
+            else deleteMutation.mutate(ids);
+          }}
+        >
+          {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
+        </ConfirmDialog>
       </div>
     </TooltipProvider>
   );

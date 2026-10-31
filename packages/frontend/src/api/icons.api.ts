@@ -39,4 +39,6 @@ export const iconsApi = {
     api.delete(`${base(configId, sid)}/${iconId}`).then((r) => r.data),
   bulkDelete: (configId: number, sid: number, iconIds: number[]): Promise<BulkResult> =>
     api.post(`${base(configId, sid)}/bulk/delete`, { iconIds }).then((r) => r.data),
+  bulkDeletePreview: (configId: number, sid: number, iconIds: number[]): Promise<BulkResult> =>
+    api.post(`${base(configId, sid)}/bulk/delete`, { iconIds, dryRun: true }).then((r) => r.data),
 };

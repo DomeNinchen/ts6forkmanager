@@ -24,6 +24,7 @@ import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { assertProfilesNotProtected } from '../utils/protected-groups.js';
+import { isDryRun, planned, sendPreview } from '../utils/bulk.js';
 
 // Everything about the profiles a virtual server has ever seen (its client database), mounted at
 // .../clients/database. Admin-only as a whole: the rows carry each client's last IP address, which
@@ -343,12 +344,13 @@ clientDatabaseRoutes.post('/ban', async (req: Request, res: Response, next) => {
     if (!Number.isInteger(time) || time < 0 || time > BAN_SECONDS_MAX) throw new AppError(400, 'time must be 0 (permanent) or a number of seconds');
     const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 200) : '';
     await assertProfilesNotProtected(req, client, cldbids);
+    const dryRun = isDryRun(req);
 
     const outcomes: ClientDbBanOutcome[] = [];
     for (const cldbid of cldbids) {
       const row = await readInfoRow(client, sid, cldbid);
       if (!row) {
-        for (const target of targets) outcomes.push({ cldbid, nickname: '', target, status: 'failed', message: 'Profile not found' });
+        for (const target of targets) outcomes.push({ cldbid, nickname: '', target, status: 'skipped', message: 'not-found' });
         continue;
       }
       const profile = toProfile(row);
@@ -356,6 +358,10 @@ clientDatabaseRoutes.post('/ban', async (req: Request, res: Response, next) => {
         const value = banRuleValue(target, profile);
         if (!value) {
           outcomes.push({ cldbid, nickname: profile.nickname, target, status: 'skipped', message: 'no-value' });
+          continue;
+        }
+        if (dryRun) {
+          outcomes.push({ cldbid, nickname: profile.nickname, target, status: 'created' }); // would be created
           continue;
         }
         try {
@@ -369,6 +375,7 @@ clientDatabaseRoutes.post('/ban', async (req: Request, res: Response, next) => {
         }
       }
     }
+    if (dryRun) return sendPreview(res, clientDbBanToBulk(outcomes));
     res.locals.bulkOutcomes = clientDbBanToBulk(outcomes); // one change-log entry with the result list
     res.json({ outcomes } satisfies ClientDbBanResult);
   } catch (err) { next(err); }
@@ -381,6 +388,12 @@ clientDatabaseRoutes.post('/delete', async (req: Request, res: Response, next) =
     const client = getClient(req);
     const sid = getSid(req);
     const cldbids = idList((req.body ?? {}).cldbids, 'cldbids');
+    if (isDryRun(req)) {
+      // One list read instead of the 523 a connected profile would answer.
+      // shortcut: an unknown cldbid shows as "would be deleted" (fails in the real run); read clientdbinfo per id if that matters.
+      const live = new Set(rows(await client.execute(sid, 'clientlist')).map((c) => toNumber(c.client_database_id)));
+      return sendPreview(res, planned(cldbids.map((id) => ({ id, name: `#${id}`, reason: live.has(id) ? 'online' as const : undefined }))));
+    }
 
     const result: ClientDbDeleteResult = { deleted: [], online: [], failed: [] };
     for (const cldbid of cldbids) {

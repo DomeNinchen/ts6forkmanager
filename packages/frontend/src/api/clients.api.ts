@@ -31,4 +31,7 @@ export const clientsApi = {
     api.post(`${base(configId, sid)}/bulk/ban`, { clids, time, banreason }).then((r): BulkResult => r.data),
   bulkDescribe: (configId: number, sid: number, clids: number[], description: string) =>
     api.post(`${base(configId, sid)}/bulk/describe`, { clids, description }).then((r): BulkResult => r.data),
+  /** The preview of a bulk action (R9): same route and body, nothing runs. */
+  bulkPreview: (configId: number, sid: number, action: 'move' | 'kick' | 'ban' | 'describe', body: object): Promise<BulkResult> =>
+    api.post(`${base(configId, sid)}/bulk/${action}`, { ...body, dryRun: true }).then((r) => r.data),
 };

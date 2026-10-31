@@ -11,11 +11,14 @@ interface ConfirmDialogProps {
   destructive?: boolean;
   onConfirm: () => void;
   loading?: boolean;
+  /** Shown between the description and the buttons (e.g. a bulk preview). */
+  children?: React.ReactNode;
+  confirmDisabled?: boolean;
 }
 
 export function ConfirmDialog({
   open, onOpenChange, title, description,
-  confirmLabel, destructive, onConfirm, loading,
+  confirmLabel, destructive, onConfirm, loading, children, confirmDisabled,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
   return (
@@ -25,6 +28,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {children}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             {t('common.cancel')}
@@ -32,7 +36,7 @@ export function ConfirmDialog({
           <Button
             variant={destructive ? 'destructive' : 'default'}
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
           >
             {loading ? t('components.confirmDialog.processing') : (confirmLabel ?? t('common.confirm'))}
           </Button>

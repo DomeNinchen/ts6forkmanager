@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { banRuleValue, clientDbBanToBulk, type ClientDbBanTarget, type ClientDbProfile } from '@ts6/common';
-import { reportBulk } from '@/components/shared/BulkResultDialog';
+import { banRuleValue, clientDbBanToBulk, type BulkOutcome, type ClientDbBanTarget, type ClientDbProfile } from '@ts6/common';
+import { BulkPreview, reportBulk, useBulkPreview } from '@/components/shared/BulkResultDialog';
+import { clientDatabaseApi } from '@/api/client-database.api';
+import { useServerStore } from '@/stores/server.store';
 import { Ban as BanIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,7 @@ interface ClientDbBanDialogProps {
 export function ClientDbBanDialog({ profiles, onClose, onDone }: ClientDbBanDialogProps) {
   const { t } = useTranslation();
   const ban = useBanProfiles();
+  const { selectedConfigId, selectedSid } = useServerStore();
   const [picked, setPicked] = useState<Record<ClientDbBanTarget, boolean>>({ uid: true, name: false, ip: false });
   const [duration, setDuration] = useState('3600');
   const [reason, setReason] = useState('');
@@ -36,9 +39,20 @@ export function ClientDbBanDialog({ profiles, onClose, onDone }: ClientDbBanDial
   const withoutValue = (target: ClientDbBanTarget) => profiles.filter((p) => banRuleValue(target, p) === '').length;
   const chosen = TARGETS.filter((target) => picked[target] && offered(target));
 
+  // Several profiles: the first press shows what would happen (R9), the second bans.
+  const preview = useBulkPreview();
+  const needsPreview = profiles.length > 1 && !preview.outcomes;
+  const nameOf = (o: BulkOutcome) => o.name.replace(/^#\d+ /, `${profiles.find((p) => p.cldbid === o.id)?.nickname || `#${o.id}`} `);
+
   const submit = () => {
+    const request = { cldbids: profiles.map((p) => p.cldbid), targets: chosen, time: Number(duration), reason: reason.trim() || undefined };
+    if (needsPreview) {
+      preview.ask(() => clientDatabaseApi.banPreview(selectedConfigId!, selectedSid!, request),
+        (err) => toast.error(tsErrorMessage(err, t('pages.clientDatabase.ban.failed'), t)), nameOf);
+      return;
+    }
     ban.mutate(
-      { cldbids: profiles.map((p) => p.cldbid), targets: chosen, time: Number(duration), reason: reason.trim() || undefined },
+      request,
       {
         onSuccess: (result) => {
           const created = result.outcomes.filter((o) => o.status === 'created').length;
@@ -73,7 +87,7 @@ export function ClientDbBanDialog({ profiles, onClose, onDone }: ClientDbBanDial
                     className="mt-0.5"
                     checked={picked[target] && isOffered}
                     disabled={!isOffered}
-                    onCheckedChange={(v) => setPicked((prev) => ({ ...prev, [target]: !!v }))}
+                    onCheckedChange={(v) => { setPicked((prev) => ({ ...prev, [target]: !!v })); preview.reset(); }}
                   />
                   <span className="space-y-0.5">
                     <span className="block text-sm font-medium">{t(`pages.clientDatabase.ban.targets.${target}.label`)}</span>
@@ -116,12 +130,15 @@ export function ClientDbBanDialog({ profiles, onClose, onDone }: ClientDbBanDial
               <Input className="mt-1" value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} placeholder={t('pages.bans.reasonPlaceholder')} />
             </div>
           </div>
+          {preview.outcomes && <BulkPreview outcomes={preview.outcomes} />}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={ban.isPending}>{t('common.cancel')}</Button>
-          <Button variant="destructive" onClick={submit} disabled={chosen.length === 0 || ban.isPending}>
-            <BanIcon className="h-4 w-4 mr-1" /> {ban.isPending ? t('components.confirmDialog.processing') : t('pages.clientDatabase.actions.ban')}
+          <Button variant="destructive" onClick={submit} disabled={chosen.length === 0 || ban.isPending || preview.loading || preview.empty}>
+            <BanIcon className="h-4 w-4 mr-1" />
+            {ban.isPending || preview.loading ? t('components.confirmDialog.processing')
+              : needsPreview ? t('components.bulkResult.preview.check') : t('pages.clientDatabase.actions.ban')}
           </Button>
         </DialogFooter>
       </DialogContent>

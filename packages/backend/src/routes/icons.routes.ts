@@ -5,7 +5,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { normalizeIconId, type IconUsageMap, type IconUsageRef, type ServerIcon } from '@ts6/common';
 import { sshExecute, toSshAppError } from '../utils/ssh-query.js';
 import { crc32 } from '../utils/crc32.js';
-import { bulkIds, runPerTarget, sendBulk } from '../utils/bulk.js';
+import { bulkIds, isDryRun, planned, runPerTarget, sendBulk, sendPreview } from '../utils/bulk.js';
 import { allocateClientFtfid, ftDownloadBytes, ftUploadBytes, resolveFileTransferHost } from '../ts-client/file-transfer.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
@@ -243,9 +243,13 @@ iconRoutes.post('/', requirePermission('icons.manage'), upload.single('file'), a
 iconRoutes.post('/bulk/delete', requirePermission('icons.manage'), async (req: Request, res: Response, next) => {
   try {
     const iconIds = bulkIds(req.body?.iconIds, 'iconIds');
+    // One listing: an icon that is not in the pool is skipped instead of failing with "invalid file path".
+    const pool = new Set((await listIcons(req)).map((icon) => icon.iconId));
+    const targets = iconIds.map((id) => ({ id, name: String(id), reason: pool.has(id) ? undefined : 'not-found' as const }));
+    if (isDryRun(req)) return sendPreview(res, planned(targets));
     // No SSH connection is one answer for the whole request, not one failed line per icon.
     let sshMissing: unknown = null;
-    const outcomes = await runPerTarget(iconIds.map((id) => ({ id, name: String(id) })), async (iconId) => {
+    const outcomes = await runPerTarget(targets, async (iconId) => {
       try {
         await sshExecute(req, 'ftdeletefile', { cid: ICON_CID, cpw: '', name: iconPath(iconId) });
       } catch (err) {

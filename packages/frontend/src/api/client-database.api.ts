@@ -1,4 +1,5 @@
 import type {
+  BulkResult,
   ClientDbBanRequest,
   ClientDbBanResult,
   ClientDbDeleteResult,
@@ -28,4 +29,9 @@ export const clientDatabaseApi = {
     api.post(`${base(configId, sid)}/ban`, request).then((r) => r.data),
   remove: (configId: number, sid: number, cldbids: number[]): Promise<ClientDbDeleteResult> =>
     api.post(`${base(configId, sid)}/delete`, { cldbids }).then((r) => r.data),
+  /** Previews (R9): same routes and checks, nothing runs; the answer is one bulk outcome per target. */
+  banPreview: (configId: number, sid: number, request: ClientDbBanRequest): Promise<BulkResult> =>
+    api.post(`${base(configId, sid)}/ban`, { ...request, dryRun: true }).then((r) => r.data),
+  removePreview: (configId: number, sid: number, cldbids: number[]): Promise<BulkResult> =>
+    api.post(`${base(configId, sid)}/delete`, { cldbids, dryRun: true }).then((r) => r.data),
 };

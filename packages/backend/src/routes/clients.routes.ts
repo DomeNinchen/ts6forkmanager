@@ -5,7 +5,7 @@ import { TSApiError, AppError } from '../middleware/error-handler.js';
 import { clientDatabaseRoutes } from './client-database.routes.js';
 import type { BulkSkipReason } from '@ts6/common';
 import { assertClientsNotProtected, protectedAmong, targetIds } from '../utils/protected-groups.js';
-import { bulkIds, runPerTarget, sendBulk } from '../utils/bulk.js';
+import { bulkIds, isDryRun, planned, runPerTarget, sendBulk, sendPreview } from '../utils/bulk.js';
 
 export const clientRoutes: Router = Router({ mergeParams: true });
 
@@ -60,6 +60,7 @@ clientRoutes.post('/bulk/move', requirePermission('clients.move'), async (req: R
     const ids = bulkIds(req.body?.clids, 'clids');
     const { cid, cpw } = req.body as { cid: number; cpw?: string };
     const targets = await bulkTargets(req, ids, { protect: true, cid: Number(cid) });
+    if (isDryRun(req)) return sendPreview(res, planned(targets));
     sendBulk(res, await runPerTarget(targets, (clid) => getClient(req).execute(getSid(req), 'clientmove', { clid: String(clid), cid, cpw })));
   } catch (err) { next(err); }
 });
@@ -69,6 +70,7 @@ clientRoutes.post('/bulk/kick', requirePermission('clients.kick'), async (req: R
     const ids = bulkIds(req.body?.clids, 'clids');
     const { reasonid, reasonmsg } = req.body as { reasonid?: number; reasonmsg?: string };
     const targets = await bulkTargets(req, ids, { protect: true });
+    if (isDryRun(req)) return sendPreview(res, planned(targets));
     sendBulk(res, await runPerTarget(targets, (clid) =>
       getClient(req).execute(getSid(req), 'clientkick', { clid: String(clid), reasonid: reasonid || 5, reasonmsg })));
   } catch (err) { next(err); }
@@ -79,6 +81,7 @@ clientRoutes.post('/bulk/ban', requirePermission('clients.ban'), async (req: Req
     const ids = bulkIds(req.body?.clids, 'clids');
     const { time, banreason } = req.body as { time?: number; banreason?: string };
     const targets = await bulkTargets(req, ids, { protect: true });
+    if (isDryRun(req)) return sendPreview(res, planned(targets));
     sendBulk(res, await runPerTarget(targets, (clid) =>
       getClient(req).execute(getSid(req), 'banclient', { clid: String(clid), time: time || 0, banreason })));
   } catch (err) { next(err); }
@@ -90,6 +93,7 @@ clientRoutes.post('/bulk/describe', requirePermission('clients.manage'), async (
     const ids = bulkIds(req.body?.clids, 'clids');
     const { description } = req.body as { description: string };
     const targets = await bulkTargets(req, ids, { protect: false });
+    if (isDryRun(req)) return sendPreview(res, planned(targets));
     sendBulk(res, await runPerTarget(targets, (clid) =>
       getClient(req).execute(getSid(req), 'clientedit', { clid: String(clid), client_description: description })));
   } catch (err) { next(err); }

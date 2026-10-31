@@ -3532,9 +3532,16 @@
         "not-connected": "Nicht mehr verbunden",
         "already-there": "Bereits in diesem Kanal",
         "online": "Gerade verbunden - TeamSpeak löscht das Profil nicht",
-        "no-value": "Nichts zu sperren (z. B. keine IP bekannt)"
+        "no-value": "Nichts zu sperren (z. B. keine IP bekannt)",
+        "not-found": "Nicht (mehr) vorhanden"
       },
-      "unknownError": "Unbekannter Fehler"
+      "unknownError": "Unbekannter Fehler",
+      "preview": {
+        "summary": "{{ok}} von {{total}} werden ausgeführt.",
+        "nothing": "Nichts auszuführen: alle ausgewählten Ziele würden übersprungen.",
+        "skip": "Wird übersprungen",
+        "check": "Prüfen"
+      }
     },
     "dataTable": {
       "searchPlaceholder": "Suche...",
