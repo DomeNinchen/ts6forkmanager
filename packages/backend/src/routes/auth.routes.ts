@@ -8,6 +8,7 @@ import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
 import { issueTokensForUser, sameLogin } from '../utils/issue-tokens.js';
 import { recordWebEvent } from '../utils/connection-journal.js';
+import { roleInfo } from '../utils/role-table.js';
 import { encrypt, decrypt, decryptOrNull } from '../utils/crypto.js';
 import {
   generateTotpSecret, generateTotpQrCode, verifyTotpCode,
@@ -60,7 +61,7 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
           const { accessToken, refreshToken } = await issueTokensForUser(prisma, user);
           res.json({
             accessToken, refreshToken,
-            user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, authProvider: user.authProvider, totpEnabled: user.totpEnabled, language: user.language },
+            user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, ...roleInfo(user.role), authProvider: user.authProvider, totpEnabled: user.totpEnabled, language: user.language },
           });
           return;
         }
@@ -85,6 +86,7 @@ authRoutes.post('/login', async (req: Request, res: Response, next) => {
         username: user.username,
         displayName: user.displayName,
         role: user.role,
+        ...roleInfo(user.role),
         authProvider: user.authProvider,
         totpEnabled: user.totpEnabled,
         language: user.language,
@@ -159,7 +161,7 @@ authRoutes.post('/login/verify-totp', async (req: Request, res: Response, next) 
       accessToken,
       refreshToken,
       deviceToken,
-      user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, totpEnabled: user.totpEnabled, language: user.language },
+      user: { id: user.id, username: user.username, displayName: user.displayName, role: user.role, ...roleInfo(user.role), totpEnabled: user.totpEnabled, language: user.language },
     });
   } catch (err) { next(err); }
 });
@@ -243,6 +245,7 @@ authRoutes.get('/me', authMiddleware, async (req: Request, res: Response, next) 
         username: user.username,
         displayName: user.displayName,
         role: user.role,
+        ...roleInfo(user.role),
         authProvider: user.authProvider,
         totpEnabled: user.totpEnabled,
         language: user.language,

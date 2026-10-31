@@ -6,6 +6,7 @@ import { LoungeHeader } from './LoungeHeader';
 import { UpdateBanner } from './UpdateBanner';
 import { YtCookieBanner } from './YtCookieBanner';
 import { useAuthStore } from '@/stores/auth.store';
+import { useOwnRoleSync } from '@/hooks/use-auth';
 import { useWebguiThemeSync, useWebguiBaseThemeSync, useWebguiDesignSync, useDesign } from '@/hooks/use-webgui-theme';
 import { Toaster } from 'sonner';
 import { BulkResultDialog } from '@/components/shared/BulkResultDialog';
@@ -16,6 +17,7 @@ export function AppLayout() {
   useWebguiThemeSync();
   useWebguiBaseThemeSync();
   useWebguiDesignSync();
+  useOwnRoleSync();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

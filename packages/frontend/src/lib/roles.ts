@@ -12,7 +12,10 @@ const ROLE_KEYS: Record<UserRole, string> = {
   'music-operator': 'common.roles.musicOperator',
 };
 
-export function roleLabel(t: TFunction, role: string | undefined): string {
+/** A fixed role's translated name, or `customName` for a custom role (unknown custom role: "Custom role"). */
+export function roleLabel(t: TFunction, role: string | undefined, customName?: string): string {
   const key = role ? ROLE_KEYS[role as UserRole] : undefined;
-  return key ? t(key) : (role ?? '');
+  if (key) return t(key);
+  if (role?.startsWith('custom:')) return customName ?? t('common.roles.custom');
+  return role ?? '';
 }

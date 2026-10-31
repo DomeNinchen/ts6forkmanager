@@ -32,6 +32,7 @@ import { TsBanLookup } from './utils/ts-ip-ban.js';
 import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import { attachWsAudience, type UpgradeRequest } from './utils/ws-audience.js';
 import { startGrantNarrowing } from './utils/vs-access.js';
+import { loadRoleTable } from './utils/role-table.js';
 import type { JwtPayload } from '@ts6/common';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -151,6 +152,8 @@ async function main() {
   void geoIp.start();
   // Addresses the web interface turns away (and the ban lists of the TeamSpeak servers, for the journal's badges).
   // Started before the listener opens, so no request gets in ahead of the list.
+  // The roles as the admin set them up, loaded before the listener opens like the ban list below.
+  await loadRoleTable(prisma);
   const ipBans = new IpBanService(prisma, app, wss, geoIp);
   app.locals.ipBans = ipBans;
   app.locals.tsBanLookup = new TsBanLookup(connectionPool);

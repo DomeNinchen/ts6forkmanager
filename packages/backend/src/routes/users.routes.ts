@@ -4,9 +4,8 @@ import { requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { validatePassword } from '../utils/validate-password.js';
 import { sameLogin } from '../utils/issue-tokens.js';
-import { USER_ROLES } from '@ts6/common';
+import { isAssignableRole } from '../utils/role-table.js';
 
-const VALID_ROLES: readonly string[] = USER_ROLES;
 
 export const userRoutes: Router = Router();
 
@@ -41,7 +40,7 @@ userRoutes.post('/', async (req: Request, res: Response, next) => {
     if (pwError) throw new AppError(400, pwError);
 
     const assignedRole = role || 'viewer';
-    if (!VALID_ROLES.includes(assignedRole)) throw new AppError(400, `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}`);
+    if (!isAssignableRole(assignedRole)) throw new AppError(400, 'Invalid role');
 
     const prisma = req.app.locals.prisma;
     const passwordHash = await bcrypt.hash(password, 12);
@@ -81,7 +80,7 @@ userRoutes.put('/:userId', async (req: Request, res: Response, next) => {
     if (req.body.username !== undefined) data.username = req.body.username;
     if (req.body.displayName !== undefined) data.displayName = req.body.displayName;
     if (req.body.role !== undefined) {
-      if (!VALID_ROLES.includes(req.body.role)) throw new AppError(400, `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}`);
+      if (!isAssignableRole(req.body.role)) throw new AppError(400, 'Invalid role');
       data.role = req.body.role;
     }
     if (req.body.enabled !== undefined) data.enabled = req.body.enabled;

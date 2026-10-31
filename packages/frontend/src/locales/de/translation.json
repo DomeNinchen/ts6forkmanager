@@ -78,7 +78,8 @@
       "botOperator": "Bot-Operator",
       "serverAdmin": "Serveradministrator",
       "moderator": "Moderator",
-      "musicOperator": "Musik-Operator"
+      "musicOperator": "Musik-Operator",
+      "custom": "Eigene Rolle"
     }
   },
   "nav": {
@@ -1783,6 +1784,7 @@
         "account": "Konto",
         "webgui": "WebGui",
         "users": "Benutzer",
+        "roles": "Rollen",
         "youtube": "YouTube",
         "streaming": "Streaming",
         "network": "Netzwerk",
@@ -1937,6 +1939,7 @@
           "unprotectedWarning": "Auf {{servers}} ist noch keine Servergruppe geschützt: Dort kann diese Rolle jeden Client kicken, bannen und verschieben, auch Admins.",
           "changeRoleTitle": "Rolle von {{username}} ändern",
           "changeRoleConfirm": "Rolle ändern",
+          "none": "Diese Rolle darf noch nichts.",
           "labels": {
             "server_view": "Dashboard, Channel- und Clientliste ansehen",
             "groups_view": "Servergruppen-Liste ansehen",
@@ -1964,6 +1967,38 @@
           }
         },
         "editUserTitle": "Benutzer bearbeiten"
+      },
+      "roles": {
+        "description": "Was jede Rolle auf den freigegebenen Servern eines Benutzers darf. Änderungen gelten sofort für alle mit dieser Rolle.",
+        "fixedTitle": "Feste Rollen",
+        "adminFixed": "Alles. Die Admin-Rolle ist nicht änderbar.",
+        "changed": "geändert",
+        "permissionCount_one": "{{count}} Recht",
+        "permissionCount_other": "{{count}} Rechte",
+        "usersCount_one": "{{count}} Benutzer",
+        "usersCount_other": "{{count}} Benutzer",
+        "noUsers": "keine Benutzer",
+        "reset": "Auf Standard zurücksetzen",
+        "customTitle": "Eigene Rollen",
+        "add": "Rolle anlegen",
+        "noCustom": "Noch keine eigenen Rollen.",
+        "saved": "Rolle gespeichert",
+        "saveFailed": "Rolle konnte nicht gespeichert werden",
+        "resetDone": "Rolle auf Standard zurückgesetzt",
+        "deleted": "Rolle gelöscht",
+        "deleteFailed": "Rolle konnte nicht gelöscht werden",
+        "inUse": "Diese Rolle haben noch: {{users}}. Gib ihnen zuerst eine andere Rolle.",
+        "resetTitle": "{{role}} auf Standard zurücksetzen?",
+        "resetDescription": "Die Rolle bekommt wieder die Rechte, die sie nach der Installation hat. Das gilt sofort für alle mit dieser Rolle.",
+        "deleteTitle": "Rolle {{role}} löschen?",
+        "deleteDescription": "Das geht nur, solange kein Benutzer die Rolle hat.",
+        "editFixedTitle": "Rechte von {{role}}",
+        "addTitle": "Eigene Rolle anlegen",
+        "editCustomTitle": "{{role}} bearbeiten",
+        "name": "Name",
+        "namePlaceholder": "z. B. Support",
+        "customNoEscalating": "Eigene Rollen können keine Rechte bekommen, mit denen man Rechte erweitern kann.",
+        "fixedAppliesNow": "Gilt sofort für alle mit dieser Rolle; offene Seiten übernehmen es innerhalb einer Minute."
       },
       "serverAccess": {
         "wholeConnection": "Diese Verbindung hat kein WebQuery und keine Liste virtueller Server: Der Zugriff gilt für die ganze Verbindung.",

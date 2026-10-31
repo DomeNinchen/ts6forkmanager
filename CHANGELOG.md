@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## October 2026
 
-Versions at the end of the month: **backend 2.87.0 · frontend 3.105.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.88.0 · frontend 3.106.0 · sidecar 2.1.4**
 
 ### New Features
+
+- **Custom roles and editable built-in roles** — A new **Roles** tab in Settings lists every role with its number of permissions and users. The admin can tick what Server Admin, Moderator, Bot Operator, Music Operator and Viewer may do (and reset each to its default), and can add named roles of their own with any permission except those that can raise privileges (group membership and editing, permissions, tokens, files, bot flows). Custom roles are given in Settings → Users like the built-in ones; a role cannot be deleted while someone still has it. Changes apply on the next request; open pages pick them up within a minute ([Users and Roles](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)). *backend 2.88.0, frontend 3.106.0* [#344](https://github.com/DomeNinchen/ts6forkmanager/pull/344)
 
 - **Backup before deletions** — Deleting a server or channel group or a channel, or at least 10 client-database profiles at once (adjustable on the Backups page), first takes a backup of the database plus a snapshot of that virtual server, kind **Before deletion**; the newest 10 are kept apart from the scheduled ones. Below the threshold the dialog shows the last backup with a snapshot of this server and a **Back up now** button. If the backup fails, nothing is deleted and the dialog offers **Delete without a backup**, which the Change Log records. Deploying that snapshot on the Miscellaneous page brings deleted groups, channels and profiles back, but it replaces the whole virtual server; bans, icons, kicks and moves get no backup step, as a snapshot cannot bring them back ([Backups](https://github.com/DomeNinchen/ts6forkmanager/wiki/Backups)). *backend 2.87.0, frontend 3.105.0* [#343](https://github.com/DomeNinchen/ts6forkmanager/pull/343)
 
@@ -136,12 +138,14 @@ Versions at the end of the month: **backend 2.87.0 · frontend 3.105.0 · sideca
 
 **Scripts using the API**
 
+- A user's `role` can be `custom:<id>` (a custom role from `GET /api/roles`) besides the built-in names; login and `/api/auth/me` also return the user's `permissions` and, for a custom role, its `roleName`. [#344](https://github.com/DomeNinchen/ts6forkmanager/pull/344)
 - Deleting a server or channel group or a channel, and `clients/database/delete` from the threshold on, take a backup first and answer **409** with `code: "BACKUP_FAILED"` (nothing deleted) when it fails; `skipBackup: true` in the body deletes without one. The backup settings gain `bulkBackupThreshold` (1 to 500); a settings request without it keeps the current value. [#343](https://github.com/DomeNinchen/ts6forkmanager/pull/343)
 - The bulk routes for online clients, `icons/bulk/delete` and the client database's `ban` and `delete` take `dryRun: true` in the body: same permission and checks, nothing runs, and the answer is `{ outcomes, dryRun: true }` with `status: "ok"` meaning "would run". An icon or profile that does not exist now comes back as skipped (`not-found`) instead of failed. [#342](https://github.com/DomeNinchen/ts6forkmanager/pull/342)
 - The bulk routes for online clients (`clients/bulk/move`, `kick`, `ban`, `describe`) and `icons/bulk/delete` answer `{ outcomes: [{ id, name, status, reason?, message? }] }` instead of TeamSpeak's raw answer or `{ succeeded, failed }`, take at most 500 ids, and send one query per target (counted against the server's flood limits like any other query). [#341](https://github.com/DomeNinchen/ts6forkmanager/pull/341)
 
 **Users & roles**
 
+- Every role keeps exactly its rights after the update; the Roles tab only changes them when an admin saves there. Update backend and frontend together: the frontend reads each user's permissions from the backend. [#344](https://github.com/DomeNinchen/ts6forkmanager/pull/344)
 - Existing server access keeps covering every virtual server of its connection until the backend has read the connection's list of virtual servers (shortly after the start, then every 10 minutes); from then on it covers the virtual servers that existed at that moment. Update backend and frontend together: the server access dialog and its API changed. [#340](https://github.com/DomeNinchen/ts6forkmanager/pull/340)
 - Existing accounts keep their role and exactly their rights; nothing to do. Moderators and server admins can kick, ban and move any client except members of server groups marked as protected on the Server Groups page, and after the update no group is protected - mark your admin groups before giving these roles out. [#338](https://github.com/DomeNinchen/ts6forkmanager/pull/338), [#339](https://github.com/DomeNinchen/ts6forkmanager/pull/339)
 

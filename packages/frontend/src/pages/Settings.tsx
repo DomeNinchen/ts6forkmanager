@@ -20,10 +20,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { NetworkTab } from '@/components/settings/NetworkTab';
 import { RolePermissions } from '@/components/settings/RolePermissions';
-import { roleLabel } from '@/lib/roles';
+import { useRoleSetup } from '@/hooks/use-roles';
+import { RolesTab } from '@/components/settings/RolesTab';
 import { Settings as SettingsIcon, Server, Plus, Trash2, Pencil, TestTube, Check, X, KeyRound, Upload, FileText, AlertTriangle, RefreshCw, Search, Monitor, Bot } from 'lucide-react';
 import { toast } from 'sonner';
-import { compareVersions, USER_ROLES } from '@ts6/common';
+import { compareVersions } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { useSetWebguiTheme, useSetWebguiBaseTheme, useSetWebguiDesign } from '@/hooks/use-webgui-theme';
@@ -74,6 +75,12 @@ export default function Settings() {
         {isAdmin && (
           <TabsContent value="users" className="mt-4">
             <UsersTab />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="roles" className="mt-4">
+            <RolesTab />
           </TabsContent>
         )}
 
@@ -912,9 +919,12 @@ function UsersTab() {
   const qc = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
   const { data: users, isLoading } = useQuery({ queryKey: ['users'], queryFn: usersApi.list });
-  const createUser = useMutation({ mutationFn: (data: any) => usersApi.create(data), onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }) });
-  const updateUser = useMutation({ mutationFn: ({ id, data }: { id: number; data: any }) => usersApi.update(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }) });
-  const deleteUser = useMutation({ mutationFn: (id: number) => usersApi.delete(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }) });
+  // The Roles tab lists who holds each role.
+  const invalidateUsers = () => Promise.all([qc.invalidateQueries({ queryKey: ['users'] }), qc.invalidateQueries({ queryKey: ['roles'] })]);
+  const roles = useRoleSetup();
+  const createUser = useMutation({ mutationFn: (data: any) => usersApi.create(data), onSuccess: invalidateUsers });
+  const updateUser = useMutation({ mutationFn: ({ id, data }: { id: number; data: any }) => usersApi.update(id, data), onSuccess: invalidateUsers });
+  const deleteUser = useMutation({ mutationFn: (id: number) => usersApi.delete(id), onSuccess: invalidateUsers });
 
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
@@ -1039,7 +1049,7 @@ function UsersTab() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {USER_ROLES.map((r) => <SelectItem key={r} value={r}>{roleLabel(t, r)}</SelectItem>)}
+                        {roles.options.map((o) => <SelectItem key={o.role} value={o.role}>{o.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </td>
@@ -1095,12 +1105,12 @@ function UsersTab() {
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {USER_ROLES.map((r) => <SelectItem key={r} value={r}>{roleLabel(t, r)}</SelectItem>)}
+                  {roles.options.map((o) => <SelectItem key={o.role} value={o.role}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             {/* A new account has no servers yet: warn about every connection without a protected group. */}
-            <RolePermissions role={form.role} unprotected={unprotectedNames(serverList.map((s: any) => s.id))} />
+            <RolePermissions role={form.role} permissions={roles.permissionsOf(form.role)} unprotected={unprotectedNames(serverList.map((s: any) => s.id))} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>{t('common.cancel')}</Button>
@@ -1115,8 +1125,8 @@ function UsersTab() {
           <DialogHeader>
             <DialogTitle className="text-sm">{t('pages.settings.users.permissions.changeRoleTitle', { username: pendingRole?.username })}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm font-medium">{roleLabel(t, pendingRole?.role)}</p>
-          {pendingRole && <RolePermissions role={pendingRole.role} unprotected={unprotectedNames(pendingAccess?.serverConfigIds)} />}
+          <p className="text-sm font-medium">{roles.nameOf(pendingRole?.role)}</p>
+          {pendingRole && <RolePermissions role={pendingRole.role} permissions={roles.permissionsOf(pendingRole.role)} unprotected={unprotectedNames(pendingAccess?.serverConfigIds)} />}
           <DialogFooter>
             <Button variant="outline" onClick={() => setPendingRole(null)}>{t('common.cancel')}</Button>
             <Button onClick={() => pendingRole && handleRoleChange(pendingRole.id, pendingRole.role)} disabled={updateUser.isPending}>

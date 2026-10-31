@@ -119,6 +119,24 @@ model UserVirtualServerAccess {
 
 // A server group whose members no non-admin web user may kick, ban or move
 // (R8). Per virtual server, because group ids only mean something inside one.
+// A role the admin defined (User.role = "custom:<id>"). Its permissions are a JSON array of
+// USER_PERMISSIONS names (@ts6/common), never one of ESCALATING_PERMISSIONS.
+model CustomRole {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  permissions String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// The admin's changed permissions of a fixed role (its key, e.g. "moderator"; never "admin").
+// No row = the role's defaults (ROLE_PERMISSIONS in @ts6/common).
+model RolePermissionOverride {
+  role        String   @id
+  permissions String
+  updatedAt   DateTime @updatedAt
+}
+
 model ProtectedServerGroup {
   id             Int            @id @default(autoincrement())
   serverConfigId Int

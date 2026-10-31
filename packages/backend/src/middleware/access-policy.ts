@@ -1,12 +1,13 @@
 import type { Request, Response, NextFunction } from 'express';
-import { roleHasPermission, type UserPermission } from '@ts6/common';
+import type { UserPermission } from '@ts6/common';
+import { mayRole } from '../utils/role-table.js';
 
 /**
  * Default-deny access for a router mounted in app.ts.
  *
  * `adminExcept(open)` lets an admin through and refuses every other role - except for the
- * requests listed in `open`, each for the roles that hold the permission it names (ROLE_PERMISSIONS
- * in @ts6/common). So what a non-admin can reach on a mount is the list at that mount in app.ts
+ * requests listed in `open`, each for the roles that hold the permission it names (as the roles
+ * are set up now, utils/role-table.ts). So what a non-admin can reach on a mount is the list at that mount in app.ts
  * and nothing else: a route added to the router later, with or without a check of its own, is
  * admin-only until someone opens it there on purpose.
  *
@@ -76,7 +77,7 @@ export function adminExcept(open: readonly OpenRoute[] = []) {
     // The patterns are case-sensitive on purpose: Express routes /Tokens like /tokens, so a
     // differently cased spelling of an open path is refused here - failing closed.
     const allowed = routes.some((r) => (r.method === '*' || r.method === method) && r.pattern.test(path)
-      && (r.permission === SIGNED_IN || roleHasPermission(role, r.permission)));
+      && (r.permission === SIGNED_IN || mayRole(role, r.permission)));
     if (!allowed) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;

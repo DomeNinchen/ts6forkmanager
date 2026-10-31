@@ -88,7 +88,9 @@ for (const m of mounts) if (isRouter(m.handle)) collect(m.handle, m.path);
 // --- A database stand-in: users 1-6 have the six roles, each granted every virtual server of
 // connection 1 only; user 99 is a server admin granted only virtual server 2 of connection 1 ---
 const RESTRICTED_USER = 99;
-const roleOfUser = (id: number) => (id === RESTRICTED_USER ? 'server-admin' : ROLES[id - 1]);
+// Users from 100 on hold whatever role a test below gives them (custom or changed roles).
+const extraRoles = new Map<number, string>();
+const roleOfUser = (id: number) => (id === RESTRICTED_USER ? 'server-admin' : extraRoles.get(id) ?? ROLES[id - 1]);
 const model = (name: string) => new Proxy({}, {
   get: (_t, op: string) => async (args: any) => {
     if (name === 'user' && op === 'findUnique') return roleOfUser(args.where.id) ? { enabled: true, role: roleOfUser(args.where.id) } : null;
@@ -180,7 +182,7 @@ const ADMIN_ONLY = [
   /^\/api\/servers\/:configId\/virtual-servers(\/:sid)?(\/(start|stop|snapshot|snapshot\/deploy|permission-reset))?$/,
   /^\/api\/servers\/:configId\/vs\/:sid\/permissions\/automatic-groups\//,
   /^\/api\/servers\/:configId\/(identity|global-message|test|bot-identity)$/,
-  /^\/api\/(users|widgets|backups|change-log|connection-journal)(\/|$)/,
+  /^\/api\/(users|roles|widgets|backups|change-log|connection-journal)(\/|$)/,
   /^\/api\/settings\/(?!webgui-theme$|webgui-base-theme$|webgui-design$)/,
 ];
 const isAdminOnly = (method: string, p: string) =>
@@ -236,4 +238,72 @@ test('no route answers a non-admin on a server connection without a grant', () =
   const leaks = Object.entries(matrix).flatMap(([key, row]) =>
     Object.entries(row).filter(([who, status]) => who.endsWith('(no grant)') && !who.startsWith('admin') && status === 'ok').map(([who]) => `${key} as ${who}`));
   assert.deepEqual(leaks, []);
+});
+
+// --- Roles the admin set up (utils/role-table.ts) ------------------------------------------------
+const { loadRoleTable } = await import('../utils/role-table.js');
+const { ESCALATING_PERMISSIONS, ROLE_PERMISSIONS, USER_PERMISSIONS } = await import('@ts6/common');
+
+/** Loads the role table the way the backend does at start, from these rows. */
+const setUpRoles = (overrides: { role: string; permissions: string[] }[], customs: { id: number; permissions: string[] }[]) =>
+  loadRoleTable({
+    rolePermissionOverride: { findMany: async () => overrides.map((o) => ({ role: o.role, permissions: JSON.stringify(o.permissions) })) },
+    customRole: { findMany: async () => customs.map((c) => ({ id: c.id, name: `role ${c.id}`, permissions: JSON.stringify(c.permissions) })) },
+  } as any);
+
+/** Every matrix route as this user (with and without a grant), keyed like the matrix columns. */
+async function columnOf(userId: number, role: string): Promise<Record<string, string>> {
+  extraRoles.set(userId, role);
+  const token = jwt.sign({ id: userId, username: `u${userId}`, role }, config.jwtSecret, { algorithm: 'HS256' });
+  const column: Record<string, string> = {};
+  for (const key of Object.keys(matrix)) {
+    const [method, p] = key.split(' ');
+    column[key] = await call(method, concrete(p, GRANTED_CONFIG), token);
+    if (p.includes(':configId')) column[`${key} (no grant)`] = await call(method, concrete(p, FOREIGN_CONFIG), token);
+  }
+  return column;
+}
+const fixedColumn = (role: string) => Object.fromEntries(Object.entries(matrix).flatMap(([key, row]) =>
+  [[key, row[role]], ...(`${role} (no grant)` in row ? [[`${key} (no grant)`, row[`${role} (no grant)`]]] : [])]));
+const differences = (a: Record<string, string>, b: Record<string, string>) =>
+  Object.keys(a).filter((k) => a[k] !== b[k]).map((k) => `${k}: ${a[k]} vs ${b[k]}`);
+
+test('a custom role reaches exactly what a fixed role with the same permissions reaches', async () => {
+  await setUpRoles([], [{ id: 7, permissions: [...ROLE_PERMISSIONS.moderator] }]);
+  const custom = await columnOf(100, 'custom:7');
+  assert.deepEqual(differences(custom, fixedColumn('moderator')), []);
+  // positive control: the role reaches something, and a role with other permissions differs
+  assert.ok(Object.values(custom).includes('ok'));
+  assert.notDeepEqual(differences(custom, fixedColumn('music-operator')), []);
+});
+
+test('a custom role never gains an escalating permission, even when stored with one', async () => {
+  const allowed = USER_PERMISSIONS.filter((p) => !ESCALATING_PERMISSIONS.includes(p));
+  // The same permissions on a changed fixed role (which may hold any) are the yardstick.
+  await setUpRoles([{ role: 'viewer', permissions: allowed }], [{ id: 8, permissions: [...USER_PERMISSIONS] }]);
+  const custom = await columnOf(101, 'custom:8');
+  const yardstick = await columnOf(102, 'viewer');
+  assert.deepEqual(differences(custom, yardstick), []);
+  // positive control: with the escalating permissions, a fixed role reaches more
+  await setUpRoles([{ role: 'viewer', permissions: [...USER_PERMISSIONS] }], []);
+  assert.notDeepEqual(differences(await columnOf(102, 'viewer'), yardstick), []);
+});
+
+test('a changed fixed role answers like its new permissions, and a reset brings the defaults back', async () => {
+  await setUpRoles([{ role: 'viewer', permissions: [...ROLE_PERMISSIONS.moderator] }], []);
+  assert.deepEqual(differences(await columnOf(103, 'viewer'), fixedColumn('moderator')), []);
+  await setUpRoles([], []);
+  assert.deepEqual(differences(await columnOf(103, 'viewer'), fixedColumn('viewer')), []);
+});
+
+test('a custom role that does not exist (or no longer) reaches nothing an empty role cannot', async () => {
+  await setUpRoles([], [{ id: 9, permissions: [] }]);
+  const empty = await columnOf(104, 'custom:9');
+  for (const role of ['custom:10', 'custom:09', 'Admin', 'constructor', '__proto__']) {
+    assert.deepEqual(differences(await columnOf(105, role), empty), [], role);
+  }
+  // an empty role reaches nothing the viewer (the smallest fixed role) cannot
+  const viewer = fixedColumn('viewer');
+  assert.deepEqual(Object.entries(empty).filter(([k, v]) => v === 'ok' && viewer[k] !== 'ok'), []);
+  assert.ok(Object.values(viewer).filter((v) => v === 'ok').length > Object.values(empty).filter((v) => v === 'ok').length);
 });
