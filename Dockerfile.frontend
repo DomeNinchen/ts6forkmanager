@@ -6,6 +6,11 @@ WORKDIR /app
 # Copy everything at once to avoid BuildKit ordering bug on Windows
 FROM base AS build
 COPY . .
+# COPY keeps the modes the files have in the checkout, and the build copies the
+# files in public/ into dist with them. nginx runs as the nginx user, so a file
+# readable for its owner only would be answered with 403. Readable for
+# everyone, directories searchable; nothing gets writable.
+RUN chmod -R a+rX /app
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @ts6/common run build
 RUN pnpm --filter @ts6/frontend run build

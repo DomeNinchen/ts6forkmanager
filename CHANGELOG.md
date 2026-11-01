@@ -4,11 +4,21 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.88.1 · frontend 3.106.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.88.2 · frontend 3.106.1 · sidecar 2.1.4**
 
 ### Security
 
 - **Dependency updates** — `follow-redirects` 1.16.2 and `qs` 6.17.1 close two Dependabot alerts; neither was reachable in this app. *backend 2.88.1* [#345](https://github.com/DomeNinchen/ts6forkmanager/pull/345)
+
+### Bug Fixes
+
+- Fixed the backend restarting in a loop with "Cannot read package config ... permission denied" when files in the checkout on the server were readable by their owner only (a restrictive umask such as `077`, or a tool that wrote them that way); the backend and frontend images now make every file they take from the checkout readable, so nginx no longer answers such files from `public/` with 403 either. *backend 2.88.2, frontend 3.106.1*
+
+### Upgrade Notes
+
+**Docker & reverse proxy**
+
+- A backend stuck in that restart loop needs nothing but the usual update: pull, then rebuild with `docker compose up -d --build`.
 
 ### Updating
 
