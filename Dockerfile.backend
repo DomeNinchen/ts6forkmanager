@@ -44,6 +44,12 @@ WORKDIR /app
 
 # Copy everything at once to avoid BuildKit ordering bug on Windows
 COPY . .
+# COPY keeps the modes the files have in the checkout, and the production stage
+# copies them on from here. The backend runs as the node user, so a file the
+# checkout holds as readable for its owner only (a restrictive umask, or a tool
+# that wrote it that way) would stop the backend at start with "permission
+# denied". Readable for everyone, directories searchable; nothing gets writable.
+RUN chmod -R a+rX /app
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @ts6/common run build
 RUN pnpm --filter @ts6/backend exec prisma generate
