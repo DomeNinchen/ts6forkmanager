@@ -12,13 +12,13 @@ Versions at the end of the month: **backend 2.88.2 · frontend 3.106.1 · sideca
 
 ### Bug Fixes
 
-- Fixed the backend restarting in a loop with "Cannot read package config ... permission denied" when files in the checkout on the server were readable by their owner only (a restrictive umask such as `077`, or a tool that wrote them that way); the backend and frontend images now make every file they take from the checkout readable, so nginx no longer answers such files from `public/` with 403 either. *backend 2.88.2, frontend 3.106.1*
+- Fixed the backend restarting in a loop with "Cannot read package config ... permission denied" when files in the checkout on the server were readable by their owner only (a restrictive umask such as `077`, or a tool that wrote them that way); the backend and frontend images now make every file they take from the checkout readable, so nginx no longer answers such files from `public/` with 403 either. *backend 2.88.2, frontend 3.106.1* [#346](https://github.com/DomeNinchen/ts6forkmanager/pull/346)
 
 ### Upgrade Notes
 
 **Docker & reverse proxy**
 
-- A backend stuck in that restart loop needs nothing but the usual update: pull, then rebuild with `docker compose up -d --build`.
+- A backend stuck in that restart loop needs nothing but the usual update: pull, then rebuild with `docker compose up -d --build`. [#346](https://github.com/DomeNinchen/ts6forkmanager/pull/346)
 
 ### Updating
 
