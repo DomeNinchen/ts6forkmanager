@@ -2,6 +2,22 @@
 
 Every user-visible or behaviour-affecting change of this fork, grouped by the month it shipped, newest month first. Each month lists new features, improvements, security changes and bug fixes, followed by upgrade notes (what an admin has to do when updating) and the update command. Entries are short on purpose: the linked pull request (or upstream issue) has the full story — root cause, design decisions and how the change was verified. Backend, frontend and sidecar are versioned independently, so each entry names the component versions that shipped it, and each month starts with the versions it ended on. Why this fork exists is explained in the [README](README.md#why-this-fork-exists).
 
+## November 2026
+
+Versions at the end of the month: **backend 2.88.1 · frontend 3.106.0 · sidecar 2.1.4**
+
+### Security
+
+- **Dependency updates** — `follow-redirects` 1.16.2 and `qs` 6.17.1 close two Dependabot alerts; neither was reachable in this app. *backend 2.88.1* [#345](https://github.com/DomeNinchen/ts6forkmanager/pull/345)
+
+### Updating
+
+For installations built from the Git repository:
+
+```bash
+git pull --autostash && docker compose up -d --build
+```
+
 ## October 2026
 
 Versions at the end of the month: **backend 2.88.0 · frontend 3.106.0 · sidecar 2.1.4**
