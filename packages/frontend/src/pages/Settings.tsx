@@ -24,7 +24,7 @@ import { useRoleSetup } from '@/hooks/use-roles';
 import { RolesTab } from '@/components/settings/RolesTab';
 import { Settings as SettingsIcon, Server, Plus, Trash2, Pencil, TestTube, Check, X, KeyRound, Upload, FileText, AlertTriangle, RefreshCw, Search, Monitor, Bot } from 'lucide-react';
 import { toast } from 'sonner';
-import { compareVersions } from '@ts6/common';
+import { compareVersions, type ConnectionTestResult } from '@ts6/common';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { useSetWebguiTheme, useSetWebguiBaseTheme, useSetWebguiDesign } from '@/hooks/use-webgui-theme';
@@ -731,7 +731,9 @@ function ConnectionsTab() {
                 <Button variant="outline" size="sm" className="h-7 text-xs" disabled={server.hasWebQuery === false}
                   title={server.hasWebQuery === false ? t('pages.settings.connections.needsApiKey') : undefined}
                   onClick={() => testServer.mutate(server.id, {
-                  onSuccess: (data: any) => data?.success ? toast.success(t('pages.settings.connections.connectionSuccessful')) : toast.error(data?.error ? t('pages.settings.connections.connectionFailedWithError', { error: data.error }) : t('pages.settings.connections.connectionFailed')),
+                  onSuccess: (data: ConnectionTestResult) => data.success
+                    ? toast.success(t('pages.settings.connections.connectionSuccessfulDetail', { detail: data.detail, ms: data.durationMs }))
+                    : toast.error(t('pages.settings.connections.connectionFailedWithError', { error: t(`pages.settings.connections.causes.${data.cause ?? 'unknown'}`) }), { description: data.detail ?? data.error, duration: 15000 }),
                   // The backend's reason (a stored key it cannot decrypt, say) is more use than "failed".
                   onError: (err: any) => toast.error(err?.response?.data?.error ? t('pages.settings.connections.connectionFailedWithError', { error: err.response.data.error }) : t('pages.settings.connections.connectionFailed')),
                 })}>
