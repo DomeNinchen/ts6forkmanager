@@ -8,7 +8,7 @@ Versions at the end of the month: **backend 2.89.0 · frontend 3.107.0 · sideca
 
 ### Improvements
 
-- **Connection test names the cause** — "Test" under Settings -> Connections now says why the WebQuery connection failed and what to do about it: host not found, connection refused, no answer (firewall), connection closed at once (HTTP/HTTPS switch, query deny list or flood block), API key rejected, TLS certificate not matching the host name, untrusted or expired, or an answer that did not come from TeamSpeak. A successful test shows the TeamSpeak version and the response time; the API response carries `cause`, `detail` and `durationMs` next to the existing fields. *backend 2.89.0, frontend 3.107.0*
+- **Connection test names the cause** — "Test" under Settings -> Connections now says why the WebQuery connection failed and what to do about it: host not found, connection refused, no answer (firewall), connection closed at once (HTTP/HTTPS switch, query deny list or flood block), API key rejected, TLS certificate not matching the host name, untrusted or expired, or an answer that did not come from TeamSpeak. A successful test shows the TeamSpeak version and the response time; the API response carries `cause`, `detail` and `durationMs` next to the existing fields. *backend 2.89.0, frontend 3.107.0* [#347](https://github.com/DomeNinchen/ts6forkmanager/pull/347)
 
 ### Security
 
