@@ -7,6 +7,8 @@ import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { ServerLifecycle } from '../ts-client/server-lifecycle.js';
 import { widgetDataCache } from './widget-public.routes.js';
 import { encrypt, decryptOrNull, REENTER_ON_CONNECTION, UNDECRYPTABLE_HINT } from '../utils/crypto.js';
+import { diagnoseConnection } from '../utils/connection-diagnosis.js';
+import type { BotEngine } from '../bot-engine/engine.js';
 
 export const serverRoutes: Router = Router();
 
@@ -264,6 +266,31 @@ serverRoutes.post('/:configId/test', requireRole('admin'), async (req: Request, 
     client.destroy(); // Close the temporary TCP connection immediately
 
     res.json(result);
+  } catch (err) { next(err); }
+});
+
+// Diagnose each way to the server (WebQuery, SSH, file-transfer port) on its own, with a cause per step.
+serverRoutes.post('/:configId/diagnose', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const id = parseInt(String(req.params.configId));
+    const server = await prisma.tsServerConfig.findUnique({ where: { id } });
+    if (!server) throw new AppError(404, 'Server config not found');
+
+    const apiKey = server.apiKey ? decryptOrNull(server.apiKey, `The WebQuery API key of server connection ${id}`, REENTER_ON_CONNECTION) : null;
+    const hasSsh = Boolean(server.sshUsername && server.sshPassword && server.sshPort);
+    const sshPassword = hasSsh ? decryptOrNull(server.sshPassword!, `The SSH password of server connection ${id}`, REENTER_ON_CONNECTION) : null;
+    const engine: BotEngine | undefined = req.app.locals.botEngine;
+
+    res.json(await diagnoseConnection({
+      host: server.host,
+      useHttps: server.useHttps,
+      webqueryPort: server.webqueryPort,
+      apiKey,
+      apiKeyProblem: server.apiKey && apiKey === null ? `The stored API key ${UNDECRYPTABLE_HINT}. ${REENTER_ON_CONNECTION}` : undefined,
+      ssh: hasSsh && sshPassword !== null ? { port: server.sshPort!, username: server.sshUsername!, password: sshPassword } : null,
+      sshProblem: hasSsh && sshPassword === null ? `The stored SSH password ${UNDECRYPTABLE_HINT}. ${REENTER_ON_CONNECTION}` : undefined,
+    }, engine?.getEventBridge().liveClient(id)));
   } catch (err) { next(err); }
 });
 

@@ -5,6 +5,7 @@ import { TS_EVENT_TYPES } from '@ts6/common';
 import crypto from 'crypto';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import { maskSecretsInLine } from '../utils/mask-secrets.js';
+import { forgetSshRejection, rememberSshRejection } from '../utils/ssh-login-guard.js';
 
 export interface SshQueryClientOptions {
   host: string;
@@ -99,6 +100,7 @@ export class SshQueryClient extends EventEmitter {
             if (!this.connected && this.bannerReceived) {
               if (this.destroyed) { try { channel.close(); } catch { } try { ssh.end(); } catch { } return; }
               this.connected = true;
+              forgetSshRejection(this.options);
               this.reconnectAttempt = 0;
               this.reconnecting = false;
               this.startKeepalive();
@@ -127,6 +129,7 @@ export class SshQueryClient extends EventEmitter {
         const isAuthError = err.message.includes('authentication') || err.message.includes('Auth');
         if (isAuthError) {
           this.fatalError = true;
+          rememberSshRejection(this.options, err.message);
           console.error(`[SshQueryClient] Fatal auth error for ${this.options.host}:${this.options.port}: ${err.message}`);
         }
         this.emit('error', err);
@@ -143,6 +146,13 @@ export class SshQueryClient extends EventEmitter {
         this.bannerReceived = false;
         this.stopKeepalive();
         this.rejectAllPending('SSH connection closed');
+        // TS6 closes right after the handshake, without an error, while it blocks this address
+        // after failed logins: say so now instead of waiting for the connect timeout.
+        if (!settled) {
+          settled = true;
+          clearTimeout(connectTimeout);
+          reject(Object.assign(new Error('SSH connection closed by the server before login'), { level: 'closed-before-login' }));
+        }
         if (!this.destroyed && wasConnected) {
           this.emit('close');
           this.scheduleReconnect();

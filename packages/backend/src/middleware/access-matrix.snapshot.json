@@ -113,6 +113,20 @@
     "moderator": "403",
     "moderator (no grant)": "403"
   },
+  "POST /api/servers/:configId/diagnose": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "403",
+    "viewer (no grant)": "403",
+    "bot-operator": "403",
+    "bot-operator (no grant)": "403",
+    "music-operator": "403",
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
+  },
   "POST /api/servers/:configId/bot-identity": {
     "admin": "ok",
     "admin (no grant)": "ok",

@@ -4,10 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.89.0 · frontend 3.107.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.90.0 · frontend 3.107.1 · sidecar 2.1.4**
 
 ### Improvements
 
+- **Connection diagnosis for SSH and file transfer** — A new admin endpoint (`POST /api/servers/:configId/diagnose`, the report dialog follows) checks WebQuery, the SSH query login and the file-transfer port one by one and gives each its own cause. The SSH check reuses the running event session when there is one; otherwise it logs in at most once per 30 seconds per server, and after a refused login it never tries the same credentials again (TeamSpeak blocks an address that is not on its query allowlist for about 11 minutes after two failed logins). The file-transfer check only opens and closes a connection to the port, without a transfer. An SSH connection the server closes before the login now fails at once instead of after 15 seconds. *backend 2.90.0, frontend 3.107.1* [#348](https://github.com/DomeNinchen/ts6forkmanager/pull/348)
 - **Connection test names the cause** — "Test" under Settings -> Connections now says why the WebQuery connection failed and what to do about it: host not found, connection refused, no answer (firewall), connection closed at once (HTTP/HTTPS switch, query deny list or flood block), API key rejected, TLS certificate not matching the host name, untrusted or expired, or an answer that did not come from TeamSpeak. A successful test shows the TeamSpeak version and the response time; the API response carries `cause`, `detail` and `durationMs` next to the existing fields. *backend 2.89.0, frontend 3.107.0* [#347](https://github.com/DomeNinchen/ts6forkmanager/pull/347)
 
 ### Security

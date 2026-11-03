@@ -18,6 +18,18 @@ export const CONNECTION_CAUSES = [
   'key-rejected',
   'ts-error',
   'unexpected-response',
+  // SSH (measured on 6.0.0-beta13.1): wrong user and wrong password look the same.
+  'ssh-auth-rejected',
+  /**
+   * The connection closed before the login. Two causes look the same: the port is not the SSH query
+   * port (e.g. the WebQuery port), or TS6 blocks this non-allowlisted address after failed logins (~11 min).
+   */
+  'ssh-closed',
+  // Why a step was not run.
+  'not-configured',
+  'prerequisite-failed',
+  /** A test login for this target ran less than the minimum interval ago (query-ban protection). */
+  'rate-limited',
   'unknown',
 ] as const;
 export type ConnectionCause = (typeof CONNECTION_CAUSES)[number];
@@ -30,4 +42,24 @@ export interface ConnectionTestResult {
   /** The technical detail behind `cause` (error code, TeamSpeak's message); never a secret. */
   detail?: string;
   durationMs: number;
+}
+
+export type DiagnosisStepId = 'webquery' | 'ssh' | 'filetransfer';
+
+export interface DiagnosisStep {
+  id: DiagnosisStepId;
+  status: 'ok' | 'failed' | 'skipped';
+  cause: ConnectionCause;
+  detail?: string;
+  durationMs?: number;
+  /** Where the SSH verdict came from: the running event session, a login of the test's own, or a refusal remembered from an earlier login. */
+  source?: 'live-session' | 'test-login' | 'remembered';
+  /** The port the step checked. */
+  port?: number;
+}
+
+export interface ConnectionDiagnosis {
+  host: string;
+  useHttps: boolean;
+  steps: DiagnosisStep[];
 }

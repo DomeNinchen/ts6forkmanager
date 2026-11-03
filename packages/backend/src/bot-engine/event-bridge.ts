@@ -127,6 +127,15 @@ export class EventBridge extends EventEmitter {
     await Promise.all(closing);
   }
 
+  /** A connected event session of this server config (any virtual server), for checks that must not log in again. */
+  liveClient(configId: number): SshQueryClient | undefined {
+    const prefix = `${configId}:`;
+    for (const [key, client] of this.connections) {
+      if (key.startsWith(prefix) && client.isConnected) return client;
+    }
+    return undefined;
+  }
+
   isConnected(configId: number, sid: number): boolean {
     const key = this.makeKey(configId, sid);
     const client = this.connections.get(key);
