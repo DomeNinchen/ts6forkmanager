@@ -44,7 +44,7 @@ export interface ConnectionTestResult {
   durationMs: number;
 }
 
-export type DiagnosisStepId = 'webquery' | 'ssh' | 'filetransfer';
+export type DiagnosisStepId = 'webquery' | 'ssh' | 'filetransfer' | 'voice' | 'sidecar';
 
 export interface DiagnosisStep {
   id: DiagnosisStepId;
@@ -56,6 +56,21 @@ export interface DiagnosisStep {
   source?: 'live-session' | 'test-login' | 'remembered';
   /** The port the step checked. */
   port?: number;
+  /** The virtual server a voice step checked, when its port came from the server list. */
+  sid?: number;
+}
+
+/** "Test with entered values": the connection form's fields; a blank secret of an existing connection (`configId`) means its stored one. */
+export interface DiagnosisRequest {
+  configId?: number;
+  host: string;
+  webqueryPort: number;
+  useHttps: boolean;
+  /** null: no WebQuery key. */
+  apiKey: string | null;
+  sshPort: number;
+  sshUsername: string;
+  sshPassword: string;
 }
 
 export interface ConnectionDiagnosis {

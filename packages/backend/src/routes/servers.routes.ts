@@ -9,6 +9,7 @@ import { widgetDataCache } from './widget-public.routes.js';
 import { encrypt, decryptOrNull, REENTER_ON_CONNECTION, UNDECRYPTABLE_HINT } from '../utils/crypto.js';
 import { diagnoseConnection } from '../utils/connection-diagnosis.js';
 import type { BotEngine } from '../bot-engine/engine.js';
+import type { DiagnosisRequest } from '@ts6/common';
 
 export const serverRoutes: Router = Router();
 
@@ -290,9 +291,58 @@ serverRoutes.post('/:configId/diagnose', requireRole('admin'), async (req: Reque
       apiKeyProblem: server.apiKey && apiKey === null ? `The stored API key ${UNDECRYPTABLE_HINT}. ${REENTER_ON_CONNECTION}` : undefined,
       ssh: hasSsh && sshPassword !== null ? { port: server.sshPort!, username: server.sshUsername!, password: sshPassword } : null,
       sshProblem: hasSsh && sshPassword === null ? `The stored SSH password ${UNDECRYPTABLE_HINT}. ${REENTER_ON_CONNECTION}` : undefined,
+      voicePorts: await musicBotVoicePorts(prisma, id),
     }, engine?.getEventBridge().liveClient(id)));
   } catch (err) { next(err); }
 });
+
+// The same diagnosis for the values in the connection form, without saving them (and so without a change-log row).
+serverRoutes.post('/diagnose', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const b = req.body as Partial<DiagnosisRequest>;
+    const host = typeof b.host === 'string' ? b.host.trim() : '';
+    const webqueryPort = Number(b.webqueryPort);
+    const sshPort = Number(b.sshPort);
+    const isPort = (p: number) => Number.isInteger(p) && p > 0 && p < 65536;
+    if (!host || !isPort(webqueryPort) || !isPort(sshPort)) throw new AppError(400, 'host, webqueryPort and sshPort are required');
+    const text = (v: unknown) => (typeof v === 'string' ? v : '');
+
+    const prisma = req.app.locals.prisma;
+    const configId = b.configId === undefined ? undefined : Number(b.configId);
+    const stored = configId ? await prisma.tsServerConfig.findUnique({ where: { id: configId } }) : null;
+    if (configId && !stored) throw new AppError(404, 'Server config not found');
+    // A stored secret is only sent to the host it was stored for, never to a host typed into the form.
+    const sameHost = !!stored && stored.host.toLowerCase() === host.toLowerCase();
+    const storedSecret = (value: string | null, what: string) => {
+      if (!sameHost || !value) return { value: null as string | null };
+      const plain = decryptOrNull(value, `${what} of server connection ${configId}`, REENTER_ON_CONNECTION);
+      return plain === null ? { value: null, problem: `${what} ${UNDECRYPTABLE_HINT}. ${REENTER_ON_CONNECTION}` } : { value: plain };
+    };
+
+    // Blank fields of an existing connection mean "keep the stored value", the way saving the form treats them.
+    const key = b.apiKey === null ? { value: null } : text(b.apiKey) ? { value: text(b.apiKey) } : storedSecret(stored?.apiKey ?? null, 'The stored API key');
+    const sshUsername = text(b.sshUsername) || (sameHost ? stored?.sshUsername ?? '' : '');
+    const password = text(b.sshPassword) ? { value: text(b.sshPassword) } : storedSecret(stored?.sshPassword ?? null, 'The stored SSH password');
+    const unchangedSsh = sameHost && !text(b.sshPassword) && sshUsername === stored?.sshUsername && sshPort === stored?.sshPort;
+    const engine: BotEngine | undefined = req.app.locals.botEngine;
+
+    res.json(await diagnoseConnection({
+      host,
+      useHttps: b.useHttps === true,
+      webqueryPort,
+      apiKey: key.value,
+      apiKeyProblem: (key as { problem?: string }).problem,
+      ssh: sshUsername && password.value !== null ? { port: sshPort, username: sshUsername, password: password.value } : null,
+      sshProblem: sshUsername ? (password as { problem?: string }).problem : undefined,
+      voicePorts: sameHost ? await musicBotVoicePorts(prisma, configId!) : [],
+    }, unchangedSsh ? engine?.getEventBridge().liveClient(configId!) : undefined));
+  } catch (err) { next(err); }
+});
+
+async function musicBotVoicePorts(prisma: any, serverConfigId: number): Promise<number[]> {
+  const bots: { voicePort: number }[] = await prisma.musicBot.findMany({ where: { serverConfigId }, select: { voicePort: true } });
+  return bots.map((b) => b.voicePort);
+}
 
 // Provision a separate, dedicated ServerQuery identity used only for bot-flow
 // actions, so they're attributed to their own name in TS's own logs/notifications
