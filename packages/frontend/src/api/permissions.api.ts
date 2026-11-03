@@ -1,4 +1,25 @@
 import api from './client';
+import type { PermissionAction, PermissionVerdict } from '@ts6/common';
+
+export interface ExplainParams {
+  actor: number;
+  target: number;
+  action: PermissionAction;
+  sgid?: number;
+  destination?: number;
+  duration?: number;
+}
+/** One permoverview row as the explain route returns it (t = permoverview tier 0-4). */
+export interface ExplainRow {
+  rank: number; t: number; id1: number; id2: number; permsid: string; permvalue: number; permnegated: number; permskip: number;
+}
+export type ExplainResult = PermissionVerdict<ExplainRow> & {
+  context: {
+    actor: { cldbid: number; online: boolean; cid: number };
+    target: { cldbid: number; online: boolean; cid: number };
+    destination: number | null; sgid: number | null; banDuration: number; defaultCid: number;
+  };
+};
 
 const base = (configId: number, sid: number) =>
   `/servers/${configId}/vs/${sid}/permissions`;
@@ -27,6 +48,10 @@ export const permissionsApi = {
   // Unlike find, these rows do carry the value (v/n/s).
   overview: (configId: number, sid: number, cldbid: number, cid: number) =>
     api.get(`${base(configId, sid)}/overview/${cldbid}`, { params: { cid } }).then((r) => r.data),
+
+  // "Why?": can client `actor` do `action` to client `target` - verdict plus every check (R11).
+  explain: (configId: number, sid: number, params: ExplainParams): Promise<ExplainResult> =>
+    api.get(`${base(configId, sid)}/explain`, { params }).then((r) => r.data),
 
   // Automatic Groups: add/remove permissions on every regular server group of
   // one type (sgtype = the group's i_group_auto_update_type). TeamSpeak applies

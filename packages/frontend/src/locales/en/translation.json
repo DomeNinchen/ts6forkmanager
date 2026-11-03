@@ -3065,6 +3065,105 @@
       "applyToCount": "Apply to {{count}}",
       "findPermission": "Find Permission",
       "permissionOverview": "Permission Overview",
+      "why": {
+        "tab": "Why?",
+        "title": "Why can (or can't) a client do this?",
+        "explanation": "Pick who acts, the action and the target. The answer is worked out from the same data as the Permission Overview, following the checks TeamSpeak makes for that action, and names where each value comes from. Nothing is changed here; use the editor for that.",
+        "actor": "Who acts",
+        "target": "Target",
+        "action": "Action",
+        "group": "Server group",
+        "destination": "Destination channel",
+        "duration": "Ban duration",
+        "durationSeconds": "Duration in seconds",
+        "check": "Check",
+        "selected": "Selected: {{name}}",
+        "noneSelected": "Nobody selected yet",
+        "moreClients": "{{count}} more - narrow the search",
+        "missing": {
+          "actor": "Pick who acts.",
+          "target": "Pick the target.",
+          "same": "Pick two different clients.",
+          "group": "Pick the server group.",
+          "destination": "Pick the destination channel.",
+          "duration": "Enter a duration of at least one second."
+        },
+        "actions": {
+          "kick-server": "Kick from server",
+          "kick-channel": "Kick from channel",
+          "ban": "Ban",
+          "move": "Move",
+          "poke": "Poke",
+          "message-private": "Send a private message",
+          "group-add": "Add to server group",
+          "group-remove": "Remove from server group"
+        },
+        "durations": {
+          "hour": "1 hour",
+          "day": "1 day",
+          "month": "30 days",
+          "permanent": "Permanent",
+          "custom": "Custom"
+        },
+        "seconds_one": "{{count}} second",
+        "seconds_other": "{{count}} seconds",
+        "verdict": {
+          "allowed": "Allowed",
+          "denied": "Denied",
+          "impossible": "Not possible"
+        },
+        "checkText": {
+          "power": "{{actor}} has {{have}}, {{need}} is needed.",
+          "flag": "Ban by identity: {{have}}",
+          "ban-time": "Maximum ban time {{have}} for a ban of {{duration}} (-1 = no limit).",
+          "ban-time-permanent": "Maximum ban time {{have}}; a permanent ban needs -1 (no limit)."
+        },
+        "scope": {
+          "target-channel": "in {{target}}'s channel \"{{channel}}\"",
+          "actor-channel": "in {{actor}}'s channel \"{{channel}}\"",
+          "destination": "in the destination \"{{channel}}\"",
+          "server": "server-wide (server groups and client permissions only)",
+          "group": "set on the group \"{{group}}\""
+        },
+        "notes": {
+          "target-offline": "{{target}} is offline. This action only works on a connected client.",
+          "already-member": "{{target}} is already a member of \"{{group}}\".",
+          "not-member": "{{target}} is not a member of \"{{group}}\".",
+          "move-join-not-checked": "TeamSpeak also checks whether {{actor}} may join the destination channel (join power, rights for permanent, semi-permanent or temporary channels). That part is not checked here.",
+          "move-same-channel": "{{target}} is already in the destination channel.",
+          "actor-offline-default-channel": "{{actor}} is offline. Calculated for the default channel \"{{channel}}\"; values that only apply in another channel are not included."
+        },
+        "fix": {
+          "where": "{{tier}} \"{{name}}\"",
+          "raise": "Raise {{perm}} in {{where}} from {{have}} to at least {{need}}.",
+          "raiseUnset": "{{perm}} is not set for {{actor}}. Set it to at least {{need}}, for example in one of their server groups or as a client permission.",
+          "banTime": "Set {{perm}} in {{where}} to at least {{duration}} (seconds), or -1 for no limit.",
+          "banTimeUnset": "{{perm}} is not set for {{actor}}. Set it to at least {{duration}} (seconds), or -1 for no limit.",
+          "banPermanent": "A permanent ban needs {{perm}} = -1 in {{where}}.",
+          "banPermanentUnset": "A permanent ban needs {{perm}} = -1 for {{actor}}.",
+          "flag": "Set {{perm}} to 1 in {{where}}.",
+          "flagUnset": "{{perm}} is not set for {{actor}}. Set it to 1.",
+          "negated": "This value comes from a negated entry, which wins over higher values on the same layer.",
+          "channelScoped": "This entry only applies in the channel \"{{channel}}\"."
+        },
+        "showOverview": "Overview of {{name}}",
+        "openInEditor": "Open in editor",
+        "notSet": "not set (counts as 0)",
+        "groupSetting": "Group",
+        "yes": "yes",
+        "no": "no",
+        "checkOk": "Check passed",
+        "checkFailed": "Check failed",
+        "error": {
+          "actor-not-found": "The acting client is not in the client database (any more).",
+          "target-not-found": "The target is not in the client database (any more).",
+          "group-not-found": "This server group does not exist (any more).",
+          "destination-not-found": "This channel does not exist (any more).",
+          "network": "The manager could not be reached.",
+          "tsUnreachable": "The TeamSpeak server could not be reached.",
+          "generic": "The check failed."
+        }
+      },
       "automatic": {
         "tab": "Automatic Groups",
         "title": "Automatic Groups",
