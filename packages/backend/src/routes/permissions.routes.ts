@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { requireRole, requirePermission } from '../middleware/rbac.js';
+import { evaluatePermissionAction, OVERVIEW_TIER_RANK, PERMISSION_ACTIONS, type PermissionAction } from '@ts6/common';
 
 export const permissionRoutes: Router = Router({ mergeParams: true });
 
@@ -44,6 +45,110 @@ permissionRoutes.get('/overview/:cldbid', async (req: Request, res: Response, ne
       cid: req.query.cid || 0,
       permid: req.query.permid || 0,
     }));
+  } catch (err) { next(err); }
+});
+
+// R11 "why": can client `actor` do `action` to client `target`? Answers with the checks and the overview
+// rows that decide each value (no sentences: the page words them). Only computed from what TeamSpeak
+// reports; which channel each value is read in follows the measured rules in @ts6/common
+// (evaluatePermissionAction). An offline actor is evaluated in the server's default channel.
+const asId = (v: unknown, what: string, required = true): number | undefined => {
+  if (v === undefined || v === '') {
+    if (required) throw new AppError(400, `${what} is required`);
+    return undefined;
+  }
+  const n = Number(v);
+  if (!Number.isInteger(n) || n < 0) throw new AppError(400, `${what} must be a non-negative integer`);
+  return n;
+};
+const list = (r: any): any[] => (Array.isArray(r) ? r : r ? [r] : []);
+
+permissionRoutes.get('/explain', async (req: Request, res: Response, next) => {
+  try {
+    const action = String(req.query.action ?? '') as PermissionAction;
+    if (!(PERMISSION_ACTIONS as readonly string[]).includes(action)) throw new AppError(400, 'Unknown action');
+    const actorDbid = asId(req.query.actor, 'actor')!;
+    const targetDbid = asId(req.query.target, 'target')!;
+    const isGroup = action === 'group-add' || action === 'group-remove';
+    const sgid = asId(req.query.sgid, 'sgid', isGroup);
+    const destination = asId(req.query.destination, 'destination', action === 'move');
+    const banDuration = asId(req.query.duration, 'duration', false) ?? 0;
+    if (actorDbid === targetDbid) throw new AppError(400, 'Actor and target must be different clients');
+
+    const client = getClient(req);
+    const sid = getSid(req);
+    const notFound = async (cldbid: number) => {
+      try { await client.execute(sid, 'clientdbinfo', { cldbid }); return false; } catch (err) {
+        if (err instanceof TSApiError && (err.code === 512 || err.code === 1281 || err.code === 1540)) return true;
+        throw err;
+      }
+    };
+    for (const [who, cldbid] of [['actor', actorDbid], ['target', targetDbid]] as const) {
+      if (await notFound(cldbid)) throw new AppError(404, `The ${who} is not in the client database`, undefined, `${who}-not-found`);
+    }
+
+    const [online, channels, permList] = await Promise.all([
+      client.execute(sid, 'clientlist').then(list),
+      client.execute(sid, 'channellist').then(list),
+      client.execute(sid, 'permissionlist').then(list),
+    ]);
+    // Voice clients only: a query login of the same database id is never the one acting in the channel
+    const where = (cldbid: number) => online.find((c) => Number(c.client_database_id) === cldbid && Number(c.client_type) === 0);
+    const actorOn = where(actorDbid);
+    const targetOn = where(targetDbid);
+    const defaultCid = Number(channels.find((c) => String(c.channel_flag_default) === '1')?.cid ?? channels[0]?.cid ?? 0);
+    if (destination !== undefined && !channels.some((c) => Number(c.cid) === destination)) {
+      throw new AppError(404, 'The destination channel does not exist', undefined, 'destination-not-found');
+    }
+    const permName = new Map(permList.filter((p) => p.permid !== undefined).map((p) => [Number(p.permid), String(p.permname)]));
+    const overview = async (cldbid: number, cid: number) =>
+      list(await client.execute(sid, 'permoverview', { cldbid, cid, permid: 0 }))
+        .filter((r) => OVERVIEW_TIER_RANK[Number(r.t)] !== undefined)
+        .map((r) => ({
+          rank: OVERVIEW_TIER_RANK[Number(r.t)], t: Number(r.t), id1: Number(r.id1), id2: Number(r.id2),
+          permsid: permName.get(Number(r.p)) ?? `permid_${r.p}`,
+          permvalue: Number(r.v) || 0, permnegated: Number(r.n) || 0, permskip: Number(r.s) || 0,
+        }));
+
+    const actorCid = actorOn ? Number(actorOn.cid) : defaultCid;
+    const targetCid = targetOn ? Number(targetOn.cid) : defaultCid;
+    const [actorInOwnChannel, actorInTargetChannel, actorInDestination, target] = await Promise.all([
+      overview(actorDbid, actorCid),
+      targetOn ? overview(actorDbid, targetCid) : undefined,
+      destination !== undefined ? overview(actorDbid, destination) : undefined,
+      overview(targetDbid, targetCid),
+    ]);
+    let group: { sgid: number; perms: { permsid: string; permvalue: number }[]; targetIsMember: boolean } | undefined;
+    if (isGroup) {
+      const groupPerms = await client.execute(sid, 'servergrouppermlist', { sgid, '-permsid': '' }).then(list).catch((err) => {
+        if (err instanceof TSApiError && err.code === 1281) return [];
+        if (err instanceof TSApiError && err.code === 2560) throw new AppError(404, 'The server group does not exist', undefined, 'group-not-found');
+        throw err;
+      });
+      const memberOf = await client.execute(sid, 'servergroupsbyclientid', { cldbid: targetDbid }).then(list).catch((err) => {
+        if (err instanceof TSApiError && err.code === 1281) return [];
+        throw err;
+      });
+      group = {
+        sgid: sgid!,
+        perms: groupPerms.map((p) => ({ permsid: String(p.permsid), permvalue: Number(p.permvalue) || 0 })),
+        targetIsMember: memberOf.some((g) => Number(g.sgid) === sgid),
+      };
+    }
+
+    const result = evaluatePermissionAction({
+      action, targetOnline: !!targetOn, actorOnline: !!actorOn,
+      actorInOwnChannel, actorInTargetChannel, actorInDestination, target, group, banDuration,
+      destinationIsTargetChannel: destination !== undefined && !!targetOn && destination === targetCid,
+    });
+    res.json({
+      ...result,
+      context: {
+        actor: { cldbid: actorDbid, online: !!actorOn, cid: actorCid },
+        target: { cldbid: targetDbid, online: !!targetOn, cid: targetCid },
+        destination: destination ?? null, sgid: sgid ?? null, banDuration, defaultCid,
+      },
+    });
   } catch (err) { next(err); }
 });
 

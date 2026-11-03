@@ -4,7 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.90.2 · frontend 3.107.2 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.91.0 · frontend 3.107.3 · sidecar 2.1.4**
+
+### New Features
+
+- **Permission helper ("why can't X do this?")** — A new endpoint (`GET /api/servers/:configId/vs/:sid/permissions/explain`, the page follows) answers whether one client can kick (server or channel), ban, move, poke or privately message another, or add them to / remove them from a server group: allowed, denied or not possible, with each power and needed power, the channel it is read in and the overview row that sets it. It reads the same Permission Overview data and follows the rules TeamSpeak applies (which channel counts per action, the maximum ban time, the client permission modify power for group changes); join rights on a move destination are not judged. Same access as the Permission Overview. *backend 2.91.0, frontend 3.107.3* [#351](https://github.com/DomeNinchen/ts6forkmanager/pull/351)
 
 ### Improvements
 
