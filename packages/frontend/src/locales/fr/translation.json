@@ -2056,6 +2056,105 @@
       "applyToCount": "Appliquer à {{count}}",
       "findPermission": "Rechercher une permission",
       "permissionOverview": "Vue d’ensemble des permissions",
+      "why": {
+        "tab": "Pourquoi ?",
+        "title": "Pourquoi un client peut-il (ou non) faire cela ?",
+        "explanation": "Choisissez qui agit, l’action et la cible. La réponse est calculée à partir des mêmes données que la vue d’ensemble des permissions, selon les vérifications que TeamSpeak fait pour cette action, et indique d’où vient chaque valeur. Rien n’est modifié ici ; utilisez l’éditeur pour cela.",
+        "actor": "Qui agit",
+        "target": "Cible",
+        "action": "Action",
+        "group": "Groupe de serveur",
+        "destination": "Canal de destination",
+        "duration": "Durée du bannissement",
+        "durationSeconds": "Durée en secondes",
+        "check": "Vérifier",
+        "selected": "Sélectionné : {{name}}",
+        "noneSelected": "Personne n’est sélectionné",
+        "moreClients": "{{count}} de plus - affinez la recherche",
+        "missing": {
+          "actor": "Choisissez qui agit.",
+          "target": "Choisissez la cible.",
+          "same": "Choisissez deux clients différents.",
+          "group": "Choisissez le groupe de serveur.",
+          "destination": "Choisissez le canal de destination.",
+          "duration": "Saisissez une durée d’au moins une seconde."
+        },
+        "actions": {
+          "kick-server": "Expulser du serveur",
+          "kick-channel": "Expulser du canal",
+          "ban": "Bannir",
+          "move": "Déplacer",
+          "poke": "Envoyer un poke",
+          "message-private": "Envoyer un message privé",
+          "group-add": "Ajouter au groupe de serveur",
+          "group-remove": "Retirer du groupe de serveur"
+        },
+        "durations": {
+          "hour": "1 heure",
+          "day": "1 jour",
+          "month": "30 jours",
+          "permanent": "Permanent",
+          "custom": "Durée personnalisée"
+        },
+        "seconds_one": "{{count}} seconde",
+        "seconds_other": "{{count}} secondes",
+        "verdict": {
+          "allowed": "Autorisé",
+          "denied": "Refusé",
+          "impossible": "Impossible"
+        },
+        "checkText": {
+          "power": "{{actor}} a {{have}}, {{need}} est requis.",
+          "flag": "Bannissement par identité : {{have}}",
+          "ban-time": "Durée de bannissement maximale {{have}} pour un bannissement de {{duration}} (-1 = sans limite).",
+          "ban-time-permanent": "Durée de bannissement maximale {{have}} ; un bannissement permanent nécessite -1 (sans limite)."
+        },
+        "scope": {
+          "target-channel": "dans le canal de {{target}} « {{channel}} »",
+          "actor-channel": "dans le canal de {{actor}} « {{channel}} »",
+          "destination": "dans le canal de destination « {{channel}} »",
+          "server": "sur tout le serveur (groupes de serveur et permissions client uniquement)",
+          "group": "défini sur le groupe « {{group}} »"
+        },
+        "notes": {
+          "target-offline": "{{target}} est hors ligne. Cette action ne fonctionne que sur un client connecté.",
+          "already-member": "{{target}} est déjà membre de « {{group}} ».",
+          "not-member": "{{target}} n’est pas membre de « {{group}} ».",
+          "move-join-not-checked": "TeamSpeak vérifie aussi si {{actor}} peut rejoindre le canal de destination (puissance de connexion, droits pour les canaux permanents, semi-permanents ou temporaires). Cette partie n’est pas vérifiée ici.",
+          "move-same-channel": "{{target}} est déjà dans le canal de destination.",
+          "actor-offline-default-channel": "{{actor}} est hors ligne. Calcul fait pour le canal par défaut « {{channel}} » ; les valeurs qui ne s’appliquent que dans un autre canal ne sont pas incluses."
+        },
+        "fix": {
+          "where": "{{tier}} « {{name}} »",
+          "raise": "Augmentez {{perm}} dans {{where}} de {{have}} à au moins {{need}}.",
+          "raiseUnset": "{{perm}} n’est pas défini pour {{actor}}. Réglez-le à au moins {{need}}, par exemple dans un de ses groupes de serveur ou comme permission client.",
+          "banTime": "Réglez {{perm}} dans {{where}} à au moins {{duration}} (secondes), ou à -1 pour aucune limite.",
+          "banTimeUnset": "{{perm}} n’est pas défini pour {{actor}}. Réglez-le à au moins {{duration}} (secondes), ou à -1 pour aucune limite.",
+          "banPermanent": "Un bannissement permanent nécessite {{perm}} = -1 dans {{where}}.",
+          "banPermanentUnset": "Un bannissement permanent nécessite {{perm}} = -1 pour {{actor}}.",
+          "flag": "Réglez {{perm}} à 1 dans {{where}}.",
+          "flagUnset": "{{perm}} n’est pas défini pour {{actor}}. Réglez-le à 1.",
+          "negated": "Cette valeur vient d’une entrée inversée (negate), qui l’emporte sur les valeurs plus élevées du même niveau.",
+          "channelScoped": "Cette entrée ne s’applique que dans le canal « {{channel}} »."
+        },
+        "showOverview": "Vue d’ensemble de {{name}}",
+        "openInEditor": "Ouvrir dans l’éditeur",
+        "notSet": "non défini (compte comme 0)",
+        "groupSetting": "Groupe",
+        "yes": "oui",
+        "no": "non",
+        "checkOk": "Vérification réussie",
+        "checkFailed": "Vérification échouée",
+        "error": {
+          "actor-not-found": "Le client qui agit n’est pas (ou plus) dans la base de données des clients.",
+          "target-not-found": "La cible n’est pas (ou plus) dans la base de données des clients.",
+          "group-not-found": "Ce groupe de serveur n’existe pas (ou plus).",
+          "destination-not-found": "Ce canal n’existe pas (ou plus).",
+          "network": "Le gestionnaire est injoignable.",
+          "tsUnreachable": "Le serveur TeamSpeak est injoignable.",
+          "generic": "La vérification a échoué."
+        }
+      },
       "automatic": {
         "tab": "Groupes automatiques",
         "title": "Groupes automatiques",

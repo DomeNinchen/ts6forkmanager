@@ -3125,6 +3125,105 @@
       "applyToCount": "Auf {{count}} anwenden",
       "findPermission": "Berechtigung suchen",
       "permissionOverview": "Berechtigungsübersicht",
+      "why": {
+        "tab": "Warum?",
+        "title": "Warum darf ein Client das (nicht)?",
+        "explanation": "Wähle, wer handelt, die Aktion und das Ziel. Die Antwort wird aus denselben Daten wie die Berechtigungsübersicht berechnet, nach den Prüfungen, die TeamSpeak für diese Aktion macht, und nennt für jeden Wert, woher er kommt. Hier wird nichts geändert; dafür ist der Editor da.",
+        "actor": "Wer handelt",
+        "target": "Ziel",
+        "action": "Aktion",
+        "group": "Servergruppe",
+        "destination": "Ziel-Channel",
+        "duration": "Bann-Dauer",
+        "durationSeconds": "Dauer in Sekunden",
+        "check": "Prüfen",
+        "selected": "Gewählt: {{name}}",
+        "noneSelected": "Noch niemand gewählt",
+        "moreClients": "{{count}} weitere - Suche eingrenzen",
+        "missing": {
+          "actor": "Wähle, wer handelt.",
+          "target": "Wähle das Ziel.",
+          "same": "Wähle zwei verschiedene Clients.",
+          "group": "Wähle die Servergruppe.",
+          "destination": "Wähle den Ziel-Channel.",
+          "duration": "Gib eine Dauer von mindestens einer Sekunde ein."
+        },
+        "actions": {
+          "kick-server": "Vom Server kicken",
+          "kick-channel": "Aus dem Channel kicken",
+          "ban": "Bannen",
+          "move": "Verschieben",
+          "poke": "Anstupsen",
+          "message-private": "Private Nachricht senden",
+          "group-add": "Zur Servergruppe hinzufügen",
+          "group-remove": "Aus Servergruppe entfernen"
+        },
+        "durations": {
+          "hour": "1 Stunde",
+          "day": "1 Tag",
+          "month": "30 Tage",
+          "permanent": "Dauerhaft",
+          "custom": "Eigene Dauer"
+        },
+        "seconds_one": "{{count}} Sekunde",
+        "seconds_other": "{{count}} Sekunden",
+        "verdict": {
+          "allowed": "Erlaubt",
+          "denied": "Abgelehnt",
+          "impossible": "Nicht möglich"
+        },
+        "checkText": {
+          "power": "{{actor}} hat {{have}}, verlangt ist {{need}}.",
+          "flag": "Bannen über die Identität: {{have}}",
+          "ban-time": "Maximale Bann-Dauer {{have}} für einen Bann von {{duration}} (-1 = unbegrenzt).",
+          "ban-time-permanent": "Maximale Bann-Dauer {{have}}; ein dauerhafter Bann braucht -1 (unbegrenzt)."
+        },
+        "scope": {
+          "target-channel": "im Channel von {{target}} „{{channel}}“",
+          "actor-channel": "im Channel von {{actor}} „{{channel}}“",
+          "destination": "im Ziel-Channel „{{channel}}“",
+          "server": "serverweit (nur Servergruppen und Client-Berechtigungen)",
+          "group": "an der Gruppe „{{group}}“ eingestellt"
+        },
+        "notes": {
+          "target-offline": "{{target}} ist offline. Diese Aktion geht nur bei einem verbundenen Client.",
+          "already-member": "{{target}} ist schon Mitglied von „{{group}}“.",
+          "not-member": "{{target}} ist kein Mitglied von „{{group}}“.",
+          "move-join-not-checked": "TeamSpeak prüft außerdem, ob {{actor}} den Ziel-Channel betreten darf (Join-Power, Rechte für permanente, semi-permanente oder temporäre Channel). Dieser Teil wird hier nicht geprüft.",
+          "move-same-channel": "{{target}} ist schon im Ziel-Channel.",
+          "actor-offline-default-channel": "{{actor}} ist offline. Gerechnet für den Standard-Channel „{{channel}}“; Werte, die nur in einem anderen Channel gelten, sind nicht enthalten."
+        },
+        "fix": {
+          "where": "{{tier}} „{{name}}“",
+          "raise": "Erhöhe {{perm}} in {{where}} von {{have}} auf mindestens {{need}}.",
+          "raiseUnset": "{{perm}} ist für {{actor}} nicht gesetzt. Setze es auf mindestens {{need}}, zum Beispiel in einer Servergruppe von {{actor}} oder als Client-Berechtigung.",
+          "banTime": "Setze {{perm}} in {{where}} auf mindestens {{duration}} (Sekunden) oder auf -1 für unbegrenzt.",
+          "banTimeUnset": "{{perm}} ist für {{actor}} nicht gesetzt. Setze es auf mindestens {{duration}} (Sekunden) oder auf -1 für unbegrenzt.",
+          "banPermanent": "Ein dauerhafter Bann braucht {{perm}} = -1 in {{where}}.",
+          "banPermanentUnset": "Ein dauerhafter Bann braucht {{perm}} = -1 für {{actor}}.",
+          "flag": "Setze {{perm}} in {{where}} auf 1.",
+          "flagUnset": "{{perm}} ist für {{actor}} nicht gesetzt. Setze es auf 1.",
+          "negated": "Dieser Wert kommt aus einem negierten Eintrag, der auf derselben Ebene höhere Werte schlägt.",
+          "channelScoped": "Dieser Eintrag gilt nur im Channel „{{channel}}“."
+        },
+        "showOverview": "Übersicht von {{name}}",
+        "openInEditor": "Im Editor öffnen",
+        "notSet": "nicht gesetzt (zählt als 0)",
+        "groupSetting": "Gruppe",
+        "yes": "ja",
+        "no": "nein",
+        "checkOk": "Prüfung bestanden",
+        "checkFailed": "Prüfung nicht bestanden",
+        "error": {
+          "actor-not-found": "Der handelnde Client ist nicht (mehr) in der Client-Datenbank.",
+          "target-not-found": "Das Ziel ist nicht (mehr) in der Client-Datenbank.",
+          "group-not-found": "Diese Servergruppe gibt es nicht (mehr).",
+          "destination-not-found": "Diesen Channel gibt es nicht (mehr).",
+          "network": "Der Manager ist nicht erreichbar.",
+          "tsUnreachable": "Der TeamSpeak-Server ist nicht erreichbar.",
+          "generic": "Die Prüfung ist fehlgeschlagen."
+        }
+      },
       "automatic": {
         "tab": "Automatische Gruppen",
         "title": "Automatische Gruppen",
