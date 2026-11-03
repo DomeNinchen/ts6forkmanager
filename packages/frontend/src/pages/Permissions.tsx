@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import { normalizeIconId } from '@ts6/common';
+import { normalizeIconId, OVERVIEW_TIER_RANK, resolvePermissionOverview } from '@ts6/common';
 import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -435,6 +435,7 @@ export default function Permissions() {
     if (!Array.isArray(overviewRaw)) return [];
     return (overviewRaw as any[]).map((r) => ({
       tier: overviewTierOf[Number(r.t)] ?? null,
+      rank: OVERVIEW_TIER_RANK[Number(r.t)] ?? 0,
       id1: String(Number(r.id1)),
       id2: String(Number(r.id2)),
       permsid: permIdToName.get(Number(r.p)) ?? `permid_${r.p}`,
@@ -444,41 +445,11 @@ export default function Permissions() {
     })).filter((r) => r.tier !== null);
   }, [overviewRaw, permIdToName, overviewTierOf]);
 
-  // Group by permission, then work out which source actually applies, per
-  // doc/server/permissiondoc.txt shipped with the server:
-  //  - within one tier (a client in several server groups, say) the highest
-  //    value wins, except that negated entries take over and the LOWEST of
-  //    those wins - that's how a restrictive "Sticky"-style group claws a
-  //    permission back from a group that grants it;
-  //  - across tiers the highest tier wins;
-  //  - except that a skip flag on a server group (1) or client (2) entry
-  //    shields it from being altered by the channel (3) and channel group (4)
-  //    layers. Tier 5 still overrides it - the docs only name 3 and 4.
+  // Which source applies per permission (tiers, negate, skip as in
+  // doc/server/permissiondoc.txt): resolvePermissionOverview in @ts6/common.
   // Every source stays visible in the UI regardless, so the result can be
   // checked by eye rather than taken on trust.
-  const overviewResolved = useMemo(() => {
-    const byPerm = new Map<string, typeof overviewRows>();
-    for (const r of overviewRows) {
-      if (!byPerm.has(r.permsid)) byPerm.set(r.permsid, []);
-      byPerm.get(r.permsid)!.push(r);
-    }
-    const pickWithinTier = (list: typeof overviewRows) => {
-      const negated = list.filter((r) => r.permnegated);
-      const pool = negated.length ? negated : list;
-      return pool.reduce((best, r) =>
-        negated.length ? (r.permvalue < best.permvalue ? r : best) : (r.permvalue > best.permvalue ? r : best));
-    };
-    return [...byPerm.entries()].map(([permsid, sources]) => {
-      const perTier = new Map<number, typeof overviewRows[number]>();
-      for (const rank of new Set(sources.map((r) => r.tier!.rank))) {
-        perTier.set(rank, pickWithinTier(sources.filter((r) => r.tier!.rank === rank)));
-      }
-      const shielded = [1, 2].some((t) => perTier.get(t)?.permskip);
-      const ranks = [...perTier.keys()].filter((t) => !(shielded && (t === 3 || t === 4)));
-      const winner = perTier.get(Math.max(...ranks))!;
-      return { permsid, sources, winner, shielded };
-    }).sort((a, b) => a.permsid.localeCompare(b.permsid));
-  }, [overviewRows]);
+  const overviewResolved = useMemo(() => resolvePermissionOverview(overviewRows), [overviewRows]);
 
   // Each selected entity's permissions as its own map (Compare and Bulk Apply)
   const compareData = useMemo(() => {

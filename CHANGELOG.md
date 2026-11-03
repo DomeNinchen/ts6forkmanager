@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.90.0 · frontend 3.107.1 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.90.1 · frontend 3.107.2 · sidecar 2.1.4**
 
 ### Improvements
 
