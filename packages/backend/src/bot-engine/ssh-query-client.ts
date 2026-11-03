@@ -5,7 +5,7 @@ import { TS_EVENT_TYPES } from '@ts6/common';
 import crypto from 'crypto';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import { maskSecretsInLine } from '../utils/mask-secrets.js';
-import { forgetSshRejection, rememberSshRejection } from '../utils/ssh-login-guard.js';
+import { forgetSshRejection, oneLoginAtATime, rememberSshRejection, sshRejection } from '../utils/ssh-login-guard.js';
 
 export interface SshQueryClientOptions {
   host: string;
@@ -55,6 +55,20 @@ export class SshQueryClient extends EventEmitter {
 
   async connect(): Promise<void> {
     if (this.destroyed) return;
+    return oneLoginAtATime(this.options, () => this.login());
+  }
+
+  private login(): Promise<void> {
+    if (this.destroyed) return Promise.resolve();
+    // Never repeat refused credentials: TS6 blocks a non-allowlisted address after its second failed login.
+    const refused = sshRejection(this.options);
+    if (refused) {
+      this.fatalError = true;
+      return Promise.reject(Object.assign(
+        new Error(`SSH login not retried, these credentials were refused at ${refused.at.toISOString()}: ${refused.message}`),
+        { level: 'client-authentication' },
+      ));
+    }
 
     return new Promise<void>((resolve, reject) => {
       // Captured locally and used throughout instead of re-reading `this.ssh`
