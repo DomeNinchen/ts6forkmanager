@@ -34,6 +34,8 @@ export class TSApiError extends Error {
     /** The permission TeamSpeak names as the one that was missing, when it says so
      * (WebQuery adds `failed_permission` to a 2568 "insufficient client permissions"). */
     public failedPermission?: string,
+    /** For code -1: Node's error code of the failed request (ENOTFOUND, CERT_HAS_EXPIRED, ...). */
+    public transportCode?: string,
   ) {
     super(message);
     this.name = 'TSApiError';

@@ -5,6 +5,8 @@ import { TSApiError } from '../middleware/error-handler.js';
 import { config } from '../config.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
 import { maskSecrets } from '../utils/mask-secrets.js';
+import { classifyWebQueryError } from '../utils/connection-cause.js';
+import type { ConnectionTestResult } from '@ts6/common';
 
 /** TeamSpeak's answer to one command, as WebQuery delivered it. */
 export interface WebQueryEnvelope {
@@ -125,7 +127,7 @@ export class WebQueryClient {
         throw tsApiErrorFrom(error.response.data.status);
       }
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
-      throw new TSApiError(-1, error.message || 'Connection failed');
+      throw new TSApiError(-1, error.message || 'Connection failed', undefined, error.code);
     }
   }
 
@@ -169,7 +171,7 @@ export class WebQueryClient {
         throw tsApiErrorFrom(error.response.data.status);
       }
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
-      throw new TSApiError(-1, error.message || 'Connection failed');
+      throw new TSApiError(-1, error.message || 'Connection failed', undefined, error.code);
     }
   }
 
@@ -211,7 +213,7 @@ export class WebQueryClient {
         throw tsApiErrorFrom(error.response.data.status);
       }
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
-      throw new TSApiError(-1, error.message || 'Connection failed');
+      throw new TSApiError(-1, error.message || 'Connection failed', undefined, error.code);
     }
   }
 
@@ -246,7 +248,7 @@ export class WebQueryClient {
       response = await this.http.post(path, payload ?? {}, { validateStatus: () => true });
     } catch (error: any) {
       if (debug) console.log(`[WebQuery ${this.target}] ← failed: ${error.message}`);
-      throw new TSApiError(-1, error.message || 'Connection failed');
+      throw new TSApiError(-1, error.message || 'Connection failed', undefined, error.code);
     }
 
     const envelope = toEnvelope(response.status, response.data);
@@ -267,12 +269,17 @@ export class WebQueryClient {
   }
 
   // Test connection
-  async testConnection(): Promise<{ success: boolean; error?: string }> {
+  async testConnection(): Promise<ConnectionTestResult> {
+    const started = Date.now();
     try {
-      await this.execute(0, 'version');
-      return { success: true };
+      const body = await this.execute(0, 'version');
+      // A proxy in front of WebQuery can answer 200 with a page of its own.
+      if (!Array.isArray(body) || !body[0]?.version) {
+        return { success: false, error: 'Unexpected response from WebQuery', cause: 'unexpected-response', detail: 'no TeamSpeak version in the answer', durationMs: Date.now() - started };
+      }
+      return { success: true, cause: 'ok', detail: `TeamSpeak ${body[0].version}`, durationMs: Date.now() - started };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Connection failed' };
+      return { success: false, error: error.message || 'Connection failed', ...classifyWebQueryError(error), durationMs: Date.now() - started };
     }
   }
 
