@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { TSApiError } from '../middleware/error-handler.js';
-import { classifyWebQueryError } from './connection-cause.js';
+import { classifySshError, classifyWebQueryError } from './connection-cause.js';
 
 // Error shapes as WebQueryClient produces them, measured against a real TS6 server (R10).
 const t = (msg: string, code?: string) => new TSApiError(-1, msg, undefined, code);
@@ -24,6 +24,17 @@ test('TeamSpeak answers keep their code', () => {
   assert.deepEqual(r, { cause: 'key-rejected', detail: '5122 invalid apikey' });
   assert.equal(classifyWebQueryError(new TSApiError(3329, 'connection failed, you are banned')).cause, 'ts-error');
   assert.equal(classifyWebQueryError(new TSApiError(-1, 'Unexpected response from WebQuery')).cause, 'unexpected-response');
+});
+
+test('SSH failures map to their cause', () => {
+  const e = (message: string, extra: object) => Object.assign(new Error(message), extra);
+  assert.equal(classifySshError(e('getaddrinfo ENOTFOUND x.invalid', { code: 'ENOTFOUND', level: 'client-socket' })).cause, 'dns');
+  assert.equal(classifySshError(e('connect ECONNREFUSED 127.0.0.1:10098', { code: 'ECONNREFUSED', level: 'client-socket' })).cause, 'refused');
+  assert.equal(classifySshError(e('Timed out while waiting for handshake', { level: 'client-timeout' })).cause, 'timeout');
+  assert.equal(classifySshError(e('Connection lost before handshake', { level: 'protocol' })).cause, 'ssh-closed');
+  assert.equal(classifySshError(e('All configured authentication methods failed', { level: 'client-authentication' })).cause, 'ssh-auth-rejected');
+  assert.equal(classifySshError(e('SSH connection closed by the server before login', { level: 'closed-before-login' })).cause, 'ssh-closed');
+  assert.equal(classifySshError(new Error('SSH connect timeout for h:1')).cause, 'timeout');
 });
 
 test('the detail carries the code and message', () => {
