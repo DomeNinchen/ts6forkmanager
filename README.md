@@ -101,7 +101,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
    ```
 
 5. Open `http://localhost:3000/setup` and create your admin account.
-6. Add your TeamSpeak server under **Settings → Connections**: host, WebQuery port and API key (the key can stay empty, see above).
+6. Add your TeamSpeak server under **Settings → Connections**: host, WebQuery port and API key (the key can stay empty, see above). **Test** checks WebQuery, SSH query, file transfer, the voice port and the video sidecar one by one and says what to fix; **Test these values** does the same in the form before you save.
 
 **Good to know before you go live:**
 

@@ -955,10 +955,6 @@
         "ssh": "SSH",
         "test": "Tester",
         "botIdentityFallback": "Identité de bot",
-        "connectionSuccessful": "Connexion réussie",
-        "connectionFailedWithError": "Échec de la connexion : {{error}}",
-        "connectionFailed": "Échec de la connexion",
-        "connectionSuccessfulDetail": "Connexion réussie ({{detail}}, {{ms}} ms)",
         "causes": {
           "ok": "Connexion réussie.",
           "dns": "Nom d'hôte introuvable. Vérifiez l'orthographe de l'hôte et son enregistrement DNS.",
@@ -973,7 +969,71 @@
           "key-rejected": "Clé API refusée. Saisissez une clé API WebQuery valide (apikeyadd).",
           "ts-error": "TeamSpeak a répondu par une erreur (voir les détails).",
           "unexpected-response": "La réponse ne provient pas du WebQuery de TeamSpeak. Vérifiez le port et la présence éventuelle d'un proxy.",
+          "ssh-auth-rejected": "Connexion SSH refusée : le nom d'utilisateur ou le mot de passe est faux (TeamSpeak ne distingue pas les deux). Vérifiez les identifiants. Le manager ne réessaie les mêmes identifiants qu'après leur modification ou un redémarrage du backend.",
+          "ssh-closed": "Le serveur a fermé la connexion avant la connexion SSH. Soit ce n'est pas le port SSH query (par exemple le port WebQuery), soit TeamSpeak bloque l'adresse du manager pendant quelques minutes après des échecs de connexion. Vérifiez le port, attendez la fin du blocage et ajoutez le manager à la liste d'autorisation query.",
+          "not-configured": "Non configuré.",
+          "prerequisite-failed": "Non vérifié, car une étape précédente a échoué.",
+          "rate-limited": "Non vérifié : une connexion de test vers ce serveur a eu lieu il y a moins de 30 secondes (protection contre le bannissement query). Réessayez dans une demi-minute.",
           "unknown": "Erreur inconnue (voir les détails)."
+        },
+        "diagnosis": {
+          "title": "Diagnostic de connexion : {{name}}",
+          "description": "Vérifie séparément chaque chemin du manager vers le serveur.",
+          "running": "Vérification …",
+          "failedToRun": "Le diagnostic n'a pas pu être exécuté.",
+          "again": "Tester à nouveau",
+          "copy": "Copier le rapport",
+          "copyManually": "Le navigateur n'autorise la copie qu'en HTTPS. Sélectionnez le rapport ici et copiez-le :",
+          "testValues": "Tester ces valeurs",
+          "ok": "OK.",
+          "okLiveSession": "OK (via la session d'événements en cours, sans nouvelle connexion).",
+          "port": "Port",
+          "virtualServer": "serveur virtuel {{sid}}",
+          "reportTitle": "Diagnostic de connexion TS6 Manager",
+          "reportTime": "Heure",
+          "reportVersion": "Version du frontend",
+          "status": {
+            "ok": "réussi",
+            "failed": "échoué",
+            "skipped": "non vérifié"
+          },
+          "steps": {
+            "webquery": "WebQuery",
+            "ssh": "SSH query",
+            "filetransfer": "Transfert de fichiers",
+            "voice": "Voix",
+            "sidecar": "Sidecar vidéo"
+          },
+          "remedies": {
+            "webquery": {
+              "not-configured": "Aucune clé API utilisable : sans WebQuery, seuls les bots musicaux fonctionnent. Une clé enregistrée impossible à déchiffrer est indiquée dans les détails."
+            },
+            "ssh": {
+              "refused": "Connexion refusée : aucun service n'écoute sur ce port. Vérifiez le port SSH query et que SSH query est activé dans TeamSpeak.",
+              "timeout": "Aucune réponse du port SSH query. Un pare-feu le bloque probablement ; vérifiez le port et le pare-feu.",
+              "not-configured": "Aucun identifiant SSH utilisable. Sans SSH, pas d'événements en direct pour les flux de bots ni d'accès aux fichiers."
+            },
+            "filetransfer": {
+              "refused": "Aucun service n'écoute sur le port de transfert de fichiers. Vérifiez le port dans la configuration de TeamSpeak.",
+              "timeout": "Aucune réponse du port de transfert de fichiers (TCP). Un pare-feu le bloque probablement ; ouvrez le port pour le manager.",
+              "not-configured": "Les commandes de fichiers passent par SSH ; sans identifiants SSH, pas de transfert de fichiers.",
+              "prerequisite-failed": "Non vérifié : le port de transfert de fichiers est lu via WebQuery."
+            },
+            "voice": {
+              "timeout": "Aucune réponse du port voix (UDP). Un pare-feu bloque probablement l'UDP, ou aucun serveur virtuel ne tourne sur ce port. Vérifiez le port et le pare-feu (vérifié depuis le manager, comme se connectent les bots musicaux).",
+              "refused": "Aucun serveur ne tourne sur ce port voix (UDP refusé). Vérifiez le port du serveur virtuel ou du bot musical.",
+              "unexpected-response": "Quelque chose répond sur le port voix, mais pas TeamSpeak. Vérifiez le port.",
+              "not-configured": "Aucun port voix connu : aucun serveur virtuel n'est en ligne et cette connexion n'a pas de bot musical.",
+              "prerequisite-failed": "Non vérifié : les ports voix sont lus via WebQuery, et cette connexion n'a pas de bot musical."
+            },
+            "sidecar": {
+              "not-configured": "Aucun conteneur sidecar séparé n'est configuré (SIDECAR_URL) : un processus sidecar démarre avec chaque flux vidéo.",
+              "refused": "Le sidecar vidéo ne tourne pas ou n'est pas joignable via SIDECAR_URL. Vérifiez le conteneur sidecar.",
+              "dns": "Le nom d'hôte de SIDECAR_URL ne peut pas être résolu. Vérifiez SIDECAR_URL et le réseau Docker.",
+              "timeout": "Le sidecar vidéo ne répond pas. Vérifiez le conteneur sidecar et SIDECAR_URL.",
+              "unexpected-response": "Quelque chose répond à SIDECAR_URL, mais pas le sidecar. Vérifiez SIDECAR_URL."
+            }
+          }
         },
         "editConnectionTitle": "Modifier la connexion",
         "namePlaceholder": "Mon serveur TS",

@@ -24,7 +24,8 @@ import { useRoleSetup } from '@/hooks/use-roles';
 import { RolesTab } from '@/components/settings/RolesTab';
 import { Settings as SettingsIcon, Server, Plus, Trash2, Pencil, TestTube, Check, X, KeyRound, Upload, FileText, AlertTriangle, RefreshCw, Search, Monitor, Bot } from 'lucide-react';
 import { toast } from 'sonner';
-import { compareVersions, type ConnectionTestResult } from '@ts6/common';
+import { compareVersions, type ConnectionDiagnosis } from '@ts6/common';
+import { ConnectionDiagnosisDialog } from '@/components/shared/ConnectionDiagnosisDialog';
 import { useUpdateCheck, useRecheckUpdate } from '@/hooks/use-update-check';
 import { useYtCookieCheck, useRecheckYtCookies } from '@/hooks/use-yt-cookie-check';
 import { useSetWebguiTheme, useSetWebguiBaseTheme, useSetWebguiDesign } from '@/hooks/use-webgui-theme';
@@ -631,7 +632,7 @@ function ConnectionsTab() {
   const createServer = useMutation({ mutationFn: (data: any) => serversApi.create(data), onSuccess: () => qc.invalidateQueries({ queryKey: ['servers'] }) });
   const updateServer = useMutation({ mutationFn: ({ id, data }: any) => serversApi.update(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['servers'] }) });
   const deleteServer = useMutation({ mutationFn: (id: number) => serversApi.delete(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['servers'] }) });
-  const testServer = useMutation({ mutationFn: (id: number) => serversApi.test(id) });
+  const [diagnosis, setDiagnosis] = useState<{ name: string; run: () => Promise<ConnectionDiagnosis> } | null>(null);
 
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -728,15 +729,8 @@ function ConnectionsTab() {
                 <p className="text-[11px] text-muted-foreground">{t('pages.settings.connections.noWebQueryHint')}</p>
               )}
               <div className="flex items-center gap-1 pt-2">
-                <Button variant="outline" size="sm" className="h-7 text-xs" disabled={server.hasWebQuery === false}
-                  title={server.hasWebQuery === false ? t('pages.settings.connections.needsApiKey') : undefined}
-                  onClick={() => testServer.mutate(server.id, {
-                  onSuccess: (data: ConnectionTestResult) => data.success
-                    ? toast.success(t('pages.settings.connections.connectionSuccessfulDetail', { detail: data.detail, ms: data.durationMs }))
-                    : toast.error(t('pages.settings.connections.connectionFailedWithError', { error: t(`pages.settings.connections.causes.${data.cause ?? 'unknown'}`) }), { description: data.detail ?? data.error, duration: 15000 }),
-                  // The backend's reason (a stored key it cannot decrypt, say) is more use than "failed".
-                  onError: (err: any) => toast.error(err?.response?.data?.error ? t('pages.settings.connections.connectionFailedWithError', { error: err.response.data.error }) : t('pages.settings.connections.connectionFailed')),
-                })}>
+                <Button variant="outline" size="sm" className="h-7 text-xs"
+                  onClick={() => setDiagnosis({ name: server.name, run: () => serversApi.diagnose(server.id) })}>
                   <TestTube className="h-3 w-3 mr-1" /> {t('pages.settings.connections.test')}
                 </Button>
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(server)}>
@@ -821,12 +815,31 @@ function ConnectionsTab() {
               <div><Label className="text-xs">{t('pages.settings.connections.sshPasswordLabel')}</Label><Input type="password" value={form.sshPassword} onChange={(e) => setForm({ ...form, sshPassword: e.target.value })} placeholder={editingServer?.hasSshCredentials ? t('pages.settings.connections.unchanged') : ''} /></div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" className="sm:mr-auto" disabled={!form.host}
+              onClick={() => setDiagnosis({
+                name: form.name || form.host,
+                // Not saved; blank secret fields of an existing connection mean its stored ones, as on save.
+                run: () => serversApi.diagnoseValues({
+                  configId: editId ?? undefined,
+                  host: form.host,
+                  webqueryPort: parseInt(form.webqueryPort),
+                  useHttps: form.useHttps,
+                  apiKey: form.removeApiKey ? null : form.apiKey,
+                  sshPort: parseInt(form.sshPort),
+                  sshUsername: form.sshUsername,
+                  sshPassword: form.sshPassword,
+                }),
+              })}>
+              <TestTube className="h-4 w-4 mr-1" /> {t('pages.settings.connections.diagnosis.testValues')}
+            </Button>
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditId(null); resetForm(); }}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} disabled={!form.name || !form.host}>{editId ? t('pages.settings.connections.update') : t('common.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {diagnosis && <ConnectionDiagnosisDialog name={diagnosis.name} run={diagnosis.run} onClose={() => setDiagnosis(null)} />}
 
       <ConfirmDialog
         open={deleteId !== null}

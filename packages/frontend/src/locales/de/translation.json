@@ -1841,10 +1841,6 @@
         "ssh": "SSH",
         "test": "Test",
         "botIdentityFallback": "Bot-Identität",
-        "connectionSuccessful": "Verbindung erfolgreich",
-        "connectionFailedWithError": "Verbindung fehlgeschlagen: {{error}}",
-        "connectionFailed": "Verbindung fehlgeschlagen",
-        "connectionSuccessfulDetail": "Verbindung erfolgreich ({{detail}}, {{ms}} ms)",
         "causes": {
           "ok": "Verbindung erfolgreich.",
           "dns": "Hostname nicht gefunden. Schreibweise des Hosts und den DNS-Eintrag prüfen.",
@@ -1859,7 +1855,71 @@
           "key-rejected": "API-Key abgelehnt. Einen gültigen WebQuery-API-Key (apikeyadd) eintragen.",
           "ts-error": "TeamSpeak hat mit einem Fehler geantwortet (siehe Details).",
           "unexpected-response": "Die Antwort kam nicht von TeamSpeaks WebQuery. Port prüfen und ob ein Proxy davor sitzt.",
+          "ssh-auth-rejected": "SSH-Login abgelehnt: Benutzername oder Passwort ist falsch (TeamSpeak unterscheidet beides nicht). Zugangsdaten prüfen. Dieselben Zugangsdaten versucht der Manager erst wieder, wenn sie geändert werden oder das Backend neu startet.",
+          "ssh-closed": "Der Server hat die Verbindung vor dem Login geschlossen. Entweder ist das nicht der SSH-Query-Port (zum Beispiel der WebQuery-Port), oder TeamSpeak sperrt die Adresse des Managers nach fehlgeschlagenen Logins für einige Minuten. Port prüfen, die Sperre abwarten und den Manager auf die Query-Allowlist setzen.",
+          "not-configured": "Nicht eingerichtet.",
+          "prerequisite-failed": "Nicht geprüft, weil ein Schritt davor fehlgeschlagen ist.",
+          "rate-limited": "Nicht geprüft: Ein Test-Login bei diesem Server lief vor weniger als 30 Sekunden (Schutz vor der Query-Sperre). In einer halben Minute erneut testen.",
           "unknown": "Unbekannter Fehler (siehe Details)."
+        },
+        "diagnosis": {
+          "title": "Verbindungsdiagnose: {{name}}",
+          "description": "Prüft jeden Weg vom Manager zum Server einzeln.",
+          "running": "Wird geprüft …",
+          "failedToRun": "Die Diagnose konnte nicht ausgeführt werden.",
+          "again": "Erneut testen",
+          "copy": "Bericht kopieren",
+          "copyManually": "Der Browser erlaubt Kopieren nur über HTTPS. Den Bericht hier markieren und kopieren:",
+          "testValues": "Mit diesen Werten testen",
+          "ok": "In Ordnung.",
+          "okLiveSession": "In Ordnung (über die laufende Event-Sitzung, ohne neuen Login).",
+          "port": "Port",
+          "virtualServer": "virtueller Server {{sid}}",
+          "reportTitle": "TS6-Manager-Verbindungsdiagnose",
+          "reportTime": "Zeit",
+          "reportVersion": "Frontend-Version",
+          "status": {
+            "ok": "erfolgreich",
+            "failed": "fehlgeschlagen",
+            "skipped": "nicht geprüft"
+          },
+          "steps": {
+            "webquery": "WebQuery",
+            "ssh": "SSH-Query",
+            "filetransfer": "Dateitransfer",
+            "voice": "Voice",
+            "sidecar": "Video-Sidecar"
+          },
+          "remedies": {
+            "webquery": {
+              "not-configured": "Kein nutzbarer API-Key: Ohne WebQuery laufen nur die Musikbots. Ein gespeicherter Key, der sich nicht entschlüsseln lässt, steht in den Details."
+            },
+            "ssh": {
+              "refused": "Verbindung abgelehnt: An diesem Port läuft kein Dienst. SSH-Query-Port prüfen und ob SSH-Query in TeamSpeak aktiviert ist.",
+              "timeout": "Keine Antwort vom SSH-Query-Port. Eine Firewall blockiert ihn vermutlich; Freigabe und Port prüfen.",
+              "not-configured": "Keine nutzbaren SSH-Zugangsdaten. Ohne SSH gibt es keine Live-Events für Bot-Flows und keinen Dateizugriff."
+            },
+            "filetransfer": {
+              "refused": "Am Dateitransfer-Port läuft kein Dienst. Den Port in der TeamSpeak-Konfiguration prüfen.",
+              "timeout": "Keine Antwort vom Dateitransfer-Port (TCP). Eine Firewall blockiert ihn vermutlich; den Port für den Manager freigeben.",
+              "not-configured": "Dateibefehle laufen über SSH; ohne SSH-Zugangsdaten gibt es keinen Dateitransfer.",
+              "prerequisite-failed": "Nicht geprüft: Der Dateitransfer-Port wird über WebQuery gelesen."
+            },
+            "voice": {
+              "timeout": "Keine Antwort vom Voice-Port (UDP). Eine Firewall blockiert UDP vermutlich, oder auf diesem Port läuft kein virtueller Server. Freigabe und Port prüfen (geprüft vom Manager aus, wie die Musikbots verbinden).",
+              "refused": "Auf diesem Voice-Port läuft kein Server (UDP abgelehnt). Den Port des virtuellen Servers bzw. des Musikbots prüfen.",
+              "unexpected-response": "Am Voice-Port antwortet etwas, aber nicht TeamSpeak. Port prüfen.",
+              "not-configured": "Kein Voice-Port bekannt: Kein virtueller Server ist online, und diese Verbindung hat keinen Musikbot.",
+              "prerequisite-failed": "Nicht geprüft: Die Voice-Ports werden über WebQuery gelesen, und diese Verbindung hat keinen Musikbot."
+            },
+            "sidecar": {
+              "not-configured": "Kein eigener Sidecar-Container eingerichtet (SIDECAR_URL): Ein Sidecar-Prozess startet mit jedem Videostream.",
+              "refused": "Der Video-Sidecar läuft nicht oder ist unter SIDECAR_URL nicht erreichbar. Den Sidecar-Container prüfen.",
+              "dns": "Der Hostname aus SIDECAR_URL lässt sich nicht auflösen. SIDECAR_URL und das Docker-Netz prüfen.",
+              "timeout": "Der Video-Sidecar antwortet nicht. Den Sidecar-Container und SIDECAR_URL prüfen.",
+              "unexpected-response": "Unter SIDECAR_URL antwortet etwas, aber nicht der Sidecar. SIDECAR_URL prüfen."
+            }
+          }
         },
         "editConnectionTitle": "Verbindung bearbeiten",
         "namePlaceholder": "Mein TS-Server",

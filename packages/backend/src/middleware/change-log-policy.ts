@@ -107,8 +107,8 @@ function isExcluded(method: UiChangeMethod, rest: string[]): boolean {
   // A user's own dashboard settings; a forced update re-check; the yt-dlp cookie check - none is a change to the server or to other users.
   if (area === 'user-settings' || area === 'update-check' || area === 'yt-cookie-check') return true;
   if (area === 'auth' && AUTH_SESSION_ROUTES.has(rest.slice(1).join('/'))) return true;
-  // POST /api/servers/:configId/test only tests a connection, it changes nothing.
-  if (area === 'servers' && rest.length === 3 && rest[2] === 'test' && method === 'POST') return true;
+  // POST /api/servers/:configId/test, /:configId/diagnose and /diagnose (the form's values) only test a connection, they change nothing.
+  if (area === 'servers' && method === 'POST' && ((rest.length === 3 && (rest[2] === 'test' || rest[2] === 'diagnose')) || (rest.length === 2 && rest[1] === 'diagnose'))) return true;
   return false;
 }
 

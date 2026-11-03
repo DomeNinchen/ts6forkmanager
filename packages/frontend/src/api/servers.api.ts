@@ -1,4 +1,5 @@
 import api from './client';
+import type { ConnectionDiagnosis, DiagnosisRequest } from '@ts6/common';
 
 export const serversApi = {
   list: () => api.get('/servers').then((r) => r.data),
@@ -7,6 +8,8 @@ export const serversApi = {
   update: (id: number, data: any) => api.put(`/servers/${id}`, data).then((r) => r.data),
   delete: (id: number) => api.delete(`/servers/${id}`),
   test: (id: number) => api.post(`/servers/${id}/test`).then((r) => r.data),
+  diagnose: (id: number): Promise<ConnectionDiagnosis> => api.post(`/servers/${id}/diagnose`).then((r) => r.data),
+  diagnoseValues: (values: DiagnosisRequest): Promise<ConnectionDiagnosis> => api.post('/servers/diagnose', values).then((r) => r.data),
   createBotIdentity: (id: number, name: string) => api.post(`/servers/${id}/bot-identity`, { name }).then((r) => r.data),
   getIdentity: (id: number, sid?: number | null) => api.get(`/servers/${id}/identity`, { params: sid ? { sid } : {} }).then((r) => r.data),
   setIdentity: (id: number, nickname: string, sid?: number | null) => api.put(`/servers/${id}/identity`, { nickname, sid }).then((r) => r.data),

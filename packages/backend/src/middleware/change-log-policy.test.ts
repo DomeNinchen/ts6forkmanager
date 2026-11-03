@@ -37,6 +37,8 @@ test('the excluded writing routes are not logged', () => {
   const excluded = { kind: 'skip', reason: 'excluded' };
   assert.deepEqual(classifyChange('PUT', '/api/user-settings/dashboard'), excluded);
   assert.deepEqual(classifyChange('POST', '/api/servers/3/test'), excluded);
+  assert.deepEqual(classifyChange('POST', '/api/servers/3/diagnose'), excluded);
+  assert.deepEqual(classifyChange('POST', '/api/servers/diagnose'), excluded);
   assert.deepEqual(classifyChange('POST', '/api/update-check'), excluded);
   for (const path of ['/api/auth/login', '/api/auth/login/verify-totp', '/api/auth/refresh', '/api/auth/logout']) {
     assert.deepEqual(classifyChange('POST', path), excluded, path);
