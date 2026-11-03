@@ -5,6 +5,8 @@ import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { AutomaticGroupsPanel } from '@/components/permissions/AutomaticGroupsPanel';
+import { WhyPanel, type SourceInfo } from '@/components/permissions/WhyPanel';
+import type { ExplainRow } from '@/api/permissions.api';
 import { IconImage } from '@/components/icons/IconImage';
 import { IconPickerDialog } from '@/components/icons/IconPickerDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +26,7 @@ import { cn } from '@/lib/utils';
 import {
   Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, UserCog, Save,
   X, Check, Minus, Plus, Columns3, Upload, FileText, Layers, ListChecks, FileInput, AlertTriangle,
-  Image as ImageIcon,
+  Image as ImageIcon, HelpCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -227,9 +229,12 @@ export default function Permissions() {
   // layout with their own, so they're modes rather than a sixth/seventh tier.
   // Automatic Groups is the odd one out: it edits server group *templates*
   // instance-wide, not one entity's permissions, and is admin-only.
-  const [mode, setMode] = useState<'edit' | 'find' | 'overview' | 'automatic'>('edit');
+  const [mode, setMode] = useState<'edit' | 'find' | 'overview' | 'why' | 'automatic'>('edit');
   const findMode = mode === 'find';
   const overviewMode = mode === 'overview';
+  // "Why?" (R11) needs the same lists as the overview to name clients, groups and channels.
+  const whyMode = mode === 'why';
+  const namesNeeded = overviewMode || whyMode;
   const automaticMode = mode === 'automatic';
   const isAdmin = useAuthStore((st) => st.user?.role === 'admin');
   const setFindMode = (on: boolean) => setMode(on ? 'find' : 'edit');
@@ -267,29 +272,29 @@ export default function Permissions() {
   const { data: serverGroups } = useQuery({
     queryKey: ['server-groups', c, s],
     queryFn: () => permissionsApi.serverGroups(c!, s!),
-    enabled: !!c && !!s && (layer === 'server-group' || findMode || overviewMode),
+    enabled: !!c && !!s && (layer === 'server-group' || findMode || namesNeeded),
   });
   const { data: channelGroups } = useQuery({
     queryKey: ['channel-groups', c, s],
     queryFn: () => permissionsApi.channelGroups(c!, s!),
-    enabled: !!c && !!s && (layer === 'channel-group' || findMode || overviewMode),
+    enabled: !!c && !!s && (layer === 'channel-group' || findMode || namesNeeded),
   });
   const { data: channels } = useQuery({
     queryKey: ['channels-for-perms', c, s],
     queryFn: () => permissionsApi.channels(c!, s!),
-    enabled: !!c && !!s && (layer === 'channel' || layer === 'channel-client' || findMode || overviewMode),
+    enabled: !!c && !!s && (layer === 'channel' || layer === 'channel-client' || findMode || namesNeeded),
   });
-  const { data: clients } = useQuery({
+  const { data: clients, isLoading: clientsListLoading } = useQuery({
     queryKey: ['clients-for-perms', c, s],
     queryFn: () => permissionsApi.clients(c!, s!),
-    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client' || findMode || overviewMode),
+    enabled: !!c && !!s && (layer === 'client' || layer === 'channel-client' || findMode || namesNeeded),
   });
-  const { data: offlineClients } = useQuery({
+  const { data: offlineClients, isLoading: offlineListLoading } = useQuery({
     queryKey: ['clients-db-for-perms', c, s],
     queryFn: () => permissionsApi.clientsDatabase(c!, s!),
     // Always in find/overview mode - a permission can sit on a client who
     // isn't online, and an overview is just as valid for an offline client.
-    enabled: !!c && !!s && (((layer === 'client' || layer === 'channel-client') && showOffline) || findMode || overviewMode),
+    enabled: !!c && !!s && (((layer === 'client' || layer === 'channel-client') && showOffline) || findMode || namesNeeded),
   });
 
   // Fetch current entity permissions
@@ -992,9 +997,9 @@ export default function Permissions() {
   })().filter((ent: any) =>
     (layer !== 'client' && layer !== 'channel-client') || !entitySearch || ent.name.toLowerCase().includes(entitySearch.toLowerCase()));
 
-  // Overview picks its own client list rather than reusing `entities`, which
-  // is scoped to whichever tier tab is active behind the overlay.
-  const overviewClients = (() => {
+  // Overview and "Why?" pick their own client list rather than reusing
+  // `entities`, which is scoped to whichever tier tab is active behind the overlay.
+  const allClientsForPicker = (() => {
     const online = (Array.isArray(clients) ? clients : [])
       .filter((cl: any) => String(cl.client_type) === '0')
       .map((cl: any) => ({ id: String(cl.client_database_id), name: cl.client_nickname, online: true }));
@@ -1003,9 +1008,10 @@ export default function Permissions() {
       .filter((cl: any) => !onlineIds.has(String(cl.cldbid)))
       .map((cl: any) => ({ id: String(cl.cldbid), name: cl.client_nickname || t('pages.permissions.clientFallback', { id: cl.cldbid }), online: false }));
     return [...online, ...offline]
-      .sort((a, b) => (a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1))
-      .filter((cl) => !entitySearch || cl.name.toLowerCase().includes(entitySearch.toLowerCase()));
+      .sort((a, b) => (a.online === b.online ? a.name.localeCompare(b.name) : a.online ? -1 : 1));
   })();
+  const overviewClients = allClientsForPicker
+    .filter((cl) => !entitySearch || cl.name.toLowerCase().includes(entitySearch.toLowerCase()));
 
   const entityName = (key: string): string => {
     if (layer === 'channel-client') {
@@ -1109,6 +1115,20 @@ export default function Permissions() {
     }
   };
 
+  // "Why?" names each deciding overview row like the overview does, and opens it in the editor.
+  // A channel group row carries the channel in id1 and the group in id2; channel-client is cid:cldbid.
+  const describeExplainSource = (row: ExplainRow): SourceInfo => {
+    const tier = overviewTierOf[row.t];
+    const id1 = String(row.id1), id2 = String(row.id2);
+    const key = tier.key === 'channel-group' ? id2 : tier.key === 'channel-client' ? `${id1}:${id2}` : id1;
+    return { tierLabel: tier.label, name: overviewSourceName({ tier, id1, id2 }), hit: { layer: tier.key, key } };
+  };
+  const jumpFromWhy = (hit: SourceInfo['hit'], permsid: string) => {
+    if (hit.layer === 'client' || hit.layer === 'channel-client') setShowOffline(true);
+    jumpToHit(hit);
+    setSearch(permsid);
+  };
+
   const addChannelClientPair = (clientId: string, clientName: string) => {
     if (!ccChannel) return;
     const key = `${ccChannel}:${clientId}`;
@@ -1172,7 +1192,7 @@ export default function Permissions() {
             onClick={() => { setLayer(key); setFindMode(false); }}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-              layer === key && !findMode && !automaticMode
+              layer === key && !findMode && !automaticMode && !whyMode
                 ? 'bg-background text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground',
             )}
@@ -1206,6 +1226,18 @@ export default function Permissions() {
           <Layers className="h-3.5 w-3.5" />
           {t('pages.permissions.permissionOverview')}
         </button>
+        <button
+          onClick={() => setMode('why')}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+            whyMode
+              ? 'bg-background text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+          {t('pages.permissions.why.tab')}
+        </button>
         {isAdmin && (
           <button
             onClick={() => setMode('automatic')}
@@ -1222,9 +1254,26 @@ export default function Permissions() {
         )}
       </div>
 
+      {/* Stays mounted while hidden, so a jump to the editor and back keeps the question and answer. */}
+      <div className={whyMode ? undefined : 'hidden'}>
+        <WhyPanel
+          configId={c!}
+          sid={s!}
+          clients={allClientsForPicker}
+          clientsLoading={clientsListLoading || offlineListLoading}
+          channels={(Array.isArray(channels) ? channels : []).map((ch: any) => ({ cid: String(ch.cid), name: ch.channel_name }))}
+          // Only regular groups take members (templates and query groups do not)
+          serverGroups={(Array.isArray(serverGroups) ? serverGroups : []).filter((g: any) => String(g.type) === '1')
+            .map((g: any) => ({ sgid: String(g.sgid), name: g.name }))}
+          describeSource={describeExplainSource}
+          permDesc={(permsid) => allPerms.find((p) => p.permsid === permsid)?.permdesc ?? ''}
+          onJump={jumpFromWhy}
+          onShowOverview={(cldbid, cid) => { setOvClient(cldbid); setOvChannel(cid); setMode('overview'); }}
+        />
+      </div>
       {automaticMode && isAdmin ? (
         <AutomaticGroupsPanel configId={c!} sid={s!} perms={allPerms} />
-      ) : overviewMode ? (
+      ) : whyMode ? null : overviewMode ? (
         <div className="grid grid-cols-12 gap-4">
           {/* Client picker */}
           <Card className="card-hero col-span-3">

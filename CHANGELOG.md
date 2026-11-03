@@ -4,11 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.91.0 · frontend 3.107.3 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.91.0 · frontend 3.108.0 · sidecar 2.1.4**
 
 ### New Features
 
-- **Permission helper ("why can't X do this?")** — A new endpoint (`GET /api/servers/:configId/vs/:sid/permissions/explain`, the page follows) answers whether one client can kick (server or channel), ban, move, poke or privately message another, or add them to / remove them from a server group: allowed, denied or not possible, with each power and needed power, the channel it is read in and the overview row that sets it. It reads the same Permission Overview data and follows the rules TeamSpeak applies (which channel counts per action, the maximum ban time, the client permission modify power for group changes); join rights on a move destination are not judged. Same access as the Permission Overview. *backend 2.91.0, frontend 3.107.3* [#351](https://github.com/DomeNinchen/ts6forkmanager/pull/351)
+- **Permission helper ("why can't X do this?")** — Permissions -> Why? answers whether one client can kick (server or channel), ban, move, poke or privately message another, or add them to / remove them from a server group: allowed, denied or not possible, with each power and needed power, the channel it is read in and the group, channel or client entry that sets it, plus a suggestion and a jump into the editor of that entry (nothing is changed automatically). It reads the same data as the Permission Overview and follows the rules TeamSpeak applies (which channel counts per action, the maximum ban time, the client permission modify power for group changes); join rights on a move destination are not judged. Same access as the Permission Overview; also available as `GET /api/servers/:configId/vs/:sid/permissions/explain`. *backend 2.91.0, frontend 3.107.3–3.108.0* [#351](https://github.com/DomeNinchen/ts6forkmanager/pull/351), [#352](https://github.com/DomeNinchen/ts6forkmanager/pull/352)
 
 ### Improvements
 
