@@ -3,9 +3,9 @@ import crypto from 'crypto';
 /**
  * Query-ban protection for SSH logins. TS6 blocks SSH for a non-allowlisted address after its second
  * failed login, for minutes, and then refuses the right password too (measured on 6.0.0-beta13.1,
- * R10). So a refused login is remembered per credentials (only a hash is kept), and the connection
- * test never tries the same credentials again; changed credentials or a backend restart allow one
- * new attempt. Test logins to one target are also spaced by TEST_LOGIN_INTERVAL_MS.
+ * R10). So a refused login is remembered per credentials (only a hash is kept), and no login path
+ * (SshQueryClient.connect) tries the same credentials again; changed credentials or a backend
+ * restart allow one new attempt. Test logins to one target are also spaced by TEST_LOGIN_INTERVAL_MS.
  */
 export interface SshCredentials { host: string; port: number; username: string; password: string }
 
@@ -28,6 +28,24 @@ export function forgetSshRejection(c: SshCredentials): void {
 
 export function sshRejection(c: SshCredentials): { message: string; at: Date } | undefined {
   return rejected.get(credentialKey(c));
+}
+
+const loginsInFlight = new Map<string, Promise<unknown>>();
+
+/**
+ * Runs one login per credentials at a time, so parallel connections (event session, command
+ * listeners, journal) cannot each spend a failed login before the first refusal is remembered.
+ */
+export async function oneLoginAtATime<T>(c: SshCredentials, login: () => Promise<T>): Promise<T> {
+  const key = credentialKey(c);
+  const run = (loginsInFlight.get(key) ?? Promise.resolve()).then(login);
+  const tail = run.catch(() => {});
+  loginsInFlight.set(key, tail);
+  try {
+    return await run;
+  } finally {
+    if (loginsInFlight.get(key) === tail) loginsInFlight.delete(key);
+  }
 }
 
 /** Claims the next test login for host:port; returns the seconds to wait when one ran too recently. */
