@@ -26,7 +26,7 @@ Versions at the end of the month: **backend 2.94.0 · frontend 3.111.1 · sideca
 
 ### Bug Fixes
 
-- Fixed two flow templates that read event fields TeamSpeak does not send: **Anti-VPN** checked an empty IP address (it now asks the server for the joining client's IP first), and **Last-Seen Tracker** stored every disconnect under the same empty name (it now remembers who is behind each connection when a client joins and records the time under that client's database ID). *frontend 3.111.1* [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
+- Fixed two flow templates that read event fields TeamSpeak does not send: **Anti-VPN** checked an empty IP address (it now asks the server for the joining client's IP first), and **Last-Seen Tracker** stored every disconnect under the same empty name (it now remembers who is behind each connection when a client joins and records the time under that client's database ID). *frontend 3.111.1* [#359](https://github.com/DomeNinchen/ts6forkmanager/pull/359)
 - Fixed the flow editor's placeholder reference naming event fields TeamSpeak does not send: "Client Connected" lists the joined channel as `{{event.ctid}}` and no longer an IP address, and text messages and chat commands name the sender as `{{event.invokerid}}` / `{{event.invokername}}`. *frontend 3.111.0* [#357](https://github.com/DomeNinchen/ts6forkmanager/pull/357)
 - Fixed the flow editor's toolbar running off the screen on a phone, which hid Save, Executions and Test; it now wraps onto a second line on narrow screens. *frontend 3.110.1* [#358](https://github.com/DomeNinchen/ts6forkmanager/pull/358)
 - Fixed the backend restarting in a loop with "Cannot read package config ... permission denied" when files in the checkout on the server were readable by their owner only (a restrictive umask such as `077`, or a tool that wrote them that way); the backend and frontend images now make every file they take from the checkout readable, so nginx no longer answers such files from `public/` with 403 either. *backend 2.88.2, frontend 3.106.1* [#346](https://github.com/DomeNinchen/ts6forkmanager/pull/346)
@@ -40,7 +40,7 @@ Versions at the end of the month: **backend 2.94.0 · frontend 3.111.1 · sideca
 **Bot flows & music bots**
 
 - A flow that read the webhook secret through `{{event.webhook_query.secret}}` gets an empty value now; send values the flow needs as other query parameters. [#355](https://github.com/DomeNinchen/ts6forkmanager/pull/355)
-- Flows already built from the **Anti-VPN** or **Last-Seen Tracker** template keep the old, broken nodes. Rebuild an Anti-VPN flow with **Configure template** in the editor (flows made before frontend 3.85.0 have no such button: create it again from the gallery); create a Last-Seen Tracker flow again from the gallery. Anti-VPN needs the bot's server query login to be allowed to see client IP addresses. [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
+- Flows already built from the **Anti-VPN** or **Last-Seen Tracker** template keep the old, broken nodes. Rebuild an Anti-VPN flow with **Configure template** in the editor (flows made before frontend 3.85.0 have no such button: create it again from the gallery); create a Last-Seen Tracker flow again from the gallery. Anti-VPN needs the bot's server query login to be allowed to see client IP addresses. [#359](https://github.com/DomeNinchen/ts6forkmanager/pull/359)
 
 ### Updating
 
