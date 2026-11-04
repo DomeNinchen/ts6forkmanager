@@ -1678,6 +1678,90 @@
       "bulkUpdatedCount_other": "{{count}} salons mis à jour"
     },
     "botEditor": {
+      "test": {
+        "button": "Tester",
+        "title": "Tester ce flux",
+        "intro": "Exécute le flux tel qu'il est dans l'éditeur (enregistré ou non) avec un événement d'exemple. Rien n'est modifié : les lectures vont au serveur, les modifications, requêtes et actions de bot musical sont seulement affichées.",
+        "trigger": "Déclencheur",
+        "noTrigger": "Ajoutez un nœud déclencheur pour tester le flux.",
+        "sample": "Événement d'exemple",
+        "field": "Champ",
+        "value": "Valeur",
+        "addField": "Ajouter un champ",
+        "removeField": "Supprimer le champ {{name}}",
+        "body": "Corps de la requête (JSON)",
+        "query": "Paramètres de requête (JSON)",
+        "method": "Méthode HTTP",
+        "cronNoData": "Un minuteur démarre le flux sans données d'événement.",
+        "fromLast": "Reprendre la dernière exécution réelle",
+        "fromLastNone": "Aucune exécution précédente de ce type de déclencheur.",
+        "fromLastDone": "Repris de l'exécution #{{id}}.",
+        "run": "Lancer le test",
+        "running": "Test en cours…",
+        "failedRequest": "Le test n'a pas pu s'exécuter : {{error}}",
+        "invalidJson": "Le corps et la requête doivent être du JSON valide.",
+        "status": {
+          "completed": "Terminé. Rien n'a été modifié.",
+          "failed": "Arrêté : {{error}}",
+          "notTriggered": "Cet événement ne démarrerait pas le déclencheur."
+        },
+        "errorCode": {
+          "readLimit": "Le test a nécessité plus de 50 lectures et s'est arrêté (protection anti-flood de TeamSpeak).",
+          "nodeVisits": "Le flux a parcouru plus de 500 nœuds ; il boucle probablement."
+        },
+        "mismatch": {
+          "filter": "Le filtre {{key}} attend « {{expected}} », l'événement a « {{actual}} ».",
+          "missing": "(absent)",
+          "listener": "Cette commande n'écoute que dans le chat de son propre salon (ou seulement en dehors).",
+          "command": "Le message ne commence pas par cette commande."
+        },
+        "summary": "Étapes : {{steps}} · modifications non effectuées : {{writes}} · espaces réservés vides : {{empty}} · lectures : {{reads}}",
+        "steps": "Étapes",
+        "stepTitle": "Aller au nœud {{label}}",
+        "iteration": "boucle #{{n}}",
+        "branch": {
+          "true": "vrai",
+          "false": "faux",
+          "error": "branche d'erreur"
+        },
+        "conditionError": "Expression en échec (compte comme faux) : {{error}}",
+        "actionError": "Échec : {{error}}",
+        "emptyPlaceholder": "{{expression}} est vide",
+        "effect": {
+          "write": "Exécuterait {{command}}",
+          "read": "{{command}} lu ({{rows}} lignes)",
+          "http": "Enverrait {{method}} {{url}}",
+          "blocked": "Serait bloqué : {{reason}}",
+          "voice": "Dirait à un bot musical : {{action}}",
+          "variable": "Variable {{name}} : « {{from}} » → « {{to}} »",
+          "delay": "Attendrait {{seconds}} s (le test n'attend pas)"
+        },
+        "note": {
+          "animationManagedByEngine": "Le salon animé tourne avec son propre minuteur une fois le flux activé ; le test ne le démarre pas.",
+          "rankCheckCapped": "Le test n'a vérifié que les 20 premiers clients.",
+          "responseUnknown": "La réponse est inconnue (non envoyée) ; son espace réservé reste vide."
+        },
+        "commands": {
+          "clientkick": "expulser",
+          "banclient": "bannir",
+          "clientmove": "déplacer",
+          "sendtextmessage": "envoyer un message",
+          "clientpoke": "poker",
+          "channelcreate": "créer un salon",
+          "channeledit": "modifier le salon",
+          "channeldelete": "supprimer le salon",
+          "servergroupaddclient": "ajouter au groupe serveur",
+          "servergroupdelclient": "retirer du groupe serveur"
+        },
+        "variables": "Variables",
+        "before": "Avant",
+        "after": "Après",
+        "temp": "valeurs temp à la fin",
+        "simulated": "simulé",
+        "simulatedHint": "Provient d'une modification ou requête que le test n'a pas effectuée.",
+        "notVisited": "Non atteint pendant le test",
+        "clear": "Masquer le résultat"
+      },
       "executions": {
         "button": "Exécutions",
         "title": "50 dernières exécutions",

@@ -129,7 +129,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 
 - **Music bots**: several bots per server playing radio, YouTube, Spotify links and your own library, controlled in the browser or with chat commands such as `!play`. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots)
 - **Video streaming**: YouTube, Twitch, direct URLs or library videos into a channel over WebRTC, with a queue and a browser preview. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots#video-streaming)
-- **Bot flows**: a visual automation editor with triggers from server events, schedules, webhooks and chat commands, plus ready-made templates. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Bot-Flows)
+- **Bot flows**: a visual automation editor with triggers from server events, schedules, webhooks and chat commands, plus ready-made templates and a test mode that shows what a flow would do with a sample event without changing anything. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Bot-Flows)
 - **Server widgets**: status banners for websites and forums, as a live page, SVG or PNG, with their own online-count filter. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
 
 **Access and appearance**

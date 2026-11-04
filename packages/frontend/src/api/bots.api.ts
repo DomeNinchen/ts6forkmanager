@@ -1,4 +1,4 @@
-import type { CustomRoleKey, UserPermission, UserRole } from '@ts6/common';
+import type { CustomRoleKey, FlowTestReport, UserPermission, UserRole } from '@ts6/common';
 import api from './client';
 
 export const botsApi = {
@@ -12,6 +12,9 @@ export const botsApi = {
   executions: (id: number) => api.get(`/bots/${id}/executions`).then((r) => r.data),
   executionLogs: (botId: number, execId: number) =>
     api.get(`/bots/${botId}/executions/${execId}/logs`).then((r) => r.data),
+  /** A test run of the flow (stored, or the editor's unsaved graph as flowData); changes nothing. */
+  test: (id: number, body: { flowData?: unknown; triggerNodeId?: string; event?: Record<string, string> }): Promise<FlowTestReport> =>
+    api.post(`/bots/${id}/test`, body).then((r) => r.data),
 };
 
 export interface UserSession {
