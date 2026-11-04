@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.92.0 · frontend 3.109.0 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.93.0 · frontend 3.109.1 · sidecar 2.1.4**
 
 ### New Features
+
+- **Flow test mode (backend)** — `POST /api/bots/:botId/test` runs a bot flow on a sample event without changing anything and answers with a report: the nodes in the order they ran, the branch each condition took (and why an expression failed), every placeholder with its value and whether it was empty, and what each write action would have done (kick, ban, move, message, group, channel, WebQuery command, HTTP/webhook request with masked headers, music bot action, variable before/after). Read-only queries really go to the server (at most 50 per test), writes, HTTP requests and music bot actions never happen, a Delay is not waited for, and the test leaves no execution, log or variable behind. It works on disabled flows and on an unsaved graph sent along, needs the same right as editing flows, and a sample the trigger would ignore (filter, command, chat) is reported as not triggered. The editor panel follows. *backend 2.93.0, frontend 3.109.1* [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
 
 - **Connection diagnosis report** — "Test" under Settings -> Connections opens a report with one line per way to the server: WebQuery, SSH query, file transfer, the voice port of every online virtual server and music bot (one UDP handshake packet each, no client joins), and the video sidecar when `SIDECAR_URL` is set. Each line says whether it passed, failed or was not checked, and what to do. **Copy report** copies it with host and ports but without API key, password or user name (over plain HTTP the report is shown to select instead). **Test these values** in the connection form runs the same checks on the entered values without saving them; blank secret fields use the stored ones, and only for the stored host. Diagnoses do not appear in the change log. *backend 2.92.0, frontend 3.109.0* [#353](https://github.com/DomeNinchen/ts6forkmanager/pull/353)
 - **Permission helper ("why can't X do this?")** — Permissions -> Why? answers whether one client can kick (server or channel), ban, move, poke or privately message another, or add them to / remove them from a server group: allowed, denied or not possible, with each power and needed power, the channel it is read in and the group, channel or client entry that sets it, plus a suggestion and a jump into the editor of that entry (nothing is changed automatically). It reads the same data as the Permission Overview and follows the rules TeamSpeak applies (which channel counts per action, the maximum ban time, the client permission modify power for group changes); join rights on a move destination are not judged. Same access as the Permission Overview; also available as `GET /api/servers/:configId/vs/:sid/permissions/explain`. *backend 2.91.0, frontend 3.107.3–3.108.0* [#351](https://github.com/DomeNinchen/ts6forkmanager/pull/351), [#352](https://github.com/DomeNinchen/ts6forkmanager/pull/352)
@@ -19,6 +21,7 @@ Versions at the end of the month: **backend 2.92.0 · frontend 3.109.0 · sideca
 
 ### Security
 
+- **Webhook secret kept out of flow data** — A webhook secret sent as `?secret=` is no longer part of `event.webhook_query`, so a flow never sees it and its executions never store it. *backend 2.93.0* [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
 - **Dependency updates** — `follow-redirects` 1.16.2 and `qs` 6.17.1 close two Dependabot alerts; neither was reachable in this app. *backend 2.88.1* [#345](https://github.com/DomeNinchen/ts6forkmanager/pull/345)
 
 ### Bug Fixes
@@ -30,6 +33,10 @@ Versions at the end of the month: **backend 2.92.0 · frontend 3.109.0 · sideca
 **Docker & reverse proxy**
 
 - A backend stuck in that restart loop needs nothing but the usual update: pull, then rebuild with `docker compose up -d --build`. [#346](https://github.com/DomeNinchen/ts6forkmanager/pull/346)
+
+**Bot flows & music bots**
+
+- A flow that read the webhook secret through `{{event.webhook_query.secret}}` gets an empty value now; send values the flow needs as other query parameters. [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
 
 ### Updating
 

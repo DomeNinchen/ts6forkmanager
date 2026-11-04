@@ -12,6 +12,7 @@ export * from './types/backups.js';
 export * from './types/online-count.js';
 export * from './types/bulk.js';
 export * from './types/connection-diagnosis.js';
+export * from './types/flow-test.js';
 export * from './constants/events.js';
 export * from './utils/ts-escape.js';
 export * from './utils/ban-rules.js';

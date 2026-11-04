@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { grantCovers, grantOf, type Grant } from '../utils/vs-access.js';
+import { FLOW_TEST_MAX_FLOW_BYTES } from '@ts6/common';
 
 export const botRoutes: Router = Router();
 
@@ -221,5 +222,28 @@ botRoutes.get('/:botId/executions/:execId/logs', requirePermission('bots.manage'
       orderBy: { timestamp: 'asc' },
     });
     res.json(logs);
+  } catch (err) { next(err); }
+});
+
+// Flow test: what the flow would do with a sample event, nothing changed (see BotEngine.testFlow).
+// The editor sends its current, possibly unsaved graph as `flowData`; without it the stored one runs.
+botRoutes.post('/:botId/test', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const flow = await prisma.botFlow.findUnique({ where: { id: parseInt(String(req.params.botId)) } });
+    if (!flow) throw new AppError(404, 'Bot flow not found');
+    await assertServerAccess(req, prisma, flow.serverConfigId, flow.virtualServerId);
+    const engine = req.app.locals.botEngine;
+    if (!engine) throw new AppError(503, 'Bot engine not running');
+
+    const { flowData, triggerNodeId, event = {} } = req.body ?? {};
+    const isObject = (v: unknown) => typeof v === 'object' && v !== null && !Array.isArray(v);
+    if (flowData !== undefined) {
+      if (!isObject(flowData) || !Array.isArray(flowData.nodes) || !Array.isArray(flowData.edges)) throw new AppError(400, 'flowData needs nodes and edges');
+      if (Buffer.byteLength(JSON.stringify(flowData)) > FLOW_TEST_MAX_FLOW_BYTES) throw new AppError(413, 'flowData is too large to test');
+    }
+    if (!isObject(event) || Object.values(event).some((v) => typeof v !== 'string')) throw new AppError(400, 'event must be an object of strings');
+
+    res.json(await engine.testFlow(flow, flowData ?? JSON.parse(flow.flowData), triggerNodeId, event));
   } catch (err) { next(err); }
 });
