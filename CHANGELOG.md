@@ -26,7 +26,7 @@ Versions at the end of the month: **backend 2.93.0 · frontend 3.110.1 · sideca
 
 ### Bug Fixes
 
-- Fixed the flow editor's toolbar running off the screen on a phone, which hid Save, Executions and Test; it now wraps onto a second line on narrow screens. *frontend 3.110.1* [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
+- Fixed the flow editor's toolbar running off the screen on a phone, which hid Save, Executions and Test; it now wraps onto a second line on narrow screens. *frontend 3.110.1* [#358](https://github.com/DomeNinchen/ts6forkmanager/pull/358)
 - Fixed the backend restarting in a loop with "Cannot read package config ... permission denied" when files in the checkout on the server were readable by their owner only (a restrictive umask such as `077`, or a tool that wrote them that way); the backend and frontend images now make every file they take from the checkout readable, so nginx no longer answers such files from `public/` with 403 either. *backend 2.88.2, frontend 3.106.1* [#346](https://github.com/DomeNinchen/ts6forkmanager/pull/346)
 
 ### Upgrade Notes
