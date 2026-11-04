@@ -1,10 +1,54 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/pion/rtp"
+	"github.com/pion/webrtc/v4"
 )
+
+// gatherOffer returns the local SDP once ICE gathering has finished.
+func gatherOffer(t *testing.T) string {
+	t.Helper()
+	se := webrtc.SettingEngine{}
+	if err := applyAnnounceIPs(&se); err != nil {
+		t.Fatal(err)
+	}
+	pc, err := webrtc.NewAPI(webrtc.WithSettingEngine(se)).NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pc.Close()
+	if _, err := pc.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
+		t.Fatal(err)
+	}
+	offer, err := pc.CreateOffer(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := webrtc.GatheringCompletePromise(pc)
+	if err := pc.SetLocalDescription(offer); err != nil {
+		t.Fatal(err)
+	}
+	<-done
+	return pc.LocalDescription().SDP
+}
+
+func TestAnnounceIPsAddsHostCandidate(t *testing.T) {
+	t.Setenv("ICE_ANNOUNCE_IPS", " 192.0.2.10 ,")
+	sdp := gatherOffer(t)
+	if !strings.Contains(sdp, " 192.0.2.10 ") {
+		t.Fatalf("announced IP missing from candidates:\n%s", sdp)
+	}
+}
+
+func TestNoAnnounceIPsLeavesCandidatesAlone(t *testing.T) {
+	t.Setenv("ICE_ANNOUNCE_IPS", "")
+	if sdp := gatherOffer(t); strings.Contains(sdp, "192.0.2.10") {
+		t.Fatalf("unexpected announced IP:\n%s", sdp)
+	}
+}
 
 func newTestRewriter() rtpRewriter {
 	return rtpRewriter{advance: 3000, maxJump: 900_000}
