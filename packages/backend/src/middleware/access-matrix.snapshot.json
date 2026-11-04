@@ -2321,6 +2321,14 @@
     "server-admin": "403",
     "moderator": "403"
   },
+  "POST /api/bots/:botId/test": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "ok",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
   "GET /api/users": {
     "admin": "ok",
     "viewer": "403",

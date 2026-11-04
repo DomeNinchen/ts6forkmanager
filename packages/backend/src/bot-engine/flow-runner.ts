@@ -22,6 +22,11 @@ import { TSApiError } from '../middleware/error-handler.js';
 import { botFlowAudience, sendToAudience } from '../utils/ws-audience.js';
 import { commaListsIntersect } from '../utils/group-match.js';
 import crypto from 'crypto';
+import {
+  isReadOnlyCommand, MASKED_VALUE, FLOW_TEST_MAX_READS, FLOW_TEST_RANK_CHECK_MAX, FLOW_TEST_SIMULATED_ID, type FlowTestReport,
+} from '@ts6/common';
+import { FlowTestTrace, FlowTestReadLimit, maskHeaders } from './flow-test-trace.js';
+import { maskSecrets } from '../utils/mask-secrets.js';
 
 // Raised from 100 to give Loop nodes real headroom - a loop at its default
 // iteration cap with even a small body (see MAX_LOOP_ITERATIONS_DEFAULT
@@ -244,17 +249,8 @@ export class FlowRunner {
         executePost: (...args) => pool.getBotClient(configId).executePost(...args),
       };
 
-      const visitNode: VisitNode = async (node, flowDef, tail) => {
-        if (this.stopping) throw new Error('The backend is shutting down');
-        ctx.nodeVisits++;
-        if (ctx.nodeVisits > MAX_NODE_VISITS) {
-          throw new Error(`Max node visits (${MAX_NODE_VISITS}) exceeded — possible infinite loop`);
-        }
-        await this.processNode(node, flowDef, ctx, client, visitNode, tail);
-      };
-
       try {
-        await start(visitNode);
+        await start(this.visitor(ctx, client));
       } finally {
         await this.leaveCreatedChannels(ctx, client);
       }
@@ -286,6 +282,60 @@ export class FlowRunner {
         error: err.message,
       }, flow.serverConfigId, flow.virtualServerId);
     }
+  }
+
+  private visitor(ctx: ExecutionContext, client: FlowQueryClient): VisitNode {
+    const visitNode: VisitNode = async (node, flowDef, tail) => {
+      if (this.stopping) throw new Error('The backend is shutting down');
+      ctx.nodeVisits++;
+      if (ctx.nodeVisits > MAX_NODE_VISITS) {
+        throw new Error(`Max node visits (${MAX_NODE_VISITS}) exceeded — possible infinite loop`);
+      }
+      await this.processNode(node, flowDef, ctx, client, visitNode, tail);
+    };
+    return visitNode;
+  }
+
+  /**
+   * Runs the flow on sample event data without changing anything, and reports what it did and
+   * would have done (see FlowTestTrace). Read-only queries really go to the server (at most
+   * FLOW_TEST_MAX_READS); writes, HTTP requests and voice actions are only described; variables
+   * are read from the database but written into the trace. No execution row, no log rows, no
+   * broadcast, no concurrency slot, no channel lock.
+   */
+  async test(flow: FlowInfo, triggerNodeId: string, triggerType: string, eventData: Record<string, string>, timezone?: string): Promise<FlowTestReport> {
+    const trace = new FlowTestTrace();
+    const ctx = new ExecutionContext(this.prisma, flow.id, 0, flow.serverConfigId, flow.virtualServerId, triggerType, eventData, timezone, trace);
+    const report: FlowTestReport = { status: 'completed', triggerNodeId, triggerType, eventData, steps: trace.steps, variables: [], temp: [], reads: 0 };
+    try {
+      const triggerNode = flow.flowData.nodes.find((n) => n.id === triggerNodeId);
+      if (!triggerNode) throw new Error(`Trigger node ${triggerNodeId} not found`);
+      await this.visitor(ctx, this.testClient(flow.serverConfigId, trace))(triggerNode, flow.flowData, true);
+    } catch (err: any) {
+      report.status = 'failed';
+      report.error = err.message;
+      if (err instanceof FlowTestReadLimit) report.errorCode = 'readLimit';
+      else if (ctx.nodeVisits > MAX_NODE_VISITS) report.errorCode = 'nodeVisits';
+    }
+    return trace.fill(report, ctx.temps as Map<string, unknown>);
+  }
+
+  /** A flow test's stand-in for the WebQuery client: reads go to the server, writes are recorded and answered with nothing. */
+  private testClient(configId: number, trace: FlowTestTrace): FlowQueryClient {
+    const call = (post: boolean) => async (sid: number, command: string, params: Record<string, any> = {}) => {
+      if (!isReadOnlyCommand(command.toLowerCase())) {
+        trace.simulating = true;
+        trace.effect({ kind: 'write', command, params: maskSecrets(params) as Record<string, unknown>, names: trace.namesFor(params) });
+        return command.toLowerCase() === 'channelcreate' ? [{ cid: FLOW_TEST_SIMULATED_ID }] : [];
+      }
+      if (++trace.reads > FLOW_TEST_MAX_READS) throw new FlowTestReadLimit(`More than ${FLOW_TEST_MAX_READS} read queries in one test`);
+      const client = this.connectionPool.getBotClient(configId);
+      const rows = await (post ? client.executePost(sid, command, params) : client.execute(sid, command, params));
+      trace.learnNames(rows);
+      trace.effect({ kind: 'read', command, params: maskSecrets(params) as Record<string, unknown>, rows: Array.isArray(rows) ? rows.length : 1 });
+      return rows;
+    };
+    return { execute: call(false), executePost: call(true) };
   }
 
   /**
@@ -342,7 +392,8 @@ export class FlowRunner {
     visitNode: VisitNode,
     tail: boolean,
   ): Promise<void> {
-    await this.log(ctx, node, 'debug', `Processing node '${node.data.label}' (type=${node.type})`);
+    const step = ctx.trace?.begin(node);
+    if (!step) await this.log(ctx, node, 'debug', `Processing node '${node.data.label}' (type=${node.type})`);
 
     switch (node.type) {
       case 'trigger': {
@@ -365,6 +416,7 @@ export class FlowRunner {
         await this.log(ctx, node, 'info', `Condition '${condData.expression}' → ${result}`);
 
         const handle = result ? 'true' : 'false';
+        if (step) step.branch = handle;
         await this.visitEdges(this.getOutgoingEdges(node.id, flowDef, handle), flowDef, tail, visitNode);
         break;
       }
@@ -379,7 +431,8 @@ export class FlowRunner {
           // so every flow built before this existed keeps working exactly
           // as it did.
           const errorEdges = this.getOutgoingEdges(node.id, flowDef, 'error');
-          if (errorEdges.length === 0) throw err;
+          if (errorEdges.length === 0 || err instanceof FlowTestReadLimit) throw err;
+          if (step) step.branch = 'error';
 
           ctx.setTemp('lastError', err.message);
           await this.log(ctx, node, 'warn', `Action '${(node.data as any).actionType}' failed, following its error branch: ${err.message}`);
@@ -393,6 +446,12 @@ export class FlowRunner {
       case 'delay': {
         const delayData = node.data as DelayNodeData;
         const delayMs = Math.min(delayData.delayMs, MAX_DELAY_MS);
+        if (ctx.trace) {
+          // A test does not wait; it goes on as if the Delay had passed, on the graph it was given.
+          ctx.trace.effect({ kind: 'delay', ms: delayMs });
+          await this.visitEdges(this.getOutgoingEdges(node.id, flowDef), flowDef, tail, visitNode);
+          break;
+        }
         await this.log(ctx, node, 'info', `Delaying ${delayMs}ms`);
         // Only a Delay with nothing behind it on the call stack can go on after a restart (a pending
         // sibling branch or loop iteration would be lost), and none whose execution still sits in a
@@ -461,13 +520,16 @@ export class FlowRunner {
         const previousIndex = ctx.getTemp(`${loopData.itemVariable}_index`);
 
         const bodyEdges = this.getOutgoingEdges(node.id, flowDef, 'body');
+        const outerIteration = ctx.trace?.iteration;
         for (let i = 0; i < toProcess.length; i++) {
           ctx.setTemp(loopData.itemVariable, toProcess[i]);
           ctx.setTemp(`${loopData.itemVariable}_index`, i);
+          if (ctx.trace) ctx.trace.iteration = i;
           await this.log(ctx, node, 'debug', `Loop: iteration ${i + 1}/${toProcess.length}`);
           // Never tail: the next iteration and the 'after' branch still wait behind the body.
           await this.visitEdges(bodyEdges, flowDef, false, visitNode);
         }
+        if (ctx.trace) ctx.trace.iteration = outerIteration;
 
         ctx.setTemp(loopData.itemVariable, previousItem);
         ctx.setTemp(`${loopData.itemVariable}_index`, previousIndex);
@@ -487,8 +549,11 @@ export class FlowRunner {
     const actionType = data.actionType as string;
 
     await this.log(ctx, node, 'info', `Executing action: ${actionType}`);
+    if (ctx.trace) ctx.trace.simulating = false;
 
     try {
+      // A test describes what a music bot would be told; it never reaches the bot or its database row.
+      if (ctx.trace && actionType.startsWith('voice')) return await this.describeVoice(actionType, data, ctx);
       switch (actionType) {
         case 'kick': await this.executeKick(data as KickActionData, ctx, client); break;
         case 'ban': await this.executeBan(data as BanActionData, ctx, client); break;
@@ -523,12 +588,14 @@ export class FlowRunner {
         case 'animatedChannel':
           // Animation lifecycle managed by BotEngine (not per-execution)
           await this.log(ctx, node, 'info', 'Animation managed by engine');
+          ctx.trace?.effect({ kind: 'note', code: 'animationManagedByEngine' });
           break;
         default:
           await this.log(ctx, node, 'warn', `Unknown action type: ${actionType}`);
       }
     } catch (err: any) {
       await this.log(ctx, node, 'error', `Action '${actionType}' failed: ${err.message}`);
+      if (ctx.trace?.step) ctx.trace.step.error = err.message;
       throw err;
     }
   }
@@ -617,6 +684,12 @@ export class FlowRunner {
     // before a "Move" node puts anyone in, so it leaves once someone is moved in or the
     // execution ends (leaveCreatedChannels). Until then no other execution on this server may
     // create a channel: that would pull the shared query client out and delete this one.
+    // A test creates nothing, so it neither queues behind nor holds up a real create, and has no query client to bring back.
+    if (ctx.trace) {
+      const cid = (await client.executePost(ctx.sid, 'channelcreate', resolved))[0].cid;
+      ctx.setTemp('lastCreatedChannelId', cid);
+      return;
+    }
     if (!ctx.releaseChannelLock) ctx.releaseChannelLock = await this.acquireChannelLock(`${ctx.configId}:${ctx.sid}`);
     let result: any;
     let who: any;
@@ -731,13 +804,6 @@ export class FlowRunner {
 
   private async executeWebhook(data: WebhookActionData, ctx: ExecutionContext): Promise<void> {
     const url = await ctx.resolveTemplate(data.url);
-
-    // C3: SSRF protection
-    const urlCheck = await validateUrl(url);
-    if (!urlCheck.valid) {
-      throw new Error(`Webhook URL blocked: ${urlCheck.error}`);
-    }
-
     const body = data.body ? await ctx.resolveTemplate(data.body) : undefined;
     const headers: Record<string, string> = {};
     if (data.headers) {
@@ -745,6 +811,13 @@ export class FlowRunner {
         headers[k] = await ctx.resolveTemplate(v);
       }
     }
+
+    // C3: SSRF protection
+    const urlCheck = await validateUrl(url);
+    const blocked = urlCheck.valid ? null : `Webhook URL blocked: ${urlCheck.error}`;
+    if (ctx.trace) return this.describeRequest(ctx, data.method || 'POST', url, headers, body, blocked, data.storeAs);
+    if (blocked) throw new Error(blocked);
+
     const response = await axios({
       method: (data.method || 'POST') as any,
       url,
@@ -774,13 +847,6 @@ export class FlowRunner {
 
   private async executeHttpRequest(data: HttpRequestActionData, ctx: ExecutionContext): Promise<void> {
     const url = await ctx.resolveTemplate(data.url);
-
-    // C3: SSRF protection
-    const urlCheck = await validateUrl(url);
-    if (!urlCheck.valid) {
-      throw new Error(`HTTP request URL blocked: ${urlCheck.error}`);
-    }
-
     const body = data.body ? await ctx.resolveTemplate(data.body) : undefined;
     const headers: Record<string, string> = {};
     if (data.headers) {
@@ -788,6 +854,13 @@ export class FlowRunner {
         headers[k] = await ctx.resolveTemplate(v);
       }
     }
+
+    // C3: SSRF protection
+    const urlCheck = await validateUrl(url);
+    const blocked = urlCheck.valid ? null : `HTTP request URL blocked: ${urlCheck.error}`;
+    if (ctx.trace) return this.describeRequest(ctx, data.method || 'GET', url, headers, body, blocked, data.storeAs);
+    if (blocked) throw new Error(blocked);
+
     const response = await axios({
       method: (data.method || 'GET') as any,
       url,
@@ -808,6 +881,22 @@ export class FlowRunner {
         }
       }
       ctx.setTemp(data.storeAs, stored);
+    }
+  }
+
+  /** A test's HTTP request: shown, never sent; fails where the real one would before sending, and leaves storeAs empty. */
+  private describeRequest(
+    ctx: ExecutionContext, method: string, url: string, headers: Record<string, string>,
+    body: string | undefined, blocked: string | null, storeAs: string | undefined,
+  ): void {
+    const trace = ctx.trace!;
+    trace.effect({ kind: 'http', method, url, headers: maskHeaders(headers), ...(body !== undefined && { body }), ...(blocked && { blocked }) });
+    if (blocked) throw new Error(blocked);
+    if (body) JSON.parse(body); // the real request sends the body as parsed JSON, so text that is no JSON fails it
+    if (storeAs) {
+      trace.simulating = true;
+      ctx.setTemp(storeAs, '');
+      trace.effect({ kind: 'note', code: 'responseUnknown' });
     }
   }
 
@@ -937,6 +1026,11 @@ export class FlowRunner {
       const clientGroups = String(cl.client_servergroups || '').split(',');
       if (excludeIds.length > 0 && excludeIds.some(g => clientGroups.includes(g))) continue;
 
+      // A test asks clientinfo for a few clients only: each is a query against the server's flood limit.
+      if (ctx.trace && mode !== 'firstConnectionAge' && eligible >= FLOW_TEST_RANK_CHECK_MAX) {
+        ctx.trace.effect({ kind: 'note', code: 'rankCheckCapped' });
+        break;
+      }
       eligible++;
       const cldbid = String(cl.client_database_id);
 
@@ -959,6 +1053,7 @@ export class FlowRunner {
           const infoObj = Array.isArray(info) ? info[0] : info;
           connectionTime = (parseInt(infoObj?.connection_connected_time) || 0) / 1000;
         } catch (err: any) {
+          if (err instanceof FlowTestReadLimit) throw err;
           console.warn(`[BotEngine] Rank Check: clientinfo failed for clid=${cl.clid} (cldbid=${cldbid}): ${err.message}`);
           continue;
         }
@@ -1041,6 +1136,17 @@ export class FlowRunner {
   }
 
   // --- Voice Action Methods ---
+
+  /** A test's voice action: its resolved settings, and the same "botId is required" failure the real one has. */
+  private async describeVoice(actionType: string, data: any, ctx: ExecutionContext): Promise<void> {
+    const params: Record<string, string> = {};
+    for (const key of ['botId', 'playlistId', 'songId', 'channelId', 'volume', 'action', 'direction', 'position', 'text', 'language']) {
+      if (data[key] !== undefined && data[key] !== '') params[key] = await ctx.resolveTemplate(String(data[key]));
+    }
+    if (data.channelPassword) params.channelPassword = MASKED_VALUE;
+    ctx.trace!.effect({ kind: 'voice', action: actionType, params });
+    if (actionType !== 'voiceTts' && !parseInt(params.botId)) throw new Error(`${actionType}: botId is required`);
+  }
 
   private getVoiceBotManager(): VoiceBotManager {
     if (!this.voiceBotManager) throw new Error('VoiceBotManager not initialized');
@@ -1221,6 +1327,7 @@ export class FlowRunner {
     message: string,
     data?: any,
   ): Promise<void> {
+    if (ctx.trace) return ctx.trace.log(level, message);
     try {
       await this.prisma.botExecutionLog.create({
         data: {

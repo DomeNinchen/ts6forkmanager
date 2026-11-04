@@ -8,9 +8,11 @@ import cron, { type ScheduledTask } from 'node-cron';
 import type {
   FlowDefinition, FlowNode, FlowEdge,
   EventTriggerData, CronTriggerData, WebhookTriggerData, CommandTriggerData,
-  AnimatedChannelActionData,
+  AnimatedChannelActionData, TriggerNodeData, FlowTestReport,
 } from '@ts6/common';
 import { AnimationManager } from './animation-manager.js';
+import { eventFilterMismatch, matchCommand, webhookEventData } from './trigger-match.js';
+import { AppError } from '../middleware/error-handler.js';
 import type { AnimationConfig } from './animation-manager.js';
 import { instanceAudience, sendToAudience } from '../utils/ws-audience.js';
 import { BOT_LOG_DEFAULTS, getBotLogSettings } from '../utils/bot-log-settings.js';
@@ -512,12 +514,7 @@ export class BotEngine {
       const flow = this.flows.get(wh.flowId);
       if (!flow) continue;
 
-      const webhookData: Record<string, string> = {
-        webhook_path: webhookPath,
-        webhook_method: method,
-        webhook_body: JSON.stringify(req.body || {}),
-        webhook_query: JSON.stringify(req.query || {}),
-      };
+      const webhookData = webhookEventData(webhookPath, method, req.body, req.query as Record<string, unknown>);
 
       if (this.executeFlow(flow, wh.nodeId, 'webhook', webhookData)) triggered++;
       else dropped++;
@@ -540,6 +537,57 @@ export class BotEngine {
 
   getFlow(flowId: number): LoadedFlow | undefined {
     return this.flows.get(flowId);
+  }
+
+  /**
+   * A flow test (FlowRunner.test) of one trigger with sample data, on the given (possibly unsaved,
+   * possibly disabled) flow. The sample goes through the same trigger checks and enrichment a live
+   * event gets; one this trigger would ignore is reported as 'notTriggered' and runs nothing.
+   * For a webhook trigger the sample's `body` and `query` are JSON text, `method` the HTTP method.
+   * `triggerNodeId` may be left out when the flow has one trigger.
+   */
+  async testFlow(
+    flow: { id: number; name: string; serverConfigId: number; virtualServerId: number },
+    rawFlowData: unknown, triggerNodeId: string | undefined, sample: Record<string, string>,
+  ): Promise<FlowTestReport> {
+    let flowData: FlowDefinition;
+    try {
+      flowData = normalizeFlowData(rawFlowData);
+    } catch {
+      throw new AppError(400, 'The flow could not be read');
+    }
+    const triggers = flowData.nodes.filter((n) => n.type === 'trigger');
+    const trigger = triggerNodeId !== undefined ? triggers.find((n) => n.id === triggerNodeId) : triggers.length === 1 ? triggers[0] : undefined;
+    if (!trigger) throw new AppError(400, triggers.length ? 'Choose one of the flow\'s triggers (triggerNodeId)' : 'The flow has no trigger');
+
+    const td = trigger.data as TriggerNodeData;
+    const notTriggered = (mismatch: FlowTestReport['mismatch']): FlowTestReport => ({
+      status: 'notTriggered', triggerNodeId: trigger.id, triggerType: td.triggerType, mismatch, eventData: sample, steps: [], variables: [], temp: [], reads: 0,
+    });
+    let data = sample;
+    if (td.triggerType === 'event') {
+      const mismatch = eventFilterMismatch(td, sample);
+      if (mismatch) return notTriggered(mismatch);
+    } else if (td.triggerType === 'command') {
+      // The test stands in for the chat a channel-bound command listens to.
+      const match = matchCommand(td, td.channelId ? { __cmd_listener_channel_id: String(td.channelId), ...sample } : sample);
+      if ('mismatch' in match) return notTriggered(match.mismatch);
+      data = match.data;
+    } else if (td.triggerType === 'webhook') {
+      const method = (sample.method || (td.method as string) || 'POST').toUpperCase();
+      let body: unknown, query: Record<string, unknown>;
+      try {
+        body = JSON.parse(sample.body || '{}');
+        query = JSON.parse(sample.query || '{}');
+      } catch {
+        throw new AppError(400, 'The sample body and query must be JSON');
+      }
+      data = webhookEventData(td.webhookPath, method === 'ANY' ? 'POST' : method, body, query);
+    } else {
+      data = {};
+    }
+    const { id, name, serverConfigId, virtualServerId } = flow;
+    return this.flowRunner.test({ id, name, serverConfigId, virtualServerId, flowData }, trigger.id, td.triggerType, data, (td as any).timezone);
   }
 
   async destroy(): Promise<void> {
@@ -649,73 +697,15 @@ export class BotEngine {
             continue;
           }
 
-          // Apply filters
-          if (eventTrigger.filters) {
-            let matches = true;
-            for (const [key, value] of Object.entries(eventTrigger.filters)) {
-              if (data[key] !== value) { matches = false; break; }
-            }
-            if (!matches) continue;
-          }
+          if (eventFilterMismatch(eventTrigger, data)) continue;
 
           this.executeFlow(flow, triggerNode.id, 'event', data);
         }
 
         // Command trigger (special case of text message)
         if (triggerData.triggerType === 'command' && eventName === 'notifytextmessage') {
-          const cmdTrigger = triggerData as CommandTriggerData;
-
-          // Backward-compat:
-          // - if trigger has NO channelId => only react to base connection events
-          // - if trigger HAS channelId => only react if event came from that cmd listener OR matches target
-          const sourceListenerCid = data.__cmd_listener_channel_id;
-
-          if (!cmdTrigger.channelId) {
-            if (sourceListenerCid) continue;
-          } else {
-            const required = String(cmdTrigger.channelId);
-
-            // For channel-specific commands: only accept events coming from the dedicated cmd listener
-            if (!sourceListenerCid) continue;
-            if (sourceListenerCid !== required) continue;
-          }
-
-          const msg = data.msg || '';
-          const fullCommand = (cmdTrigger.commandPrefix || '!') + cmdTrigger.commandName;
-          if (!msg.startsWith(fullCommand)) continue;
-
-          const afterCmd = msg.substring(fullCommand.length);
-          if (afterCmd.length > 0 && afterCmd[0] !== ' ') continue;
-
-          const args = afterCmd.trim();
-          // command_args stays the original plain string (existing flows may
-          // already display it directly, e.g. in a reply message) - the
-          // indexed form is a separate field, same nested-JSON-access
-          // mechanism resolveTemplate() already uses for event.webhook_body.*.
-          const argsList = args.length > 0 ? args.split(/\s+/) : [];
-          const enrichedData = {
-            ...data,
-            command_args: args,
-            command_args_list: JSON.stringify(argsList),
-            command_args_length: String(argsList.length),
-            command_name: cmdTrigger.commandName,
-            command_channel_id: data.__cmd_listener_channel_id || cmdTrigger.channelId || data.target || '',
-          };
-
-          const invoker =
-            data.clid ||
-            data.invokerid ||
-            data.invoker_id ||
-            data.invokerId ||
-            data.client_id ||
-            data.clientId;
-
-          if (invoker && !data.clid) {
-
-            (enrichedData as any).clid = String(invoker);
-          }
-
-          this.executeFlow(flow, triggerNode.id, 'command', enrichedData);
+          const match = matchCommand(triggerData as CommandTriggerData, data);
+          if ('data' in match) this.executeFlow(flow, triggerNode.id, 'command', match.data);
         }
       }
     }

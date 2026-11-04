@@ -1,6 +1,7 @@
 import { Parser } from 'expr-eval-fork';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { commaListHasExact } from '../utils/group-match.js';
+import type { FlowTestTrace } from './flow-test-trace.js';
 
 function resolveDotPath(obj: any, path: string): any {
   const parts = path.split('.');
@@ -78,6 +79,8 @@ export class ExecutionContext {
     public readonly triggerType: string,
     public readonly eventData: Record<string, string>,
     public readonly timezone?: string,
+    /** Set for a flow test: nothing is written, what the run does is recorded here instead. */
+    public readonly trace?: FlowTestTrace,
   ) {
     this.exprParser = new Parser();
     // Register custom functions for expression evaluation
@@ -198,6 +201,7 @@ export class ExecutionContext {
       }
 
       if (filter) value = this.applyFilter(value, filter);
+      this.trace?.placeholder(raw, value);
       result = result.replace(fullMatch, value);
     }
 
@@ -211,11 +215,14 @@ export class ExecutionContext {
       return !!result;
     } catch (err: any) {
       console.warn(`[ExecutionContext] Expression evaluation failed: "${expression}" — ${err.message}`);
+      if (this.trace?.step) this.trace.step.conditionError = err.message;
       return false;
     }
   }
 
   async getVariable(name: string): Promise<string> {
+    const written = this.trace?.vars.get(name);
+    if (written !== undefined) return written;
     const record = await this.prisma.botVariable.findFirst({
       where: { flowId: this.flowId, name, scope: 'flow' },
     });
@@ -223,6 +230,7 @@ export class ExecutionContext {
   }
 
   async setVariable(name: string, value: string): Promise<void> {
+    if (this.trace) return this.trace.setVariable(name, await this.getVariable(name), value);
     const existing = await this.prisma.botVariable.findFirst({
       where: { flowId: this.flowId, name, scope: 'flow' },
     });
@@ -253,6 +261,11 @@ export class ExecutionContext {
 
   setTemp(name: string, value: any): void {
     this.tempVars.set(name, value);
+    this.trace?.tempSet(name);
+  }
+
+  get temps(): ReadonlyMap<string, any> {
+    return this.tempVars;
   }
 
   getTemp(name: string): any {
@@ -285,9 +298,9 @@ export class ExecutionContext {
       where: { flowId: this.flowId, scope: 'flow' },
     });
     const vars: Record<string, any> = {};
-    for (const v of varRecords) {
-      const num = Number(v.value);
-      vars[v.name] = isNaN(num) ? v.value : num;
+    for (const { name, value } of [...varRecords, ...[...(this.trace?.vars ?? [])].map(([name, value]) => ({ name, value }))]) {
+      const num = Number(value);
+      vars[name] = isNaN(num) ? value : num;
     }
 
     // Build temp namespace
