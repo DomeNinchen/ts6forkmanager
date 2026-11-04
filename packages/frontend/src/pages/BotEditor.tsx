@@ -1903,7 +1903,7 @@ export default function BotEditor() {
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.bodyJsonLabel')}</Label>
-                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='{"ip":"{{event.connection_client_ip}}"}' value={selectedNodeData.config.body || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, body: e.target.value } } : n))} />
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='{"ip":"{{temp.clientInfo.0.connection_client_ip}}"}' value={selectedNodeData.config.body || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, body: e.target.value } } : n))} />
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsTempLabel')}</Label>

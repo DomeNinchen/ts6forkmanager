@@ -3534,7 +3534,7 @@
         },
         "lastSeenTracker": {
           "name": "Suivi de dernière présence",
-          "description": "Enregistre l’horodatage de dernière présence lorsqu’un client se déconnecte."
+          "description": "Enregistre l’horodatage de dernière présence par ID de base de données lorsqu’un client se déconnecte. Retient à l’arrivée qui se trouve derrière chaque connexion, car l’événement de déconnexion ne le dit pas."
         },
         "afkMover": {
           "name": "Déplaceur AFK",

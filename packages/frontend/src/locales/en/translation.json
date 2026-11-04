@@ -4611,7 +4611,7 @@
         },
         "lastSeenTracker": {
           "name": "Last-Seen Tracker",
-          "description": "Records the last-seen timestamp when a client disconnects."
+          "description": "Records the last-seen timestamp per client database ID when a client disconnects. Remembers who is behind each connection when clients join, because the disconnect event does not say."
         },
         "afkMover": {
           "name": "AFK Mover",

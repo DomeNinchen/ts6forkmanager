@@ -4611,7 +4611,7 @@
         },
         "lastSeenTracker": {
           "name": "Zuletzt-gesehen-Tracker",
-          "description": "Speichert den Zeitstempel des letzten Sehens, wenn ein Client die Verbindung trennt."
+          "description": "Speichert beim Trennen den Zeitstempel des letzten Sehens je Client-Datenbank-ID. Merkt sich dafür beim Betreten, wer hinter einer Verbindung steckt, weil das Trennen-Ereignis es nicht mitliefert."
         },
         "afkMover": {
           "name": "AFK-Mover",
