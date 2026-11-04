@@ -10,10 +10,11 @@ import type {
   EventTriggerData, CronTriggerData, WebhookTriggerData, CommandTriggerData,
   AnimatedChannelActionData, TriggerNodeData, FlowTestReport,
 } from '@ts6/common';
+import { FLOW_TEST_MAX_FRAMES } from '@ts6/common';
 import { AnimationManager } from './animation-manager.js';
 import { eventFilterMismatch, matchCommand, webhookEventData } from './trigger-match.js';
 import { AppError } from '../middleware/error-handler.js';
-import type { AnimationConfig } from './animation-manager.js';
+import { animationConfig, animationFrames } from './animation-manager.js';
 import { instanceAudience, sendToAudience } from '../utils/ws-audience.js';
 import { BOT_LOG_DEFAULTS, getBotLogSettings } from '../utils/bot-log-settings.js';
 import crypto from 'crypto';
@@ -549,6 +550,8 @@ export class BotEngine {
   async testFlow(
     flow: { id: number; name: string; serverConfigId: number; virtualServerId: number },
     rawFlowData: unknown, triggerNodeId: string | undefined, sample: Record<string, string>,
+    /** Condition node id -> the branch it takes in this test, whatever its expression says. */
+    forceBranches: Record<string, boolean> = {},
   ): Promise<FlowTestReport> {
     let flowData: FlowDefinition;
     try {
@@ -561,8 +564,18 @@ export class BotEngine {
     if (!trigger) throw new AppError(400, triggers.length ? 'Choose one of the flow\'s triggers (triggerNodeId)' : 'The flow has no trigger');
 
     const td = trigger.data as TriggerNodeData;
+    // Shown with every answer: they run on their own timer, whichever trigger is tested.
+    const animations = flowData.nodes
+      .filter((n) => n.type === 'action' && (n.data as any).actionType === 'animatedChannel')
+      .map((n) => {
+        const config = animationConfig(n.data as AnimatedChannelActionData);
+        return { nodeId: n.id, label: n.data.label ?? '', channelId: config.channelId, intervalSeconds: config.intervalSeconds, frames: animationFrames(config).slice(0, FLOW_TEST_MAX_FRAMES) };
+      });
+    const filters = td.triggerType === 'event'
+      ? Object.entries(td.filters || {}).map(([key, expected]) => ({ key, expected, actual: sample[key] ?? null, ok: sample[key] === expected }))
+      : undefined;
     const notTriggered = (mismatch: FlowTestReport['mismatch']): FlowTestReport => ({
-      status: 'notTriggered', triggerNodeId: trigger.id, triggerType: td.triggerType, mismatch, eventData: sample, steps: [], variables: [], temp: [], reads: 0,
+      status: 'notTriggered', triggerNodeId: trigger.id, triggerType: td.triggerType, mismatch, filters, eventData: sample, steps: [], variables: [], temp: [], reads: 0, animations,
     });
     let data = sample;
     if (td.triggerType === 'event') {
@@ -587,7 +600,8 @@ export class BotEngine {
       data = {};
     }
     const { id, name, serverConfigId, virtualServerId } = flow;
-    return this.flowRunner.test({ id, name, serverConfigId, virtualServerId, flowData }, trigger.id, td.triggerType, data, (td as any).timezone);
+    const report = await this.flowRunner.test({ id, name, serverConfigId, virtualServerId, flowData }, trigger.id, td.triggerType, data, (td as any).timezone, new Map(Object.entries(forceBranches)));
+    return { ...report, filters, animations };
   }
 
   async destroy(): Promise<void> {
@@ -930,18 +944,7 @@ export class BotEngine {
 
     this.animationManager.stopAnimation(flowId);
     for (const node of animNodes) {
-      const d = node.data as AnimatedChannelActionData;
-      const config: AnimationConfig = {
-        channelId: d.channelId,
-        text: d.text,
-        style: d.style || 'scroll',
-        // parseFloat: the editor offers 0.5 s and 0.25 s.
-        intervalSeconds: parseFloat(d.intervalSeconds) || 3,
-        // ?? keeps a prefix cleared on purpose; only a missing one gets the default, as in the editor.
-        prefix: d.prefix ?? '[cspacer]',
-        timezone: d.timezone,
-      };
-
+      const config = animationConfig(node.data as AnimatedChannelActionData);
       // Looked up per frame, not captured here: the connection can be edited while the animation runs.
       // The bot identity, like every other flow action, so the renames show up under its name in TeamSpeak's logs.
       this.animationManager.startAnimation(flowId, node.id, virtualServerId, config, () => this.connectionPool.getBotClient(serverConfigId));

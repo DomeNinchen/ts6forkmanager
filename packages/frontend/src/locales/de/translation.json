@@ -2826,6 +2826,26 @@
         "simulated": "simuliert",
         "simulatedHint": "Stammt aus einer Änderung oder Anfrage, die der Test nicht ausgeführt hat.",
         "notVisited": "Im Test nicht erreicht",
+        "fieldsUnknown": "Die Felder dieses Ereignisses sind noch nicht gemessen; trage die ein, die dein Flow liest.",
+        "fieldsChanges": "Dieses Ereignis bringt zusätzlich jede geänderte Einstellung unter ihrem eigenen Namen mit (z. B. channel_name).",
+        "fieldsMore_one": "{{count}} weiteres Feld dieses Ereignisses wird beim Tippen eines Feldnamens vorgeschlagen.",
+        "fieldsMore_other": "{{count}} weitere Felder dieses Ereignisses werden beim Tippen eines Feldnamens vorgeschlagen.",
+        "filters": "Filter",
+        "filterOk": "passt",
+        "filterFail": "passt nicht",
+        "filterActual": "das Ereignis hat „{{actual}}“",
+        "forced": "erzwungen",
+        "forceTrue": "Als wahr testen",
+        "forceFalse": "Als falsch testen",
+        "forceClear": "Ausdruck entscheiden lassen",
+        "forcedActive_one": "{{count}} Bedingung erzwungen.",
+        "forcedActive_other": "{{count}} Bedingungen erzwungen.",
+        "forcedReset": "Alle zurücksetzen",
+        "animations": "Animierte Kanäle",
+        "animationsHint": "Sie laufen mit eigenem Timer, sobald der Flow an ist, egal welcher Auslöser. Die Namen eines Durchlaufs, Stand jetzt:",
+        "animationMeta_one": "Kanal {{channel}} · alle {{seconds}} s · {{count}} Bild",
+        "animationMeta_other": "Kanal {{channel}} · alle {{seconds}} s · {{count}} Bilder",
+        "frameSkipped": "(übersprungen, der Name bleibt)",
         "clear": "Ergebnis ausblenden"
       },
       "executions": {
@@ -4018,13 +4038,9 @@
           "desc": "Servergruppen-IDs (kommagetrennt)",
           "example": "contains(event.client_servergroups, '6')"
         },
-        "connectionClientIp": {
-          "desc": "IP-Adresse",
-          "example": "VPN-Check: https://api.vpn.io/{{event.connection_client_ip}}"
-        },
         "cidJoined": {
           "desc": "Channel, den der Client betreten hat",
-          "example": "Bedingung: event.cid == 42"
+          "example": "Bedingung: event.ctid == 42"
         },
         "h2": "Client getrennt — notifyclientleftview",
         "clidDisc": {

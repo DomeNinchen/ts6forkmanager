@@ -303,8 +303,11 @@ export class FlowRunner {
    * are read from the database but written into the trace. No execution row, no log rows, no
    * broadcast, no concurrency slot, no channel lock.
    */
-  async test(flow: FlowInfo, triggerNodeId: string, triggerType: string, eventData: Record<string, string>, timezone?: string): Promise<FlowTestReport> {
-    const trace = new FlowTestTrace();
+  async test(
+    flow: FlowInfo, triggerNodeId: string, triggerType: string, eventData: Record<string, string>,
+    timezone?: string, forceBranches: ReadonlyMap<string, boolean> = new Map(),
+  ): Promise<FlowTestReport> {
+    const trace = new FlowTestTrace(forceBranches);
     const ctx = new ExecutionContext(this.prisma, flow.id, 0, flow.serverConfigId, flow.virtualServerId, triggerType, eventData, timezone, trace);
     const report: FlowTestReport = { status: 'completed', triggerNodeId, triggerType, eventData, steps: trace.steps, variables: [], temp: [], reads: 0 };
     try {
@@ -412,8 +415,12 @@ export class FlowRunner {
         // spliced into the expression text and interpreted as expr-eval syntax
         // instead of staying a plain value, letting a regular user manipulate
         // the condition's outcome.
-        const result = await ctx.evaluateCondition(condData.expression);
-        await this.log(ctx, node, 'info', `Condition '${condData.expression}' → ${result}`);
+        const evaluated = await ctx.evaluateCondition(condData.expression);
+        await this.log(ctx, node, 'info', `Condition '${condData.expression}' → ${evaluated}`);
+        // A test can force a branch (still evaluated above, so an expression error is shown either way).
+        const forced = ctx.trace?.forceBranches.get(node.id);
+        const result = forced ?? evaluated;
+        if (step && forced !== undefined) step.forced = true;
 
         const handle = result ? 'true' : 'false';
         if (step) step.branch = handle;

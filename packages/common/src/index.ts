@@ -14,6 +14,7 @@ export * from './types/bulk.js';
 export * from './types/connection-diagnosis.js';
 export * from './types/flow-test.js';
 export * from './constants/events.js';
+export * from './constants/event-fields.js';
 export * from './utils/ts-escape.js';
 export * from './utils/ban-rules.js';
 export * from './serverquery/syntax.js';

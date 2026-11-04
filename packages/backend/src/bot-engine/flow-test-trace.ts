@@ -17,6 +17,9 @@ export class FlowTestReadLimit extends Error {}
  * the steps, writes and requests are only described.
  */
 export class FlowTestTrace {
+  /** Condition node id -> the branch it takes in this test (see FlowRunner's condition node). */
+  constructor(readonly forceBranches: ReadonlyMap<string, boolean> = new Map()) {}
+
   readonly steps: FlowTestStep[] = [];
   /** The step of the node running now; effects and placeholders go there. */
   step?: FlowTestStep;

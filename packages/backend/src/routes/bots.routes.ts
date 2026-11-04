@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { grantCovers, grantOf, type Grant } from '../utils/vs-access.js';
-import { FLOW_TEST_MAX_FLOW_BYTES } from '@ts6/common';
+import { FLOW_TEST_MAX_FLOW_BYTES, FLOW_TEST_MAX_FORCED } from '@ts6/common';
 
 export const botRoutes: Router = Router();
 
@@ -236,14 +236,17 @@ botRoutes.post('/:botId/test', requirePermission('bots.manage'), async (req: Req
     const engine = req.app.locals.botEngine;
     if (!engine) throw new AppError(503, 'Bot engine not running');
 
-    const { flowData, triggerNodeId, event = {} } = req.body ?? {};
+    const { flowData, triggerNodeId, event = {}, forceBranches = {} } = req.body ?? {};
     const isObject = (v: unknown) => typeof v === 'object' && v !== null && !Array.isArray(v);
     if (flowData !== undefined) {
       if (!isObject(flowData) || !Array.isArray(flowData.nodes) || !Array.isArray(flowData.edges)) throw new AppError(400, 'flowData needs nodes and edges');
       if (Buffer.byteLength(JSON.stringify(flowData)) > FLOW_TEST_MAX_FLOW_BYTES) throw new AppError(413, 'flowData is too large to test');
     }
     if (!isObject(event) || Object.values(event).some((v) => typeof v !== 'string')) throw new AppError(400, 'event must be an object of strings');
+    if (!isObject(forceBranches) || Object.values(forceBranches).some((v) => typeof v !== 'boolean') || Object.keys(forceBranches).length > FLOW_TEST_MAX_FORCED) {
+      throw new AppError(400, `forceBranches must map at most ${FLOW_TEST_MAX_FORCED} condition node ids to true or false`);
+    }
 
-    res.json(await engine.testFlow(flow, flowData ?? JSON.parse(flow.flowData), triggerNodeId, event));
+    res.json(await engine.testFlow(flow, flowData ?? JSON.parse(flow.flowData), triggerNodeId, event, forceBranches));
   } catch (err) { next(err); }
 });
