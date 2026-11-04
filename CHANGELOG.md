@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.94.0 · frontend 3.111.1 · sidecar 2.1.4**
+Versions at the end of the month: **backend 2.94.0 · frontend 3.111.1 · sidecar 2.2.0**
 
 ### New Features
+
+- **LAN address for video streaming** — New `ICE_ANNOUNCE_IPS` setting (in `.env`, comma-separated) makes the video sidecar offer these addresses to viewers in addition to its own. On a home server the sidecar only knew its container IP and the router's public IP, so a stream showed as live but stayed black in the TeamSpeak client and the web preview for everyone on the host's network. *sidecar 2.2.0*, reported in [#354](https://github.com/DomeNinchen/ts6forkmanager/issues/354)
 
 - **Flow test mode** — **Test** in the flow editor runs the flow as it is on screen (saved or not, on or off) with a sample event you fill in or take from the last real run, and shows step by step what it did without changing anything: the nodes in the order they ran (marked on the canvas, a click jumps to the node), the branch each condition took and why an expression failed, every placeholder with its value and empty ones highlighted, variables before/after, and what each write action would have done (kick, ban, move, message, group, channel, WebQuery command, HTTP/webhook request with masked headers, music bot action). Read-only queries really go to the server (at most 50 per test); writes, HTTP requests and music bot actions never happen, a Delay is not waited for, and the test leaves no execution, log or variable behind. A sample the trigger would ignore (filter, command, chat) is reported as not triggered, with every filter of an event trigger marked as matching or not. The sample form starts with the fields each TeamSpeak event really carries (measured on TeamSpeak 6) and suggests the rest; a condition can be tested as true or false whatever its expression says; and every Animated Channel node shows the channel names one cycle would set. Same right as editing flows; also available as `POST /api/bots/:botId/test`. *backend 2.93.0–2.94.0, frontend 3.109.1–3.111.0* [#355](https://github.com/DomeNinchen/ts6forkmanager/pull/355), [#356](https://github.com/DomeNinchen/ts6forkmanager/pull/356), [#357](https://github.com/DomeNinchen/ts6forkmanager/pull/357)
 
@@ -34,6 +36,8 @@ Versions at the end of the month: **backend 2.94.0 · frontend 3.111.1 · sideca
 ### Upgrade Notes
 
 **Docker & reverse proxy**
+
+- Running the manager at home or behind NAT and the video stays black? Set `ICE_ANNOUNCE_IPS` in `.env` to the host's LAN IP (e.g. `192.168.1.50`) and recreate the sidecar. A server with its public IP on its own network card needs nothing.
 
 - A backend stuck in that restart loop needs nothing but the usual update: pull, then rebuild with `docker compose up -d --build`. [#346](https://github.com/DomeNinchen/ts6forkmanager/pull/346)
 

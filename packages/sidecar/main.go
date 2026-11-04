@@ -43,6 +43,32 @@ func getStunServers() []string {
 	return defaultStunServers
 }
 
+// applyAnnounceIPs adds ICE_ANNOUNCE_IPS as extra host candidates. Inside a
+// container the sidecar only sees its bridge IP, and STUN only finds the
+// router's public IP - neither reaches a viewer on the same LAN as the host,
+// so the host's own address has to be given by hand.
+func applyAnnounceIPs(se *webrtc.SettingEngine) error {
+	ips := []string{}
+	for _, ip := range strings.Split(os.Getenv("ICE_ANNOUNCE_IPS"), ",") {
+		if ip = strings.TrimSpace(ip); ip != "" {
+			ips = append(ips, ip)
+		}
+	}
+	if len(ips) == 0 {
+		return nil
+	}
+	log.Printf("[ICE] Announcing extra host candidates: %v", ips)
+	if err := se.SetICEAddressRewriteRules(webrtc.ICEAddressRewriteRule{
+		External:        ips,
+		AsCandidateType: webrtc.ICECandidateTypeHost,
+		// Append keeps the bridge-IP candidate for viewers on the Docker network.
+		Mode: webrtc.ICEAddressRewriteAppend,
+	}); err != nil {
+		return fmt.Errorf("ICE_ANNOUNCE_IPS: %w", err)
+	}
+	return nil
+}
+
 func envOrDefault(key, def string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
@@ -757,6 +783,9 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 	portMax := uint16(envIntOrDefault("ICE_UDP_PORT_MAX", 50100))
 	if err := se.SetEphemeralUDPPortRange(portMin, portMax); err != nil {
 		return "", fmt.Errorf("set ICE UDP port range: %w", err)
+	}
+	if err := applyAnnounceIPs(&se); err != nil {
+		return "", err
 	}
 	if debugLogsEnabled() {
 		lf := logging.NewDefaultLoggerFactory()

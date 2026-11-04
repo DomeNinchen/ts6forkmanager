@@ -68,7 +68,7 @@ Upstream had a video/audio streaming stutter that was never resolved and securit
 **Only for some features:**
 
 - **SSH ServerQuery** for bot flows that react to server events, live events in the Query console, and the Files and Icons pages. Everything else works over WebQuery alone.
-- **UDP `50000-50100` open on the host** for video streaming. This traffic cannot go through an HTTP reverse proxy.
+- **UDP `50000-50100` open on the host** for video streaming. This traffic cannot go through an HTTP reverse proxy. On a home server, also set `ICE_ANNOUNCE_IPS` to the host's LAN IP in `.env`, or the video stays black for viewers on that network.
 
 ## Quick Start (Docker)
 
