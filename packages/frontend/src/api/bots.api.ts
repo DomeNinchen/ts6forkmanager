@@ -13,7 +13,7 @@ export const botsApi = {
   executionLogs: (botId: number, execId: number) =>
     api.get(`/bots/${botId}/executions/${execId}/logs`).then((r) => r.data),
   /** A test run of the flow (stored, or the editor's unsaved graph as flowData); changes nothing. */
-  test: (id: number, body: { flowData?: unknown; triggerNodeId?: string; event?: Record<string, string> }): Promise<FlowTestReport> =>
+  test: (id: number, body: { flowData?: unknown; triggerNodeId?: string; event?: Record<string, string>; forceBranches?: Record<string, boolean> }): Promise<FlowTestReport> =>
     api.post(`/bots/${id}/test`, body).then((r) => r.data),
 };
 

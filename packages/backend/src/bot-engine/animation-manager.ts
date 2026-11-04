@@ -1,4 +1,5 @@
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
+import type { AnimatedChannelActionData } from '@ts6/common';
 
 export type AnimationStyle = 'scroll' | 'typewriter' | 'bounce' | 'blink' | 'wave' | 'alternateCase';
 
@@ -169,6 +170,26 @@ function resolveTimeVars(text: string, timezone?: string): string {
     .replace(/\{\{time\.timestamp\}\}/g, String(Math.floor(now.getTime() / 1000)));
 }
 
+/** An Animated Channel node's settings as the animation runs them. */
+export function animationConfig(d: AnimatedChannelActionData): AnimationConfig {
+  return {
+    channelId: d.channelId,
+    text: d.text,
+    style: d.style || 'scroll',
+    // parseFloat: the editor offers 0.5 s and 0.25 s.
+    intervalSeconds: parseFloat(d.intervalSeconds) || 3,
+    // ?? keeps a prefix cleared on purpose; only a missing one gets the default, as in the editor.
+    prefix: d.prefix ?? '[cspacer]',
+    timezone: d.timezone,
+  };
+}
+
+/** The channel names of one animation cycle, as of now; '' for a frame TeamSpeak would refuse (only spaces), which is skipped. */
+export function animationFrames(config: AnimationConfig): string[] {
+  const frames = generateFrames(resolveTimeVars(config.text, config.timezone), config.style, config.prefix);
+  return frames.map((f) => (f.trim() ? f : ''));
+}
+
 export class AnimationManager {
   /** "flowId:nodeId" -> its timer: a flow can animate several channels, one per Animated Channel node. */
   private animations: Map<string, ActiveAnimation> = new Map();
@@ -194,15 +215,14 @@ export class AnimationManager {
 
     const tick = async () => {
       try {
-        // Resolve {{time.*}} in text each tick (for dynamic content)
-        const resolvedText = resolveTimeVars(config.text, config.timezone);
-        const frames = generateFrames(resolvedText, config.style, config.prefix);
+        // Built each tick: {{time.*}} in the text changes.
+        const frames = animationFrames(config);
         if (frames.length === 0) return;
 
         const channelName = frames[frameIndex % frames.length];
         frameIndex++;
         // TeamSpeak refuses a name of only spaces - the blank frames of blink and typewriter when there is no prefix.
-        if (!channelName.trim()) return;
+        if (!channelName) return;
 
         await getClient().executePost(sid, 'channeledit', {
           cid: config.channelId,

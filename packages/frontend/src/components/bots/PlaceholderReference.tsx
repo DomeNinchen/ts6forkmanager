@@ -84,8 +84,7 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
           <P code="{{event.client_unique_identifier}}" desc={pr('event.clientUid.desc')} example={pr('event.clientUid.example')} />
           <P code="{{event.client_type}}" desc={pr('event.clientType.desc')} example={pr('event.clientType.example')} />
           <P code="{{event.client_servergroups}}" desc={pr('event.clientServergroups.desc')} example={pr('event.clientServergroups.example')} />
-          <P code="{{event.connection_client_ip}}" desc={pr('event.connectionClientIp.desc')} example={pr('event.connectionClientIp.example')} />
-          <P code="{{event.cid}}" desc={pr('event.cidJoined.desc')} example={pr('event.cidJoined.example')} />
+          <P code="{{event.ctid}}" desc={pr('event.cidJoined.desc')} example={pr('event.cidJoined.example')} />
 
           <SectionHeader>{pr('event.h2')}</SectionHeader>
           <P code="{{event.clid}}" desc={pr('event.clidDisc.desc')} />
@@ -100,8 +99,8 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
           <P code="{{event.reasonid}}" desc={pr('event.reasonidMoved.desc')} />
 
           <SectionHeader>{pr('event.h4')}</SectionHeader>
-          <P code="{{event.clid}}" desc={pr('event.clidMsg.desc')} />
-          <P code="{{event.client_nickname}}" desc={pr('event.clientNicknameMsg.desc')} />
+          <P code="{{event.invokerid}}" desc={pr('event.clidMsg.desc')} />
+          <P code="{{event.invokername}}" desc={pr('event.clientNicknameMsg.desc')} />
           <P code="{{event.msg}}" desc={pr('event.msg.desc')} example={pr('event.msg.example')} />
           <P code="{{event.targetmode}}" desc={pr('event.targetmode.desc')} />
 
@@ -109,7 +108,7 @@ export function PlaceholderReferenceContent({ tabs = ALL_TABS }: { tabs?: Placeh
           <P code="{{event.command_name}}" desc={pr('event.commandName.desc')} example={pr('event.commandName.example')} />
           <P code="{{event.command_args}}" desc={pr('event.commandArgs.desc')} example={pr('event.commandArgs.example')} />
           <P code="{{event.clid}}" desc={pr('event.clidCmd.desc')} />
-          <P code="{{event.client_nickname}}" desc={pr('event.clientNicknameCmd.desc')} />
+          <P code="{{event.invokername}}" desc={pr('event.clientNicknameCmd.desc')} />
 
           <SectionHeader>{pr('event.h6')}</SectionHeader>
           <P code="{{event.cid}}" desc={pr('event.cidChannel.desc')} />

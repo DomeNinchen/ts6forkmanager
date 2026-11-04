@@ -42,8 +42,19 @@ export interface FlowTestStep {
   logs: { level: string; message: string }[];
   /** The condition expression could not be evaluated (it then counts as false). */
   conditionError?: string;
+  /** The condition's branch was set by the request (`forceBranches`), not by its expression. */
+  forced?: boolean;
   /** The action failed. */
   error?: string;
+}
+
+/** The channel names an Animated Channel node would cycle through, in order, as of the test. '' = a blank frame, skipped (the name stays). */
+export interface FlowTestAnimation {
+  nodeId: string;
+  label: string;
+  channelId: string;
+  intervalSeconds: number;
+  frames: string[];
 }
 
 export interface FlowTestReport {
@@ -56,6 +67,8 @@ export interface FlowTestReport {
   triggerType: string;
   /** Why the trigger would not fire: a filter key with expected/actual, or 'listener'/'command' for chat commands. */
   mismatch?: { key: string; expected: string; actual: string | null } | 'listener' | 'command';
+  /** An event trigger's filters, each checked against the sample. */
+  filters?: { key: string; expected: string; actual: string | null; ok: boolean }[];
   /** The event data the flow saw, after the trigger's own enrichment (command args, webhook fields). */
   eventData: Record<string, string>;
   steps: FlowTestStep[];
@@ -64,9 +77,15 @@ export interface FlowTestReport {
   /** temp.* values at the end; `simulated`: set from a write or request the test did not carry out. */
   temp: { name: string; value: string; simulated: boolean }[];
   reads: number;
+  /** Every Animated Channel node of the flow, whether this trigger reaches it or not (they run on their own timer). */
+  animations?: FlowTestAnimation[];
 }
 
 export const FLOW_TEST_MAX_READS = 50;
+/** Most frames an animation preview lists. */
+export const FLOW_TEST_MAX_FRAMES = 60;
+/** Most conditions a test request may force. */
+export const FLOW_TEST_MAX_FORCED = 200;
 export const FLOW_TEST_RANK_CHECK_MAX = 20;
 /** Largest unsaved flow a test request may carry, in bytes of JSON. */
 export const FLOW_TEST_MAX_FLOW_BYTES = 512 * 1024;

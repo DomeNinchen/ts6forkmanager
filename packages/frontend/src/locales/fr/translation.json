@@ -1760,6 +1760,26 @@
         "simulated": "simulé",
         "simulatedHint": "Provient d'une modification ou requête que le test n'a pas effectuée.",
         "notVisited": "Non atteint pendant le test",
+        "fieldsUnknown": "Les champs de cet événement ne sont pas encore mesurés ; ajoutez ceux que votre flux lit.",
+        "fieldsChanges": "Cet événement contient aussi chaque réglage modifié sous son propre nom (p. ex. channel_name).",
+        "fieldsMore_one": "{{count}} autre champ de cet événement est proposé lors de la saisie d'un nom de champ.",
+        "fieldsMore_other": "{{count}} autres champs de cet événement sont proposés lors de la saisie d'un nom de champ.",
+        "filters": "Filtres",
+        "filterOk": "correspond",
+        "filterFail": "ne correspond pas",
+        "filterActual": "l'événement a « {{actual}} »",
+        "forced": "forcé",
+        "forceTrue": "Tester comme vrai",
+        "forceFalse": "Tester comme faux",
+        "forceClear": "Laisser l'expression décider",
+        "forcedActive_one": "{{count}} condition forcée.",
+        "forcedActive_other": "{{count}} conditions forcées.",
+        "forcedReset": "Tout réinitialiser",
+        "animations": "Salons animés",
+        "animationsHint": "Ils tournent avec leur propre minuteur une fois le flux activé, quel que soit le déclencheur. Les noms d'un cycle, à l'instant :",
+        "animationMeta_one": "Salon {{channel}} · toutes les {{seconds}} s · {{count}} image",
+        "animationMeta_other": "Salon {{channel}} · toutes les {{seconds}} s · {{count}} images",
+        "frameSkipped": "(ignorée, le nom reste)",
         "clear": "Masquer le résultat"
       },
       "executions": {
@@ -2941,13 +2961,9 @@
           "desc": "ID des groupes serveur (séparés par des virgules)",
           "example": "contains(event.client_servergroups, '6')"
         },
-        "connectionClientIp": {
-          "desc": "Adresse IP",
-          "example": "Vérification VPN : https://api.vpn.io/{{event.connection_client_ip}}"
-        },
         "cidJoined": {
           "desc": "Salon rejoint par le client",
-          "example": "Condition : event.cid == 42"
+          "example": "Condition : event.ctid == 42"
         },
         "h2": "Client déconnecté — notifyclientleftview",
         "clidDisc": {
