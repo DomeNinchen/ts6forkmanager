@@ -765,14 +765,28 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
     configFields: [],
     flowDataFactory: () => {
       resetIds();
-      const n1 = nid(), n2 = nid(), n3 = nid();
+      // TeamSpeak's leave event carries only the connection's clid, not who it was: the join
+      // event (which has the database ID) remembers it per clid, the leave event looks it up.
+      const n1 = nid(), n2 = nid(), n3 = nid(), n4 = nid(), n5 = nid(), n6 = nid(), n7 = nid(), n8 = nid();
       return {
         nodes: [
-          makeNode(n1, 'trigger_event', 'Client Leave', { eventName: 'notifyclientleftview' }, 60, 80),
-          makeNode(n2, 'variable', 'Store Timestamp', { operation: 'set', name: 'lastseen_{{event.client_database_id}}', value: '{{time.timestamp}}' }, 300, 80),
-          makeNode(n3, 'log', 'Log Leave', { level: 'info', message: '{{event.client_nickname}} left (dbid={{event.client_database_id}})' }, 540, 80),
+          makeNode(n1, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 60, 80),
+          makeNode(n2, 'condition', 'Is Human?', { expression: 'event.client_type == 0' }, 300, 80),
+          makeNode(n3, 'variable', 'Remember Client', { operation: 'set', name: 'clid_{{event.clid}}', value: '{{event.client_database_id}}' }, 540, 80),
+          makeNode(n4, 'trigger_event', 'Client Leave', { eventName: 'notifyclientleftview' }, 60, 260),
+          makeNode(n5, 'variable', 'Look Up Client', { operation: 'get', name: 'clid_{{event.clid}}', storeAs: 'dbid' }, 300, 260),
+          makeNode(n6, 'condition', 'Known Client?', { expression: 'temp.dbid != ""' }, 540, 260),
+          makeNode(n7, 'variable', 'Store Timestamp', { operation: 'set', name: 'lastseen_{{temp.dbid}}', value: '{{time.timestamp}}' }, 780, 260),
+          makeNode(n8, 'log', 'Log Leave', { level: 'info', message: 'dbid={{temp.dbid}} left ({{event.reasonmsg}})' }, 1020, 260),
         ],
-        edges: [makeEdge(eid(), n1, n2), makeEdge(eid(), n2, n3)],
+        edges: [
+          makeEdge(eid(), n1, n2),
+          makeEdge(eid(), n2, n3, 'true', 'in'),
+          makeEdge(eid(), n4, n5),
+          makeEdge(eid(), n5, n6),
+          makeEdge(eid(), n6, n7, 'true', 'in'),
+          makeEdge(eid(), n7, n8),
+        ],
       };
     },
   },
@@ -976,23 +990,26 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
     ],
     flowDataFactory: (cfg) => {
       resetIds();
-      const n1 = nid(), n2 = nid(), n3 = nid(), n4 = nid(), n5 = nid();
-      const url = (cfg.apiUrl || '').replace('{{ip}}', '{{event.connection_client_ip}}');
+      const n1 = nid(), n2 = nid(), n3 = nid(), n4 = nid(), n5 = nid(), n6 = nid();
+      // The join event carries no IP address; clientinfo has it (connection_client_ip).
+      const url = (cfg.apiUrl || '').replace('{{ip}}', '{{temp.clientInfo.0.connection_client_ip}}');
       const actionNode = cfg.action === 'ban'
-        ? makeNode(n5, 'action_ban', 'Ban VPN', { time: 3600, reason: 'VPN detected' }, 1020, 80)
-        : makeNode(n5, 'action_kick', 'Kick VPN', { reasonid: '5', reason: 'VPN detected' }, 1020, 80);
+        ? makeNode(n5, 'action_ban', 'Ban VPN', { time: 3600, reason: 'VPN detected' }, 1260, 80)
+        : makeNode(n5, 'action_kick', 'Kick VPN', { reasonid: '5', reason: 'VPN detected' }, 1260, 80);
 
       return {
         nodes: [
           makeNode(n1, 'trigger_event', 'Client Enter', { eventName: 'notifycliententerview' }, 60, 80),
           makeNode(n2, 'condition', 'Is Human?', { expression: 'event.client_type == 0' }, 300, 80),
-          makeNode(n3, 'action_httpRequest', 'Check VPN API', { url, method: 'GET', storeAs: 'vpn' }, 540, 80),
-          makeNode(n4, 'condition', 'Is VPN?', { expression: "temp.vpn.security.vpn == true or temp.vpn.security.proxy == true" }, 780, 80),
+          makeNode(n6, 'action_webquery', 'Get Client IP', { command: 'clientinfo', params: { clid: '{{event.clid}}' }, storeAs: 'clientInfo' }, 540, 80),
+          makeNode(n3, 'action_httpRequest', 'Check VPN API', { url, method: 'GET', storeAs: 'vpn' }, 780, 80),
+          makeNode(n4, 'condition', 'Is VPN?', { expression: "temp.vpn.security.vpn == true or temp.vpn.security.proxy == true" }, 1020, 80),
           actionNode,
         ],
         edges: [
           makeEdge(eid(), n1, n2),
-          makeEdge(eid(), n2, n3, 'true', 'in'),
+          makeEdge(eid(), n2, n6, 'true', 'in'),
+          makeEdge(eid(), n6, n3),
           makeEdge(eid(), n3, n4),
           makeEdge(eid(), n4, n5, 'true', 'in'),
         ],
