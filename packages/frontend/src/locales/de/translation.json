@@ -2744,6 +2744,90 @@
       "bulkUpdatedCount_other": "{{count}} Channels aktualisiert"
     },
     "botEditor": {
+      "test": {
+        "button": "Testen",
+        "title": "Flow testen",
+        "intro": "Führt den Flow so aus, wie er im Editor steht (gespeichert oder nicht), mit einem Beispiel-Ereignis. Es wird nichts verändert: Lesezugriffe gehen an den Server, Änderungen, Anfragen und Musikbot-Aktionen werden nur angezeigt.",
+        "trigger": "Auslöser",
+        "noTrigger": "Füge einen Auslöser-Knoten hinzu, um den Flow zu testen.",
+        "sample": "Beispiel-Ereignis",
+        "field": "Feld",
+        "value": "Wert",
+        "addField": "Feld hinzufügen",
+        "removeField": "Feld {{name}} entfernen",
+        "body": "Anfrage-Body (JSON)",
+        "query": "Query-Parameter (JSON)",
+        "method": "HTTP-Methode",
+        "cronNoData": "Ein Timer startet den Flow ohne Ereignisdaten.",
+        "fromLast": "Letzte echte Ausführung übernehmen",
+        "fromLastNone": "Keine frühere Ausführung dieses Auslösertyps.",
+        "fromLastDone": "Aus Ausführung #{{id}} übernommen.",
+        "run": "Test starten",
+        "running": "Teste…",
+        "failedRequest": "Der Test konnte nicht laufen: {{error}}",
+        "invalidJson": "Body und Query müssen gültiges JSON sein.",
+        "status": {
+          "completed": "Abgeschlossen. Es wurde nichts verändert.",
+          "failed": "Abgebrochen: {{error}}",
+          "notTriggered": "Dieses Ereignis würde den Auslöser nicht starten."
+        },
+        "errorCode": {
+          "readLimit": "Der Test brauchte mehr als 50 Leseabfragen und wurde beendet (Flood-Schutz von TeamSpeak).",
+          "nodeVisits": "Der Flow hat mehr als 500 Knoten durchlaufen; vermutlich eine Endlosschleife."
+        },
+        "mismatch": {
+          "filter": "Filter {{key}} erwartet „{{expected}}“, das Ereignis hat „{{actual}}“.",
+          "missing": "(fehlt)",
+          "listener": "Dieser Befehl hört nur im Chat seines eigenen Kanals (bzw. nur außerhalb davon).",
+          "command": "Die Nachricht beginnt nicht mit diesem Befehl."
+        },
+        "summary": "Schritte: {{steps}} · nicht ausgeführte Änderungen: {{writes}} · leere Platzhalter: {{empty}} · Lesezugriffe: {{reads}}",
+        "steps": "Schritte",
+        "stepTitle": "Zum Knoten {{label}} springen",
+        "iteration": "Schleife #{{n}}",
+        "branch": {
+          "true": "wahr",
+          "false": "falsch",
+          "error": "Fehlerzweig"
+        },
+        "conditionError": "Ausdruck fehlgeschlagen (zählt als falsch): {{error}}",
+        "actionError": "Fehlgeschlagen: {{error}}",
+        "emptyPlaceholder": "{{expression}} ist leer",
+        "effect": {
+          "write": "Würde {{command}} ausführen",
+          "read": "{{command}} gelesen ({{rows}} Zeilen)",
+          "http": "Würde {{method}} {{url}} senden",
+          "blocked": "Würde blockiert: {{reason}}",
+          "voice": "Würde einem Musikbot sagen: {{action}}",
+          "variable": "Variable {{name}}: „{{from}}“ → „{{to}}“",
+          "delay": "Würde {{seconds}} s warten (der Test wartet nicht)"
+        },
+        "note": {
+          "animationManagedByEngine": "Animierter Kanal läuft mit eigenem Timer, sobald der Flow an ist; der Test startet ihn nicht.",
+          "rankCheckCapped": "Der Test hat nur die ersten 20 Clients geprüft.",
+          "responseUnknown": "Die Antwort ist unbekannt (nicht gesendet); ihr Platzhalter bleibt leer."
+        },
+        "commands": {
+          "clientkick": "kicken",
+          "banclient": "bannen",
+          "clientmove": "verschieben",
+          "sendtextmessage": "Nachricht senden",
+          "clientpoke": "anstupsen",
+          "channelcreate": "Kanal anlegen",
+          "channeledit": "Kanal ändern",
+          "channeldelete": "Kanal löschen",
+          "servergroupaddclient": "zur Servergruppe hinzufügen",
+          "servergroupdelclient": "aus Servergruppe entfernen"
+        },
+        "variables": "Variablen",
+        "before": "Vorher",
+        "after": "Nachher",
+        "temp": "temp-Werte am Ende",
+        "simulated": "simuliert",
+        "simulatedHint": "Stammt aus einer Änderung oder Anfrage, die der Test nicht ausgeführt hat.",
+        "notVisited": "Im Test nicht erreicht",
+        "clear": "Ergebnis ausblenden"
+      },
       "executions": {
         "button": "Ausführungen",
         "title": "Letzte 50 Ausführungen",

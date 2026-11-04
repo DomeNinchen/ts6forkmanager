@@ -16,9 +16,11 @@ import {
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
-  BookOpen, Info, SlidersHorizontal, History,
+  BookOpen, Info, SlidersHorizontal, History, FlaskConical,
 } from 'lucide-react';
 import { ExecutionsPanel } from '@/components/bots/ExecutionsPanel';
+import { TestPanel, stepProblem } from '@/components/bots/TestPanel';
+import type { FlowTestReport } from '@ts6/common';
 import { TemplateGallery, type TemplateRef } from '@/components/bots/TemplateGallery';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -703,6 +705,36 @@ export default function BotEditor() {
   const [showTemplateConfig, setShowTemplateConfig] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showExecutions, setShowExecutions] = useState(false);
+  const [showTest, setShowTest] = useState(false);
+  const [testReport, setTestReport] = useState<FlowTestReport | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  // What the last test did, for the canvas: step numbers and problems per node, and the connections it went along.
+  const testMarks = useMemo(() => {
+    if (!testReport || testReport.status === 'notTriggered') return null;
+    const steps = new Map<string, number[]>();
+    const problem = new Map<string, 'error' | 'warning'>();
+    const branches = new Map<string, Set<string>>();
+    testReport.steps.forEach((s, i) => {
+      steps.set(s.nodeId, [...(steps.get(s.nodeId) ?? []), i + 1]);
+      const p = stepProblem(s);
+      if (p && problem.get(s.nodeId) !== 'error') problem.set(s.nodeId, p);
+      if (s.branch) branches.set(s.nodeId, (branches.get(s.nodeId) ?? new Set()).add(s.branch));
+    });
+    // A connection was taken when both ends ran and it leaves on the branch its source took (any but 'error' when it took none).
+    const taken = (e: FlowEdge) => {
+      if (!steps.has(e.source) || !steps.has(e.target)) return false;
+      const b = branches.get(e.source);
+      return b ? b.has(e.sourcePort) || (e.sourcePort !== 'error' && !b.has('true') && !b.has('false') && !b.has('error')) : e.sourcePort !== 'error';
+    };
+    return { steps, problem, taken };
+  }, [testReport]);
+  const showTestResult = useCallback((r: FlowTestReport | null) => setTestReport(r), []);
+  const pickTestNode = (nodeId: string) => {
+    setSelectedNode(nodeId);
+    const node = nodes.find((n) => n.id === nodeId);
+    const canvas = canvasRef.current;
+    if (node && canvas) canvas.scrollTo({ left: node.x - canvas.clientWidth / 2 + NODE_W / 2, top: node.y - canvas.clientHeight / 2 + NODE_H / 2, behavior: 'smooth' });
+  };
   // Greets each person once when they open a flow; the button in the
   // toolbar brings it back afterwards.
   const [showEditorHelp, setShowEditorHelp] = useState(() => !hasSeenEditorHelp());
@@ -1040,10 +1072,19 @@ export default function BotEditor() {
             variant={showExecutions ? 'secondary' : 'outline'}
             size="sm"
             className="h-8"
-            onClick={() => setShowExecutions((v) => !v)}
+            onClick={() => { setShowExecutions((v) => !v); setShowTest(false); }}
             aria-pressed={showExecutions}
           >
             <History className="h-4 w-4 mr-1" /> {t('pages.botEditor.executions.button')}
+          </Button>
+          <Button
+            variant={showTest ? 'secondary' : 'outline'}
+            size="sm"
+            className="h-8"
+            onClick={() => { setShowTest((v) => !v); setShowExecutions(false); }}
+            aria-pressed={showTest}
+          >
+            <FlaskConical className="h-4 w-4 mr-1" /> {t('pages.botEditor.test.button')}
           </Button>
           <Button
             variant="ghost"
@@ -1070,7 +1111,7 @@ export default function BotEditor() {
         </div>
       )}
 
-      <div className="card-hero flex flex-1 gap-0 overflow-hidden border border-border">
+      <div className="card-hero relative flex flex-1 gap-0 overflow-hidden border border-border">
         {/* Node Palette */}
         <div className="w-52 border-r border-border bg-card/50 shrink-0">
           <ScrollArea className="h-full">
@@ -1107,6 +1148,7 @@ export default function BotEditor() {
         {/* Canvas */}
         <div className="flex-1 relative min-w-0">
         <div
+          ref={canvasRef}
           className="absolute inset-0 bg-zinc-950/30 overflow-auto flow-canvas"
           style={{
             cursor: connectFrom ? 'crosshair' : 'default',
@@ -1149,6 +1191,7 @@ export default function BotEditor() {
               const isConditionFalse = edge.sourcePort === 'false';
               const isErrorEdge = edge.sourcePort === 'error';
               const edgeColor = isConditionTrue ? '#22c55e' : isConditionFalse ? '#ef4444' : isErrorEdge ? '#f97316' : 'hsl(var(--primary))';
+              const testTaken = testMarks?.taken(edge);
 
               return (
                 <g
@@ -1162,8 +1205,8 @@ export default function BotEditor() {
                       d={path}
                       fill="none"
                       stroke={edgeColor}
-                      strokeWidth={2}
-                      strokeOpacity={hovered ? 0.9 : 0.5}
+                      strokeWidth={testTaken ? 3.5 : 2}
+                      strokeOpacity={hovered || testTaken ? 0.9 : testMarks ? 0.15 : 0.5}
                     />
                     {/* Invisible wider path for easier click */}
                     <path
@@ -1271,11 +1314,26 @@ export default function BotEditor() {
                   'flow-node absolute rounded-lg border bg-card/95 backdrop-blur-xs shadow-xs select-none transition-shadow',
                   selectedNode === node.id ? 'border-primary ring-1 ring-primary/30 shadow-md' : 'border-border hover:border-muted-foreground/30',
                   dragging === node.id ? 'cursor-grabbing shadow-lg z-20' : 'cursor-grab z-10',
+                  testMarks && !testMarks.steps.has(node.id) && 'opacity-40',
                 )}
                 style={{ left: node.x, top: node.y, width: NODE_W, height: NODE_H }}
                 onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                 onClick={(e) => handleNodeClick(e, node.id)}
+                title={testMarks && !testMarks.steps.has(node.id) ? t('pages.botEditor.test.notVisited') : undefined}
               >
+                {testMarks?.steps.has(node.id) && (() => {
+                  const nums = testMarks.steps.get(node.id)!;
+                  const problem = testMarks.problem.get(node.id);
+                  return (
+                    <span className={cn(
+                      'absolute -top-2.5 -right-2 z-40 flex items-center gap-0.5 rounded-full border px-1.5 text-[9px] font-semibold shadow-sm',
+                      problem === 'error' ? 'border-destructive bg-destructive text-destructive-foreground'
+                        : problem === 'warning' ? 'border-amber-500 bg-amber-500 text-black' : 'border-emerald-500 bg-emerald-600 text-white',
+                    )}>
+                      {nums.length > 3 ? `${nums[0]}…${nums[nums.length - 1]} ×${nums.length}` : nums.join(', ')}
+                    </span>
+                  );
+                })()}
                 {/* Header */}
                 <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-t-lg border-b border-border', meta.color)}>
                   <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -2410,6 +2468,18 @@ export default function BotEditor() {
 
         {showExecutions && botId && (
           <ExecutionsPanel key={botId} botId={parseInt(botId)} onClose={() => setShowExecutions(false)} />
+        )}
+        {showTest && botId && (
+          <TestPanel
+            key={botId}
+            botId={parseInt(botId)}
+            nodes={nodes}
+            edges={edges}
+            template={template}
+            onClose={() => setShowTest(false)}
+            onPick={pickTestNode}
+            onResult={showTestResult}
+          />
         )}
       </div>
 

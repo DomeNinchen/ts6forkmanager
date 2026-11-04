@@ -2744,6 +2744,90 @@
       "bulkUpdatedCount_other": "Updated {{count}} channels"
     },
     "botEditor": {
+      "test": {
+        "button": "Test",
+        "title": "Test this flow",
+        "intro": "Runs the flow as it is in the editor (saved or not) with a sample event. Nothing is changed: reads go to the server, writes, requests and music bot actions are only shown.",
+        "trigger": "Trigger",
+        "noTrigger": "Add a trigger node to test the flow.",
+        "sample": "Sample event",
+        "field": "Field",
+        "value": "Value",
+        "addField": "Add field",
+        "removeField": "Remove field {{name}}",
+        "body": "Request body (JSON)",
+        "query": "Query parameters (JSON)",
+        "method": "HTTP method",
+        "cronNoData": "A timer starts the flow without event data.",
+        "fromLast": "Use last real run",
+        "fromLastNone": "No earlier run of this trigger type.",
+        "fromLastDone": "Taken from run #{{id}}.",
+        "run": "Run test",
+        "running": "Testing…",
+        "failedRequest": "The test could not run: {{error}}",
+        "invalidJson": "Body and query must be valid JSON.",
+        "status": {
+          "completed": "Completed. Nothing was changed.",
+          "failed": "Stopped: {{error}}",
+          "notTriggered": "This event would not start the trigger."
+        },
+        "errorCode": {
+          "readLimit": "The test needed more than 50 read queries and stopped (TeamSpeak flood protection).",
+          "nodeVisits": "The flow visited more than 500 nodes; it probably loops."
+        },
+        "mismatch": {
+          "filter": "Filter {{key}} expects \"{{expected}}\", the event has \"{{actual}}\".",
+          "missing": "(missing)",
+          "listener": "This command only listens in its own channel chat (or only outside of it).",
+          "command": "The message does not start with this command."
+        },
+        "summary": "Steps: {{steps}} · changes not made: {{writes}} · empty placeholders: {{empty}} · reads: {{reads}}",
+        "steps": "Steps",
+        "stepTitle": "Go to node {{label}}",
+        "iteration": "loop #{{n}}",
+        "branch": {
+          "true": "true",
+          "false": "false",
+          "error": "error branch"
+        },
+        "conditionError": "Expression failed (counts as false): {{error}}",
+        "actionError": "Failed: {{error}}",
+        "emptyPlaceholder": "{{expression}} is empty",
+        "effect": {
+          "write": "Would run {{command}}",
+          "read": "Read {{command}} ({{rows}} rows)",
+          "http": "Would send {{method}} {{url}}",
+          "blocked": "Would be blocked: {{reason}}",
+          "voice": "Would tell a music bot: {{action}}",
+          "variable": "Variable {{name}}: \"{{from}}\" → \"{{to}}\"",
+          "delay": "Would wait {{seconds}} s (the test does not wait)"
+        },
+        "note": {
+          "animationManagedByEngine": "Animated Channel runs on its own timer once the flow is on; the test does not start it.",
+          "rankCheckCapped": "The test checked only the first 20 clients.",
+          "responseUnknown": "The answer is unknown (not sent); its placeholder stays empty."
+        },
+        "commands": {
+          "clientkick": "kick",
+          "banclient": "ban",
+          "clientmove": "move",
+          "sendtextmessage": "send message",
+          "clientpoke": "poke",
+          "channelcreate": "create channel",
+          "channeledit": "edit channel",
+          "channeldelete": "delete channel",
+          "servergroupaddclient": "add to server group",
+          "servergroupdelclient": "remove from server group"
+        },
+        "variables": "Variables",
+        "before": "Before",
+        "after": "After",
+        "temp": "temp values at the end",
+        "simulated": "simulated",
+        "simulatedHint": "Comes from a change or request the test did not make.",
+        "notVisited": "Not reached in the test",
+        "clear": "Clear result"
+      },
       "executions": {
         "button": "Executions",
         "title": "Last 50 executions",
