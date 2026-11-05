@@ -57,10 +57,12 @@ serverGroupRoutes.delete('/:sgid', requirePermission('groups.edit'), async (req:
   try {
     await backupBeforeDeleting(req);
     const result = await getClient(req).execute(getSid(req), 'servergroupdel', { sgid: String(req.params.sgid), force: 1 });
-    // A deleted group protects nobody; drop its mark so the list stays what the server has.
+    // A deleted group protects nobody and has no memberships left to end; drop its rows so the lists stay what the server has.
     const sgid = Number(req.params.sgid);
     if (Number.isInteger(sgid)) {
-      await req.app.locals.prisma.protectedServerGroup.deleteMany({ where: { serverConfigId: parseInt(String(req.params.configId)), sid: getSid(req), sgid } });
+      const where = { serverConfigId: parseInt(String(req.params.configId)), sid: getSid(req), sgid };
+      await req.app.locals.prisma.protectedServerGroup.deleteMany({ where });
+      await req.app.locals.prisma.temporaryServerGroup.deleteMany({ where });
     }
     res.json(result);
   } catch (err) { next(err); }
