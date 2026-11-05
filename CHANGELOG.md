@@ -28,7 +28,7 @@ Versions at the end of the month: **backend 2.94.1 · frontend 3.111.1 · sideca
 
 ### Bug Fixes
 
-- Fixed an encrypted backup opened with the wrong passphrase sometimes being refused as "neither a backup ZIP from this page nor a database file" instead of saying the passphrase does not open it. *backend 2.94.1* [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
+- Fixed an encrypted backup opened with the wrong passphrase sometimes being refused as "neither a backup ZIP from this page nor a database file" instead of saying the passphrase does not open it. *backend 2.94.1* [#361](https://github.com/DomeNinchen/ts6forkmanager/pull/361)
 - Fixed two flow templates that read event fields TeamSpeak does not send: **Anti-VPN** checked an empty IP address (it now asks the server for the joining client's IP first), and **Last-Seen Tracker** stored every disconnect under the same empty name (it now remembers who is behind each connection when a client joins and records the time under that client's database ID). *frontend 3.111.1* [#359](https://github.com/DomeNinchen/ts6forkmanager/pull/359)
 - Fixed the flow editor's placeholder reference naming event fields TeamSpeak does not send: "Client Connected" lists the joined channel as `{{event.ctid}}` and no longer an IP address, and text messages and chat commands name the sender as `{{event.invokerid}}` / `{{event.invokername}}`. *frontend 3.111.0* [#357](https://github.com/DomeNinchen/ts6forkmanager/pull/357)
 - Fixed the flow editor's toolbar running off the screen on a phone, which hid Save, Executions and Test; it now wraps onto a second line on narrow screens. *frontend 3.110.1* [#358](https://github.com/DomeNinchen/ts6forkmanager/pull/358)
