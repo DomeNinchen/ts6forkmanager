@@ -6,7 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { decryptFile, encryptedSize, encryptor, isEncrypted, PBKDF2_ITERATIONS } from './backup-crypt.js';
-import { checkTargetDir, createBackup, deleteBackup, getBackupSettings, listBackups, localOfExternal, setBackupSettings, setPassphrase } from './backups.js';
+import { checkTargetDir, createBackup, decryptIfNeeded, deleteBackup, getBackupSettings, listBackups, localOfExternal, setBackupSettings, setPassphrase } from './backups.js';
 import { listZip } from './zip-read.js';
 
 const PASS = 'correct horse battery staple';
@@ -123,5 +123,27 @@ test('copies outside the volume: plain and encrypted ZIP, listed as external onc
     assert.ok(!fs.readdirSync(r.target).some((n) => n.startsWith(last.name.slice(0, -3))));
   } finally {
     r.done();
+  }
+});
+
+// A wrong passphrase gets past AES-CBC's padding check about once in 256 tries and decrypts to
+// noise without an error. That case, made deterministic: a file that decrypts fine but holds
+// neither a ZIP nor a database must be refused as not opening, and leave nothing behind.
+test('a file that decrypts to neither a ZIP nor a database is refused as a wrong passphrase', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts6-crypt-noise-'));
+  try {
+    const noise = path.join(dir, 'noise.enc');
+    await encryptToFile(Buffer.from('this is not a backup, just bytes that decrypt cleanly'), noise, PASS);
+    await assert.rejects(decryptIfNeeded(noise, PASS), /does not open/);
+    assert.deepEqual(fs.readdirSync(dir), []);
+
+    // Positive control: a database header comes back as the decrypted file.
+    const db = path.join(dir, 'db.enc');
+    await encryptToFile(Buffer.concat([Buffer.from('SQLite format 3\0', 'latin1'), Buffer.alloc(100)]), db, PASS);
+    const plain = await decryptIfNeeded(db, PASS);
+    assert.ok(fs.readFileSync(plain).subarray(0, 15).equals(Buffer.from('SQLite format 3', 'latin1')));
+    assert.deepEqual(fs.readdirSync(dir), [path.basename(plain)]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });

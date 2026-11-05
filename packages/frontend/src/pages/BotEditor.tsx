@@ -1053,16 +1053,17 @@ export default function BotEditor() {
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       {/* Toolbar */}
-      <div className="flex items-center justify-between pb-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/bots')}>
+      {/* Wraps on narrow screens, so the buttons on the right stay reachable instead of running off the edge. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate('/bots')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Input value={botName} onChange={(e) => setBotName(e.target.value)} className="h-8 w-60 text-sm font-medium" />
-          <Badge variant="outline" className="text-[10px]">{t('pages.botEditor.nodesCount', { count: nodes.length })}</Badge>
-          <Badge variant="outline" className="text-[10px]">{t('pages.botEditor.edgesCount', { count: edges.length })}</Badge>
+          <Input value={botName} onChange={(e) => setBotName(e.target.value)} className="h-8 w-48 min-w-0 text-sm font-medium sm:w-60" />
+          <Badge variant="outline" className="hidden text-[10px] sm:inline-flex">{t('pages.botEditor.nodesCount', { count: nodes.length })}</Badge>
+          <Badge variant="outline" className="hidden text-[10px] sm:inline-flex">{t('pages.botEditor.edgesCount', { count: edges.length })}</Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {template && (
             <Button variant="outline" size="sm" className="h-8" onClick={() => setShowTemplateConfig(true)}>
               <SlidersHorizontal className="h-4 w-4 mr-1" /> {t('pages.botEditor.templateConfig')}
@@ -1902,7 +1903,7 @@ export default function BotEditor() {
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.bodyJsonLabel')}</Label>
-                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='{"ip":"{{event.connection_client_ip}}"}' value={selectedNodeData.config.body || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, body: e.target.value } } : n))} />
+                        <Input className="h-7 text-xs mt-1 font-mono-data" placeholder='{"ip":"{{temp.clientInfo.0.connection_client_ip}}"}' value={selectedNodeData.config.body || ''} onChange={(e) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, body: e.target.value } } : n))} />
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.shared.storeAsTempLabel')}</Label>

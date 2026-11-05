@@ -2826,6 +2826,26 @@
         "simulated": "simulated",
         "simulatedHint": "Comes from a change or request the test did not make.",
         "notVisited": "Not reached in the test",
+        "fieldsUnknown": "The fields of this event are not measured yet; add the ones your flow reads.",
+        "fieldsChanges": "This event also carries every changed setting under its own name (e.g. channel_name).",
+        "fieldsMore_one": "{{count}} more field of this event is suggested when you type a field name.",
+        "fieldsMore_other": "{{count}} more fields of this event are suggested when you type a field name.",
+        "filters": "Filters",
+        "filterOk": "matches",
+        "filterFail": "does not match",
+        "filterActual": "the event has \"{{actual}}\"",
+        "forced": "forced",
+        "forceTrue": "Test as true",
+        "forceFalse": "Test as false",
+        "forceClear": "Let the expression decide",
+        "forcedActive_one": "{{count}} condition forced.",
+        "forcedActive_other": "{{count}} conditions forced.",
+        "forcedReset": "Reset all",
+        "animations": "Animated channels",
+        "animationsHint": "They run on their own timer once the flow is on, whatever triggers it. The names one cycle would set, as of now:",
+        "animationMeta_one": "Channel {{channel}} · every {{seconds}} s · {{count}} frame",
+        "animationMeta_other": "Channel {{channel}} · every {{seconds}} s · {{count}} frames",
+        "frameSkipped": "(skipped, the name stays)",
         "clear": "Clear result"
       },
       "executions": {
@@ -4018,13 +4038,9 @@
           "desc": "Server group IDs (comma-separated)",
           "example": "contains(event.client_servergroups, '6')"
         },
-        "connectionClientIp": {
-          "desc": "IP address",
-          "example": "VPN check: https://api.vpn.io/{{event.connection_client_ip}}"
-        },
         "cidJoined": {
           "desc": "Channel the client joined",
-          "example": "Condition: event.cid == 42"
+          "example": "Condition: event.ctid == 42"
         },
         "h2": "Client Disconnected — notifyclientleftview",
         "clidDisc": {
@@ -4595,7 +4611,7 @@
         },
         "lastSeenTracker": {
           "name": "Last-Seen Tracker",
-          "description": "Records the last-seen timestamp when a client disconnects."
+          "description": "Records the last-seen timestamp per client database ID when a client disconnects. Remembers who is behind each connection when clients join, because the disconnect event does not say."
         },
         "afkMover": {
           "name": "AFK Mover",

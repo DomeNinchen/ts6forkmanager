@@ -358,7 +358,10 @@ export async function decryptIfNeeded(file: string, passphrase: string | null): 
   const plain = `${file}.plain`;
   try {
     await decryptFile(file, plain, passphrase);
+    // A wrong passphrase passes the padding check about once in 256 tries and yields noise instead of an error.
+    if (!isZip(plain) && !startsWith(plain, SQLITE_HEADER)) throw new Error('Decrypted to neither a ZIP nor a database');
   } catch {
+    fs.rmSync(plain, { force: true });
     throw new AppError(400, 'The passphrase does not open this file (wrong passphrase, or the file is damaged)');
   } finally {
     fs.rmSync(file, { force: true });

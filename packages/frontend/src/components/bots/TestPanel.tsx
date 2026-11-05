@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { AlertTriangle, CheckCircle2, CircleSlash, FlaskConical, History, Plus, Trash2, X, XCircle } from 'lucide-react';
-import type { FlowTestEffect, FlowTestReport, FlowTestStep } from '@ts6/common';
+import { TS_EVENT_FIELDS, TS_EVENTS, type FlowTestEffect, type FlowTestReport, type FlowTestStep, type TSEventFields } from '@ts6/common';
 import { botsApi } from '@/api/bots.api';
 import { badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,22 +18,19 @@ interface EditorNode { id: string; type: string; label: string; config: Record<s
 
 type Row = { key: string; value: string };
 
-/** The sample fields a trigger starts with: what its actions usually read, plus its own filters. */
+/** The measured fields of the event a trigger listens to (a chat command arrives as a text message); undefined: not measured. */
+function eventFields(trigger: EditorNode): TSEventFields | undefined {
+  const event = trigger.type === 'trigger_command' ? TS_EVENTS.TEXT_MESSAGE : trigger.config.eventName;
+  return (TS_EVENT_FIELDS as Record<string, TSEventFields | null>)[event] ?? undefined;
+}
+
+/** The sample fields a trigger starts with: the main fields its event carries, plus its own filters. */
 function defaultRows(trigger: EditorNode): Row[] {
+  const rows: Row[] = (eventFields(trigger)?.main ?? []).map((key) => ({ key, value: key === 'client_type' ? '0' : '' }));
   if (trigger.type === 'trigger_command') {
     const cmd = String(trigger.config.command || '');
-    return [
-      { key: 'msg', value: `${cmd.startsWith('!') ? '' : trigger.config.commandPrefix || '!'}${cmd} ` },
-      { key: 'invokerid', value: '' },
-      { key: 'invokername', value: '' },
-    ];
+    rows.find((r) => r.key === 'msg')!.value = `${cmd.startsWith('!') ? '' : trigger.config.commandPrefix || '!'}${cmd} `;
   }
-  const rows: Row[] = [
-    { key: 'clid', value: '' },
-    { key: 'client_database_id', value: '' },
-    { key: 'client_nickname', value: '' },
-    { key: 'client_type', value: '0' },
-  ];
   for (const [key, value] of Object.entries(trigger.config.filters || {})) {
     const row = rows.find((r) => r.key === key);
     if (row) row.value = String(value); else rows.push({ key, value: String(value) });
@@ -128,11 +125,15 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
   const [method, setMethod] = useState('POST');
   const [notice, setNotice] = useState<string | null>(null);
   const [report, setReport] = useState<FlowTestReport | null>(null);
+  /** Condition node id -> the branch the next test takes there. */
+  const [forced, setForced] = useState<Record<string, boolean>>({});
+  const fields = trigger ? eventFields(trigger) : undefined;
 
   // A new trigger starts from its own default fields.
   useEffect(() => {
     if (!trigger) return;
     setRows(defaultRows(trigger));
+    setForced({});
     setBody('{}');
     setQuery('{}');
     setMethod(trigger.config.method && trigger.config.method !== 'ANY' ? trigger.config.method : 'POST');
@@ -166,7 +167,7 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
   });
 
   const run = useMutation({
-    mutationFn: () => {
+    mutationFn: (forceBranches: Record<string, boolean>) => {
       let event: Record<string, string> = {};
       if (type === 'webhook') {
         JSON.parse(body || '{}');
@@ -175,7 +176,7 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
       } else if (type !== 'cron') {
         for (const r of rows) if (r.key.trim()) event[r.key.trim()] = r.value;
       }
-      return botsApi.test(botId, { flowData: { nodes, edges, ...(template ? { template } : {}) }, triggerNodeId: trigger!.id, event });
+      return botsApi.test(botId, { flowData: { nodes, edges, ...(template ? { template } : {}) }, triggerNodeId: trigger!.id, event, forceBranches });
     },
     onMutate: () => setNotice(null),
     onSuccess: show,
@@ -187,6 +188,14 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
 
   // Closing the panel takes the marks off the canvas.
   useEffect(() => () => onResult(null), [onResult]);
+
+  /** Sets (true/false) or clears (undefined) the branch of one condition, and tests again with it. */
+  const force = (nodeId: string, value: boolean | undefined) => {
+    const { [nodeId]: _old, ...rest } = forced;
+    const next = value === undefined ? rest : { ...rest, [nodeId]: value };
+    setForced(next);
+    run.mutate(next);
+  };
 
   const effects = report?.steps.flatMap((s) => s.effects) ?? [];
   const writes = effects.filter((e) => e.kind === 'write' || e.kind === 'http' || e.kind === 'voice').length;
@@ -210,7 +219,7 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
           {!trigger && <p className="text-muted-foreground">{t('pages.botEditor.test.noTrigger')}</p>}
 
           {trigger && (
-            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); run.mutate(); }}>
+            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); run.mutate(forced); }}>
               {triggers.length > 1 && (
                 <div>
                   <Label className="text-xs">{t('pages.botEditor.test.trigger')}</Label>
@@ -243,6 +252,7 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
                           className="h-7 w-2/5 font-mono-data text-[11px]"
                           aria-label={t('pages.botEditor.test.field')}
                           placeholder={t('pages.botEditor.test.field')}
+                          list="flow-test-fields"
                           value={row.key}
                           onChange={(e) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, key: e.target.value } : r)))}
                         />
@@ -266,6 +276,13 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
                     <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => setRows((rs) => [...rs, { key: '', value: '' }])}>
                       <Plus className="mr-1 h-3 w-3" /> {t('pages.botEditor.test.addField')}
                     </Button>
+                    {/* The rest of the event's measured fields, offered when typing a field name. */}
+                    <datalist id="flow-test-fields">
+                      {[...(fields?.main ?? []), ...(fields?.more ?? [])].map((f) => <option key={f} value={f} />)}
+                    </datalist>
+                    {type === 'event' && !fields && <p className="text-[11px] text-amber-400">{t('pages.botEditor.test.fieldsUnknown')}</p>}
+                    {fields?.changes && <p className="text-[11px] text-muted-foreground">{t('pages.botEditor.test.fieldsChanges')}</p>}
+                    {!!fields?.more.length && <p className="text-[11px] text-muted-foreground">{t('pages.botEditor.test.fieldsMore', { count: fields.more.length })}</p>}
                   </div>
                 )}
 
@@ -302,18 +319,29 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
                   </Button>
                 )}
               </div>
+              {Object.keys(forced).length > 0 && (
+                <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-sky-300">
+                  {t('pages.botEditor.test.forcedActive', { count: Object.keys(forced).length })}
+                  <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5 text-[11px]" onClick={() => { setForced({}); run.mutate({}); }}>
+                    {t('pages.botEditor.test.forcedReset')}
+                  </Button>
+                </p>
+              )}
               {notice && <p role="status" className="text-[11px] text-muted-foreground">{notice}</p>}
             </form>
           )}
 
-          {report && <TestReport report={report} writes={writes} empty={empty} onPick={onPick} />}
+          {report && <TestReport report={report} writes={writes} empty={empty} onPick={onPick} forced={forced} onForce={force} busy={run.isPending} />}
         </div>
       </ScrollArea>
     </div>
   );
 }
 
-function TestReport({ report, writes, empty, onPick }: { report: FlowTestReport; writes: number; empty: number; onPick: (nodeId: string) => void }) {
+function TestReport({ report, writes, empty, onPick, forced, onForce, busy }: {
+  report: FlowTestReport; writes: number; empty: number; onPick: (nodeId: string) => void;
+  forced: Record<string, boolean>; onForce: (nodeId: string, value: boolean | undefined) => void; busy: boolean;
+}) {
   const { t } = useTranslation();
   const mismatch = report.mismatch;
   return (
@@ -335,6 +363,24 @@ function TestReport({ report, writes, empty, onPick }: { report: FlowTestReport;
           )}
         </div>
       </div>
+
+      {!!report.filters?.length && (
+        <div className="space-y-0.5">
+          <p className="font-display text-xs font-semibold tracking-wide">{t('pages.botEditor.test.filters')}</p>
+          <ul className="space-y-0.5">
+            {report.filters.map((f) => (
+              <li key={f.key} className={cn('flex items-start gap-1.5 text-[11px]', f.ok ? 'text-emerald-400' : 'text-destructive')}>
+                {f.ok ? <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0" aria-hidden /> : <XCircle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />}
+                <span className="break-all">
+                  <span className="sr-only">{f.ok ? t('pages.botEditor.test.filterOk') : t('pages.botEditor.test.filterFail')}: </span>
+                  <span className="font-mono-data">{f.key} = "{f.expected}"</span>
+                  {!f.ok && ` · ${t('pages.botEditor.test.filterActual', { actual: f.actual ?? t('pages.botEditor.test.mismatch.missing') })}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {report.status !== 'notTriggered' && (
         <>
@@ -365,10 +411,31 @@ function TestReport({ report, writes, empty, onPick }: { report: FlowTestReport;
                           {t(`pages.botEditor.test.branch.${s.branch}`)}
                         </span>
                       )}
+                      {s.forced && <span className={cn(badgeVariants({ variant: 'outline' }), 'border-sky-500/50 px-1 py-0 text-[9px] text-sky-300')}>{t('pages.botEditor.test.forced')}</span>}
                     </button>
-                    {(s.conditionError || s.error || s.placeholders.length > 0 || s.effects.length > 0 || s.logs.some((l) => s.nodeType === 'log' || l.level !== 'info')) && (
+                    {(s.nodeType === 'condition' || s.error || s.placeholders.length > 0 || s.effects.length > 0 || s.logs.some((l) => s.nodeType === 'log' || l.level !== 'info')) && (
                       <div className="space-y-1 px-2 pb-1.5">
                         {s.conditionError && <p className="text-[11px] text-destructive">{t('pages.botEditor.test.conditionError', { error: s.conditionError })}</p>}
+                        {s.nodeType === 'condition' && (
+                          <div className="flex flex-wrap gap-1">
+                            {/* A condition inside a loop runs several times; forcing it applies to every run. */}
+                            {s.branch !== 'true' && (
+                              <Button type="button" variant="outline" size="sm" className="h-6 px-1.5 text-[10px]" disabled={busy} onClick={() => onForce(s.nodeId, true)}>
+                                {t('pages.botEditor.test.forceTrue')}
+                              </Button>
+                            )}
+                            {s.branch !== 'false' && (
+                              <Button type="button" variant="outline" size="sm" className="h-6 px-1.5 text-[10px]" disabled={busy} onClick={() => onForce(s.nodeId, false)}>
+                                {t('pages.botEditor.test.forceFalse')}
+                              </Button>
+                            )}
+                            {s.nodeId in forced && (
+                              <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5 text-[10px]" disabled={busy} onClick={() => onForce(s.nodeId, undefined)}>
+                                {t('pages.botEditor.test.forceClear')}
+                              </Button>
+                            )}
+                          </div>
+                        )}
                         {s.error && <p className="break-words text-[11px] text-destructive">{t('pages.botEditor.test.actionError', { error: s.error })}</p>}
                         {s.placeholders.map((p, j) => (
                           <p key={j} className={cn('break-all font-mono-data text-[10px]', p.empty ? 'text-amber-400' : 'text-muted-foreground')}>
@@ -427,6 +494,29 @@ function TestReport({ report, writes, empty, onPick }: { report: FlowTestReport;
             </div>
           )}
         </>
+      )}
+
+      {!!report.animations?.length && (
+        <div className="space-y-2">
+          <p className="font-display text-xs font-semibold tracking-wide">{t('pages.botEditor.test.animations')}</p>
+          <p className="text-[11px] text-muted-foreground">{t('pages.botEditor.test.animationsHint')}</p>
+          {report.animations.map((a) => (
+            <div key={a.nodeId} className="space-y-1 rounded-md border border-border px-2 py-1.5">
+              <button type="button" onClick={() => onPick(a.nodeId)} className="w-full truncate text-left font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {a.label || a.nodeId}
+              </button>
+              <p className="text-[11px] text-muted-foreground">{t('pages.botEditor.test.animationMeta', { channel: a.channelId || '?', seconds: a.intervalSeconds, count: a.frames.length })}</p>
+              <ol className="max-h-48 space-y-px overflow-y-auto rounded-sm bg-muted/30 px-1.5 py-1 font-mono-data text-[10px]">
+                {a.frames.map((f, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="w-5 shrink-0 text-right text-muted-foreground">{i + 1}</span>
+                    {f ? <span className="whitespace-pre">{f}</span> : <span className="italic text-muted-foreground">{t('pages.botEditor.test.frameSkipped')}</span>}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -63,6 +63,9 @@ services:
       - SIDECAR_PORT=9800
       - VIDEO_QUEUE_SIZE=8192
       - AUDIO_QUEUE_SIZE=16384
+      # Video stays black when watched from the LAN (e.g. a home server)?
+      # Set the host's LAN IP here (comma-separated for more). See README.
+      - ICE_ANNOUNCE_IPS=${ICE_ANNOUNCE_IPS:-}
     volumes:
       - music-data:/data/music
     ports:

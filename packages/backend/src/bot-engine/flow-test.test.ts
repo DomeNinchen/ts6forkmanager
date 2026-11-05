@@ -5,6 +5,7 @@ import axios from 'axios';
 import { isReadOnlyCommand, MASKED_VALUE, FLOW_TEST_MAX_READS, FLOW_TEST_SIMULATED_ID, type FlowDefinition, type FlowNode, type FlowTestReport } from '@ts6/common';
 import { FlowRunner } from './flow-runner.js';
 import { BotEngine } from './engine.js';
+import { animationConfig, animationFrames } from './animation-manager.js';
 
 // The flow test's promise: a test run of a flow changes nothing - no TeamSpeak write, no
 // database row, no music bot command, no HTTP request - whatever actions the flow holds.
@@ -302,4 +303,51 @@ test('engine: a sample the trigger would ignore runs nothing, a command sample i
   await assert.rejects(engine.testFlow(flow, { nodes: [hook], edges: [] }, undefined, { body: '{nope' }), /must be JSON/);
   await assert.rejects(engine.testFlow(flow, { nodes: [ev, { ...hook, id: 'h' }], edges: [] }, undefined, {}), /Choose one/);
   assert.deepEqual(calls[1][3], { webhook_path: 'p', webhook_method: 'POST', webhook_body: '{"a":1}', webhook_query: '{"q":"1"}' });
+});
+
+// --- Forced branches, filter overview, animation preview ---
+
+test('a forced branch is taken and marked; the expression is still evaluated and its error shown', async () => {
+  const flowData: FlowDefinition = { nodes: [
+    trigger,
+    node('c', 'condition', { nodeType: 'condition', expression: 'event.x ==' }),
+    node('yes', 'log', { nodeType: 'log', level: 'info', message: 'y' }),
+    node('no', 'log', { nodeType: 'log', level: 'info', message: 'n' }),
+  ], edges: [
+    { id: 'a', source: 't', target: 'c' }, { id: 'b', source: 'c', target: 'yes', sourceHandle: 'true' }, { id: 'c', source: 'c', target: 'no', sourceHandle: 'false' },
+  ] };
+  const report = await rig().runner.test(flowInfo(flowData), 't', 'webhook', {}, undefined, new Map([['c', true]]));
+  const cond = report.steps.find((s) => s.nodeId === 'c')!;
+  assert.equal(cond.branch, 'true');
+  assert.equal(cond.forced, true);
+  assert.match(cond.conditionError!, /./);
+  assert.deepEqual(report.steps.map((s) => s.nodeId), ['t', 'c', 'yes']);
+  // Not forced: the expression decides, nothing is marked.
+  const plain = await rig().runner.test(flowInfo(flowData), 't', 'webhook', {});
+  assert.equal(plain.steps.find((s) => s.nodeId === 'c')!.forced, undefined);
+  assert.equal(plain.steps.find((s) => s.nodeId === 'c')!.branch, 'false');
+});
+
+test('engine: every filter is listed with its result; animations are previewed with the frames the timer would set', async () => {
+  const engine = new BotEngine({} as any, {} as any, {} as any, {} as any) as any;
+  const forced: any[] = [];
+  engine.flowRunner = { test: async (...args: any[]) => { forced.push(args[5]); return { status: 'completed', steps: [] }; } };
+  const flow = flowInfo({ nodes: [], edges: [] });
+  const ev = node('t', 'trigger', { triggerType: 'event', eventName: 'notifycliententerview', filters: { client_type: '0', ctid: '5' } });
+  const anim = node('a', 'action', { actionType: 'animatedChannel', channelId: '9', text: 'Hi', style: 'blink', intervalSeconds: '0.5', prefix: '' });
+
+  const missed = await engine.testFlow(flow, { nodes: [ev, anim], edges: [] }, undefined, { client_type: '0', ctid: '7' });
+  assert.equal(missed.status, 'notTriggered');
+  assert.deepEqual(missed.filters, [
+    { key: 'client_type', expected: '0', actual: '0', ok: true },
+    { key: 'ctid', expected: '5', actual: '7', ok: false },
+  ]);
+  // A frame of only spaces (TeamSpeak refuses it) is listed as '' - the timer skips it.
+  assert.deepEqual(missed.animations, [{ nodeId: 'a', label: 'a', channelId: '9', intervalSeconds: 0.5, frames: ['Hi', 'Hi', '--', 'Hi', 'Hi', ''] }]);
+  assert.deepEqual(animationFrames(animationConfig(anim.data as any)), missed.animations[0].frames);
+
+  const hit = await engine.testFlow(flow, { nodes: [ev, anim], edges: [] }, undefined, { client_type: '0', ctid: '5' }, { c1: false });
+  assert.ok(hit.filters.every((f: any) => f.ok));
+  assert.equal(hit.animations.length, 1);
+  assert.deepEqual([...forced[0]], [['c1', false]]);
 });
