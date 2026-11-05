@@ -15,6 +15,7 @@ import { bulkBackupRoutes } from './routes/bulk-backup.routes.js';
 import { channelRoutes } from './routes/channels.routes.js';
 import { clientRoutes } from './routes/clients.routes.js';
 import { serverGroupRoutes } from './routes/server-groups.routes.js';
+import { temporaryGroupRoutes } from './routes/temporary-groups.routes.js';
 import { channelGroupRoutes } from './routes/channel-groups.routes.js';
 import { permissionRoutes } from './routes/permissions.routes.js';
 import { banRoutes } from './routes/bans.routes.js';
@@ -182,6 +183,14 @@ export function createApp(): Express {
     { method: 'POST', path: '/:sgid/members', permission: 'groups.members' },
     { method: 'DELETE', path: '/:sgid/members/:cldbid', permission: 'groups.members' },
     { method: '*', path: '/:sgid/permissions', permission: 'permissions.edit' },
+  ]);
+  // Temporary memberships (R13): the same right as giving a group for good.
+  serverScoped('vs/:sid/temporary-groups', temporaryGroupRoutes, [
+    { method: 'GET', path: '/', permission: 'groups.members' },
+    { method: 'POST', path: '/', permission: 'groups.members' },
+    { method: 'PUT', path: '/:id', permission: 'groups.members' },
+    { method: 'POST', path: '/:id/permanent', permission: 'groups.members' },
+    { method: 'POST', path: '/:id/revoke', permission: 'groups.members' },
   ]);
   serverScoped('vs/:sid/channel-groups', channelGroupRoutes, [
     { method: 'GET', path: '/', permission: 'groups.members' },

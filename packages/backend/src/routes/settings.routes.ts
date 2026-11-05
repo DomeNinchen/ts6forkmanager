@@ -17,6 +17,8 @@ import { getOidcConfig, setOidcConfig, type OidcConfig } from '../utils/oidc-con
 import { getGithubToken, setGithubToken } from '../utils/github-token.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
 import { setPrivacyNoticeEnabled } from '../utils/privacy-notice-settings.js';
+import { getTempGroupRetentionDays, isValidTempGroupRetention, setTempGroupRetentionDays } from '../utils/temporary-groups.js';
+import { TEMP_GROUP_RETENTION_MAX_DAYS, TEMP_GROUP_RETENTION_MIN_DAYS } from '@ts6/common';
 import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES } from '../utils/stream-defaults.js';
 import {
   getUserHistorySettings,
@@ -192,6 +194,28 @@ settingsRoutes.post('/reset-music-bot-ids', requireAdmin, async (req: Request, r
     await prisma.$executeRawUnsafe(`DELETE FROM sqlite_sequence WHERE name = 'MusicBot'`);
     console.log(`[Settings] Reset music bot IDs (${count} bot(s) deleted)`);
     res.json({ deletedCount: count });
+  } catch (err) { next(err); }
+});
+
+// GET/PUT /api/settings/temporary-groups — how long ended temporary group memberships stay listed (R13)
+settingsRoutes.get('/temporary-groups', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    res.json({
+      retentionDays: await getTempGroupRetentionDays(req.app.locals.prisma),
+      retentionMin: TEMP_GROUP_RETENTION_MIN_DAYS,
+      retentionMax: TEMP_GROUP_RETENTION_MAX_DAYS,
+    });
+  } catch (err) { next(err); }
+});
+
+settingsRoutes.put('/temporary-groups', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { retentionDays } = req.body ?? {};
+    if (!isValidTempGroupRetention(retentionDays)) {
+      throw new AppError(400, `retentionDays must be a whole number from ${TEMP_GROUP_RETENTION_MIN_DAYS} to ${TEMP_GROUP_RETENTION_MAX_DAYS}`);
+    }
+    await setTempGroupRetentionDays(req.app.locals.prisma, retentionDays);
+    res.json({ retentionDays });
   } catch (err) { next(err); }
 });
 

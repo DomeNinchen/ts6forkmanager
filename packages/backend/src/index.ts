@@ -32,6 +32,7 @@ import { TsBanLookup } from './utils/ts-ip-ban.js';
 import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import { attachWsAudience, type UpgradeRequest } from './utils/ws-audience.js';
 import { startGrantNarrowing } from './utils/vs-access.js';
+import { startTemporaryGroupJob } from './utils/temporary-groups.js';
 import { loadRoleTable } from './utils/role-table.js';
 import type { JwtPayload } from '@ts6/common';
 import jwt from 'jsonwebtoken';
@@ -171,6 +172,8 @@ async function main() {
   const wsAudience = attachWsAudience(wss, prisma);
   // Grants from before access per virtual server get their virtual servers once the server list is readable.
   const grantNarrowing = startGrantNarrowing(prisma, connectionPool);
+  // Takes temporary server groups away once they expire; its first pass catches up on what expired while the backend was down.
+  const temporaryGroups = startTemporaryGroupJob(prisma, connectionPool);
   // The query console's live events: one shared SSH listener per virtual server, opened when an admin starts listening.
   const consoleEvents = new EventSessionManager(prisma, connectionPool);
   app.locals.consoleEvents = consoleEvents;
@@ -252,6 +255,8 @@ async function main() {
     // The bandwidth/ping windows still being filled are written out now;
     // after the database connection is closed there would be no way to.
     await history.flush();
+    // A removal in progress finishes (and writes its change-log row) before the batch is flushed.
+    await temporaryGroups.stop();
     // Change-log rows still waiting for their batch.
     await flushChangeLog(prisma);
     connectionPool.destroy();

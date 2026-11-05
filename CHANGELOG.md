@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.94.1 · frontend 3.111.2 · sidecar 2.2.0**
+Versions at the end of the month: **backend 2.95.0 · frontend 3.111.3 · sidecar 2.2.0**
 
 ### New Features
+
+- **Temporary server groups (backend)** — A client can be put into a server group until a deadline (one minute to five years), and the manager takes the group away within about 30 seconds after it passes, also when the backend was off or restarting at that moment. Deadlines can be extended, shortened, dropped (membership becomes permanent) or ended at once; a client who is already in the group only gets a deadline when that is confirmed explicitly. If the connection is down or TeamSpeak refuses the removal (for example missing `i_group_member_remove_power`), the entry shows why and is retried with growing pauses; a membership that is already gone ends without an error. Automatic removals appear in the change log as "system", ended entries stay listed for 90 days (adjustable). Same right as giving a group; available as `/api/servers/:configId/vs/:sid/temporary-groups` (the page follows). *backend 2.95.0, frontend 3.111.2* [#362](https://github.com/DomeNinchen/ts6forkmanager/pull/362)
 
 - **LAN address for video streaming** — New `ICE_ANNOUNCE_IPS` setting (in `.env`, comma-separated) makes the video sidecar offer these addresses to viewers in addition to its own. On a home server the sidecar only knew its container IP and the router's public IP, so a stream showed as live but stayed black in the TeamSpeak client and the web preview for everyone on the host's network. *sidecar 2.2.0* [#360](https://github.com/DomeNinchen/ts6forkmanager/pull/360), reported in [#354](https://github.com/DomeNinchen/ts6forkmanager/issues/354)
 
@@ -28,7 +30,7 @@ Versions at the end of the month: **backend 2.94.1 · frontend 3.111.2 · sideca
 
 ### Bug Fixes
 
-- Fixed the flow editor leaving almost no room for the canvas on a phone: below 768 px the node list is hidden behind a **Nodes** button in the toolbar (it closes again once a node is added), and a selected node's settings cover the canvas with a close button instead of squeezing it. *frontend 3.111.2* [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
+- Fixed the flow editor leaving almost no room for the canvas on a phone: below 768 px the node list is hidden behind a **Nodes** button in the toolbar (it closes again once a node is added), and a selected node's settings cover the canvas with a close button instead of squeezing it. *frontend 3.111.3* [#PR](https://github.com/DomeNinchen/ts6forkmanager/pull/PR)
 - Fixed an encrypted backup opened with the wrong passphrase sometimes being refused as "neither a backup ZIP from this page nor a database file" instead of saying the passphrase does not open it. *backend 2.94.1* [#361](https://github.com/DomeNinchen/ts6forkmanager/pull/361)
 - Fixed two flow templates that read event fields TeamSpeak does not send: **Anti-VPN** checked an empty IP address (it now asks the server for the joining client's IP first), and **Last-Seen Tracker** stored every disconnect under the same empty name (it now remembers who is behind each connection when a client joins and records the time under that client's database ID). *frontend 3.111.1* [#359](https://github.com/DomeNinchen/ts6forkmanager/pull/359)
 - Fixed the flow editor's placeholder reference naming event fields TeamSpeak does not send: "Client Connected" lists the joined channel as `{{event.ctid}}` and no longer an IP address, and text messages and chat commands name the sender as `{{event.invokerid}}` / `{{event.invokername}}`. *frontend 3.111.0* [#357](https://github.com/DomeNinchen/ts6forkmanager/pull/357)
