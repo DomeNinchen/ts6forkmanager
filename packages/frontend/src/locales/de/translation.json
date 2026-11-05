@@ -3298,6 +3298,7 @@
           "messagePlaceholder": "Client beigetreten: {{event.client_nickname}}"
         }
       },
+      "paletteButton": "Knoten",
       "nodesCount_one": "{{count}} Node",
       "nodesCount_other": "{{count}} Nodes",
       "edgesCount_one": "{{count}} Verbindung",
