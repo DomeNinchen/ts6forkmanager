@@ -148,6 +148,38 @@ model ProtectedServerGroup {
   @@unique([serverConfigId, sid, sgid])
 }
 
+// A server group membership with an end (R13, utils/temporary-groups.ts): TeamSpeak has no expiry for a
+// membership, so the deadline lives here and a job takes the group away once it has passed. Rows that
+// ended stay as history until the retention setting removes them.
+model TemporaryServerGroup {
+  id              Int            @id @default(autoincrement())
+  serverConfigId  Int
+  sid             Int
+  sgid            Int
+  cldbid          Int
+  // Checked before the group is taken away, so a database entry that now belongs to someone else is never touched.
+  clientUid       String
+  clientNickname  String
+  expiresAt       DateTime
+  grantedAt       DateTime       @default(now())
+  grantedByUserId Int?
+  grantedBy       String
+  // "main" or "bot": the connection that gave the group takes it away again.
+  via             String         @default("main")
+  wasMember       Boolean        @default(false)
+  // TempGroupState in common: active | waiting | error | revoked | already-removed | permanent
+  state           String         @default("active")
+  error           String?
+  attempts        Int            @default(0)
+  // When the job next looks at an open row: the expiry, later the retry time. Null once it has ended.
+  nextAttemptAt   DateTime?
+  endedAt         DateTime?
+  serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+
+  @@index([nextAttemptAt])
+  @@index([serverConfigId, sid, sgid, cldbid])
+}
+
 model TsServerConfig {
   id           Int      @id @default(autoincrement())
   name         String
@@ -210,6 +242,7 @@ model TsServerConfig {
 
   userAccess    UserServerAccess[]
   protectedGroups ProtectedServerGroup[]
+  temporaryGroups TemporaryServerGroup[]
   botFlows      BotFlow[]
   botLogs       BotExecutionLog[]
   musicBots     MusicBot[]
