@@ -1514,6 +1514,112 @@
         }
       }
     },
+    "temporaryGroups": {
+      "notes": {
+        "connectionInactive": "La connexion au serveur n'est pas active.",
+        "unreachable": "TeamSpeak n'a pas pu être joint : {{detail}}",
+        "notMember": "Le client n'était plus dans le groupe.",
+        "groupGone": "Le groupe n'existe plus.",
+        "clientGone": "L'entrée du client dans la base de données n'existe plus.",
+        "otherIdentity": "L'entrée de la base de données appartient maintenant à une autre identité ; rien n'a été retiré.",
+        "noPower": "TeamSpeak a refusé le retrait : la connexion manque de puissance ({{detail}}). Après correction, une nouvelle tentative suivra.",
+        "teamspeakError": "TeamSpeak a refusé le retrait : {{detail}}"
+      },
+      "tabs": {
+        "groups": "Groupes",
+        "temporary": "Temporaires"
+      },
+      "scopeLabel": "Quelles entrées",
+      "scope": {
+        "open": "En cours",
+        "history": "Historique"
+      },
+      "accuracyHint": "Les groupes expirés sont retirés en moins d'une minute, même après un redémarrage.",
+      "loadFailed": "Impossible de charger les appartenances temporaires.",
+      "columns": {
+        "client": "Client",
+        "group": "Groupe",
+        "granted": "Attribué",
+        "expires": "Expire",
+        "ended": "Terminé",
+        "state": "État"
+      },
+      "empty": {
+        "open": "Aucune appartenance temporaire en ce moment.",
+        "history": "Aucune appartenance temporaire terminée."
+      },
+      "by": "par {{name}}",
+      "wasMember": "Était déjà membre auparavant",
+      "until": "jusqu'au {{date}}",
+      "clientBadge": "{{group}} jusqu'au {{date}}",
+      "remaining": {
+        "overdue": "en retard",
+        "days": "encore {{days}} j {{hours}} h",
+        "hours": "encore {{hours}} h {{minutes}} min",
+        "minutes": "encore {{minutes}} min"
+      },
+      "states": {
+        "active": "Active",
+        "waiting": "En attente de connexion",
+        "error": "Erreur",
+        "revoked": "Retiré",
+        "already-removed": "Déjà retiré",
+        "permanent": "Rendu permanent"
+      },
+      "errors": {
+        "ALREADY_MEMBER": "Le client est déjà membre permanent de ce groupe. Utilisez plutôt « Fixer une échéance » sur le membre.",
+        "TEMP_GROUP_EXISTS": "Ce client a déjà une échéance pour ce groupe. Modifiez plutôt celle-ci.",
+        "GROUP_NOT_ASSIGNABLE": "Aucun client ne peut être ajouté à ce groupe (groupe par défaut, de requête ou modèle).",
+        "CLIENT_NOT_FOUND": "Ce client n'existe plus dans la base de données des clients.",
+        "TEMP_GROUP_ENDED": "Cette appartenance est déjà terminée."
+      },
+      "deadline": {
+        "mode": "Échéance",
+        "for": "Pendant",
+        "until": "Jusqu'au",
+        "extendBy": "Prolonger de",
+        "amount": "Nombre",
+        "unit": "Unité",
+        "units": {
+          "minutes": "Minutes",
+          "hours": "Heures",
+          "days": "Jours"
+        },
+        "endsAt": "Se termine le {{date}} (votre heure).",
+        "tooShort": "L'échéance doit être dans au moins une minute.",
+        "tooLong": "L'échéance peut être dans au plus cinq ans.",
+        "invalid": "Saisissez une durée ou une date."
+      },
+      "addTemporary": "Temporaire",
+      "grant": "Ajouter",
+      "grantTitle": "Ajouter au groupe pour une durée limitée",
+      "setDeadline": "Fixer une échéance",
+      "setDeadlineTitle": "Fixer une échéance pour cette appartenance",
+      "setDeadlineWarning": "Le client est déjà dans ce groupe. Avec une échéance, l'appartenance existante se termine à son expiration.",
+      "grantDescription": "{{name}} dans « {{group}} »",
+      "granted": "{{name}} est dans « {{group}} » jusqu'au {{date}}.",
+      "change": "Modifier",
+      "changeTitle": "Modifier l'échéance",
+      "changeDescription": "{{name}} dans « {{group}} », actuellement jusqu'au {{date}}.",
+      "changed": "Nouvelle échéance : {{date}}.",
+      "extend": {
+        "fromExpiry": "À partir de l'expiration actuelle : {{date}}",
+        "fromNow": "À partir de maintenant : {{date}}",
+        "applies": "(utilisé)"
+      },
+      "makePermanent": "Rendre permanent",
+      "permanentTitle": "Rendre permanent",
+      "permanentDescription": "{{name}} reste dans « {{group}} » sans fin. Le gestionnaire ne suit plus cette appartenance.",
+      "madePermanent": "L'appartenance est désormais permanente.",
+      "revokeNow": "Retirer maintenant",
+      "revokeTitle": "Retirer maintenant",
+      "revokeDescription": "{{name}} est retiré de « {{group}} » immédiatement.",
+      "revokeRetrying": "TeamSpeak n'a pas encore retiré le groupe ; une nouvelle tentative suivra. {{reason}}",
+      "ended": {
+        "revoked": "Retiré du groupe.",
+        "already-removed": "Le client n'était plus dans le groupe."
+      }
+    },
     "serverGroups": {
       "protectedLabel": "Protégé",
       "protectedHint": "Seuls les administrateurs peuvent expulser, bannir ou déplacer les membres d'un groupe protégé.",

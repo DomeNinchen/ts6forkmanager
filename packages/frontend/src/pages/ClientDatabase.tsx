@@ -6,7 +6,7 @@ import {
   buildBanIndex, findBanMatches,
   type BanIndex, type ClientDbAssignableGroup, type ClientDbProfile, type ClientDbSearchParams, type ClientDbSearchResult,
 } from '@ts6/common';
-import { Ban as BanIcon, Database, Download, Eye, Loader2, MoreHorizontal, RefreshCw, Trash2, X } from 'lucide-react';
+import { Ban as BanIcon, Clock, Database, Download, Eye, Loader2, MoreHorizontal, RefreshCw, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useServerStore } from '@/stores/server.store';
 import { useClientDatabaseViewStore, type ClientDbColumnId } from '@/stores/client-database.store';
@@ -15,7 +15,9 @@ import {
   useClientDbList, useClientDbSearch, useOnlineDbIds, useRefreshClientDbList,
 } from '@/hooks/use-client-database';
 import { useChannels } from '@/hooks/use-channels';
-import { useChannelGroups } from '@/hooks/use-groups';
+import { useChannelGroups, useServerGroups, useTemporaryGroups } from '@/hooks/use-groups';
+import { formatTempDate } from '@/components/temporary-groups/TemporaryGroups';
+import { useAuthStore } from '@/stores/auth.store';
 import { DataTable, type DataTableFeatures } from '@/components/shared/DataTable';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
@@ -59,8 +61,11 @@ interface ViewState {
   /** Group mode: groups whose members TeamSpeak refused to list. */
   failedGroups: Set<number>;
   changeMembership: (profile: ClientDbProfile, group: ClientDbAssignableGroup, member: boolean) => void;
+  /** Open temporary memberships by database id, as "group until date" lines (R13). */
+  temporary: Map<number, string[]>;
 }
 const ViewStateContext = createContext<ViewState>({
+  temporary: new Map(),
   banIndex: buildBanIndex([]),
   onlineIds: new Set(),
   channels: [],
@@ -91,10 +96,21 @@ function MatchCell({ profile }: { profile: ClientDbProfile }) {
 
 function StatusCell({ profile }: { profile: ClientDbProfile }) {
   const { t } = useTranslation();
-  const { banIndex, onlineIds } = useContext(ViewStateContext);
+  const { banIndex, onlineIds, temporary } = useContext(ViewStateContext);
   const matches = findBanMatches(banIndex, profile);
+  const deadlines = temporary.get(profile.cldbid);
   return (
-    <div className="flex items-center gap-1.5 w-8">
+    <div className="flex items-center gap-1.5 min-w-8">
+      {deadlines && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span data-testid="client-temp-group" aria-label={deadlines.join(', ')}><Clock className="h-4 w-4 text-amber-500" /></span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {deadlines.map((line) => <div key={line}>{line}</div>)}
+          </TooltipContent>
+        </Tooltip>
+      )}
       {matches.length > 0 && (
         <Tooltip>
           <TooltipTrigger asChild><span><BanIcon className="h-4 w-4 text-destructive" /></span></TooltipTrigger>
@@ -218,6 +234,20 @@ export default function ClientDatabase() {
     return map;
   }, [groupsQuery.data?.members]);
   const failedGroups = useMemo(() => new Set(groupsQuery.data?.failed ?? []), [groupsQuery.data?.failed]);
+
+  // Temporary memberships (R13) for the status column; needs the same right as the group members list.
+  const canSeeMembers = useAuthStore((s) => s.can('groups.members'));
+  const { data: tempEntries } = useTemporaryGroups('open', canSeeMembers);
+  const { data: serverGroupData } = useServerGroups(canSeeMembers);
+  const temporary = useMemo(() => {
+    const names = new Map((Array.isArray(serverGroupData) ? serverGroupData : []).map((g: any) => [Number(g.sgid), String(g.name)]));
+    const map = new Map<number, string[]>();
+    for (const e of tempEntries ?? []) {
+      const line = t('pages.temporaryGroups.clientBadge', { group: names.get(e.sgid) ?? `#${e.sgid}`, date: formatTempDate(e.expiresAt) });
+      map.set(e.cldbid, [...(map.get(e.cldbid) ?? []), line]);
+    }
+    return map;
+  }, [tempEntries, serverGroupData, t]);
 
   const changeGroup = useChangeGroupMembership();
   // The click handler is kept in a ref so the context value (and with it every cell) does not change on each render.
@@ -389,9 +419,9 @@ export default function ClientDatabase() {
       banIndex, onlineIds, channels, channelGroups,
       custom: search.data?.custom,
       assignments: search.data?.channelGroups,
-      memberSets, failedGroups, changeMembership,
+      memberSets, failedGroups, changeMembership, temporary,
     }),
-    [banIndex, onlineIds, channels, channelGroups, search.data, memberSets, failedGroups, changeMembership],
+    [banIndex, onlineIds, channels, channelGroups, search.data, memberSets, failedGroups, changeMembership, temporary],
   );
 
   /** What the export writes: the same columns as the list shows, plus the chosen group columns. */

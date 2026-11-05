@@ -1,5 +1,6 @@
 import type { PrismaClient, TemporaryServerGroup } from '../generated/prisma/client.js';
 import {
+  TEMP_GROUP_NOTES,
   TEMP_GROUP_OPEN_STATES,
   TEMP_GROUP_RETENTION_DEFAULT_DAYS,
   TEMP_GROUP_RETENTION_MAX_DAYS,
@@ -64,17 +65,15 @@ export interface RevokeResult {
  * database entry that is gone. Each of those means the membership is already over.
  */
 export function classifyRevokeError(err: unknown): RevokeResult {
-  if (err instanceof ConnectionUnavailableError) return { state: 'waiting', message: 'The server connection is not active' };
+  const N = TEMP_GROUP_NOTES;
+  if (err instanceof ConnectionUnavailableError) return { state: 'waiting', message: N.connectionInactive };
   if (err instanceof TSApiError) {
-    if (err.code === -1) return { state: 'waiting', message: `TeamSpeak could not be reached: ${err.message}` };
-    if (err.code === 2563) return { state: 'already-removed', message: 'The client was no longer in the group' };
-    if (err.code === 2560) return { state: 'already-removed', message: 'The group no longer exists' };
-    if (err.code === 512) return { state: 'already-removed', message: "The client's database entry no longer exists" };
-    if (err.code === 2568) {
-      const perm = err.failedPermission ?? 'i_group_member_remove_power';
-      return { state: 'error', message: `TeamSpeak refused the removal: the connection lacks the power (${perm}). Raise it, the removal is retried.` };
-    }
-    return { state: 'error', message: `TeamSpeak error ${err.code}: ${err.message}` };
+    if (err.code === -1) return { state: 'waiting', message: `${N.unreachable}: ${err.message}` };
+    if (err.code === 2563) return { state: 'already-removed', message: N.notMember };
+    if (err.code === 2560) return { state: 'already-removed', message: N.groupGone };
+    if (err.code === 512) return { state: 'already-removed', message: N.clientGone };
+    if (err.code === 2568) return { state: 'error', message: `${N.noPower}: ${err.failedPermission ?? 'i_group_member_remove_power'}` };
+    return { state: 'error', message: `${N.teamspeakError}: ${err.code} ${err.message}` };
   }
   return { state: 'error', message: err instanceof Error ? err.message : String(err) };
 }
@@ -87,7 +86,7 @@ export async function removeMembership(pool: ConnectionPool, row: TemporaryServe
     const client = row.via === 'bot' ? pool.getBotClient(row.serverConfigId) : pool.getClient(row.serverConfigId);
     const [info] = await client.execute(row.sid, 'clientdbinfo', { cldbid: row.cldbid });
     if (info?.client_unique_identifier !== row.clientUid) {
-      return { state: 'already-removed', message: 'The database entry now belongs to another identity; nothing was removed' };
+      return { state: 'already-removed', message: TEMP_GROUP_NOTES.otherIdentity };
     }
     await client.execute(row.sid, 'servergroupdelclient', { sgid: row.sgid, cldbid: row.cldbid });
     return { state: 'revoked', message: null };
