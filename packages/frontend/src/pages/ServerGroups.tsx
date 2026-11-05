@@ -1,11 +1,16 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizeIconId } from '@ts6/common';
 import { IconImage } from '@/components/icons/IconImage';
 import {
   useServerGroups, useServerGroupMembers, useCreateServerGroup, useDeleteServerGroup,
-  useAddServerGroupMember, useRemoveServerGroupMember,
+  useAddServerGroupMember, useRemoveServerGroupMember, useTemporaryGroups,
 } from '@/hooks/use-groups';
+import {
+  TemporaryGroupsPanel, TempChangeDialog, TempEntryActions, TempGrantDialog, formatTempDate, useTempEndActions,
+} from '@/components/temporary-groups/TemporaryGroups';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { TemporaryGroupEntry } from '@ts6/common';
 import { useClientDatabase } from '@/hooks/use-clients';
 import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
@@ -24,7 +29,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { tsErrorMessage } from '@/lib/ts-errors';
 import { reportBulk, settledOutcomes } from '@/components/shared/BulkResultDialog';
-import { Shield, ShieldCheck, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search, Download, Upload } from 'lucide-react';
+import { Shield, ShieldCheck, Plus, Trash2, Users, ChevronRight, UserPlus, X, Search, Download, Upload, Clock } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { groupsApi } from '@/api/groups.api';
 import { useAuthStore } from '@/stores/auth.store';
@@ -68,6 +73,24 @@ export default function ServerGroups() {
   });
   const [showBulkDelete, setShowBulkDelete] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Temporary memberships (R13): a deadline per member of the selected group.
+  const [tab, setTab] = useState<'groups' | 'temporary'>('groups');
+  // Same right as the members list; without it the tab and the deadlines stay hidden.
+  const canManageMembers = useAuthStore((s) => s.can('groups.members'));
+  const { data: tempEntries } = useTemporaryGroups('open', canManageMembers);
+  // The job removes members by itself: when the list of deadlines changes, the member lists may have too.
+  // (Query results keep their identity while nothing changed, so this runs only on a real change.)
+  useEffect(() => {
+    if (tempEntries) queryClient.invalidateQueries({ queryKey: ['server-group-members', selectedConfigId, selectedSid] });
+  }, [tempEntries, queryClient, selectedConfigId, selectedSid]);
+  const tempByMember = useMemo(
+    () => new Map((tempEntries ?? []).map((e) => [`${e.sgid}:${e.cldbid}`, e])),
+    [tempEntries],
+  );
+  const [grantTarget, setGrantTarget] = useState<Parameters<typeof TempGrantDialog>[0]['target']>(null);
+  const [changingTemp, setChangingTemp] = useState<TemporaryGroupEntry | null>(null);
+  const tempEnd = useTempEndActions();
 
   const toggleChecked = (sgid: number) => {
     setCheckedIds((prev) => {
@@ -217,6 +240,7 @@ export default function ServerGroups() {
   if (isLoading) return <PageLoader />;
 
   const groups = Array.isArray(data) ? data : [];
+  const selectedGroupName = groups.find((g: any) => Number(g.sgid) === Number(selectedGroup))?.name ?? `#${selectedGroup}`;
 
   return (
     <div className="space-y-5">
@@ -250,6 +274,20 @@ export default function ServerGroups() {
         </div>
       </div>
 
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'groups' | 'temporary')}>
+        <TabsList className={canManageMembers ? undefined : 'hidden'}>
+          <TabsTrigger value="groups">{t('pages.temporaryGroups.tabs.groups')}</TabsTrigger>
+          <TabsTrigger value="temporary" data-testid="temp-groups-tab">
+            {t('pages.temporaryGroups.tabs.temporary')}
+            {(tempEntries?.length ?? 0) > 0 && <Badge variant="secondary" className="ml-1.5 text-[10px] font-mono-data">{tempEntries!.length}</Badge>}
+          </TabsTrigger>
+        </TabsList>
+        {canManageMembers && (
+          <TabsContent value="temporary" className="mt-4">
+            <TemporaryGroupsPanel groups={groups} />
+          </TabsContent>
+        )}
+        <TabsContent value="groups" className="mt-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Group List */}
         <Card className="card-hero lg:col-span-1">
@@ -339,15 +377,34 @@ export default function ServerGroups() {
               <ScrollArea className="h-[440px]">
                 <div className="space-y-1">
                   {Array.isArray(members) && members.length > 0 ? (
-                    members.map((m: any, i: number) => (
-                      <div key={i} className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-muted/30 transition-colors group">
-                        <div className="flex items-center gap-2">
+                    members.map((m: any, i: number) => {
+                      const temp = tempByMember.get(`${Number(selectedGroup)}:${Number(m.cldbid)}`);
+                      const memberName = m.client_nickname || t('pages.serverGroups.dbidLabel', { id: m.cldbid });
+                      return (
+                      <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2 hover:bg-muted/30 transition-colors group">
+                        <div className="flex flex-wrap items-center gap-2">
                           <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-mono-data text-primary">
                             {m.client_nickname?.[0]?.toUpperCase() || '?'}
                           </div>
-                          <span className="text-sm">{m.client_nickname || t('pages.serverGroups.dbidLabel', { id: m.cldbid })}</span>
+                          <span className="text-sm">{memberName}</span>
+                          {temp && (
+                            <Badge variant={temp.state === 'active' ? 'warning' : 'destructive'} className="gap-1" data-testid="temp-member-badge">
+                              <Clock className="h-3 w-3" />
+                              {t('pages.temporaryGroups.until', { date: formatTempDate(temp.expiresAt) })}
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {temp ? (
+                            <TempEntryActions entry={temp} groupName={selectedGroupName} onChange={setChangingTemp} onEnd={tempEnd.ask} />
+                          ) : (
+                            <Button
+                              size="sm" variant="ghost" className="h-7 text-xs"
+                              onClick={() => setGrantTarget({ sgid: Number(selectedGroup), groupName: selectedGroupName, cldbid: Number(m.cldbid), clientName: memberName, setDeadline: true })}
+                            >
+                              <Clock className="h-3 w-3 mr-1" /> {t('pages.temporaryGroups.setDeadline')}
+                            </Button>
+                          )}
                           <span className="text-xs text-muted-foreground font-mono-data">{t('pages.serverGroups.dbidLabel', { id: m.cldbid })}</span>
                           <button
                             className="p-0.5 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
@@ -364,7 +421,8 @@ export default function ServerGroups() {
                           </button>
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-8">{t('pages.serverGroups.noMembers')}</p>
                   )}
@@ -374,6 +432,12 @@ export default function ServerGroups() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+      </Tabs>
+
+      <TempGrantDialog target={grantTarget} onClose={() => setGrantTarget(null)} />
+      <TempChangeDialog entry={changingTemp} groupName={selectedGroupName} onClose={() => setChangingTemp(null)} />
+      {tempEnd.dialog}
 
       <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
         <DialogContent>
@@ -413,6 +477,21 @@ export default function ServerGroups() {
                       }}
                     >
                       <Plus className="h-3 w-3 mr-1" /> {t('common.add')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs shrink-0 ml-1"
+                      onClick={() => {
+                        if (!selectedGroup) return;
+                        setShowAddMember(false);
+                        setGrantTarget({
+                          sgid: Number(selectedGroup), groupName: selectedGroupName, cldbid: Number(c.cldbid),
+                          clientName: c.client_nickname || t('pages.serverGroups.dbidLabel', { id: c.cldbid }),
+                        });
+                      }}
+                    >
+                      <Clock className="h-3 w-3 mr-1" /> {t('pages.temporaryGroups.addTemporary')}
                     </Button>
                   </div>
                 ))

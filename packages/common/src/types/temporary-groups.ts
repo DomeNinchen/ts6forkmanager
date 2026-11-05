@@ -34,6 +34,32 @@ export const TEMP_GROUP_RETENTION_MIN_DAYS = 1;
 export const TEMP_GROUP_RETENTION_MAX_DAYS = 3650;
 export const TEMP_GROUP_RETENTION_DEFAULT_DAYS = 90;
 
+/**
+ * The fixed reasons the job stores in `error` (English, as the change log and the server log read them).
+ * A reason with a detail is stored as `<text>: <detail>`; the page translates by the key whose text starts it.
+ */
+export const TEMP_GROUP_NOTES = {
+  connectionInactive: 'The server connection is not active',
+  unreachable: 'TeamSpeak could not be reached',
+  notMember: 'The client was no longer in the group',
+  groupGone: 'The group no longer exists',
+  clientGone: "The client's database entry no longer exists",
+  otherIdentity: 'The database entry now belongs to another identity; nothing was removed',
+  noPower: 'TeamSpeak refused the removal because the connection lacks the power; raise it and the removal is retried',
+  teamspeakError: 'TeamSpeak refused the removal',
+} as const;
+export type TempGroupNoteKey = keyof typeof TEMP_GROUP_NOTES;
+
+/** The note a stored `error` text starts with, and what follows it (a permission name, TeamSpeak's own message). */
+export function parseTempGroupNote(text: string): { key: TempGroupNoteKey; detail: string } | null {
+  for (const key of Object.keys(TEMP_GROUP_NOTES) as TempGroupNoteKey[]) {
+    const note = TEMP_GROUP_NOTES[key];
+    if (text === note) return { key, detail: '' };
+    if (text.startsWith(`${note}: `)) return { key, detail: text.slice(note.length + 2) };
+  }
+  return null;
+}
+
 /** Which connection gave the group, and so takes it away again. */
 export type TempGroupVia = 'main' | 'bot';
 

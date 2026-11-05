@@ -1,7 +1,13 @@
+import type { TemporaryGroupEntry } from '@ts6/common';
 import api from './client';
 
 const sgBase = (configId: number, sid: number) =>
   `/servers/${configId}/vs/${sid}/server-groups`;
+const tgBase = (configId: number, sid: number) =>
+  `/servers/${configId}/vs/${sid}/temporary-groups`;
+
+/** A deadline as the backend takes it: a duration from now, or a point in time (ISO 8601). */
+export type TempGroupDeadline = { durationMs: number } | { expiresAt: string };
 const cgBase = (configId: number, sid: number) =>
   `/servers/${configId}/vs/${sid}/channel-groups`;
 
@@ -28,6 +34,18 @@ export const groupsApi = {
     api.put(`${sgBase(configId, sid)}/${sgid}/protected`, { protected: isProtected }).then((r) => r.data),
   serverGroupPerms: (configId: number, sid: number, sgid: number) =>
     api.get(`${sgBase(configId, sid)}/${sgid}/permissions`).then((r) => r.data),
+
+  // Temporary server group memberships (R13)
+  temporaryGroups: (configId: number, sid: number, scope: 'open' | 'history') =>
+    api.get(tgBase(configId, sid), { params: scope === 'history' ? { scope } : undefined }).then((r) => r.data as TemporaryGroupEntry[]),
+  grantTemporaryGroup: (configId: number, sid: number, body: { sgid: number; cldbid: number; setDeadline?: boolean } & TempGroupDeadline) =>
+    api.post(tgBase(configId, sid), body).then((r) => r.data as TemporaryGroupEntry),
+  updateTemporaryGroup: (configId: number, sid: number, id: number, body: { extendByMs: number } | TempGroupDeadline) =>
+    api.put(`${tgBase(configId, sid)}/${id}`, body).then((r) => r.data as TemporaryGroupEntry),
+  makeTemporaryGroupPermanent: (configId: number, sid: number, id: number) =>
+    api.post(`${tgBase(configId, sid)}/${id}/permanent`).then((r) => r.data as TemporaryGroupEntry),
+  revokeTemporaryGroup: (configId: number, sid: number, id: number) =>
+    api.post(`${tgBase(configId, sid)}/${id}/revoke`).then((r) => r.data as TemporaryGroupEntry),
 
   // Channel groups
   channelGroups: (configId: number, sid: number) =>

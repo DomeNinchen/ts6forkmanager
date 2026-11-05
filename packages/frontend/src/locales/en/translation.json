@@ -2580,6 +2580,117 @@
         }
       }
     },
+    "temporaryGroups": {
+      "retention": {
+        "label": "Keep ended entries for",
+        "days": "days ({{min}}-{{max}})",
+        "saved": "Saved."
+      },
+      "notes": {
+        "connectionInactive": "The server connection is not active.",
+        "unreachable": "TeamSpeak could not be reached: {{detail}}",
+        "notMember": "The client was no longer in the group.",
+        "groupGone": "The group no longer exists.",
+        "clientGone": "The client's database entry no longer exists.",
+        "otherIdentity": "The database entry now belongs to another identity; nothing was removed.",
+        "noPower": "TeamSpeak refused the removal: the connection lacks the power ({{detail}}). Raise it and the removal is retried.",
+        "teamspeakError": "TeamSpeak refused the removal: {{detail}}"
+      },
+      "tabs": {
+        "groups": "Groups",
+        "temporary": "Temporary"
+      },
+      "scopeLabel": "Which entries",
+      "scope": {
+        "open": "Running",
+        "history": "History"
+      },
+      "accuracyHint": "Expired groups are removed within a minute, also after a restart.",
+      "loadFailed": "Could not load the temporary memberships.",
+      "columns": {
+        "client": "Client",
+        "group": "Group",
+        "granted": "Given",
+        "expires": "Expires",
+        "ended": "Ended",
+        "state": "State"
+      },
+      "empty": {
+        "open": "No temporary memberships right now.",
+        "history": "No ended temporary memberships."
+      },
+      "by": "by {{name}}",
+      "wasMember": "Was already a member before",
+      "until": "until {{date}}",
+      "clientBadge": "{{group}} until {{date}}",
+      "remaining": {
+        "overdue": "overdue",
+        "days": "{{days}} d {{hours}} h left",
+        "hours": "{{hours}} h {{minutes}} min left",
+        "minutes": "{{minutes}} min left"
+      },
+      "states": {
+        "active": "Active",
+        "waiting": "Waiting for connection",
+        "error": "Error",
+        "revoked": "Removed",
+        "already-removed": "Already removed",
+        "permanent": "Made permanent"
+      },
+      "errors": {
+        "ALREADY_MEMBER": "The client is already a permanent member of this group. Use \"Set deadline\" on the member instead.",
+        "TEMP_GROUP_EXISTS": "This client already has a deadline for this group. Change that one instead.",
+        "GROUP_NOT_ASSIGNABLE": "Clients cannot be put into this group (default, query or template group).",
+        "CLIENT_NOT_FOUND": "This client no longer exists in the client database.",
+        "TEMP_GROUP_ENDED": "This membership has already ended."
+      },
+      "deadline": {
+        "mode": "Deadline",
+        "for": "For",
+        "until": "Until",
+        "extendBy": "Extend by",
+        "amount": "Amount",
+        "unit": "Unit",
+        "units": {
+          "minutes": "Minutes",
+          "hours": "Hours",
+          "days": "Days"
+        },
+        "endsAt": "Ends on {{date}} (your time).",
+        "tooShort": "The deadline must be at least one minute away.",
+        "tooLong": "The deadline can be at most five years away.",
+        "invalid": "Enter a duration or a date."
+      },
+      "addTemporary": "Temporary",
+      "grant": "Add",
+      "grantTitle": "Add to group for a limited time",
+      "setDeadline": "Set deadline",
+      "setDeadlineTitle": "Set a deadline on this membership",
+      "setDeadlineWarning": "The client is already in this group. With a deadline the existing membership ends when it expires.",
+      "grantDescription": "{{name}} in \"{{group}}\"",
+      "granted": "{{name}} is in \"{{group}}\" until {{date}}.",
+      "change": "Change",
+      "changeTitle": "Change deadline",
+      "changeDescription": "{{name}} in \"{{group}}\", currently until {{date}}.",
+      "changed": "New deadline: {{date}}.",
+      "extend": {
+        "fromExpiry": "From the current expiry: {{date}}",
+        "fromNow": "From now: {{date}}",
+        "applies": "(used)"
+      },
+      "makePermanent": "Make permanent",
+      "permanentTitle": "Make permanent",
+      "permanentDescription": "{{name}} stays in \"{{group}}\" without an end. The manager no longer tracks this membership.",
+      "madePermanent": "The membership is now permanent.",
+      "revokeNow": "Remove now",
+      "revokeTitle": "Remove now",
+      "revokeDescription": "{{name}} is removed from \"{{group}}\" right away.",
+      "revokeRetrying": "TeamSpeak did not remove the group yet; it is tried again. {{reason}}",
+      "ended": {
+        "revoked": "Removed from the group.",
+        "already-removed": "The client was no longer in the group."
+      }
+    },
     "serverGroups": {
       "protectedLabel": "Protected",
       "protectedHint": "Only admins can kick, ban or move members of a protected group.",

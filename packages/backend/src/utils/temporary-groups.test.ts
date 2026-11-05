@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   TEMP_GROUP_MAX_DURATION_MS,
   TEMP_GROUP_MIN_DURATION_MS,
+  TEMP_GROUP_NOTES,
+  parseTempGroupNote,
   tempGroupDurationProblem,
   tempGroupExpiry,
   tempGroupExtendedExpiry,
@@ -72,6 +74,23 @@ test('TeamSpeak answers map to states (codes measured on 6.0.0-beta13.1)', () =>
   assert.match(power.message!, /i_group_member_remove_power/);
   assert.equal(classifyRevokeError(new TSApiError(1538, 'invalid parameter')).state, 'error');
   assert.equal(classifyRevokeError(new Error('boom')).state, 'error');
+});
+
+test('every stored reason is read back as its note, with the detail after it', () => {
+  const cases: Array<[unknown, string, string]> = [
+    [new ConnectionUnavailableError(1), 'connectionInactive', ''],
+    [new TSApiError(-1, 'connect ECONNREFUSED'), 'unreachable', 'connect ECONNREFUSED'],
+    [new TSApiError(2563, 'empty result set'), 'notMember', ''],
+    [new TSApiError(2560, 'invalid group ID'), 'groupGone', ''],
+    [new TSApiError(512, 'invalid clientID'), 'clientGone', ''],
+    [new TSApiError(2568, 'insufficient client permissions', 'i_group_needed_member_remove_power'), 'noPower', 'i_group_needed_member_remove_power'],
+    [new TSApiError(5122, 'invalid apikey'), 'teamspeakError', '5122 invalid apikey'],
+  ];
+  for (const [err, key, detail] of cases) {
+    assert.deepEqual(parseTempGroupNote(classifyRevokeError(err).message!), { key, detail }, key);
+  }
+  assert.deepEqual(parseTempGroupNote(TEMP_GROUP_NOTES.otherIdentity), { key: 'otherIdentity', detail: '' });
+  assert.equal(parseTempGroupNote('something else'), null);
 });
 
 test('a failed try stays open with the next pause, a final one ends the row', () => {

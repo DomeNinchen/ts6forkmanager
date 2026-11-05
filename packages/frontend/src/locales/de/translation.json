@@ -2580,6 +2580,117 @@
         }
       }
     },
+    "temporaryGroups": {
+      "retention": {
+        "label": "Beendete Einträge aufbewahren für",
+        "days": "Tage ({{min}}-{{max}})",
+        "saved": "Gespeichert."
+      },
+      "notes": {
+        "connectionInactive": "Die Serververbindung ist nicht aktiv.",
+        "unreachable": "TeamSpeak war nicht erreichbar: {{detail}}",
+        "notMember": "Der Client war nicht mehr in der Gruppe.",
+        "groupGone": "Die Gruppe gibt es nicht mehr.",
+        "clientGone": "Den Datenbankeintrag des Clients gibt es nicht mehr.",
+        "otherIdentity": "Der Datenbankeintrag gehört jetzt einer anderen Identität; nichts wurde entfernt.",
+        "noPower": "TeamSpeak hat das Entfernen abgelehnt: der Verbindung fehlt die Macht ({{detail}}). Nach dem Erhöhen wird es erneut versucht.",
+        "teamspeakError": "TeamSpeak hat das Entfernen abgelehnt: {{detail}}"
+      },
+      "tabs": {
+        "groups": "Gruppen",
+        "temporary": "Befristet"
+      },
+      "scopeLabel": "Welche Einträge",
+      "scope": {
+        "open": "Laufend",
+        "history": "Verlauf"
+      },
+      "accuracyHint": "Abgelaufene Gruppen werden innerhalb einer Minute entzogen, auch nach einem Neustart.",
+      "loadFailed": "Die befristeten Mitgliedschaften konnten nicht geladen werden.",
+      "columns": {
+        "client": "Client",
+        "group": "Gruppe",
+        "granted": "Vergeben",
+        "expires": "Läuft ab",
+        "ended": "Beendet",
+        "state": "Zustand"
+      },
+      "empty": {
+        "open": "Derzeit keine befristeten Mitgliedschaften.",
+        "history": "Keine beendeten befristeten Mitgliedschaften."
+      },
+      "by": "von {{name}}",
+      "wasMember": "War schon vorher Mitglied",
+      "until": "bis {{date}}",
+      "clientBadge": "{{group}} bis {{date}}",
+      "remaining": {
+        "overdue": "überfällig",
+        "days": "noch {{days}} T {{hours}} Std",
+        "hours": "noch {{hours}} Std {{minutes}} Min",
+        "minutes": "noch {{minutes}} Min"
+      },
+      "states": {
+        "active": "Aktiv",
+        "waiting": "Wartet auf Verbindung",
+        "error": "Fehler",
+        "revoked": "Entzogen",
+        "already-removed": "Schon entfernt",
+        "permanent": "Dauerhaft gemacht"
+      },
+      "errors": {
+        "ALREADY_MEMBER": "Der Client ist schon dauerhaft Mitglied dieser Gruppe. Nutze stattdessen \"Frist setzen\" beim Mitglied.",
+        "TEMP_GROUP_EXISTS": "Dieser Client hat für diese Gruppe schon eine Frist. Ändere stattdessen diese.",
+        "GROUP_NOT_ASSIGNABLE": "In diese Gruppe können keine Clients aufgenommen werden (Standard-, Query- oder Vorlagengruppe).",
+        "CLIENT_NOT_FOUND": "Diesen Client gibt es in der Client-Datenbank nicht mehr.",
+        "TEMP_GROUP_ENDED": "Diese Mitgliedschaft ist schon beendet."
+      },
+      "deadline": {
+        "mode": "Frist",
+        "for": "Für",
+        "until": "Bis",
+        "extendBy": "Verlängern um",
+        "amount": "Anzahl",
+        "unit": "Einheit",
+        "units": {
+          "minutes": "Minuten",
+          "hours": "Stunden",
+          "days": "Tage"
+        },
+        "endsAt": "Endet am {{date}} (deine Zeit).",
+        "tooShort": "Die Frist muss mindestens eine Minute in der Zukunft liegen.",
+        "tooLong": "Die Frist darf höchstens fünf Jahre in der Zukunft liegen.",
+        "invalid": "Gib eine Dauer oder ein Datum ein."
+      },
+      "addTemporary": "Befristet",
+      "grant": "Hinzufügen",
+      "grantTitle": "Befristet zur Gruppe hinzufügen",
+      "setDeadline": "Frist setzen",
+      "setDeadlineTitle": "Frist für diese Mitgliedschaft setzen",
+      "setDeadlineWarning": "Der Client ist schon in dieser Gruppe. Mit einer Frist endet die bestehende Mitgliedschaft, wenn sie abläuft.",
+      "grantDescription": "{{name}} in \"{{group}}\"",
+      "granted": "{{name}} ist bis {{date}} in \"{{group}}\".",
+      "change": "Ändern",
+      "changeTitle": "Frist ändern",
+      "changeDescription": "{{name}} in \"{{group}}\", derzeit bis {{date}}.",
+      "changed": "Neue Frist: {{date}}.",
+      "extend": {
+        "fromExpiry": "Ab bisherigem Ablauf: {{date}}",
+        "fromNow": "Ab jetzt: {{date}}",
+        "applies": "(wird verwendet)"
+      },
+      "makePermanent": "Dauerhaft machen",
+      "permanentTitle": "Dauerhaft machen",
+      "permanentDescription": "{{name}} bleibt ohne Ende in \"{{group}}\". Der Manager verfolgt diese Mitgliedschaft dann nicht mehr.",
+      "madePermanent": "Die Mitgliedschaft ist jetzt dauerhaft.",
+      "revokeNow": "Jetzt entziehen",
+      "revokeTitle": "Jetzt entziehen",
+      "revokeDescription": "{{name}} wird sofort aus \"{{group}}\" entfernt.",
+      "revokeRetrying": "TeamSpeak hat die Gruppe noch nicht entzogen; es wird erneut versucht. {{reason}}",
+      "ended": {
+        "revoked": "Aus der Gruppe entfernt.",
+        "already-removed": "Der Client war nicht mehr in der Gruppe."
+      }
+    },
     "serverGroups": {
       "protectedLabel": "Geschützt",
       "protectedHint": "Mitglieder einer geschützten Gruppe können nur Admins kicken, bannen oder verschieben.",
