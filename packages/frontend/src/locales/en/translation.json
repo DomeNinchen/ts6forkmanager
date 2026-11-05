@@ -2581,6 +2581,11 @@
       }
     },
     "temporaryGroups": {
+      "retention": {
+        "label": "Keep ended entries for",
+        "days": "days ({{min}}-{{max}})",
+        "saved": "Saved."
+      },
       "notes": {
         "connectionInactive": "The server connection is not active.",
         "unreachable": "TeamSpeak could not be reached: {{detail}}",

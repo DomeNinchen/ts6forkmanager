@@ -3,6 +3,12 @@ import api from './client';
 export const settingsApi = {
   getYtCookieStatus: () => api.get('/settings/yt-cookies').then((r) => r.data),
 
+  /** How long ended temporary group memberships stay listed (R13, admin). */
+  getTemporaryGroupSettings: () =>
+    api.get('/settings/temporary-groups').then((r) => r.data as { retentionDays: number; retentionMin: number; retentionMax: number }),
+  setTemporaryGroupRetention: (retentionDays: number) =>
+    api.put('/settings/temporary-groups', { retentionDays }).then((r) => r.data as { retentionDays: number }),
+
   uploadYtCookieFile: (file: File) => {
     const formData = new FormData();
     formData.append('cookies', file);

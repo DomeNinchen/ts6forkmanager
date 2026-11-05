@@ -1515,6 +1515,11 @@
       }
     },
     "temporaryGroups": {
+      "retention": {
+        "label": "Conserver les entrées terminées pendant",
+        "days": "jours ({{min}}-{{max}})",
+        "saved": "Enregistré."
+      },
       "notes": {
         "connectionInactive": "La connexion au serveur n'est pas active.",
         "unreachable": "TeamSpeak n'a pas pu être joint : {{detail}}",

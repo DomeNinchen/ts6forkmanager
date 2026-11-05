@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { settingsApi } from '@/api/settings.api';
+import { useAuthStore } from '@/stores/auth.store';
 import type { TFunction } from 'i18next';
 import {
   TEMP_GROUP_MIN_DURATION_MS, isOpenTempGroupState, parseTempGroupNote, tempGroupDurationProblem, tempGroupExpiry, tempGroupExtendedExpiry,
@@ -353,12 +356,43 @@ export function TempEntryActions({ entry, groupName, onChange, onEnd }: {
 
 // ---- the "Temporary" tab ----------------------------------------------------
 
+/** Admin only: how many days ended entries stay in the history. */
+function RetentionField() {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ['temporary-groups-settings'], queryFn: settingsApi.getTemporaryGroupSettings });
+  const [draft, setDraft] = useState<string | null>(null);
+  const save = useMutation({
+    mutationFn: (days: number) => settingsApi.setTemporaryGroupRetention(days),
+    onSuccess: () => { toast.success(t('pages.temporaryGroups.retention.saved')); setDraft(null); qc.invalidateQueries({ queryKey: ['temporary-groups-settings'] }); },
+    onError: (err) => toast.error(tempGroupErrorMessage(err, t)),
+  });
+  if (!data) return null;
+  const value = draft ?? String(data.retentionDays);
+  const days = Number(value);
+  const valid = Number.isInteger(days) && days >= data.retentionMin && days <= data.retentionMax;
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      <Label htmlFor="temp-group-retention" className="text-xs">{t('pages.temporaryGroups.retention.label')}</Label>
+      <Input
+        id="temp-group-retention" type="number" className="h-8 w-24" min={data.retentionMin} max={data.retentionMax}
+        value={value} onChange={(e) => setDraft(e.target.value)} aria-invalid={!valid}
+      />
+      <span className="text-muted-foreground">{t('pages.temporaryGroups.retention.days', { min: data.retentionMin, max: data.retentionMax })}</span>
+      {draft !== null && (
+        <Button size="sm" className="h-8" disabled={!valid || save.isPending} onClick={() => save.mutate(days)}>{t('common.save')}</Button>
+      )}
+    </div>
+  );
+}
+
 export function TemporaryGroupsPanel({ groups }: { groups: Array<{ sgid: number | string; name: string }> }) {
   const { t } = useTranslation();
   const [scope, setScope] = useState<'open' | 'history'>('open');
   const { data, isLoading, isError } = useTemporaryGroups(scope);
   const [changing, setChanging] = useState<TemporaryGroupEntry | null>(null);
   const end = useTempEndActions();
+  const isAdmin = useAuthStore((s) => s.isAdmin());
   const groupName = useMemo(() => {
     const names = new Map(groups.map((g) => [Number(g.sgid), g.name]));
     return (sgid: number) => names.get(sgid) ?? `#${sgid}`;
@@ -431,6 +465,7 @@ export function TemporaryGroupsPanel({ groups }: { groups: Array<{ sgid: number 
           </table>
         </div>
       )}
+      {scope === 'history' && isAdmin && <RetentionField />}
       <TempChangeDialog entry={changing} groupName={changing ? groupName(changing.sgid) : ''} onClose={() => setChanging(null)} />
       {end.dialog}
     </div>
