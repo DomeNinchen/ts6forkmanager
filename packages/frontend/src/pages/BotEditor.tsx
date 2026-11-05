@@ -16,7 +16,7 @@ import {
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
-  BookOpen, Info, SlidersHorizontal, History, FlaskConical,
+  BookOpen, Info, SlidersHorizontal, History, FlaskConical, X,
 } from 'lucide-react';
 import { ExecutionsPanel } from '@/components/bots/ExecutionsPanel';
 import { TestPanel, stepProblem } from '@/components/bots/TestPanel';
@@ -706,6 +706,8 @@ export default function BotEditor() {
   const [showHelp, setShowHelp] = useState(false);
   const [showExecutions, setShowExecutions] = useState(false);
   const [showTest, setShowTest] = useState(false);
+  // Below md the node palette is an overlay opened from the toolbar; on wider screens it is always shown.
+  const [showPalette, setShowPalette] = useState(false);
   const [testReport, setTestReport] = useState<FlowTestReport | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   // What the last test did, for the canvas: step numbers and problems per node, and the connections it went along.
@@ -803,6 +805,7 @@ export default function BotEditor() {
     const id = `node_${Date.now()}`;
     setNodes((prev) => [...prev, { id, type, label, config: {}, x: 220 + Math.random() * 200, y: 80 + prev.length * 90 }]);
     setSelectedNode(id);
+    setShowPalette(false);
   };
 
   const deleteNode = (id: string) => {
@@ -1064,6 +1067,15 @@ export default function BotEditor() {
           <Badge variant="outline" className="hidden text-[10px] sm:inline-flex">{t('pages.botEditor.edgesCount', { count: edges.length })}</Badge>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={showPalette ? 'secondary' : 'outline'}
+            size="sm"
+            className="h-8 md:hidden"
+            onClick={() => setShowPalette((v) => !v)}
+            aria-pressed={showPalette}
+          >
+            <Plus className="h-4 w-4 mr-1" /> {t('pages.botEditor.paletteButton')}
+          </Button>
           {template && (
             <Button variant="outline" size="sm" className="h-8" onClick={() => setShowTemplateConfig(true)}>
               <SlidersHorizontal className="h-4 w-4 mr-1" /> {t('pages.botEditor.templateConfig')}
@@ -1113,8 +1125,11 @@ export default function BotEditor() {
       )}
 
       <div className="card-hero relative flex flex-1 gap-0 overflow-hidden border border-border">
-        {/* Node Palette */}
-        <div className="w-52 border-r border-border bg-card/50 shrink-0">
+        {/* Node Palette: a column next to the canvas from md up, an overlay over it below (toggled in the toolbar). */}
+        <div className={cn(
+          'w-52 border-r border-border bg-card/50 shrink-0 max-md:absolute max-md:inset-0 max-md:z-40 max-md:w-full max-md:border-r-0 max-md:bg-card',
+          !showPalette && 'max-md:hidden',
+        )}>
           <ScrollArea className="h-full">
             <div className="p-3 space-y-4">
               {nodeCategories.map((cat) => (
@@ -1430,14 +1445,20 @@ export default function BotEditor() {
 
         {/* Properties Panel */}
         {selectedNodeData && (
-          <div className="w-64 border-l border-border bg-card/50 shrink-0">
+          // Below md it covers the canvas like the node palette; its close button (there only) clears the selection.
+          <div className="w-64 border-l border-border bg-card/50 shrink-0 max-md:absolute max-md:inset-0 max-md:z-40 max-md:w-full max-md:border-l-0 max-md:bg-card">
             <ScrollArea className="h-full">
               <div className="p-3 space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="font-display text-xs font-semibold tracking-wide">{t('pages.botEditor.nodeProperties')}</p>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteNode(selectedNodeData.id)}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteNode(selectedNodeData.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 md:hidden" onClick={() => setSelectedNode(null)} title={t('common.close')} aria-label={t('common.close')}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
 
                 <Separator />

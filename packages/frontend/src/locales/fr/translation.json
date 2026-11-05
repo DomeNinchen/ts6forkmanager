@@ -2123,6 +2123,7 @@
           "messagePlaceholder": "Client rejoint : {{event.client_nickname}}"
         }
       },
+      "paletteButton": "Nœuds",
       "nodesCount_one": "{{count}} nœud",
       "nodesCount_other": "{{count}} nœuds",
       "edgesCount_one": "{{count}} arête",
