@@ -1,12 +1,16 @@
 import { Router, Request, Response } from 'express';
 import {
+  TEMP_GROUP_NOTICE_DEFAULTS,
   TEMP_GROUP_OPEN_STATES,
+  noticeSettingsProblem,
   tempGroupDurationProblem,
   tempGroupExpiry,
   tempGroupExtendedExpiry,
+  type TempGroupNoticeSettings,
 } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
-import { requirePermission } from '../middleware/rbac.js';
+import { requirePermission, requireRole } from '../middleware/rbac.js';
+import { getNoticeSettings, setNoticeSettings } from '../utils/temporary-group-notices.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { targetIds } from '../utils/protected-groups.js';
@@ -51,6 +55,28 @@ async function openRow(req: Request) {
   if (!OPEN.includes(row.state as (typeof OPEN)[number])) throw new AppError(409, 'This membership has already ended', undefined, 'TEMP_GROUP_ENDED');
   return row;
 }
+
+// How clients hear about their deadline on this virtual server (stage 3). Admin only (his decision): the
+// texts go out to clients in the name of the connection. Declared before '/:id' so it is not taken for an id.
+temporaryGroupRoutes.get('/notice-settings', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { prisma, serverConfigId, sid } = scope(req);
+    res.json({ settings: await getNoticeSettings(prisma, serverConfigId, sid), defaults: TEMP_GROUP_NOTICE_DEFAULTS });
+  } catch (err) { next(err); }
+});
+
+temporaryGroupRoutes.put('/notice-settings', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { prisma, serverConfigId, sid } = scope(req);
+    const keys = Object.keys(TEMP_GROUP_NOTICE_DEFAULTS) as (keyof TempGroupNoticeSettings)[];
+    const settings = Object.fromEntries(keys.map((k) => [k, req.body?.[k]])) as unknown as TempGroupNoticeSettings;
+    const problem = noticeSettingsProblem(settings);
+    if (problem) throw new AppError(400, problem);
+    settings.warnBeforeMs = [...settings.warnBeforeMs].sort((a, b) => b - a);
+    await setNoticeSettings(prisma, serverConfigId, sid, settings);
+    res.json({ settings });
+  } catch (err) { next(err); }
+});
 
 // ?scope=open (default) lists what is running, soonest first; ?scope=history what has ended, newest first.
 temporaryGroupRoutes.get('/', requirePermission('groups.members'), async (req: Request, res: Response, next) => {
@@ -153,7 +179,8 @@ temporaryGroupRoutes.put('/:id', requirePermission('groups.members'), async (req
     const expiresAt = new Date(expiry);
     const { count } = await prisma.temporaryServerGroup.updateMany({
       where: { id: row.id, state: { in: OPEN } },
-      data: { expiresAt, nextAttemptAt: expiresAt, state: 'active', error: null, attempts: 0 },
+      // A new deadline starts the warnings over; one still waiting for the client was about the old one.
+      data: { expiresAt, nextAttemptAt: expiresAt, state: 'active', error: null, attempts: 0, deadlineSetAt: new Date(), warnedBeforeMin: null, pendingNotice: null },
     });
     if (count === 0) throw new AppError(409, 'This membership has already ended', undefined, 'TEMP_GROUP_ENDED');
     res.json(toTempGroupEntry((await prisma.temporaryServerGroup.findUniqueOrThrow({ where: { id: row.id } }))));
@@ -167,7 +194,7 @@ temporaryGroupRoutes.post('/:id/permanent', requirePermission('groups.members'),
     const row = await openRow(req);
     const { count } = await prisma.temporaryServerGroup.updateMany({
       where: { id: row.id, state: { in: OPEN } },
-      data: { state: 'permanent', error: null, nextAttemptAt: null, endedAt: new Date() },
+      data: { state: 'permanent', error: null, nextAttemptAt: null, endedAt: new Date(), pendingNotice: null },
     });
     if (count === 0) throw new AppError(409, 'This membership has already ended', undefined, 'TEMP_GROUP_ENDED');
     res.json(toTempGroupEntry((await prisma.temporaryServerGroup.findUniqueOrThrow({ where: { id: row.id } }))));

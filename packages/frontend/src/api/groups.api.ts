@@ -1,4 +1,4 @@
-import type { TemporaryGroupEntry } from '@ts6/common';
+import type { TempGroupNoticeSettings, TemporaryGroupEntry } from '@ts6/common';
 import api from './client';
 
 const sgBase = (configId: number, sid: number) =>
@@ -46,6 +46,10 @@ export const groupsApi = {
     api.post(`${tgBase(configId, sid)}/${id}/permanent`).then((r) => r.data as TemporaryGroupEntry),
   revokeTemporaryGroup: (configId: number, sid: number, id: number) =>
     api.post(`${tgBase(configId, sid)}/${id}/revoke`).then((r) => r.data as TemporaryGroupEntry),
+  temporaryGroupNoticeSettings: (configId: number, sid: number) =>
+    api.get(`${tgBase(configId, sid)}/notice-settings`).then((r) => r.data as { settings: TempGroupNoticeSettings; defaults: TempGroupNoticeSettings }),
+  setTemporaryGroupNoticeSettings: (configId: number, sid: number, settings: TempGroupNoticeSettings) =>
+    api.put(`${tgBase(configId, sid)}/notice-settings`, settings).then((r) => r.data as { settings: TempGroupNoticeSettings }),
 
   // Channel groups
   channelGroups: (configId: number, sid: number) =>

@@ -15,6 +15,7 @@ import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { ConnectionUnavailableError, TSApiError } from '../middleware/error-handler.js';
 import { recordChange } from './change-log.js';
 import { getChangeLogSettings } from './change-log-settings.js';
+import { getNoticeSettings, noticeWanted, parseNoticeRecord, processTempGroupNotices } from './temporary-group-notices.js';
 
 // Temporary server group memberships (R13). TeamSpeak has no expiry for a membership, so the
 // deadline lives in TemporaryServerGroup and a job takes the group away once it has passed.
@@ -40,6 +41,8 @@ export function toTempGroupEntry(row: TemporaryServerGroup): TemporaryGroupEntry
     attempts: row.attempts,
     nextAttemptAt: row.nextAttemptAt?.toISOString() ?? null,
     endedAt: row.endedAt?.toISOString() ?? null,
+    lastNotice: parseNoticeRecord(row.lastNotice),
+    pendingNotice: row.pendingNotice as TemporaryGroupEntry['pendingNotice'],
   };
 }
 
@@ -143,7 +146,13 @@ export async function processDueTempGroups(prisma: PrismaClient, pool: Connectio
     const startedAt = Date.now();
     const result = await removeMembership(pool, row);
     const updated = await applyRevokeResult(prisma, row, result);
-    if (updated && result.state === 'revoked') await logAutomaticRemoval(prisma, row, startedAt);
+    if (updated && result.state === 'revoked') {
+      await logAutomaticRemoval(prisma, row, startedAt);
+      // The notice pass right after this one tells the client (or waits until it is online).
+      if (noticeWanted(await getNoticeSettings(prisma, row.serverConfigId, row.sid), 'expired')) {
+        await prisma.temporaryServerGroup.update({ where: { id: row.id }, data: { pendingNotice: 'expired' } });
+      }
+    }
   }
   return rows.length;
 }
@@ -191,6 +200,7 @@ export function startTemporaryGroupJob(prisma: PrismaClient, pool: ConnectionPoo
   const tick = () => {
     if (running) return;
     running = processDueTempGroups(prisma, pool)
+      .then(() => processTempGroupNotices(prisma, pool))
       .catch((err) => console.warn(`[TempGroups] Pass failed: ${err.message}`))
       .finally(() => { running = null; });
   };

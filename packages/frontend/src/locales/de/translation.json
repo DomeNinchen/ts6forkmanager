@@ -2581,6 +2581,44 @@
       }
     },
     "temporaryGroups": {
+      "notice": {
+        "warning": "Gewarnt ({{before}} vorher)",
+        "expired": "Über das Ende informiert",
+        "nothingSent": "nichts gesendet",
+        "waiting": "Privatnachricht folgt, sobald der Client online ist",
+        "channels": {
+          "message": "Privatnachricht",
+          "offline": "Offline-Nachricht",
+          "poke": "Anstupsen"
+        }
+      },
+      "notices": {
+        "title": "Benachrichtigungen an Clients",
+        "intro": "Gilt für diesen virtuellen Server. Die Texte gehen im Namen der Serververbindung hinaus; die Sprache des Clients ist nicht bekannt, schreibe sie also in der Sprache deiner Nutzer.",
+        "enabled": "Benachrichtigungen senden",
+        "warnTimes": "Vor dem Ende warnen",
+        "warnTimesHint": "Durch Komma getrennt, z. B. \"7d, 1d, 12h, 30m\" (höchstens 5, eine Minute bis 365 Tage). Jede Warnung wird einmal gesendet; eine Frist, die kürzer als eine Warnzeit ist, bekommt diese Warnung nicht.",
+        "warnTimesInvalid": "Schreibe die Warnzeiten wie \"7d, 1d, 12h, 30m\".",
+        "warnTimesRange": "Höchstens 5 verschiedene Warnzeiten, jede zwischen einer Minute und 365 Tagen.",
+        "notifyExpired": "Client informieren, wenn die Gruppe entzogen wurde",
+        "channelsTitle": "Wie",
+        "channels": {
+          "privateMessage": "Privatnachricht (Clients, die online sind)",
+          "offlineMessage": "Offline-Nachricht (Clients, die offline sind)",
+          "poke": "Anstupsen (online, erste 100 Zeichen)"
+        },
+        "channelsHint": "Ein Client, der offline ist, bekommt sofort die Offline-Nachricht und die Privatnachricht bzw. das Anstupsen, sobald er wieder online ist (eine Warnung bis zum Ablauf, den Hinweis aufs Ende 30 Tage lang).",
+        "warningText": "Text der Warnung",
+        "expiredText": "Text nach dem Ende",
+        "preview": "Vorschau",
+        "placeholders": "Platzhalter",
+        "timeZone": "Zeitzone für {expires}",
+        "timeZoneHint": "Ein IANA-Name wie \"Europe/Berlin\" oder \"UTC\". Das Datum wird mit dem Zonennamen geschrieben.",
+        "timeZoneInvalid": "Unbekannte Zeitzone.",
+        "textEmpty": "Beide Texte werden gebraucht.",
+        "saved": "Benachrichtigungen gespeichert.",
+        "defaults": "Standardwerte"
+      },
       "retention": {
         "label": "Beendete Einträge aufbewahren für",
         "days": "Tage ({{min}}-{{max}})",

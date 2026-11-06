@@ -2581,6 +2581,44 @@
       }
     },
     "temporaryGroups": {
+      "notice": {
+        "warning": "Warned ({{before}} before)",
+        "expired": "Told about the end",
+        "nothingSent": "nothing sent",
+        "waiting": "private message follows when the client is online",
+        "channels": {
+          "message": "private message",
+          "offline": "offline message",
+          "poke": "poke"
+        }
+      },
+      "notices": {
+        "title": "Notifications to clients",
+        "intro": "Applies to this virtual server. The texts go out in the name of the server connection; the client's language is not known, so write them in the language your users read.",
+        "enabled": "Send notifications",
+        "warnTimes": "Warn before the end",
+        "warnTimesHint": "Comma-separated, e.g. \"7d, 1d, 12h, 30m\" (up to 5, one minute to 365 days). Each warning is sent once; a deadline that is shorter than a warning time does not get that warning.",
+        "warnTimesInvalid": "Write the warning times like \"7d, 1d, 12h, 30m\".",
+        "warnTimesRange": "Up to 5 different warning times, each between one minute and 365 days.",
+        "notifyExpired": "Tell the client when the group was taken away",
+        "channelsTitle": "How",
+        "channels": {
+          "privateMessage": "Private message (online clients)",
+          "offlineMessage": "Offline message (clients that are offline)",
+          "poke": "Poke (online clients, first 100 characters)"
+        },
+        "channelsHint": "A client who is offline gets the offline message at once and the private message/poke as soon as they come online (a warning until the deadline, the end notice for 30 days).",
+        "warningText": "Warning text",
+        "expiredText": "Text when it has ended",
+        "preview": "Preview",
+        "placeholders": "Placeholders",
+        "timeZone": "Time zone for {expires}",
+        "timeZoneHint": "An IANA name such as \"Europe/Berlin\" or \"UTC\". The date is written with the zone name.",
+        "timeZoneInvalid": "Unknown time zone.",
+        "textEmpty": "Both texts are needed.",
+        "saved": "Notification settings saved.",
+        "defaults": "Defaults"
+      },
       "retention": {
         "label": "Keep ended entries for",
         "days": "days ({{min}}-{{max}})",
