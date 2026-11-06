@@ -120,6 +120,12 @@ export interface SupportQueueView {
   cases: SupportCaseEntry[];
 }
 
+/** Why a queue paused, as the backend stores it (English); a reason with a detail is `<text>: <detail>`. */
+export const SUPPORT_PAUSE_NOTES = {
+  connectionInactive: 'The server connection is not active',
+  unreachable: 'TeamSpeak could not be reached',
+} as const;
+
 /** null when the settings are acceptable, otherwise the reason. */
 export function supportSettingsProblem(s: SupportQueueSettings): string | null {
   const ids = (v: unknown) => Array.isArray(v) && v.length <= 50 && v.every((n) => Number.isInteger(n) && n > 0);

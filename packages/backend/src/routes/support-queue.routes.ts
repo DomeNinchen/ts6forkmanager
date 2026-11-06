@@ -13,6 +13,7 @@ import { requirePermission, requireRole } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { targetIds } from '../utils/protected-groups.js';
+import { mayRole } from '../utils/role-table.js';
 import { acquireChannelCreateLock, clientMoveTolerating770 } from '../utils/channel-create-lock.js';
 import {
   closeOpenCases, getQueueStatus, isAvailableSupporter, orderOpenCases, parseClientList, parseSettings,
@@ -25,6 +26,11 @@ export const supportQueueRoutes: Router = Router({ mergeParams: true });
 
 const HISTORY_MAX = 500;
 const OPEN = [...SUPPORT_OPEN_STATES];
+
+/** Which web user acted is for those who may act themselves; read-only viewers get the case without it. */
+function forViewer<T extends { actedBy: string | null }>(req: Request, entry: T): T {
+  return req.user?.role === 'admin' || mayRole(req.user?.role, 'clients.move') ? entry : { ...entry, actedBy: null };
+}
 
 function scope(req: Request) {
   return {
@@ -73,7 +79,7 @@ supportQueueRoutes.get('/', requirePermission('server.view'), async (req: Reques
     const { prisma, serverConfigId, sid } = scope(req);
     const queue = await queueOf(prisma, serverConfigId, sid);
     const rows = queue ? await prisma.supportCase.findMany({ where: { queueId: queue.id, state: { in: OPEN } } }) : [];
-    const view: SupportQueueView = { config: toQueueConfig(queue), status: getQueueStatus(queue?.id ?? null), cases: orderOpenCases(rows) };
+    const view: SupportQueueView = { config: toQueueConfig(queue), status: getQueueStatus(queue?.id ?? null), cases: orderOpenCases(rows).map((e) => forViewer(req, e)) };
     res.json(view);
   } catch (err) { next(err); }
 });
@@ -85,7 +91,7 @@ supportQueueRoutes.get('/history', requirePermission('server.view'), async (req:
     const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '100')) || 100, 1), HISTORY_MAX);
     const queue = await queueOf(prisma, serverConfigId, sid);
     const rows = queue ? await prisma.supportCase.findMany({ where: { queueId: queue.id, state: { notIn: OPEN } }, orderBy: { endedAt: 'desc' }, take: limit }) : [];
-    res.json(rows.map((r) => toCaseEntry(r)));
+    res.json(rows.map((r) => forViewer(req, toCaseEntry(r))));
   } catch (err) { next(err); }
 });
 

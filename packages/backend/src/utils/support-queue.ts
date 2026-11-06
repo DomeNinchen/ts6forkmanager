@@ -1,6 +1,7 @@
 import type { PrismaClient, SupportCase, SupportQueue } from '../generated/prisma/client.js';
 import {
   SUPPORT_OPEN_STATES,
+  SUPPORT_PAUSE_NOTES,
   SUPPORT_QUEUE_DEFAULTS,
   supportSettingsProblem,
   type SupportCaseEntry,
@@ -277,11 +278,6 @@ export function getQueueStatus(queueId: number | null): SupportQueueStatus {
 export function resetQueueState(queueId: number): void {
   live.delete(queueId);
 }
-
-export const SUPPORT_PAUSE_NOTES = {
-  connectionInactive: 'The server connection is not active',
-  unreachable: 'TeamSpeak could not be reached',
-} as const;
 
 // --- The job --------------------------------------------------------------------------------
 

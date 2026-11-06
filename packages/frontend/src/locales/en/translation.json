@@ -113,6 +113,7 @@
       "files": "Files",
       "icons": "Icons",
       "complaints": "Complaints",
+      "support": "Support Queue",
       "messages": "Messages",
       "serverLogs": "Server Logs",
       "queryConsole": "Query Console",
@@ -2578,6 +2579,107 @@
           "end": "{{name}} dropped in the place of {{target}}.",
           "cancel": "Moving cancelled, {{name}} stays where it was."
         }
+      }
+    },
+    "support": {
+      "duration": {
+        "hours": "{{h}} h {{m}} min",
+        "minutes": "{{m}} min {{s}} s",
+        "seconds": "{{s}} s"
+      },
+      "states": {
+        "waiting": "Waiting",
+        "in-progress": "In progress",
+        "done": "Done",
+        "cancelled": "Cancelled"
+      },
+      "paused": {
+        "title": "The queue is paused",
+        "since": "since {{time}}",
+        "connectionInactive": "The server connection is not active. Nobody is moved along or cancelled until it is back.",
+        "unreachable": "TeamSpeak could not be reached ({{detail}}). Nobody is moved along or cancelled until it answers again."
+      },
+      "loadError": "The support queue could not be loaded",
+      "retry": "Try again",
+      "notSetUp": "No support queue on this virtual server",
+      "switchedOff": "The support queue is switched off",
+      "setUpHint": "An administrator can set one up.",
+      "setUpHintAdmin": "Use Settings to pick a waiting channel and the supporter groups.",
+      "supportersOnline_one": "{{count}} supporter available",
+      "supportersOnline_other": "{{count}} supporters available",
+      "checkedAt": "Checked {{time}}",
+      "waitingTitle": "Waiting ({{count}})",
+      "emptyQueue": "Nobody is waiting.",
+      "historyTitle": "Recent cases",
+      "emptyHistory": "No finished cases yet.",
+      "removeTitle": "Remove from the queue?",
+      "removeDescription": "{{client}} leaves the queue and is moved to the server's default channel.",
+      "actions": {
+        "take": "Take",
+        "remove": "Remove",
+        "close": "Mark done"
+      },
+      "toasts": {
+        "take": "{{client}} was taken; both are in a new room.",
+        "remove": "{{client}} was removed from the queue.",
+        "close": "The case of {{client}} is done."
+      },
+      "positionLabel": "Position {{position}}",
+      "arrivalUnknownHint": "Was already waiting when the queue started watching; the real arrival is unknown.",
+      "waited": "waiting {{time}}",
+      "waitedAtLeast": "waiting at least {{time}}",
+      "historyWaited": "waited for {{time}}",
+      "historyWaitedAtLeast": "waited at least {{time}}",
+      "absent": "gone for {{time}}",
+      "takenBy": "with {{names}}",
+      "takenByWeb": "taken for {{names}}",
+      "endReasons": {
+        "left-server": "left the server",
+        "left-channel": "left the waiting channel",
+        "finished": "no longer with a supporter",
+        "removed": "removed",
+        "closed": "marked done",
+        "queue-changed": "queue changed or switched off"
+      },
+      "takeTitle": "Take {{client}}",
+      "takeDescription": "A room is created and the client and the chosen supporter are moved into it.",
+      "noSupporterOnline": "No supporter is available right now (online, not away, not in an AFK channel).",
+      "supporter": "Supporter",
+      "chooseSupporter": "Choose a supporter",
+      "errors": {
+        "CASE_NOT_WAITING": "This client is no longer waiting.",
+        "CASE_NOT_IN_PROGRESS": "This case is no longer in progress.",
+        "CLIENT_OFFLINE": "The client is not online right now.",
+        "NOT_A_SUPPORTER": "This supporter is no longer available (offline, away or in an AFK channel).",
+        "CHANNEL_NOT_FOUND": "This channel no longer exists."
+      },
+      "settings": {
+        "open": "Settings",
+        "title": "Support queue settings",
+        "description": "Whoever enters the waiting channel is queued in order. A case is taken when a supporter pulls the client into their channel, or here with Take.",
+        "conflictTitle": "A bot flow reacts to the same channel",
+        "conflictText": "{{flows}} also handles clients entering this channel. Both would act on the same client; switch the flow off or use another channel.",
+        "enabled": "Queue switched on",
+        "channel": "Waiting channel",
+        "chooseChannel": "Choose a channel",
+        "channelHint": "Changing the channel or switching the queue off ends the open cases.",
+        "groups": "Supporter groups",
+        "afk": "AFK channels (supporters there do not count)",
+        "grace": "Grace period (seconds)",
+        "graceHint": "How long a client may be gone (disconnected, other channel) and keep their place.",
+        "withoutSupporter": "Queue clients while no supporter is available",
+        "withoutSupporterHint": "When off, nobody is queued until a supporter is available.",
+        "roomName": "Room name",
+        "roomNameHint": "For Take. {client} and {supporter} are filled in; at most 40 characters.",
+        "roomType": "Room type",
+        "roomTypes": {
+          "temporary": "Temporary (deleted when empty)",
+          "semipermanent": "Semi-permanent",
+          "permanent": "Permanent"
+        },
+        "needChannel": "Choose a waiting channel.",
+        "needGroup": "Choose at least one supporter group.",
+        "saved": "Support queue saved"
       }
     },
     "temporaryGroups": {

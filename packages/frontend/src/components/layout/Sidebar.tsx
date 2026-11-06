@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, DatabaseBackup, X,
+  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, DatabaseBackup, X, Headset,
 } from 'lucide-react';
 import { useEffect, useSyncExternalStore } from 'react';
 import { Dialog, DialogDrawerContent, DialogTitle } from '@/components/ui/dialog';
@@ -57,6 +57,7 @@ function getNavSections(t: TFunction) {
       items: [
         { to: '/channels', icon: Hash, label: t('nav.items.channels'), ...needsWebQuery },
         { to: '/clients', icon: Users, label: t('nav.items.clients'), ...needsWebQuery },
+        { to: '/support', icon: Headset, label: t('nav.items.support'), visible: may('server.view'), ...needsWebQuery },
         { to: '/client-database', icon: Database, label: t('nav.items.clientDatabase'), visible: may('clients.database'), ...needsWebQuery },
         { to: '/server-groups', icon: Shield, label: t('nav.items.serverGroups'), visible: may('groups.edit'), ...needsWebQuery },
         { to: '/channel-groups', icon: ShieldCheck, label: t('nav.items.channelGroups'), visible: may('groups.edit'), ...needsWebQuery },
