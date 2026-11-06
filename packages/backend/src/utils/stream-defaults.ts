@@ -6,9 +6,14 @@ const KEY_FRAMERATE = 'stream_default_framerate';
 const KEY_BITRATE = 'stream_default_bitrate';
 const KEY_VOLUME = 'stream_default_volume';
 const KEY_IDLE_STOP = 'stream_idle_stop_minutes';
+const KEY_MAX_VIDEO = 'stream_max_video_minutes';
 
 /** A day is more than any "nobody is watching" patience makes sense for; it also keeps setTimeout well inside its range. */
 export const IDLE_STOP_MAX_MINUTES = 1440;
+
+/** How long a downloaded video may be: 15 minutes unless an admin raises it, at most 4 hours (it is downloaded in full first). */
+export const DEFAULT_MAX_VIDEO_MINUTES = 15;
+export const MAX_VIDEO_MAX_MINUTES = 240;
 
 export interface StreamDefaults {
   preset: string;
@@ -24,6 +29,8 @@ export interface StreamDefaults {
    * Streaming tab is where an admin looks for everything about video.
    */
   idleStopMinutes: number;
+  /** Longest YouTube/Twitch video a stream accepts, in minutes (1 to MAX_VIDEO_MAX_MINUTES). */
+  maxVideoMinutes: number;
 }
 
 /**
@@ -59,12 +66,13 @@ export function builtInStreamDefaults(): StreamDefaults {
     // Off: switching it on is a decision about the server's bandwidth, and a
     // stream that ends by itself is a surprise nobody asked for.
     idleStopMinutes: 0,
+    maxVideoMinutes: DEFAULT_MAX_VIDEO_MINUTES,
   };
 }
 
 export async function getStreamDefaults(prisma: PrismaClient): Promise<StreamDefaults> {
   const rows = await prisma.appSetting.findMany({
-    where: { key: { in: [KEY_PRESET, KEY_FRAMERATE, KEY_BITRATE, KEY_VOLUME, KEY_IDLE_STOP] } },
+    where: { key: { in: [KEY_PRESET, KEY_FRAMERATE, KEY_BITRATE, KEY_VOLUME, KEY_IDLE_STOP, KEY_MAX_VIDEO] } },
   });
   const stored = new Map(rows.map((r) => [r.key, r.value]));
   const fallback = builtInStreamDefaults();
@@ -89,7 +97,14 @@ export async function getStreamDefaults(prisma: PrismaClient): Promise<StreamDef
       Number.isInteger(idleStopMinutes) && idleStopMinutes >= 0 && idleStopMinutes <= IDLE_STOP_MAX_MINUTES
         ? idleStopMinutes
         : fallback.idleStopMinutes,
+    maxVideoMinutes: isValidMaxVideoMinutes(Number(stored.get(KEY_MAX_VIDEO)))
+      ? Number(stored.get(KEY_MAX_VIDEO))
+      : fallback.maxVideoMinutes,
   };
+}
+
+export function isValidMaxVideoMinutes(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 1 && (value as number) <= MAX_VIDEO_MAX_MINUTES;
 }
 
 export async function setStreamDefaults(prisma: PrismaClient, values: StreamDefaults): Promise<StreamDefaults> {
@@ -99,6 +114,7 @@ export async function setStreamDefaults(prisma: PrismaClient, values: StreamDefa
     [KEY_BITRATE, values.bitrate],
     [KEY_VOLUME, String(values.volume)],
     [KEY_IDLE_STOP, String(values.idleStopMinutes)],
+    [KEY_MAX_VIDEO, String(values.maxVideoMinutes)],
   ];
   await prisma.$transaction(
     pairs.map(([key, value]) =>

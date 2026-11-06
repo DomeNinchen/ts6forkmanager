@@ -188,6 +188,7 @@ export class VoiceBotManager extends EventEmitter {
 
   private createBotInstance(config: VoiceBotConfig): VoiceBot {
     config.getOtherBotClientIds = () => this.otherBotClientIds(config.id);
+    config.getMaxVideoMinutes = async () => (await getStreamDefaults(this.prisma)).maxVideoMinutes;
     // Every event of this bot goes to the users who may see this bot: admins, and the music roles granted its server connection.
     const broadcast = (type: string, payload: object) => sendToAudience(this.wss, type, payload, musicAudience(config.serverConfigId, config.serverPort));
     const bot = new VoiceBot(config);

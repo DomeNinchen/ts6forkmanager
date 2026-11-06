@@ -1627,7 +1627,7 @@ function StreamingTab() {
 
   const [draft, setDraft] = useState<StreamDefaults | null>(null);
   const active: StreamDefaults | null =
-    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume, idleStopMinutes: data.idleStopMinutes } : null);
+    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume, idleStopMinutes: data.idleStopMinutes, maxVideoMinutes: data.maxVideoMinutes } : null);
 
   const save = useMutation({
     mutationFn: (cfg: StreamDefaults) => settingsApi.setStreamDefaults(cfg),
@@ -1653,7 +1653,8 @@ function StreamingTab() {
     active.framerate === data.builtIn.framerate &&
     active.bitrate === data.builtIn.bitrate &&
     active.volume === data.builtIn.volume &&
-    active.idleStopMinutes === data.builtIn.idleStopMinutes;
+    active.idleStopMinutes === data.builtIn.idleStopMinutes &&
+    active.maxVideoMinutes === data.builtIn.maxVideoMinutes;
 
   return (
     <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
@@ -1748,6 +1749,23 @@ function StreamingTab() {
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label className="text-xs" htmlFor="stream-max-video">{t('pages.settings.streaming.maxVideoLabel')}</Label>
+            <Input
+              id="stream-max-video"
+              type="number"
+              min={1}
+              max={240}
+              step={1}
+              className="max-w-[8rem]"
+              value={active.maxVideoMinutes}
+              onChange={(e) => setDraft({ ...active, maxVideoMinutes: Number(e.target.value) })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {t('pages.settings.streaming.maxVideoHint')}
+            </p>
+          </div>
+
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={() => save.mutate(active)} disabled={save.isPending || !draft}>
               {t('common.save')}
@@ -1779,7 +1797,7 @@ function DebugTab() {
   });
 
   const setFlag = useMutation({
-    mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck' | 'query'; enabled: boolean }) =>
+    mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck' | 'query' | 'streamSignaling'; enabled: boolean }) =>
       settingsApi.setDebugFlag(name, enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['debug-flags'] }),
     onError: () => toast.error(t('pages.settings.debug.debugFlagUpdateFailed')),
@@ -1848,6 +1866,17 @@ function DebugTab() {
             <Switch
               checked={!!flags?.query}
               onCheckedChange={(v) => setFlag.mutate({ name: 'query', enabled: v })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">{t('pages.settings.debug.streamSignalingDebugLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.debug.streamSignalingDebugHint')}</p>
+            </div>
+            <Switch
+              checked={!!flags?.streamSignaling}
+              onCheckedChange={(v) => setFlag.mutate({ name: 'streamSignaling', enabled: v })}
             />
           </div>
         </CardContent>

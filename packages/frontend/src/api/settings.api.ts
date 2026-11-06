@@ -22,10 +22,10 @@ export const settingsApi = {
 
   deleteYtCookies: () => api.delete('/settings/yt-cookies').then((r) => r.data),
 
-  getDebugFlags: (): Promise<{ voice: boolean; rankCheck: boolean; query: boolean }> =>
+  getDebugFlags: (): Promise<{ voice: boolean; rankCheck: boolean; query: boolean; streamSignaling: boolean }> =>
     api.get('/settings/debug-flags').then((r) => r.data),
 
-  setDebugFlag: (name: 'voice' | 'rankCheck' | 'query', enabled: boolean) =>
+  setDebugFlag: (name: 'voice' | 'rankCheck' | 'query' | 'streamSignaling', enabled: boolean) =>
     api.put(`/settings/debug-flags/${name}`, { enabled }).then((r) => r.data),
 
   getClientIp: (): Promise<ClientIpDiagnostics> =>
@@ -202,10 +202,12 @@ export interface StreamDefaults {
   volume: number;
   /** Minutes a running stream may have no viewer before it is ended; 0 = never. */
   idleStopMinutes: number;
+  /** Longest YouTube/Twitch video a stream accepts, in minutes (1-240, 15 unless raised). */
+  maxVideoMinutes: number;
 }
 
 /** The part of the stream defaults that describes the picture and sound of a stream being started. */
-export type StreamQuality = Omit<StreamDefaults, 'idleStopMinutes'>;
+export type StreamQuality = Omit<StreamDefaults, 'idleStopMinutes' | 'maxVideoMinutes'>;
 
 export interface StreamPreset {
   /** The name !stream accepts, e.g. `720p`. */

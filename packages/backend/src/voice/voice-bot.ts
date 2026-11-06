@@ -5,7 +5,7 @@ import { AudioPipeline, FRAME_MS, BYTES_PER_FRAME } from './audio/pipeline.js';
 import { PlayQueue, type QueueItem } from './playlist/queue.js';
 import { fetchIcyMetadata } from './audio/icy-metadata.js';
 import { getAudioDuration } from './audio/music-library-scan.js';
-import { StreamSignaling, type ActiveStream, type SignalingMessage } from './streaming/stream-signaling.js';
+import { StreamSignaling, logStreamSignaling, type ActiveStream, type SignalingMessage } from './streaming/stream-signaling.js';
 import { SidecarClient } from './streaming/sidecar-client.js';
 import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.js';
 import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus, type VideoQueueItem } from './streaming/types.js';
@@ -14,9 +14,8 @@ import { isDebugEnabled } from '../utils/debug-flags.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { BotFailureKind } from '@ts6/common';
 import { ChannelOccupancy } from './channel-occupancy.js';
+import { DEFAULT_MAX_VIDEO_MINUTES } from '../utils/stream-defaults.js';
 
-/** Default cap on how long a pre-downloaded video may run, in seconds. */
-const DEFAULT_MAX_VIDEO_DURATION_SEC = 900;
 
 /** How often a bot checks whether it has been alone long enough to pause. */
 const IDLE_CHECK_INTERVAL_MS = 5000;
@@ -83,6 +82,8 @@ export interface VoiceBotConfig {
    * clients like any person and must not count as company for this one.
    */
   getOtherBotClientIds?: () => ReadonlySet<number>;
+  /** Longest video (minutes) a stream may download; read from Settings -> Streaming at each download. */
+  getMaxVideoMinutes?: () => Promise<number>;
 }
 
 export class VoiceBot extends EventEmitter {
@@ -175,6 +176,7 @@ export class VoiceBot extends EventEmitter {
   private _videoTempFile: string | null = null;
   private _videoEndTimer: ReturnType<typeof setTimeout> | null = null;
   private _viewers: Map<number, VideoViewerInfo> = new Map();
+  private signalingQueue: Promise<void> = Promise.resolve();
 
   constructor(config: VoiceBotConfig) {
     super();
@@ -1286,7 +1288,8 @@ export class VoiceBot extends EventEmitter {
     await this.sidecarHttp.waitHealthy();
     console.log(`[VoiceBot ${this.config.id}] Sidecar ready`);
 
-    // Setup stream signaling on the TS3 client
+    // Setup stream signaling on the TS3 client (a leftover one from a failed start must not keep listening)
+    this.signaling?.dispose();
     this.signaling = new StreamSignaling(this.client);
     this.setupSignalingListeners();
     this.signaling.registerStreamNotifications();
@@ -1478,7 +1481,8 @@ export class VoiceBot extends EventEmitter {
    * prior looping behavior.
    */
   private async resolveStreamSource(source: string, maxHeight: number): Promise<{ path: string; loop: boolean }> {
-    const { path: filePath, durationSec } = await downloadVideoForStream(source, maxHeight, DEFAULT_MAX_VIDEO_DURATION_SEC);
+    const maxMinutes = (await this.config.getMaxVideoMinutes?.()) ?? DEFAULT_MAX_VIDEO_MINUTES;
+    const { path: filePath, durationSec } = await downloadVideoForStream(source, maxHeight, maxMinutes * 60);
     const isDownloadedTemp = filePath.includes('.stream-') && filePath.endsWith('.mp4');
 
     this.clearVideoEndTimer();
@@ -1535,6 +1539,7 @@ export class VoiceBot extends EventEmitter {
     // meant for this stream, not for whatever someone starts next.
     this._videoQueue = [];
     this._videoNowPlaying = null;
+    this.signaling?.dispose();
     this.signaling = null;
     this.cleanupVideoTempFile();
 
@@ -1597,8 +1602,12 @@ export class VoiceBot extends EventEmitter {
   private setupSignalingListeners(): void {
     if (!this.signaling) return;
 
+    // One after another: an ICE candidate handled while the answer is still on its
+    // way to the sidecar is refused there ("remote description is not set") and lost.
     this.signaling.on('signalingMessage', (msg: SignalingMessage) => {
-      this.handleSignalingMessage(msg);
+      this.signalingQueue = this.signalingQueue
+        .then(() => this.handleSignalingMessage(msg))
+        .catch((err) => console.error(`[VoiceBot ${this.config.id}] signaling error: ${err?.message ?? err}`));
     });
 
     this.signaling.on('joinStreamRequest', (params: Record<string, string>) => {
@@ -1621,16 +1630,23 @@ export class VoiceBot extends EventEmitter {
   }
 
   private async handleSignalingMessage(msg: SignalingMessage): Promise<void> {
-    if (!this.sidecarHttp) return;
+    const tag = `bot ${this.config.id} clid=${msg.clid ?? '-'}`;
+    if (!this.sidecarHttp) {
+      logStreamSignaling(`${tag} ${msg.type} dropped: no sidecar connection`);
+      return;
+    }
 
     switch (msg.type) {
       case 'answer':
         if (msg.sdp && msg.clid) {
           try {
             await this.sidecarHttp.setAnswer(String(msg.clid), msg.sdp);
+            logStreamSignaling(`${tag} answer passed to the sidecar`);
           } catch (err: any) {
             console.error(`[VoiceBot ${this.config.id}] setAnswer error (clid=${msg.clid}): ${err.message}`);
           }
+        } else {
+          logStreamSignaling(`${tag} answer dropped: ${msg.sdp ? 'no clid' : 'no SDP'}`);
         }
         break;
       case 'ice_candidate':
@@ -1642,9 +1658,12 @@ export class VoiceBot extends EventEmitter {
               msg.sdpMid || '0',
               msg.sdpMlineIndex ?? 0
             );
+            logStreamSignaling(`${tag} ICE candidate passed to the sidecar`);
           } catch (err: any) {
             console.error(`[VoiceBot ${this.config.id}] addIceCandidate error (clid=${msg.clid}): ${err.message}`);
           }
+        } else {
+          logStreamSignaling(`${tag} ICE candidate dropped: ${msg.candidate ? 'no clid' : 'no candidate'}`);
         }
         break;
       case 'reconnect':
