@@ -50,6 +50,23 @@ func TestNoAnnounceIPsLeavesCandidatesAlone(t *testing.T) {
 	}
 }
 
+// The TeamSpeak 6 client (6.0.0-beta5 and later) never answers a sendrecv offer.
+func TestViewerOfferIsSendOnly(t *testing.T) {
+	t.Setenv("STUN_SERVERS", "stun:127.0.0.1:1")
+	s := NewSidecar()
+	sdp, err := s.CreatePeer("send-only-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.ClosePeer("send-only-test")
+	if strings.Contains(sdp, "a=sendrecv") || strings.Count(sdp, "a=sendonly") != 2 {
+		t.Fatalf("want video and audio sendonly, got:\n%s", sdp)
+	}
+	if !strings.Contains(sdp, "m=video") || !strings.Contains(sdp, "m=audio") {
+		t.Fatalf("offer must carry video and audio:\n%s", sdp)
+	}
+}
+
 func newTestRewriter() rtpRewriter {
 	return rtpRewriter{advance: 3000, maxJump: 900_000}
 }

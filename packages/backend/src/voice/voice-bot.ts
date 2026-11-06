@@ -176,6 +176,7 @@ export class VoiceBot extends EventEmitter {
   private _videoTempFile: string | null = null;
   private _videoEndTimer: ReturnType<typeof setTimeout> | null = null;
   private _viewers: Map<number, VideoViewerInfo> = new Map();
+  private signalingQueue: Promise<void> = Promise.resolve();
 
   constructor(config: VoiceBotConfig) {
     super();
@@ -1601,8 +1602,12 @@ export class VoiceBot extends EventEmitter {
   private setupSignalingListeners(): void {
     if (!this.signaling) return;
 
+    // One after another: an ICE candidate handled while the answer is still on its
+    // way to the sidecar is refused there ("remote description is not set") and lost.
     this.signaling.on('signalingMessage', (msg: SignalingMessage) => {
-      this.handleSignalingMessage(msg);
+      this.signalingQueue = this.signalingQueue
+        .then(() => this.handleSignalingMessage(msg))
+        .catch((err) => console.error(`[VoiceBot ${this.config.id}] signaling error: ${err?.message ?? err}`));
     });
 
     this.signaling.on('joinStreamRequest', (params: Record<string, string>) => {

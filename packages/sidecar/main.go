@@ -820,13 +820,14 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 		return "", err
 	}
 
-	if _, err = pc.AddTrack(videoTrack); err != nil {
-		pc.Close()
-		return "", err
-	}
-	if _, err = pc.AddTrack(audioTrack); err != nil {
-		pc.Close()
-		return "", err
+	// Send-only, not AddTrack's sendrecv: the TeamSpeak 6 client from 6.0.0-beta5 on
+	// never answers an offer whose media is sendrecv, so "Watch Stream" gave up at once.
+	sendOnly := webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionSendonly}
+	for _, track := range []webrtc.TrackLocal{videoTrack, audioTrack} {
+		if _, err = pc.AddTransceiverFromTrack(track, sendOnly); err != nil {
+			pc.Close()
+			return "", err
+		}
 	}
 
 	peer := &Peer{
