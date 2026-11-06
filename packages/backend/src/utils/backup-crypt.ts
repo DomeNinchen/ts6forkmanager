@@ -46,7 +46,11 @@ export function isEncrypted(file: string): boolean {
   }
 }
 
-/** Decrypts `src` into `dst`. A wrong passphrase (or a damaged file) throws and leaves no `dst`. */
+/**
+ * Decrypts `src` into `dst`. A wrong passphrase (or a damaged file) usually throws and leaves no
+ * `dst`, but about 1 time in 256 it passes the padding check and yields noise; callers must check
+ * the content (decryptIfNeeded does).
+ */
 export async function decryptFile(src: string, dst: string, passphrase: string): Promise<void> {
   const fd = fs.openSync(src, 'r');
   const head = Buffer.alloc(16);
