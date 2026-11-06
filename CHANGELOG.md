@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.99.1 · frontend 3.116.0 · sidecar 2.2.1**
+Versions at the end of the month: **backend 2.99.1 · frontend 3.116.0 · sidecar 2.2.2**
 
 ### New Features
 
@@ -33,6 +33,7 @@ Versions at the end of the month: **backend 2.99.1 · frontend 3.116.0 · sideca
 
 ### Bug Fixes
 
+- Fixed video streams stuttering and freezing for viewers whose connection loses packets: a viewer's request to send a lost packet again (NACK) was never acted on, because the video sidecar did not read what viewers send back. Each lost packet now gets resent; before, it left the picture broken until the next full frame. *sidecar 2.2.2*
 - Fixed "Watch Stream" in the TeamSpeak 6 client giving up right after "Joining stream" (seen with 6.0.0-beta5.1): the client never answers an offer whose media is marked send-and-receive, so the video sidecar now offers video and sound as send-only. ICE candidates from the viewer that arrived while its answer was still being passed on were also lost; they are now handled in order. *backend 2.99.1, sidecar 2.2.1* [#371](https://github.com/DomeNinchen/ts6forkmanager/pull/371), reported in [#354](https://github.com/DomeNinchen/ts6forkmanager/issues/354)
 - Fixed "Watch Stream" in the TeamSpeak client getting several different offers for one viewer once a music bot had started a video stream more than once on the same connection: each earlier stream kept answering join requests, so the viewer's answer could meet the wrong sidecar peer and the video stayed black. Each viewer now gets exactly one offer. *backend 2.99.0* [#369](https://github.com/DomeNinchen/ts6forkmanager/pull/369), reported in [#354](https://github.com/DomeNinchen/ts6forkmanager/issues/354)
 - Fixed a video over the stream length limit failing with "Request failed with status code 500" (the log said "Local video file not found"); the stream tab now says the video is too long. *backend 2.99.0, frontend 3.116.0* [#369](https://github.com/DomeNinchen/ts6forkmanager/pull/369)
