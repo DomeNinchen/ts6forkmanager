@@ -188,6 +188,51 @@ model TemporaryServerGroup {
   @@index([serverConfigId, sid, sgid, cldbid])
 }
 
+// Support queue (R14): one per waiting channel (the UI offers one per virtual server for now).
+model SupportQueue {
+  id             Int            @id @default(autoincrement())
+  serverConfigId Int
+  sid            Int
+  channelId      Int
+  enabled        Boolean        @default(true)
+  // SupportQueueSettings in common, as JSON.
+  settings       String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+  cases          SupportCase[]
+
+  @@unique([serverConfigId, sid, channelId])
+}
+
+// One visit to a support queue. Clients are matched by UID: clids are reused.
+model SupportCase {
+  id             Int          @id @default(autoincrement())
+  queueId        Int
+  clientUid      String
+  cldbid         Int
+  nickname       String
+  arrivedAt      DateTime     @default(now())
+  // The client was already there when the backend started: the real arrival is unknown.
+  arrivalUnknown Boolean      @default(false)
+  // SupportCaseState in common: waiting | in-progress | done | cancelled
+  state          String       @default("waiting")
+  // Since when the client is missing; the case ends once that is longer than the grace period.
+  absentSince    DateTime?
+  takenAt        DateTime?
+  // SupportPerson[] in common, as JSON.
+  takenBy        String?
+  takenVia       String?
+  actedBy        String?
+  roomCid        Int?
+  endedAt        DateTime?
+  endReason      String?
+  queue          SupportQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+
+  @@index([queueId, state])
+  @@index([endedAt])
+}
+
 // How clients hear about their temporary memberships, per connection and virtual server (admin only).
 // No row = the defaults (TEMP_GROUP_NOTICE_DEFAULTS in common).
 model TemporaryGroupNoticeSettings {
@@ -266,6 +311,7 @@ model TsServerConfig {
   protectedGroups ProtectedServerGroup[]
   temporaryGroups TemporaryServerGroup[]
   temporaryGroupNotices TemporaryGroupNoticeSettings[]
+  supportQueues SupportQueue[]
   botFlows      BotFlow[]
   botLogs       BotExecutionLog[]
   musicBots     MusicBot[]

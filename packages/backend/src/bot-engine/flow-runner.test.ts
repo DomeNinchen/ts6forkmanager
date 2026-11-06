@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FlowRunner, markExecutionsInterrupted, FLOW_OFF_WHILE_WAITING } from './flow-runner.js';
 import { ExecutionContext } from './context.js';
+import { channelCreateLockCount } from '../utils/channel-create-lock.js';
 
 // A stand-in for the WebQuery connection with just the TeamSpeak behavior that matters
 // here: channelcreate moves the query client into the new channel, and a temporary
@@ -60,7 +61,7 @@ test('creating two channels in one execution does not wait on itself', async () 
   await runner.leaveCreatedChannels(ctx, srv.client);
   assert.equal(srv.where.get('q'), '1');
   await new Promise((r) => setImmediate(r));
-  assert.equal(runner.channelLocks.size, 0);
+  assert.equal(channelCreateLockCount(), 0);
 });
 
 
