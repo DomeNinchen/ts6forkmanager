@@ -33,6 +33,7 @@ import { startYtCookieChecker } from './utils/yt-cookie-check.js';
 import { attachWsAudience, type UpgradeRequest } from './utils/ws-audience.js';
 import { startGrantNarrowing } from './utils/vs-access.js';
 import { startTemporaryGroupJob } from './utils/temporary-groups.js';
+import { startSupportQueueJob } from './utils/support-queue.js';
 import { loadRoleTable } from './utils/role-table.js';
 import type { JwtPayload } from '@ts6/common';
 import jwt from 'jsonwebtoken';
@@ -174,6 +175,8 @@ async function main() {
   const grantNarrowing = startGrantNarrowing(prisma, connectionPool);
   // Takes temporary server groups away once they expire; its first pass catches up on what expired while the backend was down.
   const temporaryGroups = startTemporaryGroupJob(prisma, connectionPool);
+  // Support queues: reads the client list every few seconds and moves each case along.
+  const supportQueues = startSupportQueueJob(prisma, connectionPool);
   // The query console's live events: one shared SSH listener per virtual server, opened when an admin starts listening.
   const consoleEvents = new EventSessionManager(prisma, connectionPool);
   app.locals.consoleEvents = consoleEvents;
@@ -257,6 +260,7 @@ async function main() {
     await history.flush();
     // A removal in progress finishes (and writes its change-log row) before the batch is flushed.
     await temporaryGroups.stop();
+    await supportQueues.stop();
     // Change-log rows still waiting for their batch.
     await flushChangeLog(prisma);
     connectionPool.destroy();

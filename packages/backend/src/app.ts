@@ -16,6 +16,7 @@ import { channelRoutes } from './routes/channels.routes.js';
 import { clientRoutes } from './routes/clients.routes.js';
 import { serverGroupRoutes } from './routes/server-groups.routes.js';
 import { temporaryGroupRoutes } from './routes/temporary-groups.routes.js';
+import { supportQueueRoutes } from './routes/support-queue.routes.js';
 import { channelGroupRoutes } from './routes/channel-groups.routes.js';
 import { permissionRoutes } from './routes/permissions.routes.js';
 import { banRoutes } from './routes/bans.routes.js';
@@ -191,6 +192,14 @@ export function createApp(): Express {
     { method: 'PUT', path: '/:id', permission: 'groups.members' },
     { method: 'POST', path: '/:id/permanent', permission: 'groups.members' },
     { method: 'POST', path: '/:id/revoke', permission: 'groups.members' },
+  ]);
+  // Support queue (R14): seen like the client list, acted on like moving a client; set up by admins only.
+  serverScoped('vs/:sid/support-queue', supportQueueRoutes, [
+    { method: 'GET', path: '/', permission: 'server.view' },
+    { method: 'GET', path: '/history', permission: 'server.view' },
+    { method: 'POST', path: '/cases/:id/take', permission: 'clients.move' },
+    { method: 'POST', path: '/cases/:id/remove', permission: 'clients.move' },
+    { method: 'POST', path: '/cases/:id/close', permission: 'clients.move' },
   ]);
   serverScoped('vs/:sid/channel-groups', channelGroupRoutes, [
     { method: 'GET', path: '/', permission: 'groups.members' },

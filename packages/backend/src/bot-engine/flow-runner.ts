@@ -18,7 +18,6 @@ import axios from 'axios';
 import { validateUrl, ssrfSafeAxiosOptions } from '../utils/url-validator.js';
 import { ALLOWED_WEBQUERY_COMMANDS } from './command-whitelist.js';
 import { isDebugEnabled } from '../utils/debug-flags.js';
-import { TSApiError } from '../middleware/error-handler.js';
 import { botFlowAudience, sendToAudience } from '../utils/ws-audience.js';
 import { commaListsIntersect } from '../utils/group-match.js';
 import crypto from 'crypto';
@@ -27,6 +26,7 @@ import {
 } from '@ts6/common';
 import { FlowTestTrace, FlowTestReadLimit, maskHeaders } from './flow-test-trace.js';
 import { maskSecrets } from '../utils/mask-secrets.js';
+import { acquireChannelCreateLock, clientMoveTolerating770 } from '../utils/channel-create-lock.js';
 
 // Raised from 100 to give Loop nodes real headroom - a loop at its default
 // iteration cap with even a small body (see MAX_LOOP_ITERATIONS_DEFAULT
@@ -116,8 +116,6 @@ async function leaveCreatedChannelAfterCut(pool: ConnectionPool, configId: numbe
 
 export class FlowRunner {
   private voiceBotManager: VoiceBotManager | null = null;
-  /** "configId:sid" -> tail of the queue of executions waiting to create a channel there. */
-  private channelLocks = new Map<string, Promise<void>>();
   /** Executions busy with a node right now - running and not waiting in a Delay. Shutdown waits for these. */
   private working = 0;
   /** Set at shutdown: no execution starts another node. */
@@ -650,11 +648,11 @@ export class FlowRunner {
         // Flow executions aren't serialized, so a concurrent flow can move the shared
         // query client between our whoami read and this clientmove - tolerate the
         // resulting TS error 770 "already member of channel" instead of failing the flow.
-        if (!alreadyInTarget) await this.clientMoveTolerating770(client, ctx.sid, myClid, target);
+        if (!alreadyInTarget) await clientMoveTolerating770(client, ctx.sid, myClid, target);
         await client.executePost(ctx.sid, 'sendtextmessage', { targetmode: 2, msg });
         // Move back to original channel
         if (!alreadyInTarget && myCid) {
-          await this.clientMoveTolerating770(client, ctx.sid, myClid, myCid);
+          await clientMoveTolerating770(client, ctx.sid, myClid, myCid);
         }
         return;
       }
@@ -665,14 +663,6 @@ export class FlowRunner {
       target,
       msg,
     });
-  }
-
-  private async clientMoveTolerating770(client: FlowQueryClient, sid: number, clid: string, cid: string): Promise<void> {
-    try {
-      await client.executePost(sid, 'clientmove', { clid, cid });
-    } catch (err) {
-      if (!(err instanceof TSApiError && err.code === 770)) throw err;
-    }
   }
 
   private async executePoke(data: PokeActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
@@ -697,7 +687,7 @@ export class FlowRunner {
       ctx.setTemp('lastCreatedChannelId', cid);
       return;
     }
-    if (!ctx.releaseChannelLock) ctx.releaseChannelLock = await this.acquireChannelLock(`${ctx.configId}:${ctx.sid}`);
+    if (!ctx.releaseChannelLock) ctx.releaseChannelLock = await acquireChannelCreateLock(`${ctx.configId}:${ctx.sid}`);
     let result: any;
     let who: any;
     try {
@@ -726,17 +716,6 @@ export class FlowRunner {
     }
   }
 
-  /** Serializes channel creation per virtual server; resolves with the release function. */
-  private async acquireChannelLock(key: string): Promise<() => void> {
-    const prev = this.channelLocks.get(key) ?? Promise.resolve();
-    let release!: () => void;
-    const tail = prev.then(() => new Promise<void>((r) => { release = r; }));
-    this.channelLocks.set(key, tail);
-    void tail.then(() => { if (this.channelLocks.get(key) === tail) this.channelLocks.delete(key); });
-    await prev;
-    return release;
-  }
-
   private releaseChannelLock(ctx: ExecutionContext): void {
     ctx.releaseChannelLock?.();
     ctx.releaseChannelLock = undefined;
@@ -749,7 +728,7 @@ export class FlowRunner {
     try {
       if (!last) return;
       const now = (await client.execute(ctx.sid, 'whoami'))?.[0]?.client_channel_id;
-      if (String(now) === last.cid) await this.clientMoveTolerating770(client, ctx.sid, last.clid, last.home);
+      if (String(now) === last.cid) await clientMoveTolerating770(client, ctx.sid, last.clid, last.home);
     } catch (err: any) {
       await this.log(ctx, null, 'warn', `Could not move the query client out of created channel ${last?.cid}: ${err.message}`);
     } finally {
