@@ -1250,6 +1250,8 @@
         "volumeHint": "Pourcentage du volume propre de la vidéo, 0-100. Les vidéos sont masterisées bien plus fort que la voix humaine ; un stream à son niveau d'origine arrive donc comme un cri — d'où le faible défaut. Les spectateurs peuvent toujours augmenter leur propre lecteur. Prend effet au prochain stream, pas sur celui en cours.",
         "idleStopLabel": "Arrêter le stream quand personne ne regarde (minutes)",
         "idleStopHint": "Durée pendant laquelle un stream vidéo peut tourner sans spectateur avant que le bot ne l'arrête, pour qu'un stream oublié n'occupe pas en permanence l'upstream et le CPU du serveur. Le décompte démarre quand le dernier spectateur part, ou au démarrage du stream si personne ne s'est jamais connecté ; l'arrivée d'un spectateur le remet à zéro. 0 laisse le stream tourner jusqu'à ce que quelqu'un l'arrête. L'aperçu de cette interface web ne compte pas comme spectateur.",
+        "maxVideoLabel": "Vidéo la plus longue pour un stream (minutes)",
+        "maxVideoHint": "La vidéo YouTube ou Twitch la plus longue qu'un stream accepte. Par défaut 15 minutes ; elle peut être augmentée ici jusqu'à 240 minutes (4 heures). Une vidéo plus longue est refusée avec un message. La vidéo est entièrement téléchargée avant la lecture, une longue vidéo met donc un moment à démarrer.",
         "restoreShippedValues": "Restaurer les valeurs fournies",
         "unsavedChanges": "Modifications non enregistrées",
         "streamDefaultsSaved": "Paramètres par défaut du stream enregistrés",

@@ -77,11 +77,23 @@ export interface SignalingMessage {
 export class StreamSignaling extends EventEmitter {
   private client: Ts3Client;
   private activeStreams: Map<string, ActiveStream> = new Map();
+  private readonly onCommand = (parsed: any) => this.handleCommand(parsed);
 
   constructor(client: Ts3Client) {
     super();
     this.client = client;
-    this.client.on('command', (parsed: any) => this.handleCommand(parsed));
+    this.client.on('command', this.onCommand);
+  }
+
+  /**
+   * Detach from the TS client and drop all listeners. Without this, every
+   * stream start on the same connection left one more instance answering
+   * each viewer's join request (n offers for one viewer, so its answer
+   * met a different sidecar peer and the video stayed black).
+   */
+  dispose(): void {
+    this.client.removeListener('command', this.onCommand);
+    this.removeAllListeners();
   }
 
   getActiveStreams(): Map<string, ActiveStream> {

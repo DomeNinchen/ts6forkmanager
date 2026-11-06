@@ -75,3 +75,16 @@ test('flag on: incoming, unknown, empty and outgoing messages are logged without
   ]);
   assert.ok(!lines.join('\n').match(/\d+\.\d+\.\d+\.\d+/), 'no IPv4 address in the log');
 });
+
+test('dispose detaches from the client, so a restarted stream answers each join request once', () => {
+  const joins: string[] = [];
+  signaling.on('joinStreamRequest', () => joins.push('old'));
+  signaling.dispose();
+  const next = new StreamSignaling(client as any);
+  next.on('joinStreamRequest', () => joins.push('new'));
+
+  client.emit('command', { name: 'notifyjoinstreamrequest', params: { clid: '7', id: 's1' } });
+
+  assert.deepEqual(joins, ['new']);
+  assert.equal(client.listenerCount('command'), 1);
+});
