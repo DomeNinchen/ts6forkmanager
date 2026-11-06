@@ -26,6 +26,20 @@ test('a video skipped by the duration filter becomes a readable 400', () => {
   assert.match(missingDownloadError(stdout, 240 * 60).message, /longer than 240 minutes/);
 });
 
+test('a live stream skipped by the duration filter is not called a too long video', () => {
+  // A live stream has no duration; yt-dlp 2026.08.19 prints the same line for it as for a long video
+  const stdout = '[twitch:stream] somechannel: Downloading stream GraphQL\n[download] somechannel does not pass filter (duration <= 3600), skipping ..\n';
+  const err = missingDownloadError(stdout, 3600, true);
+  assert.ok(err instanceof AppError);
+  assert.equal(err.statusCode, 400);
+  assert.equal(err.code, 'VIDEO_IS_LIVE');
+  assert.match(err.message, /^Live streams are not supported yet/);
+  // Positive control: the same output for a video that is not live keeps the duration message
+  assert.equal(missingDownloadError(stdout, 3600, false).message.startsWith('The video is longer than 60 minutes'), true);
+  // A live flag changes nothing for a failure that is not the filter
+  assert.ok(!(missingDownloadError('[youtube] abc: something odd\n', 900, true) instanceof AppError));
+});
+
 test('the download timeout grows with the allowed video length', () => {
   assert.equal(downloadTimeoutMs(15 * 60), 13 * 60_000);
   assert.equal(downloadTimeoutMs(240 * 60), 58 * 60_000);
