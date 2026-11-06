@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { missingDownloadError } from './video-download.js';
+import { missingDownloadError, downloadTimeoutMs } from './video-download.js';
 import { AppError } from '../../middleware/error-handler.js';
 
 test('a video skipped by the duration filter becomes a readable 400', () => {
@@ -10,7 +10,13 @@ test('a video skipped by the duration filter becomes a readable 400', () => {
   assert.ok(err instanceof AppError);
   assert.equal(err.statusCode, 400);
   assert.equal(err.code, 'VIDEO_TOO_LONG');
-  assert.equal(err.message, 'The video is longer than 15 minutes, the limit for a stream');
+  assert.equal(err.message, 'The video is longer than 15 minutes, the limit for a stream (an admin can raise it under Settings -> Streaming)');
+  assert.match(missingDownloadError(stdout, 240 * 60).message, /longer than 240 minutes/);
+});
+
+test('the download timeout grows with the allowed video length', () => {
+  assert.equal(downloadTimeoutMs(15 * 60), 13 * 60_000);
+  assert.equal(downloadTimeoutMs(240 * 60), 58 * 60_000);
 });
 
 test('a missing file for any other reason stays a server error with yt-dlp output', () => {

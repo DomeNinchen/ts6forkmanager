@@ -19,7 +19,7 @@ import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-setting
 import { setPrivacyNoticeEnabled } from '../utils/privacy-notice-settings.js';
 import { getTempGroupRetentionDays, isValidTempGroupRetention, setTempGroupRetentionDays } from '../utils/temporary-groups.js';
 import { TEMP_GROUP_RETENTION_MAX_DAYS, TEMP_GROUP_RETENTION_MIN_DAYS } from '@ts6/common';
-import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES } from '../utils/stream-defaults.js';
+import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES, MAX_VIDEO_MAX_MINUTES, isValidMaxVideoMinutes } from '../utils/stream-defaults.js';
 import {
   getUserHistorySettings,
   setUserHistorySettings,
@@ -506,9 +506,15 @@ settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: R
     if (!Number.isInteger(idleStopMinutes) || idleStopMinutes < 0 || idleStopMinutes > IDLE_STOP_MAX_MINUTES) {
       throw new AppError(400, `idleStopMinutes must be a whole number between 0 (never) and ${IDLE_STOP_MAX_MINUTES}`);
     }
+    const maxVideoMinutes = req.body?.maxVideoMinutes === undefined
+      ? (await getStreamDefaults(prisma)).maxVideoMinutes
+      : req.body.maxVideoMinutes;
+    if (!isValidMaxVideoMinutes(maxVideoMinutes)) {
+      throw new AppError(400, `maxVideoMinutes must be a whole number between 1 and ${MAX_VIDEO_MAX_MINUTES}`);
+    }
 
-    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume, idleStopMinutes });
-    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%, idle stop ${saved.idleStopMinutes === 0 ? 'off' : `${saved.idleStopMinutes} min`}`);
+    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume, idleStopMinutes, maxVideoMinutes });
+    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%, idle stop ${saved.idleStopMinutes === 0 ? 'off' : `${saved.idleStopMinutes} min`}, max video ${saved.maxVideoMinutes} min`);
     // A stream that is already running with nobody watching follows the new
     // value now, instead of at the next time someone leaves it.
     req.app.locals.voiceBotManager?.reevaluateVideoIdleStops();

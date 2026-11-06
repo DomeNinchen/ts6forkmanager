@@ -171,9 +171,14 @@ export interface DownloadedStream {
 /** Why yt-dlp finished without leaving a file: over the duration limit (the caller's choice, 400) or unknown. */
 export function missingDownloadError(ytDlpStdout: string, maxDurationSec: number): Error {
   if (ytDlpStdout.includes('does not pass filter')) {
-    return new AppError(400, `The video is longer than ${Math.round(maxDurationSec / 60)} minutes, the limit for a stream`, undefined, 'VIDEO_TOO_LONG');
+    return new AppError(400, `The video is longer than ${Math.round(maxDurationSec / 60)} minutes, the limit for a stream (an admin can raise it under Settings -> Streaming)`, undefined, 'VIDEO_TOO_LONG');
   }
   return new Error(`yt-dlp finished without a video file: ${ytDlpStdout.trim().slice(-500)}`);
+}
+
+/** 10 minutes, plus one minute per 5 minutes of allowed video, so a raised length limit does not end in a timeout. */
+export function downloadTimeoutMs(maxDurationSec: number): number {
+  return 10 * 60_000 + Math.max(0, maxDurationSec) * 200;
 }
 
 export async function downloadVideoForStream(
@@ -232,10 +237,11 @@ export async function downloadVideoForStream(
     let stdout = '';
     proc.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
     proc.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+    const timeoutMs = downloadTimeoutMs(maxDurationSec);
     const timer = setTimeout(() => {
       proc.kill('SIGKILL');
-      reject(new Error('Video download timed out after 10 minutes'));
-    }, 10 * 60_000);
+      reject(new Error(`Video download timed out after ${Math.round(timeoutMs / 60_000)} minutes`));
+    }, timeoutMs);
 
     proc.on('close', (code) => {
       clearTimeout(timer);

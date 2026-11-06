@@ -14,9 +14,8 @@ import { isDebugEnabled } from '../utils/debug-flags.js';
 import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { BotFailureKind } from '@ts6/common';
 import { ChannelOccupancy } from './channel-occupancy.js';
+import { DEFAULT_MAX_VIDEO_MINUTES } from '../utils/stream-defaults.js';
 
-/** Default cap on how long a pre-downloaded video may run, in seconds. */
-const DEFAULT_MAX_VIDEO_DURATION_SEC = 900;
 
 /** How often a bot checks whether it has been alone long enough to pause. */
 const IDLE_CHECK_INTERVAL_MS = 5000;
@@ -83,6 +82,8 @@ export interface VoiceBotConfig {
    * clients like any person and must not count as company for this one.
    */
   getOtherBotClientIds?: () => ReadonlySet<number>;
+  /** Longest video (minutes) a stream may download; read from Settings -> Streaming at each download. */
+  getMaxVideoMinutes?: () => Promise<number>;
 }
 
 export class VoiceBot extends EventEmitter {
@@ -1479,7 +1480,8 @@ export class VoiceBot extends EventEmitter {
    * prior looping behavior.
    */
   private async resolveStreamSource(source: string, maxHeight: number): Promise<{ path: string; loop: boolean }> {
-    const { path: filePath, durationSec } = await downloadVideoForStream(source, maxHeight, DEFAULT_MAX_VIDEO_DURATION_SEC);
+    const maxMinutes = (await this.config.getMaxVideoMinutes?.()) ?? DEFAULT_MAX_VIDEO_MINUTES;
+    const { path: filePath, durationSec } = await downloadVideoForStream(source, maxHeight, maxMinutes * 60);
     const isDownloadedTemp = filePath.includes('.stream-') && filePath.endsWith('.mp4');
 
     this.clearVideoEndTimer();
