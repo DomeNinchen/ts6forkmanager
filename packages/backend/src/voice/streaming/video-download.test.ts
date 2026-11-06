@@ -1,7 +1,19 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { missingDownloadError, downloadTimeoutMs } from './video-download.js';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { AppError } from '../../middleware/error-handler.js';
+
+// See change-log-policy.test.ts: importing the media modules creates the music folders at MUSIC_DIR
+// (/data/music by default, not writable on CI).
+let tempMusicDir: string | null = null;
+if (!process.env.MUSIC_DIR) {
+  tempMusicDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts6-video-download-'));
+  process.env.MUSIC_DIR = tempMusicDir;
+}
+after(() => { if (tempMusicDir) fs.rmSync(tempMusicDir, { recursive: true, force: true }); });
+const { missingDownloadError, downloadTimeoutMs } = await import('./video-download.js');
 
 test('a video skipped by the duration filter becomes a readable 400', () => {
   // yt-dlp 2026.08.19 output for a 47:38 video with --match-filter "duration <= 900"
