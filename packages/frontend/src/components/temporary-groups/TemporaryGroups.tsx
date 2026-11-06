@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { settingsApi } from '@/api/settings.api';
 import { useAuthStore } from '@/stores/auth.store';
+import { NoticeLine, NoticeSettingsCard } from './NoticeSettings';
 import type { TFunction } from 'i18next';
 import {
   TEMP_GROUP_MIN_DURATION_MS, isOpenTempGroupState, parseTempGroupNote, tempGroupDurationProblem, tempGroupExpiry, tempGroupExtendedExpiry,
@@ -452,6 +453,7 @@ export function TemporaryGroupsPanel({ groups }: { groups: Array<{ sgid: number 
                   <td className="px-3 py-2.5">
                     <TempStateBadge state={e.state} />
                     {e.wasMember && <div className="text-xs text-muted-foreground mt-1">{t('pages.temporaryGroups.wasMember')}</div>}
+                    <NoticeLine notice={e.lastNotice} pending={e.pendingNotice} />
                     {e.error && <div className={cn('text-xs mt-1 max-w-[280px]', isOpenTempGroupState(e.state) ? 'text-destructive' : 'text-muted-foreground')}>{tempNoteText(e.error, t)}</div>}
                   </td>
                   {scope === 'open' && (
@@ -466,6 +468,7 @@ export function TemporaryGroupsPanel({ groups }: { groups: Array<{ sgid: number 
         </div>
       )}
       {scope === 'history' && isAdmin && <RetentionField />}
+      {isAdmin && <NoticeSettingsCard />}
       <TempChangeDialog entry={changing} groupName={changing ? groupName(changing.sgid) : ''} onClose={() => setChanging(null)} />
       {end.dialog}
     </div>

@@ -174,10 +174,32 @@ model TemporaryServerGroup {
   // When the job next looks at an open row: the expiry, later the retry time. Null once it has ended.
   nextAttemptAt   DateTime?
   endedAt         DateTime?
+  // Notices to the client (stage 3): when the deadline was last set (warnings that had already passed
+  // then are skipped), the smallest warning already dealt with (minutes before the expiry), a notice
+  // waiting for the client to come online ("warning" | "expired"), and the last notice as JSON
+  // (TempGroupNoticeRecord in common).
+  deadlineSetAt   DateTime       @default(now())
+  warnedBeforeMin Int?
+  pendingNotice   String?
+  lastNotice      String?
   serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
 
   @@index([nextAttemptAt])
   @@index([serverConfigId, sid, sgid, cldbid])
+}
+
+// How clients hear about their temporary memberships, per connection and virtual server (admin only).
+// No row = the defaults (TEMP_GROUP_NOTICE_DEFAULTS in common).
+model TemporaryGroupNoticeSettings {
+  id             Int            @id @default(autoincrement())
+  serverConfigId Int
+  sid            Int
+  // TempGroupNoticeSettings in common, as JSON.
+  settings       String
+  updatedAt      DateTime       @updatedAt
+  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([serverConfigId, sid])
 }
 
 model TsServerConfig {
@@ -243,6 +265,7 @@ model TsServerConfig {
   userAccess    UserServerAccess[]
   protectedGroups ProtectedServerGroup[]
   temporaryGroups TemporaryServerGroup[]
+  temporaryGroupNotices TemporaryGroupNoticeSettings[]
   botFlows      BotFlow[]
   botLogs       BotExecutionLog[]
   musicBots     MusicBot[]

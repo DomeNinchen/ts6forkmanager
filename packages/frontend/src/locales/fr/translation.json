@@ -1515,6 +1515,44 @@
       }
     },
     "temporaryGroups": {
+      "notice": {
+        "warning": "Averti ({{before}} avant)",
+        "expired": "Informé de la fin",
+        "nothingSent": "rien envoyé",
+        "waiting": "le message privé suivra dès que le client sera en ligne",
+        "channels": {
+          "message": "message privé",
+          "offline": "message hors ligne",
+          "poke": "poke"
+        }
+      },
+      "notices": {
+        "title": "Notifications aux clients",
+        "intro": "S'applique à ce serveur virtuel. Les textes sont envoyés au nom de la connexion au serveur ; la langue du client n'est pas connue, écrivez-les donc dans la langue de vos utilisateurs.",
+        "enabled": "Envoyer des notifications",
+        "warnTimes": "Avertir avant la fin",
+        "warnTimesHint": "Séparés par des virgules, p. ex. « 7d, 1d, 12h, 30m » (5 au plus, d'une minute à 365 jours). Chaque avertissement est envoyé une fois ; une échéance plus courte qu'un délai d'avertissement ne reçoit pas cet avertissement.",
+        "warnTimesInvalid": "Écrivez les délais comme « 7d, 1d, 12h, 30m ».",
+        "warnTimesRange": "5 délais différents au plus, chacun entre une minute et 365 jours.",
+        "notifyExpired": "Informer le client quand le groupe a été retiré",
+        "channelsTitle": "Comment",
+        "channels": {
+          "privateMessage": "Message privé (clients en ligne)",
+          "offlineMessage": "Message hors ligne (clients hors ligne)",
+          "poke": "Poke (en ligne, 100 premiers caractères)"
+        },
+        "channelsHint": "Un client hors ligne reçoit tout de suite le message hors ligne, et le message privé/poke dès qu'il revient en ligne (un avertissement jusqu'à l'échéance, l'avis de fin pendant 30 jours).",
+        "warningText": "Texte de l'avertissement",
+        "expiredText": "Texte après la fin",
+        "preview": "Aperçu",
+        "placeholders": "Variables",
+        "timeZone": "Fuseau horaire pour {expires}",
+        "timeZoneHint": "Un nom IANA comme « Europe/Paris » ou « UTC ». La date est écrite avec le nom du fuseau.",
+        "timeZoneInvalid": "Fuseau horaire inconnu.",
+        "textEmpty": "Les deux textes sont nécessaires.",
+        "saved": "Notifications enregistrées.",
+        "defaults": "Valeurs par défaut"
+      },
       "retention": {
         "label": "Conserver les entrées terminées pendant",
         "days": "jours ({{min}}-{{max}})",
