@@ -697,6 +697,17 @@ func (s *Sidecar) processAudioRTP() {
 	}
 }
 
+// drainRTCP reads a sender's incoming RTCP until the connection closes, so the
+// interceptors (NACK responder, reports) get to act on it.
+func drainRTCP(sender *webrtc.RTPSender) {
+	buf := make([]byte, 1500)
+	for {
+		if _, _, err := sender.Read(buf); err != nil {
+			return
+		}
+	}
+}
+
 func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 	s.peersLock.Lock()
 
@@ -824,10 +835,15 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 	// never answers an offer whose media is sendrecv, so "Watch Stream" gave up at once.
 	sendOnly := webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionSendonly}
 	for _, track := range []webrtc.TrackLocal{videoTrack, audioTrack} {
-		if _, err = pc.AddTransceiverFromTrack(track, sendOnly); err != nil {
+		transceiver, err := pc.AddTransceiverFromTrack(track, sendOnly)
+		if err != nil {
 			pc.Close()
 			return "", err
 		}
+		// The NACK responder from RegisterDefaultInterceptors only sees the
+		// viewers' RTCP if somebody reads it; unread, every resend request was
+		// ignored and each lost packet became a freeze until the next keyframe.
+		go drainRTCP(transceiver.Sender())
 	}
 
 	peer := &Peer{
