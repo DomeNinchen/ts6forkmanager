@@ -10,6 +10,43 @@
 import { EventEmitter } from 'events';
 import type { Ts3Client } from '../tslib/client.js';
 import { buildCommand } from '../tslib/commands.js';
+import { isDebugEnabled } from '../../utils/debug-flags.js';
+
+/** Logs one line when the "Stream Signaling Debug" flag is on (Settings -> Debug). */
+export function logStreamSignaling(message: string): void {
+  if (isDebugEnabled('streamSignaling')) console.log(`[StreamSignaling] ${message}`);
+}
+
+// IP addresses in ICE candidates are personal data, so the debug log only keeps type, protocol and port.
+const MASKED_IP = 'x.x.x.x';
+
+/** "srflx udp x.x.x.x:51234" for one ICE candidate (with or without the "a=" prefix). */
+export function summarizeCandidate(candidate: string | undefined): string {
+  if (!candidate) return 'empty candidate';
+  // candidate:<foundation> <component> <protocol> <priority> <address> <port> typ <type> ...
+  const f = candidate.trim().replace(/^a=/, '').split(/\s+/);
+  const typ = f.indexOf('typ');
+  if (typ !== 6 || f.length < 8) return `unparsed candidate (${candidate.length} chars)`;
+  return `${f[7]} ${f[2].toLowerCase()} ${MASKED_IP}:${f[5]}`;
+}
+
+/** "SDP 2345 chars, 3 candidates (host 2, srflx 1)" without any address from the SDP. */
+export function summarizeSdp(sdp: string | undefined): string {
+  if (!sdp) return 'no SDP';
+  const types = new Map<string, number>();
+  const lines = sdp.split(/\r?\n/).filter((l) => l.startsWith('a=candidate:'));
+  for (const l of lines) {
+    const type = summarizeCandidate(l).split(' ')[0];
+    types.set(type, (types.get(type) ?? 0) + 1);
+  }
+  const byType = [...types].map(([t, n]) => `${t} ${n}`).join(', ');
+  return `SDP ${sdp.length} chars, ${lines.length} candidates${byType ? ` (${byType})` : ''}`;
+}
+
+const HANDLED_NOTIFIES = new Set([
+  'notifystreamstarted', 'notifystreamstopped', 'notifystreamsignaling', 'notifyjoinstreamrequest',
+  'notifyrespondjoinstreamrequest', 'notifystreamclientjoined', 'notifystreamclientleft', 'notifystreaminfo',
+]);
 
 export interface ActiveStream {
   id: string;
@@ -52,7 +89,14 @@ export class StreamSignaling extends EventEmitter {
   }
 
   private handleCommand(parsed: any): void {
-    switch (parsed.name) {
+    const name = String(parsed?.name ?? '');
+    // These two get a more detailed line from their own handler.
+    if (name.startsWith('notify') && name.includes('stream')
+      && name !== 'notifystreamsignaling' && name !== 'notifyrespondjoinstreamrequest') {
+      const p = parsed.params ?? {};
+      logStreamSignaling(`<- ${name} clid=${p.clid ?? '-'} id=${p.id ?? p.stream_id ?? '-'}${HANDLED_NOTIFIES.has(name) ? '' : ' (not handled)'}`);
+    }
+    switch (name) {
       case 'notifystreamstarted':
         this.handleStreamStarted(parsed);
         break;
@@ -122,12 +166,25 @@ export class StreamSignaling extends EventEmitter {
   private handleStreamSignaling(parsed: any): void {
     const p = parsed.params;
     const dataStr = p.json || p.data || '';
-    if (!dataStr) return;
+    const from = `clid=${p.clid ?? '-'} id=${p.id ?? p.stream_id ?? '-'}`;
+    if (!dataStr) {
+      logStreamSignaling(`<- streamsignaling ${from} with an empty payload (ignored)`);
+      return;
+    }
 
     try {
       const payload = JSON.parse(dataStr);
       const cmd = payload.cmd;
       const args = payload.args || {};
+      if (isDebugEnabled('streamSignaling')) {
+        let detail: string;
+        if (cmd === 'offer' || cmd === 'reconnectOffer') detail = summarizeSdp(args.offer || args.sdp);
+        else if (cmd === 'answer') detail = summarizeSdp(args.answer || args.sdp);
+        else if (cmd === 'iceCandidate') detail = `${summarizeCandidate(args.sdp || args.candidate)} mid=${args.mid ?? args.sdp_mid ?? '-'} mLine=${args.mLine ?? args.sdp_mline_index ?? '-'}`;
+        else if (cmd === 'reconnect') detail = '';
+        else detail = `not handled (args: ${Object.keys(args).join(', ') || 'none'})`;
+        logStreamSignaling(`<- streamsignaling ${from} cmd=${cmd ?? '(none)'}${detail ? ` ${detail}` : ''}`);
+      }
 
       switch (cmd) {
         case 'offer':
@@ -179,6 +236,7 @@ export class StreamSignaling extends EventEmitter {
   private handleJoinStreamResponse(parsed: any): void {
     const p = parsed.params;
     const decision = parseInt(p.decision) || 0;
+    logStreamSignaling(`<- notifyrespondjoinstreamrequest clid=${p.clid ?? '-'} id=${p.id ?? p.stream_id ?? '-'} decision=${decision} ${summarizeSdp(p.offer)}`);
 
     if (decision === 1 && p.offer) {
       this.emit('signalingMessage', {
@@ -241,6 +299,7 @@ export class StreamSignaling extends EventEmitter {
   }
 
   sendJoinResponse(viewerClid: number, streamId: string, accept: boolean = true, offerSdp?: string): void {
+    logStreamSignaling(`-> respondjoinstreamrequest clid=${viewerClid} id=${streamId} decision=${accept ? 1 : 0} ${summarizeSdp(offerSdp)}`);
     this.client.sendCommand(buildCommand('respondjoinstreamrequest', {
       id: streamId,
       clid: String(viewerClid),
@@ -251,6 +310,7 @@ export class StreamSignaling extends EventEmitter {
   }
 
   sendSignaling(targetClid: number, data: { cmd: string; args: Record<string, any> }, streamId?: string): void {
+    logStreamSignaling(`-> streamsignaling clid=${targetClid} id=${streamId || '-'} cmd=${data.cmd} (args: ${Object.keys(data.args).join(', ') || 'none'})`);
     this.client.sendCommand(buildCommand('streamsignaling', {
       id: streamId || '',
       clid: String(targetClid),

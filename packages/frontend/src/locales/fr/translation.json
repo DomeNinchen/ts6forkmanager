@@ -1264,6 +1264,8 @@
         "rankCheckDebugHint": "Détail par client (heures calculées, appartenance aux groupes) pour l'action de flux de bot Rank Check.",
         "serverQueryDebugLabel": "Debug ServerQuery",
         "serverQueryDebugHint": "Chaque commande WebQuery/SSH envoyée à un serveur TeamSpeak et sa réponse brute, erreurs incluses (p. ex. permissions insuffisantes) — utile quand une action de flux de bot ne fait silencieusement pas ce qui est attendu.",
+        "streamSignalingDebugLabel": "Debug de signalisation du stream",
+        "streamSignalingDebugHint": "Chaque message de signalisation d'un stream vidéo entre le client TeamSpeak et le bot de stream (entrée, offer, answer, candidats ICE) et s'il a atteint le sidecar vidéo — utile quand « Watch Stream » reste noir. Les adresses IP sont masquées.",
         "debugFlagUpdateFailed": "Échec de la mise à jour du flag de debug",
         "dangerZone": "Zone de danger",
         "idResetHint": "Les compteurs d'ID de SQLite ne redescendent jamais seuls, même après avoir tout supprimé — ceci efface entièrement une table (sur tous les serveurs, pas seulement celui sélectionné ci-dessus) afin que sa prochaine entrée reparte à #1.",

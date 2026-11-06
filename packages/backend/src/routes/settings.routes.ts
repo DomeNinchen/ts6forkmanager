@@ -115,7 +115,7 @@ settingsRoutes.delete('/yt-cookies', requireAdmin, async (_req: Request, res: Re
   } catch (err) { next(err); }
 });
 
-const VALID_DEBUG_FLAGS: DebugFlagName[] = ['voice', 'rankCheck', 'query'];
+const VALID_DEBUG_FLAGS: DebugFlagName[] = ['voice', 'rankCheck', 'query', 'streamSignaling'];
 
 // GET /api/settings/debug-flags — Current debug-logging toggle states
 settingsRoutes.get('/debug-flags', requireAdmin, (_req: Request, res: Response) => {

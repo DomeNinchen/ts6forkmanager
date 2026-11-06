@@ -1,23 +1,26 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
 
-export type DebugFlagName = 'voice' | 'rankCheck' | 'query';
+export type DebugFlagName = 'voice' | 'rankCheck' | 'query' | 'streamSignaling';
 
 const ENV_VAR_MAP: Record<DebugFlagName, string> = {
   voice: 'VOICE_DEBUG',
   rankCheck: 'RANK_CHECK_DEBUG',
   query: 'QUERY_DEBUG',
+  streamSignaling: 'STREAM_SIGNALING_DEBUG',
 };
 
 const DB_KEY_MAP: Record<DebugFlagName, string> = {
   voice: 'debug_voice',
   rankCheck: 'debug_rank_check',
   query: 'debug_query',
+  streamSignaling: 'debug_stream_signaling',
 };
 
 const cache: Record<DebugFlagName, boolean> = {
   voice: false,
   rankCheck: false,
   query: false,
+  streamSignaling: false,
 };
 
 /**
