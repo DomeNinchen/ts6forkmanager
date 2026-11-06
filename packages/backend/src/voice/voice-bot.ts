@@ -1286,7 +1286,8 @@ export class VoiceBot extends EventEmitter {
     await this.sidecarHttp.waitHealthy();
     console.log(`[VoiceBot ${this.config.id}] Sidecar ready`);
 
-    // Setup stream signaling on the TS3 client
+    // Setup stream signaling on the TS3 client (a leftover one from a failed start must not keep listening)
+    this.signaling?.dispose();
     this.signaling = new StreamSignaling(this.client);
     this.setupSignalingListeners();
     this.signaling.registerStreamNotifications();
@@ -1535,6 +1536,7 @@ export class VoiceBot extends EventEmitter {
     // meant for this stream, not for whatever someone starts next.
     this._videoQueue = [];
     this._videoNowPlaying = null;
+    this.signaling?.dispose();
     this.signaling = null;
     this.cleanupVideoTempFile();
 

@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.98.0 · frontend 3.115.0 · sidecar 2.2.0**
+Versions at the end of the month: **backend 2.98.1 · frontend 3.115.1 · sidecar 2.2.0**
 
 ### New Features
 
@@ -32,6 +32,8 @@ Versions at the end of the month: **backend 2.98.0 · frontend 3.115.0 · sideca
 
 ### Bug Fixes
 
+- Fixed "Watch Stream" in the TeamSpeak client getting several different offers for one viewer once a music bot had started a video stream more than once on the same connection: each earlier stream kept answering join requests, so the viewer's answer could meet the wrong sidecar peer and the video stayed black. Each viewer now gets exactly one offer. *backend 2.98.1*, reported in [#354](https://github.com/DomeNinchen/ts6forkmanager/issues/354)
+- Fixed a video over the 15-minute stream limit failing with "Request failed with status code 500" (the log said "Local video file not found"); the stream tab now says the video is longer than 15 minutes. *backend 2.98.1, frontend 3.115.1*
 - Fixed the flow editor leaving almost no room for the canvas on a phone: below 768 px the node list is hidden behind a **Nodes** button in the toolbar (it closes again once a node is added), and a selected node's settings cover the canvas with a close button instead of squeezing it. *frontend 3.111.3* [#363](https://github.com/DomeNinchen/ts6forkmanager/pull/363)
 - Fixed an encrypted backup opened with the wrong passphrase sometimes being refused as "neither a backup ZIP from this page nor a database file" instead of saying the passphrase does not open it. *backend 2.94.1* [#361](https://github.com/DomeNinchen/ts6forkmanager/pull/361)
 - Fixed two flow templates that read event fields TeamSpeak does not send: **Anti-VPN** checked an empty IP address (it now asks the server for the joining client's IP first), and **Last-Seen Tracker** stored every disconnect under the same empty name (it now remembers who is behind each connection when a client joins and records the time under that client's database ID). *frontend 3.111.1* [#359](https://github.com/DomeNinchen/ts6forkmanager/pull/359)

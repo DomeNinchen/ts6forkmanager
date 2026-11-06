@@ -277,9 +277,9 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
 
               {(startStream.isError || stopStream.isError || setSource.isError) && (
                 <p className="text-sm text-red-500">
-                  {(startStream.error as any)?.message ||
-                    (stopStream.error as any)?.message ||
-                    (setSource.error as any)?.message}
+                  {[startStream.error, stopStream.error, setSource.error]
+                    .map((e: any) => e?.response?.data?.error || e?.message)
+                    .find(Boolean)}
                 </p>
               )}
             </>
