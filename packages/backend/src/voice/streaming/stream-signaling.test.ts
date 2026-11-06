@@ -1,7 +1,7 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'events';
-import { StreamSignaling, summarizeCandidate, summarizeSdp } from './stream-signaling.js';
+import { StreamSignaling, summarizeCandidate, summarizeSdp, summarizeMedia } from './stream-signaling.js';
 import { setDebugFlag } from '../../utils/debug-flags.js';
 
 const fakePrisma = { appSetting: { upsert: async () => ({}) } } as any;
@@ -33,6 +33,11 @@ afterEach(async () => {
 
 const signal = (json: string) =>
   client.emit('command', { name: 'notifystreamsignaling', params: { clid: '7', id: 's1', json } });
+
+test('media summary names codec and direction per section, and a rejected one', () => {
+  const sdp = 'v=0\r\nm=video 9 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 VP8/90000\r\na=recvonly\r\nm=audio 0 UDP/TLS/RTP/SAVPF 111\r\na=rtpmap:111 opus/48000/2\r\n';
+  assert.equal(summarizeMedia(sdp), 'video VP8/96 recvonly; audio rejected');
+});
 
 test('summaries keep type, protocol and port but no IP address', () => {
   assert.equal(summarizeCandidate('candidate:2 1 UDP 1694498815 203.0.113.7 50001 typ srflx raddr 192.168.1.50 rport 50000'), 'srflx udp x.x.x.x:50001');
@@ -87,4 +92,21 @@ test('dispose detaches from the client, so a restarted stream answers each join 
 
   assert.deepEqual(joins, ['new']);
   assert.equal(client.listenerCount('command'), 1);
+  assert.equal(client.listenerCount('ts3error'), 1);
+});
+
+test('flag on: a refused command is logged with the stream command sent before it, ok answers are not', async () => {
+  await setDebugFlag(fakePrisma, 'streamSignaling', true);
+  signaling.sendJoinResponse(7, 's1', true, SDP);
+  lines.length = 0;
+  client.emit('ts3error', { id: '0', msg: 'ok' });
+  client.emit('ts3error', { id: '1538', msg: 'invalid parameter', extra_msg: 'offer too long' });
+
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /^\[StreamSignaling\] <- error id=1538 msg=invalid parameter extra_msg=offer too long \(stream commands sent in the last 2 s: respondjoinstreamrequest \d+ ms ago\)$/);
+});
+
+test('flag off: a refused command logs nothing', () => {
+  client.emit('ts3error', { id: '1538', msg: 'invalid parameter' });
+  assert.deepEqual(lines, []);
 });

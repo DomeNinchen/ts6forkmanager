@@ -40,7 +40,22 @@ export function summarizeSdp(sdp: string | undefined): string {
     types.set(type, (types.get(type) ?? 0) + 1);
   }
   const byType = [...types].map(([t, n]) => `${t} ${n}`).join(', ');
-  return `SDP ${sdp.length} chars, ${lines.length} candidates${byType ? ` (${byType})` : ''}`;
+  const media = summarizeMedia(sdp);
+  return `SDP ${sdp.length} chars, ${lines.length} candidates${byType ? ` (${byType})` : ''}${media ? `; ${media}` : ''}`;
+}
+
+/** Per m= section: "video VP8/96 sendonly; audio opus/111 sendonly" ("rejected" for port 0). No addresses. */
+export function summarizeMedia(sdp: string): string {
+  return sdp.split(/\r?\nm=/).slice(1).map((section) => {
+    const lines = section.split(/\r?\n/);
+    const [kind, port] = lines[0].split(' ');
+    if (port === '0') return `${kind} rejected`;
+    const codecs = lines
+      .filter((l) => l.startsWith('a=rtpmap:'))
+      .map((l) => { const m = /^a=rtpmap:(\d+) ([^/\s]+)/.exec(l); return m ? `${m[2]}/${m[1]}` : '?'; });
+    const dir = lines.find((l) => /^a=(sendonly|recvonly|sendrecv|inactive)$/.test(l))?.slice(2) ?? 'no direction';
+    return `${kind} ${codecs.join(',') || 'no codec'} ${dir}`;
+  }).join('; ');
 }
 
 const HANDLED_NOTIFIES = new Set([
@@ -78,11 +93,37 @@ export class StreamSignaling extends EventEmitter {
   private client: Ts3Client;
   private activeStreams: Map<string, ActiveStream> = new Map();
   private readonly onCommand = (parsed: any) => this.handleCommand(parsed);
+  // shortcut: answers carry no command name and the bot sends other commands too, so a refusal is
+  // only shown next to the stream commands of the last 2 s; add return_code matching if that is not enough.
+  private recentSent: Array<{ name: string; at: number }> = [];
+  /**
+   * The server answers every command with `error id=... msg=...`; a refusal other than the
+   * fatal ones (password, ban, server full) was invisible before, so a rejected
+   * respondjoinstreamrequest left the viewer waiting with nothing in any log.
+   */
+  private readonly onServerError = (params: Record<string, string>) => {
+    if (!params || params.id === undefined || params.id === '0') return;
+    const extra = ['extra_msg', 'failed_permid', 'return_code']
+      .filter((k) => params[k])
+      .map((k) => ` ${k}=${params[k]}`)
+      .join('');
+    const now = Date.now();
+    const recent = this.recentSent.filter((s) => now - s.at <= 2000).map((s) => `${s.name} ${now - s.at} ms ago`);
+    const context = recent.length ? ` (stream commands sent in the last 2 s: ${recent.join(', ')})` : '';
+    logStreamSignaling(`<- error id=${params.id} msg=${params.msg ?? ''}${extra}${context}`);
+  };
 
   constructor(client: Ts3Client) {
     super();
     this.client = client;
     this.client.on('command', this.onCommand);
+    this.client.on('ts3error', this.onServerError);
+  }
+
+  private send(name: string, params: Record<string, string>): void {
+    const now = Date.now();
+    this.recentSent = this.recentSent.filter((s) => now - s.at <= 2000).concat({ name, at: now });
+    this.client.sendCommand(buildCommand(name, params));
   }
 
   /**
@@ -93,6 +134,7 @@ export class StreamSignaling extends EventEmitter {
    */
   dispose(): void {
     this.client.removeListener('command', this.onCommand);
+    this.client.removeListener('ts3error', this.onServerError);
     this.removeAllListeners();
   }
 
@@ -299,7 +341,7 @@ export class StreamSignaling extends EventEmitter {
     viewerLimit?: number;
     audio?: boolean;
   } = {}): void {
-    this.client.sendCommand(buildCommand('setupstream', {
+    this.send('setupstream', {
       name: params.name || 'Bot Stream',
       type: String(params.type ?? 3),
       bitrate: String(params.bitrate ?? 4608),
@@ -307,40 +349,40 @@ export class StreamSignaling extends EventEmitter {
       mode: String(params.mode ?? 1),
       viewer_limit: String(params.viewerLimit ?? 0),
       audio: params.audio === false ? '0' : '1',
-    }));
+    });
   }
 
   sendJoinResponse(viewerClid: number, streamId: string, accept: boolean = true, offerSdp?: string): void {
     logStreamSignaling(`-> respondjoinstreamrequest clid=${viewerClid} id=${streamId} decision=${accept ? 1 : 0} ${summarizeSdp(offerSdp)}`);
-    this.client.sendCommand(buildCommand('respondjoinstreamrequest', {
+    this.send('respondjoinstreamrequest', {
       id: streamId,
       clid: String(viewerClid),
       msg: '',
       offer: offerSdp || '',
       decision: accept ? '1' : '0',
-    }));
+    });
   }
 
   sendSignaling(targetClid: number, data: { cmd: string; args: Record<string, any> }, streamId?: string): void {
     logStreamSignaling(`-> streamsignaling clid=${targetClid} id=${streamId || '-'} cmd=${data.cmd} (args: ${Object.keys(data.args).join(', ') || 'none'})`);
-    this.client.sendCommand(buildCommand('streamsignaling', {
+    this.send('streamsignaling', {
       id: streamId || '',
       clid: String(targetClid),
       json: JSON.stringify(data),
-    }));
+    });
   }
 
   sendStreamStop(streamId: string, reason: number = 1): void {
-    this.client.sendCommand(buildCommand('stopstream', { id: streamId, reason: String(reason) }));
+    this.send('stopstream', { id: streamId, reason: String(reason) });
   }
 
   sendRemoveClient(clid: number, streamId: string): void {
-    this.client.sendCommand(buildCommand('removeclientfromstream', { id: streamId, clid: String(clid) }));
+    this.send('removeclientfromstream', { id: streamId, clid: String(clid) });
   }
 
   registerStreamNotifications(): void {
     for (const event of ['channel', 'server', 'textchannel']) {
-      this.client.sendCommand(buildCommand('servernotifyregister', { event }));
+      this.send('servernotifyregister', { event });
     }
   }
 }
