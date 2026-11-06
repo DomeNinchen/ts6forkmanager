@@ -35,9 +35,14 @@ test('encryption: the standard openssl tool opens it, the size is predictable, a
       await decryptFile(enc, ours, PASS);
       assert.ok(fs.readFileSync(ours).equals(plain));
     }
-    // And the other way round: what openssl encrypts, we open
+    // And the other way round: what openssl encrypts, we open. The salt is fixed because a wrong
+    // passphrase passes CBC's padding check for about 1 salt in 256 (561409ef91ead26c is one), which
+    // made this test flaky; decryptIfNeeded catches that case (tested below). With -S, OpenSSL 3
+    // writes no "Salted__" header, so it is put in front here.
+    const SALT = '0011223344556677';
     fs.writeFileSync(path.join(dir, 'plain'), 'from openssl');
-    execFileSync('openssl', ['enc', '-aes-256-cbc', '-pbkdf2', '-md', 'sha256', '-iter', String(PBKDF2_ITERATIONS), '-in', path.join(dir, 'plain'), '-out', path.join(dir, 'o.enc'), '-pass', `pass:${PASS}`]);
+    const body = execFileSync('openssl', ['enc', '-aes-256-cbc', '-pbkdf2', '-md', 'sha256', '-iter', String(PBKDF2_ITERATIONS), '-S', SALT, '-in', path.join(dir, 'plain'), '-pass', `pass:${PASS}`]);
+    fs.writeFileSync(path.join(dir, 'o.enc'), Buffer.concat([Buffer.from('Salted__', 'latin1'), Buffer.from(SALT, 'hex'), body]));
     await decryptFile(path.join(dir, 'o.enc'), path.join(dir, 'o.out'), PASS);
     assert.equal(fs.readFileSync(path.join(dir, 'o.out'), 'utf8'), 'from openssl');
     await assert.rejects(decryptFile(path.join(dir, 'o.enc'), path.join(dir, 'wrong.out'), 'wrong passphrase!!'));
