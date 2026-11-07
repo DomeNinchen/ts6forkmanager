@@ -168,12 +168,31 @@ export interface DownloadedStream {
   durationSec: number | null;
 }
 
-/** Why yt-dlp finished without leaving a file: over the duration limit (the caller's choice, 400) or unknown. */
-export function missingDownloadError(ytDlpStdout: string, maxDurationSec: number): Error {
+/**
+ * Why yt-dlp finished without leaving a file: a live stream, over the duration limit (both the
+ * caller's choice, 400) or unknown. A live stream has no duration, so the duration filter skips it
+ * just like a too long video; `isLive` (see probeIsLive) tells the two apart.
+ */
+export function missingDownloadError(ytDlpStdout: string, maxDurationSec: number, isLive = false): Error {
   if (ytDlpStdout.includes('does not pass filter')) {
+    if (isLive) {
+      return new AppError(400, 'Live streams are not supported yet - only videos with a known length can be streamed', undefined, 'VIDEO_IS_LIVE');
+    }
     return new AppError(400, `The video is longer than ${Math.round(maxDurationSec / 60)} minutes, the limit for a stream (an admin can raise it under Settings -> Streaming)`, undefined, 'VIDEO_TOO_LONG');
   }
   return new Error(`yt-dlp finished without a video file: ${ytDlpStdout.trim().slice(-500)}`);
+}
+
+/** Whether yt-dlp reports the URL as a live stream right now. Any failure counts as "no": the caller then keeps its generic error. */
+export function probeIsLive(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const proc = spawn('yt-dlp', [...getCookieArgs(), '--no-playlist', '--skip-download', '--print', '%(is_live)s', '--', url], { shell: false });
+    let stdout = '';
+    proc.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+    const timer = setTimeout(() => { proc.kill('SIGKILL'); resolve(false); }, 30_000);
+    proc.on('close', () => { clearTimeout(timer); resolve(stdout.trim().split('\n').pop() === 'True'); });
+    proc.on('error', () => { clearTimeout(timer); resolve(false); });
+  });
 }
 
 /** 10 minutes, plus one minute per 5 minutes of allowed video, so a raised length limit does not end in a timeout. */
@@ -243,7 +262,7 @@ export async function downloadVideoForStream(
       reject(new Error(`Video download timed out after ${Math.round(timeoutMs / 60_000)} minutes`));
     }, timeoutMs);
 
-    proc.on('close', (code) => {
+    proc.on('close', async (code) => {
       clearTimeout(timer);
       if (code !== 0) {
         reject(new Error(`yt-dlp failed (code ${code}): ${stderr.slice(-2000)}`));
@@ -251,7 +270,9 @@ export async function downloadVideoForStream(
       }
       // yt-dlp exits 0 when --match-filter skips the video, so a missing file is the only sign
       if (!fs.existsSync(tempPath)) {
-        reject(missingDownloadError(stdout, maxDurationSec));
+        // The filter is the only reason worth a second look: a live stream has no duration and fails it too
+        const isLive = stdout.includes('does not pass filter') && await probeIsLive(url);
+        reject(missingDownloadError(stdout, maxDurationSec, isLive));
         return;
       }
       resolve();
