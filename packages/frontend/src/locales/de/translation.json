@@ -113,6 +113,7 @@
       "files": "Dateien",
       "icons": "Icons",
       "complaints": "Beschwerden",
+      "support": "Support-Warteschlange",
       "messages": "Nachrichten",
       "serverLogs": "Server-Logs",
       "queryConsole": "Query-Konsole",
@@ -2582,6 +2583,107 @@
           "end": "{{name}} auf den Platz von {{target}} gelegt.",
           "cancel": "Verschieben abgebrochen, {{name}} bleibt an ihrem Platz."
         }
+      }
+    },
+    "support": {
+      "duration": {
+        "hours": "{{h}} Std. {{m}} Min.",
+        "minutes": "{{m}} Min. {{s}} Sek.",
+        "seconds": "{{s}} Sek."
+      },
+      "states": {
+        "waiting": "Wartet",
+        "in-progress": "In Bearbeitung",
+        "done": "Erledigt",
+        "cancelled": "Abgebrochen"
+      },
+      "paused": {
+        "title": "Die Warteschlange ist pausiert",
+        "since": "seit {{time}}",
+        "connectionInactive": "Die Serververbindung ist nicht aktiv. Bis sie zurück ist, rückt niemand weiter und niemand wird abgebrochen.",
+        "unreachable": "TeamSpeak war nicht erreichbar ({{detail}}). Bis es wieder antwortet, rückt niemand weiter und niemand wird abgebrochen."
+      },
+      "loadError": "Die Support-Warteschlange konnte nicht geladen werden",
+      "retry": "Erneut versuchen",
+      "notSetUp": "Keine Support-Warteschlange auf diesem virtuellen Server",
+      "switchedOff": "Die Support-Warteschlange ist ausgeschaltet",
+      "setUpHint": "Ein Administrator kann sie einrichten.",
+      "setUpHintAdmin": "Unter Einstellungen einen Wartekanal und die Supporter-Gruppen wählen.",
+      "supportersOnline_one": "{{count}} Supporter verfügbar",
+      "supportersOnline_other": "{{count}} Supporter verfügbar",
+      "checkedAt": "Geprüft {{time}}",
+      "waitingTitle": "Wartend ({{count}})",
+      "emptyQueue": "Niemand wartet.",
+      "historyTitle": "Letzte Fälle",
+      "emptyHistory": "Noch keine abgeschlossenen Fälle.",
+      "removeTitle": "Aus der Warteschlange entfernen?",
+      "removeDescription": "{{client}} verlässt die Warteschlange und wird in den Standardkanal des Servers verschoben.",
+      "actions": {
+        "take": "Übernehmen",
+        "remove": "Entfernen",
+        "close": "Erledigt"
+      },
+      "toasts": {
+        "take": "{{client}} wurde übernommen; beide sind in einem neuen Raum.",
+        "remove": "{{client}} wurde aus der Warteschlange entfernt.",
+        "close": "Der Fall von {{client}} ist erledigt."
+      },
+      "positionLabel": "Platz {{position}}",
+      "arrivalUnknownHint": "Wartete schon, als die Warteschlange zu beobachten begann; die echte Ankunft ist unbekannt.",
+      "waited": "wartet {{time}}",
+      "waitedAtLeast": "wartet mindestens {{time}}",
+      "historyWaited": "wartete {{time}}",
+      "historyWaitedAtLeast": "wartete mindestens {{time}}",
+      "absent": "weg seit {{time}}",
+      "takenBy": "bei {{names}}",
+      "takenByWeb": "übernommen für {{names}}",
+      "endReasons": {
+        "left-server": "hat den Server verlassen",
+        "left-channel": "hat den Wartekanal verlassen",
+        "finished": "nicht mehr bei einem Supporter",
+        "removed": "entfernt",
+        "closed": "als erledigt markiert",
+        "queue-changed": "Warteschlange geändert oder ausgeschaltet"
+      },
+      "takeTitle": "{{client}} übernehmen",
+      "takeDescription": "Ein Raum wird erstellt, und der Client sowie der gewählte Supporter werden hineinverschoben.",
+      "noSupporterOnline": "Gerade ist kein Supporter verfügbar (online, nicht abwesend, nicht in einem AFK-Kanal).",
+      "supporter": "Supporter",
+      "chooseSupporter": "Supporter wählen",
+      "errors": {
+        "CASE_NOT_WAITING": "Dieser Client wartet nicht mehr.",
+        "CASE_NOT_IN_PROGRESS": "Dieser Fall ist nicht mehr in Bearbeitung.",
+        "CLIENT_OFFLINE": "Der Client ist gerade nicht online.",
+        "NOT_A_SUPPORTER": "Dieser Supporter ist nicht mehr verfügbar (offline, abwesend oder in einem AFK-Kanal).",
+        "CHANNEL_NOT_FOUND": "Diesen Kanal gibt es nicht mehr."
+      },
+      "settings": {
+        "open": "Einstellungen",
+        "title": "Einstellungen der Support-Warteschlange",
+        "description": "Wer den Wartekanal betritt, wird der Reihe nach eingereiht. Ein Fall ist übernommen, wenn ein Supporter den Client in seinen Kanal holt, oder hier über Übernehmen.",
+        "conflictTitle": "Ein Bot-Flow reagiert auf denselben Kanal",
+        "conflictText": "{{flows}} behandelt ebenfalls Clients, die diesen Kanal betreten. Beide würden denselben Client bearbeiten; den Flow ausschalten oder einen anderen Kanal nehmen.",
+        "enabled": "Warteschlange eingeschaltet",
+        "channel": "Wartekanal",
+        "chooseChannel": "Kanal wählen",
+        "channelHint": "Ein anderer Kanal oder das Ausschalten beendet die offenen Fälle.",
+        "groups": "Supporter-Gruppen",
+        "afk": "AFK-Kanäle (Supporter dort zählen nicht)",
+        "grace": "Karenzzeit (Sekunden)",
+        "graceHint": "So lange darf ein Client weg sein (getrennt, anderer Kanal) und behält seinen Platz.",
+        "withoutSupporter": "Einreihen, auch wenn kein Supporter verfügbar ist",
+        "withoutSupporterHint": "Aus: Niemand wird eingereiht, bis ein Supporter verfügbar ist.",
+        "roomName": "Raumname",
+        "roomNameHint": "Für Übernehmen. {client} und {supporter} werden eingesetzt; höchstens 40 Zeichen.",
+        "roomType": "Raumtyp",
+        "roomTypes": {
+          "temporary": "Temporär (gelöscht, wenn leer)",
+          "semipermanent": "Semi-permanent",
+          "permanent": "Permanent"
+        },
+        "needChannel": "Einen Wartekanal wählen.",
+        "needGroup": "Mindestens eine Supporter-Gruppe wählen.",
+        "saved": "Support-Warteschlange gespeichert"
       }
     },
     "temporaryGroups": {

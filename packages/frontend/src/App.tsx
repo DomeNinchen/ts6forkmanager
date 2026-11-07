@@ -67,6 +67,7 @@ const Tokens = lazy(() => import('@/pages/Tokens'));
 const Files = lazy(() => import('@/pages/Files'));
 const Icons = lazy(() => import('@/pages/Icons'));
 const Complaints = lazy(() => import('@/pages/Complaints'));
+const Support = lazy(() => import('@/pages/Support'));
 const Messages = lazy(() => import('@/pages/Messages'));
 const ServerLogs = lazy(() => import('@/pages/ServerLogs'));
 const Console = lazy(() => import('@/pages/Console'));
@@ -103,6 +104,7 @@ export function App() {
               <Route path="/server-stats" element={<AdminRoute><WebQueryRoute><ServerStats /></WebQueryRoute></AdminRoute>} />
               <Route path="/channels" element={<WebQueryRoute><Channels /></WebQueryRoute>} />
               <Route path="/clients" element={<WebQueryRoute><Clients /></WebQueryRoute>} />
+              <Route path="/support" element={<PermissionRoute permission="server.view"><WebQueryRoute><Support /></WebQueryRoute></PermissionRoute>} />
               <Route path="/client-database" element={<PermissionRoute permission="clients.database"><WebQueryRoute><ClientDatabase /></WebQueryRoute></PermissionRoute>} />
               <Route path="/server-groups" element={<PermissionRoute permission="groups.edit"><WebQueryRoute><ServerGroups /></WebQueryRoute></PermissionRoute>} />
               <Route path="/channel-groups" element={<PermissionRoute permission="groups.edit"><WebQueryRoute><ChannelGroups /></WebQueryRoute></PermissionRoute>} />

@@ -111,6 +111,7 @@
       "files": "Fichiers",
       "icons": "Icônes",
       "complaints": "Plaintes",
+      "support": "File de support",
       "messages": "Messages",
       "serverLogs": "Logs serveur",
       "instance": "Instance",
@@ -1516,6 +1517,107 @@
           "end": "{{name}} déposée à la place de {{target}}.",
           "cancel": "Déplacement annulé, {{name}} reste à sa place."
         }
+      }
+    },
+    "support": {
+      "duration": {
+        "hours": "{{h}} h {{m}} min",
+        "minutes": "{{m}} min {{s}} s",
+        "seconds": "{{s}} s"
+      },
+      "states": {
+        "waiting": "En attente",
+        "in-progress": "En cours",
+        "done": "Terminé",
+        "cancelled": "Annulé"
+      },
+      "paused": {
+        "title": "La file est en pause",
+        "since": "depuis {{time}}",
+        "connectionInactive": "La connexion au serveur n'est pas active. Personne n'avance ni n'est annulé avant son retour.",
+        "unreachable": "TeamSpeak est injoignable ({{detail}}). Personne n'avance ni n'est annulé avant qu'il réponde à nouveau."
+      },
+      "loadError": "Impossible de charger la file de support",
+      "retry": "Réessayer",
+      "notSetUp": "Aucune file de support sur ce serveur virtuel",
+      "switchedOff": "La file de support est désactivée",
+      "setUpHint": "Un administrateur peut la configurer.",
+      "setUpHintAdmin": "Dans Paramètres, choisissez un salon d'attente et les groupes de support.",
+      "supportersOnline_one": "{{count}} agent de support disponible",
+      "supportersOnline_other": "{{count}} agents de support disponibles",
+      "checkedAt": "Vérifié {{time}}",
+      "waitingTitle": "En attente ({{count}})",
+      "emptyQueue": "Personne n'attend.",
+      "historyTitle": "Derniers cas",
+      "emptyHistory": "Aucun cas terminé pour l'instant.",
+      "removeTitle": "Retirer de la file ?",
+      "removeDescription": "{{client}} quitte la file et est déplacé dans le salon par défaut du serveur.",
+      "actions": {
+        "take": "Prendre en charge",
+        "remove": "Retirer",
+        "close": "Terminer"
+      },
+      "toasts": {
+        "take": "{{client}} est pris en charge ; les deux sont dans un nouveau salon.",
+        "remove": "{{client}} a été retiré de la file.",
+        "close": "Le cas de {{client}} est terminé."
+      },
+      "positionLabel": "Position {{position}}",
+      "arrivalUnknownHint": "Attendait déjà quand la file a commencé à observer ; l'arrivée réelle est inconnue.",
+      "waited": "attend depuis {{time}}",
+      "waitedAtLeast": "attend depuis au moins {{time}}",
+      "historyWaited": "a attendu {{time}}",
+      "historyWaitedAtLeast": "a attendu au moins {{time}}",
+      "absent": "absent depuis {{time}}",
+      "takenBy": "avec {{names}}",
+      "takenByWeb": "pris en charge pour {{names}}",
+      "endReasons": {
+        "left-server": "a quitté le serveur",
+        "left-channel": "a quitté le salon d'attente",
+        "finished": "n'est plus avec un agent",
+        "removed": "retiré",
+        "closed": "marqué terminé",
+        "queue-changed": "file modifiée ou désactivée"
+      },
+      "takeTitle": "Prendre en charge {{client}}",
+      "takeDescription": "Un salon est créé et le client ainsi que l'agent choisi y sont déplacés.",
+      "noSupporterOnline": "Aucun agent n'est disponible pour le moment (en ligne, non absent, pas dans un salon AFK).",
+      "supporter": "Agent de support",
+      "chooseSupporter": "Choisir un agent",
+      "errors": {
+        "CASE_NOT_WAITING": "Ce client n'attend plus.",
+        "CASE_NOT_IN_PROGRESS": "Ce cas n'est plus en cours.",
+        "CLIENT_OFFLINE": "Le client n'est pas en ligne pour le moment.",
+        "NOT_A_SUPPORTER": "Cet agent n'est plus disponible (hors ligne, absent ou dans un salon AFK).",
+        "CHANNEL_NOT_FOUND": "Ce salon n'existe plus."
+      },
+      "settings": {
+        "open": "Paramètres",
+        "title": "Paramètres de la file de support",
+        "description": "Quiconque entre dans le salon d'attente est placé dans la file, dans l'ordre. Un cas est pris en charge quand un agent attire le client dans son salon, ou ici avec Prendre en charge.",
+        "conflictTitle": "Un flow de bot réagit au même salon",
+        "conflictText": "{{flows}} traite aussi les clients qui entrent dans ce salon. Les deux agiraient sur le même client ; désactivez le flow ou choisissez un autre salon.",
+        "enabled": "File activée",
+        "channel": "Salon d'attente",
+        "chooseChannel": "Choisir un salon",
+        "channelHint": "Changer de salon ou désactiver la file termine les cas ouverts.",
+        "groups": "Groupes de support",
+        "afk": "Salons AFK (les agents qui s'y trouvent ne comptent pas)",
+        "grace": "Délai de grâce (secondes)",
+        "graceHint": "Durée pendant laquelle un client peut s'absenter (déconnecté, autre salon) en gardant sa place.",
+        "withoutSupporter": "Mettre en file même sans agent disponible",
+        "withoutSupporterHint": "Désactivé : personne n'est mis en file tant qu'aucun agent n'est disponible.",
+        "roomName": "Nom du salon",
+        "roomNameHint": "Pour Prendre en charge. {client} et {supporter} sont remplacés ; 40 caractères au plus.",
+        "roomType": "Type de salon",
+        "roomTypes": {
+          "temporary": "Temporaire (supprimé quand vide)",
+          "semipermanent": "Semi-permanent",
+          "permanent": "Permanent"
+        },
+        "needChannel": "Choisissez un salon d'attente.",
+        "needGroup": "Choisissez au moins un groupe de support.",
+        "saved": "File de support enregistrée"
       }
     },
     "temporaryGroups": {
