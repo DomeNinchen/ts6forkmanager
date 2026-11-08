@@ -1291,8 +1291,9 @@ export class VoiceBot extends EventEmitter {
     // Setup stream signaling on the TS3 client (a leftover one from a failed start must not keep listening)
     this.signaling?.dispose();
     this.signaling = new StreamSignaling(this.client);
+    // No servernotifyregister here: it is a ServerQuery command, the server refuses it on a
+    // voice connection (516 invalid client type) and sends the stream notifications anyway.
     this.setupSignalingListeners();
-    this.signaling.registerStreamNotifications();
 
     // Wait for server to confirm stream
     const streamPromise = new Promise<ActiveStream>((resolve, reject) => {
