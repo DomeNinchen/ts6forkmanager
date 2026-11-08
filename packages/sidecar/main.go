@@ -1001,12 +1001,15 @@ func (s *Sidecar) sendSenderReports(peer *Peer) {
 	}
 }
 
-func (s *Sidecar) SetAnswer(id, sdp string) error {
+// SetAnswer applies a viewer's answer. ignored is empty when it was applied;
+// otherwise it says why not (duplicate, wrong signaling state), so the
+// backend's "Stream Signaling Debug" log can show it.
+func (s *Sidecar) SetAnswer(id, sdp string) (ignored string, err error) {
 	s.peersLock.RLock()
 	peer, exists := s.peers[id]
 	s.peersLock.RUnlock()
 	if !exists {
-		return fmt.Errorf("peer %s not found", id)
+		return "", fmt.Errorf("peer %s not found", id)
 	}
 
 	peer.mu.Lock()
@@ -1016,16 +1019,16 @@ func (s *Sidecar) SetAnswer(id, sdp string) error {
 		if peer.PC.RemoteDescription().Type == webrtc.SDPTypeAnswer &&
 			peer.PC.SignalingState() == webrtc.SignalingStateStable {
 			debugf("[API] Ignoring duplicate answer for peer: %s", id)
-			return nil
+			return "duplicate answer", nil
 		}
 	}
 
-	if peer.PC.SignalingState() != webrtc.SignalingStateHaveLocalOffer {
-		debugf("[API] Ignoring answer in signaling state %s for peer: %s", peer.PC.SignalingState(), id)
-		return nil
+	if state := peer.PC.SignalingState(); state != webrtc.SignalingStateHaveLocalOffer {
+		debugf("[API] Ignoring answer in signaling state %s for peer: %s", state, id)
+		return "signaling state " + state.String(), nil
 	}
 
-	return peer.PC.SetRemoteDescription(webrtc.SessionDescription{
+	return "", peer.PC.SetRemoteDescription(webrtc.SessionDescription{
 		Type: webrtc.SDPTypeAnswer,
 		SDP:  sdp,
 	})
@@ -1304,12 +1307,17 @@ func main() {
 		}
 		debugf("[API] Setting answer for peer: %s (%d bytes)", req.ID, len(req.SDP))
 
-		if err := sidecar.SetAnswer(req.ID, req.SDP); err != nil {
+		ignored, err := sidecar.SetAnswer(req.ID, req.SDP)
+		if err != nil {
 			log.Printf("[API] SetAnswer error: %v", err)
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		resp := map[string]any{"status": "ok", "applied": ignored == ""}
+		if ignored != "" {
+			resp["reason"] = ignored
+		}
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	mux.HandleFunc("POST /peer/ice", func(w http.ResponseWriter, r *http.Request) {

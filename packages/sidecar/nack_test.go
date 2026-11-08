@@ -65,8 +65,8 @@ func TestNackedVideoPacketIsSentAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	<-gathered
-	if err := s.SetAnswer("nack-test", rx.LocalDescription().SDP); err != nil {
-		t.Fatal(err)
+	if ignored, err := s.SetAnswer("nack-test", rx.LocalDescription().SDP); err != nil || ignored != "" {
+		t.Fatalf("answer not applied: err=%v ignored=%q", err, ignored)
 	}
 
 	s.peersLock.RLock()
