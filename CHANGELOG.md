@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.100.0 · frontend 3.117.0 · sidecar 2.3.1**
+Versions at the end of the month: **backend 2.100.1 · frontend 3.117.1 · sidecar 2.3.1**
 
 ### New Features
 
@@ -22,6 +22,7 @@ Versions at the end of the month: **backend 2.100.0 · frontend 3.117.0 · sidec
 
 ### Improvements
 
+- **No refused commands at each stream start** — A music bot no longer sends `servernotifyregister` when it starts a video stream. TeamSpeak refuses that command on a bot's voice connection and sends the stream notifications anyway, so it only left three `invalid client type` errors (516) in the log; streams behave as before. *backend 2.100.1* [#378](https://github.com/DomeNinchen/ts6forkmanager/pull/378)
 - **Refused SSH credentials are never retried** — Once TeamSpeak refuses an SSH query login, no part of the manager (event sessions, command listeners, connection journal, console, connection test) logs in with the same credentials again until they are changed or the backend restarts, and logins with the same credentials run one after another instead of side by side. A wrong SSH password therefore costs one failed login instead of several, which keeps TeamSpeak from blocking or banning the manager's address for repeated failed logins. *backend 2.90.1* [#349](https://github.com/DomeNinchen/ts6forkmanager/pull/349)
 - **Connection diagnosis for SSH and file transfer** — A new admin endpoint (`POST /api/servers/:configId/diagnose`, the report dialog follows) checks WebQuery, the SSH query login and the file-transfer port one by one and gives each its own cause. The SSH check reuses the running event session when there is one; otherwise it logs in at most once per 30 seconds per server, and after a refused login it never tries the same credentials again (TeamSpeak blocks an address that is not on its query allowlist for about 11 minutes after two failed logins). The file-transfer check only opens and closes a connection to the port, without a transfer. An SSH connection the server closes before the login now fails at once instead of after 15 seconds. *backend 2.90.0, frontend 3.107.1* [#348](https://github.com/DomeNinchen/ts6forkmanager/pull/348)
 - **Connection test names the cause** — "Test" under Settings -> Connections now says why the WebQuery connection failed and what to do about it: host not found, connection refused, no answer (firewall), connection closed at once (HTTP/HTTPS switch, query deny list or flood block), API key rejected, TLS certificate not matching the host name, untrusted or expired, or an answer that did not come from TeamSpeak. A successful test shows the TeamSpeak version and the response time; the API response carries `cause`, `detail` and `durationMs` next to the existing fields. *backend 2.89.0, frontend 3.107.0* [#347](https://github.com/DomeNinchen/ts6forkmanager/pull/347)
@@ -33,6 +34,7 @@ Versions at the end of the month: **backend 2.100.0 · frontend 3.117.0 · sidec
 
 ### Bug Fixes
 
+- Fixed the stream preview in the web interface losing its first ICE candidate when it opened (`POST …/stream/webrtc/ice` answered 500 "remote description is not set"): the browser sent it before its answer had reached the video sidecar. Candidates are now sent after the answer; the preview already worked with the remaining ones. *frontend 3.117.1* [#378](https://github.com/DomeNinchen/ts6forkmanager/pull/378)
 - Fixed "Watch Stream" in the TeamSpeak 6 client staying at "Connecting…" for some viewers at home behind a router while the web preview worked: the client sends many ICE candidates in a burst, the video sidecar ran one connection check per candidate and gave the only usable path up after 8 checks within about 0.1 s, before the viewer's router let anything through. The sidecar now keeps checking each path for about 10 seconds. *sidecar 2.3.1* [#377](https://github.com/DomeNinchen/ts6forkmanager/pull/377), reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Fixed a live stream (a Twitch channel or a YouTube live) being refused with "The video is longer than N minutes": the stream tab now says that live streams are not supported yet. A live stream has no length, so the length limit skipped it like a too long video; the README says the same. *backend 2.99.2* [#374](https://github.com/DomeNinchen/ts6forkmanager/pull/374)
 - Fixed video streams stuttering and freezing for viewers whose connection loses packets: a viewer's request to send a lost packet again (NACK) was never acted on, because the video sidecar did not read what viewers send back. Each lost packet now gets resent; before, it left the picture broken until the next full frame. *sidecar 2.2.2* [#372](https://github.com/DomeNinchen/ts6forkmanager/pull/372)

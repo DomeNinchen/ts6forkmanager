@@ -60,8 +60,14 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
         }
       };
 
+      // Candidates appear as soon as the answer is set locally; one that reaches the
+      // sidecar before the answer is refused ("remote description is not set").
+      let markAnswerSent!: () => void;
+      const answerSent = new Promise<void>((resolve) => { markAnswerSent = resolve; });
+
       pc.onicecandidate = async (ev) => {
         if (ev.candidate) {
+          await answerSent;
           try {
             await musicBotsApi.webrtcIce(
               botId,
@@ -83,6 +89,7 @@ export function VideoPlayer({ botId, streaming }: VideoPlayerProps) {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       await musicBotsApi.webrtcAnswer(botId, answer.sdp!);
+      markAnswerSent();
     } catch (err: any) {
       setError(err.message || t('components.videoPlayer.failedToConnect'));
       cleanup();

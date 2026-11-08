@@ -396,10 +396,4 @@ export class StreamSignaling extends EventEmitter {
   sendRemoveClient(clid: number, streamId: string): void {
     this.send('removeclientfromstream', { id: streamId, clid: String(clid) });
   }
-
-  registerStreamNotifications(): void {
-    for (const event of ['channel', 'server', 'textchannel']) {
-      this.send('servernotifyregister', { event });
-    }
-  }
 }
