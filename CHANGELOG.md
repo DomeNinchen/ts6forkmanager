@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.100.0 · frontend 3.117.0 · sidecar 2.3.0**
+Versions at the end of the month: **backend 2.100.0 · frontend 3.117.0 · sidecar 2.3.1**
 
 ### New Features
 
@@ -33,6 +33,7 @@ Versions at the end of the month: **backend 2.100.0 · frontend 3.117.0 · sidec
 
 ### Bug Fixes
 
+- Fixed "Watch Stream" in the TeamSpeak 6 client staying at "Connecting…" for some viewers at home behind a router while the web preview worked: the client sends many ICE candidates in a burst, the video sidecar ran one connection check per candidate and gave the only usable path up after 8 checks within about 0.1 s, before the viewer's router let anything through. The sidecar now keeps checking each path for about 10 seconds. *sidecar 2.3.1* reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Fixed a live stream (a Twitch channel or a YouTube live) being refused with "The video is longer than N minutes": the stream tab now says that live streams are not supported yet. A live stream has no length, so the length limit skipped it like a too long video; the README says the same. *backend 2.99.2* [#374](https://github.com/DomeNinchen/ts6forkmanager/pull/374)
 - Fixed video streams stuttering and freezing for viewers whose connection loses packets: a viewer's request to send a lost packet again (NACK) was never acted on, because the video sidecar did not read what viewers send back. Each lost packet now gets resent; before, it left the picture broken until the next full frame. *sidecar 2.2.2* [#372](https://github.com/DomeNinchen/ts6forkmanager/pull/372)
 - Fixed "Watch Stream" in the TeamSpeak 6 client giving up right after "Joining stream" (seen with 6.0.0-beta5.1): the client never answers an offer whose media is marked send-and-receive, so the video sidecar now offers video and sound as send-only. ICE candidates from the viewer that arrived while its answer was still being passed on were also lost; they are now handled in order. *backend 2.99.1, sidecar 2.2.1* [#371](https://github.com/DomeNinchen/ts6forkmanager/pull/371), reported in [#354](https://github.com/DomeNinchen/ts6forkmanager/issues/354)
