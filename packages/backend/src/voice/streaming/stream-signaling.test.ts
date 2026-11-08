@@ -1,7 +1,7 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'events';
-import { StreamSignaling, summarizeCandidate, summarizeSdp, summarizeMedia } from './stream-signaling.js';
+import { StreamSignaling, summarizeCandidate, summarizeSdp, summarizeMedia, describeAnswerResult, sidecarRefusalReason } from './stream-signaling.js';
 import { setDebugFlag } from '../../utils/debug-flags.js';
 
 const fakePrisma = { appSetting: { upsert: async () => ({}) } } as any;
@@ -109,4 +109,20 @@ test('flag on: a refused command is logged with the stream command sent before i
 test('flag off: a refused command logs nothing', () => {
   client.emit('ts3error', { id: '1538', msg: 'invalid parameter' });
   assert.deepEqual(lines, []);
+});
+
+test('the answer line says whether the sidecar applied the answer, and why not', () => {
+  assert.equal(describeAnswerResult({ applied: true }), 'answer applied to the sidecar');
+  assert.equal(describeAnswerResult({ applied: false, reason: 'duplicate answer' }), 'answer ignored by the sidecar: duplicate answer');
+  assert.equal(describeAnswerResult({ applied: false, reason: 'signaling state stable' }), 'answer ignored by the sidecar: signaling state stable');
+  assert.equal(describeAnswerResult({ applied: false }), 'answer ignored by the sidecar: no reason given');
+  assert.equal(describeAnswerResult({}), 'answer passed to the sidecar (it is too old to say whether it was applied)');
+});
+
+test('a sidecar refusal keeps its reason but no IP address', () => {
+  assert.equal(sidecarRefusalReason(new Error('Sidecar /peer/ice: 500 InvalidStateError: remote description is not set\n')),
+    'InvalidStateError: remote description is not set');
+  assert.equal(sidecarRefusalReason(new Error('Sidecar /peer/answer: 500 peer 7 not found\n')), 'peer 7 not found');
+  const masked = sidecarRefusalReason(new Error('Sidecar /peer/ice: 500 bad candidate 203.0.113.7 2001:db8::1 port 50000'));
+  assert.equal(masked, 'bad candidate x.x.x.x x.x.x.x port 50000');
 });

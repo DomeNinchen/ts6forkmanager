@@ -37,8 +37,9 @@ export class SidecarClient {
     return this.call('POST', '/peer/create', { id });
   }
 
-  async setAnswer(id: string, sdp: string): Promise<void> {
-    await this.call('POST', '/peer/answer', { id, sdp });
+  /** `applied` is missing on a sidecar older than 2.3.0, which does not say. */
+  async setAnswer(id: string, sdp: string): Promise<{ applied?: boolean; reason?: string }> {
+    return this.call('POST', '/peer/answer', { id, sdp });
   }
 
   async addIceCandidate(id: string, candidate: string, sdpMid: string, sdpMLineIndex: number): Promise<void> {

@@ -30,6 +30,23 @@ export function summarizeCandidate(candidate: string | undefined): string {
   return `${f[7]} ${f[2].toLowerCase()} ${MASKED_IP}:${f[5]}`;
 }
 
+/** What the sidecar did with a viewer's answer, from its /peer/answer response. */
+export function describeAnswerResult(res: { applied?: boolean; reason?: string }): string {
+  if (res.applied === true) return 'answer applied to the sidecar';
+  if (res.applied === false) return `answer ignored by the sidecar: ${res.reason || 'no reason given'}`;
+  return 'answer passed to the sidecar (it is too old to say whether it was applied)';
+}
+
+/** The sidecar's own words from a failed call ("Sidecar /peer/ice: 500 <reason>"), with any IP address masked. */
+export function sidecarRefusalReason(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  return message
+    .replace(/^Sidecar \S+: \d+ /, '')
+    .replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, MASKED_IP)
+    .replace(/[0-9a-f]*:[0-9a-f]*:[0-9a-f:.]*/gi, MASKED_IP)
+    .trim();
+}
+
 /** "SDP 2345 chars, 3 candidates (host 2, srflx 1)" without any address from the SDP. */
 export function summarizeSdp(sdp: string | undefined): string {
   if (!sdp) return 'no SDP';

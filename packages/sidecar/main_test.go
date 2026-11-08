@@ -159,3 +159,42 @@ func TestRewriterPreservesSpacingWithinOneSource(t *testing.T) {
 		t.Errorf("spacing changed to %d, want the original 3000", delta)
 	}
 }
+
+// An answer the sidecar does not apply must say why, or a viewer stuck at
+// "Connecting..." leaves no trace in the backend's Stream Signaling Debug log.
+func TestSetAnswerReportsWhetherItWasApplied(t *testing.T) {
+	t.Setenv("STUN_SERVERS", "stun:127.0.0.1:1")
+	s := NewSidecar()
+	offer, err := s.CreatePeer("answer-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.ClosePeer("answer-test")
+
+	rx, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rx.Close()
+	if err := rx.SetRemoteDescription(webrtc.SessionDescription{Type: webrtc.SDPTypeOffer, SDP: offer}); err != nil {
+		t.Fatal(err)
+	}
+	answer, err := rx.CreateAnswer(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if ignored, err := s.SetAnswer("answer-test", answer.SDP); err != nil || ignored != "" {
+		t.Fatalf("first answer: err=%v ignored=%q, want applied", err, ignored)
+	}
+	if ignored, err := s.SetAnswer("answer-test", answer.SDP); err != nil || ignored != "duplicate answer" {
+		t.Fatalf("second answer: err=%v ignored=%q, want duplicate answer", err, ignored)
+	}
+	s.peers["answer-test"].PC.Close()
+	if ignored, err := s.SetAnswer("answer-test", answer.SDP); err != nil || ignored != "signaling state closed" {
+		t.Fatalf("closed peer: err=%v ignored=%q, want signaling state closed", err, ignored)
+	}
+	if _, err := s.SetAnswer("no-such-peer", answer.SDP); err == nil {
+		t.Fatal("unknown peer: want an error")
+	}
+}

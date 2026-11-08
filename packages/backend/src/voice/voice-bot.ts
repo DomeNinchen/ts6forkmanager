@@ -5,7 +5,7 @@ import { AudioPipeline, FRAME_MS, BYTES_PER_FRAME } from './audio/pipeline.js';
 import { PlayQueue, type QueueItem } from './playlist/queue.js';
 import { fetchIcyMetadata } from './audio/icy-metadata.js';
 import { getAudioDuration } from './audio/music-library-scan.js';
-import { StreamSignaling, logStreamSignaling, type ActiveStream, type SignalingMessage } from './streaming/stream-signaling.js';
+import { StreamSignaling, logStreamSignaling, describeAnswerResult, sidecarRefusalReason, type ActiveStream, type SignalingMessage } from './streaming/stream-signaling.js';
 import { SidecarClient } from './streaming/sidecar-client.js';
 import { SidecarProcess, type SidecarConfig } from './streaming/sidecar-process.js';
 import { STREAM_PRESETS, DEFAULT_PRESET, type VideoViewerInfo, type VideoStreamStatus, type VideoQueueItem } from './streaming/types.js';
@@ -1640,10 +1640,11 @@ export class VoiceBot extends EventEmitter {
       case 'answer':
         if (msg.sdp && msg.clid) {
           try {
-            await this.sidecarHttp.setAnswer(String(msg.clid), msg.sdp);
-            logStreamSignaling(`${tag} answer passed to the sidecar`);
+            const res = await this.sidecarHttp.setAnswer(String(msg.clid), msg.sdp);
+            logStreamSignaling(`${tag} ${describeAnswerResult(res)}`);
           } catch (err: any) {
             console.error(`[VoiceBot ${this.config.id}] setAnswer error (clid=${msg.clid}): ${err.message}`);
+            logStreamSignaling(`${tag} answer refused by the sidecar: ${sidecarRefusalReason(err)}`);
           }
         } else {
           logStreamSignaling(`${tag} answer dropped: ${msg.sdp ? 'no clid' : 'no SDP'}`);
@@ -1661,6 +1662,7 @@ export class VoiceBot extends EventEmitter {
             logStreamSignaling(`${tag} ICE candidate passed to the sidecar`);
           } catch (err: any) {
             console.error(`[VoiceBot ${this.config.id}] addIceCandidate error (clid=${msg.clid}): ${err.message}`);
+            logStreamSignaling(`${tag} ICE candidate refused by the sidecar: ${sidecarRefusalReason(err)}`);
           }
         } else {
           logStreamSignaling(`${tag} ICE candidate dropped: ${msg.candidate ? 'no clid' : 'no candidate'}`);
