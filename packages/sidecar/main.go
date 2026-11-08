@@ -43,6 +43,15 @@ func getStunServers() []string {
 	return defaultStunServers
 }
 
+// iceMaxBindingRequests is how many unanswered connectivity checks a candidate
+// pair gets before it counts as failed (pion's default is 7). pion runs one
+// check round per trickled remote candidate, so a TeamSpeak client that sends
+// its public candidate followed by a burst of TCP candidates used up all 7 in
+// ~0.1 s, before its own first packet opened the viewer's NAT; the pair was
+// then never checked again and the viewer stayed at "Connecting...". At the
+// regular 200 ms check interval 50 keeps a pair alive for ~10 s.
+var iceMaxBindingRequests uint16 = 50
+
 // applyAnnounceIPs adds ICE_ANNOUNCE_IPS as extra host candidates. Inside a
 // container the sidecar only sees its bridge IP, and STUN only finds the
 // router's public IP - neither reaches a viewer on the same LAN as the host,
@@ -798,6 +807,7 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 	if err := applyAnnounceIPs(&se); err != nil {
 		return "", err
 	}
+	se.SetICEMaxBindingRequests(iceMaxBindingRequests)
 	if debugLogsEnabled() {
 		lf := logging.NewDefaultLoggerFactory()
 		lf.DefaultLogLevel = logging.LogLevelTrace
