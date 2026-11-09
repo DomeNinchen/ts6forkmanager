@@ -1,10 +1,11 @@
 # Changelog
+- Fixed "Start Stream" and "Switch now" on the Video tab showing `Request failed with status code 504` when the video took longer than a minute to download, although the stream then started normally: the frontend container's nginx gave up after its default 60 seconds. These two requests now wait as long as the download may take. *frontend 3.117.2*, reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 
 Every user-visible or behaviour-affecting change of this fork, grouped by the month it shipped, newest month first. Each month lists new features, improvements, security changes and bug fixes, followed by upgrade notes (what an admin has to do when updating) and the update command. Entries are short on purpose: the linked pull request (or upstream issue) has the full story — root cause, design decisions and how the change was verified. Backend, frontend and sidecar are versioned independently, so each entry names the component versions that shipped it, and each month starts with the versions it ended on. Why this fork exists is explained in the [README](README.md#why-this-fork-exists).
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.100.1 · frontend 3.117.1 · sidecar 2.3.1**
+Versions at the end of the month: **backend 2.100.1 · frontend 3.117.2 · sidecar 2.3.1**
 
 ### New Features
 
@@ -52,6 +53,7 @@ Versions at the end of the month: **backend 2.100.1 · frontend 3.117.1 · sidec
 
 **Docker & reverse proxy**
 
+- A reverse proxy of your own in front of the manager (host nginx, Caddy, Traefik) may cut long requests too. If "Start Stream" still shows a 504 after updating, give `/api/music-bots/<id>/stream/start` and `/stream/source` a read timeout of several minutes there as well. [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Running the manager at home or behind NAT and the video stays black? Set `ICE_ANNOUNCE_IPS` in `.env` to the host's LAN IP (e.g. `192.168.1.50`) and recreate the sidecar. A server with its public IP on its own network card needs nothing. [#360](https://github.com/DomeNinchen/ts6forkmanager/pull/360)
 
 - A backend stuck in that restart loop needs nothing but the usual update: pull, then rebuild with `docker compose up -d --build`. [#346](https://github.com/DomeNinchen/ts6forkmanager/pull/346)
