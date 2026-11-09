@@ -100,6 +100,19 @@ RUN printf 'server {\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
     }\n\
 \n\
+    # Starting a video stream or switching its source answers only after the video\n\
+    # is downloaded, which can take minutes. The default 60s answered 504 while\n\
+    # the stream still started; the backend download timeout is the real limit.\n\
+    location ~ ^/api/music-bots/[0-9]+/stream/(start|source)$ {\n\
+        proxy_read_timeout 3600s;\n\
+        proxy_pass http://backend:3001;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
     location /api {\n\
         proxy_pass http://backend:3001;\n\
         proxy_http_version 1.1;\n\
