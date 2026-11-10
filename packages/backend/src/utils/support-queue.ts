@@ -236,9 +236,10 @@ function updateData(d: CaseUpdate) {
 
 /**
  * Writes the changes. Each update only lands while the case is still in the state it was read in,
- * so a take-over or removal from the web UI that came in meanwhile wins.
+ * so a take-over or removal from the web UI that came in meanwhile wins. Returns the ids of the cases it took over.
  */
-export async function applyChanges(prisma: PrismaClient, queueId: number, changes: CaseChange[], now: number): Promise<void> {
+export async function applyChanges(prisma: PrismaClient, queueId: number, changes: CaseChange[], now: number): Promise<number[]> {
+  const taken: number[] = [];
   for (const ch of changes) {
     if (ch.kind === 'create') {
       // Only the job creates cases and it runs one pass at a time, so no second open case can appear in between.
@@ -246,8 +247,47 @@ export async function applyChanges(prisma: PrismaClient, queueId: number, change
         data: { queueId, clientUid: ch.uid, cldbid: ch.cldbid, nickname: ch.nickname, arrivedAt: new Date(now), arrivalUnknown: ch.arrivalUnknown, vip: ch.vip },
       });
     } else {
-      await prisma.supportCase.updateMany({ where: { id: ch.id, state: ch.from }, data: updateData(ch.data) });
+      const { count } = await prisma.supportCase.updateMany({ where: { id: ch.id, state: ch.from }, data: updateData(ch.data) });
+      if (count && ch.from === 'waiting' && ch.data.state === 'in-progress') taken.push(ch.id);
     }
+  }
+  return taken;
+}
+
+// --- Flow trigger "case taken" (stage 4) ---------------------------------------------------
+
+type TakenListener = (serverConfigId: number, sid: number, data: Record<string, string>) => void;
+let takenListener: TakenListener | null = null;
+
+/** The flow engine listens here; the queue never imports the engine. */
+export function onSupportCaseTaken(fn: TakenListener | null): void {
+  takenListener = fn;
+}
+
+/** The event data of a taken case (SUPPORT_TRIGGER_FIELDS), all strings. `clid`: the client's connection now, if online. */
+export function takenEventData(row: SupportCase, queue: SupportQueue, clid: number | null): Record<string, string> {
+  const people = toCaseEntry(row).takenBy;
+  return {
+    case_id: String(row.id),
+    queue_id: String(queue.id),
+    queue_name: parseSettings(queue.settings).name,
+    clid: clid === null ? '' : String(clid),
+    client_nickname: row.nickname,
+    client_unique_identifier: row.clientUid,
+    client_database_id: String(row.cldbid),
+    supporter_nicknames: people.map((p) => p.nickname).join(', '),
+    supporter_uids: people.map((p) => p.uid).join(','),
+    taken_via: row.takenVia ?? '',
+    wait_seconds: String(Math.max(0, Math.floor(((row.takenAt?.getTime() ?? Date.now()) - row.arrivedAt.getTime()) / 1000))),
+    vip: row.vip ? '1' : '0',
+  };
+}
+
+export function emitCaseTaken(queue: SupportQueue, row: SupportCase, clid: number | null): void {
+  try {
+    takenListener?.(queue.serverConfigId, queue.sid, takenEventData(row, queue, clid));
+  } catch (err: any) {
+    console.warn(`[SupportQueue] Case #${row.id}: the flow trigger failed: ${err?.message ?? err}`);
   }
 }
 
@@ -348,8 +388,12 @@ export async function processSupportQueues(prisma: PrismaClient, pool: Connectio
         watchingSince: st.watchingSince!,
         firstLook,
       });
-      await applyChanges(prisma, q.id, changes, now);
+      const taken = await applyChanges(prisma, q.id, changes, now);
       const after = await prisma.supportCase.findMany({ where: { queueId: q.id, state: { in: OPEN } } });
+      for (const row of after.filter((r) => taken.includes(r.id))) {
+        const mine = clients.filter((c) => c.uid === row.clientUid);
+        emitCaseTaken(q, row, (mine.find((c) => c.cid !== q.channelId) ?? mine[0])?.clid ?? null);
+      }
       try {
         await processQueueNotices(prisma, pool.getBotClient(serverConfigId), q, settings, after, clients, clients.filter((c) => isAvailableSupporter(c, settings)), budget, now);
       } catch (err: any) {

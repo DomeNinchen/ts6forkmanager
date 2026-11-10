@@ -17,7 +17,7 @@ import { targetIds } from '../utils/protected-groups.js';
 import { mayRole } from '../utils/role-table.js';
 import { acquireChannelCreateLock, clientMoveTolerating770 } from '../utils/channel-create-lock.js';
 import {
-  closeOpenCases, getQueueStatus, isAvailableSupporter, orderOpenCases, parseClientList, parseSettings,
+  closeOpenCases, emitCaseTaken, getQueueStatus, isAvailableSupporter, orderOpenCases, parseClientList, parseSettings,
   resetQueueState, toCaseEntry, toQueueConfig,
 } from '../utils/support-queue.js';
 
@@ -275,8 +275,9 @@ supportQueueRoutes.post('/cases/:id/take', requirePermission('clients.move'), as
     } finally {
       release();
     }
-    await prisma.supportCase.update({ where: { id: row.id }, data: { roomCid } });
-    res.json(toCaseEntry((await prisma.supportCase.findUniqueOrThrow({ where: { id: row.id } }))));
+    const done = await prisma.supportCase.update({ where: { id: row.id }, data: { roomCid } });
+    emitCaseTaken(row.queue, done, client.clid);
+    res.json(toCaseEntry(done));
   } catch (err) { next(err); }
 });
 
