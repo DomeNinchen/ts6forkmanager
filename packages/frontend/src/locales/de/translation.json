@@ -2557,6 +2557,14 @@
       "serverVersion": "Serverversion",
       "platform": "Plattform",
       "botFlows": "Bot-Flows",
+      "supportQueue": {
+        "title": "Support",
+        "waiting": "Wartend",
+        "supporters": "Supporter",
+        "longest": "Längste Wartezeit",
+        "queue": "Warteschlange",
+        "perQueue": "Je Warteschlange"
+      },
       "tiles": {
         "customise": "Anpassen",
         "editHint": "Ordne die Kacheln per Ziehen am Griff oder mit den Pfeilen an und stelle für jede Kachel Breite und Sichtbarkeit ein. Das Layout wird in deinem Konto gespeichert und gilt auf jedem Gerät.",
@@ -2574,6 +2582,7 @@
         "width2": "2/3",
         "width3": "Ganz",
         "botFlowsHint": "Erscheint nur, wenn dieser Server Bot-Flows hat.",
+        "supportQueueHint": "Erscheint nur, wenn auf diesem virtuellen Server eine Support-Warteschlange eingeschaltet ist.",
         "saved": "Dashboard-Layout gespeichert",
         "saveFailed": "Das Layout konnte nicht gespeichert werden",
         "dnd": {
