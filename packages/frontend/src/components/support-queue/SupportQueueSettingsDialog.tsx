@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
   SUPPORT_GRACE_MAX_SEC, SUPPORT_POKE_MAX, SUPPORT_REMIND_MAX_MIN, SUPPORT_REPEAT_MAX_MIN, SUPPORT_RETENTION_DEFAULT_DAYS, SUPPORT_RETENTION_MAX_DAYS,
-  SUPPORT_RETENTION_MIN_DAYS, SUPPORT_ROOM_NAME_MAX, SUPPORT_TEXT_MAX, supportSettingsProblem, type SupportQueueSettings, type SupportRoomType,
+  SUPPORT_QUEUE_DEFAULTS, SUPPORT_QUEUE_NAME_MAX, SUPPORT_RETENTION_MIN_DAYS, SUPPORT_ROOM_NAME_MAX, SUPPORT_TEXT_MAX, supportSettingsProblem, type SupportQueueSettings, type SupportRoomType,
 } from '@ts6/common';
 import { settingsApi } from '@/api/settings.api';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +22,16 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import i18n from '@/lib/i18n';
+import type { TFunction } from 'i18next';
+
+/** A queue error with its own text (channel already used, queue gone), else the usual TeamSpeak/API message. */
+function queueError(err: any, t: TFunction): string {
+  const code = err?.response?.data?.code;
+  if (typeof code === 'string' && i18n.exists(`pages.support.errors.${code}`)) return t(`pages.support.errors.${code}`, { queue: err?.response?.data?.details ?? "" });
+  return tsErrorMessage(err, t('components.bulkResult.unknownError'), t);
+}
 
 interface Option { id: number; name: string }
 
@@ -58,7 +68,7 @@ function NumberRow({ id, label, hint, min, max, value, onChange }: { id: string;
 }
 
 /** A list of checkboxes for picking several ids (supporter groups, AFK channels). */
-function IdPicker({ legend, options, value, onChange }: { legend: string; options: Option[]; value: number[]; onChange: (v: number[]) => void }) {
+function IdPicker({ legend, hint, options, value, onChange }: { legend: string; hint?: string; options: Option[]; value: number[]; onChange: (v: number[]) => void }) {
   return (
     <fieldset className="space-y-1.5">
       <legend className="text-sm font-medium">{legend}</legend>
@@ -73,14 +83,24 @@ function IdPicker({ legend, options, value, onChange }: { legend: string; option
           );
         })}
       </div>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </fieldset>
   );
 }
 
-export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+/** Settings of one queue, or (queueId null) a new queue. */
+export function SupportQueueSettingsDialog({ queueId, onClose, onSaved, onDeleted }: {
+  queueId: number | null; onClose: () => void; onSaved: (queueId: number) => void; onDeleted: () => void;
+}) {
   const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
-  const configQ = useQuery({ queryKey: ['support-queue-config', c, s], queryFn: () => supportQueueApi.config(c!, s!), enabled: !!c && !!s, staleTime: 0 });
+  // A new queue that was saved but stays open (flow conflict shown) is from then on that queue.
+  const [createdId, setCreatedId] = useState<number | null>(null);
+  const id = queueId ?? createdId;
+  const isNew = id === null;
+  const configQ = useQuery({ queryKey: ['support-queue-config', c, s, queueId], queryFn: () => supportQueueApi.config(c!, s!, queueId!), enabled: !!c && !!s && queueId !== null, staleTime: 0 });
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { data: channels } = useChannels();
   const { data: groups } = useServerGroups();
   const [enabled, setEnabled] = useState(true);
@@ -96,13 +116,15 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
     ? t('pages.support.settings.retentionRange', { min: SUPPORT_RETENTION_MIN_DAYS, max: SUPPORT_RETENTION_MAX_DAYS }) : null;
 
   useEffect(() => {
-    if (!configQ.data || settings) return;
+    if (settings) return;
+    if (isNew) { setSettings({ ...SUPPORT_QUEUE_DEFAULTS }); return; }
+    if (!configQ.data) return;
     const { config, conflicts: found } = configQ.data;
-    setEnabled(config.id === null ? true : config.enabled);
+    setEnabled(config.enabled);
     setChannelId(config.channelId);
     setSettings(config.settings);
     setConflicts(found);
-  }, [configQ.data, settings]);
+  }, [configQ.data, settings, isNew]);
 
   const channelOptions: Option[] = (Array.isArray(channels) ? channels : []).map((ch: any) => ({ id: Number(ch.cid), name: String(ch.channel_name) }));
   // Only regular groups (type 1) can hold clients.
@@ -116,16 +138,34 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
     if (!settings) return;
     setSaving(true);
     try {
-      const res = await supportQueueApi.saveConfig(c!, s!, { enabled, channelId, settings });
+      const body = { enabled, channelId, settings };
+      const res = isNew ? await supportQueueApi.create(c!, s!, body) : await supportQueueApi.saveConfig(c!, s!, id, body);
       if (retention !== null && retention !== retentionQ.data?.retentionDays) await settingsApi.setSupportQueueRetention(retention);
       setConflicts(res.conflicts);
       toast.success(t('pages.support.settings.saved'));
-      onSaved();
+      onSaved(res.config.id!);
+      // A new queue with a conflict stays open as that queue, so saving again does not create a second one.
       if (res.conflicts.length === 0) onClose();
+      else if (isNew) setCreatedId(res.config.id);
     } catch (err) {
-      toast.error(tsErrorMessage(err, t('components.bulkResult.unknownError'), t));
+      toast.error(queueError(err, t));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    if (id === null) return;
+    setDeleting(true);
+    try {
+      await supportQueueApi.deleteQueue(c!, s!, id);
+      toast.success(t('pages.support.settings.deleted', { queue: settings?.name ?? '' }));
+      onDeleted();
+    } catch (err) {
+      toast.error(queueError(err, t));
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   };
 
@@ -133,7 +173,7 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t('pages.support.settings.title')}</DialogTitle>
+          <DialogTitle>{t(isNew ? 'pages.support.settings.newTitle' : 'pages.support.settings.title')}</DialogTitle>
           <DialogDescription>{t('pages.support.settings.description')}</DialogDescription>
         </DialogHeader>
         {!settings ? <PageLoader /> : (
@@ -147,6 +187,11 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
                 </div>
               </div>
             )}
+            <div className="space-y-1.5">
+              <Label htmlFor="sq-name">{t('pages.support.settings.name')}</Label>
+              <Input id="sq-name" maxLength={SUPPORT_QUEUE_NAME_MAX} value={settings.name} onChange={(e) => set('name', e.target.value)} />
+              <p className="text-xs text-muted-foreground">{t('pages.support.settings.nameHint')}</p>
+            </div>
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor="sq-enabled">{t('pages.support.settings.enabled')}</Label>
               <Switch id="sq-enabled" checked={enabled} onCheckedChange={setEnabled} />
@@ -162,6 +207,7 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
               <p className="text-xs text-muted-foreground">{t('pages.support.settings.channelHint')}</p>
             </div>
             <IdPicker legend={t('pages.support.settings.groups')} options={groupOptions} value={settings.supporterGroupIds} onChange={(v) => set('supporterGroupIds', v)} />
+            <IdPicker legend={t('pages.support.settings.vipGroups')} hint={t('pages.support.settings.vipGroupsHint')} options={groupOptions} value={settings.vipGroupIds} onChange={(v) => set('vipGroupIds', v)} />
             <IdPicker legend={t('pages.support.settings.afk')} options={channelOptions.filter((o) => o.id !== channelId)} value={settings.afkChannelIds} onChange={(v) => set('afkChannelIds', v)} />
             <div className="space-y-1.5">
               <Label htmlFor="sq-grace">{t('pages.support.settings.grace')}</Label>
@@ -220,13 +266,28 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
             {(problem || missing || retentionProblem) && <p role="alert" className="text-sm text-destructive">{missing ?? problem ?? retentionProblem}</p>}
           </div>
         )}
-        <DialogFooter>
+        <DialogFooter className="gap-2">
+          {!isNew && (
+            <Button variant="destructive" className="sm:mr-auto" onClick={() => setConfirmDelete(true)} disabled={saving || deleting}>
+              {t('pages.support.settings.delete')}
+            </Button>
+          )}
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={save} disabled={!settings || !!problem || !!missing || !!retentionProblem || saving}>
             {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />}{t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t('pages.support.settings.deleteTitle', { queue: settings?.name ?? '' })}
+        description={t('pages.support.settings.deleteDescription')}
+        confirmLabel={t('pages.support.settings.delete')}
+        destructive
+        loading={deleting}
+        onConfirm={remove}
+      />
     </Dialog>
   );
 }

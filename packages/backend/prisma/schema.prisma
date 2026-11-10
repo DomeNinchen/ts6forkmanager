@@ -229,6 +229,8 @@ model SupportCase {
   endReason      String?
   // What the client and the supporters were already told (stage 3), SupportNotices as JSON.
   notices        String?
+  // In a VIP group: waits before everyone who is not (stage 4); followed live while waiting.
+  vip            Boolean      @default(false)
   queue          SupportQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
 
   @@index([queueId, state])

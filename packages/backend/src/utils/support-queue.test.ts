@@ -16,7 +16,7 @@ function cl(uid: string, cid: number, extra: Partial<ListedClient> = {}): Listed
 }
 const sup = (uid: string, cid: number, extra: Partial<ListedClient> = {}) => cl(uid, cid, { groups: [8, SUP_GROUP], ...extra });
 function open(id: number, uid: string, state: OpenCase['state'], absentSince: number | null = null): OpenCase {
-  return { id, clientUid: uid, cldbid: uid.length * 7, nickname: uid, state, absentSince };
+  return { id, clientUid: uid, cldbid: uid.length * 7, nickname: uid, state, absentSince, vip: false };
 }
 function run(cases: OpenCase[], clients: ListedClient[], extra: Partial<ReconcileInput> = {}) {
   return reconcile({ channelId: WAIT, settings, cases, clients, now: T0, watchingSince: T0 - 3_600_000, firstLook: false, ...extra });
@@ -32,7 +32,7 @@ test('parseClientList keeps voice clients only and reads uid, groups and away', 
 
 test('new clients in the waiting channel are queued; supporters and other channels are not', () => {
   const ch = run([], [cl('a', WAIT), sup('s', WAIT), cl('b', 5)]);
-  assert.deepEqual(ch, [{ kind: 'create', uid: 'a', cldbid: 7, nickname: 'a', arrivalUnknown: false }]);
+  assert.deepEqual(ch, [{ kind: 'create', uid: 'a', cldbid: 7, nickname: 'a', arrivalUnknown: false, vip: false }]);
 });
 
 test('positive control: nobody in the waiting channel means no case at all', () => {
@@ -41,7 +41,7 @@ test('positive control: nobody in the waiting channel means no case at all', () 
 
 test('first look after a start marks the arrival as unknown; a known case is not created twice', () => {
   const ch = run([open(1, 'a', 'waiting')], [cl('a', WAIT), cl('b', WAIT)], { firstLook: true });
-  assert.deepEqual(ch, [{ kind: 'create', uid: 'b', cldbid: 7, nickname: 'b', arrivalUnknown: true }]);
+  assert.deepEqual(ch, [{ kind: 'create', uid: 'b', cldbid: 7, nickname: 'b', arrivalUnknown: true, vip: false }]);
 });
 
 test('two connections of one identity give one case', () => {
@@ -115,13 +115,32 @@ test('a renamed client keeps the case and the new nickname is stored', () => {
   assert.deepEqual(run([open(1, 'a', 'waiting')], [cl('a', WAIT, { nickname: 'Alice' })]), [{ kind: 'update', id: 1, from: 'waiting', data: { nickname: 'Alice', cldbid: 7 } }]);
 });
 
+const row = (id: number, state: string, at: number, vip = false) => ({
+  id, queueId: 1, clientUid: `u${id}`, cldbid: id, nickname: `n${id}`, arrivedAt: new Date(at), arrivalUnknown: false, state,
+  absentSince: null, takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid: null, endedAt: null, endReason: null, vip,
+});
+
 test('positions: by arrival, ties by id; taken cases follow without a position', () => {
-  const row = (id: number, state: string, at: number) => ({
-    id, queueId: 1, clientUid: `u${id}`, cldbid: id, nickname: `n${id}`, arrivedAt: new Date(at), arrivalUnknown: false, state,
-    absentSince: null, takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid: null, endedAt: null, endReason: null,
-  });
   const out = orderOpenCases([row(5, 'in-progress', 1), row(3, 'waiting', 200), row(2, 'waiting', 100), row(1, 'waiting', 200)] as any);
   assert.deepEqual(out.map((c) => [c.id, c.position]), [[2, 1], [1, 2], [3, 3], [5, null]]);
+});
+
+test('VIP: waits before every non-VIP, among VIPs by arrival', () => {
+  const out = orderOpenCases([row(1, 'waiting', 100), row(2, 'waiting', 300, true), row(3, 'waiting', 200), row(4, 'waiting', 250, true)] as any);
+  assert.deepEqual(out.map((c) => [c.id, c.position, c.vip]), [[4, 1, true], [2, 2, true], [1, 3, false], [3, 4, false]]);
+});
+
+test('VIP: set on arrival from the groups, followed while waiting, frozen once taken', () => {
+  const VIP = 70;
+  const v = { settings: { ...settings, vipGroupIds: [VIP] } };
+  assert.deepEqual(run([], [cl('a', WAIT, { groups: [8, VIP] })], v), [{ kind: 'create', uid: 'a', cldbid: 7, nickname: 'a', arrivalUnknown: false, vip: true }]);
+  // given the group while waiting
+  assert.deepEqual(run([open(1, 'a', 'waiting')], [cl('a', WAIT, { groups: [VIP] })], v), [{ kind: 'update', id: 1, from: 'waiting', data: { vip: true } }]);
+  // lost it while waiting
+  assert.deepEqual(run([{ ...open(1, 'a', 'waiting'), vip: true }], [cl('a', WAIT)], v), [{ kind: 'update', id: 1, from: 'waiting', data: { vip: false } }]);
+  // positive control: unchanged VIP gives no update; a taken case keeps its flag
+  assert.deepEqual(run([{ ...open(1, 'a', 'waiting'), vip: true }], [cl('a', WAIT, { groups: [VIP] })], v), []);
+  assert.deepEqual(run([open(1, 'a', 'in-progress')], [cl('a', 5, { groups: [VIP] }), sup('s', 5)], v), []);
 });
 
 test('settings: broken or invalid JSON falls back to the defaults; validation names the field', () => {
@@ -131,6 +150,11 @@ test('settings: broken or invalid JSON falls back to the defaults; validation na
   assert.match(supportSettingsProblem({ ...settings, graceSec: 3601 })!, /graceSec/);
   assert.match(supportSettingsProblem({ ...settings, supporterGroupIds: [0] })!, /supporterGroupIds/);
   assert.match(supportSettingsProblem({ ...settings, roomName: 'x'.repeat(41) })!, /roomName/);
+  assert.match(supportSettingsProblem({ ...settings, name: ' ' })!, /name/);
+  assert.match(supportSettingsProblem({ ...settings, name: 'x'.repeat(31) })!, /name/);
+  assert.match(supportSettingsProblem({ ...settings, vipGroupIds: [-1] })!, /vipGroupIds/);
+  // a queue stored before stage 4 has neither field: it gets the defaults
+  assert.deepEqual([parseSettings(JSON.stringify({ graceSec: 5 })).name, parseSettings('{}').vipGroupIds], ['Support', []]);
   assert.equal(supportSettingsProblem(settings), null);
 });
 
