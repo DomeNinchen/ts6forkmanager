@@ -44,6 +44,25 @@ interface ClientRow {
   platform: string | null;
   /** Unix seconds, when TeamSpeak said. */
   lastConnected: number | null;
+  /** Comma list of server group ids. */
+  groups: string | null;
+  /** Unix seconds: when the identity's database entry was created. */
+  created: number | null;
+}
+
+/** A session the journal just opened, for raid protection (R15). */
+export interface JournalJoin {
+  rowId: number;
+  at: Date;
+  clid: number;
+  uid: string;
+  cldbid: number | null;
+  nickname: string;
+  type: number;
+  ip: string | null;
+  country: string | null;
+  servergroups: string | null;
+  clientCreated: Date | null;
 }
 
 function str(value: unknown): string | null {
@@ -70,6 +89,8 @@ function toClientRow(record: Record<string, unknown>, clid?: number): ClientRow 
     version: str(record.client_version),
     platform: str(record.client_platform),
     lastConnected: int(record.client_lastconnected),
+    groups: str(record.client_servergroups),
+    created: int(record.client_created),
   };
 }
 
@@ -104,6 +125,10 @@ export interface TsLoginJournalDeps {
   ownBotUids: () => Set<string>;
   /** Where an address is; null from it while no GeoIP database is installed (the row waits for the backfill). */
   geo?: Pick<GeoIpService, 'lookup'>;
+  /** Each session as it is opened (raid protection). Must not throw or block: it runs in the tracker's queue. */
+  onJoin?: (configId: number, sid: number, join: JournalJoin) => void;
+  /** The tracker can see the server again after not seeing it (its first look, an outage, SSH back): joins in between were missed or are a burst. */
+  onWatchStart?: (configId: number, sid: number) => void;
 }
 
 /**
@@ -405,6 +430,8 @@ class VirtualServerTracker {
   private chain: Promise<unknown> = Promise.resolve();
   private lastSyncAt = 0;
   private failure: ConnectionJournalTsStatus['problem'] = null;
+  /** Set until the next successful look tells raid protection it is watching again. */
+  private watchGap = true;
   private readonly nickname = `${OWN_NICKNAME_PREFIX}${crypto.randomBytes(2).toString('hex')}`;
 
   constructor(
@@ -520,6 +547,8 @@ class VirtualServerTracker {
           return;
         }
         this.live = true;
+        // A new SSH session usually means TeamSpeak (or the line) was gone a moment ago.
+        this.watchGap = true;
         this.owner.clearLog(`reg:${this.configId}:${this.sid}`);
         // Whatever happened while no session was listening is found by comparing with the real list.
         await this.fullSync();
@@ -580,6 +609,8 @@ class VirtualServerTracker {
       version: info.version ?? event.version,
       platform: info.platform ?? event.platform,
       lastConnected: info.lastConnected ?? event.lastConnected,
+      groups: event.groups ?? info.groups,
+      created: info.created ?? event.created,
     };
   }
 
@@ -604,7 +635,7 @@ class VirtualServerTracker {
   }
 
   private async clientList(): Promise<ClientRow[]> {
-    const rows = await this.remote('clientlist', { '-uid': '', '-ip': '', '-times': '', '-info': '' });
+    const rows = await this.remote('clientlist', { '-uid': '', '-ip': '', '-times': '', '-info': '', '-groups': '' });
     return rows.map((r) => toClientRow(r)).filter((r): r is ClientRow => r !== null);
   }
 
@@ -627,7 +658,13 @@ class VirtualServerTracker {
       // No API key and no working SSH session: the SSH login is why, if there is one.
       this.failure = noWay ? (this.setup.ssh ? 'ssh-unavailable' : 'no-access') : 'unreachable';
       this.owner.logOnce(`sync:${this.configId}:${this.sid}`, `[TsLoginJournal] ${this.setup.name} (virtual server ${this.sid}): cannot read the client list (${describeError(err)})`);
+      this.watchGap = true;
       return; // a failure to look is not an end: nothing is closed
+    }
+    if (this.watchGap) {
+      this.watchGap = false;
+      // Before the sessions below are opened: what joined while nobody looked arrives as one burst.
+      this.deps.onWatchStart?.(this.configId, this.sid);
     }
     this.failure = null;
     this.lastSyncAt = Date.now();
@@ -688,10 +725,16 @@ class VirtualServerTracker {
         clid: client.clid,
         clientVersion: client.version,
         clientPlatform: client.platform,
+        servergroups: client.groups,
+        clientCreated: client.created === null ? null : new Date(client.created * 1000),
       },
-      select: { id: true },
+      select: { id: true, country: true, servergroups: true, clientCreated: true },
     });
     this.sessions.set(client.clid, { rowId: row.id, uid: client.uid });
+    this.deps.onJoin?.(this.configId, this.sid, {
+      rowId: row.id, at, clid: client.clid, uid: client.uid, cldbid: client.cldbid, nickname: client.nickname, type: client.type,
+      ip: client.ip, country: row.country, servergroups: row.servergroups, clientCreated: row.clientCreated,
+    });
   }
 
   /** `leftAt` null with a reason of "unknown": the end was not seen, so no time is made up for it. */
