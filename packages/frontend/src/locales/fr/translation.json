@@ -112,6 +112,7 @@
       "icons": "Icônes",
       "complaints": "Plaintes",
       "support": "File de support",
+      "raidProtection": "Protection anti-raid",
       "messages": "Messages",
       "serverLogs": "Logs serveur",
       "instance": "Instance",
@@ -1517,6 +1518,133 @@
           "end": "{{name}} déposée à la place de {{target}}.",
           "cancel": "Déplacement annulé, {{name}} reste à sa place."
         }
+      }
+    },
+    "raid": {
+      "loadError": "Impossible de charger la protection anti-raid",
+      "retry": "Réessayer",
+      "off": "La protection anti-raid est désactivée",
+      "offHint": "Un administrateur peut l'activer pour ce serveur virtuel.",
+      "offHintAdmin": "Activez-la dans les paramètres. Elle commence par observer seulement : elle enregistre des incidents et prévient vos administrateurs, sans rien faire aux clients.",
+      "statusTitle": "État",
+      "observeOnly": "Observation seule",
+      "openIncident": "Incident n° {{id}} en cours",
+      "detection": {
+        "live": "En direct",
+        "delayed": "Différée",
+        "journal-off": "Ne voit rien",
+        "unreachable": "Serveur injoignable"
+      },
+      "detectionHint": {
+        "live": "Les connexions arrivent immédiatement via la connexion SSH query.",
+        "delayed": "Sans connexion SSH, la liste des clients est lue toutes les 15 secondes : un pic est vu jusqu'à 15 secondes plus tard, et un client qui arrive et repart entre-temps n'est pas vu.",
+        "journal-off": "La protection anti-raid lit les connexions dans le journal des connexions, qui n'enregistre pas cette connexion.",
+        "unreachable": "Le journal des connexions ne peut pas lire ce serveur virtuel pour le moment. Rien n'est jugé tant que ce n'est pas rétabli."
+      },
+      "journalOff": "Activez « Enregistrer le journal des connexions » pour cette connexion dans Paramètres -> Connexions, sinon la protection anti-raid ne voit aucune connexion.",
+      "paused": {
+        "server-start": "En pause jusqu'à {{time}} : le serveur TeamSpeak vient de démarrer, et tous ceux qui se reconnectent ne sont pas un raid.",
+        "watching-again": "En pause jusqu'à {{time}} : le gestionnaire voit de nouveau ce serveur après un redémarrage ou une panne, et tout ce qu'il a manqué arrive d'un coup."
+      },
+      "observeUntil": "Période d'observation jusqu'au {{date}}. La protection anti-raid enregistre et prévient seulement ; dans cette version, elle n'agit sur aucun client.",
+      "stageNote": "La protection anti-raid enregistre et prévient seulement ; dans cette version, elle n'agit sur aucun client.",
+      "incidentsTitle": "Incidents",
+      "noIncidents": "Aucun incident pour l'instant.",
+      "states": {
+        "open": "En cours",
+        "closed": "Terminé"
+      },
+      "clientCount": "Clients : {{count}}",
+      "hits": {
+        "total": "{{count}} connexions en {{window}} s",
+        "subnet": "{{count}} du réseau {{key}}",
+        "country": "{{count}} depuis {{key}}",
+        "name": "{{count}} avec un nom comme « {{key}} »",
+        "new": "{{count}} nouvelles identités"
+      },
+      "hidden": "(masqué)",
+      "lastHit": "Dernière règle déclenchée {{time}}",
+      "ended": "terminé {{time}}",
+      "nothingDone": "rien n'a été fait à ces clients",
+      "clientsCaption": "Clients de l'incident n° {{id}}",
+      "columns": {
+        "nickname": "Pseudo",
+        "joined": "Arrivé",
+        "ip": "Adresse",
+        "country": "Pays",
+        "identity": "Identité"
+      },
+      "newIdentity": "Nouvelle",
+      "seenBefore": "Déjà vue",
+      "moreClients": "{{count}} autres clients comptés mais non listés.",
+      "notice": {
+        "none": "Personne n'a été prévenu (notifications désactivées).",
+        "nobody": "Personne n'a été prévenu : {{note}}",
+        "poke": "{{sent}} administrateur(s) poké(s).",
+        "message": "Message privé envoyé à {{sent}} administrateur(s).",
+        "failed": "{{count}} échec(s) : {{note}}",
+        "notes": {
+          "nobodyOnline": "aucun membre des groupes à prévenir n'était en ligne",
+          "noClientList": "la liste des clients n'a pas pu être lue ({{detail}})"
+        }
+      },
+      "presets": {
+        "lax": "Souple",
+        "medium": "Moyen",
+        "strict": "Strict",
+        "custom": "Valeurs propres"
+      },
+      "rules": {
+        "total": "Toutes les connexions",
+        "totalHint": "Connexions au total, quels que soient les clients.",
+        "subnet": "Même réseau",
+        "subnetHint": "Connexions depuis un même réseau IPv4 /24 ou IPv6 /64.",
+        "country": "Même pays",
+        "countryHint": "Connexions depuis un même pays (nécessite la base GeoIP du journal des connexions).",
+        "name": "Noms semblables",
+        "nameHint": "Pseudos identiques sans chiffres, ponctuation ni casse (« Raider12 », « raider_7 »).",
+        "new": "Nouvelles identités",
+        "newHint": "Identités jamais vues sur ce serveur virtuel, aussi en part de toutes les connexions comptées."
+      },
+      "notifyModes": {
+        "off": "Personne",
+        "poke": "Poke",
+        "message": "Message privé"
+      },
+      "settings": {
+        "open": "Paramètres",
+        "title": "Protection anti-raid",
+        "description": "Pour ce serveur virtuel. Les changements s'appliquent immédiatement.",
+        "enabled": "Protection anti-raid activée",
+        "enabledHint": "La première activation lance la période d'observation.",
+        "rulesTitle": "Règles",
+        "preset": "Préréglage",
+        "presetHint": "Les préréglages sont des points de départ ; comparez-les au nombre habituel de connexions de votre serveur.",
+        "count": "Connexions",
+        "windowSec": "En secondes",
+        "sharePct": "Part en %",
+        "exemptTitle": "Qui ne compte jamais",
+        "exemptGroups": "Groupes de serveur exemptés",
+        "exemptGroupsHint": "Les membres des groupes protégés, les supporters de la file d'attente, les clients query et les bots musicaux de ce gestionnaire ne comptent jamais non plus.",
+        "knownSessions": "Membre connu à partir de sessions",
+        "knownSessionsHint": "Un client avec au moins ce nombre de sessions précédentes dans le journal des connexions ne compte jamais (0 = désactivé).",
+        "graceMin": "Pause en minutes",
+        "graceMinHint": "Aucun incident pendant ce temps après le démarrage du serveur TeamSpeak ou après que le gestionnaire le voit de nouveau.",
+        "observeDays": "Jours d'observation",
+        "observeDaysHint": "À partir de la première activation.",
+        "observeDaysSet": "La période d'observation dure jusqu'au {{date}} (fixée à la première activation).",
+        "notifyTitle": "Prévenir",
+        "notify": "Lors d'un nouvel incident",
+        "notifyGroups": "Prévenir ces groupes",
+        "notifyGroupsHint": "Seulement les membres en ligne à ce moment, 10 au plus.",
+        "notifyText": "Texte",
+        "pokeMax": "un poke est coupé à {{max}} caractères",
+        "historyTitle": "Historique",
+        "retention": "Conserver les incidents (jours)",
+        "retentionHint": "Pour tous les serveurs virtuels ; les incidents en cours ne sont jamais supprimés.",
+        "retentionRange": "Conserver les incidents : {{min}} à {{max}} jours",
+        "saved": "Protection anti-raid enregistrée",
+        "needNotifyGroup": "Choisissez au moins un groupe à prévenir."
       }
     },
     "support": {

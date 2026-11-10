@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Server, Hash, Users, Shield, ShieldCheck,
   Lock, Ban, KeyRound, FolderOpen, Image as ImageIcon, MessageSquareWarning, Mail,
   ScrollText, Settings, Bot, Cpu, ChevronLeft, ChevronRight, ChevronDown, Music, ListMusic,
-  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, DatabaseBackup, X, Headset,
+  BarChart3, Wrench, SlidersHorizontal, Database, SquareTerminal, Fingerprint, History, DatabaseBackup, X, Headset, ShieldAlert,
 } from 'lucide-react';
 import { useEffect, useSyncExternalStore } from 'react';
 import { Dialog, DialogDrawerContent, DialogTitle } from '@/components/ui/dialog';
@@ -70,6 +70,7 @@ function getNavSections(t: TFunction) {
       visible: (ctx: NavContext) => ctx.hasAnyServerAccess,
       items: [
         { to: '/bans', icon: Ban, label: t('nav.items.bans'), visible: may('bans.view'), ...needsWebQuery },
+        { to: '/raid-protection', icon: ShieldAlert, label: t('nav.items.raidProtection'), visible: may('clients.kick'), ...needsWebQuery },
         { to: '/tokens', icon: KeyRound, label: t('nav.items.tokens'), visible: may('tokens.manage'), ...needsWebQuery },
         // About who signs in to this app, not about the selected server, so it needs no WebQuery.
         { to: '/connection-journal', icon: Fingerprint, label: t('nav.items.connectionJournal'), visible: adminOnly },

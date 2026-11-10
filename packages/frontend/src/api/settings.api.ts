@@ -6,6 +6,10 @@ export const settingsApi = {
   /** How long ended temporary group memberships stay listed (R13, admin). */
   getTemporaryGroupSettings: () =>
     api.get('/settings/temporary-groups').then((r) => r.data as { retentionDays: number; retentionMin: number; retentionMax: number }),
+  raidRetention: () =>
+    api.get('/settings/raid-protection').then((r) => r.data as { retentionDays: number; retentionMin: number; retentionMax: number }),
+  setRaidRetention: (retentionDays: number) =>
+    api.put('/settings/raid-protection', { retentionDays }).then((r) => r.data as { retentionDays: number }),
   supportQueueRetention: () =>
     api.get('/settings/support-queue').then((r) => r.data as { retentionDays: number; retentionMin: number; retentionMax: number }),
   setSupportQueueRetention: (retentionDays: number) =>

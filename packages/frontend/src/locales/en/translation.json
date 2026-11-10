@@ -114,6 +114,7 @@
       "icons": "Icons",
       "complaints": "Complaints",
       "support": "Support Queue",
+      "raidProtection": "Raid Protection",
       "messages": "Messages",
       "serverLogs": "Server Logs",
       "queryConsole": "Query Console",
@@ -2583,6 +2584,133 @@
           "end": "{{name}} dropped in the place of {{target}}.",
           "cancel": "Moving cancelled, {{name}} stays where it was."
         }
+      }
+    },
+    "raid": {
+      "loadError": "Raid protection could not be loaded",
+      "retry": "Try again",
+      "off": "Raid protection is off",
+      "offHint": "An admin can switch it on for this virtual server.",
+      "offHintAdmin": "Switch it on under Settings. It starts by only watching: it records incidents and tells your admins, it does nothing to any client.",
+      "statusTitle": "Status",
+      "observeOnly": "Observing only",
+      "openIncident": "Incident #{{id}} running",
+      "detection": {
+        "live": "Live",
+        "delayed": "Delayed",
+        "journal-off": "Sees nothing",
+        "unreachable": "Server not reachable"
+      },
+      "detectionHint": {
+        "live": "Joins arrive at once over the SSH query connection.",
+        "delayed": "Without an SSH login the client list is read every 15 seconds: a spike is seen up to 15 seconds late, and a client who comes and goes in between is missed.",
+        "journal-off": "Raid protection reads the joins from the connection journal, and the journal does not record this connection.",
+        "unreachable": "The connection journal cannot read this virtual server right now. Nothing is judged until it can again."
+      },
+      "journalOff": "Switch on \"Record connection journal\" for this connection under Settings -> Connections, otherwise raid protection never sees a join.",
+      "paused": {
+        "server-start": "Paused until {{time}}: the TeamSpeak server started a short while ago, and everyone reconnecting is not a raid.",
+        "watching-again": "Paused until {{time}}: the manager can see this server again after a restart or an outage, and everyone it missed arrives at once."
+      },
+      "observeUntil": "Observe-only time until {{date}}. Raid protection only records and notifies; it never acts on a client in this version.",
+      "stageNote": "Raid protection only records and notifies; it never acts on a client in this version.",
+      "incidentsTitle": "Incidents",
+      "noIncidents": "No incidents yet.",
+      "states": {
+        "open": "Running",
+        "closed": "Over"
+      },
+      "clientCount": "Clients: {{count}}",
+      "hits": {
+        "total": "{{count}} joins in {{window}} s",
+        "subnet": "{{count}} from network {{key}}",
+        "country": "{{count}} from {{key}}",
+        "name": "{{count}} named like \"{{key}}\"",
+        "new": "{{count}} new identities"
+      },
+      "hidden": "(hidden)",
+      "lastHit": "Last rule hit {{time}}",
+      "ended": "over {{time}}",
+      "nothingDone": "nothing was done to these clients",
+      "clientsCaption": "Clients of incident #{{id}}",
+      "columns": {
+        "nickname": "Nickname",
+        "joined": "Joined",
+        "ip": "Address",
+        "country": "Country",
+        "identity": "Identity"
+      },
+      "newIdentity": "New",
+      "seenBefore": "Seen before",
+      "moreClients": "{{count}} more clients counted but not listed.",
+      "notice": {
+        "none": "Nobody was notified (notifications are off).",
+        "nobody": "Nobody was notified: {{note}}",
+        "poke": "Poked {{sent}} admin(s).",
+        "message": "Sent a private message to {{sent}} admin(s).",
+        "failed": "{{count}} failed: {{note}}",
+        "notes": {
+          "nobodyOnline": "nobody of the notify groups was online",
+          "noClientList": "the client list could not be read ({{detail}})"
+        }
+      },
+      "presets": {
+        "lax": "Lax",
+        "medium": "Medium",
+        "strict": "Strict",
+        "custom": "Own values"
+      },
+      "rules": {
+        "total": "All joins",
+        "totalHint": "Joins in total, whoever they are.",
+        "subnet": "Same network",
+        "subnetHint": "Joins from one IPv4 /24 or IPv6 /64 network.",
+        "country": "Same country",
+        "countryHint": "Joins from one country (needs the GeoIP database of the connection journal).",
+        "name": "Similar names",
+        "nameHint": "Nicknames that are the same without digits, punctuation and case (\"Raider12\", \"raider_7\").",
+        "new": "New identities",
+        "newHint": "Identities this virtual server has never seen, also as a share of all counted joins."
+      },
+      "notifyModes": {
+        "off": "Nobody",
+        "poke": "Poke",
+        "message": "Private message"
+      },
+      "settings": {
+        "open": "Settings",
+        "title": "Raid protection",
+        "description": "For this virtual server. Changes take effect at once.",
+        "enabled": "Raid protection on",
+        "enabledHint": "The first time it is switched on, the observe-only time starts.",
+        "rulesTitle": "Rules",
+        "preset": "Preset",
+        "presetHint": "The presets are starting points; check them against how many joins your server usually has.",
+        "count": "Joins",
+        "windowSec": "Within seconds",
+        "sharePct": "Share in %",
+        "exemptTitle": "Who never counts",
+        "exemptGroups": "Exempt server groups",
+        "exemptGroupsHint": "Members of protected groups, supporters of the support queue, query clients and this manager's music bots never count either.",
+        "knownSessions": "Known member from sessions",
+        "knownSessionsHint": "A client with at least this many earlier sessions in the connection journal never counts (0 = off).",
+        "graceMin": "Pause in minutes",
+        "graceMinHint": "No incident this long after the TeamSpeak server started or the manager could see it again.",
+        "observeDays": "Observe-only days",
+        "observeDaysHint": "Counted from the first switch-on.",
+        "observeDaysSet": "Observe-only time runs until {{date}} (set at the first switch-on).",
+        "notifyTitle": "Notify",
+        "notify": "On a new incident",
+        "notifyGroups": "Notify these groups",
+        "notifyGroupsHint": "Only members who are online at that moment, at most 10.",
+        "notifyText": "Text",
+        "pokeMax": "a poke is cut to {{max}} characters",
+        "historyTitle": "History",
+        "retention": "Keep incidents (days)",
+        "retentionHint": "For every virtual server; running incidents are never removed.",
+        "retentionRange": "Keep incidents: {{min}} to {{max}} days",
+        "saved": "Raid protection saved",
+        "needNotifyGroup": "Choose at least one group to notify."
       }
     },
     "support": {

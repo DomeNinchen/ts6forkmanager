@@ -161,6 +161,12 @@ export interface RaidNotice {
   note: string | null;
 }
 
+/** The fixed notes a RaidNotice can carry (the page translates them); any other note is a TeamSpeak error text. */
+export const RAID_NOTICE_NOTES = {
+  nobodyOnline: 'nobody of the notify groups is online',
+  noClientList: 'cannot read the client list',
+} as const;
+
 export interface RaidIncidentEntry {
   id: number;
   serverConfigId: number;
