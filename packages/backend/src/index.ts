@@ -26,6 +26,7 @@ import { startJournalPruner } from './utils/connection-journal.js';
 import { flushChangeLog, startChangeLogPruner } from './utils/change-log.js';
 import { startBotLogPruner } from './utils/bot-log-retention.js';
 import { TsLoginJournal } from './ts-client/ts-login-journal.js';
+import { RaidProtectionService } from './utils/raid-protection.js';
 import { GeoIpService } from './utils/geoip.js';
 import { canonicalAddress, clientIpOfUpgrade, IpBanService } from './utils/ip-bans.js';
 import { TsBanLookup } from './utils/ts-ip-ban.js';
@@ -195,8 +196,17 @@ async function main() {
 
   // The TeamSpeak side of the connection journal: one row per client connection, from SSH
   // events or from polling. Needs the voice bot manager to tell its own bots from people.
-  const tsLoginJournal = new TsLoginJournal({ prisma, pool: connectionPool, ownBotUids: () => voiceBotManager.ownIdentityUids(), geo: geoIp });
+  // Raid protection (R15) judges the joins the journal records; it is built right after the journal it reads from.
+  let raidProtection: RaidProtectionService | null = null;
+  const tsLoginJournal = new TsLoginJournal({
+    prisma, pool: connectionPool, ownBotUids: () => voiceBotManager.ownIdentityUids(), geo: geoIp,
+    onJoin: (configId, sid, join) => raidProtection?.onJoin(configId, sid, join),
+    onWatchStart: (configId, sid) => raidProtection?.onWatchStart(configId, sid),
+  });
   app.locals.tsLoginJournal = tsLoginJournal;
+  const raid = new RaidProtectionService({ prisma, pool: connectionPool, ownBotUids: () => voiceBotManager.ownIdentityUids(), journalStatus: () => tsLoginJournal.status() });
+  raidProtection = raid;
+  app.locals.raidProtection = raid;
 
   // One place that tells everything holding per-connection state (pool, flows,
   // SSH sessions, music bots, console listeners, samplers, the connection journal) when a server
@@ -231,6 +241,8 @@ async function main() {
   // for not awaiting it: its first tick asks every configured server.
   void userHistorySampler.start();
 
+  // Before the journal: windows rebuilt from its rows and open incidents loaded, so the first joins are judged in context.
+  await raid.start();
   // The connection journal's TeamSpeak side. Also not awaited: its first pass asks every connection.
   void tsLoginJournal.start();
 
@@ -249,6 +261,7 @@ async function main() {
     await consoleEvents.destroy();
     // Stops listening; sessions stay open in the database, the next start finds them again.
     await tsLoginJournal.destroy();
+    await raid.stop();
     geoIp.destroy();
     await ipBans.destroy();
     await voiceBotManager.stopAll();
