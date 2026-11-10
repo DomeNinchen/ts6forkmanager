@@ -135,6 +135,11 @@ export async function deliver(client: WebQueryClient, sid: number, send: NoticeS
   }
 }
 
+/** The order of the line: VIPs before everyone else (stage 4), then by arrival, then id. */
+export function byQueueOrder(a: Pick<SupportCase, 'vip' | 'arrivedAt' | 'id'>, b: Pick<SupportCase, 'vip' | 'arrivedAt' | 'id'>): number {
+  return Number(b.vip) - Number(a.vip) || a.arrivedAt.getTime() - b.arrivedAt.getTime() || a.id - b.id;
+}
+
 /** Commands per pass and virtual server; what is left over goes out on the next pass (flood protection). */
 export const NOTICES_PER_PASS = 10;
 
@@ -153,9 +158,8 @@ export async function processQueueNotices(
   budget: { left: number },
   now: number,
 ): Promise<void> {
-  const byArrival = (a: SupportCase, b: SupportCase) => a.arrivedAt.getTime() - b.arrivedAt.getTime() || a.id - b.id;
-  const waiting = rows.filter((r) => r.state === 'waiting').sort(byArrival);
-  const ordered = [...waiting, ...rows.filter((r) => r.state === 'in-progress').sort(byArrival)];
+  const waiting = rows.filter((r) => r.state === 'waiting').sort(byQueueOrder);
+  const ordered = [...waiting, ...rows.filter((r) => r.state === 'in-progress').sort(byQueueOrder)];
   let estimate: number | null | undefined;
   for (const r of ordered) {
     const position = r.state === 'waiting' ? waiting.indexOf(r) + 1 : null;

@@ -1087,7 +1087,7 @@
     "moderator": "403",
     "moderator (no grant)": "403"
   },
-  "GET /api/servers/:configId/vs/:sid/support-queue": {
+  "GET /api/servers/:configId/vs/:sid/support-queue/queues": {
     "admin": "ok",
     "admin (no grant)": "ok",
     "viewer": "ok",
@@ -1115,7 +1115,21 @@
     "moderator": "ok",
     "moderator (no grant)": "403"
   },
-  "GET /api/servers/:configId/vs/:sid/support-queue/config": {
+  "GET /api/servers/:configId/vs/:sid/support-queue/queues/:queueId/history": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "ok",
+    "viewer (no grant)": "403",
+    "bot-operator": "ok",
+    "bot-operator (no grant)": "403",
+    "music-operator": "ok",
+    "music-operator (no grant)": "403",
+    "server-admin": "ok",
+    "server-admin (no grant)": "403",
+    "moderator": "ok",
+    "moderator (no grant)": "403"
+  },
+  "GET /api/servers/:configId/vs/:sid/support-queue/queues/:queueId/config": {
     "admin": "ok",
     "admin (no grant)": "ok",
     "viewer": "403",
@@ -1129,7 +1143,35 @@
     "moderator": "403",
     "moderator (no grant)": "403"
   },
-  "PUT /api/servers/:configId/vs/:sid/support-queue/config": {
+  "POST /api/servers/:configId/vs/:sid/support-queue/queues": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "403",
+    "viewer (no grant)": "403",
+    "bot-operator": "403",
+    "bot-operator (no grant)": "403",
+    "music-operator": "403",
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
+  },
+  "PUT /api/servers/:configId/vs/:sid/support-queue/queues/:queueId/config": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "403",
+    "viewer (no grant)": "403",
+    "bot-operator": "403",
+    "bot-operator (no grant)": "403",
+    "music-operator": "403",
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
+  },
+  "DELETE /api/servers/:configId/vs/:sid/support-queue/queues/:queueId": {
     "admin": "ok",
     "admin (no grant)": "ok",
     "viewer": "403",
