@@ -2558,6 +2558,14 @@
       "serverVersion": "Serverversion",
       "platform": "Plattform",
       "botFlows": "Bot-Flows",
+      "supportQueue": {
+        "title": "Support",
+        "waiting": "Wartend",
+        "supporters": "Supporter",
+        "longest": "Längste Wartezeit",
+        "queue": "Warteschlange",
+        "perQueue": "Je Warteschlange"
+      },
       "tiles": {
         "customise": "Anpassen",
         "editHint": "Ordne die Kacheln per Ziehen am Griff oder mit den Pfeilen an und stelle für jede Kachel Breite und Sichtbarkeit ein. Das Layout wird in deinem Konto gespeichert und gilt auf jedem Gerät.",
@@ -2575,6 +2583,7 @@
         "width2": "2/3",
         "width3": "Ganz",
         "botFlowsHint": "Erscheint nur, wenn dieser Server Bot-Flows hat.",
+        "supportQueueHint": "Erscheint nur, wenn auf diesem virtuellen Server eine Support-Warteschlange eingeschaltet ist.",
         "saved": "Dashboard-Layout gespeichert",
         "saveFailed": "Das Layout konnte nicht gespeichert werden",
         "dnd": {
@@ -3316,6 +3325,7 @@
         "trigger_cron": "Cron-Timer",
         "trigger_webhook": "Webhook",
         "trigger_command": "Chat-Befehl",
+        "trigger_support": "Support-Fall übernommen",
         "action_message": "Nachricht senden",
         "action_poke": "Client anstupsen",
         "action_kick": "Client kicken",
@@ -3343,6 +3353,7 @@
         "action_pokeGroup": "Gruppe anstupsen",
         "action_rankCheck": "Rang-Prüfung",
         "action_tempChannelCleanup": "Temp-Bereinigung",
+        "action_supportEnqueue": "In Warteschlange einreihen",
         "action_animatedChannel": "Animierter Channel",
         "condition": "Bedingung",
         "loop": "Schleife",
@@ -3409,6 +3420,14 @@
       "connections": "VERBINDUNGEN",
       "noConnections": "Keine Verbindungen",
       "config": {
+        "support": {
+          "queueLabel": "Support-Warteschlange",
+          "chooseQueue": "Warteschlange wählen",
+          "anyQueue": "Jede Warteschlange dieses virtuellen Servers",
+          "noQueue": "Dieser virtuelle Server hat noch keine Support-Warteschlange (Seite Support-Warteschlange).",
+          "triggerHint": "Startet, wenn ein Supporter einen wartenden Client übernimmt, in TeamSpeak oder mit Übernehmen in der Weboberfläche. Braucht kein SSH. Das Ereignis enthält:",
+          "enqueueHint": "Verschiebt den auslösenden Client (event.clid) in den Wartekanal der Warteschlange; sie reiht ihn innerhalb weniger Sekunden ein, wie jeden, der den Kanal betritt. Wird mit einer Warnung im Log übersprungen, wenn die Warteschlange aus ist, der Client einer ihrer Supporter ist oder niemand eingereiht wird, solange kein Supporter verfügbar ist."
+        },
         "shared": {
           "commandLabel": "Befehl",
           "channelIdLabel": "Channel-ID",

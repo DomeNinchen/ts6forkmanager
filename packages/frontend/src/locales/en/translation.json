@@ -2558,6 +2558,14 @@
       "serverVersion": "Server Version",
       "platform": "Platform",
       "botFlows": "Bot Flows",
+      "supportQueue": {
+        "title": "Support",
+        "waiting": "Waiting",
+        "supporters": "Supporters",
+        "longest": "Longest wait",
+        "queue": "Queue",
+        "perQueue": "Per queue"
+      },
       "tiles": {
         "customise": "Customise",
         "editHint": "Drag a tile by its handle or use the arrows to change the order, and set each tile's width and visibility. The layout is saved to your account and applies on every device.",
@@ -2575,6 +2583,7 @@
         "width2": "2/3",
         "width3": "Full",
         "botFlowsHint": "Only appears when this server has bot flows.",
+        "supportQueueHint": "Only appears when this virtual server has a support queue switched on.",
         "saved": "Dashboard layout saved",
         "saveFailed": "The layout could not be saved",
         "dnd": {
@@ -3316,6 +3325,7 @@
         "trigger_cron": "Cron Timer",
         "trigger_webhook": "Webhook",
         "trigger_command": "Chat Command",
+        "trigger_support": "Support Case Taken",
         "action_message": "Send Message",
         "action_poke": "Poke Client",
         "action_kick": "Kick Client",
@@ -3343,6 +3353,7 @@
         "action_pokeGroup": "Poke Group",
         "action_rankCheck": "Rank Check",
         "action_tempChannelCleanup": "Temp Cleanup",
+        "action_supportEnqueue": "Queue for Support",
         "action_animatedChannel": "Animated Channel",
         "condition": "Condition",
         "loop": "Loop",
@@ -3409,6 +3420,14 @@
       "connections": "CONNECTIONS",
       "noConnections": "No connections",
       "config": {
+        "support": {
+          "queueLabel": "Support queue",
+          "chooseQueue": "Choose a queue",
+          "anyQueue": "Every queue of this virtual server",
+          "noQueue": "This virtual server has no support queue yet (Support Queue page).",
+          "triggerHint": "Starts when a supporter takes a waiting client, in TeamSpeak or with Take in the web interface. Needs no SSH. The event carries:",
+          "enqueueHint": "Moves the triggering client (event.clid) into the queue's waiting channel; the queue picks them up within a few seconds, like anyone who walks in. Skipped with a warning in the log when the queue is off, the client is one of its supporters, or nobody may queue while no supporter is available."
+        },
         "shared": {
           "commandLabel": "Command",
           "channelIdLabel": "Channel ID",

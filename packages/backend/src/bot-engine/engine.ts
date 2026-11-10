@@ -12,7 +12,8 @@ import type {
 } from '@ts6/common';
 import { FLOW_TEST_MAX_FRAMES } from '@ts6/common';
 import { AnimationManager } from './animation-manager.js';
-import { eventFilterMismatch, matchCommand, webhookEventData } from './trigger-match.js';
+import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData } from './trigger-match.js';
+import { onSupportCaseTaken } from '../utils/support-queue.js';
 import { AppError } from '../middleware/error-handler.js';
 import { animationConfig, animationFrames } from './animation-manager.js';
 import { instanceAudience, sendToAudience } from '../utils/ws-audience.js';
@@ -35,6 +36,8 @@ import crypto from 'crypto';
  *   trigger_cron:    { cron } → { triggerType:'cron', cronExpression: cron }
  *   trigger_webhook: { path } → { triggerType:'webhook', webhookPath: path }
  *   trigger_command: { command } → { triggerType:'command', commandPrefix:'!', commandName: command }
+ *   trigger_support: { queueId } → { triggerType:'support', supportEvent:'taken', queueId } (no SSH; fired by the support queue)
+ *   action_supportEnqueue: { queueId } → { actionType:'supportEnqueue', queueId }
  *   action_kick:     { reasonid, reason } → { actionType:'kick', reasonId: parseInt(reasonid)||5, reasonMsg: reason }
  *   action_ban:      { time, reason } → { actionType:'ban', duration: time, reason }
  *   action_move:     { channelId } → { actionType:'move', channelId }
@@ -77,6 +80,12 @@ function normalizeFlowData(raw: any): FlowDefinition {
       const prefix = cmd.startsWith('!') ? '!' : config.commandPrefix || '!';
       const name = cmd.startsWith('!') ? cmd.substring(1) : cmd;
       data = { triggerType: 'command', label, commandPrefix: prefix, commandName: name, channelId: config.channelId ? String(config.channelId) : undefined, };
+    } else if (nodeType === 'trigger_support') {
+      type = 'trigger';
+      data = { triggerType: 'support', label, supportEvent: 'taken', queueId: config.queueId ? String(config.queueId) : '' };
+    } else if (nodeType === 'action_supportEnqueue') {
+      type = 'action';
+      data = { actionType: 'supportEnqueue', label, queueId: config.queueId ? String(config.queueId) : '' };
     } else if (nodeType === 'action_kick') {
       type = 'action';
       data = { actionType: 'kick', label, reasonId: parseInt(config.reasonid) || 5, reasonMsg: config.reason || '' };
@@ -335,6 +344,8 @@ export class BotEngine {
 
     // Always register event listener (even if no flows yet — flows can be enabled later)
     this.eventBridge.on('tsEvent', this.onTsEvent.bind(this));
+    // Support queue events come from the queue job and the web take, not from SSH.
+    onSupportCaseTaken(this.onSupportCaseTaken.bind(this));
 
     this.maxConcurrentPerFlow = (await getBotLogSettings(this.prisma)).maxConcurrentPerFlow;
     await this.loadFlows();
@@ -408,7 +419,7 @@ export class BotEngine {
 
       for (const t of triggerNodes) {
         const td = t.data as any;
-        console.log(`[BotEngine]   Trigger: type=${td.triggerType}, ${td.triggerType === 'event' ? `event=${td.eventName}` : td.triggerType === 'cron' ? `cron=${td.cronExpression}` : td.triggerType === 'command' ? `cmd=${td.commandPrefix}${td.commandName}` : `webhook=${td.webhookPath}`}`);
+        console.log(`[BotEngine]   Trigger: type=${td.triggerType}, ${td.triggerType === 'event' ? `event=${td.eventName}` : td.triggerType === 'cron' ? `cron=${td.cronExpression}` : td.triggerType === 'command' ? `cmd=${td.commandPrefix}${td.commandName}` : td.triggerType === 'support' ? `support=${td.supportEvent} queue=${td.queueId || 'any'}` : `webhook=${td.webhookPath}`}`);
       }
 
       this.flows.set(flowId, {
@@ -596,6 +607,9 @@ export class BotEngine {
         throw new AppError(400, 'The sample body and query must be JSON');
       }
       data = webhookEventData(td.webhookPath, method === 'ANY' ? 'POST' : method, body, query);
+    } else if (td.triggerType === 'support') {
+      const mismatch = supportQueueMismatch(td, sample);
+      if (mismatch) return notTriggered(mismatch);
     } else {
       data = {};
     }
@@ -725,6 +739,16 @@ export class BotEngine {
     }
   }
 
+
+  private onSupportCaseTaken(configId: number, sid: number, data: Record<string, string>): void {
+    for (const flow of this.flows.values()) {
+      if (flow.serverConfigId !== configId || flow.virtualServerId !== sid) continue;
+      for (const triggerNode of flow.triggerNodes) {
+        const td = triggerNode.data as TriggerNodeData;
+        if (td.triggerType === 'support' && !supportQueueMismatch(td, data)) this.executeFlow(flow, triggerNode.id, 'support', data);
+      }
+    }
+  }
 
   private getNeededCommandChannelIds(configId: number, sid: number): number[] {
     const ids = new Set<number>();

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { eventFilterMismatch, matchCommand, webhookEventData } from './trigger-match.js';
+import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData } from './trigger-match.js';
 
 const cmd = (extra: object = {}) => ({ triggerType: 'command' as const, label: '', commandPrefix: '!', commandName: 'hilfe', ...extra });
 
@@ -46,4 +46,12 @@ test('webhook data keeps body and query but never the secret', () => {
   const d = webhookEventData('a/b', 'POST', { x: { y: 1 } }, { secret: 's3cret', page: '2' });
   assert.deepEqual(d, { webhook_path: 'a/b', webhook_method: 'POST', webhook_body: '{"x":{"y":1}}', webhook_query: '{"page":"2"}' });
   assert.equal(webhookEventData('p', 'GET', undefined, {}).webhook_body, '{}');
+});
+
+test('support trigger: no queue chosen = every queue; a chosen one ignores the others', () => {
+  const trigger = { triggerType: 'support' as const, label: '', supportEvent: 'taken' as const };
+  assert.equal(supportQueueMismatch(trigger, { queue_id: '7' }), null);
+  assert.equal(supportQueueMismatch({ ...trigger, queueId: '' }, { queue_id: '7' }), null);
+  assert.equal(supportQueueMismatch({ ...trigger, queueId: '7' }, { queue_id: '7' }), null);
+  assert.deepEqual(supportQueueMismatch({ ...trigger, queueId: '7' }, { queue_id: '8' }), { key: 'queue_id', expected: '7', actual: '8' });
 });

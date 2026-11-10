@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { WidgetManagerModal } from '@/components/widget/WidgetManagerModal';
-import { DEFAULT_LAYOUT, LOUNGE_LEAD_TILES, TILE_WIDTH_CLASS, isDefaultLayout, resolveLayout, tileDef } from '@/components/dashboard/tile-registry';
+import { DEFAULT_LAYOUT, LOUNGE_LEAD_TILES, TILE_WIDTH_CLASS, isDefaultLayout, resolveLayout, tileDef, tilesFor } from '@/components/dashboard/tile-registry';
 import { TileLayoutEditor } from '@/components/dashboard/TileLayoutEditor';
 import { Wifi, Server, LayoutGrid, Lock, SlidersHorizontal, RotateCcw, UserMinus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -66,13 +66,15 @@ export default function Dashboard() {
   // The user's own tile layout. If it cannot be loaded the default is shown - the dashboard itself still works.
   const { data: settings, isLoading: settingsLoading } = useUserSettings();
   const saveLayout = useSaveUserSetting('dashboardLayout');
-  const layout = resolveLayout(settings?.dashboardLayout);
+  const can = useAuthStore((s) => s.can);
+  const layout = tilesFor(resolveLayout(settings?.dashboardLayout), can);
+  const defaultLayout = tilesFor(DEFAULT_LAYOUT, can);
   /** The layout being edited; null outside the customise mode. */
   const [draft, setDraft] = useState<DashboardTileSetting[] | null>(null);
 
   const saveDraft = () => {
     if (!draft) return;
-    saveLayout.mutate(isDefaultLayout(draft) ? null : { tiles: draft }, {
+    saveLayout.mutate(isDefaultLayout(draft, defaultLayout) ? null : { tiles: draft }, {
       onSuccess: () => {
         setDraft(null);
         toast.success(t('pages.dashboard.tiles.saved'));
@@ -138,7 +140,7 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center gap-3">
           {draft ? (
             <>
-              <Button size="sm" variant="ghost" onClick={() => setDraft(DEFAULT_LAYOUT)} disabled={saveLayout.isPending}>
+              <Button size="sm" variant="ghost" onClick={() => setDraft(defaultLayout)} disabled={saveLayout.isPending}>
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> {t('common.reset')}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setDraft(null)} disabled={saveLayout.isPending}>

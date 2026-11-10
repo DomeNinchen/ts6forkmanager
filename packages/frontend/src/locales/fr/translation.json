@@ -1492,6 +1492,14 @@
       "serverVersion": "Version du serveur",
       "platform": "Plateforme",
       "botFlows": "Flux de bots",
+      "supportQueue": {
+        "title": "Support",
+        "waiting": "En attente",
+        "supporters": "Agents",
+        "longest": "Attente max.",
+        "queue": "File",
+        "perQueue": "Par file"
+      },
       "tiles": {
         "customise": "Personnaliser",
         "editHint": "Faites glisser une tuile par sa poignée ou utilisez les flèches pour changer l'ordre, et réglez la largeur et la visibilité de chaque tuile. La disposition est enregistrée sur votre compte et s'applique sur tous vos appareils.",
@@ -1509,6 +1517,7 @@
         "width2": "2/3",
         "width3": "Pleine",
         "botFlowsHint": "N'apparaît que si ce serveur a des flux de bots.",
+        "supportQueueHint": "N'apparaît que si une file d'attente du support est activée sur ce serveur virtuel.",
         "saved": "Disposition du tableau de bord enregistrée",
         "saveFailed": "La disposition n'a pas pu être enregistrée",
         "dnd": {
@@ -2250,6 +2259,7 @@
         "trigger_cron": "Timer Cron",
         "trigger_webhook": "Webhook",
         "trigger_command": "Commande de chat",
+        "trigger_support": "Cas de support pris en charge",
         "action_message": "Envoyer un message",
         "action_poke": "Poke le client",
         "action_kick": "Kick le client",
@@ -2277,6 +2287,7 @@
         "action_pokeGroup": "Poke un groupe",
         "action_rankCheck": "Vérification de rang",
         "action_tempChannelCleanup": "Nettoyage temporaire",
+        "action_supportEnqueue": "Mettre en file d'attente du support",
         "action_animatedChannel": "Salon animé",
         "condition": "Condition",
         "loop": "Boucle",
@@ -2340,6 +2351,14 @@
       "connections": "CONNEXIONS",
       "noConnections": "Aucune connexion",
       "config": {
+        "support": {
+          "queueLabel": "File d'attente du support",
+          "chooseQueue": "Choisir une file",
+          "anyQueue": "Toutes les files de ce serveur virtuel",
+          "noQueue": "Ce serveur virtuel n'a pas encore de file d'attente du support (page File de support).",
+          "triggerHint": "Démarre quand un agent prend en charge un client en attente, dans TeamSpeak ou avec Prendre en charge dans l'interface web. Sans SSH. L'événement contient :",
+          "enqueueHint": "Déplace le client déclencheur (event.clid) dans le salon d'attente de la file ; la file l'inscrit en quelques secondes, comme toute personne qui y entre. Ignoré avec un avertissement dans le journal si la file est désactivée, si le client est l'un de ses agents ou si personne n'est inscrit tant qu'aucun agent n'est disponible."
+        },
         "shared": {
           "commandLabel": "Commande",
           "channelIdLabel": "ID du salon",

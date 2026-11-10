@@ -44,6 +44,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   countOnlineInGroups: { groupIds: '8', storeAs: 'online' },
   listMembership: { listName: 'ignore', operation: 'add', value: '{{event.clid}}' },
   voiceTts: { text: 'hi' },
+  supportEnqueue: { queueId: '1' },
   animatedChannel: { channelId: '5', text: 'x' },
 };
 
@@ -69,7 +70,7 @@ function rig() {
   const answer = (command: string): any[] => {
     switch (command) {
       case 'whoami': return [{ client_id: '1', client_channel_id: '1' }];
-      case 'clientlist': return [{ clid: '3', cid: '1', client_type: '0', client_idle_time: '99999999', client_servergroups: '8', client_database_id: '30', client_nickname: 'Max', client_created: '1' }];
+      case 'clientlist': return [{ clid: '3', cid: '1', client_type: '0', client_idle_time: '99999999', client_servergroups: '8', client_database_id: '30', client_nickname: 'Max', client_created: '1', client_unique_identifier: 'u3' }];
       case 'servergroupclientlist': return [{ cldbid: '30' }];
       case 'channellist': return [{ cid: '50', pid: '40', total_clients: '0' }];
       case 'clientinfo': return [{ connection_connected_time: '999999999' }];
@@ -97,6 +98,7 @@ function rig() {
     musicBot: { update: write('musicBot.update') },
     song: { findUnique: async () => ({ id: 1, title: 's', filePath: '/x', source: 'local' }) },
     playlist: { findUnique: async () => null },
+    supportQueue: { findFirst: async () => ({ id: 1, serverConfigId: 1, sid: 1, channelId: 10, enabled: true, settings: JSON.stringify({ supporterGroupIds: [50] }) }) },
   };
 
   const voiceCalls: string[] = [];
@@ -167,6 +169,8 @@ test('a test run of a flow with every action changes nothing', async () => {
   assert.equal(hook.body, '{"who":"3"}');
   assert.equal(hook.headers.Authorization, MASKED_VALUE);
   assert.ok(step('voiceJoinChannel').effects.some((e) => e.kind === 'voice' && e.params.channelId === '5' && e.params.channelPassword !== 'pw'));
+  // The client goes to the queue's waiting channel (10); the queue job does the rest.
+  assert.deepEqual(step('supportEnqueue').effects.find((e) => e.kind === 'write'), { kind: 'write', command: 'clientmove', params: { clid: '3', cid: '10' }, names: { 3: 'Max' } });
   assert.ok(step('animatedChannel').effects.some((e) => e.kind === 'note' && e.code === 'animationManagedByEngine'));
 
   // Variables: read from the database, written only into the report.
@@ -192,6 +196,7 @@ test('positive control: the same flow run for real does write, request and comma
   assert.ok(r.dbWrites.includes('botVariable.update') && r.dbWrites.includes('botExecution.create') && r.dbWrites.includes('musicBot.update'));
   assert.ok(r.voiceCalls.includes('stopBot') && r.voiceCalls.includes('startBot'));
   assert.equal(requests.length, 2);
+  assert.ok(r.sent.some((c) => c.command === 'clientmove' && c.params.cid === '10'), 'supportEnqueue moved the client into the waiting channel');
 });
 
 // --- What a test shows about placeholders, conditions, loops and limits ---
