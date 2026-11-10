@@ -195,8 +195,9 @@ export function createApp(): Express {
   ]);
   // Support queue (R14): seen like the client list, acted on like moving a client; set up by admins only.
   serverScoped('vs/:sid/support-queue', supportQueueRoutes, [
-    { method: 'GET', path: '/', permission: 'server.view' },
+    { method: 'GET', path: '/queues', permission: 'server.view' },
     { method: 'GET', path: '/history', permission: 'server.view' },
+    { method: 'GET', path: '/queues/:queueId/history', permission: 'server.view' },
     { method: 'POST', path: '/cases/:id/take', permission: 'clients.move' },
     { method: 'POST', path: '/cases/:id/remove', permission: 'clients.move' },
     { method: 'POST', path: '/cases/:id/close', permission: 'clients.move' },

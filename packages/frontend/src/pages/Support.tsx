@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import {
   SUPPORT_PAUSE_NOTES, supportStats, type SupportCaseEntry, type SupportCaseState, type SupportQueueView,
 } from '@ts6/common';
-import { Headset, Loader2, PauseCircle, Settings2, UserCheck, UserMinus, CheckCircle2 } from 'lucide-react';
+import { Headset, Loader2, PauseCircle, Plus, Settings2, UserCheck, UserMinus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import i18n from '@/lib/i18n';
 import { supportQueueApi } from '@/api/support-queue.api';
@@ -18,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -48,6 +50,11 @@ const STATE_VARIANT: Record<SupportCaseState, 'default' | 'warning' | 'success' 
 function StateBadge({ state }: { state: SupportCaseState }) {
   const { t } = useTranslation();
   return <Badge variant={STATE_VARIANT[state]} className="whitespace-nowrap">{t(`pages.support.states.${state}`)}</Badge>;
+}
+
+function VipBadge() {
+  const { t } = useTranslation();
+  return <Badge variant="outline" className="shrink-0 border-amber-500/50 text-amber-400" title={t('pages.support.vipHint')}>{t('pages.support.vip')}</Badge>;
 }
 
 function pauseText(reason: string, t: TFunction): string {
@@ -81,16 +88,24 @@ export default function Support() {
   const isAdmin = useAuthStore((st) => st.isAdmin());
   const canAct = useAuthStore((st) => st.can('clients.move'));
   const now = useNow();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [params, setParams] = useSearchParams();
+  // null: closed; 'new': adding a queue; a number: that queue's settings.
+  const [settingsFor, setSettingsFor] = useState<number | 'new' | null>(null);
   const [taking, setTaking] = useState<SupportCaseEntry | null>(null);
   const [removing, setRemoving] = useState<SupportCaseEntry | null>(null);
 
-  const viewQ = useQuery({ queryKey: ['support-queue', c, s], queryFn: () => supportQueueApi.view(c!, s!), enabled: !!c && !!s, refetchInterval: REFRESH_MS, staleTime: 0 });
-  const historyQ = useQuery({ queryKey: ['support-queue-history', c, s], queryFn: () => supportQueueApi.history(c!, s!), enabled: !!c && !!s, refetchInterval: REFRESH_MS * 5, staleTime: 0 });
+  const viewQ = useQuery({ queryKey: ['support-queue', c, s], queryFn: () => supportQueueApi.queues(c!, s!), enabled: !!c && !!s, refetchInterval: REFRESH_MS, staleTime: 0 });
+  const queues = viewQ.data ?? [];
+  // The tab is kept in the URL (?queue=), so a link or a reload opens the same queue.
+  const view = queues.find((q) => String(q.config.id) === params.get('queue')) ?? queues[0];
+  const queueId = view?.config.id ?? null;
+  const pick = (id: number) => setParams((p) => { p.set('queue', String(id)); return p; }, { replace: true });
+  const historyQ = useQuery({ queryKey: ['support-queue-history', c, s, queueId], queryFn: () => supportQueueApi.history(c!, s!, queueId), enabled: !!c && !!s && queueId !== null, refetchInterval: REFRESH_MS * 5, staleTime: 0 });
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['support-queue', c, s] });
     qc.invalidateQueries({ queryKey: ['support-queue-history', c, s] });
+    qc.invalidateQueries({ queryKey: ['support-queue-stats', c, s] });
   };
   const act = useMutation({
     mutationFn: (a: { kind: 'take'; id: number; clid: number } | { kind: 'remove' | 'close'; id: number }) =>
@@ -117,8 +132,8 @@ export default function Support() {
     );
   }
 
-  const view: SupportQueueView = viewQ.data;
-  const { config, status, cases } = view;
+  const status = view?.status;
+  const cases = view?.cases ?? [];
   const waiting = cases.filter((k) => k.state === 'waiting');
   const taken = cases.filter((k) => k.state === 'in-progress');
   const history = historyQ.data ?? [];
@@ -128,16 +143,38 @@ export default function Support() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">{t('nav.items.support')}</h1>
         {isAdmin && (
-          <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)}>
-            <Settings2 className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.support.settings.open')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSettingsFor('new')}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.support.addQueue')}
+            </Button>
+            {view && (
+              <Button variant="outline" size="sm" onClick={() => setSettingsFor(view.config.id!)}>
+                <Settings2 className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.support.settings.open')}
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
-      {config.id === null || !config.enabled ? (
+      {queues.length > 0 && (
+        <Tabs value={String(queueId)} onValueChange={(v) => pick(Number(v))}>
+          <TabsList aria-label={t('pages.support.queuesLabel')}>
+            {queues.map((q) => (
+              <TabsTrigger key={q.config.id} value={String(q.config.id)}>
+                {q.config.settings.name}
+                <span className="ml-1.5 tabular-nums text-muted-foreground">
+                  {q.config.enabled ? `(${q.cases.filter((k) => k.state === 'waiting').length})` : `(${t('pages.support.off')})`}
+                </span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+
+      {!view || !view.config.enabled || !status ? (
         <EmptyState
           icon={Headset}
-          title={t(config.id === null ? 'pages.support.notSetUp' : 'pages.support.switchedOff')}
+          title={t(!view ? 'pages.support.notSetUp' : 'pages.support.switchedOff')}
           description={t(isAdmin ? 'pages.support.setUpHintAdmin' : 'pages.support.setUpHint')}
         />
       ) : (
@@ -179,24 +216,26 @@ export default function Support() {
         </>
       )}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t('pages.support.historyTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('pages.support.emptyHistory')}</p>
-          ) : (
-            <ul className="divide-y divide-border text-sm">
-              {history.map((k) => <HistoryRow key={k.id} entry={k} showActor={canAct} />)}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {view && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">{t('pages.support.historyTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('pages.support.emptyHistory')}</p>
+            ) : (
+              <ul className="divide-y divide-border text-sm">
+                {history.map((k) => <HistoryRow key={k.id} entry={k} showActor={canAct} />)}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      <StatsCard />
+      {view && <StatsCard queueId={queueId} queueName={view.config.settings.name} several={queues.length > 1} />}
 
-      {taking && (
+      {taking && status && (
         <TakeDialog entry={taking} supporters={status.supporters} busy={act.isPending}
           onCancel={() => setTaking(null)} onTake={(clid) => act.mutate({ kind: 'take', id: taking.id, clid })} />
       )}
@@ -210,7 +249,14 @@ export default function Support() {
         loading={act.isPending}
         onConfirm={() => removing && act.mutate({ kind: 'remove', id: removing.id })}
       />
-      {isAdmin && settingsOpen && <SupportQueueSettingsDialog onClose={() => setSettingsOpen(false)} onSaved={refresh} />}
+      {isAdmin && settingsFor !== null && (
+        <SupportQueueSettingsDialog
+          queueId={settingsFor === 'new' ? null : settingsFor}
+          onClose={() => setSettingsFor(null)}
+          onSaved={(id) => { refresh(); pick(id); }}
+          onDeleted={() => { setSettingsFor(null); setParams((p) => { p.delete('queue'); return p; }, { replace: true }); refresh(); }}
+        />
+      )}
     </div>
   );
 }
@@ -227,7 +273,7 @@ function CaseRow({ entry: k, now, canAct, busy, onTake, onRemove, onClose }: {
         {k.position ?? '–'}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{k.nickname}</p>
+        <p className="flex min-w-0 items-center gap-2 font-medium"><span className="truncate">{k.nickname}</span>{k.vip && <VipBadge />}</p>
         <p className="text-xs text-muted-foreground">
           <span title={k.arrivalUnknown ? t('pages.support.arrivalUnknownHint') : formatTempDate(k.arrivedAt)}>
             {t(k.arrivalUnknown ? 'pages.support.waitedAtLeast' : 'pages.support.waited', { time: formatWait(waitEnd - since, t) })}
@@ -260,7 +306,7 @@ function HistoryRow({ entry: k, showActor }: { entry: SupportCaseEntry; showActo
   const waitedUntil = new Date(k.takenAt ?? k.endedAt ?? k.arrivedAt).getTime();
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-      <span className="min-w-0 basis-full truncate font-medium sm:basis-auto sm:flex-1">{k.nickname}</span>
+      <span className="flex min-w-0 basis-full items-center gap-2 font-medium sm:basis-auto sm:flex-1"><span className="truncate">{k.nickname}</span>{k.vip && <VipBadge />}</span>
       <span className="text-xs text-muted-foreground">{formatTempDate(k.arrivedAt)}</span>
       <span className="text-xs tabular-nums">{t(k.arrivalUnknown ? 'pages.support.historyWaitedAtLeast' : 'pages.support.historyWaited', { time: formatWait(waitedUntil - arrived, t) })}</span>
       {k.takenBy.length > 0 && <span className="text-xs text-muted-foreground">{k.takenBy.map((p) => p.nickname).join(', ')}</span>}
@@ -312,23 +358,37 @@ const PERIODS = [7, 30, 90] as const;
 const localDay = (ms: number) => new Date(ms).toLocaleDateString('sv-SE');
 
 /** Figures over the cases that ended in the chosen period, computed here from the history. */
-function StatsCard() {
+function StatsCard({ queueId, queueName, several }: { queueId: number | null; queueName: string; several: boolean }) {
   const { t } = useTranslation();
   const { selectedConfigId: c, selectedSid: s } = useServerStore();
   const [days, setDays] = useState<(typeof PERIODS)[number]>(7);
-  const q = useQuery({ queryKey: ['support-queue-stats', c, s, days], queryFn: () => supportQueueApi.ended(c!, s!, days), enabled: !!c && !!s, refetchInterval: 60_000, staleTime: 0 });
+  // With several queues: this tab's queue, or every queue of the virtual server together.
+  const [all, setAll] = useState(false);
+  const scope = several && all ? null : queueId;
+  const q = useQuery({ queryKey: ['support-queue-stats', c, s, scope, days], queryFn: () => supportQueueApi.ended(c!, s!, scope, days), enabled: !!c && !!s, refetchInterval: 60_000, staleTime: 0 });
   const st = q.data ? supportStats(q.data, days, localDay) : null;
   const wait = (ms: number | null) => (ms === null ? '–' : formatWait(ms, t));
   return (
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
         <CardTitle className="text-base">{t('pages.support.stats.title')}</CardTitle>
+        <div className="flex flex-wrap gap-2">
+        {several && (
+          <Select value={all ? 'all' : 'queue'} onValueChange={(v) => setAll(v === 'all')}>
+            <SelectTrigger className="w-44" aria-label={t('pages.support.stats.scope')}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="queue">{queueName}</SelectItem>
+              <SelectItem value="all">{t('pages.support.stats.allQueues')}</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
         <Select value={String(days)} onValueChange={(v) => setDays(Number(v) as (typeof PERIODS)[number])}>
           <SelectTrigger className="w-40" aria-label={t('pages.support.stats.period')}><SelectValue /></SelectTrigger>
           <SelectContent>
             {PERIODS.map((d) => <SelectItem key={d} value={String(d)}>{t('pages.support.stats.lastDays', { count: d })}</SelectItem>)}
           </SelectContent>
         </Select>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {q.isError && <p className="text-sm text-destructive">{errorText(q.error, t)}</p>}
@@ -338,6 +398,8 @@ function StatsCard() {
             <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
               {([
                 ['cases', st.cases], ['taken', st.taken], ['cancelled', st.cancelled], ['avgWait', wait(st.avgWaitMs)], ['maxWait', wait(st.maxWaitMs)],
+                // Only when the period has VIP cases: their wait next to everyone else's.
+                ...(st.vipAvgWaitMs !== null || st.otherAvgWaitMs !== null ? [['vipAvgWait', wait(st.vipAvgWaitMs)], ['otherAvgWait', wait(st.otherAvgWaitMs)]] as const : []),
               ] as const).map(([k, v]) => (
                 <div key={k} className="rounded-md border border-border p-2">
                   <dt className="text-xs text-muted-foreground">{t(`pages.support.stats.${k}`)}</dt>

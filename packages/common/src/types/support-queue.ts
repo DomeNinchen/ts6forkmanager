@@ -55,6 +55,8 @@ export interface SupportCaseEntry {
   actedBy: string | null;
   /** The room created for a web take-over. */
   roomCid: number | null;
+  /** In a VIP group: waits before everyone who is not (stage 4). Frozen once the case stops waiting. */
+  vip: boolean;
   endedAt: string | null;
   endReason: SupportEndReason | null;
 }
@@ -63,6 +65,10 @@ export type SupportRoomType = 'temporary' | 'semipermanent' | 'permanent';
 
 /** Per queue; stored as JSON next to the queue's channel. */
 export interface SupportQueueSettings {
+  /** Shown on the page's tabs and in flows (several queues per virtual server, stage 4). */
+  name: string;
+  /** Members of any of these server groups wait before everyone who is not; among themselves by arrival. */
+  vipGroupIds: number[];
   /** Members of any of these server groups are supporters (and are never queued themselves). */
   supporterGroupIds: number[];
   /** Supporters in these channels do not count as available, and do not take cases there. */
@@ -100,6 +106,8 @@ export interface SupportQueueSettings {
 }
 
 export const SUPPORT_QUEUE_DEFAULTS: SupportQueueSettings = {
+  name: 'Support',
+  vipGroupIds: [],
   supporterGroupIds: [],
   afkChannelIds: [],
   graceSec: 60,
@@ -132,6 +140,7 @@ export const SUPPORT_ESTIMATE_SAMPLE = 50;
 export const SUPPORT_RETENTION_MIN_DAYS = 1;
 export const SUPPORT_RETENTION_MAX_DAYS = 3650;
 export const SUPPORT_RETENTION_DEFAULT_DAYS = 90;
+export const SUPPORT_QUEUE_NAME_MAX = 30;
 /** TeamSpeak's limit for a channel name. */
 export const SUPPORT_ROOM_NAME_MAX = 40;
 
@@ -175,6 +184,8 @@ export const SUPPORT_PAUSE_NOTES = {
 /** null when the settings are acceptable, otherwise the reason. */
 export function supportSettingsProblem(s: SupportQueueSettings): string | null {
   const ids = (v: unknown) => Array.isArray(v) && v.length <= 50 && v.every((n) => Number.isInteger(n) && n > 0);
+  if (typeof s.name !== 'string' || !s.name.trim() || [...s.name].length > SUPPORT_QUEUE_NAME_MAX) return `name must be 1 to ${SUPPORT_QUEUE_NAME_MAX} characters`;
+  if (!ids(s.vipGroupIds)) return 'vipGroupIds must be a list of server group ids';
   if (!ids(s.supporterGroupIds)) return 'supporterGroupIds must be a list of server group ids';
   if (!ids(s.afkChannelIds)) return 'afkChannelIds must be a list of channel ids';
   if (!Number.isInteger(s.graceSec) || s.graceSec < 0 || s.graceSec > SUPPORT_GRACE_MAX_SEC) return `graceSec must be 0 to ${SUPPORT_GRACE_MAX_SEC} seconds`;
@@ -222,6 +233,9 @@ export interface SupportStats {
   /** Over taken cases with a known arrival; null when there is none. */
   avgWaitMs: number | null;
   maxWaitMs: number | null;
+  /** The average wait of VIP cases and of the others; both null while the period has no VIP case. */
+  vipAvgWaitMs: number | null;
+  otherAvgWaitMs: number | null;
   /** A case taken by several supporters counts for each of them (his decision 11). */
   perSupporter: Array<{ uid: string; nickname: string; cases: number; perDay: number }>;
   /** Newest day first; `day` as the caller's dayKey gives it. */
@@ -236,6 +250,8 @@ export function supportStats(cases: SupportCaseEntry[], days: number, dayKey: (m
   const waitOf = (k: SupportCaseEntry) => (k.takenAt && !k.arrivalUnknown ? Date.parse(k.takenAt) - Date.parse(k.arrivedAt) : null);
   const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
   const waits = cases.map(waitOf).filter((w): w is number => w !== null);
+  const waitsOf = (vip: boolean) => cases.filter((k) => k.vip === vip).map(waitOf).filter((w): w is number => w !== null);
+  const anyVip = cases.some((k) => k.vip);
   const people = new Map<string, { uid: string; nickname: string; cases: number; perDay: number }>();
   for (const k of cases) {
     for (const p of k.takenBy) {
@@ -257,6 +273,8 @@ export function supportStats(cases: SupportCaseEntry[], days: number, dayKey: (m
     cancelled: cases.filter((k) => k.state === 'cancelled').length,
     avgWaitMs: avg(waits),
     maxWaitMs: waits.length ? Math.max(...waits) : null,
+    vipAvgWaitMs: anyVip ? avg(waitsOf(true)) : null,
+    otherAvgWaitMs: anyVip ? avg(waitsOf(false)) : null,
     perSupporter: [...people.values()].sort((a, b) => b.cases - a.cases || a.nickname.localeCompare(b.nickname)),
     perDay: [...byDay.entries()]
       .sort((a, b) => (a[0] < b[0] ? 1 : -1))

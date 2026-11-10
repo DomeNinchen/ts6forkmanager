@@ -17,7 +17,7 @@ import {
 } from '@ts6/common';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { ConnectionUnavailableError } from '../middleware/error-handler.js';
-import { NOTICES_PER_PASS, processQueueNotices } from './support-queue-notices.js';
+import { NOTICES_PER_PASS, byQueueOrder, processQueueNotices } from './support-queue-notices.js';
 
 // Support queue (R14). TeamSpeak has no queue, so the manager keeps one per waiting channel: every few
 // seconds it reads the client list and moves each case along (reconcile, a pure function), so a restart
@@ -68,6 +68,10 @@ export function isAvailableSupporter(c: ListedClient, s: SupportQueueSettings): 
   return isSupporter(c, s) && !s.afkChannelIds.includes(c.cid) && !c.away;
 }
 
+export function isVip(c: ListedClient, s: SupportQueueSettings): boolean {
+  return c.groups.some((g) => s.vipGroupIds.includes(g));
+}
+
 const person = (c: ListedClient): SupportPerson => ({ uid: c.uid, nickname: c.nickname, cldbid: c.cldbid });
 
 // --- Reconcile ------------------------------------------------------------------------------
@@ -79,10 +83,11 @@ export interface OpenCase {
   nickname: string;
   state: SupportCaseState;
   absentSince: number | null;
+  vip: boolean;
 }
 
 export type CaseChange =
-  | { kind: 'create'; uid: string; cldbid: number; nickname: string; arrivalUnknown: boolean }
+  | { kind: 'create'; uid: string; cldbid: number; nickname: string; arrivalUnknown: boolean; vip: boolean }
   | { kind: 'update'; id: number; from: SupportCaseState; data: CaseUpdate };
 
 export interface CaseUpdate {
@@ -90,6 +95,7 @@ export interface CaseUpdate {
   absentSince?: number | null;
   nickname?: string;
   cldbid?: number;
+  vip?: boolean;
   takenAt?: number;
   takenBy?: SupportPerson[];
   takenVia?: 'teamspeak';
@@ -135,6 +141,8 @@ export function reconcile(input: ReconcileInput): CaseChange[] {
     open.add(k.clientUid);
     const c = byUid.get(k.clientUid);
     const seen: CaseUpdate = c && (c.nickname !== k.nickname || c.cldbid !== k.cldbid) ? { nickname: c.nickname, cldbid: c.cldbid } : {};
+    // A VIP group given or taken while waiting moves the case at once; once taken the flag stays as it was.
+    if (c && k.state === 'waiting' && isVip(c, s) !== k.vip) seen.vip = !k.vip;
     const present = (): CaseUpdate | null => (k.absentSince !== null ? { ...seen, absentSince: null } : Object.keys(seen).length ? seen : null);
     const absent = (reason: SupportEndReason, end: SupportCaseState): CaseUpdate | null => {
       if (k.absentSince === null) return { ...seen, absentSince: now };
@@ -157,7 +165,7 @@ export function reconcile(input: ReconcileInput): CaseChange[] {
   if (mayQueue) {
     for (const c of byUid.values()) {
       if (c.cid !== channelId || open.has(c.uid) || isSupporter(c, s)) continue;
-      changes.push({ kind: 'create', uid: c.uid, cldbid: c.cldbid, nickname: c.nickname, arrivalUnknown: input.firstLook });
+      changes.push({ kind: 'create', uid: c.uid, cldbid: c.cldbid, nickname: c.nickname, arrivalUnknown: input.firstLook, vip: isVip(c, s) });
     }
   }
   return changes;
@@ -191,16 +199,16 @@ export function toCaseEntry(row: SupportCase, position: number | null = null): S
     takenVia: row.takenVia as SupportCaseEntry['takenVia'],
     actedBy: row.actedBy,
     roomCid: row.roomCid,
+    vip: row.vip,
     endedAt: row.endedAt?.toISOString() ?? null,
     endReason: row.endReason as SupportEndReason | null,
   };
 }
 
-/** Open cases as the page lists them: the waiting ones in their order (arrival, then id), then the taken ones. */
+/** Open cases as the page lists them: the waiting ones in their order (VIPs first, then arrival), then the taken ones. */
 export function orderOpenCases(rows: SupportCase[]): SupportCaseEntry[] {
-  const byArrival = (a: SupportCase, b: SupportCase) => a.arrivedAt.getTime() - b.arrivedAt.getTime() || a.id - b.id;
-  const waiting = rows.filter((r) => r.state === 'waiting').sort(byArrival);
-  const taken = rows.filter((r) => r.state === 'in-progress').sort(byArrival);
+  const waiting = rows.filter((r) => r.state === 'waiting').sort(byQueueOrder);
+  const taken = rows.filter((r) => r.state === 'in-progress').sort(byQueueOrder);
   return [...waiting.map((r, i) => toCaseEntry(r, i + 1)), ...taken.map((r) => toCaseEntry(r))];
 }
 
@@ -217,6 +225,7 @@ function updateData(d: CaseUpdate) {
     absentSince: date(d.absentSince),
     nickname: d.nickname,
     cldbid: d.cldbid,
+    vip: d.vip,
     takenAt: date(d.takenAt),
     takenBy: d.takenBy ? JSON.stringify(d.takenBy) : undefined,
     takenVia: d.takenVia,
@@ -234,7 +243,7 @@ export async function applyChanges(prisma: PrismaClient, queueId: number, change
     if (ch.kind === 'create') {
       // Only the job creates cases and it runs one pass at a time, so no second open case can appear in between.
       await prisma.supportCase.create({
-        data: { queueId, clientUid: ch.uid, cldbid: ch.cldbid, nickname: ch.nickname, arrivedAt: new Date(now), arrivalUnknown: ch.arrivalUnknown },
+        data: { queueId, clientUid: ch.uid, cldbid: ch.cldbid, nickname: ch.nickname, arrivedAt: new Date(now), arrivalUnknown: ch.arrivalUnknown, vip: ch.vip },
       });
     } else {
       await prisma.supportCase.updateMany({ where: { id: ch.id, state: ch.from }, data: updateData(ch.data) });
@@ -333,7 +342,7 @@ export async function processSupportQueues(prisma: PrismaClient, pool: Connectio
       const changes = reconcile({
         channelId: q.channelId,
         settings,
-        cases: rows.map((r) => ({ id: r.id, clientUid: r.clientUid, cldbid: r.cldbid, nickname: r.nickname, state: r.state as SupportCaseState, absentSince: r.absentSince?.getTime() ?? null })),
+        cases: rows.map((r) => ({ id: r.id, clientUid: r.clientUid, cldbid: r.cldbid, nickname: r.nickname, state: r.state as SupportCaseState, absentSince: r.absentSince?.getTime() ?? null, vip: r.vip })),
         clients,
         now,
         watchingSince: st.watchingSince!,
