@@ -879,6 +879,11 @@ model RaidProtection {
   // The first switch-on starts the observe-only time (observeUntil).
   firstEnabledAt DateTime?
   observeUntil   DateTime?
+  // Stage 3: carry out the rules' actions (an admin switches it on, an emergency stop off).
+  acting         Boolean        @default(false)
+  actingSince    DateTime?
+  stoppedAt      DateTime?
+  stoppedBy      String?
   updatedAt      DateTime       @updatedAt
   serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
 
@@ -892,7 +897,7 @@ model RaidIncident {
   sid            Int
   // "open" | "closed"
   state          String         @default("open")
-  // "observe" (stage 1: nothing was done to the clients)
+  // "observe" (nothing done, clients carry what would have happened) | "act" (actions carried out)
   mode           String         @default("observe")
   startedAt      DateTime
   lastHitAt      DateTime
