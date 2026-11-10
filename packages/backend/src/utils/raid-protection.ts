@@ -1,6 +1,7 @@
 import type { PrismaClient, RaidIncident, RaidProtection } from '../generated/prisma/client.js';
 import {
   RAID_DEFAULTS,
+  RAID_NOTICE_NOTES,
   RAID_RETENTION_DEFAULT_DAYS,
   RAID_RETENTION_MAX_DAYS,
   RAID_RETENTION_MIN_DAYS,
@@ -342,11 +343,11 @@ export class RaidProtectionService {
         .map((r) => Number(r.clid))
         .slice(0, NOTICES_MAX);
     } catch (err: any) {
-      notice.note = `cannot read the client list: ${err?.message ?? err}`;
+      notice.note = `${RAID_NOTICE_NOTES.noClientList}: ${err?.message ?? err}`;
       return notice;
     }
     if (!targets.length) {
-      notice.note = 'nobody of the notify groups is online';
+      notice.note = RAID_NOTICE_NOTES.nobodyOnline;
       return notice;
     }
     const text = renderSupportText(

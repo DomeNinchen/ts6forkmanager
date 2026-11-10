@@ -114,6 +114,7 @@
       "icons": "Icons",
       "complaints": "Beschwerden",
       "support": "Support-Warteschlange",
+      "raidProtection": "Raid-Schutz",
       "messages": "Nachrichten",
       "serverLogs": "Server-Logs",
       "queryConsole": "Query-Konsole",
@@ -2592,6 +2593,133 @@
           "end": "{{name}} auf den Platz von {{target}} gelegt.",
           "cancel": "Verschieben abgebrochen, {{name}} bleibt an ihrem Platz."
         }
+      }
+    },
+    "raid": {
+      "loadError": "Raid-Schutz konnte nicht geladen werden",
+      "retry": "Erneut versuchen",
+      "off": "Raid-Schutz ist aus",
+      "offHint": "Ein Admin kann ihn für diesen virtuellen Server einschalten.",
+      "offHintAdmin": "Unter Einstellungen einschalten. Zuerst beobachtet er nur: Er hält Vorfälle fest und benachrichtigt deine Admins, mit Clients macht er nichts.",
+      "statusTitle": "Status",
+      "observeOnly": "Nur beobachten",
+      "openIncident": "Vorfall #{{id}} läuft",
+      "detection": {
+        "live": "Live",
+        "delayed": "Verzögert",
+        "journal-off": "Sieht nichts",
+        "unreachable": "Server nicht erreichbar"
+      },
+      "detectionHint": {
+        "live": "Beitritte kommen sofort über die SSH-Query-Verbindung.",
+        "delayed": "Ohne SSH-Login wird die Clientliste alle 15 Sekunden gelesen: Eine Spitze fällt bis zu 15 Sekunden später auf, und wer dazwischen kommt und geht, wird nicht gesehen.",
+        "journal-off": "Der Raid-Schutz liest die Beitritte aus dem Verbindungsprotokoll, und das zeichnet diese Verbindung nicht auf.",
+        "unreachable": "Das Verbindungsprotokoll kann diesen virtuellen Server gerade nicht lesen. Bis es wieder geht, wird nichts beurteilt."
+      },
+      "journalOff": "Schalte für diese Verbindung unter Einstellungen -> Verbindungen „Verbindungsprotokoll aufzeichnen“ ein, sonst sieht der Raid-Schutz keinen Beitritt.",
+      "paused": {
+        "server-start": "Pausiert bis {{time}}: Der TeamSpeak-Server ist erst vor Kurzem gestartet, und alle, die neu verbinden, sind kein Raid.",
+        "watching-again": "Pausiert bis {{time}}: Der Manager sieht diesen Server nach einem Neustart oder Ausfall wieder, und alles Verpasste kommt auf einmal an."
+      },
+      "observeUntil": "Beobachtungszeit bis {{date}}. Der Raid-Schutz hält nur fest und benachrichtigt; in dieser Version macht er mit keinem Client etwas.",
+      "stageNote": "Der Raid-Schutz hält nur fest und benachrichtigt; in dieser Version macht er mit keinem Client etwas.",
+      "incidentsTitle": "Vorfälle",
+      "noIncidents": "Noch keine Vorfälle.",
+      "states": {
+        "open": "Läuft",
+        "closed": "Vorbei"
+      },
+      "clientCount": "Clients: {{count}}",
+      "hits": {
+        "total": "{{count}} Beitritte in {{window}} s",
+        "subnet": "{{count}} aus Netz {{key}}",
+        "country": "{{count}} aus {{key}}",
+        "name": "{{count}} mit Namen wie „{{key}}“",
+        "new": "{{count}} neue Identitäten"
+      },
+      "hidden": "(ausgeblendet)",
+      "lastHit": "Letzter Regeltreffer {{time}}",
+      "ended": "vorbei {{time}}",
+      "nothingDone": "mit diesen Clients wurde nichts gemacht",
+      "clientsCaption": "Clients von Vorfall #{{id}}",
+      "columns": {
+        "nickname": "Nickname",
+        "joined": "Beigetreten",
+        "ip": "Adresse",
+        "country": "Land",
+        "identity": "Identität"
+      },
+      "newIdentity": "Neu",
+      "seenBefore": "Schon gesehen",
+      "moreClients": "{{count}} weitere Clients gezählt, aber nicht aufgelistet.",
+      "notice": {
+        "none": "Niemand wurde benachrichtigt (Benachrichtigung aus).",
+        "nobody": "Niemand wurde benachrichtigt: {{note}}",
+        "poke": "{{sent}} Admin(s) angestupst.",
+        "message": "Privatnachricht an {{sent}} Admin(s) gesendet.",
+        "failed": "{{count}} fehlgeschlagen: {{note}}",
+        "notes": {
+          "nobodyOnline": "niemand aus den Benachrichtigungsgruppen war online",
+          "noClientList": "die Clientliste konnte nicht gelesen werden ({{detail}})"
+        }
+      },
+      "presets": {
+        "lax": "Locker",
+        "medium": "Mittel",
+        "strict": "Streng",
+        "custom": "Eigene Werte"
+      },
+      "rules": {
+        "total": "Alle Beitritte",
+        "totalHint": "Beitritte insgesamt, egal wer.",
+        "subnet": "Gleiches Netz",
+        "subnetHint": "Beitritte aus einem IPv4-/24- bzw. IPv6-/64-Netz.",
+        "country": "Gleiches Land",
+        "countryHint": "Beitritte aus einem Land (braucht die GeoIP-Datenbank des Verbindungsprotokolls).",
+        "name": "Ähnliche Namen",
+        "nameHint": "Nicknames, die ohne Ziffern, Satzzeichen und Groß/Klein gleich sind („Raider12“, „raider_7“).",
+        "new": "Neue Identitäten",
+        "newHint": "Identitäten, die dieser virtuelle Server noch nie gesehen hat, auch als Anteil an allen gezählten Beitritten."
+      },
+      "notifyModes": {
+        "off": "Niemand",
+        "poke": "Anstupsen",
+        "message": "Privatnachricht"
+      },
+      "settings": {
+        "open": "Einstellungen",
+        "title": "Raid-Schutz",
+        "description": "Für diesen virtuellen Server. Änderungen gelten sofort.",
+        "enabled": "Raid-Schutz an",
+        "enabledHint": "Beim ersten Einschalten beginnt die Beobachtungszeit.",
+        "rulesTitle": "Regeln",
+        "preset": "Voreinstellung",
+        "presetHint": "Die Voreinstellungen sind Startwerte; prüfe sie an den üblichen Beitrittszahlen deines Servers.",
+        "count": "Beitritte",
+        "windowSec": "Innerhalb Sekunden",
+        "sharePct": "Anteil in %",
+        "exemptTitle": "Wer nie zählt",
+        "exemptGroups": "Ausgenommene Servergruppen",
+        "exemptGroupsHint": "Mitglieder geschützter Gruppen, Supporter der Support-Warteschlange, Query-Clients und die Musikbots dieses Managers zählen ebenfalls nie.",
+        "knownSessions": "Bekanntes Mitglied ab Sitzungen",
+        "knownSessionsHint": "Ein Client mit mindestens so vielen früheren Sitzungen im Verbindungsprotokoll zählt nie (0 = aus).",
+        "graceMin": "Pause in Minuten",
+        "graceMinHint": "So lange nach dem Start des TeamSpeak-Servers bzw. nachdem der Manager ihn wieder sieht entsteht kein Vorfall.",
+        "observeDays": "Beobachtungstage",
+        "observeDaysHint": "Ab dem ersten Einschalten.",
+        "observeDaysSet": "Die Beobachtungszeit läuft bis {{date}} (beim ersten Einschalten festgelegt).",
+        "notifyTitle": "Benachrichtigen",
+        "notify": "Bei einem neuen Vorfall",
+        "notifyGroups": "Diese Gruppen benachrichtigen",
+        "notifyGroupsHint": "Nur Mitglieder, die gerade online sind, höchstens 10.",
+        "notifyText": "Text",
+        "pokeMax": "ein Anstupser wird auf {{max}} Zeichen gekürzt",
+        "historyTitle": "Verlauf",
+        "retention": "Vorfälle aufbewahren (Tage)",
+        "retentionHint": "Für alle virtuellen Server; laufende Vorfälle werden nie entfernt.",
+        "retentionRange": "Vorfälle aufbewahren: {{min}} bis {{max}} Tage",
+        "saved": "Raid-Schutz gespeichert",
+        "needNotifyGroup": "Wähle mindestens eine Gruppe zum Benachrichtigen."
       }
     },
     "support": {

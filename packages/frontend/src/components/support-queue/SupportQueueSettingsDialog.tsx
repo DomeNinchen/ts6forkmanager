@@ -33,9 +33,9 @@ function queueError(err: any, t: TFunction): string {
   return tsErrorMessage(err, t('components.bulkResult.unknownError'), t);
 }
 
-interface Option { id: number; name: string }
+export interface Option { id: number; name: string }
 
-function SwitchRow({ id, label, hint, checked, onChange }: { id: string; label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void }) {
+export function SwitchRow({ id, label, hint, checked, onChange }: { id: string; label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <div>
@@ -47,7 +47,7 @@ function SwitchRow({ id, label, hint, checked, onChange }: { id: string; label: 
   );
 }
 
-function TextRow({ id, label, hint, value, max = SUPPORT_TEXT_MAX, onChange }: { id: string; label: string; hint?: string; value: string; max?: number; onChange: (v: string) => void }) {
+export function TextRow({ id, label, hint, value, max = SUPPORT_TEXT_MAX, onChange }: { id: string; label: string; hint?: string; value: string; max?: number; onChange: (v: string) => void }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
@@ -57,7 +57,7 @@ function TextRow({ id, label, hint, value, max = SUPPORT_TEXT_MAX, onChange }: {
   );
 }
 
-function NumberRow({ id, label, hint, min, max, value, onChange }: { id: string; label: string; hint?: string; min: number; max: number; value: number; onChange: (v: number) => void }) {
+export function NumberRow({ id, label, hint, min, max, value, onChange }: { id: string; label: string; hint?: string; min: number; max: number; value: number; onChange: (v: number) => void }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
@@ -68,7 +68,7 @@ function NumberRow({ id, label, hint, min, max, value, onChange }: { id: string;
 }
 
 /** A list of checkboxes for picking several ids (supporter groups, AFK channels). */
-function IdPicker({ legend, hint, options, value, onChange }: { legend: string; hint?: string; options: Option[]; value: number[]; onChange: (v: number[]) => void }) {
+export function IdPicker({ legend, hint, options, value, onChange }: { legend: string; hint?: string; options: Option[]; value: number[]; onChange: (v: number[]) => void }) {
   return (
     <fieldset className="space-y-1.5">
       <legend className="text-sm font-medium">{legend}</legend>

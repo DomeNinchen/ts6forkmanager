@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { raidSettingsProblem, type RaidProtectionView, type RaidSettings } from '@ts6/common';
+import { raidSettingsProblem, type RaidIncidentEntry, type RaidProtectionView, type RaidSettings } from '@ts6/common';
+import { mayRole } from '../utils/role-table.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { requirePermission, requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
@@ -11,6 +12,16 @@ export const raidProtectionRoutes: Router = Router({ mergeParams: true });
 
 const INCIDENTS_MAX = 200;
 const DAY_MS = 86_400_000;
+
+/** Addresses (and the networks a rule fired for) only for those who may see client addresses (R8: clients.manage, the right that shows a client's IP). */
+function forViewer(req: Request, entry: RaidIncidentEntry): RaidIncidentEntry {
+  if (req.user?.role === 'admin' || mayRole(req.user?.role, 'clients.manage')) return entry;
+  return {
+    ...entry,
+    clients: entry.clients.map((c) => ({ ...c, ip: null })),
+    hits: entry.hits.map((h) => (h.rule === 'subnet' ? { ...h, key: null } : h)),
+  };
+}
 
 function scope(req: Request) {
   return {
@@ -81,7 +92,7 @@ raidProtectionRoutes.get('/incidents', requirePermission('clients.kick'), async 
     const { prisma, serverConfigId, sid } = scope(req);
     const limit = Math.min(INCIDENTS_MAX, Math.max(1, parseInt(String(req.query.limit ?? '50')) || 50));
     const rows = await prisma.raidIncident.findMany({ where: { serverConfigId, sid }, orderBy: { startedAt: 'desc' }, take: limit });
-    res.json(rows.map(toIncidentEntry));
+    res.json(rows.map((r) => forViewer(req, toIncidentEntry(r))));
   } catch (err) { next(err); }
 });
 
@@ -91,6 +102,6 @@ raidProtectionRoutes.get('/incidents/:id', requirePermission('clients.kick'), as
     const [id] = targetIds([req.params.id], 'id');
     const row = await prisma.raidIncident.findFirst({ where: { id, serverConfigId, sid } });
     if (!row) throw new AppError(404, 'Incident not found');
-    res.json(toIncidentEntry(row));
+    res.json(forViewer(req, toIncidentEntry(row)));
   } catch (err) { next(err); }
 });
