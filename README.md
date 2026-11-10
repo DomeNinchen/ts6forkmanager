@@ -19,7 +19,7 @@ It talks to TeamSpeak over the **WebQuery HTTP API**, the ServerQuery replacemen
 <summary><b>Dashboard, music bots, video streaming, bot flows and permissions</b> (click to expand)</summary>
 
 ### Dashboard
-Live users, channels, uptime, ping and bandwidth of a virtual server, with tiles each user can arrange for their own account.
+Live users, channels, uptime, ping and bandwidth of a virtual server, plus the support queue at a glance where one is running, with tiles each user can arrange for their own account.
 
 ![Dashboard](docs/dashboard.png)
 

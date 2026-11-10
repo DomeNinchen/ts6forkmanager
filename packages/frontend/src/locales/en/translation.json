@@ -2557,6 +2557,14 @@
       "serverVersion": "Server Version",
       "platform": "Platform",
       "botFlows": "Bot Flows",
+      "supportQueue": {
+        "title": "Support",
+        "waiting": "Waiting",
+        "supporters": "Supporters",
+        "longest": "Longest wait",
+        "queue": "Queue",
+        "perQueue": "Per queue"
+      },
       "tiles": {
         "customise": "Customise",
         "editHint": "Drag a tile by its handle or use the arrows to change the order, and set each tile's width and visibility. The layout is saved to your account and applies on every device.",
@@ -2574,6 +2582,7 @@
         "width2": "2/3",
         "width3": "Full",
         "botFlowsHint": "Only appears when this server has bot flows.",
+        "supportQueueHint": "Only appears when this virtual server has a support queue switched on.",
         "saved": "Dashboard layout saved",
         "saveFailed": "The layout could not be saved",
         "dnd": {

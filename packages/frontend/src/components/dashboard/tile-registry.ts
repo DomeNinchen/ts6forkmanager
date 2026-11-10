@@ -1,10 +1,11 @@
 import type { ComponentType } from 'react';
-import { parseUserSetting, type DashboardTileSetting, type DashboardTileWidth } from '@ts6/common';
+import { parseUserSetting, type DashboardTileSetting, type DashboardTileWidth, type UserPermission } from '@ts6/common';
 import { DashboardUserHistoryCard } from '@/components/statistics/DashboardUserHistoryCard';
 import { OnlineUsersTile, ChannelsTile, UptimeTile, PingTile } from './StatTiles';
 import { BandwidthTile } from './BandwidthTile';
 import { CapacityTile } from './CapacityTile';
 import { BotFlowsTile } from './BotFlowsTile';
+import { SupportQueueTile } from './SupportQueueTile';
 import type { TileProps } from './tile-types';
 
 interface TileDef {
@@ -13,6 +14,8 @@ interface TileDef {
   labelKey: string;
   /** i18n key of a note shown under the name in the customise mode. */
   hintKey?: string;
+  /** Without it the tile is neither shown nor offered in the customise mode. */
+  permission?: UserPermission;
 }
 
 /** The dashboard's building blocks, by their stable id - the id is what a user's stored layout refers to. */
@@ -25,6 +28,7 @@ const DASHBOARD_TILES: Record<string, TileDef> = {
   bandwidth: { component: BandwidthTile, labelKey: 'pages.dashboard.bandwidth' },
   capacity: { component: CapacityTile, labelKey: 'pages.dashboard.serverCapacity' },
   botFlows: { component: BotFlowsTile, labelKey: 'pages.dashboard.botFlows', hintKey: 'pages.dashboard.tiles.botFlowsHint' },
+  supportQueue: { component: SupportQueueTile, labelKey: 'pages.dashboard.supportQueue.title', hintKey: 'pages.dashboard.tiles.supportQueueHint', permission: 'server.view' },
 };
 
 /**
@@ -55,6 +59,7 @@ export const DEFAULT_LAYOUT: DashboardTileSetting[] = [
   { id: 'bandwidth', width: 2 },
   { id: 'capacity', width: 1 },
   { id: 'botFlows', width: 3 },
+  { id: 'supportQueue', width: 2 },
 ];
 
 /**
@@ -71,7 +76,12 @@ export function resolveLayout(stored: unknown): DashboardTileSetting[] {
 }
 
 /** Whether a layout is the default one - saving it then removes the stored layout instead, so the user keeps following the default. */
-export function isDefaultLayout(layout: DashboardTileSetting[]): boolean {
+export function isDefaultLayout(layout: DashboardTileSetting[], base: DashboardTileSetting[] = DEFAULT_LAYOUT): boolean {
   const plain = (l: DashboardTileSetting[]) => JSON.stringify(l.map((t) => [t.id, t.width, !!t.hidden]));
-  return plain(layout) === plain(DEFAULT_LAYOUT);
+  return plain(layout) === plain(base);
+}
+
+/** The tiles of a layout this user may see (a tile with a permission they lack is left out). */
+export function tilesFor(layout: DashboardTileSetting[], can: (p: UserPermission) => boolean): DashboardTileSetting[] {
+  return layout.filter((t) => { const p = tileDef(t.id)?.permission; return !p || can(p); });
 }

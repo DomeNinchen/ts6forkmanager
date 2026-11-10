@@ -1491,6 +1491,14 @@
       "serverVersion": "Version du serveur",
       "platform": "Plateforme",
       "botFlows": "Flux de bots",
+      "supportQueue": {
+        "title": "Support",
+        "waiting": "En attente",
+        "supporters": "Agents",
+        "longest": "Attente max.",
+        "queue": "File",
+        "perQueue": "Par file"
+      },
       "tiles": {
         "customise": "Personnaliser",
         "editHint": "Faites glisser une tuile par sa poignée ou utilisez les flèches pour changer l'ordre, et réglez la largeur et la visibilité de chaque tuile. La disposition est enregistrée sur votre compte et s'applique sur tous vos appareils.",
@@ -1508,6 +1516,7 @@
         "width2": "2/3",
         "width3": "Pleine",
         "botFlowsHint": "N'apparaît que si ce serveur a des flux de bots.",
+        "supportQueueHint": "N'apparaît que si une file d'attente du support est activée sur ce serveur virtuel.",
         "saved": "Disposition du tableau de bord enregistrée",
         "saveFailed": "La disposition n'a pas pu être enregistrée",
         "dnd": {
