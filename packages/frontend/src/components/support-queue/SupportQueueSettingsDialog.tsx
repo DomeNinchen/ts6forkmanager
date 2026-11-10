@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { SUPPORT_GRACE_MAX_SEC, SUPPORT_ROOM_NAME_MAX, supportSettingsProblem, type SupportQueueSettings, type SupportRoomType } from '@ts6/common';
+import {
+  SUPPORT_GRACE_MAX_SEC, SUPPORT_POKE_MAX, SUPPORT_REMIND_MAX_MIN, SUPPORT_REPEAT_MAX_MIN, SUPPORT_RETENTION_DEFAULT_DAYS, SUPPORT_RETENTION_MAX_DAYS,
+  SUPPORT_RETENTION_MIN_DAYS, SUPPORT_ROOM_NAME_MAX, SUPPORT_TEXT_MAX, supportSettingsProblem, type SupportQueueSettings, type SupportRoomType,
+} from '@ts6/common';
+import { settingsApi } from '@/api/settings.api';
+import { Textarea } from '@/components/ui/textarea';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supportQueueApi } from '@/api/support-queue.api';
@@ -19,6 +24,38 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 
 interface Option { id: number; name: string }
+
+function SwitchRow({ id, label, hint, checked, onChange }: { id: string; label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <Label htmlFor={id}>{label}</Label>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onChange} />
+    </div>
+  );
+}
+
+function TextRow({ id, label, hint, value, max = SUPPORT_TEXT_MAX, onChange }: { id: string; label: string; hint?: string; value: string; max?: number; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Textarea id={id} rows={2} maxLength={max} value={value} onChange={(e) => onChange(e.target.value)} />
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+function NumberRow({ id, label, hint, min, max, value, onChange }: { id: string; label: string; hint?: string; min: number; max: number; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} type="number" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} />
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
 
 /** A list of checkboxes for picking several ids (supporter groups, AFK channels). */
 function IdPicker({ legend, options, value, onChange }: { legend: string; options: Option[]; value: number[]; onChange: (v: number[]) => void }) {
@@ -51,6 +88,12 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
   const [settings, setSettings] = useState<SupportQueueSettings | null>(null);
   const [conflicts, setConflicts] = useState<Array<{ flowId: number; name: string }>>([]);
   const [saving, setSaving] = useState(false);
+  // How long ended cases are kept: one value for every virtual server (like the temporary groups' history).
+  const retentionQ = useQuery({ queryKey: ['support-queue-retention'], queryFn: () => settingsApi.supportQueueRetention(), staleTime: 0 });
+  const [retention, setRetention] = useState<number | null>(null);
+  useEffect(() => { if (retentionQ.data && retention === null) setRetention(retentionQ.data.retentionDays); }, [retentionQ.data, retention]);
+  const retentionProblem = retention !== null && !(Number.isInteger(retention) && retention >= SUPPORT_RETENTION_MIN_DAYS && retention <= SUPPORT_RETENTION_MAX_DAYS)
+    ? t('pages.support.settings.retentionRange', { min: SUPPORT_RETENTION_MIN_DAYS, max: SUPPORT_RETENTION_MAX_DAYS }) : null;
 
   useEffect(() => {
     if (!configQ.data || settings) return;
@@ -74,6 +117,7 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
     setSaving(true);
     try {
       const res = await supportQueueApi.saveConfig(c!, s!, { enabled, channelId, settings });
+      if (retention !== null && retention !== retentionQ.data?.retentionDays) await settingsApi.setSupportQueueRetention(retention);
       setConflicts(res.conflicts);
       toast.success(t('pages.support.settings.saved'));
       onSaved();
@@ -145,12 +189,40 @@ export function SupportQueueSettingsDialog({ onClose, onSaved }: { onClose: () =
                 </SelectContent>
               </Select>
             </div>
-            {(problem || missing) && <p role="alert" className="text-sm text-destructive">{missing ?? problem}</p>}
+            <fieldset className="space-y-3 border-t border-border pt-4">
+              <legend className="text-sm font-semibold">{t('pages.support.settings.messagesTitle')}</legend>
+              <SwitchRow id="sq-msg" label={t('pages.support.settings.clientMessages')} hint={t('pages.support.settings.clientMessagesHint')} checked={settings.clientMessages} onChange={(v) => set('clientMessages', v)} />
+              {settings.clientMessages && (
+                <>
+                  <TextRow id="sq-enter" label={t('pages.support.settings.enterText')} hint="{client} {position} {waiting} {estimate}" value={settings.enterText} onChange={(v) => set('enterText', v)} />
+                  <TextRow id="sq-nosup" label={t('pages.support.settings.noSupporterText')} hint="{client} {position} {waiting}" value={settings.noSupporterText} onChange={(v) => set('noSupporterText', v)} />
+                  <TextRow id="sq-est" label={t('pages.support.settings.estimateText')} hint={t('pages.support.settings.estimateHint')} value={settings.estimateText} onChange={(v) => set('estimateText', v)} />
+                  <TextRow id="sq-taken" label={t('pages.support.settings.takenText')} hint="{client} {supporter}" value={settings.takenText} onChange={(v) => set('takenText', v)} />
+                  <NumberRow id="sq-repeat" label={t('pages.support.settings.repeatMin')} hint={t('pages.support.settings.repeatHint')} min={0} max={SUPPORT_REPEAT_MAX_MIN} value={settings.repeatMin} onChange={(v) => set('repeatMin', v)} />
+                </>
+              )}
+              <SwitchRow id="sq-poke" label={t('pages.support.settings.pokeSupporters')} hint={t('pages.support.settings.pokeHint')} checked={settings.pokeSupporters} onChange={(v) => set('pokeSupporters', v)} />
+              {settings.pokeSupporters && (
+                <TextRow id="sq-poketext" label={t('pages.support.settings.supporterPokeText')} hint="{client} {position} {waiting}" max={SUPPORT_POKE_MAX} value={settings.supporterPokeText} onChange={(v) => set('supporterPokeText', v)} />
+              )}
+              <SwitchRow id="sq-remind" label={t('pages.support.settings.remind')} hint={t('pages.support.settings.remindHint')} checked={settings.remind} onChange={(v) => set('remind', v)} />
+              {settings.remind && (
+                <>
+                  <NumberRow id="sq-remindmin" label={t('pages.support.settings.remindAfterMin')} min={1} max={SUPPORT_REMIND_MAX_MIN} value={settings.remindAfterMin} onChange={(v) => set('remindAfterMin', v)} />
+                  <TextRow id="sq-remindtext" label={t('pages.support.settings.remindText')} hint="{client} {position} {waited}" max={SUPPORT_POKE_MAX} value={settings.remindText} onChange={(v) => set('remindText', v)} />
+                </>
+              )}
+            </fieldset>
+            <fieldset className="space-y-3 border-t border-border pt-4">
+              <legend className="text-sm font-semibold">{t('pages.support.settings.historyTitle')}</legend>
+              <NumberRow id="sq-retention" label={t('pages.support.settings.retention')} hint={t('pages.support.settings.retentionHint')} min={SUPPORT_RETENTION_MIN_DAYS} max={SUPPORT_RETENTION_MAX_DAYS} value={retention ?? SUPPORT_RETENTION_DEFAULT_DAYS} onChange={setRetention} />
+            </fieldset>
+            {(problem || missing || retentionProblem) && <p role="alert" className="text-sm text-destructive">{missing ?? problem ?? retentionProblem}</p>}
           </div>
         )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={save} disabled={!settings || !!problem || !!missing || saving}>
+          <Button onClick={save} disabled={!settings || !!problem || !!missing || !!retentionProblem || saving}>
             {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />}{t('common.save')}
           </Button>
         </DialogFooter>
