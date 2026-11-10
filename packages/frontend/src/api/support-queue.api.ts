@@ -8,6 +8,9 @@ export const supportQueueApi = {
     api.get(base(configId, sid)).then((r) => r.data as SupportQueueView),
   history: (configId: number, sid: number, limit = 100) =>
     api.get(`${base(configId, sid)}/history`, { params: { limit } }).then((r) => r.data as SupportCaseEntry[]),
+  /** Every case that ended in the last `days` days (the statistics are computed from these). */
+  ended: (configId: number, sid: number, days: number) =>
+    api.get(`${base(configId, sid)}/history`, { params: { days } }).then((r) => r.data as SupportCaseEntry[]),
   config: (configId: number, sid: number) =>
     api.get(`${base(configId, sid)}/config`).then((r) => r.data as { config: SupportQueueConfig; defaults: SupportQueueSettings; conflicts: SupportQueueConflict[] }),
   saveConfig: (configId: number, sid: number, body: { enabled: boolean; channelId: number; settings: SupportQueueSettings }) =>

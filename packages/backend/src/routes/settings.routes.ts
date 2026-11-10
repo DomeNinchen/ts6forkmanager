@@ -18,6 +18,8 @@ import { getGithubToken, setGithubToken } from '../utils/github-token.js';
 import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-settings.js';
 import { setPrivacyNoticeEnabled } from '../utils/privacy-notice-settings.js';
 import { getTempGroupRetentionDays, isValidTempGroupRetention, setTempGroupRetentionDays } from '../utils/temporary-groups.js';
+import { getSupportRetentionDays, isValidSupportRetention, setSupportRetentionDays } from '../utils/support-queue.js';
+import { SUPPORT_RETENTION_MAX_DAYS, SUPPORT_RETENTION_MIN_DAYS } from '@ts6/common';
 import { TEMP_GROUP_RETENTION_MAX_DAYS, TEMP_GROUP_RETENTION_MIN_DAYS } from '@ts6/common';
 import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES, MAX_VIDEO_MAX_MINUTES, isValidMaxVideoMinutes } from '../utils/stream-defaults.js';
 import {
@@ -215,6 +217,24 @@ settingsRoutes.put('/temporary-groups', requireAdmin, async (req: Request, res: 
       throw new AppError(400, `retentionDays must be a whole number from ${TEMP_GROUP_RETENTION_MIN_DAYS} to ${TEMP_GROUP_RETENTION_MAX_DAYS}`);
     }
     await setTempGroupRetentionDays(req.app.locals.prisma, retentionDays);
+    res.json({ retentionDays });
+  } catch (err) { next(err); }
+});
+
+// GET/PUT /api/settings/support-queue — how long ended support cases are kept (R14, all virtual servers)
+settingsRoutes.get('/support-queue', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    res.json({ retentionDays: await getSupportRetentionDays(req.app.locals.prisma), retentionMin: SUPPORT_RETENTION_MIN_DAYS, retentionMax: SUPPORT_RETENTION_MAX_DAYS });
+  } catch (err) { next(err); }
+});
+
+settingsRoutes.put('/support-queue', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { retentionDays } = req.body ?? {};
+    if (!isValidSupportRetention(retentionDays)) {
+      throw new AppError(400, `retentionDays must be a whole number from ${SUPPORT_RETENTION_MIN_DAYS} to ${SUPPORT_RETENTION_MAX_DAYS}`);
+    }
+    await setSupportRetentionDays(req.app.locals.prisma, retentionDays);
     res.json({ retentionDays });
   } catch (err) { next(err); }
 });

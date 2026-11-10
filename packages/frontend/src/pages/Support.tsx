@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import {
-  SUPPORT_PAUSE_NOTES, type SupportCaseEntry, type SupportCaseState, type SupportQueueView,
+  SUPPORT_PAUSE_NOTES, supportStats, type SupportCaseEntry, type SupportCaseState, type SupportQueueView,
 } from '@ts6/common';
 import { Headset, Loader2, PauseCircle, Settings2, UserCheck, UserMinus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -194,6 +194,8 @@ export default function Support() {
         </CardContent>
       </Card>
 
+      <StatsCard />
+
       {taking && (
         <TakeDialog entry={taking} supporters={status.supporters} busy={act.isPending}
           onCancel={() => setTaking(null)} onTake={(clid) => act.mutate({ kind: 'take', id: taking.id, clid })} />
@@ -301,5 +303,73 @@ function TakeDialog({ entry, supporters, busy, onCancel, onTake }: {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+const PERIODS = [7, 30, 90] as const;
+
+/** Day label in the viewer's own time zone; sv-SE writes YYYY-MM-DD, which also sorts. */
+const localDay = (ms: number) => new Date(ms).toLocaleDateString('sv-SE');
+
+/** Figures over the cases that ended in the chosen period, computed here from the history. */
+function StatsCard() {
+  const { t } = useTranslation();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  const [days, setDays] = useState<(typeof PERIODS)[number]>(7);
+  const q = useQuery({ queryKey: ['support-queue-stats', c, s, days], queryFn: () => supportQueueApi.ended(c!, s!, days), enabled: !!c && !!s, refetchInterval: 60_000, staleTime: 0 });
+  const st = q.data ? supportStats(q.data, days, localDay) : null;
+  const wait = (ms: number | null) => (ms === null ? '–' : formatWait(ms, t));
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
+        <CardTitle className="text-base">{t('pages.support.stats.title')}</CardTitle>
+        <Select value={String(days)} onValueChange={(v) => setDays(Number(v) as (typeof PERIODS)[number])}>
+          <SelectTrigger className="w-40" aria-label={t('pages.support.stats.period')}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {PERIODS.map((d) => <SelectItem key={d} value={String(d)}>{t('pages.support.stats.lastDays', { count: d })}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {q.isError && <p className="text-sm text-destructive">{errorText(q.error, t)}</p>}
+        {st && st.cases === 0 && <p className="text-sm text-muted-foreground">{t('pages.support.stats.empty')}</p>}
+        {st && st.cases > 0 && (
+          <>
+            <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+              {([
+                ['cases', st.cases], ['taken', st.taken], ['cancelled', st.cancelled], ['avgWait', wait(st.avgWaitMs)], ['maxWait', wait(st.maxWaitMs)],
+              ] as const).map(([k, v]) => (
+                <div key={k} className="rounded-md border border-border p-2">
+                  <dt className="text-xs text-muted-foreground">{t(`pages.support.stats.${k}`)}</dt>
+                  <dd className="text-lg font-semibold tabular-nums">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="grid gap-4 md:grid-cols-2">
+              <table className="w-full text-sm">
+                <caption className="pb-1 text-left text-xs font-medium text-muted-foreground">{t('pages.support.stats.perSupporter')}</caption>
+                <thead><tr className="text-left text-xs text-muted-foreground"><th className="font-normal">{t('pages.support.supporter')}</th><th className="pl-2 text-right font-normal">{t('pages.support.stats.cases')}</th><th className="pl-2 text-right font-normal">{t('pages.support.stats.perDay')}</th></tr></thead>
+                <tbody>
+                  {st.perSupporter.length === 0 && <tr><td colSpan={3} className="text-muted-foreground">–</td></tr>}
+                  {st.perSupporter.map((p) => (
+                    <tr key={p.uid} className="border-t border-border"><td className="max-w-[10rem] truncate py-1">{p.nickname}</td><td className="pl-2 text-right tabular-nums">{p.cases}</td><td className="pl-2 text-right tabular-nums">{p.perDay.toLocaleString(i18n.language)}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+              <table className="w-full text-sm">
+                <caption className="pb-1 text-left text-xs font-medium text-muted-foreground">{t('pages.support.stats.perDayTitle')}</caption>
+                <thead><tr className="text-left text-xs text-muted-foreground"><th className="font-normal">{t('pages.support.stats.day')}</th><th className="pl-2 text-right font-normal">{t('pages.support.stats.cases')}</th><th className="pl-2 text-right font-normal">{t('pages.support.stats.taken')}</th><th className="pl-2 text-right font-normal">{t('pages.support.stats.cancelled')}</th><th className="pl-2 text-right font-normal">{t('pages.support.stats.avgWait')}</th></tr></thead>
+                <tbody>
+                  {st.perDay.map((d) => (
+                    <tr key={d.day} className="border-t border-border"><td className="py-1">{new Date(`${d.day}T12:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })}</td><td className="pl-2 text-right tabular-nums">{d.cases}</td><td className="pl-2 text-right tabular-nums">{d.taken}</td><td className="pl-2 text-right tabular-nums">{d.cancelled}</td><td className="pl-2 text-right tabular-nums">{wait(d.avgWaitMs)}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted-foreground">{t('pages.support.stats.note')}</p>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

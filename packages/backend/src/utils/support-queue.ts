@@ -2,6 +2,9 @@ import type { PrismaClient, SupportCase, SupportQueue } from '../generated/prism
 import {
   SUPPORT_OPEN_STATES,
   SUPPORT_PAUSE_NOTES,
+  SUPPORT_RETENTION_DEFAULT_DAYS,
+  SUPPORT_RETENTION_MAX_DAYS,
+  SUPPORT_RETENTION_MIN_DAYS,
   SUPPORT_QUEUE_DEFAULTS,
   supportSettingsProblem,
   type SupportCaseEntry,
@@ -14,6 +17,7 @@ import {
 } from '@ts6/common';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { ConnectionUnavailableError } from '../middleware/error-handler.js';
+import { NOTICES_PER_PASS, processQueueNotices } from './support-queue-notices.js';
 
 // Support queue (R14). TeamSpeak has no queue, so the manager keeps one per waiting channel: every few
 // seconds it reads the client list and moves each case along (reconcile, a pure function), so a restart
@@ -313,6 +317,8 @@ export async function processSupportQueues(prisma: PrismaClient, pool: Connectio
       }
       continue;
     }
+    // One budget per virtual server and pass for messages and pokes (TeamSpeak's flood protection).
+    const budget = { left: NOTICES_PER_PASS };
     for (const q of qs) {
       const st = liveOf(q.id);
       const firstLook = st.watchingSince === null;
@@ -334,8 +340,41 @@ export async function processSupportQueues(prisma: PrismaClient, pool: Connectio
         firstLook,
       });
       await applyChanges(prisma, q.id, changes, now);
+      const after = await prisma.supportCase.findMany({ where: { queueId: q.id, state: { in: OPEN } } });
+      try {
+        await processQueueNotices(prisma, pool.getBotClient(serverConfigId), q, settings, after, clients, clients.filter((c) => isAvailableSupporter(c, settings)), budget, now);
+      } catch (err: any) {
+        console.warn(`[SupportQueue] Notices for queue #${q.id} skipped this pass: ${err.message}`);
+      }
     }
   }
+}
+
+// --- Retention (his decision 9) -------------------------------------------------------------
+
+const KEY_RETENTION = 'support_queue_retention_days';
+const DAY_MS = 86_400_000;
+
+export function isValidSupportRetention(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= SUPPORT_RETENTION_MIN_DAYS && value <= SUPPORT_RETENTION_MAX_DAYS;
+}
+
+export async function getSupportRetentionDays(prisma: PrismaClient): Promise<number> {
+  const row = await prisma.appSetting.findUnique({ where: { key: KEY_RETENTION } });
+  const value = row ? Number(row.value) : NaN;
+  return isValidSupportRetention(value) ? value : SUPPORT_RETENTION_DEFAULT_DAYS;
+}
+
+export async function setSupportRetentionDays(prisma: PrismaClient, days: number): Promise<void> {
+  await prisma.appSetting.upsert({ where: { key: KEY_RETENTION }, create: { key: KEY_RETENTION, value: String(days) }, update: { value: String(days) } });
+}
+
+/** Removes ended cases older than the retention; open ones are never touched. */
+export async function pruneSupportCases(prisma: PrismaClient, now = Date.now()): Promise<number> {
+  const cutoff = new Date(now - (await getSupportRetentionDays(prisma)) * DAY_MS);
+  const { count } = await prisma.supportCase.deleteMany({ where: { state: { notIn: OPEN }, endedAt: { lt: cutoff } } });
+  if (count > 0) console.log(`[SupportQueue] Pruned ${count} ended case${count === 1 ? '' : 's'}`);
+  return count;
 }
 
 /** Starts the queue job: a pass right away, then every 5 s (SUPPORT_QUEUE_TICK_MS, meant for tests). */
@@ -348,12 +387,17 @@ export function startSupportQueueJob(prisma: PrismaClient, pool: ConnectionPool)
       .catch((err) => console.warn(`[SupportQueue] Pass failed: ${err.message}`))
       .finally(() => { running = null; });
   };
+  const prune = () => void pruneSupportCases(prisma).catch((err) => console.warn(`[SupportQueue] Pruning failed: ${err.message}`));
   tick();
+  prune();
   const timer = setInterval(tick, tickMs);
+  const pruneTimer = setInterval(prune, 60 * 60 * 1000);
   timer.unref?.();
+  pruneTimer.unref?.();
   return {
     async stop() {
       clearInterval(timer);
+      clearInterval(pruneTimer);
       await running;
     },
   };

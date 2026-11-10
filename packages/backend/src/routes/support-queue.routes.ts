@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import {
   SUPPORT_OPEN_STATES,
   SUPPORT_QUEUE_DEFAULTS,
+  SUPPORT_RETENTION_MAX_DAYS,
   supportRoomName,
   supportSettingsProblem,
   type SupportQueueConflict,
@@ -25,6 +26,8 @@ import {
 export const supportQueueRoutes: Router = Router({ mergeParams: true });
 
 const HISTORY_MAX = 500;
+// shortcut: statistics are computed on the page from at most this many cases; move them into SQL if a queue ever has more in 90 days.
+const STATS_MAX = 20_000;
 const OPEN = [...SUPPORT_OPEN_STATES];
 
 /** Which web user acted is for those who may act themselves; read-only viewers get the case without it. */
@@ -84,13 +87,16 @@ supportQueueRoutes.get('/', requirePermission('server.view'), async (req: Reques
   } catch (err) { next(err); }
 });
 
-// Ended cases, newest first.
+// Ended cases, newest first. ?days=N: every case that ended in the last N days (for the statistics, at most STATS_MAX).
 supportQueueRoutes.get('/history', requirePermission('server.view'), async (req: Request, res: Response, next) => {
   try {
     const { prisma, serverConfigId, sid } = scope(req);
-    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '100')) || 100, 1), HISTORY_MAX);
+    const days = req.query.days === undefined ? null : parseInt(String(req.query.days));
+    if (days !== null && !(days >= 1 && days <= SUPPORT_RETENTION_MAX_DAYS)) throw new AppError(400, `days must be 1 to ${SUPPORT_RETENTION_MAX_DAYS}`);
+    const limit = days !== null ? STATS_MAX : Math.min(Math.max(parseInt(String(req.query.limit ?? '100')) || 100, 1), HISTORY_MAX);
     const queue = await queueOf(prisma, serverConfigId, sid);
-    const rows = queue ? await prisma.supportCase.findMany({ where: { queueId: queue.id, state: { notIn: OPEN } }, orderBy: { endedAt: 'desc' }, take: limit }) : [];
+    const where = { queueId: queue?.id ?? -1, state: { notIn: OPEN }, ...(days !== null ? { endedAt: { gte: new Date(Date.now() - days * 86_400_000) } } : {}) };
+    const rows = queue ? await prisma.supportCase.findMany({ where, orderBy: { endedAt: 'desc' }, take: limit }) : [];
     res.json(rows.map((r) => forViewer(req, toCaseEntry(r))));
   } catch (err) { next(err); }
 });

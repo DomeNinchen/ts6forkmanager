@@ -227,6 +227,8 @@ model SupportCase {
   roomCid        Int?
   endedAt        DateTime?
   endReason      String?
+  // What the client and the supporters were already told (stage 3), SupportNotices as JSON.
+  notices        String?
   queue          SupportQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
 
   @@index([queueId, state])

@@ -3173,6 +3173,22 @@
     "server-admin": "403",
     "moderator": "403"
   },
+  "GET /api/settings/support-queue": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "403",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
+  "PUT /api/settings/support-queue": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "403",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
   "GET /api/settings/scheduled-restart": {
     "admin": "ok",
     "viewer": "403",
