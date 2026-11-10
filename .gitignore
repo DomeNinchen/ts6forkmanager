@@ -14,3 +14,4 @@ packages/backend/data/
 .claude/
 build-and-push.ps1
 CLAUDE.md
+docker-compose.override.yml

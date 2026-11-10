@@ -1,0 +1,82 @@
+# docker-compose.override.example.yml
+#
+# Local changes WITHOUT editing docker-compose.yml or forking the repo.
+# Copy this file to docker-compose.override.yml, adjust the values, then run
+# `docker compose up -d` as usual. Compose loads docker-compose.override.yml
+# automatically, and `git pull` keeps working because that file is ignored by git.
+# Check the merged result with `docker compose config`.
+# Background and macvlan/ipvlan setup: wiki page "Deployment",
+# section "Own LAN IPs per container".
+#
+# This example gives every container its own IP in your LAN (macvlan/ipvlan,
+# e.g. Unraid's br0). Every value marked CHANGE ME is a placeholder.
+#
+# Why `!override`: without it Compose MERGES the network list with the one in
+# docker-compose.yml, and the containers would sit on ts6-network AND br0.
+# `!override` replaces the list instead. It needs Docker Compose 2.24.4 or
+# later (`docker compose version`). Once no service uses ts6-network, it does
+# not have to exist any more.
+#
+# What changes once the containers live on br0:
+# - `ports:` mappings no longer apply. The web UI is at http://<frontend IP>:8080
+#   (not :3000), and the video UDP ports 50000-50100 sit directly on the
+#   sidecar's IP (point router port forwards at the sidecar, not the host).
+# - The sidecar already offers its own br0 address to viewers, so LAN viewers
+#   need no ICE_ANNOUNCE_IPS. If you set it anyway, use the sidecar's IP.
+# - TRUST_PROXY stays 1 (the frontend's nginx is the only proxy) unless you
+#   put another reverse proxy in front; Settings -> Network shows the number.
+# - The backend (3001) and the sidecar (9800) become reachable from your whole
+#   LAN. The sidecar API has no login, and a directly reachable backend lets
+#   clients fake X-Forwarded-For. Firewall both IPs so only the frontend
+#   reaches the backend and only the backend reaches the sidecar.
+# - With macvlan, the Docker host itself cannot reach these containers by
+#   default (needs a shim interface, or use ipvlan).
+#
+# volume-init is not listed: it runs with `network_mode: none` and needs no network.
+
+services:
+  backend:
+    networks: !override
+      br0:
+        ipv4_address: 192.168.1.234    # CHANGE ME
+    # Optional: DNS server for external names (container names keep working).
+    dns:
+      - 192.168.1.1                    # CHANGE ME
+    # Optional: fixed MAC, e.g. for a DHCP reservation in your router.
+    mac_address: 02:42:c0:a8:01:ea     # CHANGE ME
+
+  sidecar:
+    networks: !override
+      br0:
+        ipv4_address: 192.168.1.232    # CHANGE ME
+    dns:                               # optional
+      - 192.168.1.1                    # CHANGE ME
+    mac_address: 02:42:c0:a8:01:e8     # optional, CHANGE ME
+    # Optional video tuning. The values below are the built-in defaults, so
+    # copying them changes nothing; adjust only what you need.
+    # Environment entries are added to the ones in docker-compose.yml.
+    environment:
+      # libvpx speed: lower = better quality per bit, more CPU.
+      - VIDEO_CPU_USED=4
+      # Encoder threads; default is all CPU cores. Lower it on a busy host.
+      # - VIDEO_ENCODE_THREADS=2
+      - VIDEO_BITRATE=1500k
+      - AUDIO_BITRATE=128k
+      # UDP range for WebRTC media. On br0 there is no port mapping, but your
+      # firewall and router forwards must match this range.
+      - ICE_UDP_PORT_MIN=50000
+      - ICE_UDP_PORT_MAX=50100
+
+  frontend:
+    networks: !override
+      br0:
+        ipv4_address: 192.168.1.233    # CHANGE ME
+    dns:                               # optional
+      - 192.168.1.1                    # CHANGE ME
+    mac_address: 02:42:c0:a8:01:e9     # optional, CHANGE ME
+
+networks:
+  # Must already exist. Unraid ships br0; elsewhere create it first with
+  # `docker network create -d macvlan ...` (see the wiki).
+  br0:
+    external: true
