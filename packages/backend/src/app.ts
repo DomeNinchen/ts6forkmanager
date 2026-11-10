@@ -17,6 +17,7 @@ import { clientRoutes } from './routes/clients.routes.js';
 import { serverGroupRoutes } from './routes/server-groups.routes.js';
 import { temporaryGroupRoutes } from './routes/temporary-groups.routes.js';
 import { supportQueueRoutes } from './routes/support-queue.routes.js';
+import { raidProtectionRoutes } from './routes/raid-protection.routes.js';
 import { channelGroupRoutes } from './routes/channel-groups.routes.js';
 import { permissionRoutes } from './routes/permissions.routes.js';
 import { banRoutes } from './routes/bans.routes.js';
@@ -200,6 +201,12 @@ export function createApp(): Express {
     { method: 'POST', path: '/cases/:id/take', permission: 'clients.move' },
     { method: 'POST', path: '/cases/:id/remove', permission: 'clients.move' },
     { method: 'POST', path: '/cases/:id/close', permission: 'clients.move' },
+  ]);
+  // Raid protection (R15): seen like kicking a client; switched on and set up by admins only.
+  serverScoped('vs/:sid/raid-protection', raidProtectionRoutes, [
+    { method: 'GET', path: '/', permission: 'clients.kick' },
+    { method: 'GET', path: '/incidents', permission: 'clients.kick' },
+    { method: 'GET', path: '/incidents/:id', permission: 'clients.kick' },
   ]);
   serverScoped('vs/:sid/channel-groups', channelGroupRoutes, [
     { method: 'GET', path: '/', permission: 'groups.members' },

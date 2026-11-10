@@ -19,7 +19,8 @@ import { getKeepPlayedSongs, setKeepPlayedSongs } from '../utils/storage-setting
 import { setPrivacyNoticeEnabled } from '../utils/privacy-notice-settings.js';
 import { getTempGroupRetentionDays, isValidTempGroupRetention, setTempGroupRetentionDays } from '../utils/temporary-groups.js';
 import { getSupportRetentionDays, isValidSupportRetention, setSupportRetentionDays } from '../utils/support-queue.js';
-import { SUPPORT_RETENTION_MAX_DAYS, SUPPORT_RETENTION_MIN_DAYS } from '@ts6/common';
+import { SUPPORT_RETENTION_MAX_DAYS, SUPPORT_RETENTION_MIN_DAYS, RAID_RETENTION_MAX_DAYS, RAID_RETENTION_MIN_DAYS } from '@ts6/common';
+import { getRaidRetentionDays, isValidRaidRetention, setRaidRetentionDays } from '../utils/raid-protection.js';
 import { TEMP_GROUP_RETENTION_MAX_DAYS, TEMP_GROUP_RETENTION_MIN_DAYS } from '@ts6/common';
 import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES, MAX_VIDEO_MAX_MINUTES, isValidMaxVideoMinutes } from '../utils/stream-defaults.js';
 import {
@@ -235,6 +236,24 @@ settingsRoutes.put('/support-queue', requireAdmin, async (req: Request, res: Res
       throw new AppError(400, `retentionDays must be a whole number from ${SUPPORT_RETENTION_MIN_DAYS} to ${SUPPORT_RETENTION_MAX_DAYS}`);
     }
     await setSupportRetentionDays(req.app.locals.prisma, retentionDays);
+    res.json({ retentionDays });
+  } catch (err) { next(err); }
+});
+
+// GET/PUT /api/settings/raid-protection — how long closed raid incidents are kept (R15, all virtual servers)
+settingsRoutes.get('/raid-protection', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    res.json({ retentionDays: await getRaidRetentionDays(req.app.locals.prisma), retentionMin: RAID_RETENTION_MIN_DAYS, retentionMax: RAID_RETENTION_MAX_DAYS });
+  } catch (err) { next(err); }
+});
+
+settingsRoutes.put('/raid-protection', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const { retentionDays } = req.body ?? {};
+    if (!isValidRaidRetention(retentionDays)) {
+      throw new AppError(400, `retentionDays must be a whole number from ${RAID_RETENTION_MIN_DAYS} to ${RAID_RETENTION_MAX_DAYS}`);
+    }
+    await setRaidRetentionDays(req.app.locals.prisma, retentionDays);
     res.json({ retentionDays });
   } catch (err) { next(err); }
 });

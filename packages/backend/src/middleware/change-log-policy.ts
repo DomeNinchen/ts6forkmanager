@@ -42,7 +42,7 @@ export const CRITICAL_AREAS: ReadonlySet<string> = new Set(['users', 'roles', 's
 export const KNOWN_AREAS: ReadonlySet<string> = new Set([
   // under /servers/:configId/vs/:sid/
   'channels', 'clients', 'server-groups', 'channel-groups', 'permissions', 'bans', 'tokens',
-  'files', 'icons', 'complaints', 'messages', 'logs', 'dashboard', 'statistics', 'temporary-groups', 'support-queue',
+  'files', 'icons', 'complaints', 'messages', 'logs', 'dashboard', 'statistics', 'temporary-groups', 'support-queue', 'raid-protection',
   // a deletion dialog's "back up now" (R9): only adds a before-bulk backup, nobody can read it there
   'bulk-backup',
   // under /servers/:configId/

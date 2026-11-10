@@ -314,6 +314,8 @@ model TsServerConfig {
   temporaryGroups TemporaryServerGroup[]
   temporaryGroupNotices TemporaryGroupNoticeSettings[]
   supportQueues SupportQueue[]
+  raidProtections RaidProtection[]
+  raidIncidents   RaidIncident[]
   botFlows      BotFlow[]
   botLogs       BotExecutionLog[]
   musicBots     MusicBot[]
@@ -851,12 +853,58 @@ model ConnectionJournalEntry {
   // "unknown" when the end was not seen, "recording-stopped" when the journal stopped
   // watching this server while the client was on it.
   leaveReason     String?
+  // The client's server groups when it joined (comma list) and when TeamSpeak created its
+  // database entry - for raid protection's exemptions and new-identity rule (R15).
+  servergroups    String?
+  clientCreated   DateTime?
 
   @@index([at])
   @@index([ip, at])
   @@index([source, at])
   @@index([source, serverConfigId, virtualServerId, leftAt])
   @@index([country])
+  @@index([serverConfigId, virtualServerId, uid])
+}
+
+// Raid protection of one virtual server (R15): off until an admin switches it on.
+model RaidProtection {
+  id             Int            @id @default(autoincrement())
+  serverConfigId Int
+  sid            Int
+  enabled        Boolean        @default(false)
+  // RaidSettings in common, as JSON.
+  settings       String
+  // The first switch-on starts the observe-only time (observeUntil).
+  firstEnabledAt DateTime?
+  observeUntil   DateTime?
+  updatedAt      DateTime       @updatedAt
+  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([serverConfigId, sid])
+}
+
+// One spike of joins that fired at least one rule; open while rules keep firing.
+model RaidIncident {
+  id             Int            @id @default(autoincrement())
+  serverConfigId Int
+  sid            Int
+  // "open" | "closed"
+  state          String         @default("open")
+  // "observe" (stage 1: nothing was done to the clients)
+  mode           String         @default("observe")
+  startedAt      DateTime
+  lastHitAt      DateTime
+  endedAt        DateTime?
+  // RaidHit[] and RaidClient[] as JSON; clientCount goes on beyond the kept clients.
+  hits           String
+  clients        String
+  clientCount    Int
+  // RaidNotice as JSON, null while none was sent.
+  notice         String?
+  serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
+
+  @@index([serverConfigId, sid, startedAt])
+  @@index([state])
 }
 
 // An address the web interface turns away: every request from it (the whole API and the
