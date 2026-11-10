@@ -1,4 +1,4 @@
-import type { CommandTriggerData, EventTriggerData } from '@ts6/common';
+import type { CommandTriggerData, EventTriggerData, SupportTriggerData } from '@ts6/common';
 
 // What a trigger node makes of an incoming event, as pure functions: the engine
 // uses them on live events, the flow test (FlowRunner.test) on sample data, so
@@ -64,4 +64,10 @@ export function webhookEventData(path: string, method: string, body: unknown, qu
     webhook_body: JSON.stringify(body || {}),
     webhook_query: JSON.stringify(rest),
   };
+}
+
+/** A support trigger bound to one queue ignores the others: the mismatch, or null when it would start the flow. */
+export function supportQueueMismatch(trigger: SupportTriggerData, data: Record<string, string>): { key: string; expected: string; actual: string | null } | null {
+  const want = String(trigger.queueId ?? '').trim();
+  return want && data.queue_id !== want ? { key: 'queue_id', expected: want, actual: data.queue_id ?? null } : null;
 }

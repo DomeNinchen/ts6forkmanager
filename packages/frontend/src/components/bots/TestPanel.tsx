@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { AlertTriangle, CheckCircle2, CircleSlash, FlaskConical, History, Plus, Trash2, X, XCircle } from 'lucide-react';
-import { TS_EVENT_FIELDS, TS_EVENTS, type FlowTestEffect, type FlowTestReport, type FlowTestStep, type TSEventFields } from '@ts6/common';
+import { SUPPORT_TRIGGER_FIELDS, TS_EVENT_FIELDS, TS_EVENTS, type FlowTestEffect, type FlowTestReport, type FlowTestStep, type TSEventFields } from '@ts6/common';
 import { botsApi } from '@/api/bots.api';
 import { badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ type Row = { key: string; value: string };
 
 /** The measured fields of the event a trigger listens to (a chat command arrives as a text message); undefined: not measured. */
 function eventFields(trigger: EditorNode): TSEventFields | undefined {
+  if (trigger.type === 'trigger_support') return { main: SUPPORT_TRIGGER_FIELDS, more: [] };
   const event = trigger.type === 'trigger_command' ? TS_EVENTS.TEXT_MESSAGE : trigger.config.eventName;
   return (TS_EVENT_FIELDS as Record<string, TSEventFields | null>)[event] ?? undefined;
 }
@@ -31,6 +32,8 @@ function defaultRows(trigger: EditorNode): Row[] {
     const cmd = String(trigger.config.command || '');
     rows.find((r) => r.key === 'msg')!.value = `${cmd.startsWith('!') ? '' : trigger.config.commandPrefix || '!'}${cmd} `;
   }
+  // A support trigger bound to one queue only starts for that queue.
+  if (trigger.type === 'trigger_support' && trigger.config.queueId) rows.find((r) => r.key === 'queue_id')!.value = String(trigger.config.queueId);
   for (const [key, value] of Object.entries(trigger.config.filters || {})) {
     const row = rows.find((r) => r.key === key);
     if (row) row.value = String(value); else rows.push({ key, value: String(value) });
@@ -38,7 +41,7 @@ function defaultRows(trigger: EditorNode): Row[] {
   return rows;
 }
 
-const TRIGGER_TYPE: Record<string, string> = { trigger_event: 'event', trigger_command: 'command', trigger_webhook: 'webhook', trigger_cron: 'cron' };
+const TRIGGER_TYPE: Record<string, string> = { trigger_event: 'event', trigger_command: 'command', trigger_webhook: 'webhook', trigger_cron: 'cron', trigger_support: 'support' };
 
 /** The webhook secret, if a stored run still has it in its query, is never shown. */
 function withoutSecret(queryJson: string): string {
@@ -244,7 +247,7 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
 
                 {type === 'cron' && <p className="text-muted-foreground">{t('pages.botEditor.test.cronNoData')}</p>}
 
-                {(type === 'event' || type === 'command') && (
+                {(type === 'event' || type === 'command' || type === 'support') && (
                   <div className="space-y-1">
                     {rows.map((row, i) => (
                       <div key={i} className="flex items-center gap-1">

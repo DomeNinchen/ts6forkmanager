@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useBot, useUpdateBot } from '@/hooks/use-bots';
 import { useServers, serverCapabilities } from '@/hooks/use-servers';
+import { SupportQueuePicker } from '@/components/bots/SupportQueuePicker';
+import { SUPPORT_TRIGGER_FIELDS } from '@ts6/common';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +18,7 @@ import {
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
   Moon, Timer, Megaphone, Award, Shield, Maximize2,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
-  BookOpen, Info, SlidersHorizontal, History, FlaskConical, X,
+  BookOpen, Info, SlidersHorizontal, History, FlaskConical, X, Headset,
 } from 'lucide-react';
 import { ExecutionsPanel } from '@/components/bots/ExecutionsPanel';
 import { TestPanel, stepProblem } from '@/components/bots/TestPanel';
@@ -51,6 +53,7 @@ function getTriggerNodes(t: TFunction): NodeTypeDef[] {
     { type: 'trigger_cron', label: l('trigger_cron'), icon: Clock, color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', handles: { inputs: [], outputs: ['out'] } },
     { type: 'trigger_webhook', label: l('trigger_webhook'), icon: Webhook, color: 'bg-violet-500/20 text-violet-400 border-violet-500/30', handles: { inputs: [], outputs: ['out'] } },
     { type: 'trigger_command', label: l('trigger_command'), icon: Terminal, color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', handles: { inputs: [], outputs: ['out'] } },
+    { type: 'trigger_support', label: l('trigger_support'), icon: Headset, color: 'bg-rose-500/20 text-rose-400 border-rose-500/30', handles: { inputs: [], outputs: ['out'] } },
   ];
 }
 
@@ -96,6 +99,7 @@ function getSmartActionNodes(t: TFunction): NodeTypeDef[] {
     { type: 'action_pokeGroup', label: l('action_pokeGroup'), icon: Megaphone, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
     { type: 'action_rankCheck', label: l('action_rankCheck'), icon: Award, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
     { type: 'action_tempChannelCleanup', label: l('action_tempChannelCleanup'), icon: Trash2, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
+    { type: 'action_supportEnqueue', label: l('action_supportEnqueue'), icon: Headset, color: 'bg-rose-500/20 text-rose-400 border-rose-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
     { type: 'action_animatedChannel', label: l('action_animatedChannel'), icon: Sparkles, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: [], outputs: [] } },
   ];
 }
@@ -1578,6 +1582,16 @@ export default function BotEditor() {
                     </>
                   )}
 
+                  {selectedNodeData.type === 'trigger_support' && (
+                    <div className="space-y-2">
+                      <SupportQueuePicker id="cfg-support-trigger-queue" allowAny configId={bot?.serverConfigId} sid={bot?.virtualServerId}
+                        value={String(selectedNodeData.config.queueId ?? '')}
+                        onChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, queueId: v } } : n))} />
+                      <p className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.support.triggerHint')}</p>
+                      <p className="break-words font-mono-data text-[10px] text-muted-foreground">{SUPPORT_TRIGGER_FIELDS.map((f) => `{{event.${f}}}`).join(' ')}</p>
+                    </div>
+                  )}
+
                   {selectedNodeData.type === 'trigger_command' && (
                   <div className="space-y-2">
                       <div>
@@ -2389,6 +2403,15 @@ export default function BotEditor() {
                           {t('pages.botEditor.config.shared.useAsHintPrefix')} {'{{temp.'}{(selectedNodeData.config.storeAs || 'teamOnline')}{'}}'}
                         </p>
                       </div>
+                    </div>
+                  )}
+
+                  {selectedNodeData.type === 'action_supportEnqueue' && (
+                    <div className="space-y-2">
+                      <SupportQueuePicker id="cfg-support-enqueue-queue" configId={bot?.serverConfigId} sid={bot?.virtualServerId}
+                        value={String(selectedNodeData.config.queueId ?? '')}
+                        onChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, queueId: v } } : n))} />
+                      <p className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.support.enqueueHint')}</p>
                     </div>
                   )}
 

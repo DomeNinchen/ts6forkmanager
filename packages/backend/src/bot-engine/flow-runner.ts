@@ -11,7 +11,7 @@ import type {
   GroupAddClientActionData, GroupRemoveClientActionData,
   WebQueryActionData, WebhookActionData, HttpRequestActionData,
   AfkMoverActionData, IdleKickerActionData, PokeGroupActionData, RankCheckActionData, TempChannelCleanupActionData,
-  CountOnlineInGroupsActionData, ListMembershipActionData,
+  CountOnlineInGroupsActionData, ListMembershipActionData, SupportEnqueueActionData,
   ConditionNodeData, DelayNodeData, VariableNodeData, LogNodeData, LoopNodeData,
 } from '@ts6/common';
 import axios from 'axios';
@@ -27,6 +27,7 @@ import {
 import { FlowTestTrace, FlowTestReadLimit, maskHeaders } from './flow-test-trace.js';
 import { maskSecrets } from '../utils/mask-secrets.js';
 import { acquireChannelCreateLock, clientMoveTolerating770 } from '../utils/channel-create-lock.js';
+import { isAvailableSupporter, isSupporter, parseClientList, parseSettings as parseSupportSettings } from '../utils/support-queue.js';
 
 // Raised from 100 to give Loop nodes real headroom - a loop at its default
 // iteration cap with even a small body (see MAX_LOOP_ITERATIONS_DEFAULT
@@ -590,6 +591,7 @@ export class FlowRunner {
         case 'countOnlineInGroups': await this.executeCountOnlineInGroups(data as CountOnlineInGroupsActionData, ctx, client); break;
         case 'listMembership': await this.executeListMembership(data as ListMembershipActionData, ctx); break;
         case 'voiceTts': await this.executeVoiceTts(data, ctx); break;
+        case 'supportEnqueue': await this.executeSupportEnqueue(data as SupportEnqueueActionData, ctx, client); break;
         case 'animatedChannel':
           // Animation lifecycle managed by BotEngine (not per-execution)
           await this.log(ctx, node, 'info', 'Animation managed by engine');
@@ -631,6 +633,32 @@ export class FlowRunner {
     await client.executePost(ctx.sid, 'clientmove', { clid, cid });
     // Someone is in a channel this execution created: the query client can leave it now.
     if (ctx.createdChannels.some((c) => c.cid === String(cid))) await this.leaveCreatedChannels(ctx, client);
+  }
+
+  /**
+   * Moves the triggering client into the queue's waiting channel; the queue job queues them on its next
+   * look, the same way as someone who walks in (his decision). Skipped with a warning, the flow going on,
+   * when that would not queue them: no such queue on this virtual server, switched off, the client is a
+   * supporter of it, or nobody may queue while no supporter is available.
+   */
+  private async executeSupportEnqueue(data: SupportEnqueueActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {
+    const skip = (why: string) => this.log(ctx, null, 'warn', `Not queued: ${why}`);
+    const queueId = parseInt(await ctx.resolveTemplate(String(data.queueId ?? '')), 10);
+    const queue = Number.isInteger(queueId)
+      ? await this.prisma.supportQueue.findFirst({ where: { id: queueId, serverConfigId: ctx.configId, sid: ctx.sid } })
+      : null;
+    if (!queue) return skip(`no support queue ${data.queueId || '(none chosen)'} on this virtual server`);
+    if (!queue.enabled) return skip(`support queue #${queue.id} is switched off`);
+    const settings = parseSupportSettings(queue.settings);
+    const clients = parseClientList(await client.execute(ctx.sid, 'clientlist', { '-uid': '', '-away': '', '-groups': '' }));
+    const me = clients.find((c) => String(c.clid) === String(ctx.eventData.clid));
+    if (!me) return skip(`client ${ctx.eventData.clid || '(no event.clid)'} is not online`);
+    if (isSupporter(me, settings)) return skip(`${me.nickname} is a supporter of "${settings.name}"`);
+    if (me.cid === queue.channelId) return void (await this.log(ctx, null, 'info', `${me.nickname} is already in the waiting channel of "${settings.name}"`));
+    if (!settings.queueWithoutSupporter && !clients.some((c) => isAvailableSupporter(c, settings))) {
+      return skip(`no supporter of "${settings.name}" is available and the queue takes nobody then`);
+    }
+    await clientMoveTolerating770(client, ctx.sid, String(me.clid), String(queue.channelId));
   }
 
   private async executeMessage(data: MessageActionData, ctx: ExecutionContext, client: FlowQueryClient): Promise<void> {

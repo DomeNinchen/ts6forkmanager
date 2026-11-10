@@ -293,3 +293,9 @@ export function supportRoomName(template: string, client: string, supporter: str
   const name = template.replace(/\{client\}/g, client).replace(/\{supporter\}/g, supporter);
   return [...name].slice(0, SUPPORT_ROOM_NAME_MAX).join('');
 }
+
+/** The event data of the "support case taken" flow trigger, all strings like every flow event. */
+export const SUPPORT_TRIGGER_FIELDS = [
+  'case_id', 'queue_id', 'queue_name', 'clid', 'client_nickname', 'client_unique_identifier', 'client_database_id',
+  'supporter_nicknames', 'supporter_uids', 'taken_via', 'wait_seconds', 'vip',
+] as const;

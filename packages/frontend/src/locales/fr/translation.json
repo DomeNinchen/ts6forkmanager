@@ -2131,6 +2131,7 @@
         "trigger_cron": "Timer Cron",
         "trigger_webhook": "Webhook",
         "trigger_command": "Commande de chat",
+        "trigger_support": "Cas de support pris en charge",
         "action_message": "Envoyer un message",
         "action_poke": "Poke le client",
         "action_kick": "Kick le client",
@@ -2158,6 +2159,7 @@
         "action_pokeGroup": "Poke un groupe",
         "action_rankCheck": "Vérification de rang",
         "action_tempChannelCleanup": "Nettoyage temporaire",
+        "action_supportEnqueue": "Mettre en file d'attente du support",
         "action_animatedChannel": "Salon animé",
         "condition": "Condition",
         "loop": "Boucle",
@@ -2221,6 +2223,14 @@
       "connections": "CONNEXIONS",
       "noConnections": "Aucune connexion",
       "config": {
+        "support": {
+          "queueLabel": "File d'attente du support",
+          "chooseQueue": "Choisir une file",
+          "anyQueue": "Toutes les files de ce serveur virtuel",
+          "noQueue": "Ce serveur virtuel n'a pas encore de file d'attente du support (page File de support).",
+          "triggerHint": "Démarre quand un agent prend en charge un client en attente, dans TeamSpeak ou avec Prendre en charge dans l'interface web. Sans SSH. L'événement contient :",
+          "enqueueHint": "Déplace le client déclencheur (event.clid) dans le salon d'attente de la file ; la file l'inscrit en quelques secondes, comme toute personne qui y entre. Ignoré avec un avertissement dans le journal si la file est désactivée, si le client est l'un de ses agents ou si personne n'est inscrit tant qu'aucun agent n'est disponible."
+        },
         "shared": {
           "commandLabel": "Commande",
           "channelIdLabel": "ID du salon",

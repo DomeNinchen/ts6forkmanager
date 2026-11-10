@@ -29,7 +29,8 @@ export type TriggerNodeData =
   | EventTriggerData
   | CronTriggerData
   | WebhookTriggerData
-  | CommandTriggerData;
+  | CommandTriggerData
+  | SupportTriggerData;
 
 export interface EventTriggerData {
   triggerType: 'event';
@@ -51,6 +52,17 @@ export interface WebhookTriggerData {
   webhookPath: string;
   method: 'GET' | 'POST';
   secret?: string;
+}
+
+/**
+ * A support queue event (R14 stage 4): no SSH needed, the queue job and the web take fire it.
+ * queueId empty = every queue of the flow's virtual server. The event data is SUPPORT_TRIGGER_FIELDS.
+ */
+export interface SupportTriggerData {
+  triggerType: 'support';
+  label: string;
+  supportEvent: 'taken';
+  queueId?: string;
 }
 
 export interface CommandTriggerData {
@@ -85,7 +97,8 @@ export type ActionNodeData =
   | AnimatedChannelActionData
   | GenerateCodeActionData
   | CountOnlineInGroupsActionData
-  | ListMembershipActionData;
+  | ListMembershipActionData
+  | SupportEnqueueActionData;
 
 export interface KickActionData {
   actionType: 'kick';
@@ -250,6 +263,13 @@ export interface CountOnlineInGroupsActionData {
   excludeChannelIds?: string;
   /** Temp variable name to store the resulting count under (as a number, referenced via {{temp.<storeAs>}}). */
   storeAs: string;
+}
+
+/** Moves the triggering client (event.clid) into a support queue's waiting channel; the queue job then queues them. */
+export interface SupportEnqueueActionData {
+  actionType: 'supportEnqueue';
+  label: string;
+  queueId: string;
 }
 
 export interface ListMembershipActionData {
