@@ -108,6 +108,8 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 - **Behind a reverse proxy, set `TRUST_PROXY`** to the number of proxies in front of the backend: `1` (default) for the frontend container alone, `2` with a host nginx or Coolify in front. **Settings → Network** shows the right value. A wrong value makes rate limits, the Connection Journal, the Change Log and IP bans see the wrong address. See [Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment) and, if you ever ban yourself, [Troubleshooting](https://github.com/DomeNinchen/ts6forkmanager/wiki/Troubleshooting#an-ip-ban-locked-me-out-or-does-not-catch-the-visitor).
 - **The containers run without root.** The frontend's nginx listens on port `8080` inside its container. The `volume-init` service fixes the volume ownership on every start and then exits, so `Exited (0)` for it is normal. Bind mounts need a one-time `chown -R 1000:1000`. See [Running unprivileged](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment#running-unprivileged).
 
+- **Local changes to the stack go into `docker-compose.override.yml`**, never into `docker-compose.yml`: Compose loads the override automatically and `git pull` keeps working. `docker-compose.override.example.yml` shows one, giving each container its own LAN IP (macvlan, Unraid `br0`). See [Own LAN IPs per container](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment#own-lan-ips-per-container).
+
 [Configuration](https://github.com/DomeNinchen/ts6forkmanager/wiki/Configuration) lists every environment variable.
 
 ## Features
