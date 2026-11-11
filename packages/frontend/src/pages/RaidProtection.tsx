@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import type { TFunction } from 'i18next';
-import { RAID_NOTICE_NOTES, type RaidHit, type RaidIncidentEntry, type RaidProtectionStatus } from '@ts6/common';
-import { AlertTriangle, ChevronDown, ChevronRight, Eye, PauseCircle, Settings2, ShieldAlert } from 'lucide-react';
+import { RAID_NOTICE_NOTES, type RaidHit, type RaidIncidentEntry, type RaidOutcomeState, type RaidProtectionStatus } from '@ts6/common';
+import { AlertTriangle, ChevronDown, ChevronRight, Eye, OctagonX, PauseCircle, Settings2, ShieldAlert, Zap } from 'lucide-react';
 import { raidProtectionApi } from '@/api/raid-protection.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 // The backend judges joins as they come; the page looks every 5 s (incidents every 10 s).
 const REFRESH_MS = 5000;
@@ -44,6 +46,20 @@ export default function RaidProtection() {
     qc.invalidateQueries({ queryKey: ['raid-protection', c, s] });
     qc.invalidateQueries({ queryKey: ['raid-incidents', c, s] });
   };
+  const canStop = useAuthStore((st) => st.can('clients.kick'));
+  // 'act' | 'act-early' (observe time still running: the warning dialog) | 'stop'
+  const [confirm, setConfirm] = useState<'act' | 'act-early' | 'stop' | null>(null);
+  const onError = (err: unknown) => toast.error(tsErrorMessage(err, t('components.bulkResult.unknownError'), t));
+  const setActing = useMutation({
+    mutationFn: (body: { acting: boolean; confirmObserve?: boolean }) => raidProtectionApi.setActing(c!, s!, body),
+    onSuccess: (_v, body) => { toast.success(t(body.acting ? 'pages.raid.toasts.actOn' : 'pages.raid.toasts.actOff')); setConfirm(null); refresh(); },
+    onError,
+  });
+  const stop = useMutation({
+    mutationFn: () => raidProtectionApi.stop(c!, s!),
+    onSuccess: () => { toast.success(t('pages.raid.toasts.stopped')); setConfirm(null); refresh(); },
+    onError,
+  });
 
   if (!c || !s) return <EmptyState icon={ShieldAlert} title={t('pages.noServerSelected')} />;
   if (viewQ.isLoading) return <PageLoader />;
@@ -58,6 +74,9 @@ export default function RaidProtection() {
   const { config, status } = viewQ.data;
   const incidents = incidentsQ.data ?? [];
   const observing = config.observeUntil !== null && new Date(config.observeUntil).getTime() > Date.now();
+  // What really happens: switched to acting and not overruled by RAID_ACTIONS_DISABLED.
+  const acting = config.acting && !status.actionsDisabled;
+  const busy = setActing.isPending || stop.isPending;
 
   return (
     <div className="space-y-5">
@@ -80,9 +99,43 @@ export default function RaidProtection() {
           <CardContent className="space-y-3 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={DETECTION_VARIANT[status.detection]}>{t(`pages.raid.detection.${status.detection}`)}</Badge>
-              <Badge variant="outline" className="gap-1"><Eye className="h-3.5 w-3.5" aria-hidden />{t('pages.raid.observeOnly')}</Badge>
+              {acting
+                ? <Badge variant="destructive" className="gap-1"><Zap className="h-3.5 w-3.5" aria-hidden />{t('pages.raid.acting')}</Badge>
+                : <Badge variant="outline" className="gap-1"><Eye className="h-3.5 w-3.5" aria-hidden />{t('pages.raid.observeOnly')}</Badge>}
               {status.openIncidentId !== null && <Badge variant="destructive">{t('pages.raid.openIncident', { id: status.openIncidentId })}</Badge>}
             </div>
+            <div className="flex flex-wrap gap-2">
+              {canStop && acting && (
+                <Button variant="destructive" size="sm" onClick={() => setConfirm('stop')} disabled={busy}>
+                  <OctagonX className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.raid.stop.button')}
+                </Button>
+              )}
+              {isAdmin && !config.acting && !status.actionsDisabled && (
+                <Button variant="outline" size="sm" onClick={() => setConfirm(observing ? 'act-early' : 'act')} disabled={busy}>
+                  <Zap className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.raid.actOn')}
+                </Button>
+              )}
+              {isAdmin && config.acting && (
+                <Button variant="outline" size="sm" onClick={() => setActing.mutate({ acting: false })} disabled={busy}>
+                  <Eye className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.raid.actOff')}
+                </Button>
+              )}
+            </div>
+            {status.actionsDisabled && (
+              <div role="status" className="flex gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />
+                <p>{t('pages.raid.actionsDisabled')}</p>
+              </div>
+            )}
+            {status.actionError && (
+              <div role="alert" className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
+                <p>{t('pages.raid.actionError', { action: t(`pages.raid.actions.${status.actionError.action}`), note: status.actionError.note, time: formatTempDate(status.actionError.at) })}</p>
+              </div>
+            )}
+            {config.stoppedAt && !config.acting && (
+              <p className="text-muted-foreground">{t('pages.raid.stop.last', { time: formatTempDate(config.stoppedAt), user: config.stoppedBy ?? '' })}</p>
+            )}
             <p className="text-muted-foreground">{t(`pages.raid.detectionHint.${status.detection}`)}</p>
             {status.detection === 'journal-off' && (
               <div role="alert" className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3">
@@ -97,7 +150,7 @@ export default function RaidProtection() {
               </div>
             )}
             <p className="text-muted-foreground">
-              {observing ? t('pages.raid.observeUntil', { date: formatTempDate(config.observeUntil!) }) : t('pages.raid.stageNote')}
+              {acting ? t('pages.raid.actingNote') : observing ? t('pages.raid.observeUntil', { date: formatTempDate(config.observeUntil!) }) : t('pages.raid.stageNote')}
             </p>
           </CardContent>
         </Card>
@@ -120,8 +173,40 @@ export default function RaidProtection() {
       </Card>
 
       {isAdmin && settingsOpen && <RaidSettingsDialog config={config} onClose={() => setSettingsOpen(false)} onSaved={refresh} />}
+      <ConfirmDialog
+        open={confirm !== null}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title={t(confirm === 'stop' ? 'pages.raid.stop.title' : 'pages.raid.actConfirm.title')}
+        description={
+          confirm === 'stop' ? t('pages.raid.stop.description')
+            : confirm === 'act-early' ? t('pages.raid.actConfirm.early', { date: config.observeUntil ? formatTempDate(config.observeUntil) : '' })
+              : t('pages.raid.actConfirm.description')
+        }
+        confirmLabel={t(confirm === 'stop' ? 'pages.raid.stop.button' : 'pages.raid.actOn')}
+        destructive
+        loading={busy}
+        onConfirm={() => (confirm === 'stop' ? stop.mutate() : setActing.mutate({ acting: true, confirmObserve: confirm === 'act-early' }))}
+      />
     </div>
   );
+}
+
+const OUTCOME_VARIANT: Record<RaidOutcomeState, 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+  pending: 'warning',
+  running: 'warning',
+  done: 'success',
+  failed: 'destructive',
+  gone: 'secondary',
+  skipped: 'outline',
+  stopped: 'secondary',
+};
+
+/** "Would have: 12 kicked, 3 warned" for an observing incident; null when nothing would have happened. */
+function plannedText(i: RaidIncidentEntry, t: TFunction): string | null {
+  const counts = new Map<string, number>();
+  for (const c of i.clients) if (c.action && c.action !== 'none') counts.set(c.action, (counts.get(c.action) ?? 0) + 1);
+  if (!counts.size) return null;
+  return t('pages.raid.wouldHave', { list: [...counts].map(([a, n]) => `${n} × ${t(`pages.raid.actions.${a}`)}`).join(', ') });
 }
 
 function IncidentRow({ incident: i }: { incident: RaidIncidentEntry }) {
@@ -129,6 +214,8 @@ function IncidentRow({ incident: i }: { incident: RaidIncidentEntry }) {
   const [open, setOpen] = useState(false);
   const panelId = `raid-incident-${i.id}`;
   const showIp = i.clients.some((c) => c.ip !== null);
+  // Incidents from before stage 3 carry no levels.
+  const withActions = i.clients.some((c) => c.action !== undefined);
   return (
     <li className="py-2">
       <button
@@ -150,8 +237,10 @@ function IncidentRow({ incident: i }: { incident: RaidIncidentEntry }) {
           <p className="text-muted-foreground">
             {t('pages.raid.lastHit', { time: formatTempDate(i.lastHitAt) })}
             {i.endedAt && ` · ${t('pages.raid.ended', { time: formatTempDate(i.endedAt) })}`}
-            {' · '}{t('pages.raid.nothingDone')}
+            {i.mode === 'observe' && <>{' · '}{t('pages.raid.nothingDone')}</>}
           </p>
+          {/* The dry run of the observe mode: what acting would have done to these clients (R9 style preview). */}
+          {i.mode === 'observe' && plannedText(i, t) && <p className="text-muted-foreground">{plannedText(i, t)}</p>}
           <p className="text-muted-foreground">{noticeText(i, t)}</p>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[28rem] text-sm">
@@ -163,6 +252,7 @@ function IncidentRow({ incident: i }: { incident: RaidIncidentEntry }) {
                   {showIp && <th className="pl-2 font-normal">{t('pages.raid.columns.ip')}</th>}
                   <th className="pl-2 font-normal">{t('pages.raid.columns.country')}</th>
                   <th className="pl-2 font-normal">{t('pages.raid.columns.identity')}</th>
+                  {withActions && <th className="pl-2 font-normal">{t(i.mode === 'act' ? 'pages.raid.columns.action' : 'pages.raid.columns.wouldAction')}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -173,6 +263,17 @@ function IncidentRow({ incident: i }: { incident: RaidIncidentEntry }) {
                     {showIp && <td className="pl-2 tabular-nums">{cl.ip ?? '–'}</td>}
                     <td className="pl-2">{cl.country || '–'}</td>
                     <td className="pl-2">{cl.isNew ? t('pages.raid.newIdentity') : t('pages.raid.seenBefore')}</td>
+                    {withActions && (
+                      <td className="pl-2">
+                        {t(`pages.raid.actions.${cl.action ?? 'none'}`)}
+                        {cl.outcome && (
+                          <Badge variant={OUTCOME_VARIANT[cl.outcome.state]} className="ml-1.5" title={cl.outcome.note ?? undefined}>
+                            {t(`pages.raid.outcomes.${cl.outcome.state}`)}
+                          </Badge>
+                        )}
+                        {cl.outcome?.note && <span className="ml-1.5 text-xs text-muted-foreground">{cl.outcome.note}</span>}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

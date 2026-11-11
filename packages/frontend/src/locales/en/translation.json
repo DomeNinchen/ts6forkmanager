@@ -2596,11 +2596,50 @@
       }
     },
     "raid": {
+      "acting": "Acting",
+      "actOn": "Act on raids",
+      "actOff": "Only observe",
+      "actingNote": "Raid protection acts: clients who join during a spike get the action of the rules that caught them. Members, exempt groups, supporters, bots and clients connected before never do.",
+      "actionsDisabled": "RAID_ACTIONS_DISABLED is set on the server: nothing is done to any client, whatever the settings say.",
+      "actionError": "TeamSpeak refused the last action \"{{action}}\" ({{time}}): {{note}}. Give the identity the manager acts with the missing permission.",
+      "wouldHave": "Acting would have done: {{list}}",
+      "actions": {
+        "none": "Only record",
+        "warn": "Warn",
+        "restrict": "Restrict",
+        "kick": "Kick",
+        "ban": "Ban"
+      },
+      "outcomes": {
+        "pending": "waiting",
+        "running": "running",
+        "done": "done",
+        "failed": "failed",
+        "gone": "left before",
+        "skipped": "skipped",
+        "stopped": "stopped"
+      },
+      "stop": {
+        "button": "Emergency stop",
+        "title": "Stop all actions?",
+        "description": "Raid protection goes back to observing at once; actions that still wait are not done. Restrictions and bans already given stay until they run out.",
+        "last": "Last emergency stop {{time}} by {{user}}."
+      },
+      "actConfirm": {
+        "title": "Switch to acting?",
+        "description": "From now on clients who join during a spike get the actions set per rule under Settings.",
+        "early": "The observe-only time runs until {{date}}. Switch to acting anyway? The incidents of the observe time show what would have happened."
+      },
+      "toasts": {
+        "actOn": "Raid protection acts now",
+        "actOff": "Raid protection only observes now",
+        "stopped": "Emergency stop: raid protection only observes"
+      },
       "loadError": "Raid protection could not be loaded",
       "retry": "Try again",
       "off": "Raid protection is off",
       "offHint": "An admin can switch it on for this virtual server.",
-      "offHintAdmin": "Switch it on under Settings. It starts by only watching: it records incidents and tells your admins, it does nothing to any client.",
+      "offHintAdmin": "Switch it on under Settings. It starts by only watching: it records incidents and tells your admins; it acts only once an admin switches it to acting.",
       "statusTitle": "Status",
       "observeOnly": "Observing only",
       "openIncident": "Incident #{{id}} running",
@@ -2621,8 +2660,8 @@
         "server-start": "Paused until {{time}}: the TeamSpeak server started a short while ago, and everyone reconnecting is not a raid.",
         "watching-again": "Paused until {{time}}: the manager can see this server again after a restart or an outage, and everyone it missed arrives at once."
       },
-      "observeUntil": "Observe-only time until {{date}}. Raid protection only records and notifies; it never acts on a client in this version.",
-      "stageNote": "Raid protection only records and notifies; it never acts on a client in this version.",
+      "observeUntil": "Observe-only time until {{date}}: the incidents show what acting would have done.",
+      "stageNote": "Raid protection only records and notifies. An admin can switch it to acting.",
       "incidentsTitle": "Incidents",
       "noIncidents": "No incidents yet.",
       "states": {
@@ -2643,6 +2682,8 @@
       "nothingDone": "nothing was done to these clients",
       "clientsCaption": "Clients of incident #{{id}}",
       "columns": {
+        "action": "Action",
+        "wouldAction": "Would be",
         "nickname": "Nickname",
         "joined": "Joined",
         "ip": "Address",
@@ -2687,6 +2728,24 @@
         "message": "Private message"
       },
       "settings": {
+        "action": "Action",
+        "actionsTitle": "Actions",
+        "actionsHint": "Only while switched to acting. A client caught by several rules gets the highest level: only record < warn < restrict < kick < ban.",
+        "warnText": "Warning (private message)",
+        "restrictGroup": "Restricting server group",
+        "chooseGroup": "Choose a group",
+        "restrictGroupHint": "Prepare a group with few rights (for example no talking, no channel creating). It is taken away again automatically, like a temporary group.",
+        "restrictMinutes": "Restrict for minutes",
+        "kickReason": "Kick reason",
+        "kickReasonHint": "At most {{max}} characters (TeamSpeak). {server} is filled in.",
+        "banMinutes": "Ban for minutes",
+        "banMinutesHint": "A short ban on the identity, 10 to 60 minutes.",
+        "banReason": "Ban reason",
+        "banIp": "Also ban the address",
+        "banIpHint": "Off by default.",
+        "banIpWarning": "An address ban hits everyone behind the same address: mobile networks, offices, student halls and providers with CGNAT share one address among many people. Only use it if you know your users.",
+        "maxActionsPerMin": "At most actions per minute",
+        "maxActionsPerMinHint": "The rest waits for the next minute (TeamSpeak's flood protection).",
         "open": "Settings",
         "title": "Raid protection",
         "description": "For this virtual server. Changes take effect at once.",

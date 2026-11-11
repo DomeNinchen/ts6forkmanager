@@ -2596,11 +2596,50 @@
       }
     },
     "raid": {
+      "acting": "Greift ein",
+      "actOn": "Eingreifen einschalten",
+      "actOff": "Nur beobachten",
+      "actingNote": "Der Raid-Schutz greift ein: Clients, die während einer Spitze beitreten, bekommen den Eingriff der Regeln, die sie erfasst haben. Mitglieder, ausgenommene Gruppen, Supporter, Bots und vorher verbundene Clients nie.",
+      "actionsDisabled": "Auf dem Server ist RAID_ACTIONS_DISABLED gesetzt: Mit keinem Client wird etwas gemacht, egal was eingestellt ist.",
+      "actionError": "TeamSpeak hat den letzten Eingriff „{{action}}“ abgelehnt ({{time}}): {{note}}. Gib der Identität, mit der der Manager handelt, das fehlende Recht.",
+      "wouldHave": "Eingreifen hätte gemacht: {{list}}",
+      "actions": {
+        "none": "Nur festhalten",
+        "warn": "Warnen",
+        "restrict": "Einschränken",
+        "kick": "Kicken",
+        "ban": "Bannen"
+      },
+      "outcomes": {
+        "pending": "wartet",
+        "running": "läuft",
+        "done": "erledigt",
+        "failed": "fehlgeschlagen",
+        "gone": "vorher weg",
+        "skipped": "ausgelassen",
+        "stopped": "gestoppt"
+      },
+      "stop": {
+        "button": "Notaus",
+        "title": "Alle Eingriffe stoppen?",
+        "description": "Der Raid-Schutz beobachtet sofort wieder nur; Eingriffe, die noch warten, werden nicht gemacht. Schon vergebene Einschränkungen und Banns bleiben, bis sie ablaufen.",
+        "last": "Letzter Notaus {{time}} durch {{user}}."
+      },
+      "actConfirm": {
+        "title": "Auf Eingreifen umschalten?",
+        "description": "Ab jetzt bekommen Clients, die während einer Spitze beitreten, die je Regel eingestellten Eingriffe.",
+        "early": "Die Beobachtungszeit läuft noch bis {{date}}. Trotzdem auf Eingreifen umschalten? Die Vorfälle der Beobachtungszeit zeigen, was passiert wäre."
+      },
+      "toasts": {
+        "actOn": "Der Raid-Schutz greift jetzt ein",
+        "actOff": "Der Raid-Schutz beobachtet jetzt nur",
+        "stopped": "Notaus: Der Raid-Schutz beobachtet nur noch"
+      },
       "loadError": "Raid-Schutz konnte nicht geladen werden",
       "retry": "Erneut versuchen",
       "off": "Raid-Schutz ist aus",
       "offHint": "Ein Admin kann ihn für diesen virtuellen Server einschalten.",
-      "offHintAdmin": "Unter Einstellungen einschalten. Zuerst beobachtet er nur: Er hält Vorfälle fest und benachrichtigt deine Admins, mit Clients macht er nichts.",
+      "offHintAdmin": "Unter Einstellungen einschalten. Zuerst beobachtet er nur: Er hält Vorfälle fest und benachrichtigt deine Admins; eingreifen tut er erst, wenn ein Admin darauf umschaltet.",
       "statusTitle": "Status",
       "observeOnly": "Nur beobachten",
       "openIncident": "Vorfall #{{id}} läuft",
@@ -2621,8 +2660,8 @@
         "server-start": "Pausiert bis {{time}}: Der TeamSpeak-Server ist erst vor Kurzem gestartet, und alle, die neu verbinden, sind kein Raid.",
         "watching-again": "Pausiert bis {{time}}: Der Manager sieht diesen Server nach einem Neustart oder Ausfall wieder, und alles Verpasste kommt auf einmal an."
       },
-      "observeUntil": "Beobachtungszeit bis {{date}}. Der Raid-Schutz hält nur fest und benachrichtigt; in dieser Version macht er mit keinem Client etwas.",
-      "stageNote": "Der Raid-Schutz hält nur fest und benachrichtigt; in dieser Version macht er mit keinem Client etwas.",
+      "observeUntil": "Beobachtungszeit bis {{date}}: Die Vorfälle zeigen, was Eingreifen getan hätte.",
+      "stageNote": "Der Raid-Schutz hält nur fest und benachrichtigt. Ein Admin kann auf Eingreifen umschalten.",
       "incidentsTitle": "Vorfälle",
       "noIncidents": "Noch keine Vorfälle.",
       "states": {
@@ -2643,6 +2682,8 @@
       "nothingDone": "mit diesen Clients wurde nichts gemacht",
       "clientsCaption": "Clients von Vorfall #{{id}}",
       "columns": {
+        "action": "Eingriff",
+        "wouldAction": "Wäre",
         "nickname": "Nickname",
         "joined": "Beigetreten",
         "ip": "Adresse",
@@ -2687,6 +2728,24 @@
         "message": "Privatnachricht"
       },
       "settings": {
+        "action": "Eingriff",
+        "actionsTitle": "Eingriffe",
+        "actionsHint": "Nur, solange auf Eingreifen umgeschaltet ist. Erfassen mehrere Regeln einen Client, gilt die höchste Stufe: nur festhalten < warnen < einschränken < kicken < bannen.",
+        "warnText": "Warnung (Privatnachricht)",
+        "restrictGroup": "Einschränkende Servergruppe",
+        "chooseGroup": "Gruppe wählen",
+        "restrictGroupHint": "Lege eine Gruppe mit wenigen Rechten an (z. B. nicht sprechen, keine Channels anlegen). Sie wird automatisch wieder entzogen, wie eine befristete Gruppe.",
+        "restrictMinutes": "Einschränken für Minuten",
+        "kickReason": "Kick-Grund",
+        "kickReasonHint": "Höchstens {{max}} Zeichen (TeamSpeak). {server} wird ersetzt.",
+        "banMinutes": "Bannen für Minuten",
+        "banMinutesHint": "Ein kurzer Bann auf die Identität, 10 bis 60 Minuten.",
+        "banReason": "Bann-Grund",
+        "banIp": "Auch die Adresse bannen",
+        "banIpHint": "Standardmäßig aus.",
+        "banIpWarning": "Ein Adress-Bann trifft alle hinter derselben Adresse: Mobilfunk, Büros, Wohnheime und Anbieter mit CGNAT teilen sich eine Adresse unter vielen Menschen. Nur nutzen, wenn du deine Nutzer kennst.",
+        "maxActionsPerMin": "Höchstens Eingriffe pro Minute",
+        "maxActionsPerMinHint": "Der Rest wartet auf die nächste Minute (Flood-Schutz von TeamSpeak).",
         "open": "Einstellungen",
         "title": "Raid-Schutz",
         "description": "Für diesen virtuellen Server. Änderungen gelten sofort.",

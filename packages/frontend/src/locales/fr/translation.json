@@ -1530,11 +1530,50 @@
       }
     },
     "raid": {
+      "acting": "Intervient",
+      "actOn": "Intervenir",
+      "actOff": "Observer seulement",
+      "actingNote": "La protection anti-raid intervient : les clients qui arrivent pendant un pic reçoivent l'action des règles qui les ont repérés. Jamais les membres, groupes exemptés, supporters, bots ni les clients déjà connectés.",
+      "actionsDisabled": "RAID_ACTIONS_DISABLED est défini sur le serveur : aucune action n'est menée sur un client, quels que soient les paramètres.",
+      "actionError": "TeamSpeak a refusé la dernière action « {{action}} » ({{time}}) : {{note}}. Donnez la permission manquante à l'identité avec laquelle le gestionnaire agit.",
+      "wouldHave": "Une intervention aurait fait : {{list}}",
+      "actions": {
+        "none": "Enregistrer seulement",
+        "warn": "Avertir",
+        "restrict": "Restreindre",
+        "kick": "Expulser",
+        "ban": "Bannir"
+      },
+      "outcomes": {
+        "pending": "en attente",
+        "running": "en cours",
+        "done": "fait",
+        "failed": "échec",
+        "gone": "parti avant",
+        "skipped": "ignoré",
+        "stopped": "arrêté"
+      },
+      "stop": {
+        "button": "Arrêt d'urgence",
+        "title": "Arrêter toutes les actions ?",
+        "description": "La protection anti-raid revient immédiatement à l'observation ; les actions encore en attente ne sont pas menées. Les restrictions et bannissements déjà donnés restent jusqu'à leur expiration.",
+        "last": "Dernier arrêt d'urgence {{time}} par {{user}}."
+      },
+      "actConfirm": {
+        "title": "Passer à l'intervention ?",
+        "description": "Désormais, les clients qui arrivent pendant un pic reçoivent les actions définies par règle dans les paramètres.",
+        "early": "La période d'observation dure jusqu'au {{date}}. Intervenir quand même ? Les incidents de la période d'observation montrent ce qui se serait passé."
+      },
+      "toasts": {
+        "actOn": "La protection anti-raid intervient désormais",
+        "actOff": "La protection anti-raid observe seulement",
+        "stopped": "Arrêt d'urgence : la protection anti-raid observe seulement"
+      },
       "loadError": "Impossible de charger la protection anti-raid",
       "retry": "Réessayer",
       "off": "La protection anti-raid est désactivée",
       "offHint": "Un administrateur peut l'activer pour ce serveur virtuel.",
-      "offHintAdmin": "Activez-la dans les paramètres. Elle commence par observer seulement : elle enregistre des incidents et prévient vos administrateurs, sans rien faire aux clients.",
+      "offHintAdmin": "Activez-la dans les paramètres. Elle commence par observer seulement : elle enregistre des incidents et prévient vos administrateurs ; elle n'intervient qu'une fois qu'un administrateur l'a décidé.",
       "statusTitle": "État",
       "observeOnly": "Observation seule",
       "openIncident": "Incident n° {{id}} en cours",
@@ -1555,8 +1594,8 @@
         "server-start": "En pause jusqu'à {{time}} : le serveur TeamSpeak vient de démarrer, et tous ceux qui se reconnectent ne sont pas un raid.",
         "watching-again": "En pause jusqu'à {{time}} : le gestionnaire voit de nouveau ce serveur après un redémarrage ou une panne, et tout ce qu'il a manqué arrive d'un coup."
       },
-      "observeUntil": "Période d'observation jusqu'au {{date}}. La protection anti-raid enregistre et prévient seulement ; dans cette version, elle n'agit sur aucun client.",
-      "stageNote": "La protection anti-raid enregistre et prévient seulement ; dans cette version, elle n'agit sur aucun client.",
+      "observeUntil": "Période d'observation jusqu'au {{date}} : les incidents montrent ce qu'une intervention aurait fait.",
+      "stageNote": "La protection anti-raid enregistre et prévient seulement. Un administrateur peut la faire intervenir.",
       "incidentsTitle": "Incidents",
       "noIncidents": "Aucun incident pour l'instant.",
       "states": {
@@ -1577,6 +1616,8 @@
       "nothingDone": "rien n'a été fait à ces clients",
       "clientsCaption": "Clients de l'incident n° {{id}}",
       "columns": {
+        "action": "Action",
+        "wouldAction": "Serait",
         "nickname": "Pseudo",
         "joined": "Arrivé",
         "ip": "Adresse",
@@ -1621,6 +1662,24 @@
         "message": "Message privé"
       },
       "settings": {
+        "action": "Action",
+        "actionsTitle": "Actions",
+        "actionsHint": "Seulement en mode intervention. Un client repéré par plusieurs règles reçoit le niveau le plus élevé : enregistrer < avertir < restreindre < expulser < bannir.",
+        "warnText": "Avertissement (message privé)",
+        "restrictGroup": "Groupe de serveur restrictif",
+        "chooseGroup": "Choisir un groupe",
+        "restrictGroupHint": "Préparez un groupe avec peu de droits (par exemple sans parole ni création de canal). Il est retiré automatiquement, comme un groupe temporaire.",
+        "restrictMinutes": "Restreindre pendant (minutes)",
+        "kickReason": "Motif d'expulsion",
+        "kickReasonHint": "{{max}} caractères au plus (TeamSpeak). {server} est remplacé.",
+        "banMinutes": "Bannir pendant (minutes)",
+        "banMinutesHint": "Un court bannissement de l'identité, 10 à 60 minutes.",
+        "banReason": "Motif du bannissement",
+        "banIp": "Bannir aussi l'adresse",
+        "banIpHint": "Désactivé par défaut.",
+        "banIpWarning": "Un bannissement d'adresse touche tous ceux derrière la même adresse : réseaux mobiles, bureaux, résidences étudiantes et fournisseurs en CGNAT partagent une adresse entre beaucoup de personnes. À n'utiliser que si vous connaissez vos utilisateurs.",
+        "maxActionsPerMin": "Actions par minute au plus",
+        "maxActionsPerMinHint": "Le reste attend la minute suivante (protection anti-flood de TeamSpeak).",
         "open": "Paramètres",
         "title": "Protection anti-raid",
         "description": "Pour ce serveur virtuel. Les changements s'appliquent immédiatement.",
