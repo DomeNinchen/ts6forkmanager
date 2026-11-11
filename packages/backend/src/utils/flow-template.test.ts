@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  checkFlowTemplate, flowToTemplate, parseFlowTemplate, templateToFlowData,
+  checkFlowTemplate, flowCapabilities, flowToTemplate, flowUrlHost, parseFlowTemplate, templateToFlowData,
   FLOW_TEMPLATE_FORMAT_VERSION, FLOW_TEMPLATE_MAX_BYTES, FLOW_TEMPLATE_MAX_NODES,
 } from '@ts6/common';
 
@@ -77,8 +77,11 @@ test('round trip: export -> file text -> check -> import gives the original flow
   const { template } = flowToTemplate(original, { name: 'Support Desk', author: 'someone' });
   const check = parseFlowTemplate(JSON.stringify(template, null, 2));
   assert.ok(check.ok, check.ok ? '' : check.errors.join('\n'));
-  const { flowData, missing } = templateToFlowData(check.template);
+  // The import dialog sends a value for every input; mapped onto the same objects here.
+  const same = Object.fromEntries(check.template.inputs.map((i) => [i.key, i.default ?? '']));
+  const { flowData, missing, invalid } = templateToFlowData(check.template, same);
   assert.deepEqual(missing, []);
+  assert.deepEqual(invalid, []);
   assert.deepEqual(flowData.imported, { id: 'support-desk', version: '1.0.0', name: 'Support Desk' });
   assert.deepEqual(flowData.edges, original.edges);
   const strip = (n: any) => ({ ...n, config: { ...n.config } });
@@ -89,13 +92,53 @@ test('round trip: export -> file text -> check -> import gives the original flow
 
 test('import maps input values onto every target; empty required input is reported', () => {
   const { template } = flowToTemplate(sampleFlow(), { name: 'X' });
-  const { flowData } = templateToFlowData(template, { channel1: '42', servergroup1: '11,12' });
+  const { flowData, missing, invalid } = templateToFlowData(template, { channel1: '42', servergroup1: '11,12', channelgroup1: '3', bot1: '1' });
+  assert.deepEqual([missing, invalid], [[], []]);
   assert.equal(flowData.nodes.find((n) => n.id === 'n2')!.config.channelId, '42');
   assert.equal(flowData.nodes.find((n) => n.id === 'n3')!.config.channelId, '42');
   assert.equal(flowData.nodes.find((n) => n.id === 'n4')!.config.groupIds, '11,12');
-  assert.equal((flowData.nodes.find((n) => n.id === 'n6')!.config.params as any).cgid, '9', 'default kept');
-  const { missing } = templateToFlowData(template, { bot1: '  ' });
-  assert.deepEqual(missing, ['bot1']);
+  assert.equal((flowData.nodes.find((n) => n.id === 'n6')!.config.params as any).cgid, '3');
+  assert.deepEqual(templateToFlowData(template, { channel1: '42', channelgroup1: '3', bot1: '  ' }).missing, ['bot1']);
+});
+
+test('import never falls back to the ids of the exporting server; lists may stay empty; ids are checked', () => {
+  const { template } = flowToTemplate(sampleFlow(), { name: 'X' });
+  // Positive control: the file does carry the old ids.
+  assert.equal(template.inputs.find((i) => i.key === 'channel1')!.default, '5');
+  const { flowData, missing } = templateToFlowData(template, {});
+  assert.deepEqual(missing, ['channel1', 'channelgroup1', 'bot1'], 'a list input (servergroup1) is optional');
+  assert.equal(flowData.nodes.find((n) => n.id === 'n2')!.config.channelId, '');
+  assert.equal(flowData.nodes.find((n) => n.id === 'n4')!.config.groupIds, '');
+  const ok = { channel1: '42', channelgroup1: '3', bot1: '1' };
+  assert.deepEqual(templateToFlowData(template, { ...ok, channel1: 'abc' }).invalid, ['channel1']);
+  assert.deepEqual(templateToFlowData(template, { ...ok, channel1: '1,2' }).invalid, ['channel1'], 'one channel, not a list');
+  assert.deepEqual(templateToFlowData(template, { ...ok, servergroup1: '1, 2' }).invalid, []);
+  // A text input still uses its default.
+  const withText = validTemplate();
+  withText.inputs.push({ key: 'greeting', type: 'text', label: 'Greeting', default: 'hi', targets: [{ node: 'n3', field: 'channel_name' }] });
+  assert.equal(templateToFlowData(withText, ok).flowData.nodes.find((n) => n.id === 'n3')!.config.channel_name, 'hi');
+});
+
+test('capabilities: what the flow can do, with hosts and changing ServerQuery commands', () => {
+  const { template } = flowToTemplate(sampleFlow(), { name: 'X' });
+  const caps = Object.fromEntries(flowCapabilities(template.flow.nodes).map((c) => [c.kind, c]));
+  assert.deepEqual(Object.keys(caps).sort(), ['channels', 'http', 'move', 'serverquery', 'voice', 'webhookTrigger']);
+  assert.deepEqual(caps.http.details, ['api.example.com'], 'no credentials in the host');
+  assert.deepEqual(caps.serverquery.details, ['setclientchannelgroup', 'clientsetserverquerylogin']);
+  assert.deepEqual(caps.channels.nodes, ['n3']);
+  // A malicious file: internal address + kick. Reading commands are not listed, placeholder commands are.
+  const evil = [
+    { id: 'a', type: 'action_httpRequest', config: { url: 'http://127.0.0.1:3001/api/settings' }, x: 0, y: 0 },
+    { id: 'b', type: 'action_kick', config: { reasonmsg: 'bye' }, x: 0, y: 0 },
+    { id: 'c', type: 'action_webquery', config: { command: 'serverinfo' }, x: 0, y: 0 },
+    { id: 'd', type: 'action_webquery', config: { command: '{{event.msg}}' }, x: 0, y: 0 },
+  ];
+  const ev = Object.fromEntries(flowCapabilities(evil).map((c) => [c.kind, c]));
+  assert.deepEqual(ev.http.details, ['127.0.0.1:3001']);
+  assert.deepEqual(ev.kick.nodes, ['b']);
+  assert.deepEqual(ev.serverquery.nodes, ['d']);
+  assert.equal(flowUrlHost('https://u:p@h.example:8080/x?y=1'), 'h.example:8080');
+  assert.equal(flowUrlHost('{{var.url}}'), '{{var.url}}');
 });
 
 function validTemplate(): any {
@@ -115,6 +158,8 @@ test('check: refuses broken, too new, too large and unknown things with readable
   assert.match(errs(badEdge), /node that does not exist/);
   const badTarget = validTemplate(); badTarget.inputs[0].targets = [{ node: 'n2', field: '__proto__.polluted' }];
   assert.match(errs(badTarget), /"targets"/);
+  const badNames = validTemplate(); badNames.inputs[0].names = [1];
+  assert.match(errs(badNames), /"names"/);
   const dup = validTemplate(); dup.flow.nodes[1].id = 'n1';
   assert.match(errs(dup), /used twice/);
   const many = validTemplate(); many.flow.nodes = Array.from({ length: FLOW_TEMPLATE_MAX_NODES + 1 }, (_, i) => ({ id: `x${i}`, type: 'log', config: {}, x: 0, y: 0 }));

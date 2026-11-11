@@ -107,12 +107,14 @@ export function stepProblem(step: FlowTestStep): 'error' | 'warning' | null {
  * real one), run the editor's current graph as a test and read what it did, step by step.
  * Clicking a step selects its node; the editor marks the path on the canvas from `onResult`.
  */
-export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onResult }: {
+export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onResult, embedded }: {
   botId: number;
   nodes: EditorNode[];
   edges: unknown[];
   template?: unknown;
-  onClose: () => void;
+  onClose?: () => void;
+  /** Inside another dialog (template import): a bordered box, no close button. */
+  embedded?: boolean;
   onPick: (nodeId: string) => void;
   onResult: (report: FlowTestReport | null) => void;
 }) {
@@ -205,14 +207,18 @@ export function TestPanel({ botId, nodes, edges, template, onClose, onPick, onRe
   const empty = report?.steps.reduce((n, s) => n + s.placeholders.filter((p) => p.empty).length, 0) ?? 0;
 
   return (
-    <div className="flex w-full shrink-0 flex-col border-l border-border bg-card/50 max-md:absolute max-md:inset-0 max-md:z-40 max-md:border-l-0 max-md:bg-card md:w-96">
+    <div className={embedded
+      ? 'flex max-h-[50vh] w-full flex-col rounded-md border border-border'
+      : 'flex w-full shrink-0 flex-col border-l border-border bg-card/50 max-md:absolute max-md:inset-0 max-md:z-40 max-md:border-l-0 max-md:bg-card md:w-96'}>
       <div className="flex items-center justify-between p-3 pb-2">
         <p className="flex items-center gap-1.5 font-display text-xs font-semibold tracking-wide">
           <FlaskConical className="h-3.5 w-3.5" /> {t('pages.botEditor.test.title')}
         </p>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} title={t('common.close')} aria-label={t('common.close')}>
-          <X className="h-3.5 w-3.5" />
-        </Button>
+        {onClose && (
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} title={t('common.close')} aria-label={t('common.close')}>
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="min-h-0 flex-1">

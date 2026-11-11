@@ -267,8 +267,9 @@ botRoutes.post('/import', requireRole('admin'), async (req: Request, res: Respon
     const parsedSid = parseInt(virtualServerId) || 1;
     if (!(await prisma.tsServerConfig.findUnique({ where: { id: parsedConfigId } }))) throw new AppError(400, `Server config ${parsedConfigId} does not exist`);
 
-    const { flowData, missing } = templateToFlowData(check.template, values);
+    const { flowData, missing, invalid } = templateToFlowData(check.template, values);
     if (missing.length) return res.status(400).json({ error: 'Required inputs are empty', details: missing });
+    if (invalid.length) return res.status(400).json({ error: 'These inputs need the id of a server object', details: invalid });
     const flowName = typeof name === 'string' && name.trim() ? name.trim().slice(0, 100) : check.template.name;
     const bot = await prisma.botFlow.create({
       data: {

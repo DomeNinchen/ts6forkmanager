@@ -37,7 +37,7 @@ export default function BotList() {
   const [showCreate, setShowCreate] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [exportId, setExportId] = useState<number | null>(null);
+  const [exportBot, setExportBot] = useState<{ id: number; serverConfigId: number; virtualServerId: number } | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -114,7 +114,7 @@ export default function BotList() {
                   <Button variant="outline" size="sm" className="h-7 text-xs flex-1" onClick={() => navigate(`/bots/${bot.id}`)}>
                     <Pencil className="h-3 w-3 mr-1" /> {t('pages.botList.editFlow')}
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title={t('components.flowTemplates.exportTitle')} aria-label={t('components.flowTemplates.exportTitle')} onClick={() => setExportId(bot.id)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title={t('components.flowTemplates.exportTitle')} aria-label={t('components.flowTemplates.exportTitle')} onClick={() => setExportBot(bot)}>
                     <Download className="h-3.5 w-3.5" />
                   </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(bot.id)}>
@@ -160,7 +160,7 @@ export default function BotList() {
         }}
       />
 
-      <ExportTemplateDialog botId={exportId} onOpenChange={(open) => { if (!open) setExportId(null); }} />
+      <ExportTemplateDialog bot={exportBot} onOpenChange={(open) => { if (!open) setExportBot(null); }} />
       <ImportTemplateDialog
         open={showImport}
         onOpenChange={setShowImport}
