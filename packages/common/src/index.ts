@@ -32,3 +32,5 @@ export * from './utils/permission-action.js';
 export * from './widget-themes.js';
 export * from './user-settings.js';
 export * from './permissions.js';
+export * from './types/flow-template.js';
+export * from './utils/flow-template.js';

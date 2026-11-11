@@ -3188,6 +3188,35 @@
     }
   },
   "components": {
+    "flowTemplates": {
+      "import": "Importer",
+      "importTitle": "Importer un modèle de flux",
+      "importHint": "Charge un fichier modèle (.ts6flow.json) et crée un nouveau flux sur le serveur sélectionné.",
+      "file": "Fichier modèle",
+      "invalid": "{{file}} n'est pas un modèle valide :",
+      "byAuthor": "Par {{author}}",
+      "summary": "{{nodes}} nœuds, {{inputs}} entrées",
+      "importDisabledNote": "Le flux est créé désactivé. Vérifiez-le dans l'éditeur et testez-le avant de l'activer. Seul un admin peut l'activer la première fois.",
+      "secretsToEnter": "Ces secrets sont vides et doivent être saisis à nouveau dans l'éditeur :",
+      "imported": "Flux « {{name}} » importé (désactivé)",
+      "importFailed": "Échec de l'import",
+      "exportTitle": "Exporter comme modèle",
+      "exportHint": "Enregistre ce flux comme fichier modèle qu'un autre gestionnaire peut importer. Les salons, groupes et bots deviennent des entrées, les secrets sont retirés.",
+      "exportFailed": "Échec de l'export",
+      "id": "ID du modèle",
+      "version": "Version",
+      "author": "Auteur (facultatif)",
+      "download": "Télécharger",
+      "secretsRemoved": "Ces secrets ne sont pas enregistrés dans le fichier :",
+      "warningsTitle": "Ces emplacements peuvent encore contenir des salons ou groupes de ce serveur et ne sont pas associés à l'import :",
+      "reasons": {
+        "expression": "condition",
+        "event-filter": "filtre d'événement",
+        "webquery": "commande WebQuery",
+        "rank-list": "liste de rangs",
+        "support-queue": "file de support"
+      }
+    },
     "onlineCountFilter": {
       "title": {
         "dashboard": "Qui compte comme en ligne",

@@ -2615,6 +2615,22 @@
     "server-admin": "403",
     "moderator": "403"
   },
+  "GET /api/bots/:botId/export": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "ok",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
+  "POST /api/bots/import": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "403",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
   "POST /api/bots/:botId/test": {
     "admin": "ok",
     "viewer": "403",
