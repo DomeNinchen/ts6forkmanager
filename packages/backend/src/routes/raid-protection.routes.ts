@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { raidSettingsProblem, type RaidIncidentEntry, type RaidProtectionView, type RaidSettings } from '@ts6/common';
+import { RAID_ERROR_CODES, RAID_RULE_KINDS, raidSettingsProblem, type RaidIncidentEntry, type RaidProtectionView, type RaidSettings } from '@ts6/common';
 import { mayRole } from '../utils/role-table.js';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { requirePermission, requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { targetIds } from '../utils/protected-groups.js';
-import { toIncidentEntry, toRaidConfig, type RaidProtectionService } from '../utils/raid-protection.js';
+import { actionsDisabled, toIncidentEntry, toRaidConfig, type RaidProtectionService } from '../utils/raid-protection.js';
 
 // Raid protection (R15): seen by whoever may kick (his decision 11), set up by admins only.
 export const raidProtectionRoutes: Router = Router({ mergeParams: true });
@@ -66,6 +66,15 @@ raidProtectionRoutes.put('/', requireRole('admin'), async (req: Request, res: Re
       notify: s.notify,
       notifyGroupIds: [...new Set(s.notifyGroupIds)],
       notifyText: s.notifyText,
+      actions: Object.fromEntries(RAID_RULE_KINDS.map((k) => [k, s.actions[k]])) as RaidSettings['actions'],
+      restrictGroupId: s.restrictGroupId,
+      restrictMinutes: s.restrictMinutes,
+      banMinutes: s.banMinutes,
+      banIp: s.banIp,
+      maxActionsPerMin: s.maxActionsPerMin,
+      warnText: s.warnText,
+      kickReason: s.kickReason,
+      banReason: s.banReason,
     };
     const existing = await prisma.raidProtection.findUnique({ where: { serverConfigId_sid: { serverConfigId, sid } } });
     const now = new Date();
@@ -74,6 +83,8 @@ raidProtectionRoutes.put('/', requireRole('admin'), async (req: Request, res: Re
       enabled,
       settings: JSON.stringify(clean),
       ...(firstOn ? { firstEnabledAt: now, observeUntil: new Date(now.getTime() + clean.observeDays * DAY_MS) } : {}),
+      // Switched off = nothing happens, also after switching on again (acting needs its own switch).
+      ...(enabled ? {} : { acting: false }),
     };
     const row = await prisma.raidProtection.upsert({
       where: { serverConfigId_sid: { serverConfigId, sid } },
@@ -82,6 +93,48 @@ raidProtectionRoutes.put('/', requireRole('admin'), async (req: Request, res: Re
     });
     await raid.reload(serverConfigId, sid);
     const view: RaidProtectionView = { config: toRaidConfig(row), status: raid.status(serverConfigId, sid) };
+    res.json(view);
+  } catch (err) { next(err); }
+});
+
+// Acting on or back to observing (admin). Before the observe-only time is over only with confirmObserve
+// (his answer: possible, but with an explicit warning).
+raidProtectionRoutes.post('/acting', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const { prisma, raid, serverConfigId, sid } = scope(req);
+    const { acting, confirmObserve } = req.body ?? {};
+    if (typeof acting !== 'boolean') throw new AppError(400, 'acting must be true or false');
+    const row = await prisma.raidProtection.findUnique({ where: { serverConfigId_sid: { serverConfigId, sid } } });
+    if (acting) {
+      if (!row?.enabled) throw new AppError(409, 'Raid protection is not switched on for this virtual server', undefined, RAID_ERROR_CODES.notEnabled);
+      if (actionsDisabled()) throw new AppError(409, 'RAID_ACTIONS_DISABLED is set on the backend', undefined, RAID_ERROR_CODES.actionsDisabled);
+      if (row.observeUntil && row.observeUntil.getTime() > Date.now() && confirmObserve !== true) {
+        throw new AppError(409, `The observe-only time runs until ${row.observeUntil.toISOString()}`, undefined, RAID_ERROR_CODES.observeTimeRunning);
+      }
+    }
+    const updated = await prisma.raidProtection.update({
+      where: { serverConfigId_sid: { serverConfigId, sid } },
+      data: acting ? { acting: true, actingSince: new Date() } : { acting: false },
+    }).catch(() => { throw new AppError(404, 'Raid protection is not set up for this virtual server'); });
+    if (acting) await raid.reload(serverConfigId, sid);
+    else await raid.stopActions(serverConfigId, sid);
+    const view: RaidProtectionView = { config: toRaidConfig(updated), status: raid.status(serverConfigId, sid) };
+    res.json(view);
+  } catch (err) { next(err); }
+});
+
+// Emergency stop (his decision 11: whoever may kick): back to observing at once; what still waits is not done.
+raidProtectionRoutes.post('/stop', requirePermission('clients.kick'), async (req: Request, res: Response, next) => {
+  try {
+    const { prisma, raid, serverConfigId, sid } = scope(req);
+    const row = await prisma.raidProtection.findUnique({ where: { serverConfigId_sid: { serverConfigId, sid } } });
+    if (!row) throw new AppError(404, 'Raid protection is not set up for this virtual server');
+    const updated = await prisma.raidProtection.update({
+      where: { id: row.id },
+      data: { acting: false, stoppedAt: new Date(), stoppedBy: req.user?.username ?? 'unknown' },
+    });
+    await raid.stopActions(serverConfigId, sid);
+    const view: RaidProtectionView = { config: toRaidConfig(updated), status: raid.status(serverConfigId, sid) };
     res.json(view);
   } catch (err) { next(err); }
 });

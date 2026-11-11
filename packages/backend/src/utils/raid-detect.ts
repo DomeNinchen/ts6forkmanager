@@ -1,7 +1,10 @@
 import net from 'node:net';
 import {
+  RAID_ACTIONS,
   RAID_INCIDENT_CLIENTS_MAX,
   RAID_RULE_KINDS,
+  raidActionFor,
+  type RaidAction,
   type RaidClient,
   type RaidHit,
   type RaidRuleKind,
@@ -176,6 +179,8 @@ export function mergeIncident(
   current: { hits: RaidHit[]; clients: RaidClient[]; clientCount: number },
   now: RaidHitNow[],
   at: number,
+  /** Stage 3: the level each client gets (highest of the rules that caught it); `acting` queues it as pending. */
+  ladder?: { actions: Record<RaidRuleKind, RaidAction>; acting: boolean },
 ): { hits: RaidHit[]; clients: RaidClient[]; clientCount: number } {
   const hits = current.hits.map((h) => ({ ...h }));
   for (const h of now) {
@@ -183,19 +188,39 @@ export function mergeIncident(
     if (known) known.count = Math.max(known.count, h.count);
     else hits.push({ rule: h.rule, key: h.key, count: h.count, windowSec: h.windowSec, at: new Date(at).toISOString() });
   }
-  const clients = [...current.clients];
-  const seen = new Set(clients.map((c) => `${c.uid}|${c.joinedAt}`));
+  const clients = current.clients.map((c) => ({ ...c }));
+  const byId = new Map(clients.map((c) => [`${c.uid}|${c.joinedAt}`, c]));
   let clientCount = current.clientCount;
   for (const j of now.flatMap((h) => h.joins)) {
     const c = toRaidClient(j);
     const id = `${c.uid}|${c.joinedAt}`;
-    if (seen.has(id)) continue;
-    seen.add(id);
+    const action = ladder ? raidActionFor(now.filter((h) => h.joins.includes(j)).map((h) => h.rule), ladder.actions) : undefined;
+    const known = byId.get(id);
+    if (known) {
+      // A higher rule caught it later: the level goes up as long as nothing was done yet.
+      if (action && RAID_ACTIONS.indexOf(action) > RAID_ACTIONS.indexOf(known.action ?? 'none') && (!known.outcome || known.outcome.state === 'pending')) {
+        known.action = action;
+        if (ladder?.acting) known.outcome = { state: 'pending', at: new Date(at).toISOString(), note: null };
+      }
+      continue;
+    }
     clientCount++;
+    if (action) {
+      c.action = action;
+      if (ladder?.acting && action !== 'none') c.outcome = { state: 'pending', at: new Date(at).toISOString(), note: null };
+    }
     // shortcut: beyond the cap a client is counted but not kept, so a repeat of it is counted again; raise the cap if incidents that big are real.
-    if (clients.length < RAID_INCIDENT_CLIENTS_MAX) clients.push(c);
+    if (clients.length < RAID_INCIDENT_CLIENTS_MAX) {
+      clients.push(c);
+      byId.set(id, c);
+    }
   }
   return { hits, clients, clientCount };
+}
+
+/** How many actions may start now: at most `perMin` within any minute (the times are kept by the caller). */
+export function actionBudget(recent: number[], now: number, perMin: number): number {
+  return Math.max(0, perMin - recent.filter((t) => now - t < 60_000).length);
 }
 
 /** "12 joins in 60 s, 12 from 172.17.0.0/24" - the English summary for the notice's {rules}. */
