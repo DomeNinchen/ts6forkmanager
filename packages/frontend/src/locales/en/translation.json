@@ -4324,6 +4324,35 @@
     }
   },
   "components": {
+    "flowTemplates": {
+      "import": "Import",
+      "importTitle": "Import flow template",
+      "importHint": "Loads a template file (.ts6flow.json) and creates a new flow from it on the selected server.",
+      "file": "Template file",
+      "invalid": "{{file}} is not a valid template:",
+      "byAuthor": "By {{author}}",
+      "summary": "{{nodes}} nodes, {{inputs}} inputs",
+      "importDisabledNote": "The flow is created disabled. Check it in the editor and test it before you enable it. Only an admin may enable it the first time.",
+      "secretsToEnter": "These secrets are empty and must be entered again in the editor:",
+      "imported": "Flow \"{{name}}\" imported (disabled)",
+      "importFailed": "Import failed",
+      "exportTitle": "Export as template",
+      "exportHint": "Saves this flow as a template file another manager can import. Channels, groups and bots become inputs, secrets are removed.",
+      "exportFailed": "Export failed",
+      "id": "Template ID",
+      "version": "Version",
+      "author": "Author (optional)",
+      "download": "Download",
+      "secretsRemoved": "These secrets are not saved in the file:",
+      "warningsTitle": "These places may still hold channels or groups of this server and are not mapped on import:",
+      "reasons": {
+        "expression": "condition",
+        "event-filter": "event filter",
+        "webquery": "WebQuery command",
+        "rank-list": "rank list",
+        "support-queue": "support queue"
+      }
+    },
     "onlineCountFilter": {
       "title": {
         "dashboard": "Who counts as online",

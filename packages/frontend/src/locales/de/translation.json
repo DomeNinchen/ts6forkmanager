@@ -4324,6 +4324,35 @@
     }
   },
   "components": {
+    "flowTemplates": {
+      "import": "Importieren",
+      "importTitle": "Ablauf-Vorlage importieren",
+      "importHint": "Lädt eine Vorlagendatei (.ts6flow.json) und legt daraus einen neuen Ablauf auf dem gewählten Server an.",
+      "file": "Vorlagendatei",
+      "invalid": "{{file}} ist keine gültige Vorlage:",
+      "byAuthor": "Von {{author}}",
+      "summary": "{{nodes}} Knoten, {{inputs}} Eingaben",
+      "importDisabledNote": "Der Ablauf wird ausgeschaltet angelegt. Prüfe ihn im Editor und teste ihn, bevor du ihn einschaltest. Das erste Einschalten darf nur ein Admin.",
+      "secretsToEnter": "Diese Geheimnisse sind leer und müssen im Editor neu eingetragen werden:",
+      "imported": "Ablauf \"{{name}}\" importiert (ausgeschaltet)",
+      "importFailed": "Import fehlgeschlagen",
+      "exportTitle": "Als Vorlage exportieren",
+      "exportHint": "Speichert diesen Ablauf als Vorlagendatei, die ein anderer Manager importieren kann. Kanäle, Gruppen und Bots werden zu Eingaben, Geheimnisse werden entfernt.",
+      "exportFailed": "Export fehlgeschlagen",
+      "id": "Vorlagen-ID",
+      "version": "Version",
+      "author": "Autor (optional)",
+      "download": "Herunterladen",
+      "secretsRemoved": "Diese Geheimnisse werden nicht mitgespeichert:",
+      "warningsTitle": "Diese Stellen können noch Kanäle oder Gruppen dieses Servers enthalten und werden beim Import nicht zugeordnet:",
+      "reasons": {
+        "expression": "Bedingung",
+        "event-filter": "Ereignisfilter",
+        "webquery": "WebQuery-Befehl",
+        "rank-list": "Rangliste",
+        "support-queue": "Support-Warteschlange"
+      }
+    },
     "onlineCountFilter": {
       "title": {
         "dashboard": "Wer bei „Online“ mitzählt",

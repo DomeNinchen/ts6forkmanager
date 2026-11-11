@@ -1,8 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { requirePermission } from '../middleware/rbac.js';
+import { requirePermission, requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { grantCovers, grantOf, type Grant } from '../utils/vs-access.js';
-import { FLOW_TEST_MAX_FLOW_BYTES, FLOW_TEST_MAX_FORCED } from '@ts6/common';
+import {
+  FLOW_TEST_MAX_FLOW_BYTES, FLOW_TEST_MAX_FORCED, flowToTemplate, flowTemplateWarnings, parseFlowTemplate, templateToFlowData,
+  type ImportedTemplateRef,
+} from '@ts6/common';
 
 export const botRoutes: Router = Router();
 
@@ -161,7 +164,14 @@ botRoutes.post('/:botId/enable', requirePermission('bots.manage'), async (req: R
     if (!existing) throw new AppError(404, 'Bot flow not found');
     await assertServerAccess(req, prisma, existing.serverConfigId, existing.virtualServerId);
 
-    await prisma.botFlow.update({ where: { id: botId }, data: { enabled: true } });
+    // An imported flow is someone else's code: only an admin switches it on the first time.
+    const flowData = JSON.parse(existing.flowData);
+    const imported: ImportedTemplateRef | undefined = flowData?.imported;
+    if (imported && !imported.approved) {
+      if (req.user!.role !== 'admin') throw new AppError(403, 'An imported flow must be enabled by an admin the first time');
+      flowData.imported = { ...imported, approved: true };
+    }
+    await prisma.botFlow.update({ where: { id: botId }, data: { enabled: true, ...(imported && !imported.approved ? { flowData: JSON.stringify(flowData) } : {}) } });
 
     // Enable in bot engine
     const botEngine = req.app.locals.botEngine;
@@ -227,7 +237,54 @@ botRoutes.get('/:botId/executions/:execId/logs', requirePermission('bots.manage'
 
 // Flow test: what the flow would do with a sample event, nothing changed (see BotEngine.testFlow).
 // The editor sends its current, possibly unsaved graph as `flowData`; without it the stored one runs.
-botRoutes.post('/:botId/test', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
+// Template export: the flow as a shareable file, secrets emptied, server ids
+// turned into inputs. The client lets the user adjust name/version before saving.
+botRoutes.get('/:botId/export', requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const bot = await prisma.botFlow.findUnique({ where: { id: parseInt(String(req.params.botId)) } });
+    if (!bot) throw new AppError(404, 'Bot flow not found');
+    await assertServerAccess(req, prisma, bot.serverConfigId, bot.virtualServerId);
+    const flowData = JSON.parse(bot.flowData);
+    const imported: ImportedTemplateRef | undefined = flowData?.imported;
+    res.json(flowToTemplate(flowData, { id: imported?.id, version: imported?.version, name: bot.name, description: bot.description ?? undefined }));
+  } catch (err) { next(err); }
+});
+
+// Template import: always a NEW flow, always disabled. Admin only (app.ts lists no permission for it).
+botRoutes.post('/import', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const { file, serverConfigId, virtualServerId, values = {}, name } = req.body ?? {};
+    if (typeof file !== 'string') throw new AppError(400, 'file must be the template file content');
+    const check = parseFlowTemplate(file);
+    if (!check.ok) return res.status(400).json({ error: 'The template file is not valid', details: check.errors });
+    if (typeof values !== 'object' || values === null || Array.isArray(values) || Object.values(values).some((v) => typeof v !== 'string')) {
+      throw new AppError(400, 'values must map input keys to texts');
+    }
+    const parsedConfigId = parseInt(serverConfigId);
+    if (isNaN(parsedConfigId)) throw new AppError(400, 'A valid serverConfigId is required');
+    const parsedSid = parseInt(virtualServerId) || 1;
+    if (!(await prisma.tsServerConfig.findUnique({ where: { id: parsedConfigId } }))) throw new AppError(400, `Server config ${parsedConfigId} does not exist`);
+
+    const { flowData, missing } = templateToFlowData(check.template, values);
+    if (missing.length) return res.status(400).json({ error: 'Required inputs are empty', details: missing });
+    const flowName = typeof name === 'string' && name.trim() ? name.trim().slice(0, 100) : check.template.name;
+    const bot = await prisma.botFlow.create({
+      data: {
+        name: flowName,
+        description: check.template.description ?? null,
+        serverConfigId: parsedConfigId,
+        virtualServerId: parsedSid,
+        enabled: false,
+        flowData: JSON.stringify(flowData),
+      },
+    });
+    res.status(201).json({ id: bot.id, name: bot.name, secrets: check.template.secrets, warnings: flowTemplateWarnings(flowData.nodes, check.template.inputs.flatMap((i) => i.targets)) });
+  } catch (err) { next(err); }
+});
+
+botRoutes.post('/:botId/test',requirePermission('bots.manage'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
     const flow = await prisma.botFlow.findUnique({ where: { id: parseInt(String(req.params.botId)) } });
