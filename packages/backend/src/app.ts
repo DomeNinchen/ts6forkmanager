@@ -280,6 +280,8 @@ export function createApp(): Express {
     { method: 'GET', path: '/:botId/executions', permission: 'bots.manage' },
     { method: 'GET', path: '/:botId/executions/:execId/logs', permission: 'bots.manage' },
     { method: 'POST', path: '/:botId/test', permission: 'bots.manage' },
+    { method: 'GET', path: '/:botId/export', permission: 'bots.manage' },
+    // POST /import is not listed: admin only.
   ]), botRoutes);
   app.use('/api/users', userRoutes);
   // A user's own settings (dashboard layout, ...): every role, but only ever the caller's rows.

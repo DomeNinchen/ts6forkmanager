@@ -13,9 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Plus, Pencil, Trash2, Play, Clock, AlertTriangle, LayoutTemplate } from 'lucide-react';
+import { Bot, Plus, Pencil, Trash2, Play, Clock, AlertTriangle, LayoutTemplate, Download, FileUp } from 'lucide-react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { TemplateGallery } from '@/components/bots/TemplateGallery';
+import { ExportTemplateDialog, ImportTemplateDialog } from '@/components/bots/FlowTemplateDialogs';
 import { BotLogSettingsCard } from '@/components/bots/BotLogSettingsCard';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
@@ -36,6 +37,8 @@ export default function BotList() {
   const [showCreate, setShowCreate] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [exportId, setExportId] = useState<number | null>(null);
+  const [showImport, setShowImport] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
 
@@ -59,6 +62,7 @@ export default function BotList() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t('nav.items.botFlows')}</h1>
         <div className="flex items-center gap-2">
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowImport(true)}><FileUp className="h-4 w-4 mr-1" /> {t('components.flowTemplates.import')}</Button>}
           <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}><LayoutTemplate className="h-4 w-4 mr-1" /> {t('pages.botList.fromTemplate')}</Button>
           <Button size="sm" onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.botList.newBot')}</Button>
         </div>
@@ -110,6 +114,9 @@ export default function BotList() {
                   <Button variant="outline" size="sm" className="h-7 text-xs flex-1" onClick={() => navigate(`/bots/${bot.id}`)}>
                     <Pencil className="h-3 w-3 mr-1" /> {t('pages.botList.editFlow')}
                   </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title={t('components.flowTemplates.exportTitle')} aria-label={t('components.flowTemplates.exportTitle')} onClick={() => setExportId(bot.id)}>
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(bot.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -151,6 +158,15 @@ export default function BotList() {
             onError: () => toast.error(t('pages.botList.createFromTemplateFailed')),
           });
         }}
+      />
+
+      <ExportTemplateDialog botId={exportId} onOpenChange={(open) => { if (!open) setExportId(null); }} />
+      <ImportTemplateDialog
+        open={showImport}
+        onOpenChange={setShowImport}
+        serverConfigId={selectedConfigId ?? null}
+        sid={selectedSid || 1}
+        onImported={(id) => { qc.invalidateQueries({ queryKey: ['bots'] }); navigate(`/bots/${id}`); }}
       />
 
       {/* Delete Confirm */}
