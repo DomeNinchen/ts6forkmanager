@@ -1,6 +1,7 @@
 import type { PrismaClient, RaidIncident, RaidProtection } from '../generated/prisma/client.js';
 import {
   RAID_DEFAULTS,
+  type RaidAction,
   RAID_NOTICE_NOTES,
   RAID_RETENTION_DEFAULT_DAYS,
   RAID_RETENTION_MAX_DAYS,
@@ -19,13 +20,16 @@ import {
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import type { JournalJoin } from '../ts-client/ts-login-journal.js';
 import { protectedGroupIds } from './protected-groups.js';
+import { recordChange } from './change-log.js';
+import { getChangeLogSettings } from './change-log-settings.js';
+import { carryOut, parseOnline } from './raid-actions.js';
 import { parseSettings as parseQueueSettings } from './support-queue.js';
 import {
-  describeHits, detect, isExempt, longestWindowMs, mergeIncident, parseGroupList, pauseEnd, type RaidHitNow, type RaidJoin,
+  actionBudget, describeHits, detect, isExempt, longestWindowMs, mergeIncident, parseGroupList, pauseEnd, type RaidHitNow, type RaidJoin,
 } from './raid-detect.js';
 
-// Raid protection (R15), stage 1: watches the joins the connection journal records and keeps an
-// incident when they spike. It only observes and tells an admin group - it never acts on a client.
+// Raid protection (R15): watches the joins the connection journal records and keeps an incident when they
+// spike; tells an admin group, and while an admin switched it to acting carries out each rule's action (stage 3).
 
 /** Messages to the admin group per incident (TeamSpeak's flood protection). */
 const NOTICES_MAX = 10;
@@ -47,9 +51,16 @@ export function toRaidConfig(row: RaidProtection | null): RaidProtectionConfig {
     enabled: row?.enabled ?? false,
     firstEnabledAt: row?.firstEnabledAt?.toISOString() ?? null,
     observeUntil: row?.observeUntil?.toISOString() ?? null,
+    acting: row?.acting ?? false,
+    actingSince: row?.actingSince?.toISOString() ?? null,
+    stoppedAt: row?.stoppedAt?.toISOString() ?? null,
+    stoppedBy: row?.stoppedBy ?? null,
     settings: parseRaidSettings(row?.settings),
   };
 }
+
+/** RAID_ACTIONS_DISABLED=true: the global switch - nothing is ever done to a client (like IP_BANS_DISABLED). */
+export const actionsDisabled = () => process.env.RAID_ACTIONS_DISABLED === 'true';
 
 function json<T>(text: string | null, fallback: T): T {
   try { return text ? JSON.parse(text) : fallback; } catch { return fallback; }
@@ -61,7 +72,7 @@ export function toIncidentEntry(row: RaidIncident): RaidIncidentEntry {
     serverConfigId: row.serverConfigId,
     sid: row.sid,
     state: row.state as RaidIncidentEntry['state'],
-    mode: 'observe',
+    mode: row.mode === 'act' ? 'act' : 'observe',
     startedAt: row.startedAt.toISOString(),
     lastHitAt: row.lastHitAt.toISOString(),
     endedAt: row.endedAt?.toISOString() ?? null,
@@ -117,6 +128,11 @@ interface VsState {
   serverName: string | null;
   open: { id: number; lastHitAt: number; hits: RaidHit[]; clients: RaidClient[]; clientCount: number } | null;
   chain: Promise<unknown>;
+  /** Switched to acting by an admin (the row); see isActing for the global switch. */
+  acting: boolean;
+  /** When the last actions started, for the per-minute limit. */
+  actionTimes: number[];
+  actionError: RaidProtectionStatus['actionError'];
 }
 
 const keyOf = (configId: number, sid: number) => `${configId}:${sid}`;
@@ -164,23 +180,57 @@ export class RaidProtectionService {
     }
     if (old) {
       old.settings = parseRaidSettings(row.settings);
+      if (old.acting && !row.acting) await this.stopPending(old);
+      old.acting = row.acting;
       return;
     }
     await this.load(row);
+  }
+
+  /** Emergency stop or back to observing: whatever still waits is not done. Runs in the server's queue, after a running action. */
+  async stopActions(configId: number, sid: number): Promise<void> {
+    const st = this.vs.get(keyOf(configId, sid));
+    if (!st) return;
+    st.acting = false;
+    await new Promise<void>((resolve) => this.enqueue(st, () => this.stopPending(st).finally(resolve)));
+  }
+
+  private async stopPending(st: VsState): Promise<void> {
+    const open = st.open;
+    if (!open?.clients.some((c) => c.outcome?.state === 'pending')) return;
+    const at = new Date().toISOString();
+    for (const c of open.clients) if (c.outcome?.state === 'pending') c.outcome = { state: 'stopped', at, note: null };
+    await this.saveClients(st);
+  }
+
+  private isActing(st: VsState): boolean {
+    return st.acting && !actionsDisabled();
+  }
+
+  private async saveClients(st: VsState): Promise<void> {
+    if (st.open) await this.deps.prisma.raidIncident.update({ where: { id: st.open.id }, data: { clients: JSON.stringify(st.open.clients) } });
   }
 
   private async load(row: RaidProtection): Promise<void> {
     const key = keyOf(row.serverConfigId, row.sid);
     const settings = parseRaidSettings(row.settings);
     const open = await this.deps.prisma.raidIncident.findFirst({ where: { serverConfigId: row.serverConfigId, sid: row.sid, state: 'open' }, orderBy: { id: 'desc' } });
+    const openClients = json<RaidClient[]>(open?.clients ?? null, []);
+    // An action that was running when the backend stopped may or may not have happened: never repeated.
+    const interrupted = openClients.filter((c) => c.outcome?.state === 'running');
+    for (const c of interrupted) c.outcome = { state: 'failed', at: new Date().toISOString(), note: 'interrupted by a restart, not repeated' };
+    if (open && interrupted.length) await this.deps.prisma.raidIncident.update({ where: { id: open.id }, data: { clients: JSON.stringify(openClients) } });
     const st: VsState = {
+      acting: row.acting,
+      actionTimes: [],
+      actionError: null,
       settings,
       joins: [],
       watchingSince: this.watchStarts.get(key) ?? null,
       serverStartedAt: null,
       serverName: null,
       open: open
-        ? { id: open.id, lastHitAt: open.lastHitAt.getTime(), hits: json<RaidHit[]>(open.hits, []), clients: json<RaidClient[]>(open.clients, []), clientCount: open.clientCount }
+        ? { id: open.id, lastHitAt: open.lastHitAt.getTime(), hits: json<RaidHit[]>(open.hits, []), clients: openClients, clientCount: open.clientCount }
         : null,
       chain: Promise.resolve(),
     };
@@ -303,20 +353,26 @@ export class RaidProtectionService {
 
   private async extend(st: VsState, hits: RaidHitNow[], at: number): Promise<void> {
     const open = st.open!;
-    const merged = mergeIncident(open, hits, at);
+    const merged = mergeIncident(open, hits, at, this.ladder(st));
     const lastHitAt = Math.max(open.lastHitAt, at);
     const { count } = await this.deps.prisma.raidIncident.updateMany({
       where: { id: open.id, state: 'open' },
       data: { lastHitAt: new Date(lastHitAt), hits: JSON.stringify(merged.hits), clients: JSON.stringify(merged.clients), clientCount: merged.clientCount },
     });
     st.open = count ? { id: open.id, lastHitAt, ...merged } : null;
+    await this.processActions(open.id, st);
+  }
+
+  /** The levels for new clients; they are only queued while acting (an observing incident shows what would happen). */
+  private ladder(st: VsState) {
+    return { actions: st.settings.actions, acting: this.isActing(st) };
   }
 
   private async create(configId: number, sid: number, st: VsState, hits: RaidHitNow[], at: number): Promise<void> {
-    const merged = mergeIncident({ hits: [], clients: [], clientCount: 0 }, hits, at);
+    const merged = mergeIncident({ hits: [], clients: [], clientCount: 0 }, hits, at, this.ladder(st));
     const row = await this.deps.prisma.raidIncident.create({
       data: {
-        serverConfigId: configId, sid, state: 'open', mode: 'observe', startedAt: new Date(at), lastHitAt: new Date(at),
+        serverConfigId: configId, sid, state: 'open', mode: this.isActing(st) ? 'act' : 'observe', startedAt: new Date(at), lastHitAt: new Date(at),
         hits: JSON.stringify(merged.hits), clients: JSON.stringify(merged.clients), clientCount: merged.clientCount,
       },
     });
@@ -326,6 +382,78 @@ export class RaidProtectionService {
       const notice = await this.notify(configId, sid, st, merged.hits, merged.clientCount);
       await this.deps.prisma.raidIncident.update({ where: { id: row.id }, data: { notice: JSON.stringify(notice) } });
     }
+    await this.processActions(row.id, st);
+  }
+
+  // --- Acting (stage 3) ---------------------------------------------------------------------------
+
+  /**
+   * Carries out the pending actions of the open incident, at most maxActionsPerMin a minute; the rest waits
+   * for the next pass (the tick). Each client is marked running BEFORE the command and its result after it,
+   * so a crash in between never leads to a second action. A client list that cannot be read = nothing done.
+   */
+  private async processActions(incidentId: number, st: VsState): Promise<void> {
+    const open = st.open;
+    if (!open || open.id !== incidentId || !this.isActing(st)) return;
+    const pending = open.clients.filter((c) => c.outcome?.state === 'pending');
+    if (!pending.length) return;
+    const now = Date.now();
+    st.actionTimes = st.actionTimes.filter((t) => now - t < 60_000);
+    let budget = actionBudget(st.actionTimes, now, st.settings.maxActionsPerMin);
+    if (!budget) return;
+    const row = await this.deps.prisma.raidIncident.findUnique({ where: { id: incidentId }, select: { serverConfigId: true, sid: true } });
+    if (!row) return;
+    const { serverConfigId: configId, sid } = row;
+    let client;
+    let online;
+    try {
+      client = this.deps.pool.getBotClient(configId);
+      online = parseOnline(await client.execute(sid, 'clientlist', { '-uid': '', '-groups': '' }) as Array<Record<string, unknown>>);
+    } catch (err: any) {
+      this.logOnce(`act:${configId}:${sid}`, `[RaidProtection] ${configId}/${sid}: cannot read the client list (${err?.message ?? err}) - actions wait`);
+      return;
+    }
+    const ctx = {
+      prisma: this.deps.prisma, client, via: (client === this.deps.pool.tryGetClient(configId) ? 'main' : 'bot') as 'main' | 'bot', configId, sid,
+      settings: st.settings, serverName: st.serverName ?? `virtual server ${sid}`, exemptGroups: await this.exemptGroups(configId, sid, st.settings), online,
+    };
+    for (const c of pending) {
+      if (budget-- <= 0 || !this.isActing(st)) break;
+      const action = c.action as RaidAction;
+      const startedAt = Date.now();
+      c.outcome = { state: 'running', at: new Date(startedAt).toISOString(), note: null };
+      await this.saveClients(st);
+      st.actionTimes.push(startedAt);
+      const result = await carryOut(ctx, c, action);
+      c.outcome = { state: result.state, at: new Date().toISOString(), note: result.note };
+      await this.saveClients(st);
+      if (result.noPower) st.actionError = { at: c.outcome.at, action, note: result.note ?? '' };
+      else if (result.state === 'done') st.actionError = null;
+      if (result.state === 'done' || result.state === 'failed') await this.logAction(configId, sid, incidentId, c, action, result, startedAt);
+    }
+  }
+
+  /** The change-log row of an action nobody clicked: the job's own, like R13's automatic removal. */
+  private async logAction(configId: number, sid: number, incidentId: number, c: RaidClient, action: RaidAction, result: { state: string; note: string | null }, startedAt: number): Promise<void> {
+    try {
+      if (!(await getChangeLogSettings(this.deps.prisma)).enabled) return;
+    } catch {
+      return;
+    }
+    recordChange(this.deps.prisma, {
+      createdAt: new Date(startedAt), userId: null, username: 'system', role: 'system', ip: null,
+      method: 'POST', area: 'raid-protection', routePattern: `/servers/:configId/vs/:sid/raid-protection/incidents/:id (${action})`,
+      serverConfigId: configId, virtualServerId: sid, targetId: String(incidentId),
+      body: JSON.stringify({ action, client: c.nickname, uid: c.uid }),
+      status: result.state === 'done' ? 'ok' : 'error', httpStatus: result.state === 'done' ? 200 : 502, errorMessage: result.state === 'done' ? null : result.note,
+      durationMs: Date.now() - startedAt, loggedToTeamSpeak: false, changes: null,
+    });
+  }
+
+  private logOnce(key: string, message: string): void {
+    if (this.loggedOnce.has(key)) return;
+    this.loggedOnce.add(key);
+    console.warn(message);
   }
 
   /** Pokes or messages the online members of the admin groups (his decision 6), at most NOTICES_MAX. */
@@ -372,7 +500,13 @@ export class RaidProtectionService {
   private async closeQuiet(now = Date.now()): Promise<void> {
     for (const st of this.vs.values()) {
       const open = st.open;
-      if (!open || now - open.lastHitAt <= longestWindowMs(st.settings.rules) + CLOSE_SLACK_MS) continue;
+      if (!open) continue;
+      // Actions held back by the per-minute limit go out on the following passes; the incident stays open meanwhile.
+      if (this.isActing(st) && open.clients.some((c) => c.outcome?.state === 'pending')) {
+        this.enqueue(st, () => this.processActions(open.id, st));
+        continue;
+      }
+      if (now - open.lastHitAt <= longestWindowMs(st.settings.rules) + CLOSE_SLACK_MS) continue;
       this.enqueue(st, async () => {
         if (st.open?.id !== open.id) return;
         await this.deps.prisma.raidIncident.updateMany({ where: { id: open.id, state: 'open' }, data: { state: 'closed', endedAt: new Date(now) } });
@@ -401,6 +535,8 @@ export class RaidProtectionService {
       pausedUntil: paused ? new Date(paused.until).toISOString() : null,
       pauseReason: paused?.reason ?? null,
       openIncidentId: st?.open?.id ?? null,
+      actionsDisabled: actionsDisabled(),
+      actionError: st?.actionError ?? null,
     };
   }
 }

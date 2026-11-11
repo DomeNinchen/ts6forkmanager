@@ -208,6 +208,7 @@ export function createApp(): Express {
     { method: 'GET', path: '/', permission: 'clients.kick' },
     { method: 'GET', path: '/incidents', permission: 'clients.kick' },
     { method: 'GET', path: '/incidents/:id', permission: 'clients.kick' },
+    { method: 'POST', path: '/stop', permission: 'clients.kick' },
   ]);
   serverScoped('vs/:sid/channel-groups', channelGroupRoutes, [
     { method: 'GET', path: '/', permission: 'groups.members' },

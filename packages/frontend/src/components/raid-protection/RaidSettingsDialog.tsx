@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
-  RAID_LIMITS, RAID_PRESET_RULES, RAID_PRESETS, RAID_RETENTION_DEFAULT_DAYS, RAID_RETENTION_MAX_DAYS, RAID_RETENTION_MIN_DAYS, RAID_RULE_KINDS,
-  raidPresetOf, raidSettingsProblem, type RaidNotifyMode, type RaidProtectionConfig, type RaidRuleKind, type RaidSettings,
+  RAID_ACTIONS, RAID_LIMITS, RAID_PRESET_RULES, RAID_PRESETS, RAID_RETENTION_DEFAULT_DAYS, RAID_RETENTION_MAX_DAYS, RAID_RETENTION_MIN_DAYS, RAID_RULE_KINDS,
+  raidPresetOf, raidSettingsProblem, type RaidAction, type RaidNotifyMode, type RaidProtectionConfig, type RaidRuleKind, type RaidSettings,
 } from '@ts6/common';
-import { Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { raidProtectionApi } from '@/api/raid-protection.api';
 import { settingsApi } from '@/api/settings.api';
@@ -44,6 +44,8 @@ export function RaidSettingsDialog({ config, onClose, onSaved }: { config: RaidP
   const setRule = (kind: RaidRuleKind, patch: Record<string, number | boolean>) =>
     setSettings((cur) => ({ ...cur, rules: { ...cur.rules, [kind]: { ...cur.rules[kind], ...patch } } }));
   const preset = raidPresetOf(settings.rules);
+  // Only the fields of actions some enabled rule uses are shown.
+  const used = new Set(RAID_RULE_KINDS.filter((k) => settings.rules[k].enabled).map((k) => settings.actions[k]));
   const problem = raidSettingsProblem(settings);
   const noNotifyGroup = settings.notify !== 'off' && settings.notifyGroupIds.length === 0 ? t('pages.raid.settings.needNotifyGroup') : null;
 
@@ -112,11 +114,67 @@ export function RaidSettingsDialog({ config, onClose, onSaved }: { config: RaidP
                           <Input id="raid-new-share" type="number" min={1} max={100} value={settings.rules.new.sharePct} onChange={(e) => setRule('new', { sharePct: Number(e.target.value) })} />
                         </div>
                       )}
+                      <div className="col-span-2 space-y-1 sm:col-span-3">
+                        <Label htmlFor={`raid-${kind}-action`} className="text-xs">{t('pages.raid.settings.action')}</Label>
+                        <Select value={settings.actions[kind]} onValueChange={(v) => set('actions', { ...settings.actions, [kind]: v as RaidAction })}>
+                          <SelectTrigger id={`raid-${kind}-action`}><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {RAID_ACTIONS.map((a) => <SelectItem key={a} value={a}>{t(`pages.raid.actions.${a}`)}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
                 </div>
               );
             })}
+          </fieldset>
+
+          <fieldset className="space-y-3 border-t border-border pt-4">
+            <legend className="text-sm font-semibold">{t('pages.raid.settings.actionsTitle')}</legend>
+            <p className="text-xs text-muted-foreground">{t('pages.raid.settings.actionsHint')}</p>
+            {used.has('warn') && (
+              <TextRow id="raid-warn-text" label={t('pages.raid.settings.warnText')} hint="{server}" max={RAID_LIMITS.warnTextMax} value={settings.warnText} onChange={(v) => set('warnText', v)} />
+            )}
+            {used.has('restrict') && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="raid-restrict-group">{t('pages.raid.settings.restrictGroup')}</Label>
+                  <Select value={settings.restrictGroupId ? String(settings.restrictGroupId) : ''} onValueChange={(v) => set('restrictGroupId', Number(v))}>
+                    <SelectTrigger id="raid-restrict-group"><SelectValue placeholder={t('pages.raid.settings.chooseGroup')} /></SelectTrigger>
+                    <SelectContent>
+                      {groupOptions.map((o) => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">{t('pages.raid.settings.restrictGroupHint')}</p>
+                </div>
+                <NumberRow id="raid-restrict-min" label={t('pages.raid.settings.restrictMinutes')} min={RAID_LIMITS.restrictMinutes[0]} max={RAID_LIMITS.restrictMinutes[1]} value={settings.restrictMinutes} onChange={(v) => set('restrictMinutes', v)} />
+              </>
+            )}
+            {used.has('kick') && (
+              <div className="space-y-1.5">
+                <Label htmlFor="raid-kick-reason">{t('pages.raid.settings.kickReason')}</Label>
+                <Input id="raid-kick-reason" maxLength={RAID_LIMITS.kickReasonMax} value={settings.kickReason} onChange={(e) => set('kickReason', e.target.value)} />
+                <p className="text-xs text-muted-foreground">{t('pages.raid.settings.kickReasonHint', { max: RAID_LIMITS.kickReasonMax })}</p>
+              </div>
+            )}
+            {used.has('ban') && (
+              <>
+                <NumberRow id="raid-ban-min" label={t('pages.raid.settings.banMinutes')} hint={t('pages.raid.settings.banMinutesHint')} min={RAID_LIMITS.banMinutes[0]} max={RAID_LIMITS.banMinutes[1]} value={settings.banMinutes} onChange={(v) => set('banMinutes', v)} />
+                <div className="space-y-1.5">
+                  <Label htmlFor="raid-ban-reason">{t('pages.raid.settings.banReason')}</Label>
+                  <Input id="raid-ban-reason" maxLength={RAID_LIMITS.banReasonMax} value={settings.banReason} onChange={(e) => set('banReason', e.target.value)} />
+                </div>
+                <SwitchRow id="raid-ban-ip" label={t('pages.raid.settings.banIp')} hint={t('pages.raid.settings.banIpHint')} checked={settings.banIp} onChange={(v) => set('banIp', v)} />
+                {settings.banIp && (
+                  <div role="alert" className="flex gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />
+                    <p>{t('pages.raid.settings.banIpWarning')}</p>
+                  </div>
+                )}
+              </>
+            )}
+            <NumberRow id="raid-max-actions" label={t('pages.raid.settings.maxActionsPerMin')} hint={t('pages.raid.settings.maxActionsPerMinHint')} min={RAID_LIMITS.maxActionsPerMin[0]} max={RAID_LIMITS.maxActionsPerMin[1]} value={settings.maxActionsPerMin} onChange={(v) => set('maxActionsPerMin', v)} />
           </fieldset>
 
           <fieldset className="space-y-3 border-t border-border pt-4">

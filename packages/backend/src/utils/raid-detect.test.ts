@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { RAID_DEFAULTS, RAID_PRESET_RULES, RAID_INCIDENT_CLIENTS_MAX, raidPresetOf, raidSettingsProblem, type RaidRules } from '@ts6/common';
-import { describeHits, detect, isExempt, longestWindowMs, mergeIncident, nameKey, parseGroupList, pauseEnd, subnetKey, type RaidJoin } from './raid-detect.js';
+import { RAID_DEFAULTS, RAID_PRESET_RULES, RAID_INCIDENT_CLIENTS_MAX, raidActionFor, raidPresetOf, raidSettingsProblem, type RaidRules } from '@ts6/common';
+import { actionBudget, describeHits, detect, isExempt, longestWindowMs, mergeIncident, nameKey, parseGroupList, pauseEnd, subnetKey, type RaidJoin } from './raid-detect.js';
 
 const T0 = 1_800_000_000_000;
 let row = 1;
@@ -179,6 +179,54 @@ test('mergeIncident: one hit per rule and key, one client per join, a cap on kep
   const big = mergeIncident({ hits: [], clients: [], clientCount: 0 }, [{ rule: 'total', key: null, count: many.length, windowSec: 60, joins: many }], T0);
   assert.equal(big.clients.length, RAID_INCIDENT_CLIENTS_MAX);
   assert.equal(big.clientCount, RAID_INCIDENT_CLIENTS_MAX + 5);
+});
+
+test('ladder: highest level of the rules that caught a client, queued only while acting', () => {
+  const actions = { total: 'warn', subnet: 'kick', country: 'none', name: 'restrict', new: 'ban' } as const;
+  assert.equal(raidActionFor(['total', 'name'], actions), 'restrict');
+  assert.equal(raidActionFor(['country'], actions), 'none');
+  assert.equal(raidActionFor([], actions), 'none');
+  const a = join(T0, { uid: 'A' });
+  const b = join(T0 + 1, { uid: 'B' });
+  const hits = [
+    { rule: 'total' as const, key: null, count: 2, windowSec: 60, joins: [a, b] },
+    { rule: 'subnet' as const, key: '10.0.0.0/24', count: 1, windowSec: 60, joins: [b] },
+  ];
+  const observing = mergeIncident({ hits: [], clients: [], clientCount: 0 }, hits, T0, { actions, acting: false });
+  assert.deepEqual(observing.clients.map((c) => [c.uid, c.action, c.outcome?.state]), [['A', 'warn', undefined], ['B', 'kick', undefined]]);
+  const acting = mergeIncident({ hits: [], clients: [], clientCount: 0 }, hits, T0, { actions, acting: true });
+  assert.deepEqual(acting.clients.map((c) => [c.uid, c.action, c.outcome?.state]), [['A', 'warn', 'pending'], ['B', 'kick', 'pending']]);
+  // A caught later by a higher rule: goes up while still pending...
+  const later = [{ rule: 'new' as const, key: null, count: 1, windowSec: 60, joins: [a] }];
+  assert.equal(mergeIncident(acting, later, T0 + 5, { actions, acting: true }).clients[0].action, 'ban');
+  // ...but never once something was done to it.
+  const done = { ...acting, clients: acting.clients.map((c) => (c.uid === 'A' ? { ...c, outcome: { state: 'done' as const, at: '', note: null } } : c)) };
+  const after = mergeIncident(done, later, T0 + 5, { actions, acting: true }).clients[0];
+  assert.deepEqual([after.action, after.outcome?.state], ['warn', 'done']);
+  // 'none' is never queued.
+  const none = mergeIncident({ hits: [], clients: [], clientCount: 0 }, [{ rule: 'country', key: 'BR', count: 1, windowSec: 60, joins: [join(T0, { uid: 'C' })] }], T0, { actions, acting: true });
+  assert.deepEqual([none.clients[0].action, none.clients[0].outcome], ['none', undefined]);
+});
+
+test('actionBudget: at most N actions within any minute', () => {
+  assert.equal(actionBudget([], T0, 3), 3);
+  assert.equal(actionBudget([T0 - 1000, T0 - 2000], T0, 3), 1);
+  assert.equal(actionBudget([T0 - 1000, T0 - 2000, T0 - 3000, T0 - 4000], T0, 3), 0);
+  assert.equal(actionBudget([T0 - 60_000, T0 - 61_000], T0, 3), 3);
+});
+
+test('settings: action rules', () => {
+  const withAction = (patch: Partial<typeof RAID_DEFAULTS>) => raidSettingsProblem({ ...RAID_DEFAULTS, ...patch });
+  assert.match(withAction({ actions: { ...RAID_DEFAULTS.actions, subnet: 'restrict' } })!, /restrict needs a server group/);
+  assert.equal(withAction({ actions: { ...RAID_DEFAULTS.actions, subnet: 'restrict' }, restrictGroupId: 9 }), null);
+  // A restrict on a rule that is off needs no group.
+  assert.equal(withAction({ actions: { ...RAID_DEFAULTS.actions, country: 'restrict' } }), null);
+  assert.match(withAction({ banMinutes: 61 })!, /banMinutes/);
+  assert.match(withAction({ banMinutes: 9 })!, /banMinutes/);
+  assert.match(withAction({ kickReason: 'x'.repeat(41) })!, /kickReason/);
+  assert.match(withAction({ actions: { ...RAID_DEFAULTS.actions, total: 'nuke' as any } })!, /actions/);
+  assert.match(withAction({ actions: { ...RAID_DEFAULTS.actions, total: 'warn' }, warnText: ' ' })!, /warnText/);
+  assert.match(withAction({ maxActionsPerMin: 0 })!, /maxActionsPerMin/);
 });
 
 test('describeHits words each rule', () => {
