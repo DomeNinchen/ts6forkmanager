@@ -19,6 +19,12 @@ export interface MetricReading {
   rateOut: number;
   /** Round-trip time of the TCP ping in milliseconds, or -1 when it failed. */
   ping: number;
+  /**
+   * TeamSpeak's own voice connection quality (serverinfo), or null when no voice
+   * client was connected - TeamSpeak then reports 0 for all three, which is no
+   * measurement. Loss is a fraction 0..1, ping in milliseconds.
+   */
+  quality: { lossSpeech: number; lossTotal: number; clientPing: number } | null;
 }
 
 /** Everything the long-term table stores for one finished window, minus the virtual server it belongs to. */
@@ -36,6 +42,19 @@ export interface RollupRow {
   pingAvg: number | null;
   pingMin: number | null;
   pingMax: number | null;
+  qualityN: number;
+  lossSpeechAvg: number | null;
+  lossSpeechMax: number | null;
+  lossTotalAvg: number | null;
+  lossTotalMax: number | null;
+  clientPingAvg: number | null;
+  clientPingMax: number | null;
+}
+
+/** Sum and maximum of one quality figure over a window's readings with clients. */
+interface Acc {
+  sum: number;
+  max: number;
 }
 
 /** Whoever wants the measurements; implemented by UserHistorySampler, which owns the interval and the storage. */
@@ -65,6 +84,16 @@ interface Window {
   last: Counters | null;
   /** A total went backwards inside this window, so its difference would be wrong. */
   reset: boolean;
+  qualityN: number;
+  lossSpeech: Acc;
+  lossTotal: Acc;
+  clientPing: Acc;
+}
+
+const acc = (): Acc => ({ sum: 0, max: 0 });
+function addTo(a: Acc, value: number): void {
+  a.sum += value;
+  if (value > a.max) a.max = value;
 }
 
 export class MetricRollup {
@@ -104,6 +133,13 @@ export class MetricRollup {
       if (win.pingMax === null || reading.ping > win.pingMax) win.pingMax = reading.ping;
     } else {
       win.pingFailed += 1;
+    }
+
+    if (reading.quality) {
+      win.qualityN += 1;
+      addTo(win.lossSpeech, reading.quality.lossSpeech);
+      addTo(win.lossTotal, reading.quality.lossTotal);
+      addTo(win.clientPing, reading.quality.clientPing);
     }
 
     if (reading.counterIn !== null && reading.counterOut !== null) {
@@ -153,6 +189,10 @@ export class MetricRollup {
       baseline: carry,
       last: null,
       reset: false,
+      qualityN: 0,
+      lossSpeech: acc(),
+      lossTotal: acc(),
+      clientPing: acc(),
     };
   }
 
@@ -161,6 +201,8 @@ export class MetricRollup {
       !win.reset && win.baseline !== null && win.last !== null && win.last.at > win.baseline.at
         ? { bytesIn: win.last.in - win.baseline.in, bytesOut: win.last.out - win.baseline.out, spanSec: Math.round((win.last.at - win.baseline.at) / 1000) }
         : null;
+    const n = win.qualityN;
+    const avg = (a: Acc) => (n > 0 ? a.sum / n : null);
 
     return {
       measuredAt: new Date(win.start),
@@ -175,6 +217,13 @@ export class MetricRollup {
       pingAvg: win.pingOk > 0 ? Math.round(win.pingOkSum / win.pingOk) : null,
       pingMin: win.pingMin,
       pingMax: win.pingMax,
+      qualityN: n,
+      lossSpeechAvg: avg(win.lossSpeech),
+      lossSpeechMax: n > 0 ? win.lossSpeech.max : null,
+      lossTotalAvg: avg(win.lossTotal),
+      lossTotalMax: n > 0 ? win.lossTotal.max : null,
+      clientPingAvg: avg(win.clientPing),
+      clientPingMax: n > 0 ? win.clientPing.max : null,
     };
   }
 }

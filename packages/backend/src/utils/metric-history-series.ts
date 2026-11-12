@@ -16,10 +16,10 @@ import {
   type UserSampleRow,
 } from './user-history-series.js';
 
-export type MetricKind = 'bandwidth' | 'ping';
+export type MetricKind = 'bandwidth' | 'ping' | 'quality';
 
 export function isMetricKind(value: unknown): value is MetricKind {
-  return value === 'bandwidth' || value === 'ping';
+  return value === 'bandwidth' || value === 'ping' || value === 'quality';
 }
 
 /** The user chart's three marks plus the one that only the ping chart has: the ping target did not answer. */
@@ -47,6 +47,38 @@ export interface RollupSampleRow {
   pingAvg: number | null;
   pingMin: number | null;
   pingMax: number | null;
+  /** Readings with voice clients connected; the quality figures below are null when 0. Loss is a fraction 0..1. */
+  qualityN: number;
+  lossSpeechAvg: number | null;
+  lossSpeechMax: number | null;
+  lossTotalAvg: number | null;
+  lossTotalMax: number | null;
+  clientPingAvg: number | null;
+  clientPingMax: number | null;
+}
+
+/** One time bucket of the connection quality chart: loss in percent, ping in milliseconds. */
+export interface QualityPoint {
+  t: number;
+  lossSpeech: number | null;
+  lossSpeechMax: number | null;
+  lossTotal: number | null;
+  clientPing: number | null;
+  clientPingMax: number | null;
+  /** Measured, but no voice client was connected the whole bucket - so TeamSpeak had nothing to report. */
+  noClients: boolean;
+}
+
+export interface QualityStats {
+  /** Speech packet loss in percent and client ping of the newest window, when recent and with clients. */
+  currentLossSpeech: number | null;
+  currentClientPing: number | null;
+  averageLossSpeech: number | null;
+  averageLossTotal: number | null;
+  averageClientPing: number | null;
+  peakLossSpeech: Peak | null;
+  peakClientPing: Peak | null;
+  lastSampleAt: number | null;
 }
 
 /** One time bucket of the bandwidth chart; rates are bytes per second, null where the bucket has nothing to say. */
@@ -112,7 +144,8 @@ interface SeriesBase {
 
 export type MetricSeries =
   | (SeriesBase & { metric: 'bandwidth'; points: BandwidthPoint[]; stats: BandwidthStats })
-  | (SeriesBase & { metric: 'ping'; points: PingPoint[]; stats: PingStats });
+  | (SeriesBase & { metric: 'ping'; points: PingPoint[]; stats: PingStats })
+  | (SeriesBase & { metric: 'quality'; points: QualityPoint[]; stats: QualityStats });
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
@@ -265,13 +298,94 @@ export function buildMetricHistory(
   // virtual server can be up while its connection info is not being read.
   const outages = buildUserEvents(userRows, g.from - DAY_MS, g.to).filter((e) => e.kind !== 'nodata');
   // The ping is a TCP connect to a host, which works just the same while a
-  // virtual server on it is stopped, so only the bandwidth drops those windows.
-  const used = metric === 'bandwidth' ? withoutOutages(rows, outages) : rows;
+  // virtual server on it is stopped, so only the server's own figures drop those windows.
+  const used = metric === 'ping' ? rows : withoutOutages(rows, outages);
   const events = combineEvents(metric, used, outages, g.from, g.to);
   const base = { from: g.from, to: g.to, bucketSeconds: g.bucketSeconds, events };
-  return metric === 'bandwidth'
-    ? { metric, ...base, ...buildBandwidth(used, g) }
-    : { metric, ...base, ...buildPing(used, g) };
+  if (metric === 'bandwidth') return { metric, ...base, ...buildBandwidth(used, g) };
+  if (metric === 'quality') return { metric, ...base, ...buildQuality(used, g) };
+  return { metric, ...base, ...buildPing(used, g) };
+}
+
+const percent = (fraction: number) => Math.round(fraction * 10000) / 100;
+
+function buildQuality(rows: RollupSampleRow[], g: Grid): { points: QualityPoint[]; stats: QualityStats } {
+  // Per bucket: count of readings with clients, weighted sums and maxima, and whether any row was there at all.
+  const n = new Array<number>(g.total).fill(0);
+  const seen = new Array<boolean>(g.total).fill(false);
+  const sumSpeech = new Array<number>(g.total).fill(0);
+  const sumTotal = new Array<number>(g.total).fill(0);
+  const sumPing = new Array<number>(g.total).fill(0);
+  const maxSpeech = new Array<number | null>(g.total).fill(null);
+  const maxPing = new Array<number | null>(g.total).fill(null);
+  const higher = (a: number | null, b: number | null) => (b === null ? a : a === null || b > a ? b : a);
+
+  for (const r of rows) {
+    const index = Math.floor((r.t - g.gridStart) / g.bucketMs) + g.leadBuckets;
+    if (index < 0 || index >= g.total) continue;
+    seen[index] = true;
+    if (r.qualityN <= 0 || r.lossSpeechAvg === null || r.lossTotalAvg === null || r.clientPingAvg === null) continue;
+    n[index] += r.qualityN;
+    sumSpeech[index] += r.lossSpeechAvg * r.qualityN;
+    sumTotal[index] += r.lossTotalAvg * r.qualityN;
+    sumPing[index] += r.clientPingAvg * r.qualityN;
+    maxSpeech[index] = higher(maxSpeech[index], r.lossSpeechMax);
+    maxPing[index] = higher(maxPing[index], r.clientPingMax);
+  }
+
+  const points: QualityPoint[] = [];
+  for (let i = 0; i < g.bucketCount; i++) {
+    const index = g.leadBuckets + i;
+    const has = n[index] > 0;
+    points.push({
+      t: g.gridStart + i * g.bucketMs,
+      lossSpeech: has ? percent(sumSpeech[index] / n[index]) : null,
+      lossSpeechMax: has && maxSpeech[index] !== null ? percent(maxSpeech[index] as number) : null,
+      lossTotal: has ? percent(sumTotal[index] / n[index]) : null,
+      clientPing: has ? round1(sumPing[index] / n[index]) : null,
+      clientPingMax: has && maxPing[index] !== null ? round1(maxPing[index] as number) : null,
+      noClients: seen[index] && !has,
+    });
+  }
+
+  let count = 0;
+  let speech = 0;
+  let total = 0;
+  let ping = 0;
+  let peakLossSpeech: Peak | null = null;
+  let peakClientPing: Peak | null = null;
+  for (const r of rows) {
+    if (r.t < g.from || r.qualityN <= 0 || r.lossSpeechAvg === null || r.lossTotalAvg === null || r.clientPingAvg === null) continue;
+    count += r.qualityN;
+    speech += r.lossSpeechAvg * r.qualityN;
+    total += r.lossTotalAvg * r.qualityN;
+    ping += r.clientPingAvg * r.qualityN;
+    // `>` keeps the first time a peak was reached.
+    if (r.lossSpeechMax !== null && (peakLossSpeech === null || percent(r.lossSpeechMax) > peakLossSpeech.value)) {
+      peakLossSpeech = { value: percent(r.lossSpeechMax), at: r.t };
+    }
+    if (r.clientPingMax !== null && (peakClientPing === null || r.clientPingMax > peakClientPing.value)) {
+      peakClientPing = { value: round1(r.clientPingMax), at: r.t };
+    }
+  }
+
+  const newest = rows.length > 0 ? rows[rows.length - 1] : null;
+  const fresh = newest !== null && g.to - newest.t <= (GAP_FACTOR + 1) * newest.intervalSec * 1000;
+  const current = fresh && newest!.qualityN > 0 ? newest : null;
+
+  return {
+    points,
+    stats: {
+      currentLossSpeech: current?.lossSpeechAvg != null ? percent(current.lossSpeechAvg) : null,
+      currentClientPing: current?.clientPingAvg != null ? round1(current.clientPingAvg) : null,
+      averageLossSpeech: count > 0 ? percent(speech / count) : null,
+      averageLossTotal: count > 0 ? percent(total / count) : null,
+      averageClientPing: count > 0 ? round1(ping / count) : null,
+      peakLossSpeech,
+      peakClientPing,
+      lastSampleAt: newest ? newest.t + newest.intervalSec * 1000 : null,
+    },
+  };
 }
 
 function buildBandwidth(rows: RollupSampleRow[], g: Grid): { points: BandwidthPoint[]; stats: BandwidthStats } {
