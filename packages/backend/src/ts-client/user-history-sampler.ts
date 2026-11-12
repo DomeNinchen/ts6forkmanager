@@ -414,6 +414,13 @@ export class UserHistorySampler implements MetricSink {
       pingAvg: r.pingAvg,
       pingMin: r.pingMin,
       pingMax: r.pingMax,
+      qualityN: r.qualityN,
+      lossSpeechAvg: r.lossSpeechAvg,
+      lossSpeechMax: r.lossSpeechMax,
+      lossTotalAvg: r.lossTotalAvg,
+      lossTotalMax: r.lossTotalMax,
+      clientPingAvg: r.clientPingAvg,
+      clientPingMax: r.clientPingMax,
     }));
 
     const stateRows: UserSampleRow[] = [];

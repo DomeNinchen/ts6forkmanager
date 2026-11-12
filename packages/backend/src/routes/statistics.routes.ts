@@ -32,7 +32,7 @@ statisticsRoutes.get('/user-history', requireRole('admin'), async (req: Request,
   } catch (err) { next(err); }
 });
 
-// GET /metric-history?metric=bandwidth|ping&range=24h|3d|7d|14d|31d — the
+// GET /metric-history?metric=bandwidth|ping|quality&range=24h|3d|7d|14d|31d — the
 // rolled-up bandwidth or ping of one virtual server for the same chart, on the
 // same buckets, ranges and marks as /user-history. Admin only, for the same reason.
 statisticsRoutes.get('/metric-history', requireRole('admin'), async (req: Request, res: Response, next) => {
@@ -45,7 +45,7 @@ statisticsRoutes.get('/metric-history', requireRole('admin'), async (req: Reques
 
     const metric = req.query.metric;
     if (!isMetricKind(metric)) {
-      throw new AppError(400, 'metric must be one of: bandwidth, ping');
+      throw new AppError(400, 'metric must be one of: bandwidth, ping, quality');
     }
 
     const range = req.query.range === undefined ? '24h' : req.query.range;

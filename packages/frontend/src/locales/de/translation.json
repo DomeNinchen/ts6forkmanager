@@ -364,7 +364,8 @@
           "label": "Messwert",
           "users": "Nutzer",
           "bandwidth": "Bandbreite",
-          "ping": "Ping"
+          "ping": "Ping",
+          "quality": "Verbindungsqualität"
         },
         "metricNoDataYetHint": "Das Backend fasst Bandbreite und Ping alle {{interval}} zu einem Wert zusammen, solange der virtuelle Server läuft und die Verbindung erreichbar ist. Das Diagramm erscheint, sobald der erste gespeichert ist.",
         "metricRecordingSince": "Aufgezeichnet seit {{time}}, ein Wert je {{interval}}",
@@ -419,6 +420,36 @@
             "timeout": "Ping-Timeout"
           },
           "note": "Gemessen wird der Aufbau einer TCP-Verbindung zum Ping-Ziel dieser Verbindung. Bleibt die Antwort aus, zählt das als Timeout: rot markiert, nie als 0 ms."
+        },
+        "quality": {
+          "chartTitle": "Verbindungsqualität der Sprach-Clients",
+          "chartAria": "Verbindungsqualität, letzte {{range}}: Paketverlust Sprache im Durchschnitt {{loss}}, Client-Ping im Durchschnitt {{ping}}",
+          "chartAriaEmpty": "Verbindungsqualität: in diesem Zeitraum keine Messwerte mit verbundenen Sprach-Clients",
+          "kpi": {
+            "current": "Zuletzt",
+            "currentPing": "Client-Ping {{value}}",
+            "noClients": "Keine Sprach-Clients verbunden",
+            "lossPeak": "Paketverlust (Spitze)",
+            "lossAverage": "Paketverlust (Durchschnitt)",
+            "lossTotal": "Alle Pakete: {{value}}",
+            "pingAverage": "Client-Ping (Durchschnitt)",
+            "pingPeak": "Spitze {{value}}"
+          },
+          "tooltip": {
+            "lossSpeech": "Paketverlust Sprache",
+            "lossSpeechMax": "Paketverlust Sprache (Spitze)",
+            "lossTotal": "Paketverlust alle Pakete",
+            "clientPing": "Client-Ping",
+            "clientPingMax": "Client-Ping (Spitze)",
+            "noClients": "Keine Sprach-Clients verbunden, TeamSpeak meldet dann keinen Wert"
+          },
+          "legend": {
+            "lossSpeech": "Paketverlust Sprache",
+            "lossPeak": "Spitze Sprache",
+            "lossTotal": "Paketverlust alle Pakete",
+            "clientPing": "Client-Ping (rechte Achse)"
+          },
+          "note": "Die Werte meldet TeamSpeak selbst: Durchschnitt über alle verbundenen Sprach-Clients, Musikbots eingeschlossen. Der Paketverlust ist links in Prozent, der Client-Ping rechts in Millisekunden. Ohne verbundene Sprach-Clients meldet TeamSpeak nichts; diese Zeit bleibt leer statt 0 %."
         },
         "recordingSince": "Aufzeichnung seit {{time}}, Messintervall {{interval}}",
         "slots": {

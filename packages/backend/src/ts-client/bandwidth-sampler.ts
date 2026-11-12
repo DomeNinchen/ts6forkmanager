@@ -49,6 +49,24 @@ function byteTotal(value: unknown): number | null {
   return Number.isFinite(total) && total >= 0 ? total : null;
 }
 
+/**
+ * TeamSpeak's voice connection quality from a serverinfo answer, or null while
+ * no voice client is connected: TeamSpeak then reports 0 loss and 0 ms ping,
+ * which would read as a perfect connection. Query clients (the app's own among
+ * them) carry no voice, so they are not counted. Music bots are voice clients
+ * and do count - their connection is measured like anybody's.
+ */
+export function voiceQuality(info: Record<string, unknown>): { lossSpeech: number; lossTotal: number; clientPing: number } | null {
+  const voiceClients = Number(info.virtualserver_clientsonline) - Number(info.virtualserver_queryclientsonline);
+  if (!(voiceClients > 0)) return null;
+  const lossSpeech = Number(info.virtualserver_total_packetloss_speech);
+  const lossTotal = Number(info.virtualserver_total_packetloss_total);
+  const clientPing = Number(info.virtualserver_total_ping);
+  // A field missing from the answer (another server build) is no measurement either.
+  if (![lossSpeech, lossTotal, clientPing].every((v) => Number.isFinite(v) && v >= 0)) return null;
+  return { lossSpeech, lossTotal, clientPing };
+}
+
 export interface BandwidthSample {
   timestamp: number;
   incoming: number;
@@ -175,8 +193,11 @@ export class BandwidthSampler {
       }
 
       try {
+        // serverinfo carries the same bandwidth and byte totals as
+        // serverrequestconnectioninfo plus the client counts and TeamSpeak's
+        // packet loss and client ping, so one command still covers everything.
         const [connResult, serverConfig] = await Promise.all([
-          client.execute(sid, 'serverrequestconnectioninfo'),
+          client.execute(sid, 'serverinfo'),
           this.prisma.tsServerConfig.findUnique({ where: { id: configId } }),
         ]);
         // The byte totals describe this very moment, so the time is taken
@@ -199,6 +220,7 @@ export class BandwidthSampler {
             rateIn: incoming,
             rateOut: outgoing,
             ping,
+            quality: voiceQuality(info),
           });
         }
 

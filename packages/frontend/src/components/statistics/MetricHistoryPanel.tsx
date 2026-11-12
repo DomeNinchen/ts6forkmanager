@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Activity, ArrowDownToLine, ArrowUpFromLine, LineChart, Timer, type LucideIcon } from 'lucide-react';
+import { Activity, ArrowDownToLine, ArrowUpFromLine, Gauge, LineChart, Timer, type LucideIcon } from 'lucide-react';
 import type {
   BandwidthHistoryResponse,
   MetricKind,
   MetricPeak,
   PingHistoryResponse,
+  QualityHistoryResponse,
   UserHistoryRange,
 } from '@/api/statistics.api';
 import { useMetricHistory } from '@/hooks/use-user-history';
@@ -149,7 +150,53 @@ function PingKpis({ data, tz, locale }: { data: PingHistoryResponse; tz: History
   );
 }
 
-const METRIC_ICON: Record<MetricKind, LucideIcon> = { bandwidth: Activity, ping: Timer };
+const formatPercent = (value: number) => `${parseFloat(value.toFixed(2))} %`;
+
+function QualityKpis({ data, tz, locale }: { data: QualityHistoryResponse; tz: HistoryTimeZone; locale: string }) {
+  const { t } = useTranslation();
+  const { stats } = data;
+  const k = (key: string, opts?: Record<string, unknown>) => t(`pages.serverStats.history.quality.kpi.${key}`, opts);
+
+  return (
+    <Card className="card-hero">
+      <CardContent className="grid grid-cols-2 p-0 sm:grid-cols-3 lg:grid-cols-5">
+        <Kpi
+          label={k('current')}
+          value={stats.currentLossSpeech !== null ? formatPercent(stats.currentLossSpeech) : DASH}
+          sub={
+            stats.currentClientPing !== null
+              ? k('currentPing', { value: formatMillis(stats.currentClientPing) })
+              : stats.lastSampleAt !== null
+                ? k('noClients')
+                : undefined
+          }
+        />
+        <Kpi
+          label={k('lossPeak')}
+          value={stats.peakLossSpeech ? formatPercent(stats.peakLossSpeech.value) : DASH}
+          sub={stats.peakLossSpeech ? formatDateTime(stats.peakLossSpeech.at, tz, locale) : undefined}
+        />
+        <Kpi
+          label={k('lossAverage')}
+          value={stats.averageLossSpeech !== null ? formatPercent(stats.averageLossSpeech) : DASH}
+          sub={stats.averageLossTotal !== null ? k('lossTotal', { value: formatPercent(stats.averageLossTotal) }) : undefined}
+        />
+        <Kpi
+          label={k('pingAverage')}
+          value={stats.averageClientPing !== null ? formatMillis(stats.averageClientPing) : DASH}
+          sub={stats.peakClientPing ? k('pingPeak', { value: formatMillis(stats.peakClientPing.value) }) : undefined}
+        />
+        <Kpi
+          label={t('pages.serverStats.history.kpi.lastSample')}
+          value={stats.lastSampleAt !== null ? timeAgo(Math.floor(stats.lastSampleAt / 1000)) : DASH}
+          sub={stats.lastSampleAt !== null ? formatDateTime(stats.lastSampleAt, tz, locale) : undefined}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+const METRIC_ICON: Record<MetricKind, LucideIcon> = { bandwidth: Activity, ping: Timer, quality: Gauge };
 
 /** The History tab's body while the bandwidth or ping switch is on: the headline figures and the chart. */
 export function MetricHistoryPanel({ metric, range, tz }: { metric: MetricKind; range: UserHistoryRange; tz: HistoryTimeZone }) {
@@ -169,20 +216,15 @@ export function MetricHistoryPanel({ metric, range, tz }: { metric: MetricKind; 
   }
 
   const target = `${data.pingTarget.host}:${data.pingTarget.port}`;
-  const title =
-    data.metric === 'ping'
-      ? t('pages.serverStats.history.ping.chartTitle', { target })
-      : t('pages.serverStats.history.bandwidth.chartTitle');
+  const title = t(`pages.serverStats.history.${data.metric}.chartTitle`, { target });
 
   return (
     <div className="space-y-4">
       {!data.recording && <RecordingOffNotice />}
 
-      {data.metric === 'bandwidth' ? (
-        <BandwidthKpis data={data} tz={tz} locale={i18n.language} />
-      ) : (
-        <PingKpis data={data} tz={tz} locale={i18n.language} />
-      )}
+      {data.metric === 'bandwidth' && <BandwidthKpis data={data} tz={tz} locale={i18n.language} />}
+      {data.metric === 'ping' && <PingKpis data={data} tz={tz} locale={i18n.language} />}
+      {data.metric === 'quality' && <QualityKpis data={data} tz={tz} locale={i18n.language} />}
 
       <Card className="card-hero">
         <CardHeader className="pb-2">
