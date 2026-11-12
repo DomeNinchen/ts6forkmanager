@@ -1259,6 +1259,12 @@
 
         "liveAudioHint": "Un bot musical lit une chaîne en direct (chaîne Twitch, live YouTube) avec !play ou le lecteur web, son uniquement. Ne diffusez que des contenus que vous avez le droit de partager.",
 
+
+        "liveVideoLabel": "Lire les streams en direct en vidéo",
+
+
+        "liveVideoHint": "!stream et l’onglet Vidéo acceptent une chaîne en direct et la diffusent avec image et son jusqu’à ce que quelqu’un l’arrête ou la passe, ou que la chaîne passe hors ligne. Désactivé par défaut : une vidéo en direct occupe l’encodeur et le débit montant tant qu’elle tourne.",
+
         "liveMaxLabel": "Limite des streams en direct (minutes)",
 
         "liveMaxHint": "Un stream en direct continue jusqu’à ce que quelqu’un l’arrête ou que la chaîne passe hors ligne. Avec un nombre ici, il s’arrête après autant de minutes ; 0 signifie aucune limite. Le bot se met aussi en pause quand il reste seul, si c’est activé pour lui.",

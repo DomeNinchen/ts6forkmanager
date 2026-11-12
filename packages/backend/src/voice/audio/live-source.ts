@@ -52,27 +52,34 @@ export interface LiveAudioSource {
   isLive: boolean;
   /** Direct media address (HLS playlist); signed and short-lived on Twitch, so it is fetched again on every (re)start. */
   url: string;
+  /** Set when the page serves picture and sound separately (YouTube live): the sound's own address. */
+  audioUrl?: string;
 }
 
-/** Reads the two `--print` lines below; null when yt-dlp printed something else. */
+/** Reads the `--print` output below (is_live, then one URL per selected format); null when yt-dlp printed something else. */
 export function parseLivePrint(stdout: string): LiveAudioSource | null {
-  const lines = stdout.trim().split('\n').map((l) => l.trim());
-  if (lines.length < 2) return null;
-  const [isLive, url] = lines.slice(-2);
-  if (!/^https?:\/\//.test(url)) return null;
-  return { isLive: isLive === 'True', url };
+  const [isLive, ...rest] = stdout.trim().split('\n').map((l) => l.trim());
+  const urls = rest.filter((l) => /^https?:\/\//.test(l));
+  if (urls.length === 0 || urls.length !== rest.length) return null;
+  return { isLive: isLive === 'True', url: urls[0], ...(urls[1] ? { audioUrl: urls[1] } : {}) };
 }
 
-/** Asks yt-dlp for the current audio address of a live page (Twitch channel, YouTube live...). */
-export async function resolveLiveAudio(pageUrl: string): Promise<string> {
+/** Video: one muxed format up to the preset height (Twitch), else separate picture + sound (YouTube live). */
+export function liveVideoFormat(maxHeight: number): string {
+  // YouTube live has no muxed format: picture and sound then come as two addresses
+  return `best[height<=${maxHeight}]/bv*[height<=${maxHeight}]+ba/best`;
+}
+
+/** Asks yt-dlp whether a page is live right now and for its current media address in `format`. */
+export async function resolveLive(pageUrl: string, format: string): Promise<LiveAudioSource> {
   if (pageUrl.trim().startsWith('-')) throw new AppError(400, "Invalid URL: must not start with '-'");
   const check = await validateUrl(pageUrl, { allowedProtocols: ['http:', 'https:'] });
   if (!check.valid) throw new AppError(400, 'This URL is not allowed - only public http(s) addresses can be loaded');
 
   const { stdout, stderr, code } = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve, reject) => {
     const proc = spawn('yt-dlp', [
-      ...getCookieArgs(), '--no-playlist', '--no-warnings', '-f', LIVE_AUDIO_FORMAT,
-      '--print', '%(is_live)s', '--print', '%(url)s', '--', pageUrl,
+      ...getCookieArgs(), '--no-playlist', '--no-warnings', '-f', format,
+      '--print', '%(is_live)s', '--print', 'urls', '--', pageUrl,
     ], { shell: false });
     let out = '';
     let err = '';
@@ -92,7 +99,19 @@ export async function resolveLiveAudio(pageUrl: string): Promise<string> {
   }
   const parsed = parseLivePrint(stdout);
   if (!parsed) throw new Error('yt-dlp returned no stream address');
+  // The media address is a second hop chosen by the extractor: it gets the same SSRF check as the page
+  for (const u of [parsed.url, parsed.audioUrl]) {
+    if (!u) continue;
+    const media = await validateUrl(u, { allowedProtocols: ['http:', 'https:'] });
+    if (!media.valid) throw new AppError(400, 'The stream address this page points to is not allowed');
+  }
+  return parsed;
+}
+
+/** The current audio address of a live page (Twitch channel, YouTube live...). */
+export async function resolveLiveAudio(pageUrl: string): Promise<string> {
+  const live = await resolveLive(pageUrl, LIVE_AUDIO_FORMAT);
   // Was live when queued, a finished broadcast now: that is the channel going offline
-  if (!parsed.isLive) throw ytDlpErrorToAppError('offline')!;
-  return parsed.url;
+  if (!live.isLive) throw ytDlpErrorToAppError('offline')!;
+  return live.url;
 }

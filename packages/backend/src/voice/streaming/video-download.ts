@@ -5,6 +5,7 @@ import { getCookieArgs } from '../audio/youtube.js';
 import { validateUrl } from '../../utils/url-validator.js';
 import { MUSIC_DIR, VIDEO_SUBDIR } from '../audio/media-dirs.js';
 import { AppError } from '../../middleware/error-handler.js';
+import { resolveLive, liveVideoFormat } from '../audio/live-source.js';
 
 /** Temp files we create: `.stream-<digits>.mp4` */
 const STREAM_TEMP_NAME = /^\.stream-\d+\.mp4$/;
@@ -166,33 +167,21 @@ export interface DownloadedStream {
   path: string;
   /** Only set for a freshly downloaded temp file; used to auto-stop the stream when it ends. */
   durationSec: number | null;
+  /** A page that is live right now: `path` is its short-lived media address, to be looked up again when it breaks off. */
+  live?: boolean;
+  /** Live only: the sound's own address when the page serves picture and sound separately. */
+  audioPath?: string;
 }
 
 /**
- * Why yt-dlp finished without leaving a file: a live stream, over the duration limit (both the
- * caller's choice, 400) or unknown. A live stream has no duration, so the duration filter skips it
- * just like a too long video; `isLive` (see probeIsLive) tells the two apart.
+ * Why yt-dlp finished without leaving a file: over the duration limit (the caller's choice, 400)
+ * or unknown. A live stream fails the duration filter too; the caller checks for that first.
  */
-export function missingDownloadError(ytDlpStdout: string, maxDurationSec: number, isLive = false): Error {
+export function missingDownloadError(ytDlpStdout: string, maxDurationSec: number): Error {
   if (ytDlpStdout.includes('does not pass filter')) {
-    if (isLive) {
-      return new AppError(400, 'Live streams are not supported yet - only videos with a known length can be streamed', undefined, 'VIDEO_IS_LIVE');
-    }
     return new AppError(400, `The video is longer than ${Math.round(maxDurationSec / 60)} minutes, the limit for a stream (an admin can raise it under Settings -> Streaming)`, undefined, 'VIDEO_TOO_LONG');
   }
   return new Error(`yt-dlp finished without a video file: ${ytDlpStdout.trim().slice(-500)}`);
-}
-
-/** Whether yt-dlp reports the URL as a live stream right now. Any failure counts as "no": the caller then keeps its generic error. */
-export function probeIsLive(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const proc = spawn('yt-dlp', [...getCookieArgs(), '--no-playlist', '--skip-download', '--print', '%(is_live)s', '--', url], { shell: false });
-    let stdout = '';
-    proc.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
-    const timer = setTimeout(() => { proc.kill('SIGKILL'); resolve(false); }, 30_000);
-    proc.on('close', () => { clearTimeout(timer); resolve(stdout.trim().split('\n').pop() === 'True'); });
-    proc.on('error', () => { clearTimeout(timer); resolve(false); });
-  });
 }
 
 /** 10 minutes, plus one minute per 5 minutes of allowed video, so a raised length limit does not end in a timeout. */
@@ -204,6 +193,7 @@ export async function downloadVideoForStream(
   url: string,
   maxHeight: number = 720,
   maxDurationSec: number = 900,
+  opts: { allowLive?: boolean } = {},
 ): Promise<DownloadedStream> {
   rejectYtDlpOptionUrl(url);
 
@@ -238,7 +228,7 @@ export async function downloadVideoForStream(
   const tempName = `.stream-${Date.now()}.mp4`;
   const tempPath = path.join(musicRoot, tempName);
 
-  await new Promise<void>((resolve, reject) => {
+  const live = await new Promise<{ url: string; audioUrl?: string } | null>((resolve, reject) => {
     const args = [
       ...getCookieArgs(),
       '-f', formatFilter,
@@ -271,17 +261,29 @@ export async function downloadVideoForStream(
       // yt-dlp exits 0 when --match-filter skips the video, so a missing file is the only sign
       if (!fs.existsSync(tempPath)) {
         // The filter is the only reason worth a second look: a live stream has no duration and fails it too
-        const isLive = stdout.includes('does not pass filter') && await probeIsLive(url);
-        reject(missingDownloadError(stdout, maxDurationSec, isLive));
+        if (stdout.includes('does not pass filter')) {
+          const found = await resolveLive(url, liveVideoFormat(maxHeight)).catch(() => null);
+          if (found?.isLive) {
+            if (!opts.allowLive) {
+              reject(new AppError(400, 'Live streams as video are switched off - an admin can allow them under Settings -> Streaming', undefined, 'LIVE_VIDEO_DISABLED'));
+            } else {
+              resolve(found);
+            }
+            return;
+          }
+        }
+        reject(missingDownloadError(stdout, maxDurationSec));
         return;
       }
-      resolve();
+      resolve(null);
     });
     proc.on('error', (err) => {
       clearTimeout(timer);
       reject(new Error(`yt-dlp not found: ${err.message}`));
     });
   });
+
+  if (live) return { path: live.url, durationSec: null, live: true, audioPath: live.audioUrl };
 
   // Re-resolve via allowlisted basename (tempName is server-generated).
   const canonicalTemp = resolvePathUnderMusicDir(tempName);

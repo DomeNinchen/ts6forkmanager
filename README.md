@@ -29,7 +29,7 @@ Several bots per server, each with its own queue and volume, playing radio, YouT
 ![Music Bots](docs/musicbots.png)
 
 ### Video Streaming
-Streams YouTube, Twitch, a direct URL or a library video into a channel over WebRTC. YouTube and Twitch videos are limited to 15 minutes by default; an admin can raise that under Settings -> Streaming (up to 240 minutes). A live channel streams as sound through a music bot (see above); as a video stream it is refused with a message that says so.
+Streams YouTube, Twitch, a direct URL or a library video into a channel over WebRTC. YouTube and Twitch videos are limited to 15 minutes by default; an admin can raise that under Settings -> Streaming (up to 240 minutes). A channel that is live right now (Twitch, YouTube live) streams with picture and sound until it is stopped, skipped or goes offline; if the connection breaks, the stream is reopened by itself. An admin switches live video on under Settings -> Streaming (off by default).
 
 ![Video Streaming](docs/video-streaming.png)
 

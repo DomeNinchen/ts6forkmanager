@@ -2186,6 +2186,12 @@
 
         "liveAudioHint": "Ein Musikbot spielt einen Kanal, der gerade live ist (Twitch-Kanal, YouTube-Live), mit !play oder über den Web-Player ab, nur den Ton. Streame nur Inhalte, die du weitergeben darfst.",
 
+
+        "liveVideoLabel": "Live-Streams als Video abspielen",
+
+
+        "liveVideoHint": "!stream und der Video-Tab nehmen einen Kanal an, der gerade live ist, und streamen ihn mit Bild und Ton, bis ihn jemand stoppt oder überspringt oder der Kanal offline geht. Standardmäßig aus: Ein Live-Video beschäftigt Encoder und Upload, solange es läuft.",
+
         "liveMaxLabel": "Grenze für Live-Streams (Minuten)",
 
         "liveMaxHint": "Ein Live-Stream läuft, bis ihn jemand stoppt oder der Kanal offline geht. Mit einer Zahl hier endet er nach so vielen Minuten; 0 heißt keine Grenze. Ist beim Bot \"Pausieren, wenn allein\" an, pausiert er außerdem, wenn niemand mehr zuhört.",

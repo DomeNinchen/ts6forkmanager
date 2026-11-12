@@ -30,6 +30,9 @@ test('parseLivePrint reads the is_live and url lines', () => {
   assert.deepEqual(parseLivePrint('False\nhttps://x/y.m3u8'), { isLive: false, url: 'https://x/y.m3u8' });
   assert.equal(parseLivePrint('True\nNA\n'), null);
   assert.equal(parseLivePrint(''), null);
+  // YouTube live, separate picture and sound: two addresses (yt-dlp 2026.08.19 --print urls)
+  assert.deepEqual(parseLivePrint('True\nhttps://m/v.m3u8\nhttps://m/a.m3u8\n'), { isLive: true, url: 'https://m/v.m3u8', audioUrl: 'https://m/a.m3u8' });
+  assert.equal(parseLivePrint('True\nhttps://m/v.m3u8\nERROR x\n'), null);
 });
 
 test('retry delay grows and stays bounded', () => {
@@ -57,4 +60,9 @@ test('liveOrDownloadedItem: a live page streams, a download plays as a file', ()
 test('rebuffer target is 5 s of 48 kHz stereo 16-bit PCM', async () => {
   const { LIVE_REBUFFER_BYTES } = await import('./live-source.js');
   assert.equal(LIVE_REBUFFER_BYTES, 5 * 48000 * 2 * 2);
+});
+
+test('live video format: one muxed stream up to the preset height', async () => {
+  const { liveVideoFormat } = await import('./live-source.js');
+  assert.equal(liveVideoFormat(720), 'best[height<=720]/bv*[height<=720]+ba/best');
 });

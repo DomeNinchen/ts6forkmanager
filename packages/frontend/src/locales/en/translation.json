@@ -2186,6 +2186,12 @@
 
         "liveAudioHint": "A music bot plays a channel that is live right now (a Twitch channel, a YouTube live) with !play or the web player, sound only. Only stream content you are allowed to pass on.",
 
+
+        "liveVideoLabel": "Play live streams as video",
+
+
+        "liveVideoHint": "!stream and the Video tab accept a channel that is live right now and stream it with picture and sound until someone stops or skips it or the channel goes offline. Off by default: a live video keeps the encoder and the upload busy for as long as it runs.",
+
         "liveMaxLabel": "Live stream limit (minutes)",
 
         "liveMaxHint": "A live stream runs until someone stops it or the channel goes offline. Set a number here to end it after that many minutes; 0 means no limit. The bot also pauses when it is left alone, if that is switched on for it.",

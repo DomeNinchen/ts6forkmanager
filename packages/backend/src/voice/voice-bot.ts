@@ -16,7 +16,7 @@ import type { BotFailureKind } from '@ts6/common';
 import { ChannelOccupancy } from './channel-occupancy.js';
 import { DEFAULT_MAX_VIDEO_MINUTES } from '../utils/stream-defaults.js';
 import { AppError } from '../middleware/error-handler.js';
-import { resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS, LIVE_REBUFFER_MS, LIVE_REBUFFER_BYTES } from './audio/live-source.js';
+import { resolveLive, liveVideoFormat, resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS, LIVE_REBUFFER_MS, LIVE_REBUFFER_BYTES } from './audio/live-source.js';
 
 
 /** How often a bot checks whether it has been alone long enough to pause. */
@@ -87,7 +87,22 @@ export interface VoiceBotConfig {
   /** Longest video (minutes) a stream may download; read from Settings -> Streaming at each download. */
   getMaxVideoMinutes?: () => Promise<number>;
   /** Live-stream rules from Settings -> Streaming, read at each live start. */
-  getLiveSettings?: () => Promise<{ liveAudioEnabled: boolean; liveMaxMinutes: number }>;
+  getLiveSettings?: () => Promise<{ liveAudioEnabled: boolean; liveVideoEnabled: boolean; liveMaxMinutes: number }>;
+}
+
+/** How often a live video stream asks the sidecar whether its source is still delivering. */
+const VIDEO_LIVE_CHECK_MS = 5000;
+
+interface VideoLiveWatch {
+  page: string;
+  title: string;
+  retries: number;
+  restartedAt: number;
+  endsAt?: number;
+  lastPackets: number;
+  lastChangeAt: number;
+  busy: boolean;
+  lastError?: Error;
 }
 
 export class VoiceBot extends EventEmitter {
@@ -179,6 +194,9 @@ export class VoiceBot extends EventEmitter {
   private _videoStartedAt: number | null = null;
   private _videoTempFile: string | null = null;
   private _videoEndTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The live page now streaming as video; its media address is looked up again when the sidecar reports it broke off. */
+  private _videoLive: VideoLiveWatch | null = null;
+  private _videoLiveTimer: ReturnType<typeof setInterval> | null = null;
   private _viewers: Map<number, VideoViewerInfo> = new Map();
   private signalingQueue: Promise<void> = Promise.resolve();
 
@@ -1439,6 +1457,7 @@ export class VoiceBot extends EventEmitter {
         effectiveBitrate,
         resolved.loop,
         this._videoVolume,
+        resolved.audioPath,
       );
     } catch (err) {
       await this.stopVideoStream().catch(() => { /* report the original failure */ });
@@ -1576,12 +1595,19 @@ export class VoiceBot extends EventEmitter {
    * an admin-provided local file (e.g. an idle/background video) keeps the
    * prior looping behavior.
    */
-  private async resolveStreamSource(source: string, maxHeight: number): Promise<{ path: string; loop: boolean }> {
+  private async resolveStreamSource(source: string, maxHeight: number): Promise<{ path: string; loop: boolean; audioPath?: string }> {
     const maxMinutes = (await this.config.getMaxVideoMinutes?.()) ?? DEFAULT_MAX_VIDEO_MINUTES;
-    const { path: filePath, durationSec } = await downloadVideoForStream(source, maxHeight, maxMinutes * 60);
+    const liveSettings = await this.config.getLiveSettings?.();
+    const { path: filePath, durationSec, live, audioPath } = await downloadVideoForStream(source, maxHeight, maxMinutes * 60, { allowLive: liveSettings?.liveVideoEnabled ?? false });
     const isDownloadedTemp = filePath.includes('.stream-') && filePath.endsWith('.mp4');
 
     this.clearVideoEndTimer();
+    this.stopVideoLiveWatch();
+    if (live) {
+      // No end timer, no loop: it plays until skipped, stopped or the channel goes offline
+      this.startVideoLiveWatch(source, liveSettings?.liveMaxMinutes ?? 0);
+      return { path: filePath, loop: false, audioPath };
+    }
     if (isDownloadedTemp) {
       this.cleanupVideoTempFile();
       this._videoTempFile = filePath;
@@ -1592,11 +1618,91 @@ export class VoiceBot extends EventEmitter {
     return { path: filePath, loop: !isDownloadedTemp };
   }
 
+  private startVideoLiveWatch(page: string, maxMinutes: number): void {
+    const now = Date.now();
+    const watch: VideoLiveWatch = {
+      page, title: page, retries: 0, restartedAt: now, lastPackets: -1, lastChangeAt: now, busy: false,
+      endsAt: maxMinutes > 0 ? now + maxMinutes * 60_000 : undefined,
+    };
+    this._videoLive = watch;
+    this._videoLiveTimer = setInterval(() => {
+      this.checkVideoLive(watch).catch((err) => console.error(`[VoiceBot ${this.config.id}] Live video check failed: ${err.message}`));
+    }, VIDEO_LIVE_CHECK_MS);
+  }
+
+  private stopVideoLiveWatch(): void {
+    if (this._videoLiveTimer) clearInterval(this._videoLiveTimer);
+    this._videoLiveTimer = null;
+    this._videoLive = null;
+  }
+
+  /**
+   * The sidecar cannot re-open a live source by itself (its signed address expires), so the
+   * backend watches: ffmpeg ended, or no new video packet for LIVE_STALL_MS, counts as broken
+   * off. Then the page is looked up again, up to LIVE_MAX_RETRIES times in a row.
+   */
+  private async checkVideoLive(watch: VideoLiveWatch): Promise<void> {
+    if (this._videoLive !== watch || watch.busy || !this.sidecarHttp) return;
+    if (this._videoNowPlaying?.title) watch.title = this._videoNowPlaying.title;
+    if (watch.endsAt && Date.now() >= watch.endsAt) {
+      await this.endVideoLive(watch, 'Live stream stopped: it reached the time limit for live streams');
+      return;
+    }
+    const stats = await this.sidecarHttp.getStats();
+    if (this._videoLive !== watch) return;
+    // An older sidecar reports neither field: then nothing is judged a drop
+    if (typeof stats.videoPackets === 'number' && stats.videoPackets !== watch.lastPackets) {
+      watch.lastPackets = stats.videoPackets;
+      watch.lastChangeAt = Date.now();
+    }
+    const stalled = typeof stats.videoPackets === 'number' && Date.now() - watch.lastChangeAt > LIVE_STALL_MS;
+    if (stats.sourceEnded !== true && !stalled) return;
+
+    watch.busy = true;
+    try {
+      watch.retries = Date.now() - watch.restartedAt >= LIVE_STABLE_MS ? 1 : watch.retries + 1;
+      if (watch.retries > LIVE_MAX_RETRIES) {
+        const known = watch.lastError instanceof AppError ? watch.lastError : undefined;
+        await this.endVideoLive(watch, known?.code === 'LIVE_OFFLINE'
+          ? 'Live stream ended: the channel went offline'
+          : `Live stream ended: it broke off and could not be reached again${known ? ` (${known.message})` : ''}`);
+        return;
+      }
+      console.log(`[VoiceBot ${this.config.id}] Live video dropped (${stats.sourceEnded ? 'source ended' : 'no new picture'}), retry ${watch.retries}/${LIVE_MAX_RETRIES}`);
+      await new Promise((r) => setTimeout(r, liveRetryDelayMs(watch.retries)));
+      if (this._videoLive !== watch || !this.sidecarHttp) return;
+      const preset = STREAM_PRESETS[this._videoPreset] || STREAM_PRESETS[DEFAULT_PRESET];
+      const live = await resolveLive(watch.page, liveVideoFormat(preset.height));
+      if (!live.isLive) throw new AppError(400, 'The channel is not live right now', undefined, 'LIVE_OFFLINE');
+      if (this._videoLive !== watch) return;
+      await this.sidecarHttp.setSource(live.url, preset.width, preset.height, this._videoFramerate, this._videoBitrate, false, this._videoVolume, live.audioUrl);
+      watch.restartedAt = Date.now();
+      watch.lastChangeAt = Date.now();
+      watch.lastError = undefined;
+    } catch (err: any) {
+      // The source stays ended, so the next check counts the next attempt
+      watch.lastError = err;
+      console.log(`[VoiceBot ${this.config.id}] Live video retry failed: ${err.message}`);
+    } finally {
+      watch.busy = false;
+    }
+  }
+
+  /** Ends a live video for good (offline, time limit): tell the channel and move on like the end of a video. */
+  private async endVideoLive(watch: VideoLiveWatch, reason: string): Promise<void> {
+    if (this._videoLive !== watch) return;
+    this.stopVideoLiveWatch();
+    console.log(`[VoiceBot ${this.config.id}] ${reason}: "${watch.title}"`);
+    try { this.sendChannelMessage(`${reason}: ${watch.title}`); } catch { /* the stream still ends */ }
+    await this.advanceVideoQueue();
+  }
+
   /** Stop video streaming */
   async stopVideoStream(): Promise<void> {
     if (!this._videoStreaming) return;
 
     this.clearVideoEndTimer();
+    this.stopVideoLiveWatch();
 
     // Remove all viewers from TS6 stream first
     if (this.signaling && this._activeStreamId) {
@@ -1661,6 +1767,7 @@ export class VoiceBot extends EventEmitter {
       this._videoBitrate,
       resolved.loop,
       this._videoVolume,
+      resolved.audioPath,
     );
     console.log(`[VoiceBot ${this.config.id}] Video source changed: ${source}`);
     this.emit('videoSourceChanged', source);
