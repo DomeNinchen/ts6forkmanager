@@ -809,6 +809,20 @@ model ServerMetricRollup {
   pingMin         Int?
   pingMax         Int?
 
+  // Voice connection quality as TeamSpeak reports it in serverinfo: packet loss
+  // (fraction 0..1, speech packets and all packets) and the average ping of the
+  // connected voice clients in milliseconds. TeamSpeak reports 0 for all of them
+  // while no voice client is connected, so those readings are not counted:
+  // qualityN is the number of readings with clients, and the averages and
+  // maxima are null when it is 0.
+  qualityN        Int      @default(0)
+  lossSpeechAvg   Float?
+  lossSpeechMax   Float?
+  lossTotalAvg    Float?
+  lossTotalMax    Float?
+  clientPingAvg   Float?
+  clientPingMax   Float?
+
   @@index([serverConfigId, virtualServerId, measuredAt])
 }
 

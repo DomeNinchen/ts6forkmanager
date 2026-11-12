@@ -62,11 +62,11 @@ export interface UserHistoryResponse {
 }
 
 /**
- * What the History tab can plot. "users" is the original chart; the other two
- * are rolled up from the bandwidth and ping the backend measures anyway.
+ * What the History tab can plot. "users" is the original chart; the others are
+ * rolled up from the serverinfo reading and ping the backend takes anyway.
  */
-export type HistoryMetric = 'users' | 'bandwidth' | 'ping';
-export const HISTORY_METRICS: readonly HistoryMetric[] = ['users', 'bandwidth', 'ping'];
+export type HistoryMetric = 'users' | 'bandwidth' | 'ping' | 'quality';
+export const HISTORY_METRICS: readonly HistoryMetric[] = ['users', 'bandwidth', 'ping', 'quality'];
 export type MetricKind = Exclude<HistoryMetric, 'users'>;
 
 /** The user chart's marks plus the one only the ping chart has: the ping target did not answer. */
@@ -165,7 +165,36 @@ export type PingHistoryResponse = MetricHistoryBase & {
   stats: PingStats;
 };
 
-export type MetricHistoryResponse = BandwidthHistoryResponse | PingHistoryResponse;
+/** One time bucket of the connection quality chart: TeamSpeak's own packet loss (percent) and client ping (ms). */
+export interface QualityPoint {
+  t: number;
+  lossSpeech: number | null;
+  lossSpeechMax: number | null;
+  lossTotal: number | null;
+  clientPing: number | null;
+  clientPingMax: number | null;
+  /** Measured, but no voice client was connected the whole bucket, so TeamSpeak had nothing to report. */
+  noClients: boolean;
+}
+
+export interface QualityStats {
+  currentLossSpeech: number | null;
+  currentClientPing: number | null;
+  averageLossSpeech: number | null;
+  averageLossTotal: number | null;
+  averageClientPing: number | null;
+  peakLossSpeech: MetricPeak | null;
+  peakClientPing: MetricPeak | null;
+  lastSampleAt: number | null;
+}
+
+export type QualityHistoryResponse = MetricHistoryBase & {
+  metric: 'quality';
+  points: QualityPoint[];
+  stats: QualityStats;
+};
+
+export type MetricHistoryResponse = BandwidthHistoryResponse | PingHistoryResponse | QualityHistoryResponse;
 
 export const statisticsApi = {
   userHistory: (configId: number, sid: number, range: UserHistoryRange): Promise<UserHistoryResponse> =>

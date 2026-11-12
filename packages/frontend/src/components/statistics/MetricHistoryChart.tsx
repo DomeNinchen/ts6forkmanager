@@ -6,6 +6,7 @@ import type {
   MetricHistoryEvent,
   MetricHistoryResponse,
   PingHistoryResponse,
+  QualityHistoryResponse,
 } from '@/api/statistics.api';
 import {
   AXIS_TICK,
@@ -93,11 +94,12 @@ interface MetricTooltipProps<P extends { t: number }> {
   data: Bucketed<P> & { events: MetricHistoryEvent[] };
   tz: HistoryTimeZone;
   rows: (point: P) => TooltipRowSpec[];
-  /** A red line of its own for the bucket, when there is something to say beyond the rows (timeouts). */
+  /** A line of its own for the bucket, when there is something to say beyond the rows (timeouts, red; or a muted note). */
   extra?: (point: P) => string | null;
+  extraMuted?: boolean;
 }
 
-function MetricTooltip<P extends { t: number }>({ active, label, data, tz, rows, extra }: MetricTooltipProps<P>) {
+function MetricTooltip<P extends { t: number }>({ active, label, data, tz, rows, extra, extraMuted }: MetricTooltipProps<P>) {
   const { t, i18n } = useTranslation();
   if (!active || typeof label !== 'number' || data.points.length === 0) return null;
 
@@ -117,7 +119,7 @@ function MetricTooltip<P extends { t: number }>({ active, label, data, tz, rows,
       {shown.map((r) => (
         <TooltipRow key={r.name} color={r.color} name={r.name} value={r.format(r.value)} />
       ))}
-      {note && <p className="text-destructive">{note}</p>}
+      {note && <p className={extraMuted ? 'text-muted-foreground' : 'text-destructive'}>{note}</p>}
       {shown.length === 0 && !note && events.length === 0 && (
         <p className="text-muted-foreground">{t('pages.serverStats.history.tooltip.nodata')}</p>
       )}
@@ -362,7 +364,136 @@ function PingChart({ data, tz }: { data: PingHistoryResponse; tz: HistoryTimeZon
   );
 }
 
-/** The bandwidth or ping chart of the History tab, by what the response is. */
+// Packet loss in a hue of its own; the client ping keeps the ping amber, since it is a ping too.
+const QUALITY_COLOR = {
+  speech: 'hsl(var(--chart-5))',
+  speechPeak: 'hsl(var(--chart-5) / 0.16)',
+  speechPeakSwatch: 'hsl(var(--chart-5) / 0.5)',
+  total: 'hsl(var(--chart-5) / 0.7)',
+  ping: 'hsl(var(--chart-4))',
+};
+
+const formatPercent = (value: number) => `${parseFloat(value.toFixed(2))} %`;
+
+function QualityChart({ data, tz }: { data: QualityHistoryResponse; tz: HistoryTimeZone }) {
+  const { t, i18n } = useTranslation();
+  const chartData = useChartData(data);
+
+  // Loss on the left in percent, at least up to 1 % so a quiet line does not fill the chart;
+  // client ping on the right in milliseconds, at least up to 10 ms.
+  const lossScale = useMemo(() => {
+    let top = 0;
+    for (const p of data.points) top = Math.max(top, p.lossSpeechMax ?? 0, p.lossSpeech ?? 0, p.lossTotal ?? 0);
+    return niceScale(Math.max(top * 1.12, 1));
+  }, [data.points]);
+  const pingScale = useMemo(() => {
+    let top = 0;
+    for (const p of data.points) top = Math.max(top, p.clientPing ?? 0);
+    return niceScale(Math.max(top * 1.12, 10));
+  }, [data.points]);
+
+  const ticks = useMemo(() => axisTicks(data.from, data.to, data.range, tz), [data.from, data.to, data.range, tz]);
+
+  const tip = (key: string) => t(`pages.serverStats.history.quality.tooltip.${key}`);
+  const summary = data.stats.averageLossSpeech !== null && data.stats.averageClientPing !== null
+    ? t('pages.serverStats.history.quality.chartAria', {
+        range: t(`pages.serverStats.history.ranges.${data.range}`),
+        loss: formatPercent(data.stats.averageLossSpeech),
+        ping: formatMillis(data.stats.averageClientPing),
+      })
+    : t('pages.serverStats.history.quality.chartAriaEmpty');
+
+  const Q = QUALITY_COLOR;
+  return (
+    <div>
+      <div className={chartHeight} role="img" aria-label={summary}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={chartData} margin={chartMargin}>
+            <defs>
+              <HatchPattern />
+            </defs>
+
+            {weekendBands(data.from, data.to, tz)}
+            {eventBands(data.events, data.from, data.to, lossScale.max)}
+
+            <XAxis
+              dataKey="t"
+              type="number"
+              scale="time"
+              domain={[data.from, data.to]}
+              ticks={ticks}
+              tickFormatter={(v: number) => formatAxisTick(v, data.range, tz, i18n.language)}
+              tick={AXIS_TICK}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              type="number"
+              domain={[0, lossScale.max]}
+              ticks={lossScale.ticks}
+              tickFormatter={(v: number) => `${parseFloat(v.toFixed(2))} %`}
+              tick={AXIS_TICK}
+              axisLine={false}
+              tickLine={false}
+              width={52}
+            />
+            <YAxis
+              yAxisId="ping"
+              orientation="right"
+              type="number"
+              domain={[0, pingScale.max]}
+              ticks={pingScale.ticks}
+              tickFormatter={formatMillisTick}
+              tick={AXIS_TICK}
+              axisLine={false}
+              tickLine={false}
+              width={52}
+            />
+            <ReTooltip
+              content={(props) => (
+                <MetricTooltip
+                  active={props.active}
+                  label={props.label}
+                  data={data}
+                  tz={tz}
+                  rows={(p) => [
+                    { color: Q.speech, name: tip('lossSpeech'), value: p.lossSpeech, format: formatPercent },
+                    { color: Q.speechPeakSwatch, name: tip('lossSpeechMax'), value: p.lossSpeechMax, format: formatPercent },
+                    { color: Q.total, name: tip('lossTotal'), value: p.lossTotal, format: formatPercent },
+                    { color: Q.ping, name: tip('clientPing'), value: p.clientPing, format: formatMillis },
+                    { color: 'hsl(var(--muted-foreground))', name: tip('clientPingMax'), value: p.clientPingMax, format: formatMillis },
+                  ]}
+                  extra={(p) => (p.noClients ? tip('noClients') : null)}
+                  extraMuted
+                />
+              )}
+              filterNull={false}
+              isAnimationActive={false}
+              cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeOpacity: 0.5 }}
+            />
+
+            <Area dataKey="lossSpeechMax" type="monotone" stroke="none" fill={Q.speechPeak} connectNulls={false} isAnimationActive={false} activeDot={false} />
+            <Line dataKey="lossTotal" type="monotone" stroke={Q.total} strokeWidth={1.5} strokeDasharray="5 4" dot={false} activeDot={false} connectNulls={false} isAnimationActive={false} />
+            <Line dataKey="lossSpeech" type="monotone" stroke={Q.speech} strokeWidth={2} dot={isolatedDot(chartData, 'lossSpeech', Q.speech)} activeDot={{ r: 3.5 }} connectNulls={false} isAnimationActive={false} />
+            <Line yAxisId="ping" dataKey="clientPing" type="monotone" stroke={Q.ping} strokeWidth={1.5} dot={isolatedDot(chartData, 'clientPing', Q.ping)} activeDot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
+      <Legend>
+        <LegendItem swatch={<span className="inline-block h-0.5 w-4" style={{ background: Q.speech }} />} label={t('pages.serverStats.history.quality.legend.lossSpeech')} />
+        <LegendItem swatch={<span className={box} style={{ background: Q.speechPeakSwatch }} />} label={t('pages.serverStats.history.quality.legend.lossPeak')} />
+        <LegendItem swatch={<span className="inline-block w-4 border-t-2 border-dashed" style={{ borderColor: Q.total }} />} label={t('pages.serverStats.history.quality.legend.lossTotal')} />
+        <LegendItem swatch={<span className="inline-block h-0.5 w-4" style={{ background: Q.ping }} />} label={t('pages.serverStats.history.quality.legend.clientPing')} />
+        <CommonLegend withTimeout={false} />
+      </Legend>
+    </div>
+  );
+}
+
+/** The bandwidth, ping or connection quality chart of the History tab, by what the response is. */
 export function MetricHistoryChart({ data, tz }: { data: MetricHistoryResponse; tz: HistoryTimeZone }) {
-  return data.metric === 'bandwidth' ? <BandwidthChart data={data} tz={tz} /> : <PingChart data={data} tz={tz} />;
+  if (data.metric === 'bandwidth') return <BandwidthChart data={data} tz={tz} />;
+  if (data.metric === 'quality') return <QualityChart data={data} tz={tz} />;
+  return <PingChart data={data} tz={tz} />;
 }
