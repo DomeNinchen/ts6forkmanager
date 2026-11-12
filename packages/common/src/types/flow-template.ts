@@ -106,3 +106,38 @@ export interface FlowCapability {
   /** 'http': the hosts; 'serverquery': the commands that change something. */
   details?: string[];
 }
+
+/** One node in a flow comparison. */
+export interface FlowDiffNode { id: string; type: string; label?: string }
+
+/** A setting that differs; values are shortened, secrets masked. */
+export interface FlowDiffField { field: string; before?: string; after?: string }
+
+/** What changes from one flow to another (positions are ignored). */
+export interface FlowDiff {
+  added: FlowDiffNode[];
+  removed: FlowDiffNode[];
+  changed: (FlowDiffNode & { fields: FlowDiffField[] })[];
+  edgesAdded: number;
+  edgesRemoved: number;
+}
+
+/** A flow on this server imported from an earlier version of the same template, compared with the file being imported. */
+export interface FlowTemplateUpdate {
+  flowId: number;
+  flowName: string;
+  enabled: boolean;
+  installedVersion: string;
+  /** How the file's version compares to the installed one. */
+  relation: 'newer' | 'same' | 'older';
+  /** The major version differs: the inputs must be mapped again, `values` is empty. */
+  major: boolean;
+  /** Input values taken from the installed flow, to start the mapping with. */
+  values: Record<string, string>;
+  /** The installed version's file as it was imported; null when it was not kept (imported before versions were stored). */
+  againstPrevious: FlowDiff | null;
+  /** The installed flow (with local edits) against the new version with the same values. */
+  againstLocal: FlowDiff;
+  /** What the new version can do that the installed flow cannot. */
+  newCapabilities: FlowCapability[];
+}

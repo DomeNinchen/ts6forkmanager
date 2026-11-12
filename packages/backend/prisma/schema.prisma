@@ -348,6 +348,21 @@ model BotFlow {
   variables  BotVariable[]
 }
 
+/// Every version of a shared flow template file that was imported (R16), so a later
+/// version can be compared with the one a flow came from. Kept when the flow is deleted.
+model ImportedTemplate {
+  id         Int      @id @default(autoincrement())
+  templateId String
+  version    String
+  name       String
+  /// The checked template file as JSON.
+  file       String
+  importedBy String?
+  importedAt DateTime @default(now())
+
+  @@unique([templateId, version])
+}
+
 model BotVariable {
   id     Int     @id @default(autoincrement())
   flowId Int

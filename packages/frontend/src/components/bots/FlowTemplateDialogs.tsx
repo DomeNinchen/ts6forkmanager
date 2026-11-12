@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, KeyRound, FileUp, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, KeyRound, FileUp, RefreshCw, ShieldAlert } from 'lucide-react';
 import {
   checkFlowTemplate, flowCapabilities, parseFlowTemplate, FLOW_TEMPLATE_OBJECT_TYPES,
-  type FlowCapability, type FlowTemplateFile, type FlowTemplateInput, type FlowTemplateInputType,
-  type FlowTemplateTarget, type FlowTemplateWarning,
+  type FlowCapability, type FlowDiff, type FlowTemplateFile, type FlowTemplateInput, type FlowTemplateInputType,
+  type FlowTemplateTarget, type FlowTemplateUpdate, type FlowTemplateWarning,
 } from '@ts6/common';
 import { botsApi } from '@/api/bots.api';
 import { channelsApi } from '@/api/channels.api';
@@ -76,11 +76,69 @@ function TargetList({ template, items, icon: Icon, title }: { template: FlowTemp
   );
 }
 
-function CapabilityList({ capabilities }: { capabilities: FlowCapability[] }) {
+function DiffView({ diff, title }: { diff: FlowDiff; title: string }) {
+  const { t } = useTranslation();
+  const name = (n: { label?: string; type: string }) => n.label || n.type;
+  const count = diff.added.length + diff.removed.length + diff.changed.length + diff.edgesAdded + diff.edgesRemoved;
+  return (
+    <details className="rounded-md border p-2">
+      <summary className="cursor-pointer font-medium">
+        {t('components.flowTemplates.diffHeading', { title, summary: count ? t('components.flowTemplates.diffSummary', { added: diff.added.length, removed: diff.removed.length, changed: diff.changed.length }) : t('components.flowTemplates.diffNone') })}
+      </summary>
+      {count > 0 && (
+        <ul className="mt-2 space-y-1 text-muted-foreground max-h-48 overflow-y-auto break-words">
+          {diff.added.map((n) => <li key={`a${n.id}`}>{t('components.flowTemplates.diffAdded', { name: name(n) })}</li>)}
+          {diff.removed.map((n) => <li key={`r${n.id}`}>{t('components.flowTemplates.diffRemoved', { name: name(n) })}</li>)}
+          {diff.changed.map((n) => (
+            <li key={`c${n.id}`}>
+              {t('components.flowTemplates.diffChanged', { name: name(n) })}
+              <ul className="pl-3">
+                {n.fields.map((f) => <li key={f.field}><code>{f.field}</code>: {f.before ?? '–'} → {f.after ?? '–'}</li>)}
+              </ul>
+            </li>
+          ))}
+          {(diff.edgesAdded > 0 || diff.edgesRemoved > 0) && <li>{t('components.flowTemplates.diffEdges', { added: diff.edgesAdded, removed: diff.edgesRemoved })}</li>}
+        </ul>
+      )}
+    </details>
+  );
+}
+
+/** A flow on this server from an earlier version of the same template: what the new version changes. */
+function UpdatePanel({ updates, basis, onBasis, version }: { updates: FlowTemplateUpdate[]; basis: FlowTemplateUpdate; onBasis: (flowId: number) => void; version: string }) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-md border p-3 space-y-1">
-      <p className="text-xs font-medium flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" aria-hidden /> {t('components.flowTemplates.capabilitiesTitle')}</p>
+    <div className="rounded-md border border-primary/40 p-3 space-y-2 text-xs">
+      <p className="font-medium text-sm flex items-center gap-1.5"><RefreshCw className="h-4 w-4 shrink-0" aria-hidden /> {t('components.flowTemplates.updateTitle')}</p>
+      {updates.length > 1 && (
+        <div>
+          <Label htmlFor="tpl-update-basis" className="text-xs">{t('components.flowTemplates.updateBasis')}</Label>
+          <Select value={String(basis.flowId)} onValueChange={(v) => onBasis(Number(v))}>
+            <SelectTrigger id="tpl-update-basis"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {updates.map((u) => <SelectItem key={u.flowId} value={String(u.flowId)}>{u.flowName} (v{u.installedVersion})</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <p className="break-words">{t('components.flowTemplates.updateOf', { flow: basis.flowName, from: basis.installedVersion, to: version })}</p>
+      {basis.relation !== 'newer' && <p className="text-warning">{t(`components.flowTemplates.updateRelation.${basis.relation}`)}</p>}
+      {basis.major && <p className="text-warning">{t('components.flowTemplates.updateMajor')}</p>}
+      {basis.newCapabilities.length > 0 && <CapabilityList capabilities={basis.newCapabilities} title={t('components.flowTemplates.updateNewCapabilities')} warn />}
+      {basis.againstPrevious
+        ? <DiffView diff={basis.againstPrevious} title={t('components.flowTemplates.diffPrevious', { version: basis.installedVersion })} />
+        : <p className="text-muted-foreground">{t('components.flowTemplates.diffPreviousUnknown', { version: basis.installedVersion })}</p>}
+      <DiffView diff={basis.againstLocal} title={t('components.flowTemplates.diffLocal', { flow: basis.flowName })} />
+      <p className="text-muted-foreground">{t('components.flowTemplates.updateCopyNote', { flow: basis.flowName })}</p>
+    </div>
+  );
+}
+
+function CapabilityList({ capabilities, title, warn }: { capabilities: FlowCapability[]; title?: string; warn?: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className={`rounded-md border p-3 space-y-1 ${warn ? 'border-warning/40 bg-warning/5' : ''}`}>
+      <p className="text-xs font-medium flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" aria-hidden /> {title ?? t('components.flowTemplates.capabilitiesTitle')}</p>
       {capabilities.length === 0
         ? <p className="text-xs text-muted-foreground">{t('components.flowTemplates.capabilitiesNone')}</p>
         : (
@@ -263,12 +321,30 @@ export function ImportTemplateDialog({ open, onOpenChange, serverConfigId, sid, 
   const [values, setValues] = useState<Record<string, string>>({});
   const [created, setCreated] = useState<{ id: number; name: string } | null>(null);
   const [tested, setTested] = useState(false);
+  const [updates, setUpdates] = useState<FlowTemplateUpdate[] | null>(null);
+  const [previewFailed, setPreviewFailed] = useState(false);
+  const [basisId, setBasisId] = useState<number | null>(null);
+  const [appliedBasis, setAppliedBasis] = useState<number | null>(null);
   useEffect(() => {
     if (!open) { setStep(1); setText(null); setFileName(''); setValues({}); setCreated(null); setTested(false); }
   }, [open]);
 
   const check = useMemo(() => (text === null ? null : parseFlowTemplate(text)), [text]);
   const template = check?.ok ? check.template : null;
+
+  // Flows on this server from an earlier version of this template (the import is then an update, still as a copy).
+  useEffect(() => {
+    setUpdates(null);
+    setPreviewFailed(false);
+    setAppliedBasis(null);
+    if (!template || text === null || serverConfigId === null) return;
+    let live = true;
+    botsApi.previewImport({ file: text, serverConfigId, virtualServerId: sid })
+      .then((r) => { if (live) { setUpdates(r.updates); setBasisId(r.updates[0]?.flowId ?? null); } })
+      .catch(() => { if (live) { setUpdates([]); setPreviewFailed(true); } });
+    return () => { live = false; };
+  }, [template, text, serverConfigId, sid]);
+  const basis = updates?.find((u) => u.flowId === basisId) ?? null;
   const capabilities = useMemo(() => (template ? flowCapabilities(template.flow.nodes) : []), [template]);
   const objects = useServerObjects(serverConfigId, sid, open && !!template?.inputs.some((i) => isObjectType(i.type)));
   const lang = i18n.language.slice(0, 2) as 'de' | 'en' | 'fr';
@@ -302,6 +378,7 @@ export function ImportTemplateDialog({ open, onOpenChange, serverConfigId, sid, 
     mutationFn: () => botsApi.importTemplate({
       file: text!, serverConfigId: serverConfigId!, virtualServerId: sid,
       values: Object.fromEntries(template!.inputs.map((i) => [i.key, values[i.key] ?? ''])),
+      ...(basis ? { name: `${basis.flowName} ${template!.version}` } : {}),
     }),
     onSuccess: (res) => {
       toast.success(t('components.flowTemplates.imported', { name: res.name }));
@@ -374,6 +451,8 @@ export function ImportTemplateDialog({ open, onOpenChange, serverConfigId, sid, 
                   <p className="text-muted-foreground">{t('components.flowTemplates.summary', { nodes: template.flow.nodes.length, inputs: template.inputs.length })}</p>
                 </div>
                 <CapabilityList capabilities={capabilities} />
+                {basis && updates && <UpdatePanel updates={updates} basis={basis} onBasis={setBasisId} version={template.version} />}
+                {previewFailed && <p className="text-xs text-warning">{t('components.flowTemplates.updateCheckFailed')}</p>}
                 <p className="text-xs text-muted-foreground">{t('components.flowTemplates.importDisabledNote')}</p>
                 <TargetList template={template} items={template.secrets} icon={KeyRound} title={t('components.flowTemplates.secretsToEnter')} />
               </div>
@@ -407,7 +486,18 @@ export function ImportTemplateDialog({ open, onOpenChange, serverConfigId, sid, 
           {step === 1 && <>
             <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
             {/* Nothing to map: import straight away. */}
-            <Button onClick={() => (template!.inputs.length ? setStep(2) : importFlow.mutate())} disabled={!template || serverConfigId === null || importFlow.isPending}>
+            <Button
+              onClick={() => {
+                if (!template!.inputs.length) return importFlow.mutate();
+                // An update starts with the mapping of the installed flow (empty after a major version).
+                if (basis && basis.flowId !== appliedBasis) {
+                  setValues((prev) => ({ ...prev, ...Object.fromEntries(Object.entries(basis.values).filter(([, v]) => v)) }));
+                  setAppliedBasis(basis.flowId);
+                }
+                setStep(2);
+              }}
+              disabled={!template || serverConfigId === null || updates === null || importFlow.isPending}
+            >
               {template && !template.inputs.length ? t('components.flowTemplates.import') : t('common.next')}
             </Button>
           </>}

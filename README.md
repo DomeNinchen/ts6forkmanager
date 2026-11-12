@@ -42,7 +42,7 @@ Ready-made templates, imported with one click:
 
 ![Flow Templates](docs/flow-templates.png)
 
-A flow can also be exported as a template file and imported on another manager: channels, groups and music bots become inputs that the import maps onto the new server, secrets stay behind, and the import shows what the flow can do and runs a test before the flow is switched on.
+A flow can also be exported as a template file and imported on another manager: channels, groups and music bots become inputs that the import maps onto the new server, secrets stay behind, and the import shows what the flow can do and runs a test before the flow is switched on. A newer version of an imported template is shown as an update with the changes against the old version and against the installed flow, and is imported as a copy next to it.
 
 ### Permissions
 All five permission layers, with a side-by-side comparison that highlights the differences.
