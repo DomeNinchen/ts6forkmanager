@@ -24,8 +24,14 @@ export interface FlowTemplateInput {
   type: FlowTemplateInputType;
   label: string;
   required?: boolean;
-  /** Value used when the importer gives none (on export: the value the flow had). */
+  /**
+   * Value used when the importer gives none (on export: the value the flow had).
+   * Server objects (channel, servergroup, channelgroup, bot) never fall back to it:
+   * there it is the id on the exporting server, only a hint.
+   */
   default?: string;
+  /** Server objects: their names on the exporting server, in the order of `default`; the import suggests objects with the same name. */
+  names?: string[];
   /** For `select`. */
   options?: { label: string; value: string }[];
   /** The value is a comma-separated list (several channels/groups). */
@@ -83,4 +89,20 @@ export interface ImportedTemplateRef {
 /** Something the export could not turn into an input: the value may still point at an object of the old server. */
 export interface FlowTemplateWarning extends FlowTemplateTarget {
   reason: 'expression' | 'event-filter' | 'webquery' | 'rank-list' | 'support-queue';
+}
+
+/** Input types that name an object of the server. */
+export const FLOW_TEMPLATE_OBJECT_TYPES: readonly FlowTemplateInputType[] = ['channel', 'servergroup', 'channelgroup', 'bot'];
+
+/** Something an imported flow can do, listed before the import. */
+export type FlowCapabilityKind =
+  | 'kick' | 'ban' | 'move' | 'poke' | 'message' | 'groups' | 'channels'
+  | 'serverquery' | 'http' | 'webhookTrigger' | 'voice' | 'supportQueue';
+
+export interface FlowCapability {
+  kind: FlowCapabilityKind;
+  /** Ids of the nodes that do it. */
+  nodes: string[];
+  /** 'http': the hosts; 'serverquery': the commands that change something. */
+  details?: string[];
 }

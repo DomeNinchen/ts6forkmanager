@@ -3,11 +3,11 @@
 // turning a template back into a flow (import). Used by the backend routes and
 // by the import dialog, so both report the same problems.
 
-import { isSecretKey } from '../serverquery/classification.js';
+import { isReadOnlyCommand, isSecretKey } from '../serverquery/classification.js';
 import {
   FLOW_TEMPLATE_FORMAT, FLOW_TEMPLATE_FORMAT_VERSION, FLOW_TEMPLATE_INPUT_TYPES, FLOW_TEMPLATE_MAX_BYTES,
-  FLOW_TEMPLATE_MAX_INPUTS, FLOW_TEMPLATE_MAX_NODES,
-  type FlowTemplateEdge, type FlowTemplateFile, type FlowTemplateInput, type FlowTemplateInputType,
+  FLOW_TEMPLATE_MAX_INPUTS, FLOW_TEMPLATE_MAX_NODES, FLOW_TEMPLATE_OBJECT_TYPES,
+  type FlowCapability, type FlowCapabilityKind, type FlowTemplateEdge, type FlowTemplateFile, type FlowTemplateInput, type FlowTemplateInputType,
   type FlowTemplateNode, type FlowTemplateTarget, type FlowTemplateWarning, type ImportedTemplateRef,
 } from '../types/flow-template.js';
 
@@ -247,7 +247,8 @@ export function flowToTemplate(flowData: { nodes?: unknown[]; edges?: unknown[] 
     let input = byValue.get(group);
     if (!input) {
       counters[c.type] = (counters[c.type] ?? 0) + 1;
-      input = { key: `${c.type}${counters[c.type]}`, type: c.type, label: `${c.nodeLabel}: ${c.field}`, required: true, default: c.value, targets: [] };
+      // A list (exempt groups, protected channels) may stay empty on the new server.
+      input = { key: `${c.type}${counters[c.type]}`, type: c.type, label: `${c.nodeLabel}: ${c.field}`, required: !c.multiple, default: c.value, targets: [] };
       byValue.set(group, input);
       inputs.push(input);
     }
@@ -369,6 +370,9 @@ export function checkFlowTemplate(raw: unknown): FlowTemplateCheck {
       if (!FLOW_TEMPLATE_INPUT_TYPES.includes(inp.type as FlowTemplateInputType)) errors.push(`${where}: unknown type "${String(inp.type)}".`);
       if (typeof inp.label !== 'string' || !inp.label || inp.label.length > 200) errors.push(`${where}: "label" must be a text of 1-200 characters.`);
       if (!optString(inp.default, 2000)) errors.push(`${where}: "default" must be a text.`);
+      if (inp.names !== undefined && (!Array.isArray(inp.names) || inp.names.length > 100 || inp.names.some((n) => typeof n !== 'string' || n.length > 200))) {
+        errors.push(`${where}: "names" must be a list of texts.`);
+      }
       if (inp.type === 'select' && (!Array.isArray(inp.options) || inp.options.length === 0 || inp.options.some((o) => !isObj(o) || typeof o.value !== 'string' || typeof o.label !== 'string'))) {
         errors.push(`${where}: a select input needs "options" with label and value.`);
       }
@@ -382,23 +386,77 @@ export function checkFlowTemplate(raw: unknown): FlowTemplateCheck {
 
 /**
  * Builds the flow of an import. `values` (input key -> value) win over each
- * input's default; required inputs left empty are returned in `missing`.
+ * input's default; server objects have no default (see FlowTemplateInput.default).
+ * Required inputs left empty are returned in `missing`, object inputs that are
+ * not ids in `invalid`.
  */
 export function templateToFlowData(template: FlowTemplateFile, values: Record<string, string> = {}): {
   flowData: { nodes: FlowTemplateNode[]; edges: FlowTemplateEdge[]; imported: ImportedTemplateRef };
   missing: string[];
+  invalid: string[];
 } {
   const nodes = cloneNodes(template.flow.nodes);
   const edges = cloneEdges(template.flow.edges);
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const missing: string[] = [];
+  const invalid: string[] = [];
   for (const input of template.inputs) {
-    const value = (values[input.key] ?? input.default ?? '').trim();
+    const isObject = FLOW_TEMPLATE_OBJECT_TYPES.includes(input.type);
+    const value = (values[input.key] ?? (isObject ? '' : input.default) ?? '').trim();
     if (!value && input.required) missing.push(input.key);
+    else if (value && isObject && !(input.multiple ? ID_VALUE : /^\d+$/).test(value)) invalid.push(input.key);
     for (const t of input.targets) {
       const node = byId.get(t.node);
       if (node) setConfigPath(node.config, t.field, value);
     }
   }
-  return { flowData: { nodes, edges, imported: { id: template.id, version: template.version, name: template.name } }, missing };
+  return { flowData: { nodes, edges, imported: { id: template.id, version: template.version, name: template.name } }, missing, invalid };
+}
+
+const CAPABILITY_OF: Record<string, FlowCapabilityKind> = {
+  action_kick: 'kick', action_idleKicker: 'kick',
+  action_ban: 'ban',
+  action_move: 'move', action_afkMover: 'move',
+  action_poke: 'poke', action_pokeGroup: 'poke',
+  action_message: 'message',
+  action_groupAdd: 'groups', action_groupRemove: 'groups', action_rankCheck: 'groups',
+  action_channelCreate: 'channels', action_channelEdit: 'channels', action_channelDelete: 'channels',
+  action_tempChannelCleanup: 'channels', action_animatedChannel: 'channels',
+  action_webquery: 'serverquery',
+  action_httpRequest: 'http', action_webhook: 'http',
+  trigger_webhook: 'webhookTrigger',
+  action_supportEnqueue: 'supportQueue',
+};
+
+/** The host an HTTP node calls, without credentials; a URL that is only a placeholder is shown as written. */
+export function flowUrlHost(url: unknown): string {
+  const text = String(url ?? '').trim();
+  const m = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]*)/i.exec(text);
+  if (!m) return text.slice(0, 80) || '?';
+  return m[1].slice(m[1].lastIndexOf('@') + 1) || '?';
+}
+
+/**
+ * What a flow can do, for the import dialog ("kick, ban, HTTP to example.com, ...").
+ * WebQuery nodes count only with a command that changes something; reading is not listed.
+ */
+export function flowCapabilities(nodes: FlowTemplateNode[]): FlowCapability[] {
+  const byKind = new Map<FlowCapabilityKind, FlowCapability>();
+  for (const node of nodes) {
+    const kind: FlowCapabilityKind | undefined = node.type.startsWith('action_voice') ? 'voice' : CAPABILITY_OF[node.type];
+    if (!kind) continue;
+    let detail: string | undefined;
+    if (kind === 'http') detail = flowUrlHost(node.config.url);
+    if (kind === 'serverquery') {
+      const command = String(node.config.command ?? '').trim().split(/\s/)[0].toLowerCase();
+      // A placeholder command is unknown until it runs, so it counts as a change.
+      if (command && !command.includes('{{') && isReadOnlyCommand(command)) continue;
+      detail = command || '?';
+    }
+    let cap = byKind.get(kind);
+    if (!cap) { cap = { kind, nodes: [] }; byKind.set(kind, cap); }
+    cap.nodes.push(node.id);
+    if (detail && !cap.details?.includes(detail)) (cap.details ??= []).push(detail);
+  }
+  return [...byKind.values()];
 }
