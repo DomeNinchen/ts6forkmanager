@@ -7,6 +7,8 @@ const KEY_BITRATE = 'stream_default_bitrate';
 const KEY_VOLUME = 'stream_default_volume';
 const KEY_IDLE_STOP = 'stream_idle_stop_minutes';
 const KEY_MAX_VIDEO = 'stream_max_video_minutes';
+const KEY_LIVE_AUDIO = 'stream_live_audio_enabled';
+const KEY_LIVE_MAX = 'stream_live_max_minutes';
 
 /** A day is more than any "nobody is watching" patience makes sense for; it also keeps setTimeout well inside its range. */
 export const IDLE_STOP_MAX_MINUTES = 1440;
@@ -31,6 +33,10 @@ export interface StreamDefaults {
   idleStopMinutes: number;
   /** Longest YouTube/Twitch video a stream accepts, in minutes (1 to MAX_VIDEO_MAX_MINUTES). */
   maxVideoMinutes: number;
+  /** Whether `!play` and the web player accept a channel that is live right now (sound only). */
+  liveAudioEnabled: boolean;
+  /** Longest a live session may run before the bot ends it, in minutes; 0 = no limit. */
+  liveMaxMinutes: number;
 }
 
 /**
@@ -67,12 +73,14 @@ export function builtInStreamDefaults(): StreamDefaults {
     // stream that ends by itself is a surprise nobody asked for.
     idleStopMinutes: 0,
     maxVideoMinutes: DEFAULT_MAX_VIDEO_MINUTES,
+    liveAudioEnabled: true,
+    liveMaxMinutes: 0,
   };
 }
 
 export async function getStreamDefaults(prisma: PrismaClient): Promise<StreamDefaults> {
   const rows = await prisma.appSetting.findMany({
-    where: { key: { in: [KEY_PRESET, KEY_FRAMERATE, KEY_BITRATE, KEY_VOLUME, KEY_IDLE_STOP, KEY_MAX_VIDEO] } },
+    where: { key: { in: [KEY_PRESET, KEY_FRAMERATE, KEY_BITRATE, KEY_VOLUME, KEY_IDLE_STOP, KEY_MAX_VIDEO, KEY_LIVE_AUDIO, KEY_LIVE_MAX] } },
   });
   const stored = new Map(rows.map((r) => [r.key, r.value]));
   const fallback = builtInStreamDefaults();
@@ -100,11 +108,17 @@ export async function getStreamDefaults(prisma: PrismaClient): Promise<StreamDef
     maxVideoMinutes: isValidMaxVideoMinutes(Number(stored.get(KEY_MAX_VIDEO)))
       ? Number(stored.get(KEY_MAX_VIDEO))
       : fallback.maxVideoMinutes,
+    liveAudioEnabled: stored.has(KEY_LIVE_AUDIO) ? stored.get(KEY_LIVE_AUDIO) === 'true' : fallback.liveAudioEnabled,
+    liveMaxMinutes: isValidLiveMaxMinutes(Number(stored.get(KEY_LIVE_MAX))) ? Number(stored.get(KEY_LIVE_MAX)) : fallback.liveMaxMinutes,
   };
 }
 
 export function isValidMaxVideoMinutes(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 1 && (value as number) <= MAX_VIDEO_MAX_MINUTES;
+}
+
+export function isValidLiveMaxMinutes(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= IDLE_STOP_MAX_MINUTES;
 }
 
 export async function setStreamDefaults(prisma: PrismaClient, values: StreamDefaults): Promise<StreamDefaults> {
@@ -115,6 +129,8 @@ export async function setStreamDefaults(prisma: PrismaClient, values: StreamDefa
     [KEY_VOLUME, String(values.volume)],
     [KEY_IDLE_STOP, String(values.idleStopMinutes)],
     [KEY_MAX_VIDEO, String(values.maxVideoMinutes)],
+    [KEY_LIVE_AUDIO, String(values.liveAudioEnabled)],
+    [KEY_LIVE_MAX, String(values.liveMaxMinutes)],
   ];
   await prisma.$transaction(
     pairs.map(([key, value]) =>

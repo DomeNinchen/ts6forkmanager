@@ -1254,6 +1254,14 @@
         "idleStopHint": "Durée pendant laquelle un stream vidéo peut tourner sans spectateur avant que le bot ne l'arrête, pour qu'un stream oublié n'occupe pas en permanence l'upstream et le CPU du serveur. Le décompte démarre quand le dernier spectateur part, ou au démarrage du stream si personne ne s'est jamais connecté ; l'arrivée d'un spectateur le remet à zéro. 0 laisse le stream tourner jusqu'à ce que quelqu'un l'arrête. L'aperçu de cette interface web ne compte pas comme spectateur.",
         "maxVideoLabel": "Vidéo la plus longue pour un stream (minutes)",
         "maxVideoHint": "La vidéo YouTube ou Twitch la plus longue qu'un stream accepte. Par défaut 15 minutes ; elle peut être augmentée ici jusqu'à 240 minutes (4 heures). Une vidéo plus longue est refusée avec un message. La vidéo est entièrement téléchargée avant la lecture, une longue vidéo met donc un moment à démarrer.",
+
+        "liveAudioLabel": "Lire les streams en direct (son)",
+
+        "liveAudioHint": "Un bot musical lit une chaîne en direct (chaîne Twitch, live YouTube) avec !play ou le lecteur web, son uniquement. Ne diffusez que des contenus que vous avez le droit de partager.",
+
+        "liveMaxLabel": "Limite des streams en direct (minutes)",
+
+        "liveMaxHint": "Un stream en direct continue jusqu’à ce que quelqu’un l’arrête ou que la chaîne passe hors ligne. Avec un nombre ici, il s’arrête après autant de minutes ; 0 signifie aucune limite. Le bot se met aussi en pause quand il reste seul, si c’est activé pour lui.",
         "restoreShippedValues": "Restaurer les valeurs fournies",
         "unsavedChanges": "Modifications non enregistrées",
         "streamDefaultsSaved": "Paramètres par défaut du stream enregistrés",

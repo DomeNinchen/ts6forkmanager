@@ -2150,6 +2150,14 @@
         "idleStopHint": "How long a video stream may run with no viewer before the bot ends it, so a forgotten stream does not keep using the server's upstream and CPU. The clock starts when the last viewer leaves, or when the stream starts if nobody ever joins; a viewer joining resets it. 0 keeps the stream running until someone stops it. The preview in this web interface does not count as a viewer.",
         "maxVideoLabel": "Longest video for a stream (minutes)",
         "maxVideoHint": "The longest YouTube or Twitch video a stream accepts. The default is 15 minutes; raise it here, up to 240 minutes (4 hours). A longer video is refused with a message. The video is downloaded in full before it plays, so a long one takes a while to start.",
+
+        "liveAudioLabel": "Play live streams (sound)",
+
+        "liveAudioHint": "A music bot plays a channel that is live right now (a Twitch channel, a YouTube live) with !play or the web player, sound only. Only stream content you are allowed to pass on.",
+
+        "liveMaxLabel": "Live stream limit (minutes)",
+
+        "liveMaxHint": "A live stream runs until someone stops it or the channel goes offline. Set a number here to end it after that many minutes; 0 means no limit. The bot also pauses when it is left alone, if that is switched on for it.",
         "restoreShippedValues": "Restore shipped values",
         "unsavedChanges": "Unsaved changes",
         "streamDefaultsSaved": "Stream defaults saved",

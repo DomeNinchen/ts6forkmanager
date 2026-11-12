@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import { validateUrl } from "../../utils/url-validator.js";
 import { AppError } from "../../middleware/error-handler.js";
+import { classifyYtDlpError, ytDlpErrorToAppError } from "./live-source.js";
+import type { QueueItem } from "../playlist/queue.js";
 
 export interface YouTubeInfo {
   id: string;
@@ -11,6 +13,16 @@ export interface YouTubeInfo {
   duration: number; // seconds
   thumbnail: string;
   url: string;
+  /** Broadcasting right now: nothing was downloaded, it plays as a stream (see liveOrDownloadedItem). */
+  isLive?: boolean;
+}
+
+/** The queue entry for what downloadYouTube returned: a file to play, or a live page the bot streams. */
+export function liveOrDownloadedItem(filePath: string, info: YouTubeInfo): QueueItem {
+  if (info.isLive) {
+    return { id: `live_${info.id}`, title: info.title, artist: info.artist, filePath: '', source: 'live', sourceUrl: info.url, streamUrl: info.url };
+  }
+  return { id: `yt_${info.id}`, title: info.title, artist: info.artist, duration: info.duration, filePath, source: 'youtube', sourceUrl: info.url };
 }
 
 export interface YouTubeSearchResult {
@@ -85,7 +97,7 @@ async function assertPublicSource(url: string): Promise<void> {
 /**
  * Download audio from a YouTube URL using yt-dlp
  */
-export async function downloadYouTube(url: string, outputDir: string): Promise<{ filePath: string; info: YouTubeInfo }> {
+export async function downloadYouTube(url: string, outputDir: string, opts: { allowLive?: boolean } = {}): Promise<{ filePath: string; info: YouTubeInfo }> {
   await assertPublicSource(url);
   return new Promise((resolve, reject) => {
     const outputTemplate = path.join(outputDir, "%(id)s.%(ext)s");
@@ -113,7 +125,7 @@ export async function downloadYouTube(url: string, outputDir: string): Promise<{
 
     infoProc.on("close", (code) => {
       if (code !== 0) {
-        return reject(new Error(`yt-dlp info failed (code ${code}): ${infoErr.slice(0, 200)}`));
+        return reject(ytDlpErrorToAppError(classifyYtDlpError(infoErr)) ?? new Error(`yt-dlp info failed (code ${code}): ${infoErr.slice(0, 200)}`));
       }
 
       let parsed: any;
@@ -134,6 +146,13 @@ export async function downloadYouTube(url: string, outputDir: string): Promise<{
         // `url` was a ytsearch:... query rather than an actual link.
         url: parsed.webpage_url || url,
       };
+
+      // A live download never ends (yt-dlp records until the broadcast stops), so it is never started
+      if (parsed.is_live === true) {
+        if (!opts.allowLive) return reject(new AppError(400, 'This is a live stream - it can be played, but not saved to the library', undefined, 'SOURCE_IS_LIVE'));
+        // fulltitle: yt-dlp appends the current date and time to a live stream's title
+        return resolve({ filePath: '', info: { ...info, title: parsed.fulltitle || info.title, isLive: true } });
+      }
 
       const expectedPath = path.join(outputDir, `${info.id}.opus`);
 

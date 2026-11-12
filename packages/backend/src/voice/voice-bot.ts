@@ -15,6 +15,8 @@ import type { WebQueryClient } from '../ts-client/webquery-client.js';
 import type { BotFailureKind } from '@ts6/common';
 import { ChannelOccupancy } from './channel-occupancy.js';
 import { DEFAULT_MAX_VIDEO_MINUTES } from '../utils/stream-defaults.js';
+import { AppError } from '../middleware/error-handler.js';
+import { resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS } from './audio/live-source.js';
 
 
 /** How often a bot checks whether it has been alone long enough to pause. */
@@ -84,6 +86,8 @@ export interface VoiceBotConfig {
   getOtherBotClientIds?: () => ReadonlySet<number>;
   /** Longest video (minutes) a stream may download; read from Settings -> Streaming at each download. */
   getMaxVideoMinutes?: () => Promise<number>;
+  /** Live-stream rules from Settings -> Streaming, read at each live start. */
+  getLiveSettings?: () => Promise<{ liveAudioEnabled: boolean; liveMaxMinutes: number }>;
 }
 
 export class VoiceBot extends EventEmitter {
@@ -317,6 +321,11 @@ export class VoiceBot extends EventEmitter {
 
   get ts3ClientId(): number {
     return this.client.getClientId();
+  }
+
+  /** Chat message to the channel the bot sits in (a voice client's channel message always goes there). */
+  sendChannelMessage(msg: string): void {
+    this.client.sendCommand(buildCommand('sendtextmessage', { targetmode: 2, msg }));
   }
 
   sendTextMessage(targetClid: number, msg: string): void {
@@ -678,16 +687,35 @@ export class VoiceBot extends EventEmitter {
     }
   }
 
-  async playStream(item: QueueItem): Promise<void> {
+  /** Plays a queue entry the way its kind needs: radio and live entries stream, everything else is a file. */
+  playItem(item: QueueItem): Promise<void> {
+    return item.streamUrl ? this.playStream(item) : this.play(item);
+  }
+
+  /**
+   * Radio station or live broadcast. A live entry (source 'live') carries its page
+   * URL; the short-lived media address is looked up again on every start, retry and
+   * resume. `continuing` = a retry or resume of the same session (keeps its time limit).
+   */
+  async playStream(item: QueueItem, opts: { liveRetry?: number; continuing?: boolean } = {}): Promise<void> {
     if (this._status !== 'connected' && this._status !== 'playing' && this._status !== 'paused') {
       throw new Error('Bot is not connected');
     }
     if (!item.streamUrl) {
       throw new Error('No streamUrl provided');
     }
+    const isLive = item.source === 'live';
+    if (isLive) {
+      const live = await this.config.getLiveSettings?.();
+      if (live && !live.liveAudioEnabled) {
+        throw new AppError(400, 'Live streams are switched off - an admin can allow them under Settings -> Streaming', undefined, 'LIVE_DISABLED');
+      }
+      if (!opts.continuing) item.liveEndsAt = live?.liveMaxMinutes ? Date.now() + live.liveMaxMinutes * 60_000 : undefined;
+    }
 
     this.stopIcyPolling();
     this.stopPlayback();
+    const before = this.loopEpoch;
     this._nowPlaying = item;
     this._isStreaming = true;
     this._status = 'playing';
@@ -696,10 +724,13 @@ export class VoiceBot extends EventEmitter {
     this.emit('nowPlaying', item);
     this.updateNowPlayingNickname(item.title);
     this.updateDescription();
-    this.startIcyPolling(item.streamUrl);
+    if (!isLive) this.startIcyPolling(item.streamUrl);
 
     try {
-      const stream = await this.pipeline.toPcmStream(item.streamUrl);
+      const source = isLive ? await resolveLiveAudio(item.sourceUrl ?? item.streamUrl) : item.streamUrl;
+      if (before !== this.loopEpoch) return; // stopped or replaced while yt-dlp looked the stream up
+      const stream = await this.pipeline.toPcmStream(source);
+      if (before !== this.loopEpoch) { stream.kill(); return; }
       this.streamKill = stream.kill;
       this.streamChunks = [];
       this.streamChunksSize = 0;
@@ -707,15 +738,18 @@ export class VoiceBot extends EventEmitter {
       const epoch = ++this.loopEpoch;
       let framesSent = 0;
       const startTime = performance.now();
+      let lastDataAt = startTime;
 
       stream.stdout.on('data', (chunk: Buffer) => {
         if (epoch !== this.loopEpoch) return;
+        lastDataAt = performance.now();
         this.streamChunks.push(chunk);
         this.streamChunksSize += chunk.length;
       });
 
       stream.process.on('close', () => {
         if (epoch !== this.loopEpoch) return;
+        if (isLive) { this.liveDropped(item, opts.liveRetry ?? 0, performance.now() - startTime); return; }
         this.client.sendVoiceStop();
         this._isStreaming = false;
         this.streamKill = null;
@@ -750,6 +784,15 @@ export class VoiceBot extends EventEmitter {
         // Behind after a stall: catch up on what ffmpeg already buffered (see startSong)
         if (now - nextDue > MAX_CATCHUP_MS) nextDue = now;
 
+        if (isLive) {
+          if (item.liveEndsAt && Date.now() >= item.liveEndsAt) {
+            this.endLive(item, 'Live stream stopped: it reached the time limit for live streams');
+            return;
+          }
+          // A playlist that stopped growing leaves ffmpeg waiting forever: treat silence as a drop (close -> liveDropped)
+          if (now - lastDataAt > LIVE_STALL_MS) { stream.kill(); lastDataAt = now; }
+        }
+
         // Send exactly one frame if available
         const frame = this.takeFromStreamChunks(BYTES_PER_FRAME);
         if (frame) {
@@ -771,6 +814,8 @@ export class VoiceBot extends EventEmitter {
 
       this.playbackTimer = setTimeout(tick, 200);
     } catch (err) {
+      if (before !== this.loopEpoch) return; // something newer plays now; this attempt no longer matters
+      if (opts.liveRetry) { this.liveDropped(item, opts.liveRetry, 0, err as Error); return; }
       this._isStreaming = false;
       this.streamKill = null;
       this._status = 'connected';
@@ -778,6 +823,46 @@ export class VoiceBot extends EventEmitter {
       this.emit('statusChange', this._status);
       throw err;
     }
+  }
+
+  /**
+   * The live stream broke off (ffmpeg ended, went silent, or a retry failed): look the
+   * address up again after a short pause, up to LIVE_MAX_RETRIES times in a row, then give up.
+   */
+  private liveDropped(item: QueueItem, attempt: number, playedMs: number, lastError?: Error): void {
+    const next = playedMs >= LIVE_STABLE_MS ? 1 : attempt + 1;
+    if (next > LIVE_MAX_RETRIES) {
+      // Only our own readable messages reach the chat; raw yt-dlp/ffmpeg text can name internal addresses (logged above instead)
+      const known = lastError instanceof AppError ? lastError : undefined;
+      this.endLive(item, known?.code === 'LIVE_OFFLINE'
+        ? 'Live stream ended: the channel went offline'
+        : `Live stream ended: it broke off and could not be reached again${known ? ` (${known.message})` : ''}`);
+      return;
+    }
+    this.clearTimer(); // makes this run's callbacks stale; the retry starts a new one
+    this.stopDecoder();
+    this.client.sendVoiceStop();
+    const epoch = this.loopEpoch;
+    console.log(`[VoiceBot] Live stream "${item.title}" dropped, retry ${next}/${LIVE_MAX_RETRIES}${lastError ? `: ${lastError.message}` : ''}`);
+    setTimeout(() => {
+      if (epoch !== this.loopEpoch || this._nowPlaying !== item) return; // stopped, paused or replaced meanwhile
+      this.playStream(item, { liveRetry: next, continuing: true }).catch((err) => this.endLive(item, `Live stream ended: ${err.message}`));
+    }, liveRetryDelayMs(next));
+  }
+
+  /** Ends a live entry for good (offline, time limit) and moves on like the end of a song. */
+  private endLive(item: QueueItem, reason: string): void {
+    this.stopPlayback();
+    this.client.sendVoiceStop();
+    this._nowPlaying = null;
+    this._status = 'connected';
+    console.log(`[VoiceBot] ${reason}: "${item.title}"`);
+    this.emit('statusChange', this._status);
+    this.emit('liveEnded', item, reason);
+    this.emit('trackEnd', item);
+    const next = this.queue.next();
+    if (next) this.playItem(next).catch((err) => this.emit('error', err));
+    else { this.resetNickname(); this.resetDescription(); }
   }
 
   pause(): void {
@@ -807,7 +892,7 @@ export class VoiceBot extends EventEmitter {
     if (this._pausedStream) {
       const station = this._pausedStream;
       this._pausedStream = null;
-      this.playStream(station).catch((err) => this.emit('error', err));
+      this.playStream(station, { continuing: true }).catch((err) => this.emit('error', err));
       return;
     }
     const item = this._nowPlaying;
@@ -847,7 +932,7 @@ export class VoiceBot extends EventEmitter {
 
     const next = this.queue.next();
     if (next) {
-      this.play(next).catch((err) => this.emit('error', err));
+      this.playItem(next).catch((err) => this.emit('error', err));
     } else {
       this.resetNickname();
       this.resetDescription();
@@ -863,7 +948,7 @@ export class VoiceBot extends EventEmitter {
 
     const prev = this.queue.previous();
     if (prev) {
-      this.play(prev).catch((err) => this.emit('error', err));
+      this.playItem(prev).catch((err) => this.emit('error', err));
     } else {
       this.resetNickname();
       this.resetDescription();
@@ -1007,7 +1092,7 @@ export class VoiceBot extends EventEmitter {
         }
 
         const next = this.queue.next();
-        if (next) this.play(next).catch((err) => this.emit('error', err));
+        if (next) this.playItem(next).catch((err) => this.emit('error', err));
         else { this.resetNickname(); this.resetDescription(); }
         return;
       }

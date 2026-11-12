@@ -22,7 +22,7 @@ import { getSupportRetentionDays, isValidSupportRetention, setSupportRetentionDa
 import { SUPPORT_RETENTION_MAX_DAYS, SUPPORT_RETENTION_MIN_DAYS, RAID_RETENTION_MAX_DAYS, RAID_RETENTION_MIN_DAYS } from '@ts6/common';
 import { getRaidRetentionDays, isValidRaidRetention, setRaidRetentionDays } from '../utils/raid-protection.js';
 import { TEMP_GROUP_RETENTION_MAX_DAYS, TEMP_GROUP_RETENTION_MIN_DAYS } from '@ts6/common';
-import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES, MAX_VIDEO_MAX_MINUTES, isValidMaxVideoMinutes } from '../utils/stream-defaults.js';
+import { getStreamDefaults, setStreamDefaults, builtInStreamDefaults, BITRATE_PATTERN, IDLE_STOP_MAX_MINUTES, MAX_VIDEO_MAX_MINUTES, isValidMaxVideoMinutes, isValidLiveMaxMinutes } from '../utils/stream-defaults.js';
 import {
   getUserHistorySettings,
   setUserHistorySettings,
@@ -552,8 +552,16 @@ settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: R
       throw new AppError(400, `maxVideoMinutes must be a whole number between 1 and ${MAX_VIDEO_MAX_MINUTES}`);
     }
 
-    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume, idleStopMinutes, maxVideoMinutes });
-    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%, idle stop ${saved.idleStopMinutes === 0 ? 'off' : `${saved.idleStopMinutes} min`}, max video ${saved.maxVideoMinutes} min`);
+    const current = await getStreamDefaults(prisma);
+    const liveAudioEnabled = req.body?.liveAudioEnabled ?? current.liveAudioEnabled;
+    if (typeof liveAudioEnabled !== 'boolean') throw new AppError(400, 'liveAudioEnabled must be true or false');
+    const liveMaxMinutes = req.body?.liveMaxMinutes ?? current.liveMaxMinutes;
+    if (!isValidLiveMaxMinutes(liveMaxMinutes)) {
+      throw new AppError(400, `liveMaxMinutes must be a whole number between 0 (no limit) and ${IDLE_STOP_MAX_MINUTES}`);
+    }
+
+    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume, idleStopMinutes, maxVideoMinutes, liveAudioEnabled, liveMaxMinutes });
+    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%, idle stop ${saved.idleStopMinutes === 0 ? 'off' : `${saved.idleStopMinutes} min`}, max video ${saved.maxVideoMinutes} min, live audio ${saved.liveAudioEnabled ? 'on' : 'off'}, live limit ${saved.liveMaxMinutes === 0 ? 'none' : `${saved.liveMaxMinutes} min`}`);
     // A stream that is already running with nobody watching follows the new
     // value now, instead of at the next time someone leaves it.
     req.app.locals.voiceBotManager?.reevaluateVideoIdleStops();

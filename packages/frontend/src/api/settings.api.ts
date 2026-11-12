@@ -212,10 +212,14 @@ export interface StreamDefaults {
   idleStopMinutes: number;
   /** Longest YouTube/Twitch video a stream accepts, in minutes (1-240, 15 unless raised). */
   maxVideoMinutes: number;
+  /** Whether a music bot plays a channel that is live right now (sound only). */
+  liveAudioEnabled: boolean;
+  /** Longest a live session runs before the bot ends it, in minutes; 0 = no limit. */
+  liveMaxMinutes: number;
 }
 
 /** The part of the stream defaults that describes the picture and sound of a stream being started. */
-export type StreamQuality = Omit<StreamDefaults, 'idleStopMinutes' | 'maxVideoMinutes'>;
+export type StreamQuality = Omit<StreamDefaults, 'idleStopMinutes' | 'maxVideoMinutes' | 'liveAudioEnabled' | 'liveMaxMinutes'>;
 
 export interface StreamPreset {
   /** The name !stream accepts, e.g. `720p`. */
