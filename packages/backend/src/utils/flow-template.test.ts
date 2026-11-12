@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  checkFlowTemplate, flowCapabilities, flowToTemplate, flowUrlHost, parseFlowTemplate, templateToFlowData,
+  addedCapabilities, checkFlowTemplate, compareSemver, flowCapabilities, flowDiff, flowTemplateUpdate, flowToTemplate, flowUrlHost, parseFlowTemplate, templateToFlowData,
   FLOW_TEMPLATE_FORMAT_VERSION, FLOW_TEMPLATE_MAX_BYTES, FLOW_TEMPLATE_MAX_NODES,
 } from '@ts6/common';
 
@@ -168,4 +168,70 @@ test('check: refuses broken, too new, too large and unknown things with readable
   assert.equal(big.ok, false);
   assert.match((big as any).errors[0], /larger than 1 MB/);
   assert.match((parseFlowTemplate('{nope') as any).errors[0], /not valid JSON/);
+});
+
+test('semver comparison is numeric, not text', () => {
+  assert.equal(compareSemver('1.10.0', '1.9.0'), 1);
+  assert.equal(compareSemver('1.2.3', '1.2.3'), 0);
+  assert.equal(compareSemver('0.9.9', '1.0.0'), -1);
+});
+
+test('diff: added, removed and changed nodes, edges by endpoints, positions ignored, secrets never shown', () => {
+  const before = sampleFlow();
+  const after = sampleFlow();
+  after.nodes = after.nodes.filter((n) => n.id !== 'n7');
+  after.nodes.push({ id: 'n10', type: 'action_kick', label: 'Kick', config: { reasonmsg: 'bye' }, x: 0, y: 0 } as any);
+  const call = after.nodes.find((n) => n.id === 'n5')!;
+  call.x = 9999;
+  (call.config as any).headers = { Authorization: 'Bearer other', 'Content-Type': 'application/json' };
+  (call.config as any).url = 'https://evil.example.net/x';
+  after.edges = [after.edges[0], { id: 'e9', source: 'n2', sourcePort: 'out', target: 'n10', targetPort: 'in' }];
+  after.edges[0].id = 'renamed';
+
+  const d = flowDiff(before, after);
+  assert.deepEqual(d.added.map((n) => n.id), ['n10']);
+  assert.deepEqual(d.removed.map((n) => n.id), ['n7']);
+  assert.deepEqual(d.changed.map((n) => n.id), ['n5']);
+  const fields = Object.fromEntries(d.changed[0].fields.map((f) => [f.field, f]));
+  assert.deepEqual(Object.keys(fields), ['url'], 'the changed token is a secret: emptied on both sides, not shown');
+  assert.equal(fields.url.after, 'https://evil.example.net/x');
+  assert.ok(!JSON.stringify(d).includes(TOKEN) && !JSON.stringify(d).includes('Bearer other') && !JSON.stringify(d).includes(URL_TOKEN), 'secret values never shown');
+  assert.equal(d.edgesAdded, 1);
+  assert.equal(d.edgesRemoved, 1, 'e1 kept despite the new id, e2 removed');
+  // Positive control: identical flows give an empty diff.
+  assert.deepEqual(flowDiff(sampleFlow(), sampleFlow()), { added: [], removed: [], changed: [], edgesAdded: 0, edgesRemoved: 0 });
+});
+
+test('update: values come from the installed flow, local edits and new capabilities show, major means map again', () => {
+  const v1 = flowToTemplate(sampleFlow(), { id: 'sup', name: 'Support', version: '1.0.0' }).template;
+  // Installed on another server: channel 5 became 50, groups 7,8 became 70, the admin renamed a label.
+  const values = Object.fromEntries(v1.inputs.map((i) => [i.key, i.type === 'channel' ? '50' : i.type === 'servergroup' ? '70' : i.type === 'channelgroup' ? '90' : i.type === 'bot' ? '30' : i.default ?? '']));
+  const installed = templateToFlowData(v1, values).flowData;
+  installed.nodes.find((n) => n.id === 'n2')!.label = 'Move here';
+
+  const v11 = JSON.parse(JSON.stringify(v1));
+  v11.version = '1.1.0';
+  v11.flow.nodes.push({ id: 'n10', type: 'action_ban', label: 'Ban', config: {}, x: 0, y: 0 });
+  v11.flow.nodes.find((n: any) => n.id === 'n5').config.url = 'https://other.example.org/y';
+
+  const u = flowTemplateUpdate(v11, { id: 4, name: 'Mine', enabled: true, flowData: installed }, v1);
+  assert.equal(u.relation, 'newer');
+  assert.equal(u.major, false);
+  assert.deepEqual(u.values, values, 'mapping taken over from the installed flow');
+  assert.deepEqual(u.againstPrevious!.added.map((n) => n.id), ['n10']);
+  assert.ok(!u.againstPrevious!.changed.some((c) => c.id === 'n2'), 'author changed nothing in n2');
+  // Local: the label edit would be lost, mapped ids are not a change, the emptied secrets are not either.
+  const local = Object.fromEntries(u.againstLocal.changed.map((c) => [c.id, c.fields.map((f) => f.field)]));
+  assert.deepEqual(local.n2, ['label']);
+  assert.ok(!('n4' in local), 'mapped group ids equal');
+  assert.ok(!local.n1, 'emptied webhook secret not shown as a change');
+  assert.deepEqual(u.newCapabilities.map((c) => [c.kind, c.details]), [['http', ['other.example.org']], ['ban', undefined]]);
+
+  const v2 = { ...v11, version: '2.0.0' };
+  const major = flowTemplateUpdate(v2, { id: 4, name: 'Mine', enabled: true, flowData: installed }, null);
+  assert.equal(major.major, true);
+  assert.deepEqual(major.values, {});
+  assert.equal(major.againstPrevious, null);
+  assert.equal(flowTemplateUpdate({ ...v1, version: '0.9.0' }, { id: 4, name: 'Mine', enabled: true, flowData: installed }, null).relation, 'older');
+  assert.deepEqual(addedCapabilities(flowCapabilities(v1.flow.nodes), flowCapabilities(v1.flow.nodes)), []);
 });

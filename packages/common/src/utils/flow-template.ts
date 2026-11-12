@@ -7,8 +7,8 @@ import { isReadOnlyCommand, isSecretKey } from '../serverquery/classification.js
 import {
   FLOW_TEMPLATE_FORMAT, FLOW_TEMPLATE_FORMAT_VERSION, FLOW_TEMPLATE_INPUT_TYPES, FLOW_TEMPLATE_MAX_BYTES,
   FLOW_TEMPLATE_MAX_INPUTS, FLOW_TEMPLATE_MAX_NODES, FLOW_TEMPLATE_OBJECT_TYPES,
-  type FlowCapability, type FlowCapabilityKind, type FlowTemplateEdge, type FlowTemplateFile, type FlowTemplateInput, type FlowTemplateInputType,
-  type FlowTemplateNode, type FlowTemplateTarget, type FlowTemplateWarning, type ImportedTemplateRef,
+  type FlowCapability, type FlowCapabilityKind, type FlowDiff, type FlowDiffField, type FlowDiffNode, type FlowTemplateEdge, type FlowTemplateFile, type FlowTemplateInput, type FlowTemplateInputType,
+  type FlowTemplateNode, type FlowTemplateTarget, type FlowTemplateUpdate, type FlowTemplateWarning, type ImportedTemplateRef,
 } from '../types/flow-template.js';
 
 /** Every node type the flow editor can place (BotEditor NODE_TYPES); anything else in a file is refused. */
@@ -459,4 +459,125 @@ export function flowCapabilities(nodes: FlowTemplateNode[]): FlowCapability[] {
     if (detail && !cap.details?.includes(detail)) (cap.details ??= []).push(detail);
   }
   return [...byKind.values()];
+}
+
+/** -1, 0 or 1; both must be valid major.minor.patch. */
+export function compareSemver(a: string, b: string): number {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] < pb[i] ? -1 : 1;
+  return 0;
+}
+
+const DIFF_VALUE_MAX = 120;
+
+/** Settings as dot paths -> shown value; lists count as one value. */
+function flattenConfig(config: unknown, prefix = '', out = new Map<string, string>()): Map<string, string> {
+  if (config !== null && typeof config === 'object' && !Array.isArray(config)) {
+    for (const [k, v] of Object.entries(config as Record<string, unknown>)) flattenConfig(v, prefix ? `${prefix}.${k}` : k, out);
+  } else if (prefix && config !== undefined) {
+    out.set(prefix, typeof config === 'string' ? config : JSON.stringify(config));
+  }
+  return out;
+}
+
+const shown = (value: string | undefined) =>
+  value !== undefined && value.length > DIFF_VALUE_MAX ? `${value.slice(0, DIFF_VALUE_MAX)}…` : value;
+
+/**
+ * Node by node, what changes from `before` to `after` (nodes are matched by id,
+ * which an export keeps). Both sides lose their secrets first, as on export: a
+ * secret is never shown, and one the file emptied is not a change.
+ */
+export function flowDiff(before: { nodes?: unknown[]; edges?: unknown[] }, after: { nodes?: unknown[]; edges?: unknown[] }): FlowDiff {
+  const a = cloneNodes(before.nodes ?? []);
+  const b = cloneNodes(after.nodes ?? []);
+  stripFlowSecrets(a);
+  stripFlowSecrets(b);
+  const aById = new Map(a.map((n) => [n.id, n]));
+  const bIds = new Set(b.map((n) => n.id));
+  const ref = (n: FlowTemplateNode): FlowDiffNode => ({ id: n.id, type: n.type, ...(n.label ? { label: n.label } : {}) });
+  const diff: FlowDiff = { added: [], removed: a.filter((n) => !bIds.has(n.id)).map(ref), changed: [], edgesAdded: 0, edgesRemoved: 0 };
+  for (const node of b) {
+    const old = aById.get(node.id);
+    if (!old) { diff.added.push(ref(node)); continue; }
+    const fields: FlowDiffField[] = [];
+    if (old.type !== node.type) fields.push({ field: 'type', before: old.type, after: node.type });
+    if ((old.label ?? '') !== (node.label ?? '')) fields.push({ field: 'label', before: old.label, after: node.label });
+    const fa = flattenConfig(old.config);
+    const fb = flattenConfig(node.config);
+    for (const field of new Set([...fa.keys(), ...fb.keys()])) {
+      if (fa.get(field) === fb.get(field)) continue;
+      fields.push({ field, before: shown(fa.get(field)), after: shown(fb.get(field)) });
+    }
+    if (fields.length) diff.changed.push({ ...ref(node), fields });
+  }
+  const edgeKey = (e: FlowTemplateEdge) => `${e.source}\u0000${e.sourcePort ?? ''}\u0000${e.target}\u0000${e.targetPort ?? ''}`;
+  const ea = new Set(cloneEdges(before.edges ?? []).map(edgeKey));
+  const eb = new Set(cloneEdges(after.edges ?? []).map(edgeKey));
+  diff.edgesAdded = [...eb].filter((k) => !ea.has(k)).length;
+  diff.edgesRemoved = [...ea].filter((k) => !eb.has(k)).length;
+  return diff;
+}
+
+/** Each input's value in an installed flow (read at its first target that exists); object inputs only when it is an id. */
+export function templateValuesFromFlow(template: FlowTemplateFile, nodes: unknown[]): Record<string, string> {
+  const byId = new Map(cloneNodes(nodes).map((n) => [n.id, n]));
+  const out: Record<string, string> = {};
+  for (const input of template.inputs) {
+    for (const t of input.targets) {
+      const node = byId.get(t.node);
+      if (!node) continue;
+      const raw = getConfigPath(node.config, t.field);
+      if (raw === undefined || raw === null || typeof raw === 'object') continue;
+      const value = String(raw).trim();
+      if (FLOW_TEMPLATE_OBJECT_TYPES.includes(input.type) && value && !(input.multiple ? ID_VALUE : /^\d+$/).test(value)) continue;
+      out[input.key] = value;
+      break;
+    }
+  }
+  return out;
+}
+
+/** Capabilities (and HTTP hosts / ServerQuery commands) in `after` that `before` does not have. */
+export function addedCapabilities(before: FlowCapability[], after: FlowCapability[]): FlowCapability[] {
+  const out: FlowCapability[] = [];
+  for (const cap of after) {
+    const old = before.find((c) => c.kind === cap.kind);
+    if (!old) { out.push(cap); continue; }
+    const details = cap.details?.filter((d) => !old.details?.includes(d));
+    if (details?.length) out.push({ ...cap, details });
+  }
+  return out;
+}
+
+/**
+ * Compares a template file with a flow on this server imported from the same
+ * template id. `previous` is the installed version's file when it was kept.
+ * Nothing is changed: an update is always imported as a new flow.
+ */
+export function flowTemplateUpdate(
+  template: FlowTemplateFile,
+  installed: { id: number; name: string; enabled: boolean; flowData: { nodes?: unknown[]; edges?: unknown[]; imported: ImportedTemplateRef } },
+  previous: FlowTemplateFile | null,
+): FlowTemplateUpdate {
+  const installedVersion = installed.flowData.imported.version;
+  const valid = SEMVER.test(installedVersion);
+  const cmp = valid ? compareSemver(template.version, installedVersion) : 1;
+  const major = !valid || template.version.split('.')[0] !== installedVersion.split('.')[0];
+  const values = templateValuesFromFlow(template, installed.flowData.nodes ?? []);
+  const next = templateToFlowData(template, values).flowData;
+  const localNodes = cloneNodes(installed.flowData.nodes ?? []);
+  return {
+    flowId: installed.id,
+    flowName: installed.name,
+    enabled: installed.enabled,
+    installedVersion,
+    relation: cmp > 0 ? 'newer' : cmp < 0 ? 'older' : 'same',
+    major,
+    values: major ? {} : values,
+    againstPrevious: previous ? flowDiff(previous.flow, template.flow) : null,
+    againstLocal: flowDiff(installed.flowData, next),
+    newCapabilities: addedCapabilities(flowCapabilities(localNodes), flowCapabilities(template.flow.nodes)),
+  };
 }

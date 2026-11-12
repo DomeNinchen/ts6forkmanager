@@ -3,8 +3,8 @@ import { requirePermission, requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { grantCovers, grantOf, type Grant } from '../utils/vs-access.js';
 import {
-  FLOW_TEST_MAX_FLOW_BYTES, FLOW_TEST_MAX_FORCED, flowToTemplate, flowTemplateWarnings, parseFlowTemplate, templateToFlowData,
-  type ImportedTemplateRef,
+  FLOW_TEST_MAX_FLOW_BYTES, FLOW_TEST_MAX_FORCED, flowToTemplate, flowTemplateUpdate, flowTemplateWarnings, parseFlowTemplate, templateToFlowData,
+  type FlowTemplateFile, type FlowTemplateUpdate, type ImportedTemplateRef,
 } from '@ts6/common';
 
 export const botRoutes: Router = Router();
@@ -251,37 +251,77 @@ botRoutes.get('/:botId/export', requirePermission('bots.manage'), async (req: Re
   } catch (err) { next(err); }
 });
 
-// Template import: always a NEW flow, always disabled. Admin only (app.ts lists no permission for it).
+/** The checked file and target server of an import request; null when a 400 with the file's errors was sent. */
+async function readImportRequest(req: Request, res: Response): Promise<{ template: FlowTemplateFile; configId: number; sid: number } | null> {
+  const { file, serverConfigId, virtualServerId } = req.body ?? {};
+  if (typeof file !== 'string') throw new AppError(400, 'file must be the template file content');
+  const check = parseFlowTemplate(file);
+  if (!check.ok) { res.status(400).json({ error: 'The template file is not valid', details: check.errors }); return null; }
+  const configId = parseInt(serverConfigId);
+  if (isNaN(configId)) throw new AppError(400, 'A valid serverConfigId is required');
+  if (!(await req.app.locals.prisma.tsServerConfig.findUnique({ where: { id: configId } }))) throw new AppError(400, `Server config ${configId} does not exist`);
+  return { template: check.template, configId, sid: parseInt(virtualServerId) || 1 };
+}
+
+// Before an import: flows on this server that came from an earlier version of the same
+// template, each compared with the file (old version -> new, local flow -> new). Changes nothing.
+botRoutes.post('/import/preview', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const prisma = req.app.locals.prisma;
+    const request = await readImportRequest(req, res);
+    if (!request) return;
+    const { template, configId, sid } = request;
+    const flows = await prisma.botFlow.findMany({ where: { serverConfigId: configId, virtualServerId: sid }, orderBy: { id: 'asc' } });
+    const stored = await prisma.importedTemplate.findMany({ where: { templateId: template.id } });
+    const updates: FlowTemplateUpdate[] = [];
+    for (const flow of flows) {
+      let flowData: any;
+      try { flowData = JSON.parse(flow.flowData); } catch { continue; }
+      const ref: ImportedTemplateRef | undefined = flowData?.imported;
+      if (ref?.id !== template.id) continue;
+      const row = stored.find((s: { version: string }) => s.version === ref.version);
+      const previous = row ? parseFlowTemplate(row.file) : null;
+      updates.push(flowTemplateUpdate(template, { id: flow.id, name: flow.name, enabled: flow.enabled, flowData }, previous?.ok ? previous.template : null));
+    }
+    res.json({ updates });
+  } catch (err) { next(err); }
+});
+
+// Template import: always a NEW flow, always disabled (an update too: the installed flow stays as it is).
+// Admin only (app.ts lists no permission for it).
 botRoutes.post('/import', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const prisma = req.app.locals.prisma;
-    const { file, serverConfigId, virtualServerId, values = {}, name } = req.body ?? {};
-    if (typeof file !== 'string') throw new AppError(400, 'file must be the template file content');
-    const check = parseFlowTemplate(file);
-    if (!check.ok) return res.status(400).json({ error: 'The template file is not valid', details: check.errors });
+    const { values = {}, name } = req.body ?? {};
     if (typeof values !== 'object' || values === null || Array.isArray(values) || Object.values(values).some((v) => typeof v !== 'string')) {
       throw new AppError(400, 'values must map input keys to texts');
     }
-    const parsedConfigId = parseInt(serverConfigId);
-    if (isNaN(parsedConfigId)) throw new AppError(400, 'A valid serverConfigId is required');
-    const parsedSid = parseInt(virtualServerId) || 1;
-    if (!(await prisma.tsServerConfig.findUnique({ where: { id: parsedConfigId } }))) throw new AppError(400, `Server config ${parsedConfigId} does not exist`);
+    const request = await readImportRequest(req, res);
+    if (!request) return;
+    const { template, configId: parsedConfigId, sid: parsedSid } = request;
 
-    const { flowData, missing, invalid } = templateToFlowData(check.template, values);
+    const { flowData, missing, invalid } = templateToFlowData(template, values);
     if (missing.length) return res.status(400).json({ error: 'Required inputs are empty', details: missing });
     if (invalid.length) return res.status(400).json({ error: 'These inputs need the id of a server object', details: invalid });
-    const flowName = typeof name === 'string' && name.trim() ? name.trim().slice(0, 100) : check.template.name;
+    const flowName = typeof name === 'string' && name.trim() ? name.trim().slice(0, 100) : template.name;
     const bot = await prisma.botFlow.create({
       data: {
         name: flowName,
-        description: check.template.description ?? null,
+        description: template.description ?? null,
         serverConfigId: parsedConfigId,
         virtualServerId: parsedSid,
         enabled: false,
         flowData: JSON.stringify(flowData),
       },
     });
-    res.status(201).json({ id: bot.id, name: bot.name, secrets: check.template.secrets, warnings: flowTemplateWarnings(flowData.nodes, check.template.inputs.flatMap((i) => i.targets)) });
+    // Kept so the next version of this template can be compared with it.
+    const kept = { name: template.name, file: JSON.stringify(template), importedBy: req.user?.username ?? null, importedAt: new Date() };
+    await prisma.importedTemplate.upsert({
+      where: { templateId_version: { templateId: template.id, version: template.version } },
+      create: { templateId: template.id, version: template.version, ...kept },
+      update: kept,
+    });
+    res.status(201).json({ id: bot.id, name: bot.name, secrets: template.secrets, warnings: flowTemplateWarnings(flowData.nodes, template.inputs.flatMap((i) => i.targets)) });
   } catch (err) { next(err); }
 });
 

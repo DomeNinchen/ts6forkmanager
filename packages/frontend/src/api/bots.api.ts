@@ -1,4 +1,4 @@
-import type { CustomRoleKey, FlowTemplateFile, FlowTemplateTarget, FlowTemplateWarning, FlowTestReport, UserPermission, UserRole } from '@ts6/common';
+import type { CustomRoleKey, FlowTemplateFile, FlowTemplateTarget, FlowTemplateUpdate, FlowTemplateWarning, FlowTestReport, UserPermission, UserRole } from '@ts6/common';
 import api from './client';
 
 export const botsApi = {
@@ -10,7 +10,9 @@ export const botsApi = {
   enable: (id: number) => api.post(`/bots/${id}/enable`).then((r) => r.data),
   disable: (id: number) => api.post(`/bots/${id}/disable`).then((r) => r.data),
   exportTemplate: (id: number): Promise<{ template: FlowTemplateFile; warnings: FlowTemplateWarning[] }> => api.get(`/bots/${id}/export`).then((r) => r.data),
-  importTemplate: (data: { file: string; serverConfigId: number; virtualServerId: number; values?: Record<string, string> }): Promise<{ id: number; name: string; secrets: FlowTemplateTarget[]; warnings: FlowTemplateWarning[] }> =>
+  previewImport: (data: { file: string; serverConfigId: number; virtualServerId: number }): Promise<{ updates: FlowTemplateUpdate[] }> =>
+    api.post('/bots/import/preview', data).then((r) => r.data),
+  importTemplate: (data: { file: string; serverConfigId: number; virtualServerId: number; values?: Record<string, string>; name?: string }): Promise<{ id: number; name: string; secrets: FlowTemplateTarget[]; warnings: FlowTemplateWarning[] }> =>
     api.post('/bots/import', data).then((r) => r.data),
   executions: (id: number) => api.get(`/bots/${id}/executions`).then((r) => r.data),
   executionLogs: (botId: number, execId: number) =>
