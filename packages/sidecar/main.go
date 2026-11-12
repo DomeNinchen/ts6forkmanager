@@ -1070,6 +1070,25 @@ func (s *Sidecar) ClosePeer(id string) {
 	s.peersLock.Unlock()
 }
 
+// rtpPacketSize caps every RTP packet ffmpeg sends to the sidecar. Without a
+// cap ffmpeg fills packets up to 1472 bytes; the sidecar forwards them as they
+// are, and SRTP plus the UDP and IP headers push them past the usual 1500-byte
+// MTU, so nearly every video packet (keyframes included) left as IP fragments.
+// Routers and providers that drop fragmented UDP then let the small audio
+// packets through but no video at all. 1200 is the size libwebrtc itself uses.
+const rtpPacketSize = 1200
+
+// rtpOutputArgs are the ffmpeg output options for one RTP stream to the sidecar.
+func rtpOutputArgs(payloadType int, ssrc uint32, port int) []string {
+	return []string{
+		"-payload_type", strconv.Itoa(payloadType),
+		"-ssrc", strconv.FormatUint(uint64(ssrc), 10),
+		"-pkt_size", strconv.Itoa(rtpPacketSize),
+		"-f", "rtp",
+		fmt.Sprintf("rtp://127.0.0.1:%d", port),
+	}
+}
+
 // volumePercent scales the source's audio on the way out, where 100 means
 // leave it alone. A video is mastered at whatever loudness its creator chose,
 // which is routinely far above a TeamSpeak channel's speaking level, so the
@@ -1158,11 +1177,8 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 		"-keyint_min", "15",
 		"-g", "15",
 		"-auto-alt-ref", "0",
-		"-payload_type", "96",
-		"-ssrc", "11111111",
-		"-f", "rtp",
-		fmt.Sprintf("rtp://127.0.0.1:%d", s.videoPort),
 	)
+	args = append(args, rtpOutputArgs(96, 11111111, s.videoPort)...)
 
 	if source != "" {
 		aBitrate := envOrDefault("AUDIO_BITRATE", "128k")
@@ -1196,11 +1212,8 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 			"-b:a", aBitrate,
 			"-ar", "48000",
 			"-ac", "2",
-			"-payload_type", "111",
-			"-ssrc", "22222222",
-			"-f", "rtp",
-			fmt.Sprintf("rtp://127.0.0.1:%d", s.audioPort),
 		)
+		args = append(args, rtpOutputArgs(111, 22222222, s.audioPort)...)
 	}
 
 	log.Printf("[FFmpeg] Starting: source=%s video=:%d audio=:%d", source, s.videoPort, s.audioPort)
