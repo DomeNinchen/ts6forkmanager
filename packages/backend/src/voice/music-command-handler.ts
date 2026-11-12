@@ -2,7 +2,7 @@ import type { PrismaClient } from '../generated/prisma/client.js';
 import { VoiceBotManager } from './voice-bot-manager.js';
 import type { VoiceBot } from './voice-bot.js';
 import type { QueueItem } from './playlist/queue.js';
-import { downloadYouTube } from './audio/youtube.js';
+import { downloadYouTube, liveOrDownloadedItem } from './audio/youtube.js';
 import { saveMusicRequest } from './music-request-history.js';
 import { STREAM_PRESETS } from './streaming/types.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
@@ -306,17 +306,8 @@ export class MusicCommandHandler {
     this.reply(bot, userClid, 'Loading...');
 
     try {
-      const { filePath, info } = await downloadYouTube(await toYtDlpSource(args), MUSIC_DIR);
-
-      const queueItem: QueueItem = {
-        id: `yt_${info.id}`,
-        title: info.title,
-        artist: info.artist,
-        duration: info.duration,
-        filePath,
-        source: 'youtube',
-        sourceUrl: info.url,
-      };
+      const { filePath, info } = await downloadYouTube(await toYtDlpSource(args), MUSIC_DIR, { allowLive: true });
+      const queueItem: QueueItem = liveOrDownloadedItem(filePath, info);
 
       // Save to MusicRequest history
       this.saveMusicRequest(bot, queueItem);
@@ -329,7 +320,7 @@ export class MusicCommandHandler {
         // insertNext(), not add()+playAt(length-1) - the latter would strand
         // anything already queued behind the new current index.
         bot.queue.insertNext(queueItem);
-        await bot.play(queueItem);
+        await bot.playItem(queueItem);
         this.reply(bot, userClid, `Now playing: ${info.artist} - ${info.title}`);
       }
     } catch (err: any) {
@@ -402,17 +393,8 @@ export class MusicCommandHandler {
     this.reply(bot, userClid, 'Loading...');
 
     try {
-      const { filePath, info } = await downloadYouTube(await toYtDlpSource(args), MUSIC_DIR);
-
-      const queueItem: QueueItem = {
-        id: `yt_${info.id}`,
-        title: info.title,
-        artist: info.artist,
-        duration: info.duration,
-        filePath,
-        source: 'youtube',
-        sourceUrl: info.url,
-      };
+      const { filePath, info } = await downloadYouTube(await toYtDlpSource(args), MUSIC_DIR, { allowLive: true });
+      const queueItem: QueueItem = liveOrDownloadedItem(filePath, info);
 
       // Save to MusicRequest history
       this.saveMusicRequest(bot, queueItem);
@@ -422,7 +404,7 @@ export class MusicCommandHandler {
         // insertNext(), not add()+playAt(length-1) - the latter would strand
         // anything already queued behind the new current index.
         bot.queue.insertNext(queueItem);
-        await bot.play(queueItem);
+        await bot.playItem(queueItem);
         this.reply(bot, userClid, `Now playing: ${info.artist} - ${info.title}`);
       } else {
         bot.queue.add(queueItem);

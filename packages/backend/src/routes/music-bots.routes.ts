@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
-import { downloadYouTube } from '../voice/audio/youtube.js';
+import { downloadYouTube, liveOrDownloadedItem } from '../voice/audio/youtube.js';
 import { playerWidgetToken } from './widget-public.routes.js';
 import { MUSIC_DIR } from '../voice/audio/media-dirs.js';
 import { saveMusicRequest } from '../voice/music-request-history.js';
@@ -420,17 +420,9 @@ musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) =
       throw new AppError(400, 'Bot is not connected');
     }
 
-    const { filePath, info } = await downloadYouTube(url, MUSIC_DIR);
-
-    const queueItem = {
-      id: `yt_${info.id}`,
-      title: info.title,
-      artist: info.artist,
-      duration: info.duration,
-      filePath,
-      source: 'youtube' as const,
-      sourceUrl: url,
-    };
+    const { filePath, info } = await downloadYouTube(url, MUSIC_DIR, { allowLive: true });
+    // History replays exactly what was asked for, so sourceUrl stays the given url
+    const queueItem = { ...liveOrDownloadedItem(filePath, info), sourceUrl: url };
 
     // Queueing into silence still starts playback, exactly as !play does -
     // otherwise the bot would sit idle with a track waiting in its queue.
@@ -442,7 +434,7 @@ musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) =
       // insertNext(), not add()+playAt(length-1) - the latter would strand
       // anything already queued behind the new current index.
       bot.queue.insertNext(queueItem);
-      await bot.play(queueItem);
+      await bot.playItem(queueItem);
     }
 
     // Save to MusicRequest History

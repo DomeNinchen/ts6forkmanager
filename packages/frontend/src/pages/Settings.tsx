@@ -1627,7 +1627,7 @@ function StreamingTab() {
 
   const [draft, setDraft] = useState<StreamDefaults | null>(null);
   const active: StreamDefaults | null =
-    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume, idleStopMinutes: data.idleStopMinutes, maxVideoMinutes: data.maxVideoMinutes } : null);
+    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume, idleStopMinutes: data.idleStopMinutes, maxVideoMinutes: data.maxVideoMinutes, liveAudioEnabled: data.liveAudioEnabled, liveMaxMinutes: data.liveMaxMinutes } : null);
 
   const save = useMutation({
     mutationFn: (cfg: StreamDefaults) => settingsApi.setStreamDefaults(cfg),
@@ -1654,7 +1654,9 @@ function StreamingTab() {
     active.bitrate === data.builtIn.bitrate &&
     active.volume === data.builtIn.volume &&
     active.idleStopMinutes === data.builtIn.idleStopMinutes &&
-    active.maxVideoMinutes === data.builtIn.maxVideoMinutes;
+    active.maxVideoMinutes === data.builtIn.maxVideoMinutes &&
+    active.liveAudioEnabled === data.builtIn.liveAudioEnabled &&
+    active.liveMaxMinutes === data.builtIn.liveMaxMinutes;
 
   return (
     <div className="max-w-lg space-y-4 lounge:grid lounge:max-w-[1200px] lounge:items-start lounge:gap-x-10 lounge:gap-y-6 lounge:space-y-0 lounge:xl:grid-cols-2">
@@ -1763,6 +1765,37 @@ function StreamingTab() {
             />
             <p className="text-[11px] text-muted-foreground">
               {t('pages.settings.streaming.maxVideoHint')}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="stream-live-audio"
+                checked={active.liveAudioEnabled}
+                onCheckedChange={(v) => setDraft({ ...active, liveAudioEnabled: v })}
+              />
+              <Label className="text-xs" htmlFor="stream-live-audio">{t('pages.settings.streaming.liveAudioLabel')}</Label>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {t('pages.settings.streaming.liveAudioHint')}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs" htmlFor="stream-live-max">{t('pages.settings.streaming.liveMaxLabel')}</Label>
+            <Input
+              id="stream-live-max"
+              type="number"
+              min={0}
+              max={1440}
+              step={1}
+              className="max-w-[8rem]"
+              value={active.liveMaxMinutes}
+              onChange={(e) => setDraft({ ...active, liveMaxMinutes: Number(e.target.value) })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {t('pages.settings.streaming.liveMaxHint')}
             </p>
           </div>
 

@@ -8,9 +8,10 @@ export interface QueueItem {
   artist?: string;
   duration?: number; // seconds
   filePath: string;
-  source: "local" | "youtube" | "url" | "radio";
+  source: "local" | "youtube" | "url" | "radio" | "live"; // live: sourceUrl is the page, re-resolved on every (re)start
   sourceUrl?: string;
   streamUrl?: string; // If set, play as live stream (radio) instead of file
+  liveEndsAt?: number; // live only: when the "max minutes per live session" limit ends it (ms epoch)
 }
 
 /** How many finished tracks previous() can step back through. */

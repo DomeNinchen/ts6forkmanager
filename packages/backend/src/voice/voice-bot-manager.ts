@@ -189,6 +189,10 @@ export class VoiceBotManager extends EventEmitter {
   private createBotInstance(config: VoiceBotConfig): VoiceBot {
     config.getOtherBotClientIds = () => this.otherBotClientIds(config.id);
     config.getMaxVideoMinutes = async () => (await getStreamDefaults(this.prisma)).maxVideoMinutes;
+    config.getLiveSettings = async () => {
+      const { liveAudioEnabled, liveMaxMinutes } = await getStreamDefaults(this.prisma);
+      return { liveAudioEnabled, liveMaxMinutes };
+    };
     // Every event of this bot goes to the users who may see this bot: admins, and the music roles granted its server connection.
     const broadcast = (type: string, payload: object) => sendToAudience(this.wss, type, payload, musicAudience(config.serverConfigId, config.serverPort));
     const bot = new VoiceBot(config);
@@ -231,6 +235,14 @@ export class VoiceBotManager extends EventEmitter {
 
     bot.on('trackEnd', (item: QueueItem | null) => {
       broadcast('music:bot:trackEnd', { botId: config.id, songId: item?.id ?? null });
+    });
+
+    // Offline or time limit: the people in the channel hear the sound stop, so they also get the reason
+    bot.on('liveEnded', (item: QueueItem, reason: string) => {
+      broadcast('music:bot:liveEnded', { botId: config.id, songId: item.id, title: item.title, reason });
+      try { bot.sendChannelMessage(`${reason}: ${item.title}`); } catch (err: any) {
+        console.error(`[VoiceBotManager] Bot ${config.id}: could not post the live-end notice: ${err.message}`);
+      }
     });
 
     bot.on('volumeChange', (volume: number) => {
