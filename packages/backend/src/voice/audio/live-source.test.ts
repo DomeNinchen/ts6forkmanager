@@ -53,3 +53,8 @@ test('liveOrDownloadedItem: a live page streams, a download plays as a file', ()
   assert.equal(song.streamUrl, undefined);
   assert.equal(song.filePath, '/data/music/x.opus');
 });
+
+test('rebuffer target is 5 s of 48 kHz stereo 16-bit PCM', async () => {
+  const { LIVE_REBUFFER_BYTES } = await import('./live-source.js');
+  assert.equal(LIVE_REBUFFER_BYTES, 5 * 48000 * 2 * 2);
+});

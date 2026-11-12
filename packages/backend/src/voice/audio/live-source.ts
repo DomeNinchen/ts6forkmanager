@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import { AppError } from '../../middleware/error-handler.js';
 import { validateUrl } from '../../utils/url-validator.js';
 import { getCookieArgs } from './youtube.js';
+import { BYTES_PER_FRAME, FRAME_MS } from './pipeline.js';
 
 /**
  * Twitch offers an `audio_only` rendition; other live sources (YouTube Live) only have
@@ -14,6 +15,9 @@ export const LIVE_MAX_RETRIES = 3;
 export const LIVE_STABLE_MS = 60_000;
 /** No sound from ffmpeg for this long (a playlist that stopped growing) counts as a dropped stream. */
 export const LIVE_STALL_MS = 20_000;
+/** After the buffer ran dry, sound to collect before playing on: one longer pause beats a gap every few seconds. */
+export const LIVE_REBUFFER_MS = 5_000;
+export const LIVE_REBUFFER_BYTES = (LIVE_REBUFFER_MS / FRAME_MS) * BYTES_PER_FRAME;
 const RESOLVE_TIMEOUT_MS = 45_000;
 
 /** 2 s, 4 s, 8 s: long enough for a broadcaster's short reconnect, short enough to sound like a hiccup. */

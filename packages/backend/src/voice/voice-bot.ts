@@ -16,7 +16,7 @@ import type { BotFailureKind } from '@ts6/common';
 import { ChannelOccupancy } from './channel-occupancy.js';
 import { DEFAULT_MAX_VIDEO_MINUTES } from '../utils/stream-defaults.js';
 import { AppError } from '../middleware/error-handler.js';
-import { resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS } from './audio/live-source.js';
+import { resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS, LIVE_REBUFFER_MS, LIVE_REBUFFER_BYTES } from './audio/live-source.js';
 
 
 /** How often a bot checks whether it has been alone long enough to pause. */
@@ -769,6 +769,7 @@ export class VoiceBot extends EventEmitter {
       });
 
       let nextDue = performance.now() + 200; // initial buffer delay
+      let rebuffering = false;
 
       const tick = () => {
         if (epoch !== this.loopEpoch) return;
@@ -791,10 +792,19 @@ export class VoiceBot extends EventEmitter {
           }
           // A playlist that stopped growing leaves ffmpeg waiting forever: treat silence as a drop (close -> liveDropped)
           if (now - lastDataAt > LIVE_STALL_MS) { stream.kill(); lastDataAt = now; }
+          // Source slower than real time (Twitch hiccup): one longer pause until LIVE_REBUFFER_MS
+          // are buffered again, instead of a short gap every few seconds
+          if (!rebuffering && this.streamChunksSize < BYTES_PER_FRAME) {
+            rebuffering = true;
+            this.client.sendVoiceStop();
+            if (isDebugEnabled('voice')) console.log(`[VoiceBot] Live buffer ran dry, waiting for ${LIVE_REBUFFER_MS / 1000} s of sound`);
+          } else if (rebuffering && this.streamChunksSize >= LIVE_REBUFFER_BYTES) {
+            rebuffering = false;
+          }
         }
 
         // Send exactly one frame if available
-        const frame = this.takeFromStreamChunks(BYTES_PER_FRAME);
+        const frame = rebuffering ? null : this.takeFromStreamChunks(BYTES_PER_FRAME);
         if (frame) {
           const opusFrame = this.pipeline.encodeFrame(frame, this.config.volume);
           this.sendVoiceFrame(opusFrame);
