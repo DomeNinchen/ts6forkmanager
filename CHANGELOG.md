@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.110.0 · frontend 3.128.0 · sidecar 2.3.1**
+Versions at the end of the month: **backend 2.110.0 · frontend 3.128.0 · sidecar 2.3.2**
 
 ### New Features
 
@@ -39,8 +39,10 @@ Versions at the end of the month: **backend 2.110.0 · frontend 3.128.0 · sidec
 
 ### Bug Fixes
 
+- Fixed "Watch Stream" in the TeamSpeak 6 client playing the bot's audio but showing only a black picture for some viewers, while the web preview and other viewers saw the video: ffmpeg filled the video packets up to 1472 bytes, and with encryption and headers on top they exceeded the usual 1500-byte limit and were split, which some routers and providers drop. Video and audio packets are now capped at 1200 bytes. *sidecar 2.3.2* [#394](https://github.com/DomeNinchen/ts6forkmanager/pull/394), reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Fixed **Take** on the Support Queue page sometimes failing with "convert error" and leaving an empty room behind: TeamSpeak 6 at times confirms a new channel without saying which one it created, and the room is now found by its name. A take also no longer fails when the bot's previous channel has disappeared meanwhile; the bot then goes to the default channel. *backend 2.102.0* [#382](https://github.com/DomeNinchen/ts6forkmanager/pull/382)
-- Fixed "Start Stream" and "Switch now" on the Video tab showing `Request failed with status code 504` when the video took longer than a minute to download, although the stream then started normally: the frontend container's nginx gave up after its default 60 seconds. These two requests now wait as long as the download may take. *frontend 3.117.2* [#379](https://github.com/DomeNinchen/ts6forkmanager/pull/379), reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
+
+- Fixed "Start Stream" and "Switch now" on the Video tab showing `Request failed with status code 504` when the video took longer than a minute to download, although the stream then started normally: the frontend container's nginx gave up after its default 60 seconds. These two requests now wait as long as the download may take. *frontend 3.117.2* [#379](https://github.com/DomeNinchen/ts6forkmanager/pull/379), reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Fixed the stream preview in the web interface losing its first ICE candidate when it opened (`POST …/stream/webrtc/ice` answered 500 "remote description is not set"): the browser sent it before its answer had reached the video sidecar. Candidates are now sent after the answer; the preview already worked with the remaining ones. *frontend 3.117.1* [#378](https://github.com/DomeNinchen/ts6forkmanager/pull/378)
 - Fixed "Watch Stream" in the TeamSpeak 6 client staying at "Connecting…" for some viewers at home behind a router while the web preview worked: the client sends many ICE candidates in a burst, the video sidecar ran one connection check per candidate and gave the only usable path up after 8 checks within about 0.1 s, before the viewer's router let anything through. The sidecar now keeps checking each path for about 10 seconds. *sidecar 2.3.1* [#377](https://github.com/DomeNinchen/ts6forkmanager/pull/377), reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Fixed a live stream (a Twitch channel or a YouTube live) being refused with "The video is longer than N minutes": the stream tab now says that live streams are not supported yet. A live stream has no length, so the length limit skipped it like a too long video; the README says the same. *backend 2.99.2* [#374](https://github.com/DomeNinchen/ts6forkmanager/pull/374)
