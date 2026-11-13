@@ -2868,12 +2868,14 @@
       "actions": {
         "take": "Take",
         "remove": "Remove",
-        "close": "Mark done"
+        "close": "Mark done",
+        "bringBack": "Bring back"
       },
       "toasts": {
         "take": "{{client}} was taken; both are in a new room.",
         "remove": "{{client}} was removed from the queue.",
-        "close": "The case of {{client}} is done."
+        "close": "The case of {{client}} is done.",
+        "bringBack": "{{client}} is back in the waiting channel."
       },
       "positionLabel": "Position {{position}}",
       "arrivalUnknownHint": "Was already waiting when the queue started watching; the real arrival is unknown.",
@@ -2918,6 +2920,11 @@
       "noSupporterOnline": "No supporter is available right now (online, not away, not in an AFK channel).",
       "supporter": "Supporter",
       "chooseSupporter": "Choose a supporter",
+      "takeFailed": "Take-over failed at \"{{step}}\" and moving the client back failed too ({{error}}).",
+      "takeFailedClientIn": "Afterwards the client was in channel {{cid}}.",
+      "takeFailedClientOffline": "Afterwards the client was not online.",
+      "takeFailedRoom": "The room still exists.",
+      "takeSteps": { "create-room": "create room", "move-client": "move client", "move-supporter": "move supporter" },
       "errors": {
         "CASE_NOT_WAITING": "This client is no longer waiting.",
         "CASE_NOT_IN_PROGRESS": "This case is no longer in progress.",
@@ -2925,7 +2932,12 @@
         "NOT_A_SUPPORTER": "This supporter is no longer available (offline, away or in an AFK channel).",
         "CHANNEL_NOT_FOUND": "This channel no longer exists.",
         "CHANNEL_IN_USE": "This channel is already the waiting channel of the queue \"{{queue}}\".",
-        "QUEUE_NOT_FOUND": "This queue no longer exists."
+        "QUEUE_NOT_FOUND": "This queue no longer exists.",
+        "TAKE_FAILED_CREATE_ROOM": "The take-over failed while creating the room. The client keeps their place.",
+        "TAKE_FAILED_MOVE_CLIENT": "The take-over failed while moving the client into the room. An empty room is removed again; the client keeps their place.",
+        "TAKE_FAILED_MOVE_SUPPORTER": "The take-over failed while moving the supporter. The client was moved back into the waiting channel and keeps their place.",
+        "TAKE_FAILED_NOT_BACK": "The take-over failed, and the client could not be moved back. Use \"Bring back\" on the case.",
+        "NOTHING_TO_BRING_BACK": "There is nothing to bring back for this case."
       },
       "settings": {
         "open": "Settings",

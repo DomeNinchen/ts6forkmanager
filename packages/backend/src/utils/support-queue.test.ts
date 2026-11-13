@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SUPPORT_QUEUE_DEFAULTS, supportRoomName, supportSettingsProblem, type SupportQueueSettings } from '@ts6/common';
-import { orderOpenCases, parseClientList, parseSettings, reconcile, type ListedClient, type OpenCase, type ReconcileInput } from './support-queue.js';
+import { orderOpenCases, parseClientList, parseSettings, reconcile, takeUndoSteps, type ListedClient, type OpenCase, type ReconcileInput } from './support-queue.js';
 import { findQueueConflicts } from '../routes/support-queue.routes.js';
 
 const WAIT = 10;
@@ -117,7 +117,7 @@ test('a renamed client keeps the case and the new nickname is stored', () => {
 
 const row = (id: number, state: string, at: number, vip = false) => ({
   id, queueId: 1, clientUid: `u${id}`, cldbid: id, nickname: `n${id}`, arrivedAt: new Date(at), arrivalUnknown: false, state,
-  absentSince: null, takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid: null, endedAt: null, endReason: null, vip,
+  absentSince: null, takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid: null, endedAt: null, endReason: null, vip, takeFailure: null,
 });
 
 test('positions: by arrival, ties by id; taken cases follow without a position', () => {
@@ -174,4 +174,13 @@ test('conflicts: the support template on the same channel and a move trigger com
   const prisma = { botFlow: { findMany: async () => flows } } as any;
   assert.deepEqual(await findQueueConflicts(prisma, 1, 1, 15), [{ flowId: 1, name: 'tpl' }, { flowId: 2, name: 'own' }]);
   assert.deepEqual(await findQueueConflicts(prisma, 1, 1, 0), []);
+});
+
+test('a failed take is undone client first, room last (the client may not stay in the room)', () => {
+  // Second move failed: the client sits in the room - it goes back before the room is deleted.
+  assert.deepEqual(takeUndoSteps({ clientMoved: true, roomCid: 77 }), ['move-client-back', 'query-leave', 'delete-room']);
+  // First move failed: only the room (and the query client in it) to clean up.
+  assert.deepEqual(takeUndoSteps({ clientMoved: false, roomCid: 77 }), ['query-leave', 'delete-room']);
+  // Creating the room failed: nothing to undo.
+  assert.deepEqual(takeUndoSteps({ clientMoved: false, roomCid: null }), []);
 });
