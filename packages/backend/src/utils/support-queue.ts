@@ -14,6 +14,7 @@ import {
   type SupportQueueConfig,
   type SupportQueueSettings,
   type SupportQueueStatus,
+  type SupportTakeFailure,
 } from '@ts6/common';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { ConnectionUnavailableError } from '../middleware/error-handler.js';
@@ -202,7 +203,26 @@ export function toCaseEntry(row: SupportCase, position: number | null = null): S
     vip: row.vip,
     endedAt: row.endedAt?.toISOString() ?? null,
     endReason: row.endReason as SupportEndReason | null,
+    takeFailure: parseTakeFailure(row.takeFailure),
   };
+}
+
+function parseTakeFailure(json: string | null): SupportTakeFailure | null {
+  try {
+    return json ? JSON.parse(json) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** What undoing a failed web take-over does, in this order (pure, so the order is tested). */
+export type TakeUndoStep = 'move-client-back' | 'query-leave' | 'delete-room';
+export function takeUndoSteps(p: { clientMoved: boolean; roomCid: number | null }): TakeUndoStep[] {
+  const steps: TakeUndoStep[] = [];
+  // The client first: while it sits in the room the room is not empty and must not be deleted.
+  if (p.clientMoved) steps.push('move-client-back');
+  if (p.roomCid) steps.push('query-leave', 'delete-room');
+  return steps;
 }
 
 /** Open cases as the page lists them: the waiting ones in their order (VIPs first, then arrival), then the taken ones. */

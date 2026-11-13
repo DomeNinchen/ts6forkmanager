@@ -8,6 +8,8 @@ import {
   type SupportQueueConflict,
   type SupportQueueSettings,
   type SupportQueueView,
+  type SupportTakeFailure,
+  type SupportTakeStep,
 } from '@ts6/common';
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { requirePermission, requireRole } from '../middleware/rbac.js';
@@ -18,7 +20,7 @@ import { mayRole } from '../utils/role-table.js';
 import { acquireChannelCreateLock, clientMoveTolerating770 } from '../utils/channel-create-lock.js';
 import {
   closeOpenCases, emitCaseTaken, getQueueStatus, isAvailableSupporter, orderOpenCases, parseClientList, parseSettings,
-  resetQueueState, toCaseEntry, toQueueConfig,
+  resetQueueState, takeUndoSteps, toCaseEntry, toQueueConfig,
 } from '../utils/support-queue.js';
 
 // Support queue (R14): view with server.view (the same as the client list), act with clients.move,
@@ -211,6 +213,98 @@ async function leaveRoom(q: ReturnType<ConnectionPool['getBotClient']>, sid: num
   }
 }
 
+type TsClient = ReturnType<ConnectionPool['getBotClient']>;
+
+const tsText = (err: any) => (err instanceof TSApiError
+  ? `${err.code}: ${err.message}${err.failedPermission ? ` (${err.failedPermission})` : ''}`
+  : String(err?.message ?? err));
+
+/** The error code the page turns into a text naming the failed step. */
+function takeErrorCode(step: SupportTakeStep, notBack: boolean): string {
+  return notBack ? 'TAKE_FAILED_NOT_BACK' : `TAKE_FAILED_${step.toUpperCase().replace('-', '_')}`;
+}
+
+/** The room of an earlier failed take of this case, when it still exists and nobody is in it. */
+async function reusableRoom(q: TsClient, sid: number, cid: number | null): Promise<number | null> {
+  if (!cid) return null;
+  const channels = await q.execute(sid, 'channellist', {}) as Array<Record<string, unknown>>;
+  const room = channels.find((c) => Number(c.cid) === cid);
+  return room && String(room.total_clients) === '0' ? cid : null;
+}
+
+async function createRoom(q: TsClient, sid: number, name: string, roomType: SupportQueueSettings['roomType'], caseId: number): Promise<number> {
+  const params: Record<string, string> = { channel_name: name };
+  if (roomType === 'permanent') params.channel_flag_permanent = '1';
+  else if (roomType === 'semipermanent') params.channel_flag_semi_permanent = '1';
+  let created: any;
+  try {
+    created = await q.executePost(sid, 'channelcreate', params);
+  } catch (err) {
+    // 771: a channel of that name exists already (two cases of the same nickname) - the case id tells them apart.
+    if (!(err instanceof TSApiError && err.code === 771)) throw err;
+    params.channel_name = `${[...params.channel_name].slice(0, 32).join('')} #${caseId}`;
+    created = await q.executePost(sid, 'channelcreate', params);
+  }
+  // TS6 sometimes answers channelcreate with a bare "ok": no cid, and the query client is not moved in
+  // (measured 2026-11-10; the NaN cid then gave 1540 convert error). The name was free (else 771), so it finds the room.
+  const cid = Number(created?.[0]?.cid) || null;
+  if (cid) return cid;
+  const channels = await q.execute(sid, 'channellist', {}) as Array<Record<string, unknown>>;
+  const found = Number(channels.find((c) => c.channel_name === params.channel_name && String(c.pid) === '0')?.cid) || null;
+  if (!found) throw new AppError(502, 'TeamSpeak did not say which channel it created for the support room');
+  return found;
+}
+
+/** Deletes a support room only while nobody is in it (force=0: TeamSpeak refuses otherwise). null = gone. */
+async function deleteRoomIfEmpty(q: TsClient, sid: number, cid: number): Promise<number | null> {
+  try {
+    await q.executePost(sid, 'channeldelete', { cid, force: 0 });
+    return null;
+  } catch (err) {
+    if (err instanceof TSApiError && err.code === 768) return null; // already gone (a temporary room empties itself)
+    console.warn(`[SupportQueue] Support room ${cid} was left in place: ${tsText(err)}`);
+    return cid;
+  }
+}
+
+/**
+ * Undoes a failed take: the client back into the waiting channel, the query client out of the room, the
+ * room (made or reused by this case) deleted when empty. If the client cannot be moved back, what
+ * TeamSpeak shows now is kept on the case so a user can bring them back.
+ */
+async function undoTake(q: TsClient, sid: number, u: {
+  who: any; roomCid: number | null; clientMoved: boolean; clid: number; uid: string; waitingCid: number;
+  step: SupportTakeStep; pool: ConnectionPool; serverConfigId: number;
+}): Promise<{ roomCid: number | null; failure: SupportTakeFailure | null }> {
+  let roomCid = u.roomCid;
+  let backError: string | null = null;
+  for (const s of takeUndoSteps({ clientMoved: u.clientMoved, roomCid })) {
+    if (s === 'move-client-back') {
+      try {
+        await clientMoveTolerating770(q, sid, String(u.clid), String(u.waitingCid));
+      } catch (err) {
+        backError = tsText(err);
+      }
+    } else if (s === 'query-leave') {
+      if (u.who?.client_id && u.who.client_channel_id !== undefined) await leaveRoom(q, sid, String(u.who.client_id), String(u.who.client_channel_id));
+    } else if (roomCid && backError === null) {
+      roomCid = await deleteRoomIfEmpty(q, sid, roomCid);
+    }
+  }
+  if (backError === null) return { roomCid, failure: null };
+  console.warn(`[SupportQueue] Could not move the client back into the waiting channel: ${backError}`);
+  let clientCid: number | null = null;
+  let roomExists = roomCid !== null;
+  try {
+    clientCid = (await lookUp(u.pool, u.serverConfigId, sid, u.uid, u.waitingCid)).client?.cid ?? null;
+    if (roomCid) roomExists = (await u.pool.getClient(u.serverConfigId).execute(sid, 'channellist', {}) as Array<Record<string, unknown>>).some((c) => Number(c.cid) === roomCid);
+  } catch (err) {
+    // shortcut: when TeamSpeak cannot even be asked, client = unknown (null) and the room counts as still there.
+    console.warn(`[SupportQueue] Could not look up where the client is now: ${tsText(err)}`);
+  }
+  return { roomCid: roomExists ? roomCid : null, failure: { step: u.step, error: backError, clientCid, roomExists, at: new Date().toISOString() } };
+}
+
 // A supporter takes a waiting case: a room is created and both are moved into it (his decisions 2b and 3).
 // Body: { supporterClid }.
 supportQueueRoutes.post('/cases/:id/take', requirePermission('clients.move'), async (req: Request, res: Response, next) => {
@@ -241,43 +335,64 @@ supportQueueRoutes.post('/cases/:id/take', requirePermission('clients.move'), as
     const release = await acquireChannelCreateLock(`${serverConfigId}:${sid}`);
     let roomCid: number | null = null;
     let who: any;
+    let step: SupportTakeStep = 'create-room';
+    let clientMoved = false;
     try {
       who = (await q.execute(sid, 'whoami'))?.[0];
-      const params: Record<string, string> = { channel_name: supportRoomName(settings.roomName, client.nickname, supporter.nickname) };
-      if (settings.roomType === 'permanent') params.channel_flag_permanent = '1';
-      else if (settings.roomType === 'semipermanent') params.channel_flag_semi_permanent = '1';
-      let created: any;
-      try {
-        created = await q.executePost(sid, 'channelcreate', params);
-      } catch (err) {
-        // 771: a channel of that name exists already (two cases of the same nickname) - the case id tells them apart.
-        if (!(err instanceof TSApiError && err.code === 771)) throw err;
-        params.channel_name = `${[...params.channel_name].slice(0, 32).join('')} #${row.id}`;
-        created = await q.executePost(sid, 'channelcreate', params);
-      }
-      // TS6 sometimes answers channelcreate with a bare "ok": no cid, and the query client is not moved in
-      // (measured 2026-11-10; the NaN cid then gave 1540 convert error). The name was free (else 771), so it finds the room.
-      roomCid = Number(created?.[0]?.cid) || null;
-      if (!roomCid) {
-        const channels = await q.execute(sid, 'channellist', {}) as Array<Record<string, unknown>>;
-        roomCid = Number(channels.find((c) => c.channel_name === params.channel_name && String(c.pid) === '0')?.cid) || null;
-        if (!roomCid) throw new AppError(502, 'TeamSpeak did not say which channel it created for the support room');
+      const name = supportRoomName(settings.roomName, client.nickname, supporter.nickname);
+      roomCid = await reusableRoom(q, sid, row.roomCid);
+      if (roomCid) {
+        // The room of an earlier failed try is still there and empty: use it rather than make a second one.
+        await q.executePost(sid, 'channeledit', { cid: roomCid, channel_name: name }).catch(() => undefined);
+      } else {
+        roomCid = await createRoom(q, sid, name, settings.roomType, row.id);
       }
       // TeamSpeak put the query client into the room; while it sits there a temporary room never empties.
+      step = 'move-client';
       await clientMoveTolerating770(q, sid, String(client.clid), String(roomCid));
+      clientMoved = true;
+      step = 'move-supporter';
       await clientMoveTolerating770(q, sid, String(supporter.clid), String(roomCid));
       if (who?.client_id && who.client_channel_id !== undefined) await leaveRoom(q, sid, String(who.client_id), String(who.client_channel_id));
-    } catch (err) {
-      // A move failed after the room was made: the query client still sits in it, and a temporary room would never empty.
-      if (roomCid && who?.client_id && who.client_channel_id !== undefined) await leaveRoom(q, sid, String(who.client_id), String(who.client_channel_id));
-      await prisma.supportCase.updateMany({ where: { id: row.id, state: 'in-progress' }, data: { state: 'waiting', takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid } });
-      throw err;
+    } catch (err: any) {
+      console.warn(`[SupportQueue] Take of case ${row.id} failed at ${step}: ${err?.message ?? err}`);
+      const undone = await undoTake(q, sid, { who, roomCid, clientMoved, clid: client.clid, uid: row.clientUid, waitingCid: row.queue.channelId, step, pool, serverConfigId });
+      await prisma.supportCase.updateMany({
+        where: { id: row.id, state: 'in-progress' },
+        data: { state: 'waiting', takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid: undone.roomCid, takeFailure: undone.failure ? JSON.stringify(undone.failure) : null },
+      });
+      // The original error stays the cause; the code names the step it failed at.
+      throw new AppError(502, `The take-over failed at step ${step}${undone.failure ? ', and the client could not be moved back' : ''}`, tsText(err), takeErrorCode(step, !!undone.failure));
     } finally {
       release();
     }
-    const done = await prisma.supportCase.update({ where: { id: row.id }, data: { roomCid } });
+    const done = await prisma.supportCase.update({ where: { id: row.id }, data: { roomCid, takeFailure: null } });
     emitCaseTaken(row.queue, done, client.clid);
     res.json(toCaseEntry(done));
+  } catch (err) { next(err); }
+});
+
+// After a failed take that could not move the client back: moves them into the waiting channel and deletes
+// the left-over room when it is empty. Under the channel-create lock, so never next to a take or another try.
+supportQueueRoutes.post('/cases/:id/bring-back', requirePermission('clients.move'), async (req: Request, res: Response, next) => {
+  try {
+    const { prisma, pool, serverConfigId, sid } = scope(req);
+    const { id } = await caseOf(req);
+    const release = await acquireChannelCreateLock(`${serverConfigId}:${sid}`);
+    try {
+      const row = await prisma.supportCase.findUnique({ where: { id }, include: { queue: true } });
+      if (!row || row.state !== 'waiting') throw new AppError(409, 'This case is no longer waiting', undefined, 'CASE_NOT_WAITING');
+      if (!row.takeFailure) throw new AppError(409, 'Nothing to bring back for this case', undefined, 'NOTHING_TO_BRING_BACK');
+      const { client } = await lookUp(pool, serverConfigId, sid, row.clientUid, row.queue.channelId);
+      if (!client) throw new AppError(409, 'The client is not online', undefined, 'CLIENT_OFFLINE');
+      const q = pool.getBotClient(serverConfigId);
+      if (client.cid !== row.queue.channelId) await clientMoveTolerating770(q, sid, String(client.clid), String(row.queue.channelId));
+      const roomCid = row.roomCid ? await deleteRoomIfEmpty(q, sid, row.roomCid) : null;
+      const done = await prisma.supportCase.update({ where: { id }, data: { takeFailure: null, roomCid } });
+      res.json(toCaseEntry(done));
+    } finally {
+      release();
+    }
   } catch (err) { next(err); }
 });
 

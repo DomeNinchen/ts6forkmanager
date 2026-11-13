@@ -28,6 +28,8 @@ export const supportQueueApi = {
     api.delete(`${base(configId, sid)}/queues/${queueId}`),
   take: (configId: number, sid: number, id: number, supporterClid: number) =>
     api.post(`${base(configId, sid)}/cases/${id}/take`, { supporterClid }).then((r) => r.data as SupportCaseEntry),
+  bringBack: (configId: number, sid: number, id: number) =>
+    api.post(`${base(configId, sid)}/cases/${id}/bring-back`).then((r) => r.data as SupportCaseEntry),
   remove: (configId: number, sid: number, id: number) =>
     api.post(`${base(configId, sid)}/cases/${id}/remove`).then((r) => r.data as SupportCaseEntry),
   close: (configId: number, sid: number, id: number) =>
