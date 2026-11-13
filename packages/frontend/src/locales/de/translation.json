@@ -1,5 +1,6 @@
 {
   "common": {
+    "live": "LIVE",
     "save": "Speichern",
     "saving": "Wird gespeichert...",
     "cancel": "Abbrechen",
@@ -4369,6 +4370,20 @@
     }
   },
   "components": {
+    "live": {
+      "openSettings": "Einstellungen → Streaming",
+      "replayHint": "Startet den Kanal erneut - er muss gerade live sein",
+      "errors": {
+        "disabled": "Live-Streams sind ausgeschaltet. Ein Admin kann sie unter Einstellungen → Streaming erlauben.",
+        "videoDisabled": "Live-Streams als Video sind ausgeschaltet. Ein Admin kann sie unter Einstellungen → Streaming erlauben.",
+        "offline": "Der Kanal ist gerade nicht live."
+      },
+      "ended": {
+        "offline": "Live-Stream beendet: Der Kanal ist offline gegangen",
+        "time_limit": "Live-Stream gestoppt: Das Zeitlimit für Live-Streams ist erreicht",
+        "unreachable": "Live-Stream beendet: Er ist abgebrochen und war nicht mehr erreichbar"
+      }
+    },
     "flowTemplates": {
       "import": "Importieren",
       "importTitle": "Ablauf-Vorlage importieren",

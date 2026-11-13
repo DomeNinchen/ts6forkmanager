@@ -1,5 +1,6 @@
 {
   "common": {
+    "live": "LIVE",
     "save": "Save",
     "saving": "Saving...",
     "cancel": "Cancel",
@@ -4369,6 +4370,20 @@
     }
   },
   "components": {
+    "live": {
+      "openSettings": "Settings → Streaming",
+      "replayHint": "Starts the channel again - it has to be live right now",
+      "errors": {
+        "disabled": "Live streams are switched off. An admin can allow them under Settings → Streaming.",
+        "videoDisabled": "Live streams as video are switched off. An admin can allow them under Settings → Streaming.",
+        "offline": "The channel is not live right now."
+      },
+      "ended": {
+        "offline": "Live stream ended: the channel went offline",
+        "time_limit": "Live stream stopped: it reached the time limit for live streams",
+        "unreachable": "Live stream ended: it broke off and could not be reached again"
+      }
+    },
     "flowTemplates": {
       "import": "Import",
       "importTitle": "Import flow template",

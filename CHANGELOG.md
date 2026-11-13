@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.111.0 · frontend 3.129.0 · sidecar 2.4.0**
+Versions at the end of the month: **backend 2.112.0 · frontend 3.130.0 · sidecar 2.4.0**
 
 ### New Features
 
@@ -27,6 +27,7 @@ Versions at the end of the month: **backend 2.111.0 · frontend 3.129.0 · sidec
 
 ### Improvements
 
+- **Live streams in the web interface** — A channel that is live shows a red LIVE badge instead of a length in the bot card, the Queue tab, the Video tab and the music request history; playing a live entry from the history again starts the channel anew (it has to be live at that moment). Whoever has the bot open gets a notice when a live stream ends and why (channel offline, time limit, could not be reached again), and "live streams are switched off" or "the channel is not live" now show as readable messages, for admins with a link to Settings -> Streaming. All texts in German, English and French; the badge says LIVE in every language. *backend 2.112.0, frontend 3.130.0* [#397](https://github.com/DomeNinchen/ts6forkmanager/pull/397)
 - **Example override file for local Docker changes** — `docker-compose.override.example.yml` shows how to change the stack without touching `docker-compose.yml`, using the example of a LAN IP per container (macvlan/ipvlan, such as Unraid's `br0`), plus optional video tuning for the sidecar. `docker-compose.override.yml` is now ignored by git, so `git pull` keeps working with local changes. ([Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment#own-lan-ips-per-container)) [#380](https://github.com/DomeNinchen/ts6forkmanager/pull/380)
 - **No refused commands at each stream start** — A music bot no longer sends `servernotifyregister` when it starts a video stream. TeamSpeak refuses that command on a bot's voice connection and sends the stream notifications anyway, so it only left three `invalid client type` errors (516) in the log; streams behave as before. *backend 2.100.1* [#378](https://github.com/DomeNinchen/ts6forkmanager/pull/378)
 - **Refused SSH credentials are never retried** — Once TeamSpeak refuses an SSH query login, no part of the manager (event sessions, command listeners, connection journal, console, connection test) logs in with the same credentials again until they are changed or the backend restarts, and logins with the same credentials run one after another instead of side by side. A wrong SSH password therefore costs one failed login instead of several, which keeps TeamSpeak from blocking or banning the manager's address for repeated failed logins. *backend 2.90.1* [#349](https://github.com/DomeNinchen/ts6forkmanager/pull/349)
@@ -40,6 +41,7 @@ Versions at the end of the month: **backend 2.111.0 · frontend 3.129.0 · sidec
 
 ### Bug Fixes
 
+- Fixed the Queue tab of Music Bots on a phone: at 375 px the title column had no room left and the titles disappeared; the Source column is now hidden on narrow screens. *frontend 3.130.0* [#397](https://github.com/DomeNinchen/ts6forkmanager/pull/397)
 - Fixed "Watch Stream" in the TeamSpeak 6 client playing the bot's audio but showing only a black picture for some viewers, while the web preview and other viewers saw the video: ffmpeg filled the video packets up to 1472 bytes, and with encryption and headers on top they exceeded the usual 1500-byte limit and were split, which some routers and providers drop. Video and audio packets are now capped at 1200 bytes. *sidecar 2.3.2* [#394](https://github.com/DomeNinchen/ts6forkmanager/pull/394), reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Fixed **Take** on the Support Queue page sometimes failing with "convert error" and leaving an empty room behind: TeamSpeak 6 at times confirms a new channel without saying which one it created, and the room is now found by its name. A take also no longer fails when the bot's previous channel has disappeared meanwhile; the bot then goes to the default channel. *backend 2.102.0* [#382](https://github.com/DomeNinchen/ts6forkmanager/pull/382)
 

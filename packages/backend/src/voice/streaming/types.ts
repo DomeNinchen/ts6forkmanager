@@ -56,4 +56,6 @@ export interface VideoStreamStatus {
   nowPlaying: VideoQueueItem | null;
   queue: VideoQueueItem[];
   sidecar: { videoPort: number; audioPort: number } | null;
+  /** The stream now running is a live channel (no length, ends when stopped or the channel goes offline). */
+  live?: boolean;
 }

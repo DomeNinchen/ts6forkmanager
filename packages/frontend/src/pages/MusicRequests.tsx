@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getDateFnsLocale } from '@/lib/date-fns-locale';
+import { LiveBadge, useLiveErrorToast } from '@/components/shared/Live';
 
 // The same states the play-url route accepts.
 const CONNECTED = ['connected', 'playing', 'paused'];
@@ -30,6 +31,7 @@ export default function MusicRequests() {
     });
     const { data: bots } = useMusicBots();
     const playUrl = usePlayUrl();
+    const liveErrorToast = useLiveErrorToast();
     const [chosenBotId, setChosenBotId] = useState<number | null>(null);
 
     const connectedBots = ((bots ?? []) as MusicBotSummary[])
@@ -44,7 +46,7 @@ export default function MusicRequests() {
             onSuccess: (res) => toast.success(
                 res?.queued ? t('pages.musicBots.botsTab.addedToQueuePosition', { position: res.position }) : t('pages.musicBots.botsTab.playingUrl'),
             ),
-            onError: () => toast.error(t(mode === 'queue' ? 'pages.musicBots.botsTab.queueUrlFailed' : 'pages.musicBots.botsTab.playUrlFailed')),
+            onError: (err) => { if (!liveErrorToast(err)) toast.error(t(mode === 'queue' ? 'pages.musicBots.botsTab.queueUrlFailed' : 'pages.musicBots.botsTab.playUrlFailed')); },
         });
     };
 
@@ -109,9 +111,12 @@ export default function MusicRequests() {
 
                                     {/* Content Details */}
                                     <div className="flex-1 basis-48 min-w-0">
-                                        <p className="font-medium text-[15px] truncate group-hover:text-primary transition-colors" title={req.title}>
-                                            {req.title}
-                                        </p>
+                                        <div className="flex min-w-0 items-center gap-2">
+                                            <p className="font-medium text-[15px] truncate group-hover:text-primary transition-colors" title={req.title}>
+                                                {req.title}
+                                            </p>
+                                            {req.isLive && <LiveBadge />}
+                                        </div>
                                         <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
                                             <span className="flex items-center gap-1.5 font-mono-data">
                                                 <Clock className="w-3.5 h-3.5" />
@@ -125,7 +130,7 @@ export default function MusicRequests() {
                                         <Button variant="default" size="sm" className="h-7 text-xs px-2"
                                             disabled={!botId || !!pending}
                                             onClick={() => play(req.url, 'now')}
-                                            title={t('pages.musicBots.playSongDialog.playNowHint')}
+                                            title={req.isLive ? t('components.live.replayHint') : t('pages.musicBots.playSongDialog.playNowHint')}
                                         >
                                             {loading === 'now' ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Play className="h-3.5 w-3.5 mr-1" />}
                                             {loading === 'now' ? t('pages.musicBots.playSongDialog.loading') : t('pages.musicBots.playSongDialog.play')}
@@ -133,7 +138,7 @@ export default function MusicRequests() {
                                         <Button variant="outline" size="sm" className="h-7 text-xs px-2"
                                             disabled={!botId || !!pending}
                                             onClick={() => play(req.url, 'queue')}
-                                            title={t('pages.musicBots.playSongDialog.queueAfterHint')}
+                                            title={req.isLive ? t('components.live.replayHint') : t('pages.musicBots.playSongDialog.queueAfterHint')}
                                         >
                                             {loading === 'queue' ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
                                             {loading === 'queue' ? t('pages.musicBots.playSongDialog.loading') : t('pages.musicBots.playSongDialog.queue')}

@@ -41,6 +41,10 @@ const SONG_BUFFER_BYTES = 5 * 48000 * 2 * 2;
 
 export type VoiceBotStatus = 'stopped' | 'starting' | 'connected' | 'playing' | 'paused' | 'error';
 
+/** Why a live stream ended for good: the web interface translates the code, the chat gets the English reason. */
+export type LiveEndCode = 'offline' | 'time_limit' | 'unreachable';
+export interface LiveEnd { title: string; code: LiveEndCode; at: number }
+
 export interface PlaybackProgress {
   position: number;  // seconds
   duration: number;  // seconds
@@ -203,6 +207,8 @@ export class VoiceBot extends EventEmitter {
   private _videoEndTimer: ReturnType<typeof setTimeout> | null = null;
   /** The live page now streaming as video; its media address is looked up again when the sidecar reports it broke off. */
   private _videoLive: VideoLiveWatch | null = null;
+  /** How the last live stream (sound or video) ended, for the web interface to tell whoever has the bot open. */
+  private _lastLiveEnd: LiveEnd | null = null;
   private _videoLiveTimer: ReturnType<typeof setInterval> | null = null;
   private _viewers: Map<number, VideoViewerInfo> = new Map();
   private signalingQueue: Promise<void> = Promise.resolve();
@@ -297,6 +303,10 @@ export class VoiceBot extends EventEmitter {
 
   get nowPlaying(): QueueItem | null {
     return this._nowPlaying;
+  }
+
+  get lastLiveEnd(): LiveEnd | null {
+    return this._lastLiveEnd;
   }
 
   get isStreaming(): boolean {
@@ -812,7 +822,7 @@ export class VoiceBot extends EventEmitter {
 
         if (isLive) {
           if (item.liveEndsAt && Date.now() >= item.liveEndsAt) {
-            this.endLive(item, 'Live stream stopped: it reached the time limit for live streams');
+            this.endLive(item, 'Live stream stopped: it reached the time limit for live streams', 'time_limit');
             return;
           }
           // A playlist that stopped growing leaves ffmpeg waiting forever: treat silence as a drop (close -> liveDropped)
@@ -869,9 +879,10 @@ export class VoiceBot extends EventEmitter {
     if (next > LIVE_MAX_RETRIES) {
       // Only our own readable messages reach the chat; raw yt-dlp/ffmpeg text can name internal addresses (logged above instead)
       const known = lastError instanceof AppError ? lastError : undefined;
-      this.endLive(item, known?.code === 'LIVE_OFFLINE'
+      const offline = known?.code === 'LIVE_OFFLINE';
+      this.endLive(item, offline
         ? 'Live stream ended: the channel went offline'
-        : `Live stream ended: it broke off and could not be reached again${known ? ` (${known.message})` : ''}`);
+        : `Live stream ended: it broke off and could not be reached again${known ? ` (${known.message})` : ''}`, offline ? 'offline' : 'unreachable');
       return;
     }
     this.clearTimer(); // makes this run's callbacks stale; the retry starts a new one
@@ -881,12 +892,13 @@ export class VoiceBot extends EventEmitter {
     console.log(`[VoiceBot] Live stream "${item.title}" dropped, retry ${next}/${LIVE_MAX_RETRIES}${lastError ? `: ${lastError.message}` : ''}`);
     setTimeout(() => {
       if (epoch !== this.loopEpoch || this._nowPlaying !== item) return; // stopped, paused or replaced meanwhile
-      this.playStream(item, { liveRetry: next, continuing: true }).catch((err) => this.endLive(item, `Live stream ended: ${err.message}`));
+      this.playStream(item, { liveRetry: next, continuing: true }).catch((err) => this.endLive(item, `Live stream ended: ${err.message}`, 'unreachable'));
     }, liveRetryDelayMs(next));
   }
 
   /** Ends a live entry for good (offline, time limit) and moves on like the end of a song. */
-  private endLive(item: QueueItem, reason: string): void {
+  private endLive(item: QueueItem, reason: string, code: LiveEndCode): void {
+    this._lastLiveEnd = { title: item.title, code, at: Date.now() };
     this.stopPlayback();
     this.client.sendVoiceStop();
     this._nowPlaying = null;
@@ -1332,6 +1344,7 @@ export class VoiceBot extends EventEmitter {
       nowPlaying: this._videoNowPlaying,
       queue: [...this._videoQueue],
       sidecar: null,
+      live: this._videoLive !== null,
     };
   }
 
@@ -1663,7 +1676,7 @@ export class VoiceBot extends EventEmitter {
     if (!this.sidecarHttp) return;
     if (this._videoNowPlaying?.title) watch.title = this._videoNowPlaying.title;
     if (watch.endsAt && Date.now() >= watch.endsAt) {
-      await this.endVideoLive(watch, 'Live stream stopped: it reached the time limit for live streams');
+      await this.endVideoLive(watch, 'Live stream stopped: it reached the time limit for live streams', 'time_limit');
       return;
     }
     // Twitch ad segments come with other timestamps for picture and sound; ffmpeg loses both and
@@ -1708,9 +1721,10 @@ export class VoiceBot extends EventEmitter {
       watch.retries = Date.now() - watch.restartedAt >= LIVE_STABLE_MS ? 1 : watch.retries + 1;
       if (watch.retries > LIVE_MAX_RETRIES) {
         const known = watch.lastError instanceof AppError ? watch.lastError : undefined;
-        await this.endVideoLive(watch, known?.code === 'LIVE_OFFLINE'
+        const offline = known?.code === 'LIVE_OFFLINE';
+        await this.endVideoLive(watch, offline
           ? 'Live stream ended: the channel went offline'
-          : `Live stream ended: it broke off and could not be reached again${known ? ` (${known.message})` : ''}`);
+          : `Live stream ended: it broke off and could not be reached again${known ? ` (${known.message})` : ''}`, offline ? 'offline' : 'unreachable');
         return;
       }
       console.log(`[VoiceBot ${this.config.id}] Live video dropped (${stats.sourceEnded ? 'source ended' : 'no new picture'}), retry ${watch.retries}/${LIVE_MAX_RETRIES}`);
@@ -1737,8 +1751,9 @@ export class VoiceBot extends EventEmitter {
   }
 
   /** Ends a live video for good (offline, time limit): tell the channel and move on like the end of a video. */
-  private async endVideoLive(watch: VideoLiveWatch, reason: string): Promise<void> {
+  private async endVideoLive(watch: VideoLiveWatch, reason: string, code: LiveEndCode): Promise<void> {
     if (this._videoLive !== watch) return;
+    this._lastLiveEnd = { title: watch.title, code, at: Date.now() };
     this.stopVideoLiveWatch();
     console.log(`[VoiceBot ${this.config.id}] ${reason}: "${watch.title}"`);
     try { this.sendChannelMessage(`${reason}: ${watch.title}`); } catch { /* the stream still ends */ }

@@ -440,7 +440,7 @@ musicBotRoutes.post('/:id/play-url', async (req: Request, res: Response, next) =
     // Save to MusicRequest History
     try {
       if (queueItem.sourceUrl && bot.currentConfig.serverConfigId) {
-        await saveMusicRequest(req.app.locals.prisma, bot.currentConfig.serverConfigId, queueItem.sourceUrl, queueItem.title);
+        await saveMusicRequest(req.app.locals.prisma, bot.currentConfig.serverConfigId, queueItem.sourceUrl, queueItem.title, queueItem.source === 'live');
       }
     } catch (saveErr) {
       console.error('[music-bots.routes] Failed to save music request history:', saveErr);
@@ -591,6 +591,7 @@ musicBotRoutes.get('/:id/state', async (req: Request, res: Response, next) => {
       repeat: bot.queue.repeat,
       isStreaming: bot.isStreaming,
       videoStream: bot.videoStreamStatus,
+      lastLiveEnd: bot.lastLiveEnd,
     });
   } catch (err) { next(err); }
 });

@@ -544,6 +544,8 @@ model MusicRequest {
   serverConfigId Int
   serverConfig   TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
   requestedAt    DateTime       @default(now())
+  /** The link was a channel that was live at the time; playing it again is a new live call. */
+  isLive         Boolean        @default(false)
 
   @@unique([serverConfigId, url])
 }

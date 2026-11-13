@@ -1,5 +1,6 @@
 {
   "common": {
+    "live": "LIVE",
     "save": "Enregistrer",
     "saving": "Enregistrement en cours...",
     "cancel": "Annuler",
@@ -2999,7 +3000,7 @@
       "botPlayerCard": {
         "playerWidget": "Widget lecteur",
         "playSongEllipsis": "Lire un morceau...",
-        "live": "EN DIRECT",
+        "live": "LIVE",
         "stop": "Arrêter",
         "playEllipsis": "Lire...",
         "stopAudio": "Arrêter l’audio",
@@ -3261,6 +3262,20 @@
     }
   },
   "components": {
+    "live": {
+      "openSettings": "Paramètres → Streaming",
+      "replayHint": "Relance la chaîne - elle doit être en direct maintenant",
+      "errors": {
+        "disabled": "Les diffusions en direct sont désactivées. Un administrateur peut les autoriser dans Paramètres → Streaming.",
+        "videoDisabled": "Les diffusions en direct en vidéo sont désactivées. Un administrateur peut les autoriser dans Paramètres → Streaming.",
+        "offline": "La chaîne n'est pas en direct pour le moment."
+      },
+      "ended": {
+        "offline": "Diffusion en direct terminée : la chaîne est passée hors ligne",
+        "time_limit": "Diffusion en direct arrêtée : la limite de temps des diffusions en direct est atteinte",
+        "unreachable": "Diffusion en direct terminée : elle a été interrompue et n’a plus pu être jointe"
+      }
+    },
     "flowTemplates": {
       "import": "Importer",
       "importTitle": "Importer un modèle de flux",
@@ -3498,7 +3513,7 @@
       "mute": "Couper le son",
       "connecting": "Connexion au flux...",
       "retry": "Réessayer",
-      "live": "EN DIRECT"
+      "live": "LIVE"
     },
     "videoStreamTab": {
       "title": "Flux vidéo",
