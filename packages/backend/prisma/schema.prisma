@@ -343,6 +343,10 @@ model BotFlow {
   virtualServerId Int      @default(1)
   serverConfig    TsServerConfig @relation(fields: [serverConfigId], references: [id], onDelete: Cascade)
   enabled         Boolean  @default(false)
+  // An imported flow (flowData.imported) runs only once an admin approved it; set when an admin enables it,
+  // cleared when a non-admin changes what it does. approvedBy is null for approvals from before this column.
+  approvedAt      DateTime?
+  approvedBy      String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

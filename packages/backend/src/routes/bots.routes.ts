@@ -2,12 +2,21 @@ import { Router, Request, Response } from 'express';
 import { requirePermission, requireRole } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import { grantCovers, grantOf, type Grant } from '../utils/vs-access.js';
+import { flowLogicKey, withStoredImport } from '../utils/flow-approval.js';
 import {
   FLOW_TEST_MAX_FLOW_BYTES, FLOW_TEST_MAX_FORCED, flowToTemplate, flowTemplateUpdate, flowTemplateWarnings, parseFlowTemplate, templateToFlowData,
   type FlowTemplateFile, type FlowTemplateUpdate, type ImportedTemplateRef,
 } from '@ts6/common';
 
 export const botRoutes: Router = Router();
+
+function isImported(flowData: string): boolean {
+  try {
+    return !!JSON.parse(flowData)?.imported;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Bot Flows aren't mounted under /api/servers/:configId (see app.ts), so
@@ -54,6 +63,7 @@ botRoutes.get('/', async (req: Request, res: Response, next) => {
       id: b.id, name: b.name, description: b.description,
       serverConfigId: b.serverConfigId, virtualServerId: b.virtualServerId,
       enabled: b.enabled, createdAt: b.createdAt, updatedAt: b.updatedAt,
+      imported: isImported(b.flowData), approvedAt: b.approvedAt, approvedBy: b.approvedBy,
       executionCount: b._count.executions,
       droppedLast24h: dropped.get(b.id) || 0,
     })));
@@ -100,7 +110,8 @@ botRoutes.post('/', requirePermission('bots.manage'), async (req: Request, res: 
         name, description,
         serverConfigId: parsedConfigId,
         virtualServerId: parsedSid,
-        flowData: flowData ? JSON.stringify(flowData) : '{"nodes":[],"edges":[]}',
+        // Only the import route marks a flow as imported.
+        flowData: flowData ? JSON.stringify(withStoredImport(flowData, null)) : '{"nodes":[],"edges":[]}',
       },
     });
     res.status(201).json({ id: bot.id, name: bot.name });
@@ -118,7 +129,18 @@ botRoutes.put('/:botId', requirePermission('bots.manage'), async (req: Request, 
     const data: any = {};
     if (req.body.name !== undefined) data.name = req.body.name;
     if (req.body.description !== undefined) data.description = req.body.description;
-    if (req.body.flowData !== undefined) data.flowData = JSON.stringify(req.body.flowData);
+    // The import mark stays as stored; an approved imported flow whose behaviour a non-admin changes needs an
+    // admin again, so a running one is switched off (his decision 5).
+    let approvalRevoked = false;
+    if (req.body.flowData !== undefined) {
+      const stored = JSON.parse(existing.flowData);
+      const next = withStoredImport(req.body.flowData ?? {}, stored);
+      data.flowData = JSON.stringify(next);
+      if (next.imported && existing.approvedAt && req.user!.role !== 'admin' && flowLogicKey(next) !== flowLogicKey(stored)) {
+        Object.assign(data, { approvedAt: null, approvedBy: null, enabled: false });
+        approvalRevoked = true;
+      }
+    }
     if (req.body.serverConfigId !== undefined) data.serverConfigId = parseInt(req.body.serverConfigId);
     if (req.body.virtualServerId !== undefined) data.virtualServerId = parseInt(req.body.virtualServerId);
     if (data.serverConfigId !== undefined || data.virtualServerId !== undefined) {
@@ -133,9 +155,9 @@ botRoutes.put('/:botId', requirePermission('bots.manage'), async (req: Request, 
 
     // Notify bot engine of flow update
     const botEngine = req.app.locals.botEngine;
-    if (botEngine) await botEngine.reloadFlow(botId);
+    if (botEngine) await (approvalRevoked ? botEngine.disableFlow(botId) : botEngine.reloadFlow(botId));
 
-    res.json({ id: bot.id, name: bot.name });
+    res.json({ id: bot.id, name: bot.name, ...(approvalRevoked ? { approvalRevoked: true } : {}) });
   } catch (err) { next(err); }
 });
 
@@ -164,14 +186,14 @@ botRoutes.post('/:botId/enable', requirePermission('bots.manage'), async (req: R
     if (!existing) throw new AppError(404, 'Bot flow not found');
     await assertServerAccess(req, prisma, existing.serverConfigId, existing.virtualServerId);
 
-    // An imported flow is someone else's code: only an admin switches it on the first time.
-    const flowData = JSON.parse(existing.flowData);
-    const imported: ImportedTemplateRef | undefined = flowData?.imported;
-    if (imported && !imported.approved) {
-      if (req.user!.role !== 'admin') throw new AppError(403, 'An imported flow must be enabled by an admin the first time');
-      flowData.imported = { ...imported, approved: true };
+    // An imported flow is someone else's code: only an admin approves it, by switching it on (again after a
+    // non-admin changed it). The approval lives in its own columns, never in flowData.
+    const imported: ImportedTemplateRef | undefined = JSON.parse(existing.flowData)?.imported;
+    const approve = !!imported && !existing.approvedAt;
+    if (approve && req.user!.role !== 'admin') {
+      throw new AppError(403, 'An imported flow must be approved by an admin: an admin has to enable it', undefined, 'APPROVAL_REQUIRED');
     }
-    await prisma.botFlow.update({ where: { id: botId }, data: { enabled: true, ...(imported && !imported.approved ? { flowData: JSON.stringify(flowData) } : {}) } });
+    await prisma.botFlow.update({ where: { id: botId }, data: { enabled: true, ...(approve ? { approvedAt: new Date(), approvedBy: req.user!.username } : {}) } });
 
     // Enable in bot engine
     const botEngine = req.app.locals.botEngine;

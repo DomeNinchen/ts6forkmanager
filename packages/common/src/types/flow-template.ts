@@ -82,8 +82,6 @@ export interface ImportedTemplateRef {
   id: string;
   version: string;
   name: string;
-  /** Set once an admin enabled the imported flow for the first time. */
-  approved?: boolean;
 }
 
 /** Something the export could not turn into an input: the value may still point at an object of the old server. */
