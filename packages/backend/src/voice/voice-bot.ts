@@ -16,7 +16,7 @@ import type { BotFailureKind } from '@ts6/common';
 import { ChannelOccupancy } from './channel-occupancy.js';
 import { DEFAULT_MAX_VIDEO_MINUTES } from '../utils/stream-defaults.js';
 import { AppError } from '../middleware/error-handler.js';
-import { resolveLive, liveVideoFormat, resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS, LIVE_REBUFFER_MS, LIVE_REBUFFER_BYTES } from './audio/live-source.js';
+import { resolveLive, liveVideoFormat, resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS, LIVE_REBUFFER_MS, LIVE_REBUFFER_BYTES, LIVE_AD_HOLD_MS, twitchAdRunning } from './audio/live-source.js';
 
 
 /** How often a bot checks whether it has been alone long enough to pause. */
@@ -95,6 +95,13 @@ const VIDEO_LIVE_CHECK_MS = 5000;
 
 interface VideoLiveWatch {
   page: string;
+  /** The media address(es) ffmpeg plays now; replaced on every re-resolve. */
+  mediaUrl: string;
+  audioUrl?: string;
+  /** Set while a Twitch ad break holds the picture back. */
+  adSince?: number;
+  /** The playlist read as an ad for longer than LIVE_AD_HOLD_MS: play it as it is from then on. */
+  ignoreAds?: boolean;
   title: string;
   retries: number;
   restartedAt: number;
@@ -1605,7 +1612,7 @@ export class VoiceBot extends EventEmitter {
     this.stopVideoLiveWatch();
     if (live) {
       // No end timer, no loop: it plays until skipped, stopped or the channel goes offline
-      this.startVideoLiveWatch(source, liveSettings?.liveMaxMinutes ?? 0);
+      this.startVideoLiveWatch(source, liveSettings?.liveMaxMinutes ?? 0, filePath, audioPath);
       return { path: filePath, loop: false, audioPath };
     }
     if (isDownloadedTemp) {
@@ -1618,10 +1625,10 @@ export class VoiceBot extends EventEmitter {
     return { path: filePath, loop: !isDownloadedTemp };
   }
 
-  private startVideoLiveWatch(page: string, maxMinutes: number): void {
+  private startVideoLiveWatch(page: string, maxMinutes: number, mediaUrl: string, audioUrl?: string): void {
     const now = Date.now();
     const watch: VideoLiveWatch = {
-      page, title: page, retries: 0, restartedAt: now, lastPackets: -1, lastChangeAt: now, busy: false,
+      page, mediaUrl, audioUrl, title: page, retries: 0, restartedAt: now, lastPackets: -1, lastChangeAt: now, busy: false,
       endsAt: maxMinutes > 0 ? now + maxMinutes * 60_000 : undefined,
     };
     this._videoLive = watch;
@@ -1643,11 +1650,46 @@ export class VoiceBot extends EventEmitter {
    */
   private async checkVideoLive(watch: VideoLiveWatch): Promise<void> {
     if (this._videoLive !== watch || watch.busy || !this.sidecarHttp) return;
+    // One check at a time: a slow playlist read or retry must not overlap the next tick
+    watch.busy = true;
+    try {
+      await this.checkVideoLiveOnce(watch);
+    } finally {
+      watch.busy = false;
+    }
+  }
+
+  private async checkVideoLiveOnce(watch: VideoLiveWatch): Promise<void> {
+    if (!this.sidecarHttp) return;
     if (this._videoNowPlaying?.title) watch.title = this._videoNowPlaying.title;
     if (watch.endsAt && Date.now() >= watch.endsAt) {
       await this.endVideoLive(watch, 'Live stream stopped: it reached the time limit for live streams');
       return;
     }
+    // Twitch ad segments come with other timestamps for picture and sound; ffmpeg loses both and
+    // does not find back. So ffmpeg pauses while the ad runs and starts fresh on the stream after it.
+    const ad = await twitchAdRunning(watch.mediaUrl);
+    if (this._videoLive !== watch) return;
+    if (ad === true && !watch.ignoreAds) {
+      if (watch.adSince === undefined) {
+        watch.adSince = Date.now();
+        console.log(`[VoiceBot ${this.config.id}] Twitch ad break: picture paused until it is over`);
+        await this.sidecarHttp.stopSource().catch(() => { /* the restart after the ad replaces it anyway */ });
+        return;
+      }
+      if (Date.now() - watch.adSince < LIVE_AD_HOLD_MS) return;
+      console.log(`[VoiceBot ${this.config.id}] Twitch ad break longer than ${LIVE_AD_HOLD_MS / 60_000} min: playing the playlist as it is`);
+      watch.ignoreAds = true;
+    }
+    if (watch.adSince !== undefined) {
+      watch.adSince = undefined;
+      const preset = STREAM_PRESETS[this._videoPreset] || STREAM_PRESETS[DEFAULT_PRESET];
+      console.log(`[VoiceBot ${this.config.id}] Twitch ad break over, playing on`);
+      await this.sidecarHttp.setSource(watch.mediaUrl, preset.width, preset.height, this._videoFramerate, this._videoBitrate, false, this._videoVolume, watch.audioUrl);
+      watch.lastChangeAt = Date.now();
+      return;
+    }
+
     const stats = await this.sidecarHttp.getStats();
     if (this._videoLive !== watch) return;
     // An older sidecar reports neither field: then nothing is judged a drop
@@ -1658,7 +1700,6 @@ export class VoiceBot extends EventEmitter {
     const stalled = typeof stats.videoPackets === 'number' && Date.now() - watch.lastChangeAt > LIVE_STALL_MS;
     if (stats.sourceEnded !== true && !stalled) return;
 
-    watch.busy = true;
     try {
       watch.retries = Date.now() - watch.restartedAt >= LIVE_STABLE_MS ? 1 : watch.retries + 1;
       if (watch.retries > LIVE_MAX_RETRIES) {
@@ -1676,15 +1717,18 @@ export class VoiceBot extends EventEmitter {
       if (!live.isLive) throw new AppError(400, 'The channel is not live right now', undefined, 'LIVE_OFFLINE');
       if (this._videoLive !== watch) return;
       await this.sidecarHttp.setSource(live.url, preset.width, preset.height, this._videoFramerate, this._videoBitrate, false, this._videoVolume, live.audioUrl);
+      watch.mediaUrl = live.url;
+      watch.audioUrl = live.audioUrl;
+      watch.adSince = undefined;
       watch.restartedAt = Date.now();
       watch.lastChangeAt = Date.now();
       watch.lastError = undefined;
     } catch (err: any) {
-      // The source stays ended, so the next check counts the next attempt
+      // The source stays ended, so the next check counts the next attempt; a failed attempt is
+      // not a stable stretch, else a long-running stream that went offline retried forever
       watch.lastError = err;
+      watch.restartedAt = Date.now();
       console.log(`[VoiceBot ${this.config.id}] Live video retry failed: ${err.message}`);
-    } finally {
-      watch.busy = false;
     }
   }
 

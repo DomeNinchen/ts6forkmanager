@@ -66,3 +66,11 @@ test('live video format: one muxed stream up to the preset height', async () => 
   const { liveVideoFormat } = await import('./live-source.js');
   assert.equal(liveVideoFormat(720), 'best[height<=720]/bv*[height<=720]+ba/best');
 });
+
+test('playlistHasAd: only segments not titled "live" count as an ad', async () => {
+  const { playlistHasAd } = await import('./live-source.js');
+  const live = '#EXTM3U\n#EXT-X-PROGRAM-DATE-TIME:2026-11-13T05:52:28.808Z\n#EXTINF:2.000,live\nhttps://x/1.ts\n#EXTINF:2.000,live\nhttps://x/2.ts\n';
+  assert.equal(playlistHasAd(live), false);
+  assert.equal(playlistHasAd(live + '#EXT-X-DISCONTINUITY\n#EXTINF:2.000,Amazon|123\nhttps://x/ad.ts\n'), true);
+  assert.equal(playlistHasAd(live.replace(/\n/g, '\r\n')), false);
+});

@@ -70,6 +70,28 @@ export function liveVideoFormat(maxHeight: number): string {
   return `best[height<=${maxHeight}]/bv*[height<=${maxHeight}]+ba/best`;
 }
 
+/** Longest a Twitch ad break holds the picture back; past it the playlist is played as it is. */
+export const LIVE_AD_HOLD_MS = 4 * 60_000;
+
+/** Twitch stitches ads into the live playlist: its own segments are titled "live", ad segments are not. */
+export function playlistHasAd(m3u8: string): boolean {
+  return m3u8.split('\n').some((l) => l.startsWith('#EXTINF') && !/^#EXTINF:[^,]*,live$/.test(l.trim()));
+}
+
+/**
+ * Whether an ad break is in a Twitch media playlist right now; null for other sources or when it
+ * could not be read. The address already passed resolveLive's SSRF check.
+ */
+export async function twitchAdRunning(mediaUrl: string): Promise<boolean | null> {
+  try {
+    if (!new URL(mediaUrl).hostname.endsWith('.ttvnw.net')) return null;
+    const res = await fetch(mediaUrl, { signal: AbortSignal.timeout(5_000), redirect: 'error' });
+    return res.ok ? playlistHasAd(await res.text()) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Asks yt-dlp whether a page is live right now and for its current media address in `format`. */
 export async function resolveLive(pageUrl: string, format: string): Promise<LiveAudioSource> {
   if (pageUrl.trim().startsWith('-')) throw new AppError(400, "Invalid URL: must not start with '-'");
