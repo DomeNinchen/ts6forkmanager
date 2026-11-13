@@ -7,7 +7,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Trans, useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { VideoPlayer } from './VideoPlayer';
+import { LiveBadge, liveErrorText, useLiveEndNotice } from '@/components/shared/Live';
+import { useAuthStore } from '@/stores/auth.store';
 import { useSongs } from '@/hooks/use-music-library';
 import {
   useVideoStreamStatus,
@@ -50,6 +53,8 @@ interface VideoStreamTabProps {
 
 export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStreamTabProps) {
   const { t } = useTranslation();
+  const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
+  useLiveEndNotice(botId);
   const [sourceUrl, setSourceUrl] = useState('');
 
   // Starts from whatever an admin configured under Settings -> Streaming, so
@@ -278,8 +283,11 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
               {(startStream.isError || stopStream.isError || setSource.isError) && (
                 <p className="text-sm text-red-500">
                   {[startStream.error, stopStream.error, setSource.error]
-                    .map((e: any) => e?.response?.data?.error || e?.message)
+                    .map((e: any) => liveErrorText(e, t) || e?.response?.data?.error || e?.message)
                     .find(Boolean)}
+                  {isAdmin && [startStream.error, setSource.error].some((e: any) => e?.response?.data?.code === 'LIVE_VIDEO_DISABLED') && (
+                    <Link to="/settings?tab=streaming" className="ml-2 underline">{t('components.live.openSettings')}</Link>
+                  )}
                 </p>
               )}
             </>
@@ -310,6 +318,7 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
               <span className="text-sm truncate" title={nowPlaying?.title}>
                 {nowPlaying?.title ?? streamStatus?.source ?? t('common.unknown')}
               </span>
+              {streamStatus?.live && <LiveBadge pulse />}
             </div>
 
             {queue.length === 0 ? (

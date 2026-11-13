@@ -13,13 +13,14 @@ export async function saveMusicRequest(
   serverConfigId: number,
   url: string,
   title: string | undefined,
+  isLive = false,
 ): Promise<void> {
   const requestedAt = new Date();
   const name = title || 'Unknown Title';
   await prisma.musicRequest.upsert({
     where: { serverConfigId_url: { serverConfigId, url } },
-    update: { requestedAt, title: name },
-    create: { serverConfigId, url, title: name, requestedAt },
+    update: { requestedAt, title: name, isLive },
+    create: { serverConfigId, url, title: name, requestedAt, isLive },
   });
 
   const stale = await prisma.musicRequest.findMany({

@@ -6,6 +6,8 @@ export interface MusicRequest {
     url: string;
     serverConfigId: number;
     requestedAt: string;
+    /** The link was a channel that was live then; playing it again needs it to be live now. */
+    isLive: boolean;
 }
 
 export const musicRequestsApi = {

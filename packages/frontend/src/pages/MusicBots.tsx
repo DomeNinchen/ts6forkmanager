@@ -20,6 +20,7 @@ import { useServers, serverCapabilities } from '@/hooks/use-servers';
 import { useServerStore } from '@/stores/server.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { LiveBadge, useLiveEndNotice, useLiveErrorToast } from '@/components/shared/Live';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -109,6 +110,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   const shuffleMut = useSetShuffle();
   const repeatMut = useSetRepeat();
   const playFromQueue = usePlayFromQueue();
+  useLiveEndNotice(bot.status !== 'stopped' ? bot.id : null);
 
   // Widget token dialog
   const [showWidget, setShowWidget] = useState(false);
@@ -297,7 +299,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
                   <div key={item.id} className="flex items-center gap-2 text-[10px] py-0.5">
                     <span className="text-muted-foreground w-4 text-right">{i + 1}</span>
                     <span className="truncate flex-1">{item.title}</span>
-                    <span className="text-muted-foreground">{formatTime(item.duration)}</span>
+                    {item.source === 'live' ? <LiveBadge /> : <span className="text-muted-foreground">{formatTime(item.duration)}</span>}
                   </div>
                 ))}
                 {upcoming.length > 5 && (
@@ -543,11 +545,12 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, pen
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate" title={req.title}>{req.title}</p>
                 </div>
+                {req.isLive && <LiveBadge />}
                 <div className={`flex items-center gap-1 shrink-0 transition-opacity ${loading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                   <Button variant="default" size="sm" className="h-6 text-[10px] px-2"
                     disabled={!!pendingUrl}
                     onClick={() => onPlayUrl(req.url)}
-                    title={t('pages.musicBots.playSongDialog.playNowHint')}
+                    title={req.isLive ? t('components.live.replayHint') : t('pages.musicBots.playSongDialog.playNowHint')}
                   >
                     {loading === 'now' ? <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> : <Play className="h-3 w-3 mr-0.5" />}
                     {loading === 'now' ? t('pages.musicBots.playSongDialog.loading') : t('pages.musicBots.playSongDialog.play')}
@@ -555,7 +558,7 @@ function PlaySongDialog({ botId, onClose, onPlaySong, onPlayUrl, onQueueUrl, pen
                   <Button variant="outline" size="sm" className="h-6 text-[10px] px-2"
                     disabled={!!pendingUrl}
                     onClick={() => onQueueUrl(req.url)}
-                    title={t('pages.musicBots.playSongDialog.queueAfterHint')}
+                    title={req.isLive ? t('components.live.replayHint') : t('pages.musicBots.playSongDialog.queueAfterHint')}
                   >
                     {loading === 'queue' ? <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> : <Plus className="h-3 w-3 mr-0.5" />}
                     {loading === 'queue' ? t('pages.musicBots.playSongDialog.loading') : t('pages.musicBots.playSongDialog.queue')}
@@ -652,6 +655,7 @@ function BotsTab() {
   const deleteBot = useDeleteMusicBot();
   const playSong = usePlaySong();
   const playUrl = usePlayUrl();
+  const liveErrorToast = useLiveErrorToast();
   const enqueueSong = useEnqueue();
   const loadPlaylist = useLoadPlaylist();
   const uploadAvatar = useUploadBotAvatar();
@@ -1037,7 +1041,7 @@ function BotsTab() {
           if (showPlayDialog) {
             playUrl.mutate({ botId: showPlayDialog, url, mode: 'now' }, {
               onSuccess: () => { toast.success(t('pages.musicBots.botsTab.playingUrl')); setShowPlayDialog(null); },
-              onError: () => toast.error(t('pages.musicBots.botsTab.playUrlFailed')),
+              onError: (err) => { if (!liveErrorToast(err)) toast.error(t('pages.musicBots.botsTab.playUrlFailed')); },
             });
           }
         }}
@@ -1050,7 +1054,7 @@ function BotsTab() {
               onSuccess: (res) => toast.success(
                 res?.queued ? t('pages.musicBots.botsTab.addedToQueuePosition', { position: res.position }) : t('pages.musicBots.botsTab.playingUrl'),
               ),
-              onError: () => toast.error(t('pages.musicBots.botsTab.queueUrlFailed')),
+              onError: (err) => { if (!liveErrorToast(err)) toast.error(t('pages.musicBots.botsTab.queueUrlFailed')); },
             });
           }
         }}
@@ -2162,6 +2166,7 @@ function QueueTab() {
   const clearQueue = useClearQueue();
   const playFromQueue = usePlayFromQueue();
   const moveQueueItem = useMoveQueueItem();
+  useLiveEndNotice(selectedBot);
 
   const botList = Array.isArray(bots) ? bots : [];
   const queue: any[] = state?.queue ?? [];
@@ -2212,11 +2217,11 @@ function QueueTab() {
         <Card className="card-hero">
           <CardContent className="p-0">
             {/* Header */}
-            <div className="grid grid-cols-[2rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-2 px-3 py-2 text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border/50">
+            <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_2rem_2rem] sm:grid-cols-[2rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-2 px-3 py-2 text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border/50">
               <div>#</div>
               <div>{t('pages.musicBots.shared.title')}</div>
               <div className="text-right">{t('pages.musicBots.shared.duration')}</div>
-              <div className="text-right">{t('pages.musicBots.shared.source')}</div>
+              <div className="hidden sm:block text-right">{t('pages.musicBots.shared.source')}</div>
               <div />
               <div />
             </div>
@@ -2226,7 +2231,7 @@ function QueueTab() {
                 return (
                   <div
                     key={`${item.id}-${i}`}
-                    className={`grid grid-cols-[2rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-2 px-3 py-1.5 items-center group transition-colors ${isActive ? 'bg-primary/10' : 'hover:bg-muted/30'}`}
+                    className={`grid grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_2rem_2rem] sm:grid-cols-[2rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-2 px-3 py-1.5 items-center group transition-colors ${isActive ? 'bg-primary/10' : 'hover:bg-muted/30'}`}
                   >
                     <div className="text-xs text-muted-foreground font-mono-data">
                       {isActive ? <Play className="h-3 w-3 text-primary" /> : (
@@ -2252,9 +2257,10 @@ function QueueTab() {
                       {item.artist && <p className="text-[10px] text-muted-foreground truncate">{item.artist}</p>}
                     </div>
                     <div className="text-[11px] text-muted-foreground text-right font-mono-data">
-                      {item.duration ? formatTime(item.duration) : '—'}
+                      {item.source === 'live' ? <LiveBadge /> : item.duration ? formatTime(item.duration) : '—'}
                     </div>
-                    <div className="text-right">
+                    {/* Too narrow for this column on a phone; LIVE already shows in the duration */}
+                    <div className="hidden sm:block text-right">
                       <Badge variant="outline" className="text-[9px] h-4 px-1">{item.source}</Badge>
                     </div>
                     <div className="flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

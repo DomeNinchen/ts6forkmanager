@@ -632,7 +632,7 @@ export class MusicCommandHandler {
 
   private saveMusicRequest(bot: VoiceBot, item: QueueItem): void {
     if (!item.sourceUrl || !bot.currentConfig.serverConfigId) return;
-    saveMusicRequest(this.prisma, bot.currentConfig.serverConfigId, item.sourceUrl, item.title).catch((err) => {
+    saveMusicRequest(this.prisma, bot.currentConfig.serverConfigId, item.sourceUrl, item.title, item.source === 'live').catch((err) => {
       console.error('[MusicCmd] Failed to save music request history:', err.message);
     });
   }
