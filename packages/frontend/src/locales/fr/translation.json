@@ -3264,6 +3264,7 @@
   "components": {
     "live": {
       "openSettings": "Paramètres → Streaming",
+      "thumbnailAlt": "Aperçu de la diffusion en direct",
       "replayHint": "Relance la chaîne - elle doit être en direct maintenant",
       "errors": {
         "disabled": "Les diffusions en direct sont désactivées. Un administrateur peut les autoriser dans Paramètres → Streaming.",

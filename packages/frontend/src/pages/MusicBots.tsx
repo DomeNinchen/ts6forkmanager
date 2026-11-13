@@ -20,7 +20,7 @@ import { useServers, serverCapabilities } from '@/hooks/use-servers';
 import { useServerStore } from '@/stores/server.store';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { LiveBadge, useLiveEndNotice, useLiveErrorToast } from '@/components/shared/Live';
+import { LiveBadge, LiveThumbnail, useLiveEndNotice, useLiveErrorToast } from '@/components/shared/Live';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -197,7 +197,9 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
         {state?.nowPlaying && (
           <div className="rounded-md bg-muted/50 p-2.5 space-y-2">
             <div className="flex items-center gap-2 min-w-0">
-              {isStreaming ? <Radio className="h-3.5 w-3.5 text-red-500 shrink-0" /> : <Music2 className="h-3.5 w-3.5 text-primary shrink-0" />}
+              {state.nowPlaying.source === 'live' && state.nowPlaying.thumbnail
+                ? <LiveThumbnail botId={bot.id} kind="audio" version={state.nowPlaying.liveInfoAt} className="h-9" />
+                : isStreaming ? <Radio className="h-3.5 w-3.5 text-red-500 shrink-0" /> : <Music2 className="h-3.5 w-3.5 text-primary shrink-0" />}
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium truncate">{state.nowPlaying.title}</p>
                 {state.nowPlaying.artist && (

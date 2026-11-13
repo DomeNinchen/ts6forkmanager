@@ -24,12 +24,12 @@ Live users, channels, uptime, ping and bandwidth of a virtual server, plus the s
 ![Dashboard](docs/dashboard.png)
 
 ### Music Bots
-Several bots per server, each with its own queue and volume, playing radio, YouTube or your own library. A channel that is live right now (a Twitch channel, a YouTube live) plays as sound with `!play <link>` or from the web player until it is stopped or the channel goes offline; an admin can switch this off or set a time limit under Settings -> Streaming.
+Several bots per server, each with its own queue and volume, playing radio, YouTube or your own library. A channel that is live right now (a Twitch or Kick channel, a YouTube live) plays as sound with `!play <link>` or from the web player until it is stopped or the channel goes offline; an admin can switch this off or set a time limit under Settings -> Streaming.
 
 ![Music Bots](docs/musicbots.png)
 
 ### Video Streaming
-Streams YouTube, Twitch, a direct URL or a library video into a channel over WebRTC. YouTube and Twitch videos are limited to 15 minutes by default; an admin can raise that under Settings -> Streaming (up to 240 minutes). A channel that is live right now (Twitch, YouTube live) streams with picture and sound until it is stopped, skipped or goes offline; if the connection breaks, the stream is reopened by itself, and during a Twitch ad break viewers see a notice instead of a black picture. An admin switches live video on under Settings -> Streaming (off by default).
+Streams YouTube, Twitch, Kick, a direct URL or a library video into a channel over WebRTC. YouTube and Twitch videos are limited to 15 minutes by default; an admin can raise that under Settings -> Streaming (up to 240 minutes). A channel that is live right now (Twitch, Kick, YouTube live) streams with picture and sound until it is stopped, skipped or goes offline; if the connection breaks, the stream is reopened by itself, and during a Twitch ad break viewers see a notice instead of a black picture. An admin switches live video on under Settings -> Streaming (off by default).
 
 ![Video Streaming](docs/video-streaming.png)
 

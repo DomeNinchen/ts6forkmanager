@@ -4372,6 +4372,7 @@
   "components": {
     "live": {
       "openSettings": "Einstellungen → Streaming",
+      "thumbnailAlt": "Vorschau des Live-Streams",
       "replayHint": "Startet den Kanal erneut - er muss gerade live sein",
       "errors": {
         "disabled": "Live-Streams sind ausgeschaltet. Ein Admin kann sie unter Einstellungen → Streaming erlauben.",

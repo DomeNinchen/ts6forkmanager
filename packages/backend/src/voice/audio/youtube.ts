@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { validateUrl } from "../../utils/url-validator.js";
 import { AppError } from "../../middleware/error-handler.js";
-import { classifyYtDlpError, ytDlpErrorToAppError } from "./live-source.js";
+import { classifyYtDlpError, liveDisplayInfo, ytDlpErrorToAppError } from "./live-source.js";
 import type { QueueItem } from "../playlist/queue.js";
 
 export interface YouTubeInfo {
@@ -20,7 +20,7 @@ export interface YouTubeInfo {
 /** The queue entry for what downloadYouTube returned: a file to play, or a live page the bot streams. */
 export function liveOrDownloadedItem(filePath: string, info: YouTubeInfo): QueueItem {
   if (info.isLive) {
-    return { id: `live_${info.id}`, title: info.title, artist: info.artist, filePath: '', source: 'live', sourceUrl: info.url, streamUrl: info.url };
+    return { id: `live_${info.id}`, title: info.title, artist: info.artist, filePath: '', source: 'live', sourceUrl: info.url, streamUrl: info.url, ...(info.thumbnail ? { thumbnail: info.thumbnail } : {}), liveInfoAt: Date.now() };
   }
   return { id: `yt_${info.id}`, title: info.title, artist: info.artist, duration: info.duration, filePath, source: 'youtube', sourceUrl: info.url };
 }
@@ -150,8 +150,8 @@ export async function downloadYouTube(url: string, outputDir: string, opts: { al
       // A live download never ends (yt-dlp records until the broadcast stops), so it is never started
       if (parsed.is_live === true) {
         if (!opts.allowLive) return reject(new AppError(400, 'This is a live stream - it can be played, but not saved to the library', undefined, 'SOURCE_IS_LIVE'));
-        // fulltitle: yt-dlp appends the current date and time to a live stream's title
-        return resolve({ filePath: '', info: { ...info, title: parsed.fulltitle || info.title, isLive: true } });
+        // The stream's own title and channel (Twitch keeps it in the description), see liveDisplayInfo
+        return resolve({ filePath: '', info: { ...info, ...liveDisplayInfo(parsed), isLive: true } });
       }
 
       const expectedPath = path.join(outputDir, `${info.id}.opus`);

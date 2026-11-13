@@ -16,7 +16,7 @@ import type { BotFailureKind } from '@ts6/common';
 import { ChannelOccupancy } from './channel-occupancy.js';
 import { DEFAULT_MAX_VIDEO_MINUTES } from '../utils/stream-defaults.js';
 import { AppError } from '../middleware/error-handler.js';
-import { resolveLive, liveVideoFormat, resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS, LIVE_REBUFFER_MS, LIVE_REBUFFER_BYTES, LIVE_AD_HOLD_MS, twitchAdRunning } from './audio/live-source.js';
+import { resolveLive, liveVideoFormat, resolveLiveAudio, liveRetryDelayMs, LIVE_MAX_RETRIES, LIVE_STABLE_MS, LIVE_STALL_MS, LIVE_REBUFFER_MS, LIVE_REBUFFER_BYTES, LIVE_AD_HOLD_MS, twitchAdRunning, fetchLiveInfo, LIVE_INFO_REFRESH_MS } from './audio/live-source.js';
 
 
 /** How often a bot checks whether it has been alone long enough to pause. */
@@ -114,6 +114,9 @@ interface VideoLiveWatch {
   lastChangeAt: number;
   busy: boolean;
   lastError?: Error;
+  /** When title and preview picture were last looked up (0 = not yet). */
+  infoAt: number;
+  thumbnail?: string;
 }
 
 export class VoiceBot extends EventEmitter {
@@ -606,6 +609,41 @@ export class VoiceBot extends EventEmitter {
     } catch { }
   }
 
+  /** Live: title, channel and preview picture are looked up again every few minutes (shares the ICY timer slot). */
+  private startLiveInfoPolling(item: QueueItem): void {
+    this.stopIcyPolling();
+    if (Date.now() - (item.liveInfoAt ?? 0) >= LIVE_INFO_REFRESH_MS) void this.refreshLiveInfo(item);
+    this.icyPollTimer = setInterval(() => { void this.refreshLiveInfo(item); }, LIVE_INFO_REFRESH_MS);
+  }
+
+  private async refreshLiveInfo(item: QueueItem): Promise<void> {
+    const info = await fetchLiveInfo(item.sourceUrl ?? item.streamUrl ?? '');
+    if (!info || this._nowPlaying !== item) return;
+    item.liveInfoAt = Date.now();
+    if (info.thumbnail) item.thumbnail = info.thumbnail;
+    if (info.title === item.title && info.artist === item.artist) return;
+    item.title = info.title;
+    item.artist = info.artist;
+    this.updateNowPlayingNickname(item.title);
+    this.updateDescription();
+    this.emit('metadataChange', item);
+  }
+
+  private async refreshVideoLiveInfo(watch: VideoLiveWatch): Promise<void> {
+    const info = await fetchLiveInfo(watch.page);
+    if (!info || this._videoLive !== watch) return;
+    watch.infoAt = Date.now();
+    if (info.thumbnail) watch.thumbnail = info.thumbnail;
+    watch.title = info.title;
+    if (this._videoNowPlaying) this._videoNowPlaying.title = info.title;
+  }
+
+  /** The live preview picture's CDN address, for the backend to hand out; null when there is none. */
+  liveThumbnailUrl(kind: 'audio' | 'video'): string | null {
+    if (kind === 'video') return this._videoLive?.thumbnail || null;
+    return this._nowPlaying?.source === 'live' ? this._nowPlaying.thumbnail || null : null;
+  }
+
   private stopIcyPolling(): void {
     if (this.icyPollTimer) {
       clearInterval(this.icyPollTimer);
@@ -759,7 +797,8 @@ export class VoiceBot extends EventEmitter {
     this.emit('nowPlaying', item);
     this.updateNowPlayingNickname(item.title);
     this.updateDescription();
-    if (!isLive) this.startIcyPolling(item.streamUrl);
+    if (isLive) this.startLiveInfoPolling(item);
+    else this.startIcyPolling(item.streamUrl);
 
     try {
       const source = isLive ? await resolveLiveAudio(item.sourceUrl ?? item.streamUrl) : item.streamUrl;
@@ -1345,6 +1384,7 @@ export class VoiceBot extends EventEmitter {
       queue: [...this._videoQueue],
       sidecar: null,
       live: this._videoLive !== null,
+      liveThumbnailAt: this._videoLive?.thumbnail ? this._videoLive.infoAt : undefined,
     };
   }
 
@@ -1641,7 +1681,7 @@ export class VoiceBot extends EventEmitter {
   private startVideoLiveWatch(page: string, maxMinutes: number, mediaUrl: string, audioUrl?: string): void {
     const now = Date.now();
     const watch: VideoLiveWatch = {
-      page, mediaUrl, audioUrl, title: page, retries: 0, restartedAt: now, lastPackets: -1, lastChangeAt: now, busy: false,
+      page, mediaUrl, audioUrl, title: page, retries: 0, restartedAt: now, lastPackets: -1, lastChangeAt: now, busy: false, infoAt: 0,
       endsAt: maxMinutes > 0 ? now + maxMinutes * 60_000 : undefined,
     };
     this._videoLive = watch;
@@ -1678,6 +1718,10 @@ export class VoiceBot extends EventEmitter {
     if (watch.endsAt && Date.now() >= watch.endsAt) {
       await this.endVideoLive(watch, 'Live stream stopped: it reached the time limit for live streams', 'time_limit');
       return;
+    }
+    if (Date.now() - watch.infoAt >= LIVE_INFO_REFRESH_MS) {
+      watch.infoAt = Date.now();
+      void this.refreshVideoLiveInfo(watch); // not awaited: yt-dlp takes a second or two, the checks go on
     }
     // Twitch ad segments come with other timestamps for picture and sound; ffmpeg loses both and
     // does not find back. So ffmpeg pauses while the ad runs and starts fresh on the stream after it.
