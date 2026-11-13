@@ -800,7 +800,7 @@ export default function BotEditor() {
       id: parseInt(botId),
       data: { name: botName, flowData: { nodes, edges, ...(template ? { template } : {}) } },
     }, {
-      onSuccess: () => toast.success(t('pages.botEditor.flowSaved')),
+      onSuccess: (res: any) => (res?.approvalRevoked ? toast.warning(t('pages.botEditor.approvalRevoked')) : toast.success(t('pages.botEditor.flowSaved'))),
       onError: () => toast.error(t('pages.botEditor.flowSaveFailed')),
     });
   };

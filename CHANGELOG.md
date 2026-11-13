@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.113.0 · frontend 3.131.0 · sidecar 2.4.0**
+Versions at the end of the month: **backend 2.115.0 · frontend 3.133.0 · sidecar 2.4.0**
 
 ### New Features
 
@@ -43,6 +43,7 @@ Versions at the end of the month: **backend 2.113.0 · frontend 3.131.0 · sidec
 
 ### Bug Fixes
 
+- Fixed the admin approval of imported flows: it was kept inside the flow's own data, where an edit could change it, and saving a flow in the editor dropped the flow's link to its template (so a newer version was no longer offered as an update). The server now keeps the link and the approval itself, and **Bot Flows** shows "Approval pending" or "Approved by … on …". When a user who is not an admin changes what an approved imported flow does (nodes, their settings or connections; moving or renaming nodes does not count), the flow is switched off and an admin has to switch it on again. *backend 2.115.0, frontend 3.133.0*
 - Fixed the Queue tab of Music Bots on a phone: at 375 px the title column had no room left and the titles disappeared; the Source column is now hidden on narrow screens. *frontend 3.130.0* [#397](https://github.com/DomeNinchen/ts6forkmanager/pull/397)
 - Fixed "Watch Stream" in the TeamSpeak 6 client playing the bot's audio but showing only a black picture for some viewers, while the web preview and other viewers saw the video: ffmpeg filled the video packets up to 1472 bytes, and with encryption and headers on top they exceeded the usual 1500-byte limit and were split, which some routers and providers drop. Video and audio packets are now capped at 1200 bytes. *sidecar 2.3.2* [#394](https://github.com/DomeNinchen/ts6forkmanager/pull/394), reported in [#375](https://github.com/DomeNinchen/ts6forkmanager/issues/375)
 - Fixed **Take** on the Support Queue page sometimes failing with "convert error" and leaving an empty room behind: TeamSpeak 6 at times confirms a new channel without saying which one it created, and the room is now found by its name. A take also no longer fails when the bot's previous channel has disappeared meanwhile; the bot then goes to the default channel. *backend 2.102.0* [#382](https://github.com/DomeNinchen/ts6forkmanager/pull/382)
@@ -82,6 +83,7 @@ Versions at the end of the month: **backend 2.113.0 · frontend 3.131.0 · sidec
 
 **Bot flows & music bots**
 
+- Imported flows an admin already switched on stay approved after the update (shown as "Approved", without name and date). From now on a change by a user who is not an admin to what an approved imported flow does switches it off until an admin switches it on again.
 - Update backend and sidecar together (the usual update command does): reopening a live video and the separate sound of a YouTube live need sidecar 2.4.0. Live video stays off until an admin switches it on. [#395](https://github.com/DomeNinchen/ts6forkmanager/pull/395)
 - Existing flows are not changed by the template import/export; only flows imported from a file need an admin to switch them on the first time. [#388](https://github.com/DomeNinchen/ts6forkmanager/pull/388)
 - Video streams still accept YouTube and Twitch videos of up to 15 minutes by default. To stream longer videos, raise **Longest video for a stream** under Settings -> Streaming (up to 240 minutes). [#369](https://github.com/DomeNinchen/ts6forkmanager/pull/369)

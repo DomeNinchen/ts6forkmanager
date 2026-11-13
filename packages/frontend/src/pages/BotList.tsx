@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Plus, Pencil, Trash2, Play, Clock, AlertTriangle, LayoutTemplate, Download, FileUp } from 'lucide-react';
+import { Bot, Plus, Pencil, Trash2, Play, Clock, AlertTriangle, LayoutTemplate, Download, FileUp, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { TemplateGallery } from '@/components/bots/TemplateGallery';
 import { ExportTemplateDialog, ImportTemplateDialog } from '@/components/bots/FlowTemplateDialogs';
@@ -24,7 +24,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { timeAgo } from '@/lib/utils';
 
 export default function BotList() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { selectedConfigId, selectedSid } = useServerStore();
@@ -82,6 +82,8 @@ export default function BotList() {
                       checked={bot.enabled}
                       onCheckedChange={(enabled) => toggleBot.mutate({ id: bot.id, enabled }, {
                         onSuccess: () => toast.success(enabled ? t('pages.botList.enabled') : t('pages.botList.disabled')),
+                        onError: (err: any) => toast.error(err?.response?.data?.code === 'APPROVAL_REQUIRED'
+                          ? t('pages.botList.approvalRequired') : err?.response?.data?.error ?? t('components.bulkResult.unknownError')),
                       })}
                     />
                   </div>
@@ -102,7 +104,20 @@ export default function BotList() {
                   {bot.serverConfigId && (
                     <Badge variant="outline" className="text-[10px]">{t('pages.botList.serverHash', { id: bot.serverConfigId })}</Badge>
                   )}
+                  {bot.imported && !bot.approvedAt && (
+                    <Badge variant="warning" className="text-[10px] gap-1" title={t('pages.botList.approvalPendingHint')}>
+                      <ShieldAlert className="h-3 w-3" aria-hidden /> {t('pages.botList.approvalPending')}
+                    </Badge>
+                  )}
                 </div>
+                {bot.imported && bot.approvedAt && (
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3" aria-hidden />
+                    {bot.approvedBy
+                      ? t('pages.botList.approvedBy', { user: bot.approvedBy, date: new Date(bot.approvedAt).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) })
+                      : t('pages.botList.approved')}
+                  </p>
+                )}
 
                 {bot.updatedAt && (
                   <p className="text-[10px] text-muted-foreground flex items-center gap-1">
