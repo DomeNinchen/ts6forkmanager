@@ -29,7 +29,7 @@ Several bots per server, each with its own queue and volume, playing radio, YouT
 ![Music Bots](docs/musicbots.png)
 
 ### Video Streaming
-Streams YouTube, Twitch, a direct URL or a library video into a channel over WebRTC. YouTube and Twitch videos are limited to 15 minutes by default; an admin can raise that under Settings -> Streaming (up to 240 minutes). A channel that is live right now (Twitch, YouTube live) streams with picture and sound until it is stopped, skipped or goes offline; if the connection breaks, the stream is reopened by itself. An admin switches live video on under Settings -> Streaming (off by default).
+Streams YouTube, Twitch, a direct URL or a library video into a channel over WebRTC. YouTube and Twitch videos are limited to 15 minutes by default; an admin can raise that under Settings -> Streaming (up to 240 minutes). A channel that is live right now (Twitch, YouTube live) streams with picture and sound until it is stopped, skipped or goes offline; if the connection breaks, the stream is reopened by itself, and during a Twitch ad break viewers see a notice instead of a black picture. An admin switches live video on under Settings -> Streaming (off by default).
 
 ![Video Streaming](docs/video-streaming.png)
 
@@ -134,7 +134,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 **Automation and media**
 
 - **Music bots**: several bots per server playing radio, YouTube, Spotify links and your own library, controlled in the browser or with chat commands such as `!play`. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots)
-- **Video streaming**: YouTube and Twitch videos (no live streams yet), direct URLs or library videos into a channel over WebRTC, with a queue and a browser preview. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots#video-streaming)
+- **Video streaming**: YouTube and Twitch videos, live channels (switched on by an admin), direct URLs or library videos into a channel over WebRTC, with a queue and a browser preview. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Music-Bots#video-streaming)
 - **Bot flows**: a visual automation editor with triggers from server events, schedules, webhooks, chat commands and the support queue, plus ready-made templates, export and import of flows as template files, and a test mode that shows what a flow would do with a sample event without changing anything. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Bot-Flows)
 - **Server widgets**: status banners for websites and forums, as a live page, SVG or PNG, with their own online-count filter. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Widgets)
 
