@@ -12,6 +12,8 @@ export interface QueueItem {
   sourceUrl?: string;
   streamUrl?: string; // If set, play as live stream (radio) instead of file
   liveEndsAt?: number; // live only: when the "max minutes per live session" limit ends it (ms epoch)
+  thumbnail?: string; // live only: preview picture on the platform's CDN, handed out through the backend
+  liveInfoAt?: number; // live only: when title and thumbnail were last looked up (ms epoch)
 }
 
 /** How many finished tracks previous() can step back through. */

@@ -58,4 +58,6 @@ export interface VideoStreamStatus {
   sidecar: { videoPort: number; audioPort: number } | null;
   /** The stream now running is a live channel (no length, ends when stopped or the channel goes offline). */
   live?: boolean;
+  /** Live: when the preview picture (GET /music-bots/:id/live-thumbnail?kind=video) was last refreshed; absent without one. */
+  liveThumbnailAt?: number;
 }

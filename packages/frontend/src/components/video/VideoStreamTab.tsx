@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { VideoPlayer } from './VideoPlayer';
-import { LiveBadge, liveErrorText, useLiveEndNotice } from '@/components/shared/Live';
+import { LiveBadge, LiveThumbnail, liveErrorText, useLiveEndNotice } from '@/components/shared/Live';
 import { useAuthStore } from '@/stores/auth.store';
 import { useSongs } from '@/hooks/use-music-library';
 import {
@@ -313,8 +313,9 @@ export function VideoStreamTab({ botId, botStatus, serverConfigId }: VideoStream
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-center gap-2">
               <Badge variant="secondary" className="shrink-0">{t('components.videoStreamTab.now')}</Badge>
+              {streamStatus?.liveThumbnailAt && <LiveThumbnail botId={botId} kind="video" version={streamStatus.liveThumbnailAt} className="h-9" />}
               <span className="text-sm truncate" title={nowPlaying?.title}>
                 {nowPlaying?.title ?? streamStatus?.source ?? t('common.unknown')}
               </span>

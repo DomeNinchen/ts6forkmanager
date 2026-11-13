@@ -117,6 +117,10 @@ export interface QueueItemInfo {
   duration?: number;
   source: string;
   streamUrl?: string;
+  /** Live only: the stream has a preview picture (served by GET /music-bots/:id/live-thumbnail). */
+  thumbnail?: string;
+  /** Live only: when title and preview picture were last looked up (ms epoch). */
+  liveInfoAt?: number;
 }
 
 export type RepeatMode = 'off' | 'track';

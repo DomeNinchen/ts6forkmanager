@@ -148,7 +148,9 @@ function isYtDlpStreamHost(url: string): boolean {
     hostname.endsWith('.youtube.com') ||
     hostname === 'youtu.be' ||
     hostname === 'twitch.tv' ||
-    hostname.endsWith('.twitch.tv')
+    hostname.endsWith('.twitch.tv') ||
+    hostname === 'kick.com' ||
+    hostname.endsWith('.kick.com')
   );
 }
 

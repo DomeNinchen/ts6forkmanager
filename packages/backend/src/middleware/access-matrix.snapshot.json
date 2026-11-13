@@ -2963,6 +2963,14 @@
     "server-admin": "ok",
     "moderator": "403"
   },
+  "GET /api/music-bots/:id/live-thumbnail": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "ok",
+    "music-operator": "ok",
+    "server-admin": "ok",
+    "moderator": "403"
+  },
   "GET /api/music-bots/:id/queue": {
     "admin": "ok",
     "viewer": "403",

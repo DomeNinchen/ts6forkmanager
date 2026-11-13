@@ -9,6 +9,8 @@ import { saveMusicRequest } from '../voice/music-request-history.js';
 import { DESCRIPTION_PLACEHOLDERS } from '../voice/description-template.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
 import { mayUseMusicBot } from '../utils/vs-access.js';
+import { validateUrl, ssrfSafeAxiosOptions } from '../utils/url-validator.js';
+import axios from 'axios';
 import multer from 'multer';
 
 // The real limit is the TS server's own i_client_max_avatar_filesize
@@ -593,6 +595,34 @@ musicBotRoutes.get('/:id/state', async (req: Request, res: Response, next) => {
       videoStream: bot.videoStreamStatus,
       lastLiveEnd: bot.lastLiveEnd,
     });
+  } catch (err) { next(err); }
+});
+
+// GET /:id/live-thumbnail?kind=audio|video — The running live stream's preview picture, fetched by
+// the backend so the platform (Twitch, Kick...) never sees the addresses of the manager's viewers
+const LIVE_THUMBNAIL_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const LIVE_THUMBNAIL_MAX_BYTES = 2 * 1024 * 1024;
+musicBotRoutes.get('/:id/live-thumbnail', async (req: Request, res: Response, next) => {
+  try {
+    const manager: VoiceBotManager = req.app.locals.voiceBotManager;
+    const bot = manager.getBot(parseInt(req.params.id as string));
+    if (!bot) throw new AppError(404, 'Music bot not found');
+    const url = bot.liveThumbnailUrl(req.query.kind === 'video' ? 'video' : 'audio');
+    if (!url) throw new AppError(404, 'No live preview picture');
+    // The address came from yt-dlp (the platform's page): the same SSRF rules as any user-chosen URL
+    const check = await validateUrl(url, { allowedProtocols: ['https:'] });
+    if (!check.valid) throw new AppError(404, 'No live preview picture');
+    const r = await axios.get<ArrayBuffer>(url, {
+      ...ssrfSafeAxiosOptions,
+      responseType: 'arraybuffer',
+      timeout: 8_000,
+      maxRedirects: 3,
+      maxContentLength: LIVE_THUMBNAIL_MAX_BYTES,
+      validateStatus: (s) => s === 200,
+    }).catch(() => null);
+    const type = String(r?.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+    if (!r || !LIVE_THUMBNAIL_TYPES.includes(type)) throw new AppError(404, 'No live preview picture');
+    res.set('Cache-Control', 'private, max-age=60').type(type).send(Buffer.from(r.data));
   } catch (err) { next(err); }
 });
 

@@ -137,3 +137,56 @@ export async function resolveLiveAudio(pageUrl: string): Promise<string> {
   if (!live.isLive) throw ytDlpErrorToAppError('offline')!;
   return live.url;
 }
+
+/** How often the title and preview picture of a running live stream are looked up again. */
+export const LIVE_INFO_REFRESH_MS = 5 * 60_000;
+
+export interface LiveInfo {
+  /** What the broadcaster calls the stream right now. */
+  title: string;
+  /** The channel. */
+  artist: string;
+  /** Preview picture address on the platform's CDN; empty when it has none. */
+  thumbnail: string;
+}
+
+/**
+ * The stream's own title from yt-dlp's info. Twitch's `title` is always "<channel> (live) <date>",
+ * its stream title is the description; elsewhere `fulltitle` is the title without the date
+ * yt-dlp appends to live titles.
+ */
+export function liveDisplayInfo(j: Record<string, any>): LiveInfo {
+  const plain = String(j.fulltitle || j.title || '').replace(/ \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/, '').trim();
+  const twitchTitle = j.extractor_key === 'TwitchStream' ? String(j.description || '').trim() : '';
+  return {
+    title: twitchTitle || plain || 'Live stream',
+    artist: String(j.uploader || j.channel || '').trim() || 'Live',
+    thumbnail: typeof j.thumbnail === 'string' && /^https?:\/\//.test(j.thumbnail) ? j.thumbnail : '',
+  };
+}
+
+/** Current title, channel and preview picture of a live page; null when it could not be read or is not live. */
+export async function fetchLiveInfo(pageUrl: string): Promise<LiveInfo | null> {
+  if (pageUrl.trim().startsWith('-')) return null;
+  const check = await validateUrl(pageUrl, { allowedProtocols: ['http:', 'https:'] });
+  if (!check.valid) return null;
+  const out = await new Promise<string | null>((resolve) => {
+    // No format is needed for the info; YouTube live refuses some format choices outright
+    const proc = spawn('yt-dlp', [
+      ...getCookieArgs(), '--no-playlist', '--no-warnings', '--ignore-no-formats-error', '--dump-json', '--', pageUrl,
+    ], { shell: false });
+    let stdout = '';
+    proc.stdout.on('data', (c: Buffer) => { stdout += c.toString(); });
+    proc.stderr.on('data', () => { /* offline or a hiccup: the playback's own retries deal with that */ });
+    const timer = setTimeout(() => { proc.kill('SIGKILL'); resolve(null); }, RESOLVE_TIMEOUT_MS);
+    proc.on('close', (c) => { clearTimeout(timer); resolve(c === 0 ? stdout : null); });
+    proc.on('error', () => { clearTimeout(timer); resolve(null); });
+  });
+  if (!out) return null;
+  try {
+    const j = JSON.parse(out);
+    return j.is_live ? liveDisplayInfo(j) : null;
+  } catch {
+    return null;
+  }
+}

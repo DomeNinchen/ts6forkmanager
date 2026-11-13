@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -7,6 +7,25 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMusicBotState } from '@/hooks/use-music-bots';
+import api from '@/api/client';
+
+/**
+ * The running live stream's preview picture, loaded through the backend (an authenticated blob, so
+ * the platform never sees the viewer's address). `version` changes when the backend looked it up again.
+ */
+export function LiveThumbnail({ botId, kind, version, className }: { botId: number; kind: 'audio' | 'video'; version?: number; className?: string }) {
+  const { t } = useTranslation();
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let revoke: string | null = null;
+    api.get(`/music-bots/${botId}/live-thumbnail`, { params: { kind, v: version }, responseType: 'blob' })
+      .then((r) => { revoke = URL.createObjectURL(r.data as Blob); setSrc(revoke); })
+      .catch(() => setSrc(null));
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [botId, kind, version]);
+  if (!src) return null;
+  return <img src={src} alt={t('components.live.thumbnailAlt')} className={cn('aspect-video rounded-sm object-cover shrink-0', className)} />;
+}
 
 /** The red "LIVE" marker for a channel that is live right now (same look as the radio one). */
 export function LiveBadge({ pulse = false, className }: { pulse?: boolean; className?: string }) {
