@@ -29,7 +29,7 @@ jobs:
     name: Filesystem, dependency, secret & misconfig scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Human-readable table report, same format as the one referenced in
       # clusterzx/ts6-manager#80 -- downloadable from the run's Summary page.
@@ -45,7 +45,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload table report as an artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trivy-filesystem-report
           path: trivy-fs-report.txt
@@ -64,7 +64,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-filesystem
@@ -83,10 +83,10 @@ jobs:
           - name: frontend
             dockerfile: Dockerfile.frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build ${{ matrix.name }} image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -106,7 +106,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload table report as an artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trivy-${{ matrix.name }}-image-report
           path: trivy-${{ matrix.name }}-report.txt
@@ -123,7 +123,7 @@ jobs:
           exit-code: "0"
 
       - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-${{ matrix.name }}.sarif
           category: trivy-image-${{ matrix.name }}
