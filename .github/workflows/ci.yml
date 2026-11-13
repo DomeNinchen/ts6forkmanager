@@ -3,6 +3,7 @@ name: CI
 # Typecheck and tests on every PR and on main. The test suite includes the
 # schema-migrations-synced check, so a schema.prisma change without a matching
 # migration fails CI (packages/backend/src/schema-migrations-synced.test.ts).
+# The Go sidecar's tests and the frontend production build run as their own jobs.
 on:
   pull_request:
   push:
@@ -26,3 +27,35 @@ jobs:
       - run: pnpm --filter @ts6/backend exec prisma generate
       - run: pnpm typecheck
       - run: pnpm test
+
+  # Own jobs, so a failure in one does not hide the result of the others.
+  sidecar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/sidecar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          # The version the sidecar declares, not a guess.
+          go-version-file: packages/sidecar/go.mod
+          cache-dependency-path: packages/sidecar/go.sum
+      # One test runs ffmpeg and skips itself when it is missing.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - run: go test -v ./...
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ts6/common run build
+      - run: pnpm --filter @ts6/frontend build
