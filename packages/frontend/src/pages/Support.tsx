@@ -6,7 +6,7 @@ import type { TFunction } from 'i18next';
 import {
   SUPPORT_PAUSE_NOTES, supportStats, type SupportCaseEntry, type SupportCaseState, type SupportQueueView,
 } from '@ts6/common';
-import { Headset, Loader2, PauseCircle, Plus, Settings2, UserCheck, UserMinus, CheckCircle2 } from 'lucide-react';
+import { Headset, Loader2, PauseCircle, Plus, Settings2, UserCheck, UserMinus, CheckCircle2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import i18n from '@/lib/i18n';
 import { supportQueueApi } from '@/api/support-queue.api';
@@ -67,7 +67,11 @@ function pauseText(reason: string, t: TFunction): string {
 
 function errorText(err: any, t: TFunction): string {
   const code = err?.response?.data?.code;
-  if (typeof code === 'string' && i18n.exists(`pages.support.errors.${code}`)) return t(`pages.support.errors.${code}`);
+  if (typeof code === 'string' && i18n.exists(`pages.support.errors.${code}`)) {
+    // A failed take-over also says what TeamSpeak answered.
+    const details = err?.response?.data?.details;
+    return t(`pages.support.errors.${code}`) + (code.startsWith('TAKE_FAILED') && details ? ` (${details})` : '');
+  }
   return tsErrorMessage(err, t('components.bulkResult.unknownError'), t);
 }
 
@@ -108,8 +112,8 @@ export default function Support() {
     qc.invalidateQueries({ queryKey: ['support-queue-stats', c, s] });
   };
   const act = useMutation({
-    mutationFn: (a: { kind: 'take'; id: number; clid: number } | { kind: 'remove' | 'close'; id: number }) =>
-      a.kind === 'take' ? supportQueueApi.take(c!, s!, a.id, a.clid) : a.kind === 'remove' ? supportQueueApi.remove(c!, s!, a.id) : supportQueueApi.close(c!, s!, a.id),
+    mutationFn: (a: { kind: 'take'; id: number; clid: number } | { kind: 'remove' | 'close' | 'bringBack'; id: number }) =>
+      a.kind === 'take' ? supportQueueApi.take(c!, s!, a.id, a.clid) : supportQueueApi[a.kind](c!, s!, a.id),
     onSuccess: (entry, a) => {
       toast.success(t(`pages.support.toasts.${a.kind}`, { client: entry.nickname }));
       setTaking(null);
@@ -209,7 +213,8 @@ export default function Support() {
               {waiting.length === 0 && <p className="text-sm text-muted-foreground">{t('pages.support.emptyQueue')}</p>}
               {[...waiting, ...taken].map((k) => (
                 <CaseRow key={k.id} entry={k} now={now} canAct={canAct} busy={act.isPending}
-                  onTake={() => setTaking(k)} onRemove={() => setRemoving(k)} onClose={() => act.mutate({ kind: 'close', id: k.id })} />
+                  onTake={() => setTaking(k)} onRemove={() => setRemoving(k)} onClose={() => act.mutate({ kind: 'close', id: k.id })}
+                  onBringBack={() => act.mutate({ kind: 'bringBack', id: k.id })} />
               ))}
             </CardContent>
           </Card>
@@ -261,8 +266,22 @@ export default function Support() {
   );
 }
 
-function CaseRow({ entry: k, now, canAct, busy, onTake, onRemove, onClose }: {
-  entry: SupportCaseEntry; now: number; canAct: boolean; busy: boolean; onTake: () => void; onRemove: () => void; onClose: () => void;
+/** Why a failed take-over left the client where it is (shown on the case and in the history). */
+function TakeFailureNote({ entry: k }: { entry: SupportCaseEntry }) {
+  const { t } = useTranslation();
+  const f = k.takeFailure;
+  if (!f) return null;
+  return (
+    <p className="basis-full text-xs text-amber-400" role="status">
+      {t('pages.support.takeFailed', { step: t(`pages.support.takeSteps.${f.step}`), error: f.error })}{' '}
+      {f.clientCid === null ? t('pages.support.takeFailedClientOffline') : t('pages.support.takeFailedClientIn', { cid: f.clientCid })}
+      {f.roomExists && <> {t('pages.support.takeFailedRoom')}</>}
+    </p>
+  );
+}
+
+function CaseRow({ entry: k, now, canAct, busy, onTake, onRemove, onClose, onBringBack }: {
+  entry: SupportCaseEntry; now: number; canAct: boolean; busy: boolean; onTake: () => void; onRemove: () => void; onClose: () => void; onBringBack: () => void;
 }) {
   const { t } = useTranslation();
   const since = new Date(k.arrivedAt).getTime();
@@ -287,6 +306,9 @@ function CaseRow({ entry: k, now, canAct, busy, onTake, onRemove, onClose }: {
         <div className="flex flex-wrap gap-2">
           {k.state === 'waiting' ? (
             <>
+              {k.takeFailure && (
+                <Button size="sm" variant="secondary" onClick={onBringBack} disabled={busy}><Undo2 className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.support.actions.bringBack')}</Button>
+              )}
               <Button size="sm" onClick={onTake} disabled={busy}><UserCheck className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.support.actions.take')}</Button>
               <Button size="sm" variant="outline" onClick={onRemove} disabled={busy}><UserMinus className="mr-1.5 h-4 w-4" aria-hidden />{t('pages.support.actions.remove')}</Button>
             </>
@@ -295,6 +317,7 @@ function CaseRow({ entry: k, now, canAct, busy, onTake, onRemove, onClose }: {
           )}
         </div>
       )}
+      <TakeFailureNote entry={k} />
     </div>
   );
 }
@@ -312,6 +335,7 @@ function HistoryRow({ entry: k, showActor }: { entry: SupportCaseEntry; showActo
       {k.takenBy.length > 0 && <span className="text-xs text-muted-foreground">{k.takenBy.map((p) => p.nickname).join(', ')}</span>}
       <StateBadge state={k.state} />
       {k.endReason && <span className="text-xs text-muted-foreground">{t(`pages.support.endReasons.${k.endReason}`)}{showActor && k.actedBy ? ` (${k.actedBy})` : ''}</span>}
+      <TakeFailureNote entry={k} />
     </li>
   );
 }

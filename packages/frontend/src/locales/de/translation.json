@@ -2873,12 +2873,14 @@
       "actions": {
         "take": "Übernehmen",
         "remove": "Entfernen",
-        "close": "Erledigt"
+        "close": "Erledigt",
+        "bringBack": "Zurückholen"
       },
       "toasts": {
         "take": "{{client}} wurde übernommen; beide sind in einem neuen Raum.",
         "remove": "{{client}} wurde aus der Warteschlange entfernt.",
-        "close": "Der Fall von {{client}} ist erledigt."
+        "close": "Der Fall von {{client}} ist erledigt.",
+        "bringBack": "{{client}} ist wieder im Wartekanal."
       },
       "positionLabel": "Platz {{position}}",
       "arrivalUnknownHint": "Wartete schon, als die Warteschlange zu beobachten begann; die echte Ankunft ist unbekannt.",
@@ -2923,6 +2925,11 @@
       "noSupporterOnline": "Gerade ist kein Supporter verfügbar (online, nicht abwesend, nicht in einem AFK-Kanal).",
       "supporter": "Supporter",
       "chooseSupporter": "Supporter wählen",
+      "takeFailed": "Übernahme bei „{{step}}“ gescheitert, auch das Zurückholen des Clients schlug fehl ({{error}}).",
+      "takeFailedClientIn": "Danach war der Client in Kanal {{cid}}.",
+      "takeFailedClientOffline": "Danach war der Client nicht online.",
+      "takeFailedRoom": "Der Raum besteht noch.",
+      "takeSteps": { "create-room": "Raum anlegen", "move-client": "Client verschieben", "move-supporter": "Supporter verschieben" },
       "errors": {
         "CASE_NOT_WAITING": "Dieser Client wartet nicht mehr.",
         "CASE_NOT_IN_PROGRESS": "Dieser Fall ist nicht mehr in Bearbeitung.",
@@ -2930,7 +2937,12 @@
         "NOT_A_SUPPORTER": "Dieser Supporter ist nicht mehr verfügbar (offline, abwesend oder in einem AFK-Kanal).",
         "CHANNEL_NOT_FOUND": "Diesen Kanal gibt es nicht mehr.",
         "CHANNEL_IN_USE": "Dieser Kanal ist schon der Wartekanal der Warteschlange „{{queue}}“.",
-        "QUEUE_NOT_FOUND": "Diese Warteschlange gibt es nicht mehr."
+        "QUEUE_NOT_FOUND": "Diese Warteschlange gibt es nicht mehr.",
+        "TAKE_FAILED_CREATE_ROOM": "Die Übernahme ist beim Anlegen des Raums gescheitert. Der Client behält seinen Platz.",
+        "TAKE_FAILED_MOVE_CLIENT": "Die Übernahme ist beim Verschieben des Clients in den Raum gescheitert. Ein leerer Raum wird wieder entfernt; der Client behält seinen Platz.",
+        "TAKE_FAILED_MOVE_SUPPORTER": "Die Übernahme ist beim Verschieben des Supporters gescheitert. Der Client wurde in den Wartekanal zurückgeschoben und behält seinen Platz.",
+        "TAKE_FAILED_NOT_BACK": "Die Übernahme ist gescheitert, und der Client konnte nicht zurückgeschoben werden. Nutze „Zurückholen“ am Fall.",
+        "NOTHING_TO_BRING_BACK": "Für diesen Fall gibt es nichts zurückzuholen."
       },
       "settings": {
         "open": "Einstellungen",

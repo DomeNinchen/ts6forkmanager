@@ -108,7 +108,7 @@ test('statistics: waits over taken cases with a known arrival, each supporter cr
   const at = (h: number) => new Date(Date.UTC(2026, 10, 10, h)).toISOString();
   const e = (id: number, x: Partial<SupportCaseEntry>): SupportCaseEntry => ({
     id, queueId: 1, clientUid: `u${id}`, cldbid: id, nickname: `n${id}`, arrivedAt: at(10), arrivalUnknown: false, state: 'done', position: null,
-    absentSince: null, takenAt: null, takenBy: [], takenVia: null, actedBy: null, roomCid: null, vip: false, endedAt: at(12), endReason: null, ...x,
+    absentSince: null, takenAt: null, takenBy: [], takenVia: null, actedBy: null, roomCid: null, vip: false, endedAt: at(12), endReason: null, takeFailure: null, ...x,
   });
   const bob = { uid: 'b', nickname: 'Bob', cldbid: 1 };
   const eve = { uid: 'e', nickname: 'Eve', cldbid: 2 };
@@ -133,7 +133,7 @@ test('statistics: waits over taken cases with a known arrival, each supporter cr
 test('the per-pass budget: what does not fit waits, nothing is marked as sent for it', async () => {
   const rows = Array.from({ length: 6 }, (_, i) => ({
     id: i + 1, queueId: 1, clientUid: `c${i}`, cldbid: i, nickname: `c${i}`, arrivedAt: new Date(T0 + i), arrivalUnknown: false, state: 'waiting',
-    absentSince: null, takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid: null, endedAt: null, endReason: null, notices: null, vip: false,
+    absentSince: null, takenAt: null, takenBy: null, takenVia: null, actedBy: null, roomCid: null, endedAt: null, endReason: null, notices: null, vip: false, takeFailure: null,
   }));
   const clients = [...rows.map((r, i) => cl(r.clientUid, 100 + i, WAIT)), sup('s1', 20)];
   const sent: string[] = [];

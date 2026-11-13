@@ -23,6 +23,27 @@ export const SUPPORT_END_REASONS = [
 ] as const;
 export type SupportEndReason = (typeof SUPPORT_END_REASONS)[number];
 
+/** The steps of a web take-over, to say which one failed. */
+export const SUPPORT_TAKE_STEPS = ['create-room', 'move-client', 'move-supporter'] as const;
+export type SupportTakeStep = (typeof SUPPORT_TAKE_STEPS)[number];
+
+/**
+ * A web take-over failed after the client was moved, and moving the client back failed too. What
+ * TeamSpeak showed right after (clientlist/channellist), so a user can bring the client back.
+ */
+export interface SupportTakeFailure {
+  /** The take-over step that failed first. */
+  step: SupportTakeStep;
+  /** TeamSpeak's answer to moving the client back. */
+  error: string;
+  /** Where the client sat afterwards; null = not online. */
+  clientCid: number | null;
+  /** Whether the room still existed afterwards. */
+  roomExists: boolean;
+  /** ISO 8601. */
+  at: string;
+}
+
 /** A supporter as the client list showed them. */
 export interface SupportPerson {
   uid: string;
@@ -59,6 +80,8 @@ export interface SupportCaseEntry {
   vip: boolean;
   endedAt: string | null;
   endReason: SupportEndReason | null;
+  /** Set when a failed web take-over could not move the client back; cleared by the next take or bring-back. */
+  takeFailure: SupportTakeFailure | null;
 }
 
 export type SupportRoomType = 'temporary' | 'semipermanent' | 'permanent';

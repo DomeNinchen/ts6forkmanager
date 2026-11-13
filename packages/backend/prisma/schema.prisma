@@ -231,6 +231,8 @@ model SupportCase {
   notices        String?
   // In a VIP group: waits before everyone who is not (stage 4); followed live while waiting.
   vip            Boolean      @default(false)
+  // A web take-over failed and the client could not be moved back: SupportTakeFailure in common, as JSON.
+  takeFailure    String?
   queue          SupportQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
 
   @@index([queueId, state])

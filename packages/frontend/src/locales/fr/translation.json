@@ -1776,12 +1776,14 @@
       "actions": {
         "take": "Prendre en charge",
         "remove": "Retirer",
-        "close": "Terminer"
+        "close": "Terminer",
+        "bringBack": "Ramener"
       },
       "toasts": {
         "take": "{{client}} est pris en charge ; les deux sont dans un nouveau salon.",
         "remove": "{{client}} a été retiré de la file.",
-        "close": "Le cas de {{client}} est terminé."
+        "close": "Le cas de {{client}} est terminé.",
+        "bringBack": "{{client}} est de retour dans le canal d'attente."
       },
       "positionLabel": "Position {{position}}",
       "arrivalUnknownHint": "Attendait déjà quand la file a commencé à observer ; l'arrivée réelle est inconnue.",
@@ -1826,6 +1828,11 @@
       "noSupporterOnline": "Aucun agent n'est disponible pour le moment (en ligne, non absent, pas dans un salon AFK).",
       "supporter": "Agent de support",
       "chooseSupporter": "Choisir un agent",
+      "takeFailed": "La prise en charge a échoué à « {{step}} » et le retour du client a aussi échoué ({{error}}).",
+      "takeFailedClientIn": "Ensuite, le client était dans le canal {{cid}}.",
+      "takeFailedClientOffline": "Ensuite, le client n'était pas en ligne.",
+      "takeFailedRoom": "La salle existe encore.",
+      "takeSteps": { "create-room": "créer la salle", "move-client": "déplacer le client", "move-supporter": "déplacer le support" },
       "errors": {
         "CASE_NOT_WAITING": "Ce client n'attend plus.",
         "CASE_NOT_IN_PROGRESS": "Ce cas n'est plus en cours.",
@@ -1833,7 +1840,12 @@
         "NOT_A_SUPPORTER": "Cet agent n'est plus disponible (hors ligne, absent ou dans un salon AFK).",
         "CHANNEL_NOT_FOUND": "Ce salon n'existe plus.",
         "CHANNEL_IN_USE": "Ce salon est déjà le salon d'attente de la file « {{queue}} ».",
-        "QUEUE_NOT_FOUND": "Cette file n'existe plus."
+        "QUEUE_NOT_FOUND": "Cette file n'existe plus.",
+        "TAKE_FAILED_CREATE_ROOM": "La prise en charge a échoué lors de la création de la salle. Le client garde sa place.",
+        "TAKE_FAILED_MOVE_CLIENT": "La prise en charge a échoué lors du déplacement du client dans la salle. Une salle vide est supprimée ; le client garde sa place.",
+        "TAKE_FAILED_MOVE_SUPPORTER": "La prise en charge a échoué lors du déplacement du support. Le client a été replacé dans le canal d'attente et garde sa place.",
+        "TAKE_FAILED_NOT_BACK": "La prise en charge a échoué et le client n'a pas pu être replacé. Utilisez « Ramener » sur le cas.",
+        "NOTHING_TO_BRING_BACK": "Il n'y a rien à ramener pour ce cas."
       },
       "settings": {
         "open": "Paramètres",

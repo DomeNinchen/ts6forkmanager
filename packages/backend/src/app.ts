@@ -200,6 +200,7 @@ export function createApp(): Express {
     { method: 'GET', path: '/history', permission: 'server.view' },
     { method: 'GET', path: '/queues/:queueId/history', permission: 'server.view' },
     { method: 'POST', path: '/cases/:id/take', permission: 'clients.move' },
+    { method: 'POST', path: '/cases/:id/bring-back', permission: 'clients.move' },
     { method: 'POST', path: '/cases/:id/remove', permission: 'clients.move' },
     { method: 'POST', path: '/cases/:id/close', permission: 'clients.move' },
   ]);
