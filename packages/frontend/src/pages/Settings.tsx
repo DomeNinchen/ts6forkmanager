@@ -1627,7 +1627,7 @@ function StreamingTab() {
 
   const [draft, setDraft] = useState<StreamDefaults | null>(null);
   const active: StreamDefaults | null =
-    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume, idleStopMinutes: data.idleStopMinutes, maxVideoMinutes: data.maxVideoMinutes, liveAudioEnabled: data.liveAudioEnabled, liveMaxMinutes: data.liveMaxMinutes } : null);
+    draft ?? (data ? { preset: data.preset, framerate: data.framerate, bitrate: data.bitrate, volume: data.volume, idleStopMinutes: data.idleStopMinutes, maxVideoMinutes: data.maxVideoMinutes, liveAudioEnabled: data.liveAudioEnabled, liveVideoEnabled: data.liveVideoEnabled, liveMaxMinutes: data.liveMaxMinutes } : null);
 
   const save = useMutation({
     mutationFn: (cfg: StreamDefaults) => settingsApi.setStreamDefaults(cfg),
@@ -1656,6 +1656,7 @@ function StreamingTab() {
     active.idleStopMinutes === data.builtIn.idleStopMinutes &&
     active.maxVideoMinutes === data.builtIn.maxVideoMinutes &&
     active.liveAudioEnabled === data.builtIn.liveAudioEnabled &&
+    active.liveVideoEnabled === data.builtIn.liveVideoEnabled &&
     active.liveMaxMinutes === data.builtIn.liveMaxMinutes;
 
   return (
@@ -1779,6 +1780,20 @@ function StreamingTab() {
             </div>
             <p className="text-[11px] text-muted-foreground">
               {t('pages.settings.streaming.liveAudioHint')}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="stream-live-video"
+                checked={active.liveVideoEnabled}
+                onCheckedChange={(v) => setDraft({ ...active, liveVideoEnabled: v })}
+              />
+              <Label className="text-xs" htmlFor="stream-live-video">{t('pages.settings.streaming.liveVideoLabel')}</Label>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {t('pages.settings.streaming.liveVideoHint')}
             </p>
           </div>
 

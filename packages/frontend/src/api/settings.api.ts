@@ -214,12 +214,14 @@ export interface StreamDefaults {
   maxVideoMinutes: number;
   /** Whether a music bot plays a channel that is live right now (sound only). */
   liveAudioEnabled: boolean;
+  /** Whether a video stream plays a channel that is live right now. */
+  liveVideoEnabled: boolean;
   /** Longest a live session runs before the bot ends it, in minutes; 0 = no limit. */
   liveMaxMinutes: number;
 }
 
 /** The part of the stream defaults that describes the picture and sound of a stream being started. */
-export type StreamQuality = Omit<StreamDefaults, 'idleStopMinutes' | 'maxVideoMinutes' | 'liveAudioEnabled' | 'liveMaxMinutes'>;
+export type StreamQuality = Omit<StreamDefaults, 'idleStopMinutes' | 'maxVideoMinutes' | 'liveAudioEnabled' | 'liveVideoEnabled' | 'liveMaxMinutes'>;
 
 export interface StreamPreset {
   /** The name !stream accepts, e.g. `720p`. */

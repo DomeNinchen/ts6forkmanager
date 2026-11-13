@@ -458,6 +458,9 @@ type Sidecar struct {
 
 	ffmpeg     *exec.Cmd
 	ffmpegLock sync.Mutex
+	// ffmpeg exited by itself (source ended or unreachable), not stopped or replaced
+	// by us; guarded by ffmpegLock. The backend polls it via /stats to re-open a live source.
+	sourceEnded bool
 	source     string
 	running    bool
 
@@ -1093,7 +1096,26 @@ func rtpOutputArgs(payloadType int, ssrc uint32, port int) []string {
 // leave it alone. A video is mastered at whatever loudness its creator chose,
 // which is routinely far above a TeamSpeak channel's speaking level, so the
 // caller usually wants this well below 100.
-func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate int, bitrate string, loop bool, volumePercent int) {
+// audioSource, when set, is a second input whose audio is used instead of the
+// source's own (a live page that serves picture and sound as separate streams).
+// slateFont ships with fonts-dejavu-core (Dockerfile.sidecar).
+const slateFont = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+// cleanSlateText keeps what can sit inside drawtext's quoted text without escaping.
+func cleanSlateText(text string) string {
+	out := make([]rune, 0, len(text))
+	for _, r := range text {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || strings.ContainsRune(" .!-", r) {
+			out = append(out, r)
+		}
+	}
+	if len(out) > 80 {
+		out = out[:80]
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func (s *Sidecar) StartFFmpeg(source string, audioSource string, width int, height int, framerate int, bitrate string, loop bool, volumePercent int, slateText string) {
 	s.ffmpegLock.Lock()
 	defer s.ffmpegLock.Unlock()
 
@@ -1134,8 +1156,17 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 		}
 
 		args = append(args, "-fflags", "+genpts+discardcorrupt", "-re", "-i", source)
+		if audioSource != "" {
+			args = append(args, "-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5",
+				"-fflags", "+genpts+discardcorrupt", "-re", "-i", audioSource)
+		}
 	} else {
-		args = append(args, "-re", "-f", "lavfi", "-i", fmt.Sprintf("color=c=black:s=%dx%d:r=1", w, h))
+		input := fmt.Sprintf("color=c=black:s=%dx%d:r=1", w, h)
+		if text := cleanSlateText(slateText); text != "" {
+			// A notice viewers can read (e.g. a Twitch ad break); 5 fps so a viewer joining gets a keyframe within 3 s
+			input = fmt.Sprintf("color=c=0x18181b:s=%dx%d:r=5,drawtext=fontfile=%s:text='%s':fontcolor=white:fontsize=h/18:x=(w-text_w)/2:y=(h-text_h)/2", w, h, slateFont, text)
+		}
+		args = append(args, "-re", "-f", "lavfi", "-i", input)
 	}
 
 	vBitrate := strings.TrimSpace(bitrate)
@@ -1183,8 +1214,12 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 	if source != "" {
 		aBitrate := envOrDefault("AUDIO_BITRATE", "128k")
 
+		audioMap := "0:a:0?"
+		if audioSource != "" {
+			audioMap = "1:a:0"
+		}
 		args = append(args,
-			"-map", "0:a:0?",
+			"-map", audioMap,
 		)
 
 		// One -af for the whole chain: a second one replaces the first rather
@@ -1230,17 +1265,35 @@ func (s *Sidecar) StartFFmpeg(source string, width int, height int, framerate in
 	go func() {
 		err := cmd.Wait()
 		log.Printf("[FFmpeg] Exited: %v", err)
+		s.onFFmpegExit(cmd)
 	}()
 }
 
 func (s *Sidecar) StopFFmpegLocked() {
+	s.sourceEnded = false
 	if s.ffmpeg != nil && s.ffmpeg.Process != nil {
 		s.ffmpeg.Process.Kill()
 		s.ffmpeg = nil
 	}
 }
 
+// onFFmpegExit marks the source as ended only if cmd is still the current
+// ffmpeg: one we killed or replaced has already been cleared from s.ffmpeg.
+func (s *Sidecar) onFFmpegExit(cmd *exec.Cmd) {
+	s.ffmpegLock.Lock()
+	defer s.ffmpegLock.Unlock()
+	if s.ffmpeg == cmd {
+		s.ffmpeg = nil
+		s.sourceEnded = true
+	}
+}
+
 func (s *Sidecar) GetStats() map[string]interface{} {
+	// ffmpegLock before peersLock, the order StartFFmpeg takes them in
+	s.ffmpegLock.Lock()
+	sourceEnded := s.sourceEnded
+	s.ffmpegLock.Unlock()
+
 	s.peersLock.RLock()
 	defer s.peersLock.RUnlock()
 
@@ -1258,6 +1311,8 @@ func (s *Sidecar) GetStats() map[string]interface{} {
 		"peerCount": len(s.peers),
 		"peers":     peers,
 		"source":    s.source,
+		"sourceEnded":  sourceEnded,
+		"videoPackets": atomic.LoadUint64(&s.videoPktCount),
 	}
 }
 
@@ -1390,6 +1445,10 @@ func main() {
 			// Percent, omitted means 100 (the source's own level) so anything
 			// driving this API directly keeps the behaviour it had before.
 			Volume *int `json:"volume"`
+			// Optional separate audio input (picture and sound as two streams)
+			AudioSource string `json:"audioSource"`
+			// Without a source: a notice shown on a plain background instead of black
+			Text string `json:"text"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), 400)
@@ -1400,8 +1459,8 @@ func main() {
 		if req.Volume != nil {
 			volume = *req.Volume
 		}
-		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s, loop=%v, volume=%d%%)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume)
-		sidecar.StartFFmpeg(req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume)
+		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s, loop=%v, volume=%d%%, separate audio=%v)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume, req.AudioSource != "")
+		sidecar.StartFFmpeg(req.Source, req.AudioSource, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume, req.Text)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 

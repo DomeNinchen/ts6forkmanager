@@ -9,6 +9,10 @@ export interface SidecarStats {
   peerCount: number;
   peers: Record<string, { active: boolean; state: string }>;
   source: string;
+  /** ffmpeg ended by itself (sidecar 2.4.0+); absent on older sidecars. */
+  sourceEnded?: boolean;
+  /** Video RTP packets received from ffmpeg so far (sidecar 2.4.0+). */
+  videoPackets?: number;
 }
 
 export class SidecarClient {
@@ -50,7 +54,7 @@ export class SidecarClient {
     await this.call('POST', '/peer/close', { id });
   }
 
-  async setSource(source: string, width?: number, height?: number, framerate?: number, bitrate?: string, loop?: boolean, volume?: number): Promise<void> {
+  async setSource(source: string, width?: number, height?: number, framerate?: number, bitrate?: string, loop?: boolean, volume?: number, audioSource?: string): Promise<void> {
     await this.call('POST', '/source', {
       source,
       width,
@@ -59,7 +63,14 @@ export class SidecarClient {
       bitrate,
       loop,
       volume,
+      // Separate sound (sidecar 2.4.0+); left out for a single source so older sidecars see no change
+      ...(audioSource ? { audioSource } : {}),
     });
+  }
+
+  /** Replaces the source with a plain picture carrying `text` (letters, digits, spaces and .!- only). */
+  async showSlate(text: string, width: number, height: number, bitrate: string): Promise<void> {
+    await this.call('POST', '/source', { source: '', text, width, height, bitrate, loop: false });
   }
 
   async stopSource(): Promise<void> {

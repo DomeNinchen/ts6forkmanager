@@ -555,13 +555,15 @@ settingsRoutes.put('/stream-defaults', requireAdmin, async (req: Request, res: R
     const current = await getStreamDefaults(prisma);
     const liveAudioEnabled = req.body?.liveAudioEnabled ?? current.liveAudioEnabled;
     if (typeof liveAudioEnabled !== 'boolean') throw new AppError(400, 'liveAudioEnabled must be true or false');
+    const liveVideoEnabled = req.body?.liveVideoEnabled ?? current.liveVideoEnabled;
+    if (typeof liveVideoEnabled !== 'boolean') throw new AppError(400, 'liveVideoEnabled must be true or false');
     const liveMaxMinutes = req.body?.liveMaxMinutes ?? current.liveMaxMinutes;
     if (!isValidLiveMaxMinutes(liveMaxMinutes)) {
       throw new AppError(400, `liveMaxMinutes must be a whole number between 0 (no limit) and ${IDLE_STOP_MAX_MINUTES}`);
     }
 
-    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume, idleStopMinutes, maxVideoMinutes, liveAudioEnabled, liveMaxMinutes });
-    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%, idle stop ${saved.idleStopMinutes === 0 ? 'off' : `${saved.idleStopMinutes} min`}, max video ${saved.maxVideoMinutes} min, live audio ${saved.liveAudioEnabled ? 'on' : 'off'}, live limit ${saved.liveMaxMinutes === 0 ? 'none' : `${saved.liveMaxMinutes} min`}`);
+    const saved = await setStreamDefaults(prisma, { preset, framerate, bitrate: bitrate.trim(), volume, idleStopMinutes, maxVideoMinutes, liveAudioEnabled, liveVideoEnabled, liveMaxMinutes });
+    console.log(`[Settings] Stream defaults set to ${saved.preset} @ ${saved.framerate}fps, ${saved.bitrate}, volume ${saved.volume}%, idle stop ${saved.idleStopMinutes === 0 ? 'off' : `${saved.idleStopMinutes} min`}, max video ${saved.maxVideoMinutes} min, live audio ${saved.liveAudioEnabled ? 'on' : 'off'}, live video ${saved.liveVideoEnabled ? 'on' : 'off'}, live limit ${saved.liveMaxMinutes === 0 ? 'none' : `${saved.liveMaxMinutes} min`}`);
     // A stream that is already running with nobody watching follows the new
     // value now, instead of at the next time someone leaves it.
     req.app.locals.voiceBotManager?.reevaluateVideoIdleStops();
