@@ -1673,8 +1673,12 @@ export class VoiceBot extends EventEmitter {
     if (ad === true && !watch.ignoreAds) {
       if (watch.adSince === undefined) {
         watch.adSince = Date.now();
-        console.log(`[VoiceBot ${this.config.id}] Twitch ad break: picture paused until it is over`);
-        await this.sidecarHttp.stopSource().catch(() => { /* the restart after the ad replaces it anyway */ });
+        console.log(`[VoiceBot ${this.config.id}] Twitch ad break: showing a notice until it is over`);
+        // A notice instead of a black picture, so viewers do not think the stream broke
+        const preset = STREAM_PRESETS[this._videoPreset] || STREAM_PRESETS[DEFAULT_PRESET];
+        await this.sidecarHttp.showSlate('Twitch ad break - the stream continues right after it', preset.width, preset.height, this._videoBitrate)
+          .catch(() => this.sidecarHttp?.stopSource())
+          .catch(() => { /* the restart after the ad replaces it anyway */ });
         return;
       }
       if (Date.now() - watch.adSince < LIVE_AD_HOLD_MS) return;

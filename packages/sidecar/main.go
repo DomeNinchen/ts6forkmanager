@@ -1098,7 +1098,24 @@ func rtpOutputArgs(payloadType int, ssrc uint32, port int) []string {
 // caller usually wants this well below 100.
 // audioSource, when set, is a second input whose audio is used instead of the
 // source's own (a live page that serves picture and sound as separate streams).
-func (s *Sidecar) StartFFmpeg(source string, audioSource string, width int, height int, framerate int, bitrate string, loop bool, volumePercent int) {
+// slateFont ships with fonts-dejavu-core (Dockerfile.sidecar).
+const slateFont = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+// cleanSlateText keeps what can sit inside drawtext's quoted text without escaping.
+func cleanSlateText(text string) string {
+	out := make([]rune, 0, len(text))
+	for _, r := range text {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || strings.ContainsRune(" .!-", r) {
+			out = append(out, r)
+		}
+	}
+	if len(out) > 80 {
+		out = out[:80]
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func (s *Sidecar) StartFFmpeg(source string, audioSource string, width int, height int, framerate int, bitrate string, loop bool, volumePercent int, slateText string) {
 	s.ffmpegLock.Lock()
 	defer s.ffmpegLock.Unlock()
 
@@ -1144,7 +1161,12 @@ func (s *Sidecar) StartFFmpeg(source string, audioSource string, width int, heig
 				"-fflags", "+genpts+discardcorrupt", "-re", "-i", audioSource)
 		}
 	} else {
-		args = append(args, "-re", "-f", "lavfi", "-i", fmt.Sprintf("color=c=black:s=%dx%d:r=1", w, h))
+		input := fmt.Sprintf("color=c=black:s=%dx%d:r=1", w, h)
+		if text := cleanSlateText(slateText); text != "" {
+			// A notice viewers can read (e.g. a Twitch ad break); 5 fps so a viewer joining gets a keyframe within 3 s
+			input = fmt.Sprintf("color=c=0x18181b:s=%dx%d:r=5,drawtext=fontfile=%s:text='%s':fontcolor=white:fontsize=h/18:x=(w-text_w)/2:y=(h-text_h)/2", w, h, slateFont, text)
+		}
+		args = append(args, "-re", "-f", "lavfi", "-i", input)
 	}
 
 	vBitrate := strings.TrimSpace(bitrate)
@@ -1425,6 +1447,8 @@ func main() {
 			Volume *int `json:"volume"`
 			// Optional separate audio input (picture and sound as two streams)
 			AudioSource string `json:"audioSource"`
+			// Without a source: a notice shown on a plain background instead of black
+			Text string `json:"text"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), 400)
@@ -1436,7 +1460,7 @@ func main() {
 			volume = *req.Volume
 		}
 		log.Printf("[API] Setting source: %s (%dx%d @ %dfps, %s, loop=%v, volume=%d%%, separate audio=%v)", req.Source, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume, req.AudioSource != "")
-		sidecar.StartFFmpeg(req.Source, req.AudioSource, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume)
+		sidecar.StartFFmpeg(req.Source, req.AudioSource, req.Width, req.Height, req.Framerate, req.Bitrate, loop, volume, req.Text)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 

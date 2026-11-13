@@ -68,6 +68,11 @@ export class SidecarClient {
     });
   }
 
+  /** Replaces the source with a plain picture carrying `text` (letters, digits, spaces and .!- only). */
+  async showSlate(text: string, width: number, height: number, bitrate: string): Promise<void> {
+    await this.call('POST', '/source', { source: '', text, width, height, bitrate, loop: false });
+  }
+
   async stopSource(): Promise<void> {
     await this.call('POST', '/source/stop');
   }
