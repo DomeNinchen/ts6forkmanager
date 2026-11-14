@@ -3,6 +3,19 @@ import type { PrismaClient } from '../generated/prisma/client.js';
 const KEY_RETENTION = 'bot_log_retention_days';
 const KEY_MAX_ROWS = 'bot_log_max_rows';
 const KEY_MAX_CONCURRENT = 'bot_flow_max_concurrent';
+const KEY_MAX_RUNTIME = 'bot_flow_max_runtime_min';
+
+/**
+ * How long one execution may run in total, counted from its start (also across a backend restart,
+ * since a Delay can carry it over one); 0 switches the limit off. A day is the most a flow made of
+ * 5-minute Delays could reasonably need.
+ */
+export const BOT_FLOW_MAX_RUNTIME_MIN = 0;
+export const BOT_FLOW_MAX_RUNTIME_MAX = 1440;
+
+export function isValidBotFlowMaxRuntime(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= BOT_FLOW_MAX_RUNTIME_MIN && value <= BOT_FLOW_MAX_RUNTIME_MAX;
+}
 
 /**
  * Bounds for how long the bot-flow execution history is kept. Every flow run
@@ -31,12 +44,15 @@ export const BOT_LOG_DEFAULTS = {
   retentionDays: 30,
   maxRows: 50_000,
   maxConcurrentPerFlow: 20,
+  maxRuntimeMinutes: 30,
 } as const;
 
 export interface BotLogSettings {
   retentionDays: number;
   maxRows: number;
   maxConcurrentPerFlow: number;
+  /** Longest total runtime of one execution in minutes; 0 = no limit. */
+  maxRuntimeMinutes: number;
 }
 
 export function isValidBotLogRetention(value: unknown): value is number {
@@ -67,7 +83,7 @@ export function isValidBotFlowMaxConcurrent(value: unknown): value is number {
 }
 
 export async function getBotLogSettings(prisma: PrismaClient): Promise<BotLogSettings> {
-  const rows = await prisma.appSetting.findMany({ where: { key: { in: [KEY_RETENTION, KEY_MAX_ROWS, KEY_MAX_CONCURRENT] } } });
+  const rows = await prisma.appSetting.findMany({ where: { key: { in: [KEY_RETENTION, KEY_MAX_ROWS, KEY_MAX_CONCURRENT, KEY_MAX_RUNTIME] } } });
   const stored = new Map(rows.map((r) => [r.key, r.value]));
 
   // A stored value that is no longer allowed (a bound that moved in an update,
@@ -76,10 +92,12 @@ export async function getBotLogSettings(prisma: PrismaClient): Promise<BotLogSet
   const retention = Number(stored.get(KEY_RETENTION));
   const maxRows = Number(stored.get(KEY_MAX_ROWS));
   const maxConcurrent = Number(stored.get(KEY_MAX_CONCURRENT));
+  const maxRuntime = stored.has(KEY_MAX_RUNTIME) ? Number(stored.get(KEY_MAX_RUNTIME)) : NaN;
   return {
     retentionDays: isValidBotLogRetention(retention) ? retention : BOT_LOG_DEFAULTS.retentionDays,
     maxRows: isValidBotLogMaxRows(maxRows) ? maxRows : BOT_LOG_DEFAULTS.maxRows,
     maxConcurrentPerFlow: isValidBotFlowMaxConcurrent(maxConcurrent) ? maxConcurrent : BOT_LOG_DEFAULTS.maxConcurrentPerFlow,
+    maxRuntimeMinutes: isValidBotFlowMaxRuntime(maxRuntime) ? maxRuntime : BOT_LOG_DEFAULTS.maxRuntimeMinutes,
   };
 }
 
@@ -88,6 +106,7 @@ export async function setBotLogSettings(prisma: PrismaClient, values: BotLogSett
     [KEY_RETENTION, String(values.retentionDays)],
     [KEY_MAX_ROWS, String(values.maxRows)],
     [KEY_MAX_CONCURRENT, String(values.maxConcurrentPerFlow)],
+    [KEY_MAX_RUNTIME, String(values.maxRuntimeMinutes)],
   ];
   await prisma.$transaction(
     pairs.map(([key, value]) =>

@@ -136,7 +136,9 @@ export class BotEngine {
     // Support queue events come from the queue job and the web take, not from SSH.
     onSupportCaseTaken(this.onSupportCaseTaken.bind(this));
 
-    this.maxConcurrentPerFlow = (await getBotLogSettings(this.prisma)).maxConcurrentPerFlow;
+    const botLogSettings = await getBotLogSettings(this.prisma);
+    this.maxConcurrentPerFlow = botLogSettings.maxConcurrentPerFlow;
+    this.setMaxRuntimeMinutes(botLogSettings.maxRuntimeMinutes);
     await this.loadFlows();
 
     if (this.flows.size === 0) {
@@ -179,6 +181,11 @@ export class BotEngine {
 
   setMaxConcurrentPerFlow(limit: number): void {
     this.maxConcurrentPerFlow = limit;
+  }
+
+  /** Longest total runtime of one execution; 0 = no limit. Applies to running executions at their next node. */
+  setMaxRuntimeMinutes(minutes: number): void {
+    this.flowRunner.maxRuntimeMs = minutes * 60_000;
   }
 
   async enableFlow(flowId: number): Promise<void> {
@@ -613,7 +620,7 @@ export class BotEngine {
   async resumeWaitingExecutions(): Promise<void> {
     const rows = await this.prisma.botExecution.findMany({
       where: { status: 'waiting' },
-      select: { id: true, flowId: true, triggeredBy: true, triggerData: true, resumeNodeId: true, resumeAt: true, state: true },
+      select: { id: true, flowId: true, triggeredBy: true, triggerData: true, resumeNodeId: true, resumeAt: true, state: true, startedAt: true },
     });
     for (const row of rows) {
       const flow = this.flows.get(row.flowId);
