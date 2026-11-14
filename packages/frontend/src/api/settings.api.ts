@@ -81,6 +81,12 @@ export const settingsApi = {
   setBotLogSettings: (config: BotLogSettings): Promise<BotLogSettingsResponse> =>
     api.put('/settings/bot-logs', config).then((r) => r.data),
 
+  getWebhookSettings: (): Promise<WebhookSettingsResponse> =>
+    api.get('/settings/webhooks').then((r) => r.data),
+
+  setWebhookSettings: (values: WebhookSettings): Promise<WebhookSettingsResponse> =>
+    api.put('/settings/webhooks', values).then((r) => r.data),
+
   getWebguiTheme: (): Promise<{ preset: AccentPreset }> =>
     api.get('/settings/webgui-theme').then((r) => r.data),
 
@@ -262,6 +268,20 @@ export interface BotLogSettings {
   maxRows: number;
   /** Executions of one flow that may run at once; further triggers are dropped. */
   maxConcurrentPerFlow: number;
+}
+
+/** Limits on incoming webhook calls, checked before the body is read. */
+export interface WebhookSettings {
+  bodyLimitKb: number;
+  /** Calls with a matching secret per address and minute. */
+  validPerMinute: number;
+  /** Calls to an unknown path or with a wrong secret per address and minute. */
+  failedPerMinute: number;
+}
+
+export interface WebhookSettingsResponse extends WebhookSettings {
+  defaults: WebhookSettings;
+  bounds: Record<keyof WebhookSettings, { min: number; max: number }>;
 }
 
 export interface BotLogSettingsResponse extends BotLogSettings {

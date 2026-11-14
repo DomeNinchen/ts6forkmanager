@@ -219,6 +219,18 @@
       "deleteTitle": "Delete Bot?",
       "deleteDescription": "This will permanently delete this bot flow and all its execution history.",
       "deleted": "Bot deleted",
+      "webhooks": {
+        "title": "Webhooks: incoming limits",
+        "description": "Limits on incoming webhook calls, checked before the body is read. Valid calls (matching secret) and failed ones (unknown path or wrong secret) are counted apart per address. Applies to the whole instance.",
+        "bodyLimitKbLabel": "Largest body (KB)",
+        "bodyLimitKbHint": "{{min}} to {{max}} KB; larger calls get 413. A proxy in front may have its own, smaller limit.",
+        "validPerMinuteLabel": "Valid calls per address and minute",
+        "validPerMinuteHint": "{{min}} to {{max}}; beyond that the manager answers 429.",
+        "failedPerMinuteLabel": "Failed calls per address and minute",
+        "failedPerMinuteHint": "{{min}} to {{max}}; beyond that 429 and a row in the connection journal.",
+        "saved": "Webhook limits saved",
+        "saveFailed": "Could not save the webhook limits"
+      },
       "retention": {
         "title": "Executions: retention and limit",
         "description": "How long the execution history of every bot flow (runs and their log lines) is kept. Applies to the whole instance; anything older is removed hourly.",
@@ -973,7 +985,8 @@
         "sso-no-subject": "The identity provider sent no account id",
         "sso-failed": "The identity provider's answer was refused",
         "login-limit": "Too many sign-in attempts from this address",
-        "refresh-limit": "Too many token refreshes from this address"
+        "refresh-limit": "Too many token refreshes from this address",
+        "webhook-limit": "Too many failed webhook calls from this address"
       },
       "unknownAccount": "unknown",
       "unknownAccountHint": "No account has this name. It is what was typed into the field - possibly something else, such as a password in the wrong field.",

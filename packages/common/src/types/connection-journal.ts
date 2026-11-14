@@ -36,6 +36,7 @@ export const JOURNAL_REASONS = [
   'sso-failed',
   'login-limit',
   'refresh-limit',
+  'webhook-limit',
 ] as const;
 export type JournalReason = (typeof JOURNAL_REASONS)[number];
 

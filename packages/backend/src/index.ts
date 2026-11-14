@@ -25,6 +25,7 @@ import { startPlayedSongCleanup } from './voice/audio/played-song-cleanup.js';
 import { startJournalPruner } from './utils/connection-journal.js';
 import { flushChangeLog, startChangeLogPruner } from './utils/change-log.js';
 import { startBotLogPruner } from './utils/bot-log-retention.js';
+import { loadWebhookSettings } from './utils/webhook-settings.js';
 import { TsLoginJournal } from './ts-client/ts-login-journal.js';
 import { RaidProtectionService } from './utils/raid-protection.js';
 import { GeoIpService } from './utils/geoip.js';
@@ -83,6 +84,7 @@ async function main() {
   startJournalPruner(prisma);
   startChangeLogPruner(prisma);
   startBotLogPruner(prisma);
+  await loadWebhookSettings(prisma);
   startYtCookieChecker();
 
   // Pick up audio files already sitting in MUSIC_DIR (e.g. a volume shared

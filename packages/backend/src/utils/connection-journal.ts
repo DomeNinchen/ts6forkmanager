@@ -85,7 +85,7 @@ export function recordWebEvent(req: Request, entry: WebJournalEvent): void {
 const lastRateLimitRow = new Map<string, number>();
 
 /** The sign-in limit turned a request away. One row per address per minute, whatever the attempts after it. */
-export function recordRateLimitHit(req: Request, reason: Extract<JournalReason, 'login-limit' | 'refresh-limit'>): void {
+export function recordRateLimitHit(req: Request, reason: Extract<JournalReason, 'login-limit' | 'refresh-limit' | 'webhook-limit'>): void {
   const ip = clientIpOf(req);
   const now = Date.now();
   const last = lastRateLimitRow.get(ip);
