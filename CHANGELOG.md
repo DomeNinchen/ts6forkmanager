@@ -4,10 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.119.0 · frontend 3.138.0 · sidecar 2.4.0**
+Versions at the end of the month: **backend 2.120.0 · frontend 3.139.0 · sidecar 2.4.0**
 
 ### New Features
 
+- **Delete a virtual server** — The Virtual Servers page has a **Delete** button per server. It works only on a stopped server (a running one shows "stop it first"); the dialog lists what goes with the server, says what a snapshot can and cannot bring back, warns when it is the instance's first (SID 1) or last server, and asks for the server's name. A server that was deleted in the meantime or is running again gets a readable message instead of TeamSpeak's error. Admins only. *backend 2.120.0, frontend 3.139.0* [#411](https://github.com/DomeNinchen/ts6forkmanager/pull/411)
 - **Snapshot comparison** (Miscellaneous -> Compare with server) — Compares a TeamSpeak snapshot, from a backup that holds one or from a snapshot file, with the current state of the virtual server, without changing anything: server groups, channel groups and channels are listed as new, removed or changed, with the changed fields (name, parent channel, position, topic, description, flags, codec and more) and each permission's value, negated and skip before and now. Objects are matched by id, so a group deleted and created again shows up as removed and new. Server settings, client permissions and memberships are not compared, and server keys, password hashes and client identities in the snapshot are never shown. The current state is read as a fresh snapshot for the comparison and not stored. Search, a kind filter and pages keep large differences readable. Admin only; a comparison leaves no change-log entry. *backend 2.119.0, frontend 3.138.0* [#410](https://github.com/DomeNinchen/ts6forkmanager/pull/410)
 
 - **Global search** — A **Search** button in the header (in the phone menu on narrow screens) or Ctrl+K (Cmd+K on a Mac) opens a search over the pages and Settings tabs. It takes German, English and French names and ignores case, accents and spelled-out umlauts, lists only what the role may open on the selected server (the same pages as the navigation), remembers the last five opened in this browser and opens the chosen one with Enter. *frontend 3.136.0* [#408](https://github.com/DomeNinchen/ts6forkmanager/pull/408)

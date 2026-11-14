@@ -662,7 +662,21 @@
       "namePlaceholder": "Mon serveur TeamSpeak",
       "portOptional": "Port (facultatif)",
       "portPlaceholder": "Laisser vide pour le premier port libre",
-      "autostartWithInstance": "Démarrer automatiquement avec l'instance"
+      "autostartWithInstance": "Démarrer automatiquement avec l'instance",
+      "deleteStopFirst": "Arrêtez d'abord le serveur - seul un serveur arrêté peut être supprimé.",
+      "deleteDialogTitle": "Supprimer le serveur virtuel",
+      "deleteDialogDescription": "Supprime définitivement « {{name}} » (SID {{sid}}) de cette instance TeamSpeak. Cette action est irréversible.",
+      "deleteWhatGoes": "Tout ce qui appartient à ce serveur disparaît avec lui : canaux et leurs fichiers, groupes de serveur et de canal, permissions, base de données clients, bannissements, icônes et jetons.",
+      "deleteSnapshotNote": "Un snapshot (page Divers) n'en restaure qu'une partie : groupes, canaux et profils clients, mais pas les bannissements, icônes ni fichiers de canal. Créez-en un avant si vous pourriez encore avoir besoin du serveur.",
+      "deleteLastWarning": "C'est le dernier serveur virtuel de cette instance. Personne ne pourra se connecter tant qu'un nouveau n'aura pas été créé.",
+      "deleteFirstWarning": "C'est le premier serveur de l'instance (SID 1), généralement celui que les clients joignent sur le port par défaut.",
+      "deleteTypeName": "Saisissez le nom du serveur pour confirmer : {{name}}",
+      "deleteConfirm": "Supprimer définitivement",
+      "deleted": "Serveur virtuel « {{name}} » supprimé",
+      "deleteFailed": "Échec de la suppression du serveur virtuel",
+      "deleteRunning": "Le serveur est en cours d'exécution - arrêtez-le d'abord, puis supprimez-le.",
+      "deleteNotFound": "Ce serveur virtuel n'existe plus. La liste a été actualisée.",
+      "deleteNoPermission": "Le compte query de la connexion n'a pas le droit de supprimer des serveurs virtuels (b_virtualserver_delete)."
     },
     "snapshotCompare": {
       "title": "Comparaison de snapshot",

@@ -1369,7 +1369,21 @@
       "namePlaceholder": "My TeamSpeak Server",
       "portOptional": "Port (optional)",
       "portPlaceholder": "Leave empty for first free port",
-      "autostartWithInstance": "Autostart with the instance"
+      "autostartWithInstance": "Autostart with the instance",
+      "deleteStopFirst": "Stop the server first - only a stopped server can be deleted.",
+      "deleteDialogTitle": "Delete virtual server",
+      "deleteDialogDescription": "Permanently deletes \"{{name}}\" (SID {{sid}}) from this TeamSpeak instance. This cannot be undone.",
+      "deleteWhatGoes": "Everything of this server goes with it: channels and their files, server and channel groups, permissions, the client database, bans, icons and tokens.",
+      "deleteSnapshotNote": "A snapshot (Miscellaneous page) brings back only part of it: groups, channels and client profiles, but no bans, icons or channel files. Create one first if you may need the server again.",
+      "deleteLastWarning": "This is the last virtual server on this instance. Until a new one is created, nobody can connect.",
+      "deleteFirstWarning": "This is the instance's first server (SID 1), usually the one clients reach on the default port.",
+      "deleteTypeName": "Type the server name to confirm: {{name}}",
+      "deleteConfirm": "Delete permanently",
+      "deleted": "Virtual server \"{{name}}\" deleted",
+      "deleteFailed": "Failed to delete virtual server",
+      "deleteRunning": "The server is running - stop it first, then delete it.",
+      "deleteNotFound": "This virtual server does not exist any more. The list was refreshed.",
+      "deleteNoPermission": "The connection's query account may not delete virtual servers (b_virtualserver_delete)."
     },
     "snapshotCompare": {
       "title": "Snapshot comparison",
