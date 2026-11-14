@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useAddressTarget, revealSearchTarget } from '@/lib/search-target';
+import { channelParents } from '@/lib/search';
 import { useTranslation } from 'react-i18next';
 import { useChannels, useCreateChannel, useDeleteChannel, useEditChannel, useMoveChannel } from '@/hooks/use-channels';
 import { useClients } from '@/hooks/use-clients';
@@ -108,11 +110,14 @@ interface TreeNodeProps {
   setDraggedCid: (cid: number | null) => void;
   selected: Set<number>;
   onToggleSelect: (cid: number) => void;
+  /** Channels to unfold so a target opened from the global search is in view. */
+  openCids: Set<number>;
 }
 
-function ChannelTreeNode({ node, depth = 0, canEdit, clientsByChannel, onDelete, onEdit, onDuplicate, onDrop, draggedCid, setDraggedCid, selected, onToggleSelect }: TreeNodeProps) {
+function ChannelTreeNode({ node, depth = 0, canEdit, clientsByChannel, onDelete, onEdit, onDuplicate, onDrop, draggedCid, setDraggedCid, selected, onToggleSelect, openCids }: TreeNodeProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
+  useEffect(() => { if (openCids.has(node.cid)) setExpanded(true); }, [openCids, node.cid]);
   const [dropOver, setDropOver] = useState(false);
   const hasChildren = node.children.length > 0;
   const clients = clientsByChannel.get(node.cid) || [];
@@ -159,6 +164,7 @@ function ChannelTreeNode({ node, depth = 0, canEdit, clientsByChannel, onDelete,
   return (
     <div>
       <div
+        data-search-target={`channel-${node.cid}`}
         className={cn(
           'flex items-center gap-1 py-1 px-2 rounded-xs hover:bg-muted/30 transition-colors group text-sm',
           canEdit && 'cursor-grab active:cursor-grabbing',
@@ -251,6 +257,7 @@ function ChannelTreeNode({ node, depth = 0, canEdit, clientsByChannel, onDelete,
               setDraggedCid={setDraggedCid}
               selected={selected}
               onToggleSelect={onToggleSelect}
+              openCids={openCids}
             />
           ))}
         </>
@@ -301,6 +308,15 @@ export default function Channels() {
     if (!channelData || !Array.isArray(channelData)) return [];
     return buildTree(channelData);
   }, [channelData]);
+
+  // ?cid= from the global search: unfold the channel's parents, then scroll to it.
+  const [openCids, setOpenCids] = useState<Set<number>>(new Set());
+  useAddressTarget('cid', Array.isArray(channelData), (value) => {
+    const parents = channelParents(channelData as any[], Number(value));
+    if (!parents) return;
+    setOpenCids(parents);
+    revealSearchTarget(`channel-${value}`);
+  });
 
   const clientsByChannel = useMemo(() => {
     const map = new Map<number, ClientInfo[]>();
@@ -462,6 +478,7 @@ export default function Channels() {
                   setDraggedCid={setDraggedCid}
                   selected={selected}
                   onToggleSelect={toggleSelect}
+                  openCids={openCids}
                 />
               ))}
             </div>

@@ -90,12 +90,23 @@
     "search": {
       "open": "Rechercher",
       "title": "Recherche globale",
-      "placeholder": "Rechercher des pages et des paramètres …",
+      "placeholder": "Rechercher des pages, des paramètres et des objets du serveur …",
       "recent": "Ouverts récemment",
       "pages": "Pages",
       "empty": "Aucun résultat",
       "ctrl": "Ctrl",
-      "hint": "↑↓ pour choisir, Entrée pour ouvrir, Échap pour fermer"
+      "hint": "↑↓ pour choisir, Entrée pour ouvrir, Échap pour fermer",
+      "noWebQuery": "Cette connexion n’a pas de WebQuery : les clients, canaux et groupes ne sont pas recherchés.",
+      "types": {
+        "clients": "Clients",
+        "client": "Client",
+        "channels": "Canaux",
+        "channel": "Canal",
+        "serverGroup": "Groupe de serveur",
+        "channelGroup": "Groupe de canal",
+        "flow": "Flux de bot",
+        "musicBot": "Bot musical"
+      }
     },
     "closeMenu": "Fermer la navigation",
     "sections": {

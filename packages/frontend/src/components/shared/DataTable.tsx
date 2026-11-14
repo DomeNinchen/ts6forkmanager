@@ -68,16 +68,19 @@ interface DataTableProps<TData extends RowData> {
   horizontalScroll?: boolean;
   /** Reports every row the table shows across all its pages, in display order (after the text filter and the sort), whenever that changes. */
   onVisibleRowsChange?: (rows: TData[]) => void;
+  /** Text for the search field, e.g. from the address; a new value replaces what is typed there. */
+  searchValue?: string;
 }
 
 export function DataTable<TData extends RowData>({
   columns, data, searchKey, searchPlaceholder, pageSize = 20,
   enableRowSelection = false, getRowId, onSelectionChange,
-  selectionResetKey, rowClassName, onRowClick, horizontalScroll = false, onVisibleRowsChange,
+  selectionResetKey, rowClassName, onRowClick, horizontalScroll = false, onVisibleRowsChange, searchValue,
 }: DataTableProps<TData>) {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState(searchValue ?? '');
+  useEffect(() => { if (searchValue !== undefined) setGlobalFilter(searchValue); }, [searchValue]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const lastResetKey = useRef(selectionResetKey);
   useEffect(() => {

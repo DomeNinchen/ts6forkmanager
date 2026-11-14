@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { normalizeIconId } from '@ts6/common';
 import { IconImage } from '@/components/icons/IconImage';
+import { useAddressTarget, revealSearchTarget } from '@/lib/search-target';
 import { useChannelGroups, useCreateChannelGroup, useDeleteChannelGroup } from '@/hooks/use-groups';
 import { groupsApi } from '@/api/groups.api';
 import { permissionsApi } from '@/api/permissions.api';
@@ -72,6 +73,11 @@ export default function ChannelGroups() {
     setCheckedIds(new Set());
   };
 
+  // ?cgid= from the global search: the groups tab, scrolled to that group.
+  useAddressTarget('cgid', Array.isArray(data), (cgid) => {
+    setTab('groups');
+    revealSearchTarget(`cgroup-${cgid}`);
+  });
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -306,7 +312,7 @@ export default function ChannelGroups() {
             <ScrollArea className="h-[500px]">
               <div className="space-y-1">
                 {groups.map((g: any) => (
-                  <div key={g.cgid} className="flex items-center justify-between rounded-md px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                  <div key={g.cgid} data-search-target={`cgroup-${g.cgid}`} className="flex items-center justify-between rounded-md px-3 py-2.5 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-2">
                       <Checkbox
                         checked={checkedIds.has(g.cgid)}
