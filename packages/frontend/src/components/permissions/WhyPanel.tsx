@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Search, Check, X, Ban, ArrowRight, Info, Layers, Lightbulb, Plus, Trash2, FlaskConical, Clock } from 'lucide-react';
@@ -24,7 +24,11 @@ import { cn } from '@/lib/utils';
 type PermLayer = 'server-group' | 'channel-group' | 'channel' | 'client' | 'channel-client';
 export interface SourceInfo { tierLabel: string; name: string; hit: { layer: PermLayer; key: string } }
 
+/** Planned changes handed over from the editor ("Why? with these changes"); a new `seq` replaces the list. */
+export interface WhyPrefill { seq: number; changes: WhatIfChange[]; actor?: string; target?: string }
+
 interface Props {
+  prefill?: WhyPrefill;
   configId: number;
   sid: number;
   clients: { id: string; name: string; online: boolean }[];
@@ -226,7 +230,7 @@ function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, 
   );
 }
 
-export function WhyPanel({ configId, sid, clients, clientsLoading, channels, serverGroups, permissions, describeSource, permDesc, onJump, onShowOverview }: Props) {
+export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, channels, serverGroups, permissions, describeSource, permDesc, onJump, onShowOverview }: Props) {
   const { t, i18n } = useTranslation();
   const [changes, setChanges] = useState<WhatIfChange[]>([]);
   const [actor, setActor] = useState('');
@@ -258,6 +262,15 @@ export function WhyPanel({ configId, sid, clients, clientsLoading, channels, ser
     },
   });
   const updateChanges = (next: WhatIfChange[]) => { setChanges(next); explain.reset(); };
+  const [fromEditor, setFromEditor] = useState(false);
+  useEffect(() => {
+    if (!prefill) return;
+    setChanges(prefill.changes);
+    if (prefill.actor) { setActor(prefill.actor); setTarget((t0) => (t0 === prefill.actor ? '' : t0)); }
+    if (prefill.target) { setTarget(prefill.target); setActor((a0) => (a0 === prefill.target ? '' : a0)); }
+    setFromEditor(true);
+    explain.reset();
+  }, [prefill?.seq]); // only a new hand-over (seq) applies it, not every re-render
 
   const nameOf = (cldbid: number | string) => clients.find((c) => c.id === String(cldbid))?.name ?? t('pages.permissions.clientFallback', { id: cldbid });
   const channelName = (cid: number | string | null) => channels.find((ch) => ch.cid === String(cid))?.name ?? t('pages.permissions.channelFallback', { id: cid });
@@ -370,6 +383,11 @@ export function WhyPanel({ configId, sid, clients, clientsLoading, channels, ser
             </div>
             <ClientField id="why-target" label={t('pages.permissions.why.target')} clients={clients} loading={clientsLoading} value={target} onChange={setTarget} />
           </div>
+          {fromEditor && changes.length > 0 && (
+            <p className="flex items-center gap-2 text-[11px] text-muted-foreground" role="note">
+              <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />{t('pages.permissions.why.whatif.fromEditor.note')}
+            </p>
+          )}
           <WhatIfEditor changes={changes} onChange={updateChanges} serverGroups={serverGroups} permissions={permissions}
             describe={describeChange} tempUntil={tempUntil} />
         </CardContent>

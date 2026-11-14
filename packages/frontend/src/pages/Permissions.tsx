@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import { normalizeIconId, OVERVIEW_TIER_RANK, resolvePermissionOverview } from '@ts6/common';
+import { normalizeIconId, OVERVIEW_TIER_RANK, resolvePermissionOverview, WHATIF_MAX_CHANGES, type WhatIfChange, type WhatIfWho } from '@ts6/common';
 import { permissionsApi } from '@/api/permissions.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { AutomaticGroupsPanel } from '@/components/permissions/AutomaticGroupsPanel';
-import { WhyPanel, type SourceInfo } from '@/components/permissions/WhyPanel';
+import { WhyPanel, type SourceInfo, type WhyPrefill } from '@/components/permissions/WhyPanel';
 import type { ExplainRow } from '@/api/permissions.api';
 import { IconImage } from '@/components/icons/IconImage';
 import { IconPickerDialog } from '@/components/icons/IconPickerDialog';
@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 import {
   Lock, Search, ChevronRight, ChevronDown, Shield, Users, Hash, User, UserCog, Save,
   X, Check, Minus, Plus, Columns3, Upload, FileText, Layers, ListChecks, FileInput, AlertTriangle,
-  Image as ImageIcon, HelpCircle,
+  Image as ImageIcon, HelpCircle, FlaskConical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -230,6 +230,7 @@ export default function Permissions() {
   // Automatic Groups is the odd one out: it edits server group *templates*
   // instance-wide, not one entity's permissions, and is admin-only.
   const [mode, setMode] = useState<'edit' | 'find' | 'overview' | 'why' | 'automatic'>('edit');
+  const [whyPrefill, setWhyPrefill] = useState<WhyPrefill | undefined>();
   const findMode = mode === 'find';
   const overviewMode = mode === 'overview';
   // "Why?" (R11) needs the same lists as the overview to name clients, groups and channels.
@@ -1108,7 +1109,8 @@ export default function Permissions() {
     if (hit.layer !== layer) {
       jumpRef.current = { layer: hit.layer, key: hit.key, ccName };
       setLayer(hit.layer);
-    } else {
+    } else if (!(selectedIds.size === 1 && selectedIds.has(hit.key))) {
+      // Jumping back to the entity already open keeps its unsaved edits (e.g. after "Why? with these changes")
       setSelectedIds(new Set([hit.key]));
       if (ccName) setCcNames((prev) => new Map(prev).set(hit.key, ccName));
       setChanges(new Map());
@@ -1124,6 +1126,22 @@ export default function Permissions() {
     const key = tier.key === 'channel-group' ? id2 : tier.key === 'channel-client' ? `${id1}:${id2}` : id1;
     return { tierLabel: tier.label, name: overviewSourceName({ tier, id1, id2 }), hit: { layer: tier.key, key } };
   };
+  // R11 stage 4: the unsaved edits of one server group or client go to the Why? tab as planned changes.
+  // Only these two layers: channel groups and channel permissions are not simulated.
+  const whyEditId = !compareMode && !bulkMode && selectedIds.size === 1 && (layer === 'server-group' || layer === 'client')
+    ? [...selectedIds][0] : null;
+  const openWhyWithChanges = (who?: WhatIfWho) => {
+    if (!whyEditId) return;
+    const planned: WhatIfChange[] = [...changes.values()].map((ch) => {
+      const value = ch.action === 'remove' ? null : { permvalue: ch.permvalue, permnegated: !!ch.permnegated, permskip: !!ch.permskip };
+      return layer === 'server-group'
+        ? { kind: 'group-perm', sgid: Number(whyEditId), permsid: ch.permsid, value }
+        : { kind: 'client-perm', who: who ?? 'actor', permsid: ch.permsid, value: value && { permvalue: value.permvalue, permskip: value.permskip } };
+    });
+    setWhyPrefill((prev) => ({ seq: (prev?.seq ?? 0) + 1, changes: planned, ...(who ? { [who]: whyEditId } : {}) }));
+    setMode('why');
+  };
+
   const jumpFromWhy = (hit: SourceInfo['hit'], permsid: string) => {
     if (hit.layer === 'client' || hit.layer === 'channel-client') setShowOffline(true);
     jumpToHit(hit);
@@ -1170,6 +1188,13 @@ export default function Permissions() {
           {activeChangeCount > 0 && (
             <>
               <Badge variant="secondary" className="font-mono-data">{t('pages.permissions.changesCount', { count: activeChangeCount })}</Badge>
+              {whyEditId && (layer === 'server-group' ? ['group'] as const : ['actor', 'target'] as const).map((role) => (
+                <Button key={role} variant="outline" size="sm" disabled={changes.size > WHATIF_MAX_CHANGES}
+                  title={changes.size > WHATIF_MAX_CHANGES ? t('pages.permissions.why.whatif.missing.tooMany', { max: WHATIF_MAX_CHANGES }) : undefined}
+                  onClick={() => openWhyWithChanges(role === 'group' ? undefined : role)}>
+                  <FlaskConical className="h-3.5 w-3.5 mr-1" /> {t(`pages.permissions.why.whatif.fromEditor.${role}`)}
+                </Button>
+              ))}
               <Button variant="outline" size="sm" onClick={() => (compareMode ? setCompareChanges(new Map()) : setChanges(new Map()))}>
                 <X className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.discard')}
               </Button>
@@ -1267,6 +1292,7 @@ export default function Permissions() {
           serverGroups={(Array.isArray(serverGroups) ? serverGroups : []).filter((g: any) => String(g.type) === '1')
             .map((g: any) => ({ sgid: String(g.sgid), name: g.name }))}
           permissions={whyPermNames}
+          prefill={whyPrefill}
           describeSource={describeExplainSource}
           permDesc={(permsid) => allPerms.find((p) => p.permsid === permsid)?.permdesc ?? ''}
           onJump={jumpFromWhy}
