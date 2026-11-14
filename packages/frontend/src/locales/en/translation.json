@@ -87,6 +87,16 @@
     "collapse": "Collapse",
     "menu": "Navigation",
     "openMenu": "Open navigation",
+    "search": {
+      "open": "Search",
+      "title": "Global search",
+      "placeholder": "Search pages and settings …",
+      "recent": "Recently opened",
+      "pages": "Pages",
+      "empty": "No results",
+      "ctrl": "Ctrl",
+      "hint": "↑↓ to select, Enter to open, Esc to close"
+    },
     "closeMenu": "Close navigation",
     "sections": {
       "overview": "Overview",
@@ -191,6 +201,9 @@
     },
     "botList": {
       "selectServerFirst": "Please select a server first",
+      "querySecretHint": "Webhook calls with the secret in the address instead of the X-Webhook-Secret header, last on {{date}}. Details in the editor at the webhook trigger.",
+      "querySecret_other": "{{count}} calls with ?secret=",
+      "querySecret_one": "{{count}} call with ?secret=",
       "created": "Bot created",
       "createFailed": "Failed to create bot",
       "fromTemplate": "From Template",
@@ -221,6 +234,8 @@
       "deleted": "Bot deleted",
       "webhooks": {
         "title": "Webhooks: incoming limits",
+        "allowQuerySecretHint": "The recommended way is the X-Webhook-Secret header. While allowed, every flow counts and shows its calls with ?secret=; switched off, such calls get 404.",
+        "allowQuerySecretLabel": "Allow ?secret= in the address",
         "description": "Limits on incoming webhook calls, checked before the body is read. Valid calls (matching secret) and failed ones (unknown path or wrong secret) are counted apart per address. Applies to the whole instance.",
         "bodyLimitKbLabel": "Largest body (KB)",
         "bodyLimitKbHint": "{{min}} to {{max}} KB; larger calls get 413. A proxy in front may have its own, smaller limit.",
@@ -233,6 +248,8 @@
       },
       "retention": {
         "title": "Executions: retention and limit",
+        "maxRuntimeHint": "0 to {{max}}; 0 = no limit. Counted from its start, also across a restart. An execution running longer ends as failed before its next node or when a Delay ends; a WebQuery command or HTTP call already under way still finishes.",
+        "maxRuntimeLabel": "Longest runtime of one execution (minutes)",
         "description": "How long the execution history of every bot flow (runs and their log lines) is kept. Applies to the whole instance; anything older is removed hourly.",
         "retentionLabel": "Retention (days)",
         "retentionHint": "Between {{min}} and {{max}} days.",
@@ -3624,10 +3641,13 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Webhook Path",
+          "querySecretWarning_other": "This flow was called {{count}} times with ?secret= in the address, last on {{date}}. Switch the callers to the X-Webhook-Secret header: addresses end up in access logs.",
+          "querySecretWarning_one": "This flow was called {{count}} time with ?secret= in the address, last on {{date}}. Switch the caller to the X-Webhook-Secret header: addresses end up in access logs.",
+          "exampleLabel": "Example call",
           "httpMethodLabel": "HTTP Method",
-          "secretLabel": "Secret (optional)",
-          "secretPlaceholder": "Leave empty for no auth",
-          "secretHint": "Validated via X-Webhook-Secret header or ?secret= query param"
+          "secretLabel": "Secret",
+          "secretPlaceholder": "Required: without a secret the webhook never fires",
+          "secretHint": "The caller sends the secret in the X-Webhook-Secret header."
         },
         "triggerCommand": {
           "listenChannelIdLabel": "Listen Channel ID (optional)",

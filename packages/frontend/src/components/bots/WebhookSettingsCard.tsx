@@ -3,14 +3,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Webhook } from 'lucide-react';
-import { settingsApi, type WebhookSettings } from '@/api/settings.api';
+import { settingsApi, type WebhookLimit, type WebhookSettings } from '@/api/settings.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
-const FIELDS: Array<keyof WebhookSettings> = ['bodyLimitKb', 'validPerMinute', 'failedPerMinute'];
+const FIELDS: WebhookLimit[] = ['bodyLimitKb', 'validPerMinute', 'failedPerMinute'];
 
 /** Limits on incoming webhook calls (body size, calls per address and minute). Admin-only, instance-wide. */
 export function WebhookSettingsCard() {
@@ -33,9 +34,10 @@ export function WebhookSettingsCard() {
 
   const active: WebhookSettings = draft ?? {
     bodyLimitKb: data.bodyLimitKb, validPerMinute: data.validPerMinute, failedPerMinute: data.failedPerMinute,
+    allowQuerySecret: data.allowQuerySecret,
   };
   const valid = FIELDS.every((f) => Number.isInteger(active[f]) && active[f] >= data.bounds[f].min && active[f] <= data.bounds[f].max);
-  const matchesDefaults = FIELDS.every((f) => active[f] === data.defaults[f]);
+  const matchesDefaults = FIELDS.every((f) => active[f] === data.defaults[f]) && active.allowQuerySecret === data.defaults.allowQuerySecret;
 
   return (
     <Card className="card-hero">
@@ -64,6 +66,18 @@ export function WebhookSettingsCard() {
               </p>
             </div>
           ))}
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <Label htmlFor="webhook-allowQuerySecret" className="text-xs">{t('pages.botList.webhooks.allowQuerySecretLabel')}</Label>
+            <Switch
+              id="webhook-allowQuerySecret"
+              checked={active.allowQuerySecret}
+              onCheckedChange={(allowQuerySecret) => setDraft({ ...active, allowQuerySecret })}
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground">{t('pages.botList.webhooks.allowQuerySecretHint')}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

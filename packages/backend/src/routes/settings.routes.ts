@@ -41,11 +41,12 @@ import {
   getBotLogSettings, setBotLogSettings, isValidBotLogRetention, isValidBotLogMaxRows, isValidBotFlowMaxConcurrent,
   BOT_LOG_RETENTION_MIN_DAYS, BOT_LOG_RETENTION_MAX_DAYS, BOT_LOG_MAX_ROWS_MIN, BOT_LOG_MAX_ROWS_MAX, BOT_LOG_DEFAULTS,
   BOT_FLOW_MAX_CONCURRENT_MIN, BOT_FLOW_MAX_CONCURRENT_MAX,
+  BOT_FLOW_MAX_RUNTIME_MIN, BOT_FLOW_MAX_RUNTIME_MAX, isValidBotFlowMaxRuntime,
   type BotLogSettings,
 } from '../utils/bot-log-settings.js';
 import { pruneBotLogs, botLogStats } from '../utils/bot-log-retention.js';
 import {
-  webhookSettings, saveWebhookSettings, isValidWebhookSetting, WEBHOOK_DEFAULTS, WEBHOOK_BOUNDS, type WebhookSettings,
+  webhookSettings, saveWebhookSettings, isValidWebhookSetting, WEBHOOK_DEFAULTS, WEBHOOK_BOUNDS, WEBHOOK_LIMITS, type WebhookSettings,
 } from '../utils/webhook-settings.js';
 import { STREAM_PRESETS } from '../voice/streaming/types.js';
 import { forceCookieCheck } from '../utils/yt-cookie-check.js';
@@ -655,6 +656,8 @@ const botLogSettingsResponse = async (prisma: any, settings: BotLogSettings) => 
     maxRowsMax: BOT_LOG_MAX_ROWS_MAX,
     maxConcurrentMin: BOT_FLOW_MAX_CONCURRENT_MIN,
     maxConcurrentMax: BOT_FLOW_MAX_CONCURRENT_MAX,
+    maxRuntimeMin: BOT_FLOW_MAX_RUNTIME_MIN,
+    maxRuntimeMax: BOT_FLOW_MAX_RUNTIME_MAX,
   },
   ...(await botLogStats(prisma)),
 });
@@ -671,6 +674,12 @@ settingsRoutes.get('/bot-logs', requireAdmin, async (req: Request, res: Response
 settingsRoutes.put('/bot-logs', requireAdmin, async (req: Request, res: Response, next) => {
   try {
     const { retentionDays, maxRows, maxConcurrentPerFlow } = req.body ?? {};
+    const prisma = req.app.locals.prisma;
+    // Optional, so a caller that only knows the older three values keeps the current limit.
+    const maxRuntimeMinutes = req.body?.maxRuntimeMinutes ?? (await getBotLogSettings(prisma)).maxRuntimeMinutes;
+    if (!isValidBotFlowMaxRuntime(maxRuntimeMinutes)) {
+      throw new AppError(400, `maxRuntimeMinutes must be a whole number between ${BOT_FLOW_MAX_RUNTIME_MIN} and ${BOT_FLOW_MAX_RUNTIME_MAX} (0 = no limit)`);
+    }
     if (!isValidBotLogRetention(retentionDays)) {
       throw new AppError(400, `retentionDays must be a whole number between ${BOT_LOG_RETENTION_MIN_DAYS} and ${BOT_LOG_RETENTION_MAX_DAYS}`);
     }
@@ -680,11 +689,11 @@ settingsRoutes.put('/bot-logs', requireAdmin, async (req: Request, res: Response
     if (!isValidBotFlowMaxConcurrent(maxConcurrentPerFlow)) {
       throw new AppError(400, `maxConcurrentPerFlow must be a whole number between ${BOT_FLOW_MAX_CONCURRENT_MIN} and ${BOT_FLOW_MAX_CONCURRENT_MAX}`);
     }
-    const prisma = req.app.locals.prisma;
-    const saved = await setBotLogSettings(prisma, { retentionDays, maxRows, maxConcurrentPerFlow });
+    const saved = await setBotLogSettings(prisma, { retentionDays, maxRows, maxConcurrentPerFlow, maxRuntimeMinutes });
     req.app.locals.botEngine?.setMaxConcurrentPerFlow(saved.maxConcurrentPerFlow);
+    req.app.locals.botEngine?.setMaxRuntimeMinutes(saved.maxRuntimeMinutes);
     await pruneBotLogs(prisma);
-    console.log(`[Settings] Bot logs kept ${saved.retentionDays} day(s), capped at ${saved.maxRows} rows per table; ${saved.maxConcurrentPerFlow} concurrent executions per flow`);
+    console.log(`[Settings] Bot logs kept ${saved.retentionDays} day(s), capped at ${saved.maxRows} rows per table; ${saved.maxConcurrentPerFlow} concurrent executions per flow, each at most ${saved.maxRuntimeMinutes || 'unlimited'} min`);
     res.json(await botLogSettingsResponse(prisma, saved));
   } catch (err) { next(err); }
 });
@@ -700,8 +709,9 @@ settingsRoutes.get('/webhooks', requireAdmin, (_req: Request, res: Response) => 
 settingsRoutes.put('/webhooks', requireAdmin, async (req: Request, res: Response, next) => {
   try {
     const body = req.body ?? {};
-    const values = {} as WebhookSettings;
-    for (const name of Object.keys(WEBHOOK_DEFAULTS) as Array<keyof WebhookSettings>) {
+    if (typeof body.allowQuerySecret !== 'boolean') throw new AppError(400, 'allowQuerySecret must be true or false');
+    const values: WebhookSettings = { ...WEBHOOK_DEFAULTS, allowQuerySecret: body.allowQuerySecret };
+    for (const name of WEBHOOK_LIMITS) {
       if (!isValidWebhookSetting(name, body[name])) {
         const { min, max } = WEBHOOK_BOUNDS[name];
         throw new AppError(400, `${name} must be a whole number between ${min} and ${max}`);
@@ -709,7 +719,7 @@ settingsRoutes.put('/webhooks', requireAdmin, async (req: Request, res: Response
       values[name] = body[name];
     }
     const saved = await saveWebhookSettings(req.app.locals.prisma, values);
-    console.log(`[Settings] Webhooks: body up to ${saved.bodyLimitKb} KB, ${saved.validPerMinute} valid / ${saved.failedPerMinute} failed calls per address and minute`);
+    console.log(`[Settings] Webhooks: body up to ${saved.bodyLimitKb} KB, ${saved.validPerMinute} valid / ${saved.failedPerMinute} failed calls per address and minute, ?secret= ${saved.allowQuerySecret ? 'accepted' : 'refused'}`);
     res.json(webhookSettingsResponse(saved));
   } catch (err) { next(err); }
 });

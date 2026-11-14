@@ -87,6 +87,16 @@
     "collapse": "Einklappen",
     "menu": "Navigation",
     "openMenu": "Navigation öffnen",
+    "search": {
+      "open": "Suchen",
+      "title": "Globale Suche",
+      "placeholder": "Seiten und Einstellungen suchen …",
+      "recent": "Zuletzt geöffnet",
+      "pages": "Seiten",
+      "empty": "Keine Treffer",
+      "ctrl": "Strg",
+      "hint": "↑↓ auswählen, Enter öffnen, Esc schließen"
+    },
     "closeMenu": "Navigation schließen",
     "sections": {
       "overview": "Übersicht",
@@ -191,6 +201,9 @@
     },
     "botList": {
       "selectServerFirst": "Bitte zuerst einen Server auswählen",
+      "querySecretHint": "Webhook-Aufrufe mit dem Secret in der Adresse statt im Header X-Webhook-Secret, zuletzt {{date}}. Details im Editor am Webhook-Auslöser.",
+      "querySecret_other": "{{count}} Aufrufe mit ?secret=",
+      "querySecret_one": "{{count}} Aufruf mit ?secret=",
       "created": "Bot erstellt",
       "createFailed": "Bot konnte nicht erstellt werden",
       "fromTemplate": "Aus Vorlage",
@@ -221,6 +234,8 @@
       "deleted": "Bot gelöscht",
       "webhooks": {
         "title": "Webhooks: Eingangsgrenzen",
+        "allowQuerySecretHint": "Der empfohlene Weg ist der Header X-Webhook-Secret. Solange erlaubt, zählt jeder Flow seine Aufrufe mit ?secret= und zeigt sie an; ausgeschaltet antworten solche Aufrufe mit 404.",
+        "allowQuerySecretLabel": "?secret= in der Adresse erlauben",
         "description": "Grenzen für eingehende Webhook-Aufrufe, geprüft bevor der Inhalt gelesen wird. Gültige Aufrufe (passendes Secret) und Fehlversuche (unbekannter Pfad oder falsches Secret) werden je Adresse getrennt gezählt. Gilt für die ganze Instanz.",
         "bodyLimitKbLabel": "Größter Inhalt (KB)",
         "bodyLimitKbHint": "{{min}} bis {{max}} KB; größere Aufrufe erhalten 413. Ein Proxy davor kann eine eigene, kleinere Grenze haben.",
@@ -233,6 +248,8 @@
       },
       "retention": {
         "title": "Ausführungen: Aufbewahrung und Limit",
+        "maxRuntimeHint": "0 bis {{max}}; 0 = ohne Grenze. Gezählt ab dem Start, auch über einen Neustart hinweg. Länger laufende Ausführungen enden vor dem nächsten Knoten oder am Ende einer Verzögerung als fehlgeschlagen; ein WebQuery-Befehl oder HTTP-Aufruf, der gerade läuft, wird noch beendet.",
+        "maxRuntimeLabel": "Höchstdauer einer Ausführung (Minuten)",
         "description": "Wie lange der Ausführungsverlauf aller Bot-Flows (Ausführungen und ihre Logzeilen) aufbewahrt wird. Gilt für die ganze Instanz; Älteres wird stündlich entfernt.",
         "retentionLabel": "Aufbewahrung (Tage)",
         "retentionHint": "Zwischen {{min}} und {{max}} Tagen.",
@@ -3624,10 +3641,13 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Webhook-Pfad",
+          "querySecretWarning_other": "Dieser Flow wurde {{count}}-mal mit ?secret= in der Adresse aufgerufen, zuletzt {{date}}. Stelle die Aufrufer auf den Header X-Webhook-Secret um: Adressen landen in Zugriffsprotokollen.",
+          "querySecretWarning_one": "Dieser Flow wurde {{count}}-mal mit ?secret= in der Adresse aufgerufen, zuletzt {{date}}. Stelle den Aufrufer auf den Header X-Webhook-Secret um: Adressen landen in Zugriffsprotokollen.",
+          "exampleLabel": "Beispielaufruf",
           "httpMethodLabel": "HTTP-Methode",
-          "secretLabel": "Secret (optional)",
-          "secretPlaceholder": "Leer lassen für keine Authentifizierung",
-          "secretHint": "Wird über den X-Webhook-Secret-Header oder den ?secret=-Query-Parameter geprüft"
+          "secretLabel": "Secret",
+          "secretPlaceholder": "Pflicht: ohne Secret löst der Webhook nie aus",
+          "secretHint": "Der Aufrufer sendet das Secret im Header X-Webhook-Secret."
         },
         "triggerCommand": {
           "listenChannelIdLabel": "Channel-ID zum Abhören (optional)",

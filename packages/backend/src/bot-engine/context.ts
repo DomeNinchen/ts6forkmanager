@@ -69,6 +69,8 @@ export class ExecutionContext {
   releaseChannelLock?: () => void;
   /** Nodes visited so far, against FlowRunner's MAX_NODE_VISITS; carried over a restart. */
   nodeVisits = 0;
+  /** When the execution started (its row's startedAt, also after a restart), against FlowRunner.maxRuntimeMs. */
+  startedAt = Date.now();
 
   constructor(
     private prisma: PrismaClient,

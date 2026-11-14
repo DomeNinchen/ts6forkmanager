@@ -268,6 +268,8 @@ export interface BotLogSettings {
   maxRows: number;
   /** Executions of one flow that may run at once; further triggers are dropped. */
   maxConcurrentPerFlow: number;
+  /** Longest total runtime of one execution in minutes; 0 = no limit. */
+  maxRuntimeMinutes: number;
 }
 
 /** Limits on incoming webhook calls, checked before the body is read. */
@@ -277,11 +279,15 @@ export interface WebhookSettings {
   validPerMinute: number;
   /** Calls to an unknown path or with a wrong secret per address and minute. */
   failedPerMinute: number;
+  /** Whether a secret sent as ?secret= in the address is still accepted. */
+  allowQuerySecret: boolean;
 }
+
+export type WebhookLimit = 'bodyLimitKb' | 'validPerMinute' | 'failedPerMinute';
 
 export interface WebhookSettingsResponse extends WebhookSettings {
   defaults: WebhookSettings;
-  bounds: Record<keyof WebhookSettings, { min: number; max: number }>;
+  bounds: Record<WebhookLimit, { min: number; max: number }>;
 }
 
 export interface BotLogSettingsResponse extends BotLogSettings {
@@ -289,6 +295,7 @@ export interface BotLogSettingsResponse extends BotLogSettings {
   bounds: {
     retentionMin: number; retentionMax: number; maxRowsMin: number; maxRowsMax: number;
     maxConcurrentMin: number; maxConcurrentMax: number;
+    maxRuntimeMin: number; maxRuntimeMax: number;
   };
   /** Current row counts, for the panel. */
   executionCount: number;

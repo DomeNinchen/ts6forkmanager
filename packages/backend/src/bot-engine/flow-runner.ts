@@ -41,7 +41,12 @@ const MAX_RESUME_LATE_MS = MAX_DELAY_MS;
 const MAX_LOOP_ITERATIONS_DEFAULT = 50;
 const MAX_LOOP_ITERATIONS_HARD_CAP = 500; // absolute ceiling regardless of node config
 
-export const FLOW_OFF_WHILE_WAITING = 'Cancelled: the flow was switched off while this execution waited';
+/** Whether an execution started at startedAt has run longer than limitMs by now; a limit of 0 is no limit. */
+export function runtimeExceeded(startedAt: number, now: number, limitMs: number): boolean {
+  return limitMs > 0 && now - startedAt > limitMs;
+}
+
+export const FLOW_OFF_WHILE_WAITING ='Cancelled: the flow was switched off while this execution waited';
 
 /** The two WebQuery calls the flow actions make - what they get instead of a client, see FlowRunner.execute. */
 type FlowQueryClient = Pick<WebQueryClient, 'execute' | 'executePost'>;
@@ -65,6 +70,7 @@ export interface WaitingExecution {
   resumeNodeId: string | null;
   resumeAt: Date | null;
   state: string | null;
+  startedAt: Date;
 }
 
 /** Ends an execution whose row already has its final status (cancelled, interrupted). */
@@ -121,6 +127,8 @@ export class FlowRunner {
   private working = 0;
   /** Set at shutdown: no execution starts another node. */
   private stopping = false;
+  /** Longest total runtime of one execution, checked before every node and when a Delay ends; 0 = no limit. */
+  maxRuntimeMs = 0;
 
   constructor(
     private prisma: PrismaClient,
@@ -180,6 +188,7 @@ export class FlowRunner {
       const ctx = new ExecutionContext(this.prisma, flow.id, row.id, flow.serverConfigId, flow.virtualServerId,
         row.triggeredBy, JSON.parse(row.triggerData || '{}'), state.timezone);
       ctx.restoreState(state);
+      ctx.startedAt = row.startedAt.getTime();
       await this.log(ctx, null, 'info', `Resuming after a backend restart: the Delay ${late > 0 ? `ended ${Math.round(late / 1000)} s ago` : `ends in ${Math.round(-late / 1000)} s`}`);
       await this.drive(flow, ctx, (visit) => this.afterDelay(row.resumeNodeId!, Math.max(0, -late), true, ctx, flow.flowData, true, visit));
     } finally {
@@ -213,6 +222,7 @@ export class FlowRunner {
       eventData,
       timezone,
     );
+    ctx.startedAt = execution.startedAt.getTime();
 
     this.broadcast('bot:execution:start', {
       flowId: flow.id,
@@ -290,6 +300,7 @@ export class FlowRunner {
       if (ctx.nodeVisits > MAX_NODE_VISITS) {
         throw new Error(`Max node visits (${MAX_NODE_VISITS}) exceeded — possible infinite loop`);
       }
+      await this.checkRuntime(ctx);
       await this.processNode(node, flowDef, ctx, client, visitNode, tail);
     };
     return visitNode;
@@ -355,6 +366,7 @@ export class FlowRunner {
     this.working++;
     // A 'waiting' row stays so through the shutdown and goes on after the next start.
     if (this.stopping) throw new Error('The backend is shutting down');
+    await this.checkRuntime(ctx);
 
     const current = this.getFlow(ctx.flowId);
     if (!current) return this.endEarly(ctx, 'cancelled', FLOW_OFF_WHILE_WAITING);
@@ -368,7 +380,15 @@ export class FlowRunner {
     await this.visitEdges(this.getOutgoingEdges(nodeId, def), def, tail, visitNode);
   }
 
-  private async endEarly(ctx: ExecutionContext, status: 'cancelled' | 'interrupted', error: string): Promise<never> {
+  /** Ends the execution as failed once it has run longer than maxRuntimeMs in total (never in a flow test). */
+  private async checkRuntime(ctx: ExecutionContext): Promise<void> {
+    if (ctx.trace || !runtimeExceeded(ctx.startedAt, Date.now(), this.maxRuntimeMs)) return;
+    const error = `Time limit: the execution ran longer than ${this.maxRuntimeMs / 60_000} min in total (limit set under Bot Flows → Executions)`;
+    this.broadcast('bot:execution:failed', { flowId: ctx.flowId, executionId: ctx.executionId, error }, ctx.configId, ctx.sid);
+    await this.endEarly(ctx, 'failed', error);
+  }
+
+  private async endEarly(ctx: ExecutionContext, status: 'cancelled' | 'interrupted' | 'failed', error: string): Promise<never> {
     // A deleted flow took the row with it; then nothing is left to update.
     await this.prisma.botExecution.updateMany({
       where: { id: ctx.executionId, status: { in: ['running', 'waiting'] } },

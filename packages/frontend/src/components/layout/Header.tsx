@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { ServerSelector } from './ServerSelector';
+import { GlobalSearchButton } from './GlobalSearch';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLogout } from '@/hooks/use-auth';
 import { roleLabel } from '@/lib/roles';
@@ -34,6 +35,8 @@ export function Header() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        {/* Below md the drawer carries the search; here it would crowd the server picker. */}
+        <GlobalSearchButton className="max-md:hidden" />
         <ThemeToggle />
 
         <DropdownMenu>

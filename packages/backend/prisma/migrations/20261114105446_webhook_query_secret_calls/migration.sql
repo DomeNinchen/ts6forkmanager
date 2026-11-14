@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "BotFlow" ADD COLUMN "querySecretCalls" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "BotFlow" ADD COLUMN "querySecretLastAt" DATETIME;

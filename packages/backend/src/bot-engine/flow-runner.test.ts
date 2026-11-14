@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FlowRunner, markExecutionsInterrupted, FLOW_OFF_WHILE_WAITING } from './flow-runner.js';
+import { FlowRunner, markExecutionsInterrupted, FLOW_OFF_WHILE_WAITING, runtimeExceeded } from './flow-runner.js';
 import { ExecutionContext } from './context.js';
 import { channelCreateLockCount } from '../utils/channel-create-lock.js';
 
@@ -76,7 +76,8 @@ function fakeDb() {
   const matches = (e: any, where: any) => e.id === where.id && (typeof where.status === 'object' ? where.status.in.includes(e.status) : e.status === where.status);
   const prisma = {
     botExecution: {
-      create: async ({ data }: any) => { executions.push({ id: executions.length + 1, ...data }); return executions[executions.length - 1]; },
+      // startedAt like the column's default.
+      create: async ({ data }: any) => { executions.push({ id: executions.length + 1, startedAt: new Date(), ...data }); return executions[executions.length - 1]; },
       update: async ({ where, data }: any) => Object.assign(executions.find((e) => e.id === where.id), data),
       // Newest log row with a node, like the real select.
       findMany: async ({ where }: any) => executions.filter((e) => e.status === where.status).map((e) => ({
@@ -223,7 +224,7 @@ test('a waiting execution goes on after a restart, with its variables, exactly o
   const flow = flowOf(chain(delayNode(1000), logNode('After', 'code={{temp.code}} x={{event.x}}')));
   loaded.set(1, flow);
   executions.push({
-    id: 1, status: 'waiting', triggeredBy: 'webhook', triggerData: JSON.stringify({ x: '1' }), resumeNodeId: 'n0',
+    id: 1, status: 'waiting', startedAt: new Date(), triggeredBy: 'webhook', triggerData: JSON.stringify({ x: '1' }), resumeNodeId: 'n0',
     resumeAt: new Date(Date.now() + 100), state: JSON.stringify({ temp: [['code', '42']], nodeVisits: 2 }),
   });
 
@@ -238,7 +239,7 @@ test('a waiting execution found too late after a restart is interrupted, its nex
   const { runner, executions, ran, loaded } = rig();
   const flow = flowOf(chain(delayNode(1000), afterNode));
   loaded.set(1, flow);
-  executions.push({ id: 1, status: 'waiting', triggeredBy: 'webhook', triggerData: '{}', resumeNodeId: 'n0',
+  executions.push({ id: 1, status: 'waiting', startedAt: new Date(), triggeredBy: 'webhook', triggerData: '{}', resumeNodeId: 'n0',
     resumeAt: new Date(Date.now() - 10 * 60_000), state: JSON.stringify({ temp: [], nodeVisits: 2 }) });
 
   await runner.resume(flow, executions[0]);
@@ -262,4 +263,47 @@ test('when the Delay ends: a flow switched off cancels, a missing Delay node int
   assert.equal(executions[0].error, FLOW_OFF_WHILE_WAITING);
   assert.match(executions[1].error, /Delay node is gone/);
   assert.deepEqual([ran(1, 'After'), ran(2, 'After'), ran(3, 'After'), ran(3, 'Edited')], [0, 0, 0, 1]);
+});
+test('runtime limit: only beyond the limit, never with 0', () => {
+  assert.equal(runtimeExceeded(1000, 1000 + 5000, 5000), false, 'exactly at the limit');
+  assert.equal(runtimeExceeded(1000, 1000 + 4999, 5000), false, 'before');
+  assert.equal(runtimeExceeded(1000, 1000 + 5001, 5000), true, 'after');
+  assert.equal(runtimeExceeded(1000, 1000 + 10 ** 9, 0), false, '0 = no limit');
+});
+
+test('an execution past its total runtime ends as failed when a Delay ends, the next node never runs; a shorter one runs through', async () => {
+  const { runner, executions, start, ran } = rig();
+  runner.maxRuntimeMs = 250;
+  // 3 x 150 ms: past 250 ms when the second Delay ends.
+  start(chain(delayNode(150), logNode('Mid'), delayNode(150), afterNode, delayNode(150), logNode('Last')));
+  // Negative control: 2 x 50 ms stays well below it.
+  start(chain(delayNode(50), logNode('Mid'), delayNode(50), afterNode));
+  await sleep(700);
+  assert.equal(executions[0].status, 'failed');
+  assert.match(executions[0].error, /^Time limit: the execution ran longer than/);
+  assert.ok(executions[0].endedAt instanceof Date);
+  assert.deepEqual([ran(1, 'Mid'), ran(1, 'After'), ran(1, 'Last')], [1, 0, 0]);
+  assert.equal(executions[1].status, 'completed');
+  assert.equal(ran(2, 'After'), 1);
+});
+
+test('after a restart the runtime counts from the original start, not from the restart', async () => {
+  const { runner, executions, ran, loaded } = rig();
+  runner.maxRuntimeMs = 5_000;
+  const flow = flowOf(chain(delayNode(1000), afterNode));
+  loaded.set(1, flow);
+  const waitingRow = (id: number, startedAgoMs: number) => ({
+    id, status: 'waiting', startedAt: new Date(Date.now() - startedAgoMs), triggeredBy: 'webhook', triggerData: '{}',
+    resumeNodeId: 'n0', resumeAt: new Date(Date.now() + 100), state: JSON.stringify({ temp: [], nodeVisits: 2 }),
+  });
+  // Started 6 s ago: over the limit once its Delay ends after the restart.
+  executions.push(waitingRow(1, 6_000), waitingRow(2, 1_000));
+  await runner.resume(flow, executions[0]);
+  await runner.resume(flow, executions[1]);
+  assert.equal(executions[0].status, 'failed');
+  assert.match(executions[0].error, /^Time limit/);
+  assert.equal(ran(1, 'After'), 0);
+  // Started 1 s ago: runs on.
+  assert.equal(executions[1].status, 'completed');
+  assert.equal(ran(2, 'After'), 1);
 });

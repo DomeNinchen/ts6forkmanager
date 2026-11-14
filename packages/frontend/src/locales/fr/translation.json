@@ -87,6 +87,16 @@
     "collapse": "Réduire",
     "menu": "Navigation",
     "openMenu": "Ouvrir la navigation",
+    "search": {
+      "open": "Rechercher",
+      "title": "Recherche globale",
+      "placeholder": "Rechercher des pages et des paramètres …",
+      "recent": "Ouverts récemment",
+      "pages": "Pages",
+      "empty": "Aucun résultat",
+      "ctrl": "Ctrl",
+      "hint": "↑↓ pour choisir, Entrée pour ouvrir, Échap pour fermer"
+    },
     "closeMenu": "Fermer la navigation",
     "sections": {
       "overview": "Vue d'ensemble",
@@ -442,6 +452,9 @@
     },
     "botList": {
       "selectServerFirst": "Veuillez d'abord sélectionner un serveur",
+      "querySecretHint": "Appels webhook avec le secret dans l’adresse au lieu de l’en-tête X-Webhook-Secret, dernier le {{date}}. Détails dans l’éditeur, au déclencheur webhook.",
+      "querySecret_other": "{{count}} appels avec ?secret=",
+      "querySecret_one": "{{count}} appel avec ?secret=",
       "created": "Bot créé",
       "createFailed": "Échec de la création du bot",
       "fromTemplate": "Depuis un modèle",
@@ -472,6 +485,8 @@
       "deleted": "Bot supprimé",
       "webhooks": {
         "title": "Webhooks : limites d’entrée",
+        "allowQuerySecretHint": "La méthode recommandée est l’en-tête X-Webhook-Secret. Tant que c’est autorisé, chaque flux compte et affiche ses appels avec ?secret= ; désactivé, ces appels reçoivent 404.",
+        "allowQuerySecretLabel": "Autoriser ?secret= dans l’adresse",
         "description": "Limites des appels webhook entrants, vérifiées avant la lecture du contenu. Les appels valides (secret correct) et les échecs (chemin inconnu ou secret erroné) sont comptés séparément par adresse. S’applique à toute l’instance.",
         "bodyLimitKbLabel": "Contenu maximal (Ko)",
         "bodyLimitKbHint": "{{min}} à {{max}} Ko ; au-delà, réponse 413. Un proxy en amont peut avoir sa propre limite, plus petite.",
@@ -484,6 +499,8 @@
       },
       "retention": {
         "title": "Exécutions : conservation et limite",
+        "maxRuntimeHint": "0 à {{max}} ; 0 = sans limite. Comptée depuis son début, même après un redémarrage. Une exécution plus longue se termine en échec avant son nœud suivant ou à la fin d’un délai ; une commande WebQuery ou un appel HTTP déjà en cours se termine quand même.",
+        "maxRuntimeLabel": "Durée maximale d’une exécution (minutes)",
         "description": "Durée de conservation de l'historique d'exécution de tous les flux de bots (exécutions et leurs lignes de journal). S'applique à toute l'instance ; tout ce qui est plus ancien est supprimé chaque heure.",
         "retentionLabel": "Conservation (jours)",
         "retentionHint": "Entre {{min}} et {{max}} jours.",
@@ -2523,10 +2540,13 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Chemin du webhook",
+          "querySecretWarning_other": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez les appelants à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès.",
+          "querySecretWarning_one": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez l’appelant à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès.",
+          "exampleLabel": "Exemple d’appel",
           "httpMethodLabel": "Méthode HTTP",
-          "secretLabel": "Secret (facultatif)",
-          "secretPlaceholder": "Laissez vide pour aucune auth",
-          "secretHint": "Validé via l’en-tête X-Webhook-Secret ou le paramètre de requête ?secret="
+          "secretLabel": "Secret",
+          "secretPlaceholder": "Obligatoire : sans secret, le webhook ne se déclenche jamais",
+          "secretHint": "L’appelant envoie le secret dans l’en-tête X-Webhook-Secret."
         },
         "triggerCommand": {
           "listenChannelIdLabel": "ID du salon d’écoute (facultatif)",
