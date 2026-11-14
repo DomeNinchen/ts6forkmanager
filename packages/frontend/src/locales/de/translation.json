@@ -90,12 +90,23 @@
     "search": {
       "open": "Suchen",
       "title": "Globale Suche",
-      "placeholder": "Seiten und Einstellungen suchen …",
+      "placeholder": "Seiten, Einstellungen und Serverobjekte suchen …",
       "recent": "Zuletzt geöffnet",
       "pages": "Seiten",
       "empty": "Keine Treffer",
       "ctrl": "Strg",
-      "hint": "↑↓ auswählen, Enter öffnen, Esc schließen"
+      "hint": "↑↓ auswählen, Enter öffnen, Esc schließen",
+      "noWebQuery": "Diese Verbindung hat keine WebQuery: Clients, Channels und Gruppen fehlen in der Suche.",
+      "types": {
+        "clients": "Clients",
+        "client": "Client",
+        "channels": "Channels",
+        "channel": "Channel",
+        "serverGroup": "Servergruppe",
+        "channelGroup": "Channel-Gruppe",
+        "flow": "Bot-Flow",
+        "musicBot": "Musik-Bot"
+      }
     },
     "closeMenu": "Navigation schließen",
     "sections": {

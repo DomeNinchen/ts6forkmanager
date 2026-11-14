@@ -45,6 +45,18 @@ export function searchEntries<T extends SearchEntry>(entries: T[], query: string
   return scored.slice(0, limit).map((s) => s.entry);
 }
 
+/**
+ * Every channel above `cid` (parent, its parent, ...), or null when `cid` is not in the list.
+ * Stops at the top (pid 0), at a parent missing from the list, and on a loop in broken data.
+ */
+export function channelParents(channels: { cid: unknown; pid: unknown }[], cid: number): Set<number> | null {
+  const parentOf = new Map(channels.map((ch) => [Number(ch.cid), Number(ch.pid)]));
+  if (!parentOf.has(cid)) return null;
+  const parents = new Set<number>();
+  for (let p = parentOf.get(cid) ?? 0; p > 0 && !parents.has(p); p = parentOf.get(p) ?? 0) parents.add(p);
+  return parents;
+}
+
 /** The recent list after opening `id`: it moves to the front, duplicates go, at most `max` stay. */
 export function pushRecent(recent: string[], id: string, max = 5): string[] {
   return [id, ...recent.filter((r) => r !== id)].slice(0, max);

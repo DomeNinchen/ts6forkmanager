@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizeIconId } from '@ts6/common';
 import { IconImage } from '@/components/icons/IconImage';
+import { useAddressTarget, revealSearchTarget } from '@/lib/search-target';
 import {
   useServerGroups, useServerGroupMembers, useCreateServerGroup, useDeleteServerGroup,
   useAddServerGroupMember, useRemoveServerGroupMember, useTemporaryGroups,
@@ -84,6 +85,14 @@ export default function ServerGroups() {
   useEffect(() => {
     if (tempEntries) queryClient.invalidateQueries({ queryKey: ['server-group-members', selectedConfigId, selectedSid] });
   }, [tempEntries, queryClient, selectedConfigId, selectedSid]);
+  // ?sgid= from the global search selects that group, as a click on it would.
+  useAddressTarget('sgid', Array.isArray(data), (sgid) => {
+    const group = (data as any[]).find((g) => String(g.sgid) === sgid);
+    if (!group) return;
+    setTab('groups');
+    setSelectedGroup(group.sgid);
+    revealSearchTarget(`sgroup-${group.sgid}`);
+  });
   const tempByMember = useMemo(
     () => new Map((tempEntries ?? []).map((e) => [`${e.sgid}:${e.cldbid}`, e])),
     [tempEntries],
@@ -300,6 +309,7 @@ export default function ServerGroups() {
                 {groups.map((g: any) => (
                   <div
                     key={g.sgid}
+                    data-search-target={`sgroup-${g.sgid}`}
                     onClick={() => setSelectedGroup(g.sgid)}
                     className={cn(
                       'flex items-center justify-between w-full rounded-md px-3 py-2 text-sm transition-colors text-left cursor-pointer',

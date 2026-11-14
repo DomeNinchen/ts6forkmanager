@@ -142,7 +142,7 @@ Starting from a fresh server? The wiki's [Install on Debian 13](https://github.c
 
 - **Security**: six built-in roles (admin, server admin, moderator, bot operator, music operator, viewer) built from individual permissions, editable and joined by roles of your own, with access per server and virtual server checked by the backend, two-factor sign-in, Single Sign-On via OpenID Connect, and encrypted stored credentials. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Users-and-Roles)
 - **Privacy**: no third-party requests, no HTTP cookies, and only what is needed stored in the browser. This describes the software and is not legal advice. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Privacy-and-Hosting)
-- **Appearance**: two layouts (Cockpit and Lounge), eleven themes and ten accent colours, as an installation default that each user can override, and a global search (Ctrl+K) that opens any page or settings tab the role may use. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Themes-and-Appearance)
+- **Appearance**: two layouts (Cockpit and Lounge), eleven themes and ten accent colours, as an installation default that each user can override, and a global search (Ctrl+K) that opens any page, settings tab, client, channel, group, flow or music bot the role may use. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Themes-and-Appearance)
 - **Language**: English, German and French, with more translated by the community on [Crowdin](https://crowdin.com/project/ts6forkmanager).
 - **Administration**: users and sessions, yt-dlp cookies, debug switches, scheduled restarts and update status. → [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki/Administration)
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { musicRequestsApi } from '@/api/music-requests.api';
+import { useAddressTarget, revealSearchTarget } from '@/lib/search-target';
 import { musicBotsApi } from '@/api/music.api';
 import {
   useMusicBots, useCreateMusicBot, useUpdateMusicBot, useDeleteMusicBot,
@@ -135,7 +136,7 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
   const hasQueue = (state?.queue.length ?? 0) > 0;
 
   return (
-    <Card className="card-hero group hover:border-primary/30 transition-colors">
+    <Card data-search-target={`musicbot-${bot.id}`} className="card-hero group hover:border-primary/30 transition-colors">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -2517,6 +2518,12 @@ function PermissionsTab() {
 
 export default function MusicBots() {
   const { t } = useTranslation();
+  const [tab, setTab] = useState('bots');
+  // ?bot= from the global search: the bots tab, scrolled to that bot's card.
+  useAddressTarget('bot', true, (id) => {
+    setTab('bots');
+    revealSearchTarget(`musicbot-${id}`);
+  });
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -2526,7 +2533,7 @@ export default function MusicBots() {
         </div>
       </div>
 
-      <Tabs defaultValue="bots" className="space-y-4">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="bots"><Music2 className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabBots')}</TabsTrigger>
           <TabsTrigger value="queue"><ListMusic className="h-3.5 w-3.5 mr-1.5" /> {t('pages.musicBots.tabQueue')}</TabsTrigger>
