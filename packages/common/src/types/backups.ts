@@ -57,6 +57,8 @@ export interface BackupEntry {
   createdBy: string | null;
   /** TeamSpeak snapshots in it; null when none were taken. */
   tsSnapshots: number | null;
+  /** The virtual servers those snapshots are of (managed backups only), for comparing one. */
+  tsSnapshotTargets?: Array<{ configId: number; sid: number; server: string; virtualServer: string }>;
   /** A copy of it is in the target directory. */
   external: boolean;
 }
