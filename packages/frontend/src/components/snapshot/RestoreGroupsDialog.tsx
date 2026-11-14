@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GROUP_NAME_MAX } from '@ts6/common';
-import type { SnapshotCompareSource, SnapshotGroupKind, SnapshotGroupReference, SnapshotRestoreOutcome, SnapshotRestoreResult } from '@ts6/common';
+import { CHANNEL_NAME_MAX, GROUP_NAME_MAX } from '@ts6/common';
+import type { SnapshotCompareSource, SnapshotGroupKind, SnapshotGroupReference, SnapshotObjectKind, SnapshotRestoreOutcome, SnapshotRestoreResult } from '@ts6/common';
 import { serversApi } from '@/api/servers.api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-export interface RestoreTarget { kind: SnapshotGroupKind; id: number }
+export interface RestoreTarget { kind: SnapshotObjectKind; id: number }
+
+const nameMax = (k: SnapshotObjectKind) => (k === 'channel' ? CHANNEL_NAME_MAX : GROUP_NAME_MAX);
 
 type Phase = 'preview' | 'running' | 'done';
 
@@ -39,10 +41,18 @@ export function RestoreGroupsDialog({ configId, sid, source, targets, onClose }:
   const [members, setMembers] = useState(false);
   // Per group with a taken name: undefined = skip, a string = create under that name.
   const [newNames, setNewNames] = useState<Record<string, string | undefined>>({});
+  // Deleted subchannels the preview offers (role child) that were unticked; new passwords per channel.
+  const [leaveOut, setLeaveOut] = useState<Set<string>>(new Set());
+  const [passwords, setPasswords] = useState<Record<string, string>>({});
   const keyOf = (o: { kind: string; oldId?: number; id?: number }) => `${o.kind}:${o.oldId ?? o.id}`;
+  const groupTargets = targets.filter((g): g is RestoreTarget & { kind: SnapshotGroupKind } => g.kind !== 'channel');
 
   useEffect(() => {
-    serversApi.restoreSnapshotGroups(configId, sid, { source, groups: targets, dryRun: true })
+    serversApi.restoreSnapshotGroups(configId, sid, {
+      source, dryRun: true,
+      groups: targets.filter((g) => g.kind !== 'channel') as Array<{ kind: SnapshotGroupKind; id: number }>,
+      channels: targets.filter((g) => g.kind === 'channel').map((g) => ({ id: g.id })),
+    })
       .then((r) => setPreview(r.outcomes))
       .catch((err) => setError(errorOf(err, t('pages.snapshotCompare.restore.failed'))));
   }, [configId, sid, source, targets, t]);
@@ -51,8 +61,12 @@ export function RestoreGroupsDialog({ configId, sid, source, targets, onClose }:
     setPhase('running');
     setError(null);
     try {
-      const groups = targets.map((g) => ({ ...g, ...(newNames[keyOf(g)] !== undefined ? { newName: newNames[keyOf(g)] } : {}) }));
-      setResult(await serversApi.restoreSnapshotGroups(configId, sid, { source, groups, members, skipBackup }));
+      const named = (k: string) => (newNames[k] !== undefined ? { newName: newNames[k] } : {});
+      const groups = groupTargets.map((g) => ({ ...g, ...named(keyOf(g)) }));
+      // every channel the preview would create (parents included), minus unticked subchannels
+      const channels = (preview ?? []).filter((o) => o.kind === 'channel' && o.status !== 'skipped' && !leaveOut.has(keyOf(o)))
+        .map((o) => ({ id: o.oldId, ...named(keyOf(o)), ...(passwords[keyOf(o)] ? { password: passwords[keyOf(o)] } : {}) }));
+      setResult(await serversApi.restoreSnapshotGroups(configId, sid, { source, groups, channels, members, skipBackup }));
       setPhase('done');
     } catch (err) {
       setError(errorOf(err, t('pages.snapshotCompare.restore.failed')));
@@ -60,9 +74,9 @@ export function RestoreGroupsDialog({ configId, sid, source, targets, onClose }:
     }
   };
 
-  const nameInvalid = Object.values(newNames).some((n) => n !== undefined && (n.trim() === '' || n.trim().length > GROUP_NAME_MAX));
+  const nameInvalid = Object.entries(newNames).some(([k, n]) => n !== undefined && (n.trim() === '' || [...n.trim()].length > nameMax(k.split(':')[0] as SnapshotObjectKind)));
   const anyMembers = preview?.some((o) => (o.members?.inSnapshot ?? 0) > 0);
-  const kindLabel = (k: SnapshotGroupKind) => t(`pages.snapshotCompare.kinds.${k}`);
+  const kindLabel = (k: SnapshotObjectKind) => t(`pages.snapshotCompare.kinds.${k}`);
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open && phase !== 'running') onClose(phase === 'done'); }}>
@@ -82,11 +96,28 @@ export function RestoreGroupsDialog({ configId, sid, source, targets, onClose }:
                   <span className="text-xs text-muted-foreground">{kindLabel(o.kind)}</span>
                   <span className="font-medium break-all">{o.name}</span>
                   <span className="text-xs text-muted-foreground">#{o.oldId}</span>
+                  {o.role === 'parent' && <span className="text-xs text-amber-500">{t('pages.snapshotCompare.restore.roleParent')}</span>}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t('pages.snapshotCompare.restore.permissions', { count: o.permissions })}
                   {o.members && ` · ${t('pages.snapshotCompare.restore.membersInSnapshot', { count: o.members.inSnapshot })}`}
                 </p>
+                {o.role === 'child' && o.status !== 'skipped' && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Checkbox id={`child-${keyOf(o)}`} checked={!leaveOut.has(keyOf(o))} data-testid="restore-child"
+                      onCheckedChange={(v) => setLeaveOut((s) => { const n = new Set(s); if (v === true) n.delete(keyOf(o)); else n.add(keyOf(o)); return n; })} />
+                    <Label htmlFor={`child-${keyOf(o)}`} className="font-normal">{t('pages.snapshotCompare.restore.roleChild')}</Label>
+                  </div>
+                )}
+                {o.password !== undefined && o.status !== 'skipped' && (
+                  <div className="space-y-1">
+                    <Label htmlFor={`pw-${keyOf(o)}`} className="text-xs">{t('pages.snapshotCompare.restore.newPassword')}</Label>
+                    <Input id={`pw-${keyOf(o)}`} type="password" autoComplete="new-password" value={passwords[keyOf(o)] ?? ''} data-testid="restore-password"
+                      onChange={(e) => setPasswords((p) => ({ ...p, [keyOf(o)]: e.target.value }))} />
+                    <p className="text-[11px] text-muted-foreground">{t('pages.snapshotCompare.restore.passwordNote')}</p>
+                  </div>
+                )}
+                {o.defaultDropped && <p className="text-xs text-muted-foreground">{t('pages.snapshotCompare.restore.defaultDropped')}</p>}
                 {o.status === 'name-taken' && (
                   <fieldset className="space-y-2 text-sm" data-testid="restore-name-choice">
                     <legend className="text-xs">{t('pages.snapshotCompare.restore.nameTaken')}</legend>
@@ -96,15 +127,15 @@ export function RestoreGroupsDialog({ configId, sid, source, targets, onClose }:
                     </label>
                     <label className="flex items-center gap-2">
                       <input type="radio" name={`name-${keyOf(o)}`} checked={newNames[keyOf(o)] !== undefined}
-                        onChange={() => setNewNames((n) => ({ ...n, [keyOf(o)]: `${o.name.slice(0, GROUP_NAME_MAX - 4)} (2)` }))} />
+                        onChange={() => setNewNames((n) => ({ ...n, [keyOf(o)]: `${[...o.name].slice(0, nameMax(o.kind) - 4).join('')} (2)` }))} />
                       {t('pages.snapshotCompare.restore.otherName')}
                     </label>
                     {newNames[keyOf(o)] !== undefined && (
                       <div className="pl-6 space-y-1">
                         <Label htmlFor={`newname-${keyOf(o)}`} className="sr-only">{t('pages.snapshotCompare.restore.newName')}</Label>
-                        <Input id={`newname-${keyOf(o)}`} value={newNames[keyOf(o)]} maxLength={GROUP_NAME_MAX} aria-label={t('pages.snapshotCompare.restore.newName')}
+                        <Input id={`newname-${keyOf(o)}`} value={newNames[keyOf(o)]} maxLength={nameMax(o.kind)} aria-label={t('pages.snapshotCompare.restore.newName')}
                           onChange={(e) => setNewNames((n) => ({ ...n, [keyOf(o)]: e.target.value }))} data-testid="restore-new-name" />
-                        <p className="text-[11px] text-muted-foreground">{t('pages.snapshotCompare.restore.nameLimit', { max: GROUP_NAME_MAX })}</p>
+                        <p className="text-[11px] text-muted-foreground">{t('pages.snapshotCompare.restore.nameLimit', { max: nameMax(o.kind) })}</p>
                       </div>
                     )}
                   </fieldset>
@@ -182,6 +213,9 @@ function ResultView({ result }: { result: SnapshotRestoreResult }) {
                 {t('pages.snapshotCompare.restore.permsSet', { count: o.permissions - (o.permFailures?.filter((f) => f.perm !== '*').length ?? 0), total: o.permissions })}
                 {o.members?.added !== undefined && o.members.inSnapshot > 0 && ` ·${t('pages.snapshotCompare.restore.membersResult', { added: o.members.added, missing: o.members.missing, failed: o.members.failed })}`}
               </p>
+              {o.password === 'none' && <p className="text-xs text-amber-500">{t('pages.snapshotCompare.restore.passwordNone')}</p>}
+              {o.password === 'set' && <p className="text-xs text-muted-foreground">{t('pages.snapshotCompare.restore.passwordSet')}</p>}
+              {o.defaultDropped && <p className="text-xs text-muted-foreground">{t('pages.snapshotCompare.restore.defaultDropped')}</p>}
               {o.permFailures && (
                 <ul className="text-xs text-destructive list-disc pl-5">
                   {o.permFailures.map((f) => <li key={f.perm}><span className="font-mono">{f.perm}</span>: {f.message}</li>)}

@@ -303,7 +303,7 @@
     "moderator": "403",
     "moderator (no grant)": "403"
   },
-  "POST /api/servers/:configId/virtual-servers/:sid/snapshot/restore-groups": {
+  "POST /api/servers/:configId/virtual-servers/:sid/snapshot/restore": {
     "admin": "ok",
     "admin (no grant)": "ok",
     "viewer": "403",
