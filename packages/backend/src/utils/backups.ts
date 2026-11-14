@@ -222,13 +222,31 @@ export function listBackups(): BackupEntry[] {
 
 /** The newest backup in the volume that holds a snapshot of this virtual server: what can bring a deleted group, channel or profile back. */
 export function lastBackupWithSnapshot(configId: number, sid: number): { kind: BackupKind; name: string; createdAt: string } | null {
+  return backupsWithSnapshot(configId, sid)[0] ?? null;
+}
+
+/** Every backup in the volume holding a snapshot of this virtual server, newest first. */
+export function backupsWithSnapshot(configId: number, sid: number): Array<{ kind: BackupKind; name: string; createdAt: string }> {
   const d = dirs();
+  const out: Array<{ kind: BackupKind; name: string; createdAt: string }> = [];
   for (const b of listBackups()) {
     if (b.kind === 'before-update' || b.kind === 'external' || !b.tsSnapshots) continue;
     const manifest = readManifest(path.join(d.managed, `${b.name.slice(0, -3)}.json`));
-    if (manifest?.tsSnapshots?.some((s) => s.configId === configId && s.sid === sid && s.file)) return { kind: b.kind, name: b.name, createdAt: b.createdAt };
+    if (manifest?.tsSnapshots?.some((s) => s.configId === configId && s.sid === sid && s.file)) out.push({ kind: b.kind, name: b.name, createdAt: b.createdAt });
   }
-  return null;
+  return out;
+}
+
+/** The snapshot of this virtual server inside a backup ({version, data}), or a 404. */
+export function readBackupSnapshot(kind: string, name: string, configId: number, sid: number): { version?: unknown; data?: unknown; salt?: unknown } {
+  const { file, manifest } = resolveBackup(kind, name);
+  const entry = readManifest(manifest)?.tsSnapshots?.find((s) => s.configId === configId && s.sid === sid && s.file);
+  if (!entry?.file) throw new AppError(404, 'This backup holds no snapshot of this virtual server');
+  try {
+    return JSON.parse(fs.readFileSync(path.join(snapshotDirOf(file), path.basename(entry.file)), 'utf-8'));
+  } catch {
+    throw new AppError(404, 'The snapshot file of this backup is missing or unreadable');
+  }
 }
 
 // --- The target directory outside the volume (stage 3) --------------------------------
