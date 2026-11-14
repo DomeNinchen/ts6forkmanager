@@ -12,8 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatUptime, cn } from '@/lib/utils';
-import { Server, Play, Square, Users, Clock, Plus, Power, Layers, Check } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Server, Play, Square, Users, Clock, Plus, Power, Layers, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { serversApi } from '@/api/servers.api';
+import { tsErrorMessage } from '@/lib/ts-errors';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -40,6 +42,9 @@ export default function VirtualServers() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', maxclients: 32, port: '', autostart: false });
+  const [toDelete, setToDelete] = useState<{ sid: number; name: string } | null>(null);
+  const [typedName, setTypedName] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const servers = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
@@ -84,6 +89,33 @@ export default function VirtualServers() {
     } catch { toast.error(t('pages.virtualServers.stopFailed')); }
   };
 
+  const closeDelete = () => { if (!deleting) { setToDelete(null); setTypedName(''); } };
+
+  const handleDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      await serversApi.deleteVirtual(selectedConfigId, toDelete.sid);
+      toast.success(t('pages.virtualServers.deleted', { name: toDelete.name }));
+      // The server selector then picks the first remaining server.
+      if (Number(selectedSid) === toDelete.sid) setSid(null);
+      setToDelete(null);
+      setTypedName('');
+    } catch (err: any) {
+      const code = err?.response?.data?.code;
+      toast.error(
+        code === 'SERVER_RUNNING' ? t('pages.virtualServers.deleteRunning')
+          : code === 'SERVER_NOT_FOUND' ? t('pages.virtualServers.deleteNotFound')
+            : code === 2568 ? t('pages.virtualServers.deleteNoPermission')
+              : tsErrorMessage(err, t('pages.virtualServers.deleteFailed'), t),
+      );
+      if (code === 'SERVER_NOT_FOUND') { setToDelete(null); setTypedName(''); }
+    } finally {
+      setDeleting(false);
+      qc.invalidateQueries({ queryKey: ['virtual-servers'] });
+    }
+  };
+
   const handleCreate = () => {
     if (!form.name.trim()) return;
     const payload: Record<string, unknown> = {
@@ -121,9 +153,12 @@ export default function VirtualServers() {
         </CardContent>
       </Card>
 
+      <TooltipProvider>
       <div className="grid gap-3">
         {servers.map((vs: any) => {
           const isSelected = String(selectedSid) === String(vs.virtualserver_id);
+          // "online virtual" = stopped, only held open for a query client (no voice clients); the backend stops it before deleting.
+          const isStopped = vs.virtualserver_status === 'offline' || vs.virtualserver_status === 'online virtual';
           return (
             <Card
               key={vs.virtualserver_id}
@@ -158,7 +193,7 @@ export default function VirtualServers() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {isSelected ? (
                       <Button variant="outline" size="sm" onClick={() => setSid(null)}>
                         {t('pages.virtualServers.deselect')}
@@ -177,6 +212,27 @@ export default function VirtualServers() {
                         <Play className="h-3 w-3 mr-1" /> {t('pages.virtualServers.start')}
                       </Button>
                     )}
+                    {!isStopped ? (
+                      // TeamSpeak deletes only a stopped server; the wrapper keeps the hint reachable by keyboard and hover.
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0} aria-label={t('pages.virtualServers.deleteStopFirst')} data-testid={`vs-delete-${vs.virtualserver_id}`}>
+                            <Button variant="outline" size="sm" disabled className="pointer-events-none">
+                              <Trash2 className="h-3 w-3 mr-1" /> {t('common.delete')}
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>{t('pages.virtualServers.deleteStopFirst')}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Button
+                        variant="outline" size="sm" data-testid={`vs-delete-${vs.virtualserver_id}`}
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setToDelete({ sid: Number(vs.virtualserver_id), name: String(vs.virtualserver_name ?? '') })}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" /> {t('common.delete')}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -184,6 +240,43 @@ export default function VirtualServers() {
           );
         })}
       </div>
+      </TooltipProvider>
+
+      {/* Delete: only for a stopped server, the server's name typed in. */}
+      <Dialog open={toDelete !== null} onOpenChange={(v) => { if (!v) closeDelete(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('pages.virtualServers.deleteDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('pages.virtualServers.deleteDialogDescription', { name: toDelete?.name, sid: toDelete?.sid })}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>{t('pages.virtualServers.deleteWhatGoes')}</p>
+            <p className="text-muted-foreground">{t('pages.virtualServers.deleteSnapshotNote')}</p>
+            {(toDelete?.sid === 1 || servers.length === 1) && (
+              <div className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-destructive" data-testid="vs-delete-warning">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  {servers.length === 1 && <p>{t('pages.virtualServers.deleteLastWarning')}</p>}
+                  {toDelete?.sid === 1 && <p>{t('pages.virtualServers.deleteFirstWarning')}</p>}
+                </div>
+              </div>
+            )}
+            <div>
+              <Label htmlFor="vs-delete-confirm-name" className="text-xs">{t('pages.virtualServers.deleteTypeName', { name: toDelete?.name })}</Label>
+              <Input id="vs-delete-confirm-name" value={typedName} onChange={(e) => setTypedName(e.target.value)} autoComplete="off" autoFocus data-testid="vs-delete-confirm-name" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDelete} disabled={deleting}>{t('common.cancel')}</Button>
+            <Button
+              variant="destructive" onClick={handleDelete} data-testid="vs-delete-confirm"
+              disabled={!toDelete || typedName.trim() !== toDelete.name.trim() || deleting}
+            >
+              {deleting ? t('components.confirmDialog.processing') : t('pages.virtualServers.deleteConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Server Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>

@@ -311,10 +311,10 @@ export default function AdvancedServerSettings() {
             <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{as('fileTransferLimitsPerUser')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <NumField label={as('uploadQuotaMb')} hint={as('zeroUnlimited')} value={form.virtualserver_upload_quota} onChange={(v) => set('virtualserver_upload_quota', Number(v))} />
-                <NumField label={as('downloadQuotaMb')} hint={as('zeroUnlimited')} value={form.virtualserver_download_quota} onChange={(v) => set('virtualserver_download_quota', Number(v))} />
-                <NumField label={as('uploadBandwidth')} hint={as('zeroUnlimited')} value={form.virtualserver_max_upload_total_bandwidth} onChange={(v) => set('virtualserver_max_upload_total_bandwidth', Number(v))} />
-                <NumField label={as('downloadBandwidth')} hint={as('zeroUnlimited')} value={form.virtualserver_max_download_total_bandwidth} onChange={(v) => set('virtualserver_max_download_total_bandwidth', Number(v))} />
+                <NumField label={as('uploadQuotaMb')} hint={as('quotaUnlimitedHint')} value={form.virtualserver_upload_quota} onChange={(v) => set('virtualserver_upload_quota', Number(v))} />
+                <NumField label={as('downloadQuotaMb')} hint={as('quotaUnlimitedHint')} value={form.virtualserver_download_quota} onChange={(v) => set('virtualserver_download_quota', Number(v))} />
+                <NumField label={as('uploadBandwidth')} hint={as('bandwidthUnlimitedHint')} value={form.virtualserver_max_upload_total_bandwidth} onChange={(v) => set('virtualserver_max_upload_total_bandwidth', Number(v))} />
+                <NumField label={as('downloadBandwidth')} hint={as('bandwidthUnlimitedHint')} value={form.virtualserver_max_download_total_bandwidth} onChange={(v) => set('virtualserver_max_download_total_bandwidth', Number(v))} />
               </div>
               <Button size="sm" onClick={() => save(LIMITS_FIELDS)} disabled={editServer.isPending}>{t('common.save')}</Button>
             </CardContent>

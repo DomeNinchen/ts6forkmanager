@@ -52,6 +52,8 @@ export interface WebhookTriggerData {
   webhookPath: string;
   method: 'GET' | 'POST';
   secret?: string;
+  /** Only calls signed with the secret (X-Webhook-Timestamp + X-Webhook-Signature) fire; the bare secret is not enough. */
+  requireSignature?: boolean;
 }
 
 /**

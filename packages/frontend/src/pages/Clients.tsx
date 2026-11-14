@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import {
   useClients, useKickClient, useBanClient, usePokeClient,
   useBulkMoveClients, useBulkKickClients, useBulkBanClients, useBulkDescribeClients,
@@ -40,6 +41,8 @@ export default function Clients() {
   const canAct = canMessage || canKick || canBan;
   const canBulk = canMove || canKick || canBan || canDescribe;
   const { data, isLoading } = useClients();
+  // ?q= from the global search fills the table's search field.
+  const [searchParams] = useSearchParams();
   const { data: channelData } = useChannels();
   const kickClient = useKickClient();
   const banClient = useBanClient();
@@ -221,6 +224,7 @@ export default function Clients() {
         data={clients}
         searchKey="client_nickname"
         searchPlaceholder={t('pages.clients.searchPlaceholder')}
+        searchValue={searchParams.get('q') ?? undefined}
         enableRowSelection={canBulk}
         getRowId={(c: any) => String(c.clid)}
         onSelectionChange={setSelected}

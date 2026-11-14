@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState, type ComponentProps } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Search, type LucideIcon } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,16 +10,10 @@ import { useAuthStore } from '@/stores/auth.store';
 import { settingsTabsFor } from '@/lib/settings-tabs';
 import { searchEntries, pushRecent } from '@/lib/search';
 import { useVisibleNavSections } from './Sidebar';
+import { useSearchObjects, type SearchEntry as Entry } from './use-search-objects';
 
-interface Entry {
-  id: string;
-  /** Visible name first; see searchEntries. */
-  terms: string[];
-  label: string;
-  hint: string;
-  icon: LucideIcon;
-  to: string;
-}
+/** Shortcut: at most this many hits per kind of server object; upgrade to "show more" if real servers need it. */
+const OBJECTS_PER_TYPE = 8;
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -124,16 +118,25 @@ export function GlobalSearch() {
     setRecent(readRecent(userId));
   }, [open, userId]);
 
+  // Keyed on the paths as text: `sections` is a new array on every render.
+  const pagesKey = sections.flatMap((s) => s.items.map((i) => i.to)).join(' ');
+  const visiblePages = useMemo(() => new Set(pagesKey.split(' ')), [pagesKey]);
+  const objects = useSearchObjects(open, visiblePages);
+
   const groups = useMemo(() => {
-    const byId = new Map(entries.map((e) => [e.id, e]));
+    const typed = query.trim() !== '';
+    // A recent entry shows only while it still exists and is still allowed: a deleted channel or a lost right drops it.
+    const byId = new Map([...entries, ...objects.groups.flatMap((g) => g.items)].map((e) => [e.id, e]));
     const found = searchEntries(entries, query);
-    const recentEntries = query.trim() ? [] : recent.map((id) => byId.get(id)).filter((e): e is Entry => !!e);
+    const recentEntries = typed ? [] : recent.map((id) => byId.get(id)).filter((e): e is Entry => !!e);
     return [
       { key: 'recent', label: t('nav.search.recent'), items: recentEntries },
       { key: 'pages', label: t('nav.search.pages'), items: found.filter((e) => e.id.startsWith('page:')) },
       { key: 'settings', label: t('common.settings'), items: found.filter((e) => e.id.startsWith('settings:')) },
+      // Server objects only once something is typed; an empty search stays short.
+      ...(typed ? objects.groups.map((g) => ({ ...g, items: searchEntries(g.items, query, OBJECTS_PER_TYPE) })) : []),
     ].filter((g) => g.items.length > 0);
-  }, [entries, query, recent, t]);
+  }, [entries, objects.groups, query, recent, t]);
 
   const flat = groups.flatMap((g) => g.items.map((item) => ({ item, optionId: `${baseId}-${g.key}-${item.id}` })));
   const current = flat[Math.min(active, flat.length - 1)];
@@ -231,6 +234,9 @@ export function GlobalSearch() {
             </div>
           ))}
         </div>
+        {objects.noWebQuery && (
+          <p className="border-t border-border px-3 py-2 text-xs text-muted-foreground">{t('nav.search.noWebQuery')}</p>
+        )}
         <div className="hidden border-t border-border px-3 py-2 text-xs text-muted-foreground sm:block" aria-hidden>
           {t('nav.search.hint')}
         </div>

@@ -13,7 +13,7 @@ import type {
 import { FLOW_TEST_MAX_FRAMES } from '@ts6/common';
 import { AnimationManager } from './animation-manager.js';
 import { normalizeFlowData } from './normalize-flow.js';
-import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretFrom, webhookSecretMatches } from './trigger-match.js';
+import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretFrom, webhookSecretMatches, webhookSignatureCheck, SignatureReplayGuard } from './trigger-match.js';
 import { webhookSettings } from '../utils/webhook-settings.js';
 import { noteQuerySecretUse, startQuerySecretFlusher, stopQuerySecretFlusher } from '../utils/webhook-query-secret.js';
 import { onSupportCaseTaken } from '../utils/support-queue.js';
@@ -43,6 +43,7 @@ interface WebhookEntry {
   path: string;
   method: string;
   secret?: string;
+  requireSignature: boolean;
 }
 
 /** Dropped triggers of one flow and trigger type inside this window share one 'dropped' execution row. */
@@ -64,6 +65,7 @@ export class BotEngine {
   private animationManager: AnimationManager;
   private cronJobs: CronEntry[] = [];
   private webhookEntries: WebhookEntry[] = [];
+  private signatureGuard = new SignatureReplayGuard();
   private executionCounts: Map<number, number> = new Map();
   private dropWindows: Map<string, DropWindow> = new Map();
   private maxConcurrentPerFlow: number = BOT_LOG_DEFAULTS.maxConcurrentPerFlow;
@@ -136,7 +138,9 @@ export class BotEngine {
     // Support queue events come from the queue job and the web take, not from SSH.
     onSupportCaseTaken(this.onSupportCaseTaken.bind(this));
 
-    this.maxConcurrentPerFlow = (await getBotLogSettings(this.prisma)).maxConcurrentPerFlow;
+    const botLogSettings = await getBotLogSettings(this.prisma);
+    this.maxConcurrentPerFlow = botLogSettings.maxConcurrentPerFlow;
+    this.setMaxRuntimeMinutes(botLogSettings.maxRuntimeMinutes);
     await this.loadFlows();
 
     if (this.flows.size === 0) {
@@ -179,6 +183,11 @@ export class BotEngine {
 
   setMaxConcurrentPerFlow(limit: number): void {
     this.maxConcurrentPerFlow = limit;
+  }
+
+  /** Longest total runtime of one execution; 0 = no limit. Applies to running executions at their next node. */
+  setMaxRuntimeMinutes(minutes: number): void {
+    this.flowRunner.maxRuntimeMs = minutes * 60_000;
   }
 
   async enableFlow(flowId: number): Promise<void> {
@@ -303,13 +312,29 @@ export class BotEngine {
 
     let triggered = 0;
     let dropped = 0;
+    // A call carrying a signature is judged by it alone; the bare secret only counts without one,
+    // and not on a trigger that requires signing.
+    const signature = req.headers['x-webhook-signature'];
+    const signed = signature !== undefined;
+    const now = Date.now();
     for (const wh of matching) {
-      // H6: mandatory secret (none configured never matches), compared in constant time
-      if (!webhookSecretMatches(wh.secret ?? '', providedSecret)) continue;
+      if (signed) {
+        const result = webhookSignatureCheck(wh.secret ?? '', req.headers['x-webhook-timestamp'], signature, (req as any).rawBody ?? Buffer.alloc(0), now);
+        // Only a call that knows the secret gets here, so naming the cause helps the admin and nobody else.
+        if (result === 'stale') console.warn(`[BotEngine] Webhook '${webhookPath}': signed call refused, its timestamp is more than 5 minutes off the server clock`);
+        if (result !== 'ok') continue;
+        if (!this.signatureGuard.firstUse(`${wh.flowId}:${wh.nodeId}:${signature}`, now)) {
+          console.warn(`[BotEngine] Webhook '${webhookPath}': signed call refused, the same signature was used before`);
+          continue;
+        }
+      } else {
+        // H6: mandatory secret (none configured never matches), compared in constant time
+        if (wh.requireSignature || !webhookSecretMatches(wh.secret ?? '', providedSecret)) continue;
+      }
 
       const flow = this.flows.get(wh.flowId);
       if (!flow) continue;
-      if (viaQuery) noteQuerySecretUse(flow.id);
+      if (!signed && viaQuery) noteQuerySecretUse(flow.id);
 
       const webhookData = webhookEventData(webhookPath, method, req.body, req.query as Record<string, unknown>);
 
@@ -613,7 +638,7 @@ export class BotEngine {
   async resumeWaitingExecutions(): Promise<void> {
     const rows = await this.prisma.botExecution.findMany({
       where: { status: 'waiting' },
-      select: { id: true, flowId: true, triggeredBy: true, triggerData: true, resumeNodeId: true, resumeAt: true, state: true },
+      select: { id: true, flowId: true, triggeredBy: true, triggerData: true, resumeNodeId: true, resumeAt: true, state: true, startedAt: true },
     });
     for (const row of rows) {
       const flow = this.flows.get(row.flowId);
@@ -724,6 +749,7 @@ export class BotEngine {
         path: whData.webhookPath,
         method: whData.method || 'POST',
         secret: whData.secret || undefined,
+        requireSignature: whData.requireSignature === true,
       });
     }
   }

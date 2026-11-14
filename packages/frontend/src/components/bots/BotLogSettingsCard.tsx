@@ -39,16 +39,18 @@ export function BotLogSettingsCard() {
 
   const active: BotLogSettings = draft ?? {
     retentionDays: data.retentionDays, maxRows: data.maxRows, maxConcurrentPerFlow: data.maxConcurrentPerFlow,
+    maxRuntimeMinutes: data.maxRuntimeMinutes,
   };
-  const { retentionMin, retentionMax, maxRowsMin, maxRowsMax, maxConcurrentMin, maxConcurrentMax } = data.bounds;
+  const { retentionMin, retentionMax, maxRowsMin, maxRowsMax, maxConcurrentMin, maxConcurrentMax, maxRuntimeMin, maxRuntimeMax } = data.bounds;
   const valid =
     Number.isInteger(active.retentionDays) && active.retentionDays >= retentionMin && active.retentionDays <= retentionMax &&
     Number.isInteger(active.maxRows) && active.maxRows >= maxRowsMin && active.maxRows <= maxRowsMax &&
     Number.isInteger(active.maxConcurrentPerFlow) &&
-    active.maxConcurrentPerFlow >= maxConcurrentMin && active.maxConcurrentPerFlow <= maxConcurrentMax;
+    active.maxConcurrentPerFlow >= maxConcurrentMin && active.maxConcurrentPerFlow <= maxConcurrentMax &&
+    Number.isInteger(active.maxRuntimeMinutes) && active.maxRuntimeMinutes >= maxRuntimeMin && active.maxRuntimeMinutes <= maxRuntimeMax;
   const matchesDefaults =
     active.retentionDays === data.defaults.retentionDays && active.maxRows === data.defaults.maxRows &&
-    active.maxConcurrentPerFlow === data.defaults.maxConcurrentPerFlow;
+    active.maxConcurrentPerFlow === data.defaults.maxConcurrentPerFlow && active.maxRuntimeMinutes === data.defaults.maxRuntimeMinutes;
 
   return (
     <Card className="card-hero">
@@ -103,6 +105,21 @@ export function BotLogSettingsCard() {
             />
             <p className="text-[11px] text-muted-foreground">
               {t('pages.botList.retention.maxConcurrentHint', { min: maxConcurrentMin, max: maxConcurrentMax })}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs" htmlFor="bot-flow-max-runtime">{t('pages.botList.retention.maxRuntimeLabel')}</Label>
+            <Input
+              id="bot-flow-max-runtime"
+              type="number"
+              min={maxRuntimeMin}
+              max={maxRuntimeMax}
+              value={active.maxRuntimeMinutes}
+              onChange={(e) => setDraft({ ...active, maxRuntimeMinutes: Number(e.target.value) })}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {t('pages.botList.retention.maxRuntimeHint', { max: maxRuntimeMax })}
             </p>
           </div>
         </div>
