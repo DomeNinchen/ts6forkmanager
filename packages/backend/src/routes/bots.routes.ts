@@ -66,6 +66,7 @@ botRoutes.get('/', async (req: Request, res: Response, next) => {
       imported: isImported(b.flowData), approvedAt: b.approvedAt, approvedBy: b.approvedBy,
       executionCount: b._count.executions,
       droppedLast24h: dropped.get(b.id) || 0,
+      querySecretCalls: b.querySecretCalls, querySecretLastAt: b.querySecretLastAt,
     })));
   } catch (err) { next(err); }
 });

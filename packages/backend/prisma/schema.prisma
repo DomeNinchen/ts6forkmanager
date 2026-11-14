@@ -349,6 +349,10 @@ model BotFlow {
   approvedBy      String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  // Webhook calls whose secret came in the address (?secret=) instead of the header, and the last one;
+  // shown so an admin can switch the callers over (see utils/webhook-query-secret.ts).
+  querySecretCalls  Int       @default(0)
+  querySecretLastAt DateTime?
 
   executions BotExecution[]
   variables  BotVariable[]

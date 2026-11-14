@@ -277,11 +277,15 @@ export interface WebhookSettings {
   validPerMinute: number;
   /** Calls to an unknown path or with a wrong secret per address and minute. */
   failedPerMinute: number;
+  /** Whether a secret sent as ?secret= in the address is still accepted. */
+  allowQuerySecret: boolean;
 }
+
+export type WebhookLimit = 'bodyLimitKb' | 'validPerMinute' | 'failedPerMinute';
 
 export interface WebhookSettingsResponse extends WebhookSettings {
   defaults: WebhookSettings;
-  bounds: Record<keyof WebhookSettings, { min: number; max: number }>;
+  bounds: Record<WebhookLimit, { min: number; max: number }>;
 }
 
 export interface BotLogSettingsResponse extends BotLogSettings {

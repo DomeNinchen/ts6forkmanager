@@ -191,6 +191,9 @@
     },
     "botList": {
       "selectServerFirst": "Bitte zuerst einen Server auswählen",
+      "querySecretHint": "Webhook-Aufrufe mit dem Secret in der Adresse statt im Header X-Webhook-Secret, zuletzt {{date}}. Details im Editor am Webhook-Auslöser.",
+      "querySecret_other": "{{count}} Aufrufe mit ?secret=",
+      "querySecret_one": "{{count}} Aufruf mit ?secret=",
       "created": "Bot erstellt",
       "createFailed": "Bot konnte nicht erstellt werden",
       "fromTemplate": "Aus Vorlage",
@@ -221,6 +224,8 @@
       "deleted": "Bot gelöscht",
       "webhooks": {
         "title": "Webhooks: Eingangsgrenzen",
+        "allowQuerySecretHint": "Der empfohlene Weg ist der Header X-Webhook-Secret. Solange erlaubt, zählt jeder Flow seine Aufrufe mit ?secret= und zeigt sie an; ausgeschaltet antworten solche Aufrufe mit 404.",
+        "allowQuerySecretLabel": "?secret= in der Adresse erlauben",
         "description": "Grenzen für eingehende Webhook-Aufrufe, geprüft bevor der Inhalt gelesen wird. Gültige Aufrufe (passendes Secret) und Fehlversuche (unbekannter Pfad oder falsches Secret) werden je Adresse getrennt gezählt. Gilt für die ganze Instanz.",
         "bodyLimitKbLabel": "Größter Inhalt (KB)",
         "bodyLimitKbHint": "{{min}} bis {{max}} KB; größere Aufrufe erhalten 413. Ein Proxy davor kann eine eigene, kleinere Grenze haben.",
@@ -3610,10 +3615,13 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Webhook-Pfad",
+          "querySecretWarning_other": "Dieser Flow wurde {{count}}-mal mit ?secret= in der Adresse aufgerufen, zuletzt {{date}}. Stelle die Aufrufer auf den Header X-Webhook-Secret um: Adressen landen in Zugriffsprotokollen.",
+          "querySecretWarning_one": "Dieser Flow wurde {{count}}-mal mit ?secret= in der Adresse aufgerufen, zuletzt {{date}}. Stelle den Aufrufer auf den Header X-Webhook-Secret um: Adressen landen in Zugriffsprotokollen.",
+          "exampleLabel": "Beispielaufruf",
           "httpMethodLabel": "HTTP-Methode",
-          "secretLabel": "Secret (optional)",
-          "secretPlaceholder": "Leer lassen für keine Authentifizierung",
-          "secretHint": "Wird über den X-Webhook-Secret-Header oder den ?secret=-Query-Parameter geprüft"
+          "secretLabel": "Secret",
+          "secretPlaceholder": "Pflicht: ohne Secret löst der Webhook nie aus",
+          "secretHint": "Der Aufrufer sendet das Secret im Header X-Webhook-Secret."
         },
         "triggerCommand": {
           "listenChannelIdLabel": "Channel-ID zum Abhören (optional)",

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretMatches } from './trigger-match.js';
+import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretFrom, webhookSecretMatches } from './trigger-match.js';
 
 const cmd = (extra: object = {}) => ({ triggerType: 'command' as const, label: '', commandPrefix: '!', commandName: 'hilfe', ...extra });
 
@@ -65,4 +65,15 @@ test('webhook secret: equal matches, anything else (wrong, other length, empty) 
   // A trigger without a secret never fires, not even for an empty one sent.
   assert.equal(webhookSecretMatches('', ''), false);
   assert.equal(webhookSecretMatches('', 'x'), false);
+});
+
+test('webhook secret source: header wins, ?secret= only while allowed and then marked', () => {
+  assert.deepEqual(webhookSecretFrom('h', 'q', true), { secret: 'h', viaQuery: false });
+  assert.deepEqual(webhookSecretFrom('h', undefined, false), { secret: 'h', viaQuery: false });
+  assert.deepEqual(webhookSecretFrom(undefined, 'q', true), { secret: 'q', viaQuery: true });
+  assert.deepEqual(webhookSecretFrom('', 'q', true), { secret: 'q', viaQuery: true });
+  assert.deepEqual(webhookSecretFrom(undefined, 'q', false), { secret: '', viaQuery: false });
+  // ?secret=a&secret=b arrives as an array: not a secret at all.
+  assert.deepEqual(webhookSecretFrom(undefined, ['a', 'b'], true), { secret: '', viaQuery: false });
+  assert.deepEqual(webhookSecretFrom(undefined, undefined, true), { secret: '', viaQuery: false });
 });

@@ -102,6 +102,15 @@ export default function BotList() {
                       <AlertTriangle className="h-3 w-3" /> {t('pages.botList.dropped', { count: bot.droppedLast24h })}
                     </Badge>
                   )}
+                  {bot.querySecretCalls > 0 && (
+                    <Badge
+                      variant="warning"
+                      className="text-[10px] gap-1"
+                      title={t('pages.botList.querySecretHint', { date: new Date(bot.querySecretLastAt).toLocaleString() })}
+                    >
+                      <AlertTriangle className="h-3 w-3" aria-hidden /> {t('pages.botList.querySecret', { count: bot.querySecretCalls })}
+                    </Badge>
+                  )}
                   {bot.serverConfigId && (
                     <Badge variant="outline" className="text-[10px]">{t('pages.botList.serverHash', { id: bot.serverConfigId })}</Badge>
                   )}
