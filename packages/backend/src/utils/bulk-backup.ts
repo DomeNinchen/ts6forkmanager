@@ -40,14 +40,15 @@ export async function ensureBulkBackup(prisma: PrismaClient, pool: ConnectionPoo
  * Called by a deleting route right before it deletes. Backs up first when the deletion is always
  * backed up (`count` omitted: a group or a channel) or deletes at least the threshold's number of
  * profiles. A failed backup refuses the deletion (409 BACKUP_FAILED); the dialog can then send
- * `skipBackup: true`, which the change log keeps with the request.
+ * `skipBackup: true`, which the change log keeps with the request. `fresh`: no two-minute reuse
+ * (a whole virtual server is about to go). Returns the backup's name, or null when none was taken.
  */
-export async function backupBeforeDeleting(req: Request, count?: number): Promise<void> {
-  if (req.body?.skipBackup === true) return;
+export async function backupBeforeDeleting(req: Request, count?: number, fresh = false): Promise<string | null> {
+  if (req.body?.skipBackup === true) return null;
   const prisma = req.app.locals.prisma as PrismaClient;
-  if (count !== undefined && count < (await getBackupSettings(prisma)).bulkBackupThreshold) return;
+  if (count !== undefined && count < (await getBackupSettings(prisma)).bulkBackupThreshold) return null;
   try {
-    await ensureBulkBackup(prisma, req.app.locals.connectionPool, Number(req.params.configId), Number(req.params.sid), req.user?.username ?? 'unknown');
+    return await ensureBulkBackup(prisma, req.app.locals.connectionPool, Number(req.params.configId), Number(req.params.sid), req.user?.username ?? 'unknown', Date.now(), fresh);
   } catch (err) {
     const reason = err instanceof AppError && err.details ? `${err.message}: ${err.details}` : (err as Error).message;
     throw new AppError(409, 'The backup before this deletion failed, so nothing was deleted', reason, 'BACKUP_FAILED');
