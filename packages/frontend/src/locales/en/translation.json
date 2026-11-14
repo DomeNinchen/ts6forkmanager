@@ -3714,6 +3714,9 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Webhook Path",
+          "signedExampleLabel": "Example call, signed",
+          "requireSignatureHint": "Protects against repeated calls: the caller sends X-Webhook-Timestamp (Unix seconds) and X-Webhook-Signature = sha256= followed by the HMAC-SHA256 of \"<timestamp>.<body>\", keyed with the secret. Only calls whose timestamp is at most 5 minutes off are accepted, and each signature only once. Switched on, the secret alone is no longer enough; signed calls are accepted when it is off too.",
+          "requireSignatureLabel": "Require a signature",
           "querySecretWarning_other": "This flow was called {{count}} times with ?secret= in the address, last on {{date}}. Switch the callers to the X-Webhook-Secret header: addresses end up in access logs.",
           "querySecretWarning_one": "This flow was called {{count}} time with ?secret= in the address, last on {{date}}. Switch the caller to the X-Webhook-Secret header: addresses end up in access logs.",
           "exampleLabel": "Example call",

@@ -7,6 +7,7 @@ import { SUPPORT_TRIGGER_FIELDS } from '@ts6/common';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -102,6 +103,27 @@ function getSmartActionNodes(t: TFunction): NodeTypeDef[] {
     { type: 'action_supportEnqueue', label: l('action_supportEnqueue'), icon: Headset, color: 'bg-rose-500/20 text-rose-400 border-rose-500/30', handles: { inputs: ['in'], outputs: ['out'] } },
     { type: 'action_animatedChannel', label: l('action_animatedChannel'), icon: Sparkles, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', handles: { inputs: [], outputs: [] } },
   ];
+}
+
+/**
+ * An example call for a webhook trigger, with the secret left as a placeholder. Signed: a shell
+ * sketch that signs "<timestamp>.<body>" with HMAC-SHA256 the way the backend checks it.
+ */
+function webhookExample(method: string, url: string, signed: boolean): string {
+  const post = method === 'POST';
+  if (!signed) {
+    return `curl -X ${method} \\\n  -H "X-Webhook-Secret: <secret>" \\\n${post ? `  -H "Content-Type: application/json" -d '{}' \\\n` : ''}  ${url}`;
+  }
+  return [
+    `TS=$(date +%s)`,
+    `BODY='${post ? '{}' : ''}'`,
+    `SIG=$(printf '%s.%s' "$TS" "$BODY" | openssl dgst -sha256 -hmac '<secret>' | sed 's/^.* //')`,
+    `curl -X ${method} \\`,
+    `  -H "X-Webhook-Timestamp: $TS" \\`,
+    `  -H "X-Webhook-Signature: sha256=$SIG" \\`,
+    ...(post ? [`  -H "Content-Type: application/json" -d "$BODY" \\`] : []),
+    `  ${url}`,
+  ].join('\n');
 }
 
 /** The time zones the Cron trigger and Animated Channel nodes offer for {{time.*}}. */
@@ -1580,10 +1602,21 @@ export default function BotEditor() {
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">{t('pages.botEditor.config.triggerWebhook.secretHint')}</p>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerWebhook.exampleLabel')}</Label>
+                        <div className="flex items-center justify-between gap-2">
+                          <Label htmlFor="webhook-require-signature" className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerWebhook.requireSignatureLabel')}</Label>
+                          <Switch
+                            id="webhook-require-signature"
+                            checked={selectedNodeData.config.requireSignature === true}
+                            onCheckedChange={(v) => setNodes((prev) => prev.map((n) => n.id === selectedNode ? { ...n, config: { ...n.config, requireSignature: v } } : n))}
+                          />
+                        </div>
+                        <p className="text-[9px] text-muted-foreground/60 mt-0.5">{t('pages.botEditor.config.triggerWebhook.requireSignatureHint')}</p>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">{t(selectedNodeData.config.requireSignature ? 'pages.botEditor.config.triggerWebhook.signedExampleLabel' : 'pages.botEditor.config.triggerWebhook.exampleLabel')}</Label>
                         {/* The secret itself stays out of the example, so it never ends up in a screenshot or a pasted snippet. */}
                         <pre className="mt-1 whitespace-pre-wrap break-all rounded bg-muted/40 p-1.5 text-[9px] font-mono-data">
-                          {`curl -X ${selectedNodeData.config.method || 'POST'} \\\n  -H "X-Webhook-Secret: <secret>" \\\n${(selectedNodeData.config.method || 'POST') === 'POST' ? `  -H "Content-Type: application/json" -d '{}' \\\n` : ''}  ${window.location.origin}/api/bots/webhook/${selectedNodeData.config.path || 'my-hook'}`}
+                          {webhookExample(selectedNodeData.config.method || 'POST', `${window.location.origin}/api/bots/webhook/${selectedNodeData.config.path || 'my-hook'}`, selectedNodeData.config.requireSignature === true)}
                         </pre>
                       </div>
                       {bot?.querySecretCalls > 0 && (
