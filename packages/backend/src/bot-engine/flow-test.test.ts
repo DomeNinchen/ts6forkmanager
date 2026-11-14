@@ -85,7 +85,8 @@ function rig() {
 
   const dbWrites: string[] = [];
   const variables: any[] = [{ id: 1, flowId: 1, name: 'joins', value: '3', scope: 'flow' }];
-  const write = (what: string) => async ({ data }: any = {}) => { dbWrites.push(what); return { id: 1, ...data }; };
+  // startedAt like the BotExecution column's default.
+  const write = (what: string) => async ({ data }: any = {}) => { dbWrites.push(what); return { id: 1, startedAt: new Date(), ...data }; };
   const prisma = {
     botExecution: { create: write('botExecution.create'), update: write('botExecution.update'), updateMany: write('botExecution.updateMany') },
     botExecutionLog: { create: write('botExecutionLog.create') },

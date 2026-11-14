@@ -238,6 +238,8 @@
       },
       "retention": {
         "title": "Executions: retention and limit",
+        "maxRuntimeHint": "0 to {{max}}; 0 = no limit. Counted from its start, also across a restart. An execution running longer ends as failed before its next node or when a Delay ends; a WebQuery command or HTTP call already under way still finishes.",
+        "maxRuntimeLabel": "Longest runtime of one execution (minutes)",
         "description": "How long the execution history of every bot flow (runs and their log lines) is kept. Applies to the whole instance; anything older is removed hourly.",
         "retentionLabel": "Retention (days)",
         "retentionHint": "Between {{min}} and {{max}} days.",

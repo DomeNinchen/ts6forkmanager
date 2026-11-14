@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.117.0 · frontend 3.135.0 · sidecar 2.4.0**
+Versions at the end of the month: **backend 2.118.0 · frontend 3.136.0 · sidecar 2.4.0**
 
 ### New Features
 
@@ -38,6 +38,7 @@ Versions at the end of the month: **backend 2.117.0 · frontend 3.135.0 · sidec
 
 ### Security
 
+- **Longest runtime of a flow execution** — An execution now ends as failed ("Time limit: …", shown in the editor's execution list) once it has run longer than a set time in total, counted from its start and also across a backend restart. It is checked before every node and when a Delay ends; a WebQuery command or HTTP call already under way still finishes. Set on the Bot Flows page under **Executions: retention and limit** (default 30 minutes, 0 = no limit). *backend 2.118.0, frontend 3.136.0*
 - **Webhook secret in the X-Webhook-Secret header** — The header is now the documented way to send a webhook secret: the editor shows an example call with it, and each flow counts the calls that still send the secret as `?secret=` in the address, shown as a badge on **Bot Flows** and as a warning at the webhook trigger. A new switch under **Bot Flows → Webhooks**, "Allow ?secret= in the address" (on by default), turns the address form off; such calls then get 404. *backend 2.117.0, frontend 3.135.0* [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
 - **Limits on incoming webhook calls** — The webhook route now checks, before reading the body, how many calls an address makes per minute (valid ones and ones with an unknown path or wrong secret counted apart, the latter much stricter) and how large the body is; beyond that it answers 429 with `Retry-After` or 413. Too many failed calls from one address show up in the Connection Journal, once per address and minute. The limits (default 1 MB, 120 valid and 10 failed calls per address and minute) are set by an admin on the Bot Flows page under **Webhooks**. The secret check takes the same time whatever the length of the secret sent. *backend 2.116.0, frontend 3.134.0* [#405](https://github.com/DomeNinchen/ts6forkmanager/pull/405)
 - **Webhook secret kept out of flow data** — A webhook secret sent as `?secret=` is no longer part of `event.webhook_query`, so a flow never sees it and its executions never store it. *backend 2.93.0* [#355](https://github.com/DomeNinchen/ts6forkmanager/pull/355)
@@ -87,6 +88,7 @@ Versions at the end of the month: **backend 2.117.0 · frontend 3.135.0 · sidec
 
 **Bot flows & music bots**
 
+- Flow executions now end after **30 minutes** in total by default (counted from their start, across restarts). A flow that waits longer on purpose (many Delays in a row) needs a higher value or 0 under **Bot Flows → Executions: retention and limit**.
 - Webhook callers that send the secret as `?secret=` in the address keep working unchanged; the recommended way is the `X-Webhook-Secret` header. **Bot Flows** shows per flow how many calls still use the address, so callers can be switched over before the address form is turned off under **Bot Flows → Webhooks**. [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
 - Webhook calls now have their own limits: a body above **1 MB** gets 413 (before, up to 10 MB was read), more than **120** calls or **10** failed calls per address and minute get 429. If a caller sends more, raise the values on the Bot Flows page under **Webhooks**. Behind a reverse proxy the limits count per visitor only with the right `TRUST_PROXY` (Settings → Network). [#405](https://github.com/DomeNinchen/ts6forkmanager/pull/405)
 - Imported flows an admin already switched on stay approved after the update (shown as "Approved", without name and date). From now on a change by a user who is not an admin to what an approved imported flow does switches it off until an admin switches it on again. [#400](https://github.com/DomeNinchen/ts6forkmanager/pull/400)

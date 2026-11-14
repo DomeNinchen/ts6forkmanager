@@ -238,6 +238,8 @@
       },
       "retention": {
         "title": "Ausführungen: Aufbewahrung und Limit",
+        "maxRuntimeHint": "0 bis {{max}}; 0 = ohne Grenze. Gezählt ab dem Start, auch über einen Neustart hinweg. Länger laufende Ausführungen enden vor dem nächsten Knoten oder am Ende einer Verzögerung als fehlgeschlagen; ein WebQuery-Befehl oder HTTP-Aufruf, der gerade läuft, wird noch beendet.",
+        "maxRuntimeLabel": "Höchstdauer einer Ausführung (Minuten)",
         "description": "Wie lange der Ausführungsverlauf aller Bot-Flows (Ausführungen und ihre Logzeilen) aufbewahrt wird. Gilt für die ganze Instanz; Älteres wird stündlich entfernt.",
         "retentionLabel": "Aufbewahrung (Tage)",
         "retentionHint": "Zwischen {{min}} und {{max}} Tagen.",
