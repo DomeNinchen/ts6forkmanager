@@ -29,6 +29,7 @@ export * from './utils/file-repository.js';
 export * from './utils/version-compare.js';
 export * from './utils/permission-overview.js';
 export * from './utils/permission-action.js';
+export * from './utils/permission-whatif.js';
 export * from './widget-themes.js';
 export * from './user-settings.js';
 export * from './permissions.js';

@@ -2,7 +2,10 @@ import { Router, Request, Response } from 'express';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { requireRole, requirePermission } from '../middleware/rbac.js';
-import { evaluatePermissionAction, OVERVIEW_TIER_RANK, PERMISSION_ACTIONS, type PermissionAction } from '@ts6/common';
+import {
+  evaluatePermissionAction, evaluateWhatIf, OVERVIEW_TIER_RANK, PERMISSION_ACTIONS, WHATIF_MAX_CHANGES, WhatIfError,
+  type PermissionAction, type PermissionActionInput, type WhatIfChange, type WhatIfGroupPerm, type WhatIfRow, type WhatIfValue, type WhatIfWho,
+} from '@ts6/common';
 
 export const permissionRoutes: Router = Router({ mergeParams: true });
 
@@ -63,16 +66,16 @@ const asId = (v: unknown, what: string, required = true): number | undefined => 
 };
 const list = (r: any): any[] => (Array.isArray(r) ? r : r ? [r] : []);
 
-permissionRoutes.get('/explain', async (req: Request, res: Response, next) => {
-  try {
-    const action = String(req.query.action ?? '') as PermissionAction;
+// Everything /explain and /explain-whatif read from TeamSpeak (reads only), and the evaluation input built from it.
+async function gatherExplain(req: Request, q: Record<string, unknown>) {
+    const action = String(q.action ?? '') as PermissionAction;
     if (!(PERMISSION_ACTIONS as readonly string[]).includes(action)) throw new AppError(400, 'Unknown action');
-    const actorDbid = asId(req.query.actor, 'actor')!;
-    const targetDbid = asId(req.query.target, 'target')!;
+    const actorDbid = asId(q.actor, 'actor')!;
+    const targetDbid = asId(q.target, 'target')!;
     const isGroup = action === 'group-add' || action === 'group-remove';
-    const sgid = asId(req.query.sgid, 'sgid', isGroup);
-    const destination = asId(req.query.destination, 'destination', action === 'move');
-    const banDuration = asId(req.query.duration, 'duration', false) ?? 0;
+    const sgid = asId(q.sgid, 'sgid', isGroup);
+    const destination = asId(q.destination, 'destination', action === 'move');
+    const banDuration = asId(q.duration, 'duration', false) ?? 0;
     if (actorDbid === targetDbid) throw new AppError(400, 'Actor and target must be different clients');
 
     const client = getClient(req);
@@ -119,36 +122,126 @@ permissionRoutes.get('/explain', async (req: Request, res: Response, next) => {
       overview(targetDbid, targetCid),
     ]);
     let group: { sgid: number; perms: { permsid: string; permvalue: number }[]; targetIsMember: boolean } | undefined;
+    let targetGroups: number[] | undefined;
     if (isGroup) {
-      const groupPerms = await client.execute(sid, 'servergrouppermlist', { sgid, '-permsid': '' }).then(list).catch((err) => {
-        if (err instanceof TSApiError && err.code === 1281) return [];
-        if (err instanceof TSApiError && err.code === 2560) throw new AppError(404, 'The server group does not exist', undefined, 'group-not-found');
-        throw err;
-      });
-      const memberOf = await client.execute(sid, 'servergroupsbyclientid', { cldbid: targetDbid }).then(list).catch((err) => {
-        if (err instanceof TSApiError && err.code === 1281) return [];
-        throw err;
-      });
+      const groupPerms = await groupPermList(client, sid, sgid!);
+      if (!groupPerms) throw new AppError(404, 'The server group does not exist', undefined, 'group-not-found');
+      targetGroups = await groupsOf(client, sid, targetDbid);
       group = {
         sgid: sgid!,
-        perms: groupPerms.map((p) => ({ permsid: String(p.permsid), permvalue: Number(p.permvalue) || 0 })),
-        targetIsMember: memberOf.some((g) => Number(g.sgid) === sgid),
+        perms: groupPerms.map((p) => ({ permsid: p.permsid, permvalue: p.permvalue })),
+        targetIsMember: targetGroups.includes(sgid!),
       };
     }
 
-    const result = evaluatePermissionAction({
+    const input: PermissionActionInput<WhatIfRow> = {
       action, targetOnline: !!targetOn, actorOnline: !!actorOn,
       actorInOwnChannel, actorInTargetChannel, actorInDestination, target, group, banDuration,
       destinationIsTargetChannel: destination !== undefined && !!targetOn && destination === targetCid,
-    });
-    res.json({
-      ...result,
-      context: {
-        actor: { cldbid: actorDbid, online: !!actorOn, cid: actorCid },
-        target: { cldbid: targetDbid, online: !!targetOn, cid: targetCid },
-        destination: destination ?? null, sgid: sgid ?? null, banDuration, defaultCid,
-      },
-    });
+    };
+    const context = {
+      actor: { cldbid: actorDbid, online: !!actorOn, cid: actorCid },
+      target: { cldbid: targetDbid, online: !!targetOn, cid: targetCid },
+      destination: destination ?? null, sgid: sgid ?? null, banDuration, defaultCid,
+    };
+    return { input, context, client, sid, permNames: new Set(permName.values()), targetGroups };
+}
+
+/** A server group's own permissions with their flags; null when the group does not exist. */
+async function groupPermList(client: ReturnType<typeof getClient>, sid: number, sgid: number): Promise<WhatIfGroupPerm[] | null> {
+  try {
+    return list(await client.execute(sid, 'servergrouppermlist', { sgid, '-permsid': '' })).map((p) => ({
+      permsid: String(p.permsid), permvalue: Number(p.permvalue) || 0, permnegated: Number(p.permnegated) || 0, permskip: Number(p.permskip) || 0,
+    }));
+  } catch (err) {
+    if (err instanceof TSApiError && err.code === 1281) return [];
+    if (err instanceof TSApiError && err.code === 2560) return null;
+    throw err;
+  }
+}
+
+async function groupsOf(client: ReturnType<typeof getClient>, sid: number, cldbid: number): Promise<number[]> {
+  try { return list(await client.execute(sid, 'servergroupsbyclientid', { cldbid })).map((g) => Number(g.sgid)); } catch (err) {
+    if (err instanceof TSApiError && err.code === 1281) return [];
+    throw err;
+  }
+}
+
+permissionRoutes.get('/explain', async (req: Request, res: Response, next) => {
+  try {
+    const { input, context } = await gatherExplain(req, req.query);
+    res.json({ ...evaluatePermissionAction(input), context });
+  } catch (err) { next(err); }
+});
+
+// R11 stage 4 "what if": the same evaluation before and after planned changes to server group memberships and
+// to server group / client permission values. Reads only - nothing is written to TeamSpeak.
+const WHO = new Set(['actor', 'target']);
+function parseChanges(raw: unknown, permNames: Set<string>): WhatIfChange[] {
+  if (!Array.isArray(raw) || raw.length === 0) throw new AppError(400, 'changes must be a non-empty list');
+  if (raw.length > WHATIF_MAX_CHANGES) throw new AppError(400, `At most ${WHATIF_MAX_CHANGES} changes`);
+  const perm = (v: unknown, i: number) => {
+    const s = typeof v === 'string' ? v : '';
+    if (!PERMSID_PATTERN.test(s) || !permNames.has(s)) throw new AppError(400, `Change ${i + 1}: unknown permission`);
+    return s;
+  };
+  const who = (v: unknown, i: number) => {
+    if (!WHO.has(String(v))) throw new AppError(400, `Change ${i + 1}: who must be actor or target`);
+    return v as WhatIfWho;
+  };
+  const value = (v: any, i: number): WhatIfValue | null => {
+    if (v === null) return null;
+    if (!Number.isInteger(v?.permvalue)) throw new AppError(400, `Change ${i + 1}: permvalue must be a whole number`);
+    return { permvalue: v.permvalue, permnegated: !!v.permnegated, permskip: !!v.permskip };
+  };
+  return raw.map((c: any, i): WhatIfChange => {
+    switch (c?.kind) {
+      case 'group-member':
+        if (c.op !== 'add' && c.op !== 'remove') throw new AppError(400, `Change ${i + 1}: op must be add or remove`);
+        return { kind: 'group-member', who: who(c.who, i), sgid: asId(c.sgid, `Change ${i + 1}: sgid`)!, op: c.op };
+      case 'group-perm':
+        return { kind: 'group-perm', sgid: asId(c.sgid, `Change ${i + 1}: sgid`)!, permsid: perm(c.permsid, i), value: value(c.value, i) };
+      case 'client-perm':
+        return { kind: 'client-perm', who: who(c.who, i), permsid: perm(c.permsid, i), value: value(c.value, i) };
+      default:
+        throw new AppError(400, `Change ${i + 1}: unknown kind`);
+    }
+  });
+}
+
+permissionRoutes.post('/explain-whatif', async (req: Request, res: Response, next) => {
+  try {
+    const body = req.body ?? {};
+    const { input, context, client, sid, permNames, targetGroups } = await gatherExplain(req, body);
+    const changes = parseChanges(body.changes, permNames);
+    const [info, serverGroups, actorGroups, tGroups] = await Promise.all([
+      client.execute(sid, 'serverinfo'),
+      client.execute(sid, 'servergrouplist').then(list),
+      groupsOf(client, sid, context.actor.cldbid),
+      targetGroups ?? groupsOf(client, sid, context.target.cldbid),
+    ]);
+    const defaultSgid = Number(info?.virtualserver_default_server_group);
+    // Only regular groups (type 1) can take members; template and query groups stay out (TS answers 2560/2564).
+    const regular = new Set(serverGroups.filter((g) => Number(g.type) === 1).map((g) => Number(g.sgid)));
+    const needed = new Set<number>([defaultSgid]);
+    for (const c of changes) if (c.kind === 'group-member' && c.op === 'add' && regular.has(c.sgid)) needed.add(c.sgid);
+    const groupPerms: Record<number, WhatIfGroupPerm[]> = {};
+    for (const g of needed) {
+      const perms = await groupPermList(client, sid, g);
+      if (perms) groupPerms[g] = perms;
+    }
+    let result;
+    try {
+      result = evaluateWhatIf({
+        base: input, changes, defaultSgid, groupPerms,
+        actor: { cldbid: context.actor.cldbid, groups: actorGroups },
+        target: { cldbid: context.target.cldbid, groups: tGroups },
+      });
+    } catch (err) {
+      if (err instanceof WhatIfError) throw new AppError(400, err.message, undefined, `whatif-${err.problem}`);
+      throw err;
+    }
+    res.json({ ...result, changes, context: { ...context, defaultSgid } });
   } catch (err) { next(err); }
 });
 
