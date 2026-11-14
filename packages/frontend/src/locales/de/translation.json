@@ -1861,7 +1861,8 @@
       "downloadQuotaMb": "Download-Kontingent (MB)",
       "uploadBandwidth": "Upload-Bandbreite (Bytes/s)",
       "downloadBandwidth": "Download-Bandbreite (Bytes/s)",
-      "zeroUnlimited": "0 = unbegrenzt"
+      "quotaUnlimitedHint": "-1 = unbegrenzt (TeamSpeak zeigt dann die größtmögliche Zahl). 0 sperrt Dateiübertragungen.",
+      "bandwidthUnlimitedHint": "-1 = unbegrenzt (TeamSpeak zeigt dann die größtmögliche Zahl)."
     },
     "notFound": {
       "title": "Seite nicht gefunden",

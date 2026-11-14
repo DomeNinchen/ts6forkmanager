@@ -944,7 +944,8 @@
       "downloadQuotaMb": "Quota de download (Mo)",
       "uploadBandwidth": "Bande passante d'upload (octets/s)",
       "downloadBandwidth": "Bande passante de download (octets/s)",
-      "zeroUnlimited": "0 = illimité"
+      "quotaUnlimitedHint": "-1 = illimité (TeamSpeak affiche alors le plus grand nombre possible). 0 bloque les transferts de fichiers.",
+      "bandwidthUnlimitedHint": "-1 = illimité (TeamSpeak affiche alors le plus grand nombre possible)."
     },
     "notFound": {
       "title": "Page introuvable",
