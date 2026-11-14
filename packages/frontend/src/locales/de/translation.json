@@ -1380,7 +1380,21 @@
       "namePlaceholder": "Mein TeamSpeak-Server",
       "portOptional": "Port (optional)",
       "portPlaceholder": "Leer lassen für ersten freien Port",
-      "autostartWithInstance": "Automatisch mit der Instanz starten"
+      "autostartWithInstance": "Automatisch mit der Instanz starten",
+      "deleteStopFirst": "Zuerst den Server stoppen - nur ein gestoppter Server kann gelöscht werden.",
+      "deleteDialogTitle": "Virtuellen Server löschen",
+      "deleteDialogDescription": "Löscht \"{{name}}\" (SID {{sid}}) endgültig von dieser TeamSpeak-Instanz. Das lässt sich nicht rückgängig machen.",
+      "deleteWhatGoes": "Alles dieses Servers geht mit: Kanäle und ihre Dateien, Server- und Kanalgruppen, Rechte, die Client-Datenbank, Banns, Icons und Tokens.",
+      "deleteSnapshotNote": "Ein Snapshot (Seite Sonstiges) holt nur einen Teil zurück: Gruppen, Kanäle und Client-Profile, aber keine Banns, Icons oder Kanaldateien. Lege vorher einen an, falls du den Server noch brauchen könntest.",
+      "deleteLastWarning": "Das ist der letzte virtuelle Server dieser Instanz. Bis ein neuer angelegt ist, kann sich niemand verbinden.",
+      "deleteFirstWarning": "Das ist der erste Server der Instanz (SID 1), meist der, den Clients über den Standard-Port erreichen.",
+      "deleteTypeName": "Zum Bestätigen den Servernamen eintippen: {{name}}",
+      "deleteConfirm": "Endgültig löschen",
+      "deleted": "Virtueller Server \"{{name}}\" gelöscht",
+      "deleteFailed": "Virtueller Server konnte nicht gelöscht werden",
+      "deleteRunning": "Der Server läuft - erst stoppen, dann löschen.",
+      "deleteNotFound": "Diesen virtuellen Server gibt es nicht mehr. Die Liste wurde neu geladen.",
+      "deleteNoPermission": "Das Query-Konto der Verbindung darf keine virtuellen Server löschen (b_virtualserver_delete)."
     },
     "snapshotCompare": {
       "title": "Snapshot-Vergleich",
