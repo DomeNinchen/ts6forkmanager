@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Search, Check, X, Ban, ArrowRight, Info, Layers, Lightbulb } from 'lucide-react';
-import { PERMISSION_ACTIONS, type PermissionAction, type PermissionCheck } from '@ts6/common';
-import { permissionsApi, type ExplainResult, type ExplainRow } from '@/api/permissions.api';
+import { Search, Check, X, Ban, ArrowRight, Info, Layers, Lightbulb, Plus, Trash2, FlaskConical, Clock } from 'lucide-react';
+import { PERMISSION_ACTIONS, WHATIF_MAX_CHANGES, type PermissionAction, type PermissionCheck, type PermissionVerdict, type WhatIfChange, type WhatIfWho } from '@ts6/common';
+import { permissionsApi, type ExplainResult, type ExplainRow, type WhatIfExplainResult } from '@/api/permissions.api';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useAuthStore } from '@/stores/auth.store';
+import { useTemporaryGroups } from '@/hooks/use-groups';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +31,8 @@ interface Props {
   clientsLoading: boolean;
   channels: { cid: string; name: string }[];
   serverGroups: { sgid: string; name: string }[];
+  /** Every permission name (permsid), for the "what if" value changes. */
+  permissions: string[];
   describeSource: (row: ExplainRow) => SourceInfo;
   permDesc: (permsid: string) => string;
   onJump: (hit: SourceInfo['hit'], permsid: string) => void;
@@ -97,8 +102,133 @@ function ClientField({ id, label, clients, loading, value, onChange }: {
   );
 }
 
-export function WhyPanel({ configId, sid, clients, clientsLoading, channels, serverGroups, describeSource, permDesc, onJump, onShowOverview }: Props) {
+type ChangeKind = 'add' | 'remove' | 'group-perm' | 'client-perm';
+
+/** R11 stage 4 "what if": the planned changes, each added from a small form; the list is what gets simulated. */
+function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, tempUntil }: {
+  changes: WhatIfChange[];
+  onChange: (next: WhatIfChange[]) => void;
+  serverGroups: Props['serverGroups'];
+  permissions: string[];
+  describe: (c: WhatIfChange) => string;
+  tempUntil: (c: WhatIfChange) => string | null;
+}) {
   const { t } = useTranslation();
+  const [kind, setKind] = useState<ChangeKind>('add');
+  const [who, setWho] = useState<WhatIfWho>('actor');
+  const [sgid, setSgid] = useState('');
+  const [permsid, setPermsid] = useState('');
+  const [value, setValue] = useState('');
+  const [removeValue, setRemoveValue] = useState(false);
+  const [negated, setNegated] = useState(false);
+  const [skip, setSkip] = useState(false);
+
+  const needsGroup = kind !== 'client-perm';
+  const needsWho = kind !== 'group-perm';
+  const isValue = kind === 'group-perm' || kind === 'client-perm';
+  const n = Number(value);
+  const problem = needsGroup && !sgid ? 'group'
+    : isValue && !permissions.includes(permsid.trim()) ? 'permission'
+    : isValue && !removeValue && (value.trim() === '' || !Number.isInteger(n)) ? 'value'
+    : changes.length >= WHATIF_MAX_CHANGES ? 'tooMany' : null;
+
+  const add = () => {
+    const v = removeValue ? null : { permvalue: n, ...(kind === 'group-perm' ? { permnegated: negated } : {}), permskip: skip };
+    const c: WhatIfChange = kind === 'add' || kind === 'remove' ? { kind: 'group-member', who, sgid: Number(sgid), op: kind }
+      : kind === 'group-perm' ? { kind: 'group-perm', sgid: Number(sgid), permsid: permsid.trim(), value: v }
+      : { kind: 'client-perm', who, permsid: permsid.trim(), value: v };
+    onChange([...changes, c]);
+  };
+
+  return (
+    <div className="space-y-3 rounded-md border border-dashed border-border/60 p-3">
+      <div className="flex items-center gap-2">
+        <FlaskConical className="h-4 w-4 text-primary" aria-hidden />
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t('pages.permissions.why.whatif.title')}</h3>
+      </div>
+      <p className="text-[11px] text-muted-foreground">{t('pages.permissions.why.whatif.explanation')}</p>
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-end">
+        <div className="space-y-1.5 min-w-0">
+          <Label htmlFor="whatif-kind" className="text-xs">{t('pages.permissions.why.whatif.kind')}</Label>
+          <Select value={kind} onValueChange={(v) => setKind(v as ChangeKind)}>
+            <SelectTrigger id="whatif-kind" className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(['add', 'remove', 'group-perm', 'client-perm'] as const).map((k) => <SelectItem key={k} value={k}>{t(`pages.permissions.why.whatif.kinds.${k}`)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        {needsWho && (
+          <div className="space-y-1.5 min-w-0">
+            <Label htmlFor="whatif-who" className="text-xs">{t('pages.permissions.why.whatif.who')}</Label>
+            <Select value={who} onValueChange={(v) => setWho(v as WhatIfWho)}>
+              <SelectTrigger id="whatif-who" className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="actor">{t('pages.permissions.why.actor')}</SelectItem>
+                <SelectItem value="target">{t('pages.permissions.why.target')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {needsGroup && (
+          <div className="space-y-1.5 min-w-0">
+            <Label htmlFor="whatif-group" className="text-xs">{t('pages.permissions.why.group')}</Label>
+            <Select value={sgid} onValueChange={setSgid}>
+              <SelectTrigger id="whatif-group" className="h-8 text-xs"><SelectValue placeholder={t('pages.permissions.choosePlaceholder')} /></SelectTrigger>
+              <SelectContent>
+                {serverGroups.map((g) => <SelectItem key={g.sgid} value={g.sgid}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {isValue && (
+          <>
+            <div className="space-y-1.5 min-w-0">
+              <Label htmlFor="whatif-perm" className="text-xs">{t('pages.permissions.why.whatif.permission')}</Label>
+              <Input id="whatif-perm" list="whatif-perm-list" value={permsid} onChange={(e) => setPermsid(e.target.value)}
+                placeholder="i_client_kick_from_server_power" className="h-8 text-xs font-mono-data" autoComplete="off" />
+              <datalist id="whatif-perm-list">{permissions.map((p) => <option key={p} value={p} />)}</datalist>
+            </div>
+            <div className="space-y-1.5 min-w-0">
+              <Label htmlFor="whatif-value" className="text-xs">{t('pages.permissions.why.whatif.value')}</Label>
+              <Input id="whatif-value" type="number" value={value} disabled={removeValue} onChange={(e) => setValue(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 sm:col-span-2 lg:col-span-3 text-xs">
+              <label className="flex items-center gap-1.5"><Checkbox checked={removeValue} onCheckedChange={(v) => setRemoveValue(!!v)} />{t('pages.permissions.why.whatif.removeValue')}</label>
+              {kind === 'group-perm' && <label className="flex items-center gap-1.5"><Checkbox checked={negated} disabled={removeValue} onCheckedChange={(v) => setNegated(!!v)} />{t('pages.permissions.why.whatif.negated')}</label>}
+              <label className="flex items-center gap-1.5"><Checkbox checked={skip} disabled={removeValue} onCheckedChange={(v) => setSkip(!!v)} />{t('pages.permissions.why.whatif.skip')}</label>
+            </div>
+          </>
+        )}
+        <Button variant="outline" size="sm" className="h-8 text-xs" disabled={!!problem} onClick={add}>
+          <Plus className="h-3.5 w-3.5 mr-1" aria-hidden /> {t('pages.permissions.why.whatif.add')}
+        </Button>
+      </div>
+      {problem && <p className="text-[11px] text-muted-foreground">{t(`pages.permissions.why.whatif.missing.${problem}`, { max: WHATIF_MAX_CHANGES })}</p>}
+      {changes.length > 0 && (
+        <ol className="space-y-1" aria-label={t('pages.permissions.why.whatif.planned')}>
+          {changes.map((c, i) => {
+            const until = tempUntil(c);
+            return (
+              <li key={i} className="flex flex-wrap items-center gap-2 rounded-sm bg-muted/30 px-2 py-1 text-xs">
+                <span className="text-muted-foreground font-mono-data">{i + 1}.</span>
+                <span className="flex-1 min-w-[10rem]">{describe(c)}</span>
+                {until && <span className="inline-flex items-center gap-1 text-[11px] text-amber-500"><Clock className="h-3 w-3" aria-hidden />{t('pages.permissions.why.whatif.temporary', { until })}</span>}
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" aria-label={t('pages.permissions.why.whatif.removeChange', { n: i + 1 })}
+                  onClick={() => onChange(changes.filter((_, j) => j !== i))}>
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                </Button>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+export function WhyPanel({ configId, sid, clients, clientsLoading, channels, serverGroups, permissions, describeSource, permDesc, onJump, onShowOverview }: Props) {
+  const { t, i18n } = useTranslation();
+  const [changes, setChanges] = useState<WhatIfChange[]>([]);
   const [actor, setActor] = useState('');
   const [target, setTarget] = useState('');
   const [action, setAction] = useState<PermissionAction>('kick-server');
@@ -115,22 +245,55 @@ export function WhyPanel({ configId, sid, clients, clientsLoading, channels, ser
     : action === 'ban' && !durationValid ? 'duration' : null;
 
   const explain = useMutation({
-    mutationFn: () => permissionsApi.explain(configId, sid, {
-      actor: Number(actor), target: Number(target), action,
-      ...(isGroup ? { sgid: Number(sgid) } : {}),
-      ...(action === 'move' ? { destination: Number(destination) } : {}),
-      ...(action === 'ban' ? { duration } : {}),
-    }),
+    mutationFn: async (): Promise<{ plain: ExplainResult } | { whatif: WhatIfExplainResult }> => {
+      const params = {
+        actor: Number(actor), target: Number(target), action,
+        ...(isGroup ? { sgid: Number(sgid) } : {}),
+        ...(action === 'move' ? { destination: Number(destination) } : {}),
+        ...(action === 'ban' ? { duration } : {}),
+      };
+      return changes.length > 0
+        ? { whatif: await permissionsApi.explainWhatIf(configId, sid, { ...params, changes }) }
+        : { plain: await permissionsApi.explain(configId, sid, params) };
+    },
   });
+  const updateChanges = (next: WhatIfChange[]) => { setChanges(next); explain.reset(); };
 
   const nameOf = (cldbid: number | string) => clients.find((c) => c.id === String(cldbid))?.name ?? t('pages.permissions.clientFallback', { id: cldbid });
   const channelName = (cid: number | string | null) => channels.find((ch) => ch.cid === String(cid))?.name ?? t('pages.permissions.channelFallback', { id: cid });
   const groupName = (id: number | string | null) => serverGroups.find((g) => g.sgid === String(id))?.name ?? t('pages.permissions.serverGroupFallback', { id });
 
+  const whoName = (w: WhatIfWho) => {
+    const id = w === 'actor' ? actor : target;
+    return id ? nameOf(id) : t(`pages.permissions.why.${w}`);
+  };
+  const describeChange = (c: WhatIfChange): string => {
+    const val = (v: { permvalue: number; permnegated?: boolean; permskip?: boolean } | null) => v === null ? ''
+      : `${v.permvalue}${v.permnegated ? ' (N)' : ''}${v.permskip ? ' (S)' : ''}`;
+    if (c.kind === 'group-member') return t(`pages.permissions.why.whatif.describe.${c.op}`, { client: whoName(c.who), group: groupName(c.sgid) });
+    const key = c.value === null ? 'unset' : 'set';
+    return c.kind === 'group-perm'
+      ? t(`pages.permissions.why.whatif.describe.group-${key}`, { group: groupName(c.sgid), perm: c.permsid, value: val(c.value) })
+      : t(`pages.permissions.why.whatif.describe.client-${key}`, { client: whoName(c.who), perm: c.permsid, value: val(c.value) });
+  };
+  // R13: a temporary membership only gets a hint, it does not change the calculation (decision 5)
+  const mayMembers = useAuthStore((s) => s.can('groups.members'));
+  const temps = useTemporaryGroups('open', mayMembers && changes.some((c) => c.kind === 'group-member'));
+  const tempUntil = (c: WhatIfChange): string | null => {
+    if (c.kind !== 'group-member' || c.op !== 'remove') return null;
+    const cldbid = Number(c.who === 'actor' ? actor : target);
+    const hit = (temps.data ?? []).find((e) => e.sgid === c.sgid && e.cldbid === cldbid);
+    return hit ? new Date(hit.expiresAt).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }) : null;
+  };
+
   const errorText = (err: any): string => {
     const code = err?.response?.data?.code;
     if (typeof code === 'string' && ['actor-not-found', 'target-not-found', 'group-not-found', 'destination-not-found'].includes(code)) {
       return t(`pages.permissions.why.error.${code}`);
+    }
+    if (typeof code === 'string' && code.startsWith('whatif-')) {
+      const n = /change (\d+)/i.exec(String(err.response.data.error ?? ''))?.[1];
+      return t(`pages.permissions.why.whatif.error.${code.slice(7)}`, { n: n ?? '?', defaultValue: t('pages.permissions.why.error.generic') });
     }
     // No answer, or a proxy's 502-504 without the backend's JSON: the manager itself is not reachable
     const data = err?.response?.data;
@@ -201,12 +364,14 @@ export function WhyPanel({ configId, sid, clients, clientsLoading, channels, ser
                 </div>
               )}
               <Button className="w-full" disabled={!!missing || explain.isPending} onClick={() => explain.mutate()}>
-                {t('pages.permissions.why.check')}
+                {changes.length > 0 ? t('pages.permissions.why.whatif.check', { count: changes.length }) : t('pages.permissions.why.check')}
               </Button>
               {missing && <p className="text-[11px] text-muted-foreground">{t(`pages.permissions.why.missing.${missing}`)}</p>}
             </div>
             <ClientField id="why-target" label={t('pages.permissions.why.target')} clients={clients} loading={clientsLoading} value={target} onChange={setTarget} />
           </div>
+          <WhatIfEditor changes={changes} onChange={updateChanges} serverGroups={serverGroups} permissions={permissions}
+            describe={describeChange} tempUntil={tempUntil} />
         </CardContent>
       </Card>
 
@@ -214,19 +379,57 @@ export function WhyPanel({ configId, sid, clients, clientsLoading, channels, ser
       {explain.isError && (
         <Card className="card-hero border-destructive/40"><CardContent className="py-4 text-sm text-destructive" role="alert">{errorText(explain.error)}</CardContent></Card>
       )}
-      {explain.data && !explain.isPending && (
+      {explain.data && !explain.isPending && 'plain' in explain.data && (
         <Result
-          result={explain.data}
+          result={explain.data.plain}
           nameOf={nameOf} channelName={channelName} groupName={groupName}
           describeSource={describeSource} permDesc={permDesc} onJump={onJump} onShowOverview={onShowOverview}
         />
       )}
+      {explain.data && !explain.isPending && 'whatif' in explain.data && (() => {
+        const w = explain.data.whatif;
+        const wrap = (v: PermissionVerdict<ExplainRow>): ExplainResult => ({ ...v, context: w.context });
+        const changed = w.before.verdict !== w.after.verdict;
+        const verdictText = (v: string) => t(`pages.permissions.why.verdict.${v}`);
+        const groupLines = (['actor', 'target'] as const)
+          .filter((who) => w.groups[who].before.join() !== w.groups[who].after.join())
+          .map((who) => t('pages.permissions.why.whatif.groupsChange', {
+            client: nameOf(w.context[who].cldbid),
+            before: w.groups[who].before.map(groupName).join(', '),
+            after: w.groups[who].after.map(groupName).join(', '),
+          }));
+        return (
+          <div className="space-y-3">
+            <div role="status" className={cn('rounded-md border p-3 text-xs space-y-1', changed ? 'border-primary/50 bg-primary/5' : 'border-border/50')}>
+              <p className="flex items-center gap-2 font-medium">
+                <FlaskConical className="h-4 w-4 text-primary" aria-hidden />{t('pages.permissions.why.whatif.nothingChanged')}
+              </p>
+              <p>{changed
+                ? t('pages.permissions.why.whatif.verdictChanged', { before: verdictText(w.before.verdict), after: verdictText(w.after.verdict) })
+                : t('pages.permissions.why.whatif.verdictSame', { verdict: verdictText(w.after.verdict) })}</p>
+              {groupLines.map((l) => <p key={l} className="text-muted-foreground">{l}</p>)}
+            </div>
+            <div className="grid gap-3 grid-cols-1 xl:grid-cols-2">
+              <Result heading={t('pages.permissions.why.whatif.before')} result={wrap(w.before)}
+                nameOf={nameOf} channelName={channelName} groupName={groupName}
+                describeSource={describeSource} permDesc={permDesc} onJump={onJump} onShowOverview={onShowOverview} />
+              <Result heading={t('pages.permissions.why.whatif.after')} preview result={wrap(w.after)}
+                nameOf={nameOf} channelName={channelName} groupName={groupName}
+                describeSource={describeSource} permDesc={permDesc} onJump={onJump} onShowOverview={onShowOverview} />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
 
-function Result({ result, nameOf, channelName, groupName, describeSource, permDesc, onJump, onShowOverview }: {
+function Result({ result, heading, preview, nameOf, channelName, groupName, describeSource, permDesc, onJump, onShowOverview }: {
   result: ExplainResult;
+  /** "Before" / "after" in a what-if comparison. */
+  heading?: string;
+  /** The planned state: no overview link and no fix suggestion (both would point at today's rights). */
+  preview?: boolean;
   nameOf: (id: number | string) => string;
   channelName: (cid: number | string | null) => string;
   groupName: (id: number | string | null) => string;
@@ -297,7 +500,8 @@ function Result({ result, nameOf, channelName, groupName, describeSource, permDe
   return (
     <Card className="card-hero">
       <CardHeader className="pb-2">
-        <div className="flex flex-wrap items-center gap-3" role="status">
+        {heading && <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{heading}</p>}
+        <div className="flex flex-wrap items-center gap-3" role={heading ? undefined : 'status'}>
           <Icon className={cn('h-6 w-6', tone)} aria-hidden />
           <div>
             <p className={cn('text-base font-semibold', tone)}>{t(`pages.permissions.why.verdict.${result.verdict}`)}</p>
@@ -305,9 +509,11 @@ function Result({ result, nameOf, channelName, groupName, describeSource, permDe
               {actor} <ArrowRight className="inline h-3 w-3" aria-hidden /> {t(`pages.permissions.why.actions.${result.action}`)} <ArrowRight className="inline h-3 w-3" aria-hidden /> {target}
             </p>
           </div>
-          <Button variant="outline" size="sm" className="ml-auto h-7 text-xs" onClick={() => onShowOverview(String(ctx.actor.cldbid), String(ctx.target.online ? ctx.target.cid : ctx.actor.cid))}>
-            <Layers className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.why.showOverview', { name: actor })}
-          </Button>
+          {!preview && (
+            <Button variant="outline" size="sm" className="ml-auto h-7 text-xs" onClick={() => onShowOverview(String(ctx.actor.cldbid), String(ctx.target.online ? ctx.target.cid : ctx.actor.cid))}>
+              <Layers className="h-3.5 w-3.5 mr-1" /> {t('pages.permissions.why.showOverview', { name: actor })}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -322,7 +528,7 @@ function Result({ result, nameOf, channelName, groupName, describeSource, permDe
           </ul>
         )}
         {result.checks.map((c, i) => {
-          const fix = result.verdict === 'impossible' ? null : fixFor(c);
+          const fix = result.verdict === 'impossible' || preview ? null : fixFor(c);
           return (
             <div key={i} className={cn('rounded-md border p-3 space-y-2', c.ok ? 'border-border/50' : 'border-destructive/40')}>
               <div className="flex items-start gap-2">
