@@ -220,7 +220,8 @@ permissionRoutes.post('/explain-whatif', async (req: Request, res: Response, nex
       groupsOf(client, sid, context.actor.cldbid),
       targetGroups ?? groupsOf(client, sid, context.target.cldbid),
     ]);
-    const defaultSgid = Number(info?.virtualserver_default_server_group);
+    const defaultSgid = Number(list(info)[0]?.virtualserver_default_server_group);
+    if (!Number.isInteger(defaultSgid)) throw new AppError(502, 'TeamSpeak did not report the default server group');
     // Only regular groups (type 1) can take members; template and query groups stay out (TS answers 2560/2564).
     const regular = new Set(serverGroups.filter((g) => Number(g.type) === 1).map((g) => Number(g.sgid)));
     const needed = new Set<number>([defaultSgid]);
