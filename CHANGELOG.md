@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.116.0 · frontend 3.134.0 · sidecar 2.4.0**
+Versions at the end of the month: **backend 2.117.0 · frontend 3.135.0 · sidecar 2.4.0**
 
 ### New Features
 
@@ -38,12 +38,14 @@ Versions at the end of the month: **backend 2.116.0 · frontend 3.134.0 · sidec
 
 ### Security
 
+- **Webhook secret in the X-Webhook-Secret header** — The header is now the documented way to send a webhook secret: the editor shows an example call with it, and each flow counts the calls that still send the secret as `?secret=` in the address, shown as a badge on **Bot Flows** and as a warning at the webhook trigger. A new switch under **Bot Flows → Webhooks**, "Allow ?secret= in the address" (on by default), turns the address form off; such calls then get 404. *backend 2.117.0, frontend 3.135.0* [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
 - **Limits on incoming webhook calls** — The webhook route now checks, before reading the body, how many calls an address makes per minute (valid ones and ones with an unknown path or wrong secret counted apart, the latter much stricter) and how large the body is; beyond that it answers 429 with `Retry-After` or 413. Too many failed calls from one address show up in the Connection Journal, once per address and minute. The limits (default 1 MB, 120 valid and 10 failed calls per address and minute) are set by an admin on the Bot Flows page under **Webhooks**. The secret check takes the same time whatever the length of the secret sent. *backend 2.116.0, frontend 3.134.0* [#405](https://github.com/DomeNinchen/ts6forkmanager/pull/405)
 - **Webhook secret kept out of flow data** — A webhook secret sent as `?secret=` is no longer part of `event.webhook_query`, so a flow never sees it and its executions never store it. *backend 2.93.0* [#355](https://github.com/DomeNinchen/ts6forkmanager/pull/355)
 - **Dependency updates** — `follow-redirects` 1.16.2 and `qs` 6.17.1 close two Dependabot alerts; neither was reachable in this app. *backend 2.88.1* [#345](https://github.com/DomeNinchen/ts6forkmanager/pull/345)
 
 ### Bug Fixes
 
+- Fixed the webhook trigger and the three webhook templates presenting the secret as optional ("leave empty for no auth"): a webhook without a secret never fires. The secret is now a required field of the templates and the editor says so. *frontend 3.135.0* [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
 - Fixed the admin approval of imported flows: it was kept inside the flow's own data, where an edit could change it, and saving a flow in the editor dropped the flow's link to its template (so a newer version was no longer offered as an update). The server now keeps the link and the approval itself, and **Bot Flows** shows "Approval pending" or "Approved by … on …". When a user who is not an admin changes what an approved imported flow does (nodes, their settings or connections; moving or renaming nodes does not count), the flow is switched off and an admin has to switch it on again. *backend 2.115.0, frontend 3.133.0* [#400](https://github.com/DomeNinchen/ts6forkmanager/pull/400)
 - Fixed **Take** on the Support Queue page when a step failed halfway (for example TeamSpeak refused to move the supporter): the client stayed in the new room, a permanent or semi-permanent room was left behind, and the client lost their place once the grace period ran out. Now the client is moved back into the waiting channel, the room made for the case is removed when empty (or reused by the next try), and the message names the step that failed with TeamSpeak's answer. If the client cannot be moved back either, the case shows where the client is and offers **Bring back**. *backend 2.114.0, frontend 3.132.0* [#399](https://github.com/DomeNinchen/ts6forkmanager/pull/399)
 - Fixed the Queue tab of Music Bots on a phone: at 375 px the title column had no room left and the titles disappeared; the Source column is now hidden on narrow screens. *frontend 3.130.0* [#397](https://github.com/DomeNinchen/ts6forkmanager/pull/397)
@@ -85,6 +87,7 @@ Versions at the end of the month: **backend 2.116.0 · frontend 3.134.0 · sidec
 
 **Bot flows & music bots**
 
+- Webhook callers that send the secret as `?secret=` in the address keep working unchanged; the recommended way is the `X-Webhook-Secret` header. **Bot Flows** shows per flow how many calls still use the address, so callers can be switched over before the address form is turned off under **Bot Flows → Webhooks**. [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
 - Webhook calls now have their own limits: a body above **1 MB** gets 413 (before, up to 10 MB was read), more than **120** calls or **10** failed calls per address and minute get 429. If a caller sends more, raise the values on the Bot Flows page under **Webhooks**. Behind a reverse proxy the limits count per visitor only with the right `TRUST_PROXY` (Settings → Network). [#405](https://github.com/DomeNinchen/ts6forkmanager/pull/405)
 - Imported flows an admin already switched on stay approved after the update (shown as "Approved", without name and date). From now on a change by a user who is not an admin to what an approved imported flow does switches it off until an admin switches it on again. [#400](https://github.com/DomeNinchen/ts6forkmanager/pull/400)
 - Update backend and sidecar together (the usual update command does): reopening a live video and the separate sound of a YouTube live need sidecar 2.4.0. Live video stays off until an admin switches it on. [#395](https://github.com/DomeNinchen/ts6forkmanager/pull/395)

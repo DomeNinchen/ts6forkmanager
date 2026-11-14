@@ -201,6 +201,9 @@
     },
     "botList": {
       "selectServerFirst": "Please select a server first",
+      "querySecretHint": "Webhook calls with the secret in the address instead of the X-Webhook-Secret header, last on {{date}}. Details in the editor at the webhook trigger.",
+      "querySecret_other": "{{count}} calls with ?secret=",
+      "querySecret_one": "{{count}} call with ?secret=",
       "created": "Bot created",
       "createFailed": "Failed to create bot",
       "fromTemplate": "From Template",
@@ -231,6 +234,8 @@
       "deleted": "Bot deleted",
       "webhooks": {
         "title": "Webhooks: incoming limits",
+        "allowQuerySecretHint": "The recommended way is the X-Webhook-Secret header. While allowed, every flow counts and shows its calls with ?secret=; switched off, such calls get 404.",
+        "allowQuerySecretLabel": "Allow ?secret= in the address",
         "description": "Limits on incoming webhook calls, checked before the body is read. Valid calls (matching secret) and failed ones (unknown path or wrong secret) are counted apart per address. Applies to the whole instance.",
         "bodyLimitKbLabel": "Largest body (KB)",
         "bodyLimitKbHint": "{{min}} to {{max}} KB; larger calls get 413. A proxy in front may have its own, smaller limit.",
@@ -3620,10 +3625,13 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Webhook Path",
+          "querySecretWarning_other": "This flow was called {{count}} times with ?secret= in the address, last on {{date}}. Switch the callers to the X-Webhook-Secret header: addresses end up in access logs.",
+          "querySecretWarning_one": "This flow was called {{count}} time with ?secret= in the address, last on {{date}}. Switch the caller to the X-Webhook-Secret header: addresses end up in access logs.",
+          "exampleLabel": "Example call",
           "httpMethodLabel": "HTTP Method",
-          "secretLabel": "Secret (optional)",
-          "secretPlaceholder": "Leave empty for no auth",
-          "secretHint": "Validated via X-Webhook-Secret header or ?secret= query param"
+          "secretLabel": "Secret",
+          "secretPlaceholder": "Required: without a secret the webhook never fires",
+          "secretHint": "The caller sends the secret in the X-Webhook-Secret header."
         },
         "triggerCommand": {
           "listenChannelIdLabel": "Listen Channel ID (optional)",

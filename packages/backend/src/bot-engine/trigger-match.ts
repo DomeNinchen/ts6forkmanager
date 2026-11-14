@@ -67,6 +67,17 @@ export function webhookSecretMatches(expected: string, provided: string): boolea
   return timingSafeEqual(digest(expected), digest(provided));
 }
 
+/**
+ * The secret a webhook call sent and whether it came from the address (`?secret=`). The
+ * X-Webhook-Secret header wins when both are there; the address is read only while allowed.
+ */
+export function webhookSecretFrom(header: unknown, query: unknown, allowQuery: boolean): { secret: string; viaQuery: boolean } {
+  const fromHeader = typeof header === 'string' ? header : '';
+  if (fromHeader) return { secret: fromHeader, viaQuery: false };
+  const fromQuery = allowQuery && typeof query === 'string' ? query : '';
+  return { secret: fromQuery, viaQuery: fromQuery !== '' };
+}
+
 /** The event data of a webhook call. The secret, when sent as `?secret=`, is not part of it: it would end up in the execution's stored trigger data. */
 export function webhookEventData(path: string, method: string, body: unknown, query: Record<string, unknown>): Record<string, string> {
   const { secret: _secret, ...rest } = query || {};
