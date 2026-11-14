@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { createBackup, deleteBackup, listBackups, snapshotDirOf } from './backups.js';
+import { backupsWithSnapshot, createBackup, deleteBackup, listBackups, readBackupSnapshot, snapshotDirOf } from './backups.js';
 
 /** Settings rows plus one connection with WebQuery and one without. */
 function fakePrisma(includeTsSnapshots: boolean) {
@@ -55,6 +55,18 @@ test('TeamSpeak snapshots: one file per virtual server, a failing one only noted
       ['Main', 1, 'Lobby server', '1-1.json', null],
       ['Main', 2, 'Second', null, 'insufficient client permissions (2568)'],
     ]);
+
+    // What the Backups page and the comparison read: only the virtual servers with a file, newest backup first
+    assert.deepEqual(listBackups().find((b) => b.name === on.name)?.tsSnapshotTargets, [{ configId: 1, sid: 1, server: 'Main', virtualServer: 'Lobby server' }]);
+    assert.deepEqual(listBackups().find((b) => b.name === off.name)?.tsSnapshotTargets, undefined);
+    assert.deepEqual(backupsWithSnapshot(1, 1).map((b) => b.name), [on.name]);
+    assert.deepEqual(backupsWithSnapshot(1, 2), []);
+    assert.deepEqual(readBackupSnapshot('manual', on.name, 1, 1), { version: '3', data: 'KLUv/test' });
+    assert.throws(() => readBackupSnapshot('manual', on.name, 1, 2), /no snapshot of this virtual server/);
+    assert.throws(() => readBackupSnapshot('manual', off.name, 1, 1), /no snapshot of this virtual server/);
+    assert.throws(() => readBackupSnapshot('manual', '../ts6webui.db', 1, 1), /No such backup/);
+    fs.rmSync(path.join(folder, '1-1.json'));
+    assert.throws(() => readBackupSnapshot('manual', on.name, 1, 1), /missing or unreadable/);
 
     deleteBackup('manual', on.name);
     assert.ok(!fs.existsSync(folder));

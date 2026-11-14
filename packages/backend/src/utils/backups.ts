@@ -184,6 +184,7 @@ export function listBackups(): BackupEntry[] {
       migrationCount: manifest?.migrations.length ?? null,
       createdBy: manifest?.createdBy ?? null,
       tsSnapshots: manifest?.tsSnapshots ? manifest.tsSnapshots.filter((s) => s.file).length : null,
+      tsSnapshotTargets: manifest?.tsSnapshots?.filter((s) => s.file).map((s) => ({ configId: s.configId, sid: s.sid, server: s.server, virtualServer: s.virtualServer })),
     });
   }
   const before = beforeUpdatePattern(d.stem);
