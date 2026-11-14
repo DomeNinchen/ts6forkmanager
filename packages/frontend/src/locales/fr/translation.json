@@ -87,6 +87,16 @@
     "collapse": "Réduire",
     "menu": "Navigation",
     "openMenu": "Ouvrir la navigation",
+    "search": {
+      "open": "Rechercher",
+      "title": "Recherche globale",
+      "placeholder": "Rechercher des pages et des paramètres …",
+      "recent": "Ouverts récemment",
+      "pages": "Pages",
+      "empty": "Aucun résultat",
+      "ctrl": "Ctrl",
+      "hint": "↑↓ pour choisir, Entrée pour ouvrir, Échap pour fermer"
+    },
     "closeMenu": "Fermer la navigation",
     "sections": {
       "overview": "Vue d'ensemble",
