@@ -12,7 +12,9 @@ import type {
 } from '@ts6/common';
 import { FLOW_TEST_MAX_FRAMES } from '@ts6/common';
 import { AnimationManager } from './animation-manager.js';
-import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretMatches } from './trigger-match.js';
+import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretFrom, webhookSecretMatches } from './trigger-match.js';
+import { webhookSettings } from '../utils/webhook-settings.js';
+import { noteQuerySecretUse, startQuerySecretFlusher, stopQuerySecretFlusher } from '../utils/webhook-query-secret.js';
 import { onSupportCaseTaken } from '../utils/support-queue.js';
 import { AppError } from '../middleware/error-handler.js';
 import { animationConfig, animationFrames } from './animation-manager.js';
@@ -340,6 +342,7 @@ export class BotEngine {
 
   async start(): Promise<void> {
     if (this.running) return;
+    startQuerySecretFlusher(this.prisma);
 
     // Always register event listener (even if no flows yet — flows can be enabled later)
     this.eventBridge.on('tsEvent', this.onTsEvent.bind(this));
@@ -497,7 +500,9 @@ export class BotEngine {
     const pathParam = req.params.path;
     const webhookPath = Array.isArray(pathParam) ? pathParam.join('/') : String(pathParam || '');
     const method = req.method.toUpperCase();
-    const providedSecret = String(req.headers['x-webhook-secret'] || req.query.secret || '');
+    const { secret: providedSecret, viaQuery } = webhookSecretFrom(
+      req.headers['x-webhook-secret'], req.query.secret, webhookSettings().allowQuerySecret,
+    );
 
     const matching = this.webhookEntries.filter(w =>
       w.path === webhookPath && (w.method === method || w.method === 'ANY')
@@ -517,6 +522,7 @@ export class BotEngine {
 
       const flow = this.flows.get(wh.flowId);
       if (!flow) continue;
+      if (viaQuery) noteQuerySecretUse(flow.id);
 
       const webhookData = webhookEventData(webhookPath, method, req.body, req.query as Record<string, unknown>);
 
@@ -614,6 +620,7 @@ export class BotEngine {
     await this.stop();
     await this.flowRunner.shutdown(SHUTDOWN_GRACE_MS);
     await this.eventBridge.destroy();
+    await stopQuerySecretFlusher(this.prisma);
     this.broadcast('bot:engine:stopped', {});
   }
 

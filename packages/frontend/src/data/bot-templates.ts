@@ -916,7 +916,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
     icon: Webhook,
     configFields: [
       { key: 'path', label: t('data.botTemplates.items.webhookServerMessage.fields.path.label'), type: 'text', placeholder: 'server-notify', required: true },
-      { key: 'secret', label: t('data.botTemplates.items.webhookServerMessage.fields.secret.label'), type: 'text', placeholder: 'my-secret-key' },
+      { key: 'secret', label: t('data.botTemplates.items.webhookServerMessage.fields.secret.label'), type: 'text', placeholder: 'my-secret-key', required: true },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -939,7 +939,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
     configFields: [
       { key: 'path', label: t('data.botTemplates.items.webhookGroupAssign.fields.path.label'), type: 'text', placeholder: 'verify-user', required: true },
       { key: 'groupId', label: t('data.botTemplates.items.webhookGroupAssign.fields.groupId.label'), type: 'text', placeholder: '42', required: true },
-      { key: 'secret', label: t('data.botTemplates.items.webhookGroupAssign.fields.secret.label'), type: 'text', placeholder: 'my-secret-key' },
+      { key: 'secret', label: t('data.botTemplates.items.webhookGroupAssign.fields.secret.label'), type: 'text', placeholder: 'my-secret-key', required: true },
     ],
     flowDataFactory: (cfg) => {
       resetIds();
@@ -964,7 +964,7 @@ export function getBotTemplates(t: TFunction): BotTemplate[] { return [
       { key: 'path', label: t('data.botTemplates.items.webhookChannelRename.fields.path.label'), type: 'text', placeholder: 'update-status', required: true },
       { key: 'channelId', label: t('data.botTemplates.items.webhookChannelRename.fields.channelId.label'), type: 'text', placeholder: '42', required: true },
       { key: 'nameTemplate', label: t('data.botTemplates.items.webhookChannelRename.fields.nameTemplate.label'), type: 'text', placeholder: '[STATUS] {{event.webhook_body.status}}', required: true },
-      { key: 'secret', label: t('data.botTemplates.items.webhookChannelRename.fields.secret.label'), type: 'text', placeholder: 'my-secret-key' },
+      { key: 'secret', label: t('data.botTemplates.items.webhookChannelRename.fields.secret.label'), type: 'text', placeholder: 'my-secret-key', required: true },
     ],
     flowDataFactory: (cfg) => {
       resetIds();

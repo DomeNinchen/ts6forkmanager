@@ -16,7 +16,7 @@ import {
   ArrowLeft, Save, HelpCircle, Zap, MessageSquare, Ban, UserX, ArrowRightLeft,
   Clock, GitBranch, Variable, FileText, Webhook, Terminal, Plus, Trash2,
   Bell, PenLine, FolderPlus, FolderMinus, Users, Globe, Send,
-  Moon, Timer, Megaphone, Award, Shield, Maximize2,
+  Moon, Timer, Megaphone, Award, Shield, Maximize2, AlertTriangle,
   Music, Volume2, LogIn, LogOut, Pause, SkipForward, Navigation, Mic, Sparkles, Repeat, ListChecks,
   BookOpen, Info, SlidersHorizontal, History, FlaskConical, X, Headset,
 } from 'lucide-react';
@@ -1579,6 +1579,19 @@ export default function BotEditor() {
                         />
                         <p className="text-[9px] text-muted-foreground/60 mt-0.5">{t('pages.botEditor.config.triggerWebhook.secretHint')}</p>
                       </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">{t('pages.botEditor.config.triggerWebhook.exampleLabel')}</Label>
+                        {/* The secret itself stays out of the example, so it never ends up in a screenshot or a pasted snippet. */}
+                        <pre className="mt-1 whitespace-pre-wrap break-all rounded bg-muted/40 p-1.5 text-[9px] font-mono-data">
+                          {`curl -X ${selectedNodeData.config.method || 'POST'} \\\n  -H "X-Webhook-Secret: <secret>" \\\n${(selectedNodeData.config.method || 'POST') === 'POST' ? `  -H "Content-Type: application/json" -d '{}' \\\n` : ''}  ${window.location.origin}/api/bots/webhook/${selectedNodeData.config.path || 'my-hook'}`}
+                        </pre>
+                      </div>
+                      {bot?.querySecretCalls > 0 && (
+                        <p role="status" className="flex gap-1 rounded border border-amber-500/30 bg-amber-500/10 p-1.5 text-[10px] text-amber-600 dark:text-amber-400">
+                          <AlertTriangle className="h-3 w-3 shrink-0 mt-px" aria-hidden />
+                          {t('pages.botEditor.config.triggerWebhook.querySecretWarning', { count: bot.querySecretCalls, date: new Date(bot.querySecretLastAt).toLocaleString() })}
+                        </p>
+                      )}
                     </>
                   )}
 
