@@ -1,5 +1,5 @@
 import api from './client';
-import type { PermissionAction, PermissionVerdict } from '@ts6/common';
+import type { PermissionAction, PermissionVerdict, WhatIfChange, WhatIfWho } from '@ts6/common';
 
 export interface ExplainParams {
   actor: number;
@@ -20,6 +20,14 @@ export type ExplainResult = PermissionVerdict<ExplainRow> & {
     destination: number | null; sgid: number | null; banDuration: number; defaultCid: number;
   };
 };
+
+export interface WhatIfExplainResult {
+  before: PermissionVerdict<ExplainRow>;
+  after: PermissionVerdict<ExplainRow>;
+  groups: Record<WhatIfWho, { before: number[]; after: number[] }>;
+  changes: WhatIfChange[];
+  context: ExplainResult['context'] & { defaultSgid: number };
+}
 
 const base = (configId: number, sid: number) =>
   `/servers/${configId}/vs/${sid}/permissions`;
@@ -52,6 +60,10 @@ export const permissionsApi = {
   // "Why?": can client `actor` do `action` to client `target` - verdict plus every check (R11).
   explain: (configId: number, sid: number, params: ExplainParams): Promise<ExplainResult> =>
     api.get(`${base(configId, sid)}/explain`, { params }).then((r) => r.data),
+
+  // "What if": the same question before and after planned changes; reads only, changes nothing.
+  explainWhatIf: (configId: number, sid: number, params: ExplainParams & { changes: WhatIfChange[] }): Promise<WhatIfExplainResult> =>
+    api.post(`${base(configId, sid)}/explain-whatif`, params).then((r) => r.data),
 
   // Automatic Groups: add/remove permissions on every regular server group of
   // one type (sgtype = the group's i_group_auto_update_type). TeamSpeak applies

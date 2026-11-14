@@ -358,6 +358,7 @@ export default function Permissions() {
       permdesc: p.permdesc || '',
     }));
   }, [permDefs]);
+  const whyPermNames = useMemo(() => allPerms.map((p) => p.permsid), [allPerms]);
 
   // Entering Compare starts with every permission shown (narrow down via
   // Add/Remove Perm), and clears any pinned color reference from a prior visit.
@@ -1265,6 +1266,7 @@ export default function Permissions() {
           // Only regular groups take members (templates and query groups do not)
           serverGroups={(Array.isArray(serverGroups) ? serverGroups : []).filter((g: any) => String(g.type) === '1')
             .map((g: any) => ({ sgid: String(g.sgid), name: g.name }))}
+          permissions={whyPermNames}
           describeSource={describeExplainSource}
           permDesc={(permsid) => allPerms.find((p) => p.permsid === permsid)?.permdesc ?? ''}
           onJump={jumpFromWhy}
