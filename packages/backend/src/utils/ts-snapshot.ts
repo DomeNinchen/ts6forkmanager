@@ -42,6 +42,8 @@ export interface ParsedSnapshot {
   serverGroups: Map<number, SnapshotGroup>;
   channelGroups: Map<number, SnapshotGroup>;
   channels: Map<number, SnapshotChannel>;
+  /** sgid -> cldbids. Channel group memberships are not in a TS6 snapshot (measured). */
+  serverGroupMembers: Map<number, number[]>;
 }
 
 /** The text inside a snapshot, or a 400 saying why it is not one this version can read. */
@@ -72,7 +74,8 @@ function permOf(kv: Record<string, string>): [string, SnapshotPermValue] | null 
 export function parseSnapshotText(text: string, version = '3'): ParsedSnapshot {
   const missing = REQUIRED_MARKERS.filter((m) => !new RegExp(`(^|[ |])${m}([ |]|$)`).test(text));
   if (missing.length) throw new AppError(400, `The snapshot has an unknown layout (missing: ${missing.join(', ')})`);
-  const out: ParsedSnapshot = { version, serverGroups: new Map(), channelGroups: new Map(), channels: new Map() };
+  const out: ParsedSnapshot = { version, serverGroups: new Map(), channelGroups: new Map(), channels: new Map(), serverGroupMembers: new Map() };
+  let relationsOf: 'serverGroups' | 'channelGroups' = 'serverGroups';
   const channelPerms = new Map<number, Map<string, SnapshotPermValue>>();
   type Section = 'server' | 'channels' | 'clients' | 'serverGroups' | 'channelGroups' | 'relations' | 'clientFlat' | 'channelFlat' | 'channelClientFlat' | 'apikeys' | 'other';
   let section: Section = 'server';
@@ -90,7 +93,7 @@ export function parseSnapshotText(text: string, version = '3'): ParsedSnapshot {
         case 'begin_clients': section = 'clients'; break;
         case 'server_groups': section = 'serverGroups'; group = null; break;
         case 'channel_groups': section = 'channelGroups'; group = null; break;
-        case 'end_groups': section = 'relations'; group = null; break;
+        case 'end_groups': if (section === 'serverGroups' || section === 'channelGroups') relationsOf = section; section = 'relations'; group = null; break;
         case 'client_flat': section = 'clientFlat'; break;
         case 'channel_flat': section = 'channelFlat'; break;
         case 'channel_client_flat': section = 'channelClientFlat'; break;
@@ -109,6 +112,10 @@ export function parseSnapshotText(text: string, version = '3'): ParsedSnapshot {
       }
       const perm = permOf(kv);
       if (perm && group) group.perms.set(perm[0], perm[1]);
+    } else if (section === 'relations' && relationsOf === 'serverGroups' && kv.cldbid !== undefined && kv.gid !== undefined) {
+      const gid = Number(kv.gid);
+      if (!out.serverGroupMembers.has(gid)) out.serverGroupMembers.set(gid, []);
+      out.serverGroupMembers.get(gid)!.push(Number(kv.cldbid));
     } else if (section === 'channelFlat') {
       if (kv.id1 !== undefined) flatId = Number(kv.id1);
       const perm = permOf(kv);

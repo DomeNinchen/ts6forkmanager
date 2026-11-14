@@ -17,6 +17,7 @@ export * from './types/temporary-groups.js';
 export * from './types/support-queue.js';
 export * from './types/raid-protection.js';
 export * from './types/snapshot-compare.js';
+export * from './types/snapshot-restore.js';
 export * from './constants/events.js';
 export * from './constants/event-fields.js';
 export * from './utils/ts-escape.js';

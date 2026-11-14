@@ -183,6 +183,16 @@ function idCandidates(nodes: FlowTemplateNode[]): IdCandidate[] {
   return out;
 }
 
+/**
+ * The node fields of a flow that name this server or channel group id (the same fields a template export
+ * turns into inputs). Raw expressions and WebQuery parameters outside the known ones are not searched.
+ */
+export function flowGroupReferences(nodes: unknown[], type: 'servergroup' | 'channelgroup', id: number): Array<{ node: string; field: string }> {
+  return idCandidates(cloneNodes(nodes))
+    .filter((c) => c.type === type && c.value.split(',').includes(String(id)))
+    .map((c) => ({ node: c.nodeLabel, field: c.field }));
+}
+
 /** Places the import cannot map automatically; `skip` are fields already covered by an input. */
 export function flowTemplateWarnings(nodes: FlowTemplateNode[], skip: FlowTemplateTarget[] = []): FlowTemplateWarning[] {
   const skipped = new Set(skip.map((t) => `${t.node}\u0000${t.field}`));
