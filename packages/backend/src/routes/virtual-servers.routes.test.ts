@@ -42,7 +42,7 @@ async function withApp(status: Map<number, string>, fn: (del: (sid: string) => P
   try {
     await fn(async (sid) => {
       const r = await fetch(`${base}/${sid}`, { method: 'DELETE' });
-      return { status: r.status, code: (await r.json()).code };
+      return { status: r.status, code: ((await r.json()) as { code?: string }).code };
     }, ts.calls);
   } finally {
     server.close();

@@ -4,9 +4,11 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.118.0 · frontend 3.137.0 · sidecar 2.4.0**
+Versions at the end of the month: **backend 2.119.0 · frontend 3.138.0 · sidecar 2.4.0**
 
 ### New Features
+
+- **Delete a virtual server** — The Virtual Servers page has a **Delete** button per server. It works only on a stopped server (a running one shows "stop it first"); the dialog lists what goes with the server, says what a snapshot can and cannot bring back, warns when it is the instance's first (SID 1) or last server, and asks for the server's name. A server that was deleted in the meantime or is running again gets a readable message instead of TeamSpeak's error. Admins only. *backend 2.119.0, frontend 3.138.0*
 
 - **Global search** — A **Search** button in the header (in the phone menu on narrow screens) or Ctrl+K (Cmd+K on a Mac) opens a search over the pages and Settings tabs. It takes German, English and French names and ignores case, accents and spelled-out umlauts, lists only what the role may open on the selected server (the same pages as the navigation), remembers the last five opened in this browser and opens the chosen one with Enter. *frontend 3.136.0* [#408](https://github.com/DomeNinchen/ts6forkmanager/pull/408)
 - **Kick live streams** — A channel on kick.com that is live right now plays like a Twitch channel: as sound with `!play` or from the web interface, and as video with `!stream` or the Video tab when live video is switched on. Kick videos that are not live now go through yt-dlp for the Video tab, like YouTube and Twitch, and the same length limit applies to them. *backend 2.113.0* [#398](https://github.com/DomeNinchen/ts6forkmanager/pull/398)
