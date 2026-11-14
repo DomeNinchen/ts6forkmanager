@@ -24,12 +24,12 @@ export interface SnapshotPermChange {
   after: SnapshotPermValue | null;
 }
 
-/** before = the snapshot, after = the live server. */
+/** before = the request's `source`, after = its `against` (the live server by default). */
 export interface SnapshotObjectDiff {
   kind: SnapshotObjectKind;
   id: number;
   name: string;
-  /** added = only on the live server, removed = only in the snapshot. */
+  /** added = only on the "after" side, removed = only on the "before" side. */
   status: 'added' | 'removed' | 'changed';
   fields: SnapshotFieldChange[];
   perms: SnapshotPermChange[];
@@ -49,10 +49,20 @@ export interface SnapshotCompareResult {
   counts: Record<SnapshotObjectKind, SnapshotCompareCounts>;
 }
 
-/** Where the "before" side comes from: a snapshot file the admin picked, or a backup holding one of this virtual server. */
+/**
+ * One side of a comparison: a snapshot file the admin picked, a backup holding one of this virtual
+ * server, or the server as it is now (a fresh snapshot, never stored).
+ */
 export type SnapshotCompareSource =
   | { type: 'file'; snapshot: { version: string | number; data: string } }
-  | { type: 'backup'; kind: string; name: string };
+  | { type: 'backup'; kind: string; name: string }
+  | { type: 'live' };
+
+/** POST body: `source` is the "before" side, `against` the "after" side (the live server when left out). */
+export interface SnapshotCompareRequest {
+  source: SnapshotCompareSource;
+  against?: SnapshotCompareSource;
+}
 
 /** A backup that can be compared with this virtual server. */
 export interface SnapshotBackupSource {
