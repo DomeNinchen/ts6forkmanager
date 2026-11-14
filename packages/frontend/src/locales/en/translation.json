@@ -87,6 +87,16 @@
     "collapse": "Collapse",
     "menu": "Navigation",
     "openMenu": "Open navigation",
+    "search": {
+      "open": "Search",
+      "title": "Global search",
+      "placeholder": "Search pages and settings …",
+      "recent": "Recently opened",
+      "pages": "Pages",
+      "empty": "No results",
+      "ctrl": "Ctrl",
+      "hint": "↑↓ to select, Enter to open, Esc to close"
+    },
     "closeMenu": "Close navigation",
     "sections": {
       "overview": "Overview",

@@ -10,6 +10,7 @@ import { useOwnRoleSync } from '@/hooks/use-auth';
 import { useWebguiThemeSync, useWebguiBaseThemeSync, useWebguiDesignSync, useDesign } from '@/hooks/use-webgui-theme';
 import { Toaster } from 'sonner';
 import { BulkResultDialog } from '@/components/shared/BulkResultDialog';
+import { GlobalSearch, useGlobalSearchShortcut } from './GlobalSearch';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
@@ -18,6 +19,7 @@ export function AppLayout() {
   useWebguiBaseThemeSync();
   useWebguiDesignSync();
   useOwnRoleSync();
+  useGlobalSearchShortcut();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -39,6 +41,7 @@ export function AppLayout() {
         </main>
       </div>
       <BulkResultDialog />
+      <GlobalSearch />
       <Toaster
         position="top-right"
         toastOptions={{
