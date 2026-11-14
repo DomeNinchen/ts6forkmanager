@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Users, Hash, Shield, ShieldCheck, Bot, Music, type LucideIcon } from 'lucide-react';
+import { Users, UserX, Database, Hash, Shield, ShieldCheck, Bot, Music, type LucideIcon } from 'lucide-react';
+import { clientDatabaseApi } from '@/api/client-database.api';
 import { useServerStore } from '@/stores/server.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { useSelectedServer } from '@/hooks/use-servers';
@@ -10,7 +11,7 @@ import { channelsApi } from '@/api/channels.api';
 import { groupsApi } from '@/api/groups.api';
 import { botsApi } from '@/api/bots.api';
 import { musicBotsApi } from '@/api/music.api';
-import type { UserPermission } from '@ts6/common';
+import type { ClientDbSearchParams, UserPermission } from '@ts6/common';
 
 export interface SearchEntry {
   id: string;
@@ -137,4 +138,70 @@ export function useSearchObjects(open: boolean, visiblePages: Set<string>): { gr
     },
   ], [clients.data, channels.data, serverGroups.data, channelGroups.data, flows.data, musicBots.data, at, c, s, visiblePages, t]);
   return { groups, noWebQuery: !!server && !hasWebQuery };
+}
+
+/** How many offline profiles the search lists; each one costs TeamSpeak a clientdbinfo call. */
+const OFFLINE_LIMIT = 8;
+/** A TeamSpeak unique id: base64 ending in "=" (sha1: 28 characters, TS6 sha256: 44). */
+const UID_PATTERN = /^[A-Za-z0-9+/]{26,43}=$/;
+
+/** The text once typing has paused for `ms`. */
+function useSettled(text: string, ms: number): string {
+  const [settled, setSettled] = useState(text);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(text), ms);
+    return () => clearTimeout(timer);
+  }, [text, ms]);
+  return settled;
+}
+
+/**
+ * Offline clients from the client database: asked only after typing pauses for 300 ms, from three
+ * characters on, for users who may open the Client Database page. One search asks TeamSpeak at most
+ * 1 + OFFLINE_LIMIT commands; a text already searched comes from the cache.
+ */
+export function useOfflineClientSearch(open: boolean, query: string, visiblePages: Set<string>, onlineCldbids: Set<string>) {
+  const { t } = useTranslation();
+  const { selectedConfigId: c, selectedSid: s } = useServerStore();
+  const can = useAuthStore((st) => st.can);
+  useAuthStore((st) => st.user?.permissions);
+  const text = useSettled(query.trim(), 300);
+  const allowed = open && !!c && !!s && visiblePages.has('/client-database') && can('clients.database');
+  const params: ClientDbSearchParams = { mode: UID_PATTERN.test(text) ? 'uid' : 'name', query: text, limit: OFFLINE_LIMIT };
+  const search = useQuery({
+    queryKey: ['client-database-search', c, s, params],
+    queryFn: () => clientDatabaseApi.search(c!, s!, params),
+    enabled: allowed && text.length >= 3,
+    staleTime: 60_000,
+    retry: false,
+  });
+  const at = `${c}:${s}`;
+  const settledNow = text === query.trim();
+  const result = allowed && settledNow && text.length >= 3 ? search.data : undefined;
+  // Profiles already listed as online clients are left out here.
+  const items: SearchEntry[] = (result?.entries ?? [])
+    .filter((p) => !onlineCldbids.has(`client:${at}:${p.cldbid}`))
+    .map((p) => ({
+      id: `offline:${at}:${p.cldbid}`,
+      terms: [p.nickname],
+      label: p.nickname,
+      hint: t('nav.search.types.offlineClient'),
+      icon: UserX,
+      to: `/client-database?cldbid=${p.cldbid}`,
+    }));
+  if (result && result.matchCount > result.entries.length) {
+    items.push({
+      id: `offline-all:${at}:${text}`,
+      terms: [],
+      // TeamSpeak stops counting at 50 matches.
+      label: t('nav.search.offlineAll', { count: result.truncated && result.matchCount >= 50 ? '50+' : result.matchCount }),
+      hint: '',
+      icon: Database,
+      to: `/client-database?q=${encodeURIComponent(text)}${params.mode === 'uid' ? '&mode=uid' : ''}`,
+    });
+  }
+  return {
+    group: { key: 'offline', label: t('nav.search.types.offlineClients'), items } as ObjectGroup,
+    searching: allowed && text.length >= 3 && (search.isFetching || !settledNow),
+  };
 }

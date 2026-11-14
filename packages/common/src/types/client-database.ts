@@ -43,6 +43,11 @@ export interface ClientDbSearchParams {
   cid?: number;
   /** channelgroup: only this channel group; omitted = every group except the server's default channel group. */
   cgid?: number;
+  /**
+   * name / uid: read the details of only this many matches, newest first (1-50). Each listed profile
+   * costs TeamSpeak one more command; the global search asks for a few, the page for all.
+   */
+  limit?: number;
 }
 
 /** A custom property (custominfo) of a profile. */

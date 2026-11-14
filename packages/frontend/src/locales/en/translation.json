@@ -97,6 +97,8 @@
       "ctrl": "Ctrl",
       "hint": "↑↓ to select, Enter to open, Esc to close",
       "noWebQuery": "This connection has no WebQuery: clients, channels and groups are not searched.",
+      "offlineAll": "All {{count}} in the client database",
+      "searchingDatabase": "Searching the client database …",
       "types": {
         "clients": "Clients",
         "client": "Client",
@@ -105,7 +107,9 @@
         "serverGroup": "Server group",
         "channelGroup": "Channel group",
         "flow": "Bot flow",
-        "musicBot": "Music bot"
+        "musicBot": "Music bot",
+        "offlineClients": "Offline clients",
+        "offlineClient": "Client database"
       }
     },
     "closeMenu": "Close navigation",
