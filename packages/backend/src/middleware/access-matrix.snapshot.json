@@ -275,6 +275,34 @@
     "moderator": "403",
     "moderator (no grant)": "403"
   },
+  "GET /api/servers/:configId/virtual-servers/:sid/snapshot/compare-sources": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "403",
+    "viewer (no grant)": "403",
+    "bot-operator": "403",
+    "bot-operator (no grant)": "403",
+    "music-operator": "403",
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
+  },
+  "POST /api/servers/:configId/virtual-servers/:sid/snapshot/compare": {
+    "admin": "ok",
+    "admin (no grant)": "ok",
+    "viewer": "403",
+    "viewer (no grant)": "403",
+    "bot-operator": "403",
+    "bot-operator (no grant)": "403",
+    "music-operator": "403",
+    "music-operator (no grant)": "403",
+    "server-admin": "403",
+    "server-admin (no grant)": "403",
+    "moderator": "403",
+    "moderator (no grant)": "403"
+  },
   "GET /api/servers/:configId/virtual-servers/:sid/connection-info": {
     "admin": "ok",
     "admin (no grant)": "ok",

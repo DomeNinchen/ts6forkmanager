@@ -74,6 +74,7 @@ const ServerLogs = lazy(() => import('@/pages/ServerLogs'));
 const Console = lazy(() => import('@/pages/Console'));
 const Instance = lazy(() => import('@/pages/Instance'));
 const Miscellaneous = lazy(() => import('@/pages/Miscellaneous'));
+const SnapshotCompare = lazy(() => import('@/pages/SnapshotCompare'));
 const AdvancedServerSettings = lazy(() => import('@/pages/AdvancedServerSettings'));
 const BotList = lazy(() => import('@/pages/BotList'));
 const BotEditor = lazy(() => import('@/pages/BotEditor'));
@@ -124,6 +125,7 @@ export function App() {
               <Route path="/console" element={<AdminRoute><WebQueryRoute><Console /></WebQueryRoute></AdminRoute>} />
               <Route path="/instance" element={<AdminRoute><WebQueryRoute><Instance /></WebQueryRoute></AdminRoute>} />
               <Route path="/miscellaneous" element={<AdminRoute><WebQueryRoute><Miscellaneous /></WebQueryRoute></AdminRoute>} />
+              <Route path="/snapshot-compare" element={<AdminRoute><WebQueryRoute><SnapshotCompare /></WebQueryRoute></AdminRoute>} />
               <Route path="/advanced-settings" element={<PermissionRoute permission="vserver.edit"><WebQueryRoute><AdvancedServerSettings /></WebQueryRoute></PermissionRoute>} />
               <Route path="/music-requests" element={<AdminRoute><MusicRequests /></AdminRoute>} />
               <Route path="/bots" element={<PermissionRoute permission="bots.manage"><BotList /></PermissionRoute>} />

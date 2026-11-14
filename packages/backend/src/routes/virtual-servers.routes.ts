@@ -3,6 +3,9 @@ import { requireRole, requirePermission } from '../middleware/rbac.js';
 import { AppError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { grantCovers, grantOf } from '../utils/vs-access.js';
+import { backupsWithSnapshot, readBackupSnapshot } from '../utils/backups.js';
+import { compareSnapshots, readSnapshot } from '../utils/ts-snapshot.js';
+import type { SnapshotBackupSource, SnapshotCompareSource } from '@ts6/common';
 
 export const virtualServerRoutes: Router = Router({ mergeParams: true });
 
@@ -130,6 +133,32 @@ virtualServerRoutes.post('/:sid/snapshot/deploy', requireRole('admin'), async (r
     if (keepFiles === true) params['-keepfiles'] = '';
     const result = await getClient(req).executePost(sid, 'serversnapshotdeploy', params, true);
     res.json(result);
+  } catch (err) { next(err); }
+});
+
+// The backups that hold a snapshot of this virtual server: what the compare page offers next to a file.
+virtualServerRoutes.get('/:sid/snapshot/compare-sources', requireRole('admin'), (req: Request, res: Response) => {
+  const sources: SnapshotBackupSource[] = backupsWithSnapshot(parseInt(String(req.params.configId)), parseInt(String(req.params.sid)));
+  res.json(sources);
+});
+
+// A snapshot (a file, or one in a backup) against the live server. The live side is a fresh snapshot
+// read in memory and never stored (it holds the server's keys and client identities). Read-only:
+// marked as dryRun so the change log leaves it out.
+virtualServerRoutes.post('/:sid/snapshot/compare', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const configId = parseInt(String(req.params.configId));
+    const sid = parseInt(String(req.params.sid));
+    const source = req.body?.source as SnapshotCompareSource | undefined;
+    let snapshot;
+    if (source?.type === 'file') snapshot = source.snapshot;
+    else if (source?.type === 'backup' && typeof source.kind === 'string' && typeof source.name === 'string') snapshot = readBackupSnapshot(source.kind, source.name, configId, sid);
+    else throw new AppError(400, 'Name a snapshot file or a backup to compare with');
+    const before = readSnapshot(snapshot ?? {});
+    const result = await getClient(req).execute(sid, 'serversnapshotcreate');
+    const after = readSnapshot((Array.isArray(result) ? result[0] : result) ?? {});
+    res.locals.dryRun = true;
+    res.json(compareSnapshots(before, after));
   } catch (err) { next(err); }
 });
 
