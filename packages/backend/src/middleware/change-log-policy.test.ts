@@ -40,6 +40,10 @@ test('the excluded writing routes are not logged', () => {
   assert.deepEqual(classifyChange('POST', '/api/servers/3/diagnose'), excluded);
   assert.deepEqual(classifyChange('POST', '/api/servers/diagnose'), excluded);
   assert.deepEqual(classifyChange('POST', '/api/update-check'), excluded);
+  assert.deepEqual(classifyChange('POST', '/api/servers/3/vs/1/permissions/explain-whatif'), excluded);
+  // only that one read-only preview, not its neighbours
+  assert.equal(classifyChange('POST', '/api/servers/3/vs/1/permissions/automatic-groups/add').kind, 'log');
+  assert.equal(classifyChange('PUT', '/api/servers/3/vs/1/permissions/explain-whatif').kind, 'log');
   for (const path of ['/api/auth/login', '/api/auth/login/verify-totp', '/api/auth/refresh', '/api/auth/logout']) {
     assert.deepEqual(classifyChange('POST', path), excluded, path);
   }

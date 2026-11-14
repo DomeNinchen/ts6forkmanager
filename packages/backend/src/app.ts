@@ -230,6 +230,7 @@ export function createApp(): Express {
     { method: 'GET', path: '/find', permission: 'permissions.edit' },
     { method: 'GET', path: '/overview/:cldbid', permission: 'permissions.edit' },
     { method: 'GET', path: '/explain', permission: 'permissions.edit' },
+    { method: 'POST', path: '/explain-whatif', permission: 'permissions.edit' },
   ]);
   serverScoped('vs/:sid/bans', banRoutes, [
     { method: 'GET', path: '/', permission: 'bans.view' },

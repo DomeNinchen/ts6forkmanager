@@ -109,6 +109,8 @@ function isExcluded(method: UiChangeMethod, rest: string[]): boolean {
   if (area === 'auth' && AUTH_SESSION_ROUTES.has(rest.slice(1).join('/'))) return true;
   // POST /api/servers/:configId/test, /:configId/diagnose and /diagnose (the form's values) only test a connection, they change nothing.
   if (area === 'servers' && method === 'POST' && ((rest.length === 3 && (rest[2] === 'test' || rest[2] === 'diagnose')) || (rest.length === 2 && rest[1] === 'diagnose'))) return true;
+  // The Why? "what if" preview (R11 stage 4) only reads; POST because it carries a list of planned changes.
+  if (area === 'servers' && method === 'POST' && rest.length === 6 && rest[2] === 'vs' && rest[4] === 'permissions' && rest[5] === 'explain-whatif') return true;
   return false;
 }
 
