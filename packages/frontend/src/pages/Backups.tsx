@@ -18,6 +18,10 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { formatBytes } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
+import { useServerStore } from '@/stores/server.store';
+import { useNavigate } from 'react-router';
+import { GitCompare } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 /** How long the outcome of the last restore stays at the top of the page. */
 const RESTORE_NOTICE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -237,6 +241,7 @@ export default function Backups() {
                         <ShieldCheck className="h-4 w-4" />
                         <span className="hidden sm:inline ml-1">{busy(check, entry) ? t('pages.backups.actions.checking') : t('pages.backups.actions.check')}</span>
                       </Button>
+                      {!!entry.tsSnapshotTargets?.length && <CompareButton entry={entry} />}
                       <Button variant="ghost" size="sm" onClick={() => download.mutate(entry)} disabled={busy(download, entry)} title={t('pages.backups.actions.download')} aria-label={t('pages.backups.actions.download')} data-testid="backup-download">
                         <Download className="h-4 w-4" />
                       </Button>
@@ -288,6 +293,42 @@ export default function Backups() {
  * again, marks the backup for the next start and restarts; the start saves the current state
  * first, puts the backup in place and migrates it.
  */
+/** Opens the snapshot comparison with this backup, for the virtual server picked (a menu when it holds several). */
+function CompareButton({ entry }: { entry: BackupEntry }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const setServer = useServerStore((s) => s.setServer);
+  const targets = entry.tsSnapshotTargets ?? [];
+  const open = (configId: number, sid: number) => {
+    setServer(configId, sid);
+    navigate(`/snapshot-compare?backup=${encodeURIComponent(`${entry.kind}/${entry.name}`)}`);
+  };
+  const label = t('pages.backups.actions.compare');
+  if (targets.length === 1) {
+    return (
+      <Button variant="ghost" size="sm" onClick={() => open(targets[0].configId, targets[0].sid)} title={label} aria-label={label} data-testid="backup-compare">
+        <GitCompare className="h-4 w-4" />
+      </Button>
+    );
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" title={label} aria-label={label} data-testid="backup-compare">
+          <GitCompare className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {targets.map((s) => (
+          <DropdownMenuItem key={`${s.configId}-${s.sid}`} onSelect={() => open(s.configId, s.sid)}>
+            {s.server} · {s.virtualServer || `#${s.sid}`}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function RestoreDialog({ entry, databaseBytes, onClose }: { entry: BackupEntry; databaseBytes: number; onClose: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
