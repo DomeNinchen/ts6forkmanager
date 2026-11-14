@@ -95,10 +95,10 @@ export default function SnapshotCompare() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-1">
+            <div className="space-y-1 w-full sm:w-auto">
               <Label htmlFor="snapshot-source-type">{t('pages.snapshotCompare.sourceType')}</Label>
               <Select value={sourceType} onValueChange={(v) => setSourceType(v as 'backup' | 'file')}>
-                <SelectTrigger id="snapshot-source-type" className="w-[200px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="snapshot-source-type" className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="backup">{t('pages.snapshotCompare.fromBackup')}</SelectItem>
                   <SelectItem value="file">{t('pages.snapshotCompare.fromFile')}</SelectItem>
@@ -106,7 +106,7 @@ export default function SnapshotCompare() {
               </Select>
             </div>
             {sourceType === 'backup' ? (
-              <div className="space-y-1 min-w-0 flex-1 sm:flex-none">
+              <div className="space-y-1 w-full sm:w-auto">
                 <Label htmlFor="snapshot-backup">{t('pages.snapshotCompare.backup')}</Label>
                 <Select value={backup} onValueChange={setBackup} disabled={!sources.data?.length}>
                   <SelectTrigger id="snapshot-backup" className="w-full sm:w-[340px]"><SelectValue placeholder={t('pages.snapshotCompare.pickBackup')} /></SelectTrigger>
@@ -188,7 +188,7 @@ export default function SnapshotCompare() {
   );
 }
 
-const STATUS_VARIANT = { added: 'default', removed: 'destructive', changed: 'secondary' } as const;
+const STATUS_VARIANT = { added: 'success', removed: 'destructive', changed: 'warning' } as const;
 
 function ObjectDiff({ o }: { o: SnapshotObjectDiff }) {
   const { t } = useTranslation();
