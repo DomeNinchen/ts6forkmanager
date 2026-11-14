@@ -1,5 +1,5 @@
 import api from './client';
-import type { ConnectionDiagnosis, DiagnosisRequest, SnapshotBackupSource, SnapshotCompareRequest, SnapshotCompareResult, VirtualServerDeleteResult } from '@ts6/common';
+import type { ConnectionDiagnosis, DiagnosisRequest, SnapshotBackupSource, SnapshotCompareRequest, SnapshotCompareResult, SnapshotRestoreRequest, SnapshotRestoreResult, VirtualServerDeleteResult } from '@ts6/common';
 
 export const serversApi = {
   list: () => api.get('/servers').then((r) => r.data),
@@ -39,6 +39,8 @@ export const serversApi = {
     api.get(`/servers/${configId}/virtual-servers/${sid}/snapshot/compare-sources`).then((r) => r.data),
   compareSnapshot: (configId: number, sid: number, body: SnapshotCompareRequest): Promise<SnapshotCompareResult> =>
     api.post(`/servers/${configId}/virtual-servers/${sid}/snapshot/compare`, body).then((r) => r.data),
+  restoreSnapshotGroups: (configId: number, sid: number, body: SnapshotRestoreRequest): Promise<SnapshotRestoreResult> =>
+    api.post(`/servers/${configId}/virtual-servers/${sid}/snapshot/restore-groups`, body).then((r) => r.data),
   getConnectionInfo: (configId: number, sid: number) =>
     api.get(`/servers/${configId}/virtual-servers/${sid}/connection-info`).then((r) => r.data),
   sendServerMessage: (configId: number, sid: number, msg: string) =>

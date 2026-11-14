@@ -8,7 +8,10 @@ import { cleanUpDeletedVirtualServer } from '../utils/virtual-server-cleanup.js'
 import type { VirtualServerDeleteResult } from '@ts6/common';
 import { backupsWithSnapshot, readBackupSnapshot } from '../utils/backups.js';
 import { compareSnapshots, readSnapshot } from '../utils/ts-snapshot.js';
-import type { SnapshotBackupSource, SnapshotCompareRequest, SnapshotCompareSource } from '@ts6/common';
+import type { BulkOutcome, SnapshotBackupSource, SnapshotCompareRequest, SnapshotCompareSource, SnapshotRestoreRequest, SnapshotRestoreResult } from '@ts6/common';
+import { BULK_MAX } from '@ts6/common';
+import { ensureBulkBackup } from '../utils/bulk-backup.js';
+import { restoreGroups } from '../utils/snapshot-restore.js';
 
 export const virtualServerRoutes: Router = Router({ mergeParams: true });
 
@@ -208,6 +211,50 @@ virtualServerRoutes.post('/:sid/snapshot/compare', requireRole('admin'), async (
     const after = await read(body.against ?? { type: 'live' }, 'after');
     res.locals.dryRun = true;
     res.json(compareSnapshots(before, after));
+  } catch (err) { next(err); }
+});
+
+// Brings single groups back from a snapshot (a file or a backup) as new groups. dryRun = the preview
+// (nothing created, no backup, no change-log row). Otherwise a before-bulk backup of this virtual
+// server is taken first; when it fails nothing happens unless the dialog sends skipBackup.
+virtualServerRoutes.post('/:sid/snapshot/restore-groups', requireRole('admin'), async (req: Request, res: Response, next) => {
+  try {
+    const configId = parseInt(String(req.params.configId));
+    const sid = parseInt(String(req.params.sid));
+    const body = (req.body ?? {}) as Partial<SnapshotRestoreRequest>;
+    const source = body.source;
+    let snapshot;
+    if (source?.type === 'file') snapshot = source.snapshot;
+    else if (source?.type === 'backup' && typeof source.kind === 'string' && typeof source.name === 'string') snapshot = readBackupSnapshot(source.kind, source.name, configId, sid);
+    else throw new AppError(400, 'Name the snapshot file or backup to restore from');
+    const choices = Array.isArray(body.groups) ? body.groups : [];
+    if (choices.length === 0 || choices.length > BULK_MAX
+      || !choices.every((c) => (c?.kind === 'serverGroup' || c?.kind === 'channelGroup') && Number.isInteger(c.id) && c.id > 0 && (c.newName === undefined || typeof c.newName === 'string'))) {
+      throw new AppError(400, `Name 1 to ${BULK_MAX} groups to restore (kind serverGroup or channelGroup, id, optional newName)`);
+    }
+    const snap = readSnapshot(snapshot ?? {});
+    const dryRun = body.dryRun === true;
+    let backup: string | undefined;
+    if (!dryRun && body.skipBackup !== true) {
+      try {
+        backup = await ensureBulkBackup(req.app.locals.prisma, req.app.locals.connectionPool, configId, sid, req.user?.username ?? 'unknown');
+      } catch (err) {
+        const reason = err instanceof AppError && err.details ? `${err.message}: ${err.details}` : (err as Error).message;
+        throw new AppError(409, 'The backup before restoring failed, so nothing was restored', reason, 'BACKUP_FAILED');
+      }
+    }
+    const outcomes = await restoreGroups(getClient(req), req.app.locals.prisma, configId, sid, snap, choices, { dryRun, members: body.members === true });
+    if (dryRun) res.locals.dryRun = true;
+    // The change log keeps one line per group, like a bulk action (R9).
+    else res.locals.bulkOutcomes = outcomes.map((o): BulkOutcome => ({
+      id: o.oldId,
+      name: `${o.name}${o.newId ? ` -> #${o.newId}${o.createdAs ? ` "${o.createdAs}"` : ''}` : ''}`,
+      status: o.status === 'created' ? 'ok' : o.status === 'failed' ? 'failed' : 'skipped',
+      ...(o.status === 'skipped' ? { reason: o.reason === 'not-in-snapshot' ? 'not-found' as const : 'already-there' as const } : {}),
+      ...(o.message ? { message: o.message } : o.permFailures ? { message: `${o.permFailures.length} permission(s) not set` } : {}),
+    }));
+    const result: SnapshotRestoreResult = { ...(dryRun ? { dryRun: true as const } : {}), outcomes, ...(backup ? { backup } : {}) };
+    res.json(result);
   } catch (err) { next(err); }
 });
 

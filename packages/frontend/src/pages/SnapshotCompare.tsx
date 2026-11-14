@@ -13,7 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Pager } from '@/components/connection-journal/table-parts';
-import { ArrowLeft, GitCompare, Search, Upload } from 'lucide-react';
+import { ArrowLeft, GitCompare, RotateCcw, Search, Upload } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RestoreGroupsDialog, type RestoreTarget } from '@/components/snapshot/RestoreGroupsDialog';
 
 const PAGE_SIZE = 25;
 const KINDS: SnapshotObjectKind[] = ['serverGroup', 'channelGroup', 'channel'];
@@ -42,6 +44,10 @@ export default function SnapshotCompare() {
   const [page, setPage] = useState(1);
   // The column headings of the result, fixed when it was asked for.
   const [labels, setLabels] = useState<[string, string]>(['', '']);
+  // The sides of the result shown: restoring takes groups from its "before" snapshot into the live server.
+  const [ran, setRan] = useState<{ source: SnapshotCompareSource; against: SnapshotCompareSource } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [restoring, setRestoring] = useState<RestoreTarget[] | null>(null);
 
   const sources = useQuery({
     queryKey: ['snapshot-compare-sources', selectedConfigId, selectedSid],
@@ -82,8 +88,21 @@ export default function SnapshotCompare() {
   const run = () => {
     if (!source || !against) return;
     setLabels([labelOf(before), labelOf(after)]);
+    setRan({ source, against });
+    setSelected(new Set());
     compare.mutate({ source, against });
   };
+  // Groups that are only in the snapshot, compared with the live server: these can be brought back.
+  const canRestore = (o: SnapshotObjectDiff) => ran?.against.type === 'live' && ran.source.type !== 'live'
+    && o.status === 'removed' && (o.kind === 'serverGroup' || o.kind === 'channelGroup');
+  const keyOf = (o: { kind: string; id: number }) => `${o.kind}:${o.id}`;
+  const toggle = (o: SnapshotObjectDiff) => setSelected((s) => {
+    const next = new Set(s);
+    if (next.has(keyOf(o))) next.delete(keyOf(o)); else next.add(keyOf(o));
+    return next;
+  });
+  const openRestore = () => setRestoring((compare.data?.objects ?? []).filter((o) => canRestore(o) && selected.has(keyOf(o)))
+    .map((o) => ({ kind: o.kind as RestoreTarget['kind'], id: o.id })));
   // A backup named in the link that this virtual server's list does not have (another server selected).
   const linkedMissing = before.type === 'backup' && !!before.backup && !!sources.data && !backupOf(before);
 
@@ -158,7 +177,18 @@ export default function SnapshotCompare() {
                   </SelectContent>
                 </Select>
               </div>
-              {shown.map((o) => <ObjectDiff key={`${o.kind}-${o.id}`} o={o} labels={labels} />)}
+              {result.objects.some(canRestore) && (
+                <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 p-2 text-sm" data-testid="restore-bar">
+                  <span className="text-muted-foreground">{t('pages.snapshotCompare.restore.hint')}</span>
+                  <Button size="sm" onClick={openRestore} disabled={selected.size === 0} data-testid="restore-open">
+                    <RotateCcw className="h-4 w-4 mr-1" /> {t('pages.snapshotCompare.restore.open', { count: selected.size })}
+                  </Button>
+                </div>
+              )}
+              {shown.map((o) => (
+                <ObjectDiff key={`${o.kind}-${o.id}`} o={o} labels={labels}
+                  select={canRestore(o) ? { checked: selected.has(keyOf(o)), onChange: () => toggle(o) } : undefined} />
+              ))}
               {filtered.length === 0 && <p className="text-sm text-muted-foreground">{t('pages.snapshotCompare.noMatch')}</p>}
               <Pager page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage}
                 countText={t('pages.snapshotCompare.objectCount', { count: filtered.length })} />
@@ -166,13 +196,22 @@ export default function SnapshotCompare() {
           )}
         </div>
       )}
+
+      {restoring && ran && (
+        <RestoreGroupsDialog configId={selectedConfigId} sid={selectedSid} source={ran.source} targets={restoring}
+          onClose={(changed) => {
+            setRestoring(null);
+            // Show the server as it is now: restored groups are no longer "removed".
+            if (changed) { setSelected(new Set()); compare.mutate(ran); }
+          }} />
+      )}
     </div>
   );
 }
 
 const STATUS_VARIANT = { added: 'success', removed: 'destructive', changed: 'warning' } as const;
 
-function ObjectDiff({ o, labels }: { o: SnapshotObjectDiff; labels: [string, string] }) {
+function ObjectDiff({ o, labels, select }: { o: SnapshotObjectDiff; labels: [string, string]; select?: { checked: boolean; onChange: () => void } }) {
   const { t } = useTranslation();
   const fieldLabel = (f: string) => t(`pages.snapshotCompare.fields.${f}`, { defaultValue: f });
   const value = (field: string, v: string | null) => (v === null ? '—' : v !== '' ? v
@@ -191,6 +230,10 @@ function ObjectDiff({ o, labels }: { o: SnapshotObjectDiff; labels: [string, str
     <Card data-testid="snapshot-compare-object">
       <CardContent className="p-3 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
+          {select && (
+            <Checkbox checked={select.checked} onCheckedChange={select.onChange} data-testid="restore-select"
+              aria-label={t('pages.snapshotCompare.restore.select', { name: o.name })} />
+          )}
           <Badge variant={STATUS_VARIANT[o.status]}>{t(`pages.snapshotCompare.status.${o.status}`)}</Badge>
           <span className="text-xs text-muted-foreground">{t(`pages.snapshotCompare.kinds.${o.kind}`)}</span>
           <span className="font-medium break-all">{o.name}</span>
