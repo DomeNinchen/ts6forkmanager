@@ -48,7 +48,8 @@ export function webhookIngress(): RequestHandler[] {
       return;
     }
     if (!parser || parserLimitKb !== bodyLimitKb) {
-      parser = express.json({ limit: bodyLimitKb * 1024 });
+      // The bytes as sent are kept as well: a signed call is checked against them, not against re-serialised JSON.
+      parser = express.json({ limit: bodyLimitKb * 1024, verify: (req, _res, buf) => { (req as any).rawBody = buf; } });
       parserLimitKb = bodyLimitKb;
     }
     parser(req, res, next);

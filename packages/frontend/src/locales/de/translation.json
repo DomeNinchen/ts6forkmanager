@@ -3627,6 +3627,9 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Webhook-Pfad",
+          "signedExampleLabel": "Beispielaufruf, signiert",
+          "requireSignatureHint": "Schützt gegen wiederholte Aufrufe: Der Aufrufer sendet X-Webhook-Timestamp (Unix-Sekunden) und X-Webhook-Signature = sha256= und HMAC-SHA256 von „<Zeitstempel>.<Inhalt>“ mit dem Secret als Schlüssel. Angenommen werden nur Aufrufe, deren Zeitstempel höchstens 5 Minuten abweicht, und jede Signatur nur einmal. Eingeschaltet reicht das Secret allein nicht mehr; signierte Aufrufe werden auch ausgeschaltet angenommen.",
+          "requireSignatureLabel": "Signatur verlangen",
           "querySecretWarning_other": "Dieser Flow wurde {{count}}-mal mit ?secret= in der Adresse aufgerufen, zuletzt {{date}}. Stelle die Aufrufer auf den Header X-Webhook-Secret um: Adressen landen in Zugriffsprotokollen.",
           "querySecretWarning_one": "Dieser Flow wurde {{count}}-mal mit ?secret= in der Adresse aufgerufen, zuletzt {{date}}. Stelle den Aufrufer auf den Header X-Webhook-Secret um: Adressen landen in Zugriffsprotokollen.",
           "exampleLabel": "Beispielaufruf",

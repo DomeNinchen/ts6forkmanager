@@ -2526,6 +2526,9 @@
         },
         "triggerWebhook": {
           "webhookPathLabel": "Chemin du webhook",
+          "signedExampleLabel": "Exemple d’appel, signé",
+          "requireSignatureHint": "Protège contre les appels répétés : l’appelant envoie X-Webhook-Timestamp (secondes Unix) et X-Webhook-Signature = sha256= suivi du HMAC-SHA256 de « <horodatage>.<contenu> », avec le secret comme clé. Seuls les appels dont l’horodatage s’écarte d’au plus 5 minutes sont acceptés, et chaque signature une seule fois. Activé, le secret seul ne suffit plus ; les appels signés sont acceptés aussi quand il est désactivé.",
+          "requireSignatureLabel": "Exiger une signature",
           "querySecretWarning_other": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez les appelants à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès.",
           "querySecretWarning_one": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez l’appelant à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès.",
           "exampleLabel": "Exemple d’appel",

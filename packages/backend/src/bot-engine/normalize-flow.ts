@@ -53,7 +53,7 @@ export function normalizeFlowData(raw: any): FlowDefinition {
       data = { triggerType: 'cron', label, cronExpression: config.cron || config.cronExpression || '', timezone: config.timezone || undefined };
     } else if (nodeType === 'trigger_webhook') {
       type = 'trigger';
-      data = { triggerType: 'webhook', label, webhookPath: config.path || config.webhookPath || '', method: config.method || 'POST', secret: config.secret || undefined };
+      data = { triggerType: 'webhook', label, webhookPath: config.path || config.webhookPath || '', method: config.method || 'POST', secret: config.secret || undefined, requireSignature: config.requireSignature === true };
     } else if (nodeType === 'trigger_command') {
       type = 'trigger';
       const cmd = config.command || '';
