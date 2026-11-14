@@ -21,6 +21,8 @@ interface UiStore {
   sidebarCollapsed: boolean;
   /** The Cockpit sidebar as a drawer on phone width (below md) - per page view, never persisted. */
   mobileNavOpen: boolean;
+  /** The global search window (Ctrl/Cmd+K) - never persisted. */
+  searchOpen: boolean;
   /** Which sidebar nav section labels (e.g. "Management") are collapsed - independent of the whole-sidebar collapse above. */
   collapsedSections: Record<string, boolean>;
   /** This user's personal choice, overriding the installation default below. null = follow the installation default. */
@@ -39,6 +41,7 @@ interface UiStore {
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setMobileNavOpen: (open: boolean) => void;
+  setSearchOpen: (open: boolean) => void;
   toggleSection: (label: string) => void;
   /** Swaps between the most recently used light and dark theme. */
   toggleTheme: () => void;
@@ -55,6 +58,7 @@ export const useUiStore = create<UiStore>()(
     (set, get) => ({
       sidebarCollapsed: false,
       mobileNavOpen: false,
+      searchOpen: false,
       collapsedSections: {},
       accentOverride: null,
       installDefaultAccent: 'violet',
@@ -67,6 +71,7 @@ export const useUiStore = create<UiStore>()(
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setMobileNavOpen: (open) => set({ mobileNavOpen: open }),
+      setSearchOpen: (open) => set({ searchOpen: open }),
       toggleSection: (label) =>
         set({ collapsedSections: { ...get().collapsedSections, [label]: !get().collapsedSections[label] } }),
       toggleTheme: () => {

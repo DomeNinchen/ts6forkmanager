@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { UserPermission } from '@ts6/common';
+import { GlobalSearchButton } from './GlobalSearch';
 
 interface NavContext {
   isAdmin: boolean;
@@ -137,12 +138,20 @@ function useNavContext(): NavContext {
  * dropped - the same rules the sidebar applies, for the Lounge design's top navigation.
  */
 export function useVisibleNavSections() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navCtx = useNavContext();
+  // The English names as well, so the global search finds a page by either.
+  const en = getNavSections(i18n.getFixedT('en'));
   return getNavSections(t)
+    .map((section, si) => ({
+      ...section,
+      enLabel: en[si].label,
+      items: section.items.map((item, ii) => ({ ...item, enLabel: en[si].items[ii].label })),
+    }))
     .filter((section) => !(section as any).visible || (section as any).visible(navCtx))
     .map((section) => ({
       label: section.label,
+      enLabel: section.enLabel,
       items: section.items.filter((item) =>
         (!(item as any).needsWebQuery || navCtx.hasWebQuery) && (!(item as any).visible || (item as any).visible(navCtx))),
     }))
@@ -217,6 +226,13 @@ function SidebarPanel({ collapsed: sidebarCollapsed, onClose }: { collapsed: boo
             </Link>
           )}
         </div>
+
+        {/* In the phone drawer the search sits on top; it closes the drawer first, one dialog at a time. */}
+        {onClose && (
+          <div className="border-b border-sidebar-border p-2">
+            <GlobalSearchButton onOpen={onClose} className="w-full justify-start [&>span]:inline text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground" />
+          </div>
+        )}
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-2">

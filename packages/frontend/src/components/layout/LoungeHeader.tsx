@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { ServerSelector } from './ServerSelector';
+import { GlobalSearchButton } from './GlobalSearch';
 import { useVisibleNavSections } from './Sidebar';
 import { useAuthStore } from '@/stores/auth.store';
 import { useLogout } from '@/hooks/use-auth';
@@ -65,6 +66,7 @@ export function LoungeHeader() {
         <ServerSelector />
 
         <div className="ml-auto flex items-center gap-1">
+          <GlobalSearchButton className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

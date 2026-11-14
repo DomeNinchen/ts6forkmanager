@@ -87,6 +87,16 @@
     "collapse": "Einklappen",
     "menu": "Navigation",
     "openMenu": "Navigation öffnen",
+    "search": {
+      "open": "Suchen",
+      "title": "Globale Suche",
+      "placeholder": "Seiten und Einstellungen suchen …",
+      "recent": "Zuletzt geöffnet",
+      "pages": "Seiten",
+      "empty": "Keine Treffer",
+      "ctrl": "Strg",
+      "hint": "↑↓ auswählen, Enter öffnen, Esc schließen"
+    },
     "closeMenu": "Navigation schließen",
     "sections": {
       "overview": "Übersicht",
