@@ -1,5 +1,5 @@
 import api from './client';
-import type { ConnectionDiagnosis, DiagnosisRequest, SnapshotBackupSource, SnapshotCompareResult, SnapshotCompareSource } from '@ts6/common';
+import type { ConnectionDiagnosis, DiagnosisRequest, SnapshotBackupSource, SnapshotCompareResult, SnapshotCompareSource, VirtualServerDeleteResult } from '@ts6/common';
 
 export const serversApi = {
   list: () => api.get('/servers').then((r) => r.data),
@@ -28,8 +28,9 @@ export const serversApi = {
     api.post(`/servers/${configId}/virtual-servers/${sid}/start`).then((r) => r.data),
   stopVirtual: (configId: number, sid: number) =>
     api.post(`/servers/${configId}/virtual-servers/${sid}/stop`).then((r) => r.data),
-  deleteVirtual: (configId: number, sid: number) =>
-    api.delete(`/servers/${configId}/virtual-servers/${sid}`),
+  /** `skipBackup`: go on after the backup before it failed (R9). */
+  deleteVirtual: (configId: number, sid: number, skipBackup = false): Promise<VirtualServerDeleteResult> =>
+    api.delete(`/servers/${configId}/virtual-servers/${sid}`, skipBackup ? { data: { skipBackup } } : undefined).then((r) => r.data),
   createSnapshot: (configId: number, sid: number) =>
     api.post(`/servers/${configId}/virtual-servers/${sid}/snapshot`).then((r) => r.data),
   deploySnapshot: (configId: number, sid: number, data: any) =>

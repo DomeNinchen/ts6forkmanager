@@ -35,3 +35,4 @@ export * from './user-settings.js';
 export * from './permissions.js';
 export * from './types/flow-template.js';
 export * from './utils/flow-template.js';
+export * from './types/virtual-server-delete.js';

@@ -3,6 +3,9 @@ import { requireRole, requirePermission } from '../middleware/rbac.js';
 import { AppError, TSApiError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { grantCovers, grantOf } from '../utils/vs-access.js';
+import { backupBeforeDeleting } from '../utils/bulk-backup.js';
+import { cleanUpDeletedVirtualServer } from '../utils/virtual-server-cleanup.js';
+import type { VirtualServerDeleteResult } from '@ts6/common';
 import { backupsWithSnapshot, readBackupSnapshot } from '../utils/backups.js';
 import { compareSnapshots, readSnapshot } from '../utils/ts-snapshot.js';
 import type { SnapshotBackupSource, SnapshotCompareSource } from '@ts6/common';
@@ -103,25 +106,45 @@ virtualServerRoutes.post('/:sid/stop', requireRole('admin'), async (req: Request
   } catch (err) { next(err); }
 });
 
+const statusOf = async (client: ReturnType<typeof getClient>, sid: number): Promise<string | undefined> => {
+  const list = await client.execute(0, 'serverlist');
+  const vs = (Array.isArray(list) ? list : [list]).find((s: { virtualserver_id?: unknown }) => Number(s?.virtualserver_id) === sid);
+  return vs ? String(vs.virtualserver_status) : undefined;
+};
+
 // TS6 deletes only a stopped server (measured: a running one answers 1035, an unknown sid 1024;
-// sids are never handed out again), so the state check is TeamSpeak's own. A stopped server that a
-// query client touched (the bandwidth sampler does, right after a stop) is "online virtual": no voice
-// clients, but TS6 still answers 1035 until it is stopped again - so that one is stopped and retried once.
+// sids are never handed out again). A stopped server that a query client touched (the bandwidth
+// sampler, or the snapshot of the backup before this) is "online virtual": no voice clients, but TS6
+// still answers 1035 until it is stopped again - so that one is stopped and retried once.
+// Order: state check, backup, delete, then the manager's own data of that server (cleanUpDeletedVirtualServer).
 virtualServerRoutes.delete('/:sid', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     if (!/^[1-9]\d*$/.test(String(req.params.sid))) throw new AppError(400, 'Invalid virtual server ID');
     const sid = Number(req.params.sid);
+    const configId = Number(req.params.configId);
     const client = getClient(req);
+    const status = await statusOf(client, sid);
+    if (status === undefined) throw new TSApiError(1024, 'invalid serverID');
+    if (status !== 'offline' && status !== 'online virtual') throw new TSApiError(1035, 'server got an invalid status for this operation');
+
+    const backup = await backupBeforeDeleting(req, undefined, true);
     try {
-      res.json(await client.execute(0, 'serverdelete', { sid }));
+      await client.execute(0, 'serverdelete', { sid });
     } catch (err) {
-      if (!(err instanceof TSApiError && err.code === 1035)) throw err;
-      const list = await client.execute(0, 'serverlist');
-      const vs = (Array.isArray(list) ? list : [list]).find((s: { virtualserver_id?: unknown }) => Number(s?.virtualserver_id) === sid);
-      if (vs?.virtualserver_status !== 'online virtual') throw err;
+      if (!(err instanceof TSApiError && err.code === 1035) || (await statusOf(client, sid)) !== 'online virtual') throw err;
       await client.execute(0, 'serverstop', { sid });
-      res.json(await client.execute(0, 'serverdelete', { sid }));
+      await client.execute(0, 'serverdelete', { sid });
     }
+
+    const result: VirtualServerDeleteResult = { deleted: true, backup, cleanup: null };
+    try {
+      result.cleanup = await cleanUpDeletedVirtualServer({ prisma: req.app.locals.prisma, botEngine: req.app.locals.botEngine, raid: req.app.locals.raidProtection }, configId, sid);
+    } catch (err) {
+      // TeamSpeak has deleted the server already: say what is left instead of a failure.
+      result.cleanupError = (err as Error).message;
+      console.error(`[VirtualServers] Clean-up after deleting ${configId}/${sid} failed: ${result.cleanupError}`);
+    }
+    res.json(result);
   } catch (err) {
     if (err instanceof TSApiError && err.code === 1035) {
       return next(new AppError(409, 'Only a stopped virtual server can be deleted - stop it first', undefined, 'SERVER_RUNNING'));
