@@ -97,6 +97,8 @@
       "ctrl": "Strg",
       "hint": "↑↓ auswählen, Enter öffnen, Esc schließen",
       "noWebQuery": "Diese Verbindung hat keine WebQuery: Clients, Channels und Gruppen fehlen in der Suche.",
+      "offlineAll": "Alle {{count}} in der Client-Datenbank",
+      "searchingDatabase": "Suche in der Client-Datenbank …",
       "types": {
         "clients": "Clients",
         "client": "Client",
@@ -105,7 +107,9 @@
         "serverGroup": "Servergruppe",
         "channelGroup": "Channel-Gruppe",
         "flow": "Bot-Flow",
-        "musicBot": "Musik-Bot"
+        "musicBot": "Musik-Bot",
+        "offlineClients": "Offline-Clients",
+        "offlineClient": "Client-Datenbank"
       }
     },
     "closeMenu": "Navigation schließen",

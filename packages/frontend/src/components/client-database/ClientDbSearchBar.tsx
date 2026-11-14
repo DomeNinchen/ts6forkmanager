@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ClientDbSearchMode, ClientDbSearchParams } from '@ts6/common';
 import { Search, X } from 'lucide-react';
@@ -20,12 +20,19 @@ interface ClientDbSearchBarProps {
   channelGroups: any[];
   onSearch: (params: ClientDbSearchParams) => void;
   onClear: () => void;
+  /** A name or UID search started from outside (the global search): shown in the fields as if typed. */
+  preset?: ClientDbSearchParams | null;
 }
 
-export function ClientDbSearchBar({ active, busy, channels, channelGroups, onSearch, onClear }: ClientDbSearchBarProps) {
+export function ClientDbSearchBar({ active, busy, channels, channelGroups, onSearch, onClear, preset }: ClientDbSearchBarProps) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ClientDbSearchMode>('name');
   const [text, setText] = useState('');
+  useEffect(() => {
+    if (!preset) return;
+    setMode(preset.mode);
+    setText(preset.query ?? '');
+  }, [preset]);
   const [ident, setIdent] = useState('');
   const [cid, setCid] = useState(ANY);
   const [cgid, setCgid] = useState(ANY);

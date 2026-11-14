@@ -187,10 +187,12 @@ clientDatabaseRoutes.get('/search', async (req: Request, res: Response, next) =>
     if (mode === 'name' || mode === 'uid') {
       const pattern = asContainsPattern(requiredText(req.query.query, 'query', 100));
       const hits = rows(await client.execute(sid, 'clientdbfind', { pattern, ...(mode === 'uid' ? { '-uid': '' } : {}) }));
-      const ids = [...new Set(hits.map((h) => toNumber(h.cldbid)))];
+      const ids = [...new Set(hits.map((h) => toNumber(h.cldbid)))].sort((a, b) => b - a);
+      // `limit` (the global search) reads only the newest few: each listed profile is one clientdbinfo call.
+      const shown = req.query.limit === undefined ? ids : ids.slice(0, boundedInt(req.query.limit, TS_FIND_CAP, 1, TS_FIND_CAP));
       result = {
-        entries: await readProfiles(client, sid, ids),
-        truncated: ids.length >= TS_FIND_CAP,
+        entries: await readProfiles(client, sid, shown),
+        truncated: ids.length >= TS_FIND_CAP || shown.length < ids.length,
         matchCount: ids.length,
       };
     } else if (mode === 'dbid') {

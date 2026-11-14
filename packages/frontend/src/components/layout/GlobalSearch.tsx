@@ -10,7 +10,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { settingsTabsFor } from '@/lib/settings-tabs';
 import { searchEntries, pushRecent } from '@/lib/search';
 import { useVisibleNavSections } from './Sidebar';
-import { useSearchObjects, type SearchEntry as Entry } from './use-search-objects';
+import { useSearchObjects, useOfflineClientSearch, type SearchEntry as Entry } from './use-search-objects';
 
 /** Shortcut: at most this many hits per kind of server object; upgrade to "show more" if real servers need it. */
 const OBJECTS_PER_TYPE = 8;
@@ -122,6 +122,8 @@ export function GlobalSearch() {
   const pagesKey = sections.flatMap((s) => s.items.map((i) => i.to)).join(' ');
   const visiblePages = useMemo(() => new Set(pagesKey.split(' ')), [pagesKey]);
   const objects = useSearchObjects(open, visiblePages);
+  const onlineIds = useMemo(() => new Set(objects.groups.find((g) => g.key === 'clients')?.items.map((i) => i.id)), [objects.groups]);
+  const offline = useOfflineClientSearch(open, query, visiblePages, onlineIds);
 
   const groups = useMemo(() => {
     const typed = query.trim() !== '';
@@ -134,9 +136,13 @@ export function GlobalSearch() {
       { key: 'pages', label: t('nav.search.pages'), items: found.filter((e) => e.id.startsWith('page:')) },
       { key: 'settings', label: t('common.settings'), items: found.filter((e) => e.id.startsWith('settings:')) },
       // Server objects only once something is typed; an empty search stays short.
-      ...(typed ? objects.groups.map((g) => ({ ...g, items: searchEntries(g.items, query, OBJECTS_PER_TYPE) })) : []),
+      // The offline clients follow the online ones; TeamSpeak's name search already filtered and capped them.
+      ...(typed ? objects.groups.flatMap((g) => {
+        const hits = { ...g, items: searchEntries(g.items, query, OBJECTS_PER_TYPE) };
+        return g.key === 'clients' ? [hits, offline.group] : [hits];
+      }) : []),
     ].filter((g) => g.items.length > 0);
-  }, [entries, objects.groups, query, recent, t]);
+  }, [entries, objects.groups, offline.group, query, recent, t]);
 
   const flat = groups.flatMap((g) => g.items.map((item) => ({ item, optionId: `${baseId}-${g.key}-${item.id}` })));
   const current = flat[Math.min(active, flat.length - 1)];
@@ -146,8 +152,11 @@ export function GlobalSearch() {
   }, [current?.optionId]);
 
   const choose = (entry: Entry) => {
-    const next = pushRecent(readRecent(userId), entry.id);
-    try { localStorage.setItem(recentKey(userId), JSON.stringify(next)); } catch { /* private mode: just no history */ }
+    // Offline profiles are in no loaded list, so a recent entry could not be shown again without asking TeamSpeak.
+    if (!entry.id.startsWith('offline')) {
+      const next = pushRecent(readRecent(userId), entry.id);
+      try { localStorage.setItem(recentKey(userId), JSON.stringify(next)); } catch { /* private mode: just no history */ }
+    }
     setOpen(false);
     navigate(entry.to);
   };
@@ -234,6 +243,10 @@ export function GlobalSearch() {
             </div>
           ))}
         </div>
+        {/* Always in the tree, so screen readers hear the text when it appears. */}
+        <p aria-live="polite" className={cn('px-3 text-xs text-muted-foreground', offline.searching && 'border-t border-border py-2')}>
+          {offline.searching ? t('nav.search.searchingDatabase') : ''}
+        </p>
         {objects.noWebQuery && (
           <p className="border-t border-border px-3 py-2 text-xs text-muted-foreground">{t('nav.search.noWebQuery')}</p>
         )}

@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams as useAddressSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAddressTarget } from '@/lib/search-target';
 import { type ColumnDef } from '@tanstack/react-table';
 import {
   buildBanIndex, findBanMatches,
@@ -290,6 +292,19 @@ export default function ClientDatabase() {
     setSearchParams(null);
   };
 
+  // From the global search: ?cldbid= opens that profile's details, ?q= (&mode=uid) runs that search.
+  const [preset, setPreset] = useState<ClientDbSearchParams | null>(null);
+  useAddressTarget('cldbid', true, (value) => {
+    const cldbid = Number(value);
+    if (Number.isInteger(cldbid) && cldbid > 0) setDetailId(cldbid);
+  });
+  const [addressParams] = useAddressSearchParams();
+  useAddressTarget('q', true, (query) => {
+    const params: ClientDbSearchParams = { mode: addressParams.get('mode') === 'uid' ? 'uid' : 'name', query };
+    setPreset(params);
+    runSearch(params);
+  });
+
   const refresh = () => {
     if (searching) search.refetch();
     else refreshList();
@@ -497,6 +512,7 @@ export default function ClientDatabase() {
           channelGroups={channelGroups}
           onSearch={runSearch}
           onClear={endSearch}
+          preset={preset}
         />
 
         {searching ? (
