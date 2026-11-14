@@ -12,13 +12,12 @@ import type {
 } from '@ts6/common';
 import { FLOW_TEST_MAX_FRAMES } from '@ts6/common';
 import { AnimationManager } from './animation-manager.js';
-import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData } from './trigger-match.js';
+import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretMatches } from './trigger-match.js';
 import { onSupportCaseTaken } from '../utils/support-queue.js';
 import { AppError } from '../middleware/error-handler.js';
 import { animationConfig, animationFrames } from './animation-manager.js';
 import { instanceAudience, sendToAudience } from '../utils/ws-audience.js';
 import { BOT_LOG_DEFAULTS, getBotLogSettings } from '../utils/bot-log-settings.js';
-import crypto from 'crypto';
 
 /**
  * Normalize flow data from the frontend editor format to the engine format.
@@ -513,15 +512,8 @@ export class BotEngine {
     let triggered = 0;
     let dropped = 0;
     for (const wh of matching) {
-      // H6: Mandatory webhook secrets — skip webhooks without secrets configured
-      if (!wh.secret) continue;
-
-      // H6: Timing-safe secret comparison
-      const secretBuf = Buffer.from(wh.secret);
-      const providedBuf = Buffer.from(providedSecret);
-      if (secretBuf.length !== providedBuf.length || !crypto.timingSafeEqual(secretBuf, providedBuf)) {
-        continue;
-      }
+      // H6: mandatory secret (none configured never matches), compared in constant time
+      if (!webhookSecretMatches(wh.secret ?? '', providedSecret)) continue;
 
       const flow = this.flows.get(wh.flowId);
       if (!flow) continue;

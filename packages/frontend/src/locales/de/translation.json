@@ -219,6 +219,18 @@
       "deleteTitle": "Bot löschen?",
       "deleteDescription": "Dies löscht diesen Bot-Flow und seinen gesamten Ausführungsverlauf dauerhaft.",
       "deleted": "Bot gelöscht",
+      "webhooks": {
+        "title": "Webhooks: Eingangsgrenzen",
+        "description": "Grenzen für eingehende Webhook-Aufrufe, geprüft bevor der Inhalt gelesen wird. Gültige Aufrufe (passendes Secret) und Fehlversuche (unbekannter Pfad oder falsches Secret) werden je Adresse getrennt gezählt. Gilt für die ganze Instanz.",
+        "bodyLimitKbLabel": "Größter Inhalt (KB)",
+        "bodyLimitKbHint": "{{min}} bis {{max}} KB; größere Aufrufe erhalten 413. Ein Proxy davor kann eine eigene, kleinere Grenze haben.",
+        "validPerMinuteLabel": "Gültige Aufrufe je Adresse und Minute",
+        "validPerMinuteHint": "{{min}} bis {{max}}; darüber antwortet der Manager mit 429.",
+        "failedPerMinuteLabel": "Fehlversuche je Adresse und Minute",
+        "failedPerMinuteHint": "{{min}} bis {{max}}; darüber 429 und ein Eintrag im Verbindungsjournal.",
+        "saved": "Webhook-Grenzen gespeichert",
+        "saveFailed": "Webhook-Grenzen konnten nicht gespeichert werden"
+      },
       "retention": {
         "title": "Ausführungen: Aufbewahrung und Limit",
         "description": "Wie lange der Ausführungsverlauf aller Bot-Flows (Ausführungen und ihre Logzeilen) aufbewahrt wird. Gilt für die ganze Instanz; Älteres wird stündlich entfernt.",
@@ -973,7 +985,8 @@
         "sso-no-subject": "Der Identitätsanbieter hat keine Konto-ID geschickt",
         "sso-failed": "Die Antwort des Identitätsanbieters wurde abgelehnt",
         "login-limit": "Zu viele Anmeldeversuche von dieser Adresse",
-        "refresh-limit": "Zu viele Token-Erneuerungen von dieser Adresse"
+        "refresh-limit": "Zu viele Token-Erneuerungen von dieser Adresse",
+        "webhook-limit": "Zu viele fehlgeschlagene Webhook-Aufrufe von dieser Adresse"
       },
       "unknownAccount": "unbekannt",
       "unknownAccountHint": "Kein Konto trägt diesen Namen. Es ist das, was ins Feld getippt wurde – möglicherweise etwas anderes, etwa ein Passwort im falschen Feld.",

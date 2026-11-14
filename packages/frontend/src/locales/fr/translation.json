@@ -470,6 +470,18 @@
       "deleteTitle": "Supprimer le bot ?",
       "deleteDescription": "Cela supprimera définitivement ce flux de bot et tout son historique d'exécution.",
       "deleted": "Bot supprimé",
+      "webhooks": {
+        "title": "Webhooks : limites d’entrée",
+        "description": "Limites des appels webhook entrants, vérifiées avant la lecture du contenu. Les appels valides (secret correct) et les échecs (chemin inconnu ou secret erroné) sont comptés séparément par adresse. S’applique à toute l’instance.",
+        "bodyLimitKbLabel": "Contenu maximal (Ko)",
+        "bodyLimitKbHint": "{{min}} à {{max}} Ko ; au-delà, réponse 413. Un proxy en amont peut avoir sa propre limite, plus petite.",
+        "validPerMinuteLabel": "Appels valides par adresse et minute",
+        "validPerMinuteHint": "{{min}} à {{max}} ; au-delà, le manager répond 429.",
+        "failedPerMinuteLabel": "Échecs par adresse et minute",
+        "failedPerMinuteHint": "{{min}} à {{max}} ; au-delà, 429 et une entrée dans le journal des connexions.",
+        "saved": "Limites webhook enregistrées",
+        "saveFailed": "Impossible d’enregistrer les limites webhook"
+      },
       "retention": {
         "title": "Exécutions : conservation et limite",
         "description": "Durée de conservation de l'historique d'exécution de tous les flux de bots (exécutions et leurs lignes de journal). S'applique à toute l'instance ; tout ce qui est plus ancien est supprimé chaque heure.",

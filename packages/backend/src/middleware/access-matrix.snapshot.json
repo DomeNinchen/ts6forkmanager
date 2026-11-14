@@ -3569,6 +3569,22 @@
     "server-admin": "403",
     "moderator": "403"
   },
+  "GET /api/settings/webhooks": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "403",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
+  "PUT /api/settings/webhooks": {
+    "admin": "ok",
+    "viewer": "403",
+    "bot-operator": "403",
+    "music-operator": "403",
+    "server-admin": "403",
+    "moderator": "403"
+  },
   "GET /api/connection-journal/geoip": {
     "admin": "ok",
     "viewer": "403",

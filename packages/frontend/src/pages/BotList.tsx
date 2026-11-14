@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { TemplateGallery } from '@/components/bots/TemplateGallery';
 import { ExportTemplateDialog, ImportTemplateDialog } from '@/components/bots/FlowTemplateDialogs';
 import { BotLogSettingsCard } from '@/components/bots/BotLogSettingsCard';
+import { WebhookSettingsCard } from '@/components/bots/WebhookSettingsCard';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -143,6 +144,7 @@ export default function BotList() {
       )}
 
       {isAdmin && <BotLogSettingsCard />}
+      {isAdmin && <WebhookSettingsCard />}
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>

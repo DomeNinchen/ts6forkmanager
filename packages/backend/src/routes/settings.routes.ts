@@ -44,6 +44,9 @@ import {
   type BotLogSettings,
 } from '../utils/bot-log-settings.js';
 import { pruneBotLogs, botLogStats } from '../utils/bot-log-retention.js';
+import {
+  webhookSettings, saveWebhookSettings, isValidWebhookSetting, WEBHOOK_DEFAULTS, WEBHOOK_BOUNDS, type WebhookSettings,
+} from '../utils/webhook-settings.js';
 import { STREAM_PRESETS } from '../voice/streaming/types.js';
 import { forceCookieCheck } from '../utils/yt-cookie-check.js';
 import type { VoiceBotManager } from '../voice/voice-bot-manager.js';
@@ -683,6 +686,31 @@ settingsRoutes.put('/bot-logs', requireAdmin, async (req: Request, res: Response
     await pruneBotLogs(prisma);
     console.log(`[Settings] Bot logs kept ${saved.retentionDays} day(s), capped at ${saved.maxRows} rows per table; ${saved.maxConcurrentPerFlow} concurrent executions per flow`);
     res.json(await botLogSettingsResponse(prisma, saved));
+  } catch (err) { next(err); }
+});
+
+const webhookSettingsResponse = (settings: WebhookSettings) => ({ ...settings, defaults: WEBHOOK_DEFAULTS, bounds: WEBHOOK_BOUNDS });
+
+// GET /api/settings/webhooks - limits on the unauthenticated webhook route
+settingsRoutes.get('/webhooks', requireAdmin, (_req: Request, res: Response) => {
+  res.json(webhookSettingsResponse(webhookSettings()));
+});
+
+// PUT /api/settings/webhooks - applies to the next webhook call
+settingsRoutes.put('/webhooks', requireAdmin, async (req: Request, res: Response, next) => {
+  try {
+    const body = req.body ?? {};
+    const values = {} as WebhookSettings;
+    for (const name of Object.keys(WEBHOOK_DEFAULTS) as Array<keyof WebhookSettings>) {
+      if (!isValidWebhookSetting(name, body[name])) {
+        const { min, max } = WEBHOOK_BOUNDS[name];
+        throw new AppError(400, `${name} must be a whole number between ${min} and ${max}`);
+      }
+      values[name] = body[name];
+    }
+    const saved = await saveWebhookSettings(req.app.locals.prisma, values);
+    console.log(`[Settings] Webhooks: body up to ${saved.bodyLimitKb} KB, ${saved.validPerMinute} valid / ${saved.failedPerMinute} failed calls per address and minute`);
+    res.json(webhookSettingsResponse(saved));
   } catch (err) { next(err); }
 });
 

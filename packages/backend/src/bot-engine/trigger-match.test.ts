@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData } from './trigger-match.js';
+import { eventFilterMismatch, matchCommand, supportQueueMismatch, webhookEventData, webhookSecretMatches } from './trigger-match.js';
 
 const cmd = (extra: object = {}) => ({ triggerType: 'command' as const, label: '', commandPrefix: '!', commandName: 'hilfe', ...extra });
 
@@ -54,4 +54,15 @@ test('support trigger: no queue chosen = every queue; a chosen one ignores the o
   assert.equal(supportQueueMismatch({ ...trigger, queueId: '' }, { queue_id: '7' }), null);
   assert.equal(supportQueueMismatch({ ...trigger, queueId: '7' }, { queue_id: '7' }), null);
   assert.deepEqual(supportQueueMismatch({ ...trigger, queueId: '7' }, { queue_id: '8' }), { key: 'queue_id', expected: '7', actual: '8' });
+});
+
+test('webhook secret: equal matches, anything else (wrong, other length, empty) does not', () => {
+  assert.equal(webhookSecretMatches('s3cret-value', 's3cret-value'), true);
+  assert.equal(webhookSecretMatches('s3cret-value', 's3cret-valuX'), false);
+  assert.equal(webhookSecretMatches('s3cret-value', 's3cret'), false);
+  assert.equal(webhookSecretMatches('s3cret-value', 's3cret-value-longer'), false);
+  assert.equal(webhookSecretMatches('s3cret-value', ''), false);
+  // A trigger without a secret never fires, not even for an empty one sent.
+  assert.equal(webhookSecretMatches('', ''), false);
+  assert.equal(webhookSecretMatches('', 'x'), false);
 });

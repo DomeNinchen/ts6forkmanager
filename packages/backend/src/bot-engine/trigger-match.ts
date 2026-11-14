@@ -1,4 +1,5 @@
 import type { CommandTriggerData, EventTriggerData, SupportTriggerData } from '@ts6/common';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 // What a trigger node makes of an incoming event, as pure functions: the engine
 // uses them on live events, the flow test (FlowRunner.test) on sample data, so
@@ -53,6 +54,17 @@ export function matchCommand(trigger: CommandTriggerData, data: Record<string, s
   if (invoker && !data.clid) enriched.clid = String(invoker);
 
   return { data: enriched };
+}
+
+/**
+ * Whether the secret a webhook call sent is the trigger's. Both sides are hashed first, so the
+ * constant-time comparison always sees two equally long values and the time taken says nothing
+ * about the secret's length. A trigger without a secret never matches.
+ */
+export function webhookSecretMatches(expected: string, provided: string): boolean {
+  if (!expected) return false;
+  const digest = (s: string) => createHash('sha256').update(s).digest();
+  return timingSafeEqual(digest(expected), digest(provided));
 }
 
 /** The event data of a webhook call. The secret, when sent as `?secret=`, is not part of it: it would end up in the execution's stored trigger data. */
