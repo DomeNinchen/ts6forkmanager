@@ -14,7 +14,8 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useVirtualServerInfo } from '@/hooks/use-servers';
-import { MessageSquare, UserRound, Camera, AlertTriangle, Download, Upload } from 'lucide-react';
+import { MessageSquare, UserRound, Camera, AlertTriangle, Download, Upload, GitCompare } from 'lucide-react';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 export default function Miscellaneous() {
@@ -207,6 +208,9 @@ export default function Miscellaneous() {
                 <Upload className="h-3.5 w-3.5 mr-1" /> {t('pages.misc.restoreFromFile')}
               </Button>
               <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleRestoreFile} />
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/snapshot-compare" data-testid="snapshot-compare-link"><GitCompare className="h-3.5 w-3.5 mr-1" /> {t('pages.misc.compareWithServer')}</Link>
+              </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">{t('pages.misc.restoreWarning')}</p>
           </CardContent>
