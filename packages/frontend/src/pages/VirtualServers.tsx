@@ -13,9 +13,10 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatUptime, cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Server, Play, Square, Users, Clock, Plus, Power, Layers, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { Server, Play, Square, Users, Clock, Plus, Power, Layers, Check, Trash2, AlertTriangle, DatabaseBackup } from 'lucide-react';
 import { serversApi } from '@/api/servers.api';
 import { tsErrorMessage } from '@/lib/ts-errors';
+import type { VirtualServerDeleteResult } from '@ts6/common';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -33,6 +34,38 @@ function CounterTile({ icon: Icon, label, value, sub }: { icon: React.ElementTyp
   );
 }
 
+/** What the manager did with its own data of the deleted server (only what there was). */
+function DeleteCleanupList({ result }: { result: VirtualServerDeleteResult }) {
+  const { t } = useTranslation();
+  const c = result.cleanup;
+  if (!c) return <p role="alert" className="text-sm text-destructive">{t('pages.virtualServers.cleanupFailed', { reason: result.cleanupError })}</p>;
+  const lines = [
+    c.accessGrants > 0 && t('pages.virtualServers.cleanupAccess', { count: c.accessGrants }),
+    c.protectedGroups > 0 && t('pages.virtualServers.cleanupProtected', { count: c.protectedGroups }),
+    c.temporaryGroups > 0 && t('pages.virtualServers.cleanupTempGroups', { count: c.temporaryGroups }),
+    c.supportQueues > 0 && t('pages.virtualServers.cleanupQueues', { count: c.supportQueues }),
+    c.raidProtection && t('pages.virtualServers.cleanupRaid'),
+    c.flowsDisabled.length > 0 && t('pages.virtualServers.cleanupFlows', { names: c.flowsDisabled.map((f) => f.name).join(', ') }),
+  ].filter(Boolean) as string[];
+  return (
+    <div className="space-y-2 text-sm" data-testid="vs-delete-cleanup">
+      {lines.length > 0 ? (
+        <>
+          <p>{t('pages.virtualServers.cleanupDone')}</p>
+          <ul className="list-disc pl-5 space-y-1">{lines.map((l) => <li key={l}>{l}</li>)}</ul>
+        </>
+      ) : <p>{t('pages.virtualServers.cleanupNothing')}</p>}
+      {c.widgets.length > 0 && (
+        <p className="flex gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>{t('pages.virtualServers.cleanupWidgets', { names: c.widgets.map((w) => w.name).join(', ') })}</span>
+        </p>
+      )}
+      <p className="text-muted-foreground">{t('pages.virtualServers.cleanupHistory')}</p>
+    </div>
+  );
+}
+
 export default function VirtualServers() {
   const { t } = useTranslation();
   const { selectedConfigId, selectedSid, setSid } = useServerStore();
@@ -45,6 +78,8 @@ export default function VirtualServers() {
   const [toDelete, setToDelete] = useState<{ sid: number; name: string } | null>(null);
   const [typedName, setTypedName] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [backupFailed, setBackupFailed] = useState<string | null>(null);
+  const [deleteResult, setDeleteResult] = useState<VirtualServerDeleteResult | null>(null);
 
   const servers = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
@@ -89,27 +124,31 @@ export default function VirtualServers() {
     } catch { toast.error(t('pages.virtualServers.stopFailed')); }
   };
 
-  const closeDelete = () => { if (!deleting) { setToDelete(null); setTypedName(''); } };
+  const closeDelete = () => {
+    if (deleting) return;
+    setToDelete(null); setTypedName(''); setBackupFailed(null); setDeleteResult(null);
+  };
 
-  const handleDelete = async () => {
+  const handleDelete = async (skipBackup = false) => {
     if (!toDelete) return;
     setDeleting(true);
+    setBackupFailed(null);
     try {
-      await serversApi.deleteVirtual(selectedConfigId, toDelete.sid);
+      setDeleteResult(await serversApi.deleteVirtual(selectedConfigId, toDelete.sid, skipBackup));
       toast.success(t('pages.virtualServers.deleted', { name: toDelete.name }));
       // The server selector then picks the first remaining server.
       if (Number(selectedSid) === toDelete.sid) setSid(null);
-      setToDelete(null);
-      setTypedName('');
     } catch (err: any) {
       const code = err?.response?.data?.code;
+      // Nothing was deleted; the dialog says why and offers to go on without the backup.
+      if (code === 'BACKUP_FAILED') { setBackupFailed(err.response.data.details ?? err.response.data.error); return; }
       toast.error(
         code === 'SERVER_RUNNING' ? t('pages.virtualServers.deleteRunning')
           : code === 'SERVER_NOT_FOUND' ? t('pages.virtualServers.deleteNotFound')
             : code === 2568 ? t('pages.virtualServers.deleteNoPermission')
               : tsErrorMessage(err, t('pages.virtualServers.deleteFailed'), t),
       );
-      if (code === 'SERVER_NOT_FOUND') { setToDelete(null); setTypedName(''); }
+      if (code === 'SERVER_NOT_FOUND') { setToDelete(null); setTypedName(''); setBackupFailed(null); }
     } finally {
       setDeleting(false);
       qc.invalidateQueries({ queryKey: ['virtual-servers'] });
@@ -245,13 +284,32 @@ export default function VirtualServers() {
       {/* Delete: only for a stopped server, the server's name typed in. */}
       <Dialog open={toDelete !== null} onOpenChange={(v) => { if (!v) closeDelete(); }}>
         <DialogContent>
+          {deleteResult ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{t('pages.virtualServers.deleted', { name: toDelete?.name })}</DialogTitle>
+                <DialogDescription>
+                  {deleteResult.backup ? t('pages.virtualServers.deleteResultBackup', { name: deleteResult.backup }) : t('pages.virtualServers.deleteResultNoBackup')}
+                </DialogDescription>
+              </DialogHeader>
+              <DeleteCleanupList result={deleteResult} />
+              <DialogFooter>
+                <Button onClick={closeDelete} data-testid="vs-delete-close">{t('common.close')}</Button>
+              </DialogFooter>
+            </>
+          ) : (<>
           <DialogHeader>
             <DialogTitle>{t('pages.virtualServers.deleteDialogTitle')}</DialogTitle>
             <DialogDescription>{t('pages.virtualServers.deleteDialogDescription', { name: toDelete?.name, sid: toDelete?.sid })}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm">
             <p>{t('pages.virtualServers.deleteWhatGoes')}</p>
+            <p className="flex items-start gap-2">
+              <DatabaseBackup className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span>{t('components.backupStep.auto')}</span>
+            </p>
             <p className="text-muted-foreground">{t('pages.virtualServers.deleteSnapshotNote')}</p>
+            <p className="text-muted-foreground">{t('pages.virtualServers.deleteManagerData')}</p>
             {(toDelete?.sid === 1 || servers.length === 1) && (
               <div className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-destructive" data-testid="vs-delete-warning">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -265,16 +323,25 @@ export default function VirtualServers() {
               <Label htmlFor="vs-delete-confirm-name" className="text-xs">{t('pages.virtualServers.deleteTypeName', { name: toDelete?.name })}</Label>
               <Input id="vs-delete-confirm-name" value={typedName} onChange={(e) => setTypedName(e.target.value)} autoComplete="off" autoFocus data-testid="vs-delete-confirm-name" />
             </div>
+            {backupFailed && (
+              <div role="alert" className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive" data-testid="vs-delete-backup-failed">
+                <p>{t('components.backupStep.failed', { reason: backupFailed })}</p>
+                <Button type="button" size="sm" variant="destructive" onClick={() => void handleDelete(true)} disabled={deleting} data-testid="vs-delete-skip-backup">
+                  {t('components.backupStep.skip')}
+                </Button>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDelete} disabled={deleting}>{t('common.cancel')}</Button>
             <Button
-              variant="destructive" onClick={handleDelete} data-testid="vs-delete-confirm"
+              variant="destructive" onClick={() => void handleDelete()} data-testid="vs-delete-confirm"
               disabled={!toDelete || typedName.trim() !== toDelete.name.trim() || deleting}
             >
               {deleting ? t('components.confirmDialog.processing') : t('pages.virtualServers.deleteConfirm')}
             </Button>
           </DialogFooter>
+          </>)}
         </DialogContent>
       </Dialog>
 
