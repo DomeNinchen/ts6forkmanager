@@ -8,7 +8,7 @@ import { cleanUpDeletedVirtualServer } from '../utils/virtual-server-cleanup.js'
 import type { VirtualServerDeleteResult } from '@ts6/common';
 import { backupsWithSnapshot, readBackupSnapshot } from '../utils/backups.js';
 import { compareSnapshots, readSnapshot } from '../utils/ts-snapshot.js';
-import type { SnapshotBackupSource, SnapshotCompareSource } from '@ts6/common';
+import type { SnapshotBackupSource, SnapshotCompareRequest, SnapshotCompareSource } from '@ts6/common';
 
 export const virtualServerRoutes: Router = Router({ mergeParams: true });
 
@@ -187,21 +187,25 @@ virtualServerRoutes.get('/:sid/snapshot/compare-sources', requireRole('admin'), 
   res.json(sources);
 });
 
-// A snapshot (a file, or one in a backup) against the live server. The live side is a fresh snapshot
-// read in memory and never stored (it holds the server's keys and client identities). Read-only:
-// marked as dryRun so the change log leaves it out.
+// Two snapshots of this virtual server, each a file, one in a backup, or the live server (`against`
+// defaults to live). The live side is a fresh snapshot read in memory and never stored (it holds the
+// server's keys and client identities). Read-only: marked as dryRun so the change log leaves it out.
 virtualServerRoutes.post('/:sid/snapshot/compare', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const configId = parseInt(String(req.params.configId));
     const sid = parseInt(String(req.params.sid));
-    const source = req.body?.source as SnapshotCompareSource | undefined;
-    let snapshot;
-    if (source?.type === 'file') snapshot = source.snapshot;
-    else if (source?.type === 'backup' && typeof source.kind === 'string' && typeof source.name === 'string') snapshot = readBackupSnapshot(source.kind, source.name, configId, sid);
-    else throw new AppError(400, 'Name a snapshot file or a backup to compare with');
-    const before = readSnapshot(snapshot ?? {});
-    const result = await getClient(req).execute(sid, 'serversnapshotcreate');
-    const after = readSnapshot((Array.isArray(result) ? result[0] : result) ?? {});
+    const read = async (source: SnapshotCompareSource | undefined, side: string) => {
+      if (source?.type === 'file') return readSnapshot(source.snapshot ?? {});
+      if (source?.type === 'backup' && typeof source.kind === 'string' && typeof source.name === 'string') return readSnapshot(readBackupSnapshot(source.kind, source.name, configId, sid));
+      if (source?.type === 'live') {
+        const result = await getClient(req).execute(sid, 'serversnapshotcreate');
+        return readSnapshot((Array.isArray(result) ? result[0] : result) ?? {});
+      }
+      throw new AppError(400, `Name a snapshot file, a backup or the live server for the ${side} side`);
+    };
+    const body = (req.body ?? {}) as Partial<SnapshotCompareRequest>;
+    const before = await read(body.source, 'before');
+    const after = await read(body.against ?? { type: 'live' }, 'after');
     res.locals.dryRun = true;
     res.json(compareSnapshots(before, after));
   } catch (err) { next(err); }
