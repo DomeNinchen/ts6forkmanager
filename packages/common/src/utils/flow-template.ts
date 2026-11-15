@@ -187,7 +187,7 @@ function idCandidates(nodes: FlowTemplateNode[]): IdCandidate[] {
  * The node fields of a flow that name this server or channel group id (the same fields a template export
  * turns into inputs). Raw expressions and WebQuery parameters outside the known ones are not searched.
  */
-export function flowGroupReferences(nodes: unknown[], type: 'servergroup' | 'channelgroup', id: number): Array<{ node: string; field: string }> {
+export function flowGroupReferences(nodes: unknown[], type: 'servergroup' | 'channelgroup' | 'channel', id: number): Array<{ node: string; field: string }> {
   return idCandidates(cloneNodes(nodes))
     .filter((c) => c.type === type && c.value.split(',').includes(String(id)))
     .map((c) => ({ node: c.nodeLabel, field: c.field }));
