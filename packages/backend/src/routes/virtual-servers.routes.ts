@@ -4,7 +4,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { grantCovers, grantOf } from '../utils/vs-access.js';
 import { backupBeforeDeleting } from '../utils/bulk-backup.js';
-import { cleanUpDeletedVirtualServer } from '../utils/virtual-server-cleanup.js';
+import { changeLogResultOf, cleanUpDeletedVirtualServer } from '../utils/virtual-server-cleanup.js';
 import type { VirtualServerDeleteResult } from '@ts6/common';
 import { backupsWithSnapshot, readBackupSnapshot } from '../utils/backups.js';
 import { compareSnapshots, readSnapshot } from '../utils/ts-snapshot.js';
@@ -149,6 +149,7 @@ virtualServerRoutes.delete('/:sid', requireRole('admin'), async (req: Request, r
       result.cleanupError = (err as Error).message;
       console.error(`[VirtualServers] Clean-up after deleting ${configId}/${sid} failed: ${result.cleanupError}`);
     }
+    res.locals.changeLogResult = changeLogResultOf(result, configId, sid);
     res.json(result);
   } catch (err) {
     if (err instanceof TSApiError && err.code === 1035) {

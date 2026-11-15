@@ -2,10 +2,38 @@
 // deleted sid out again (measured on 6.0.0-beta13.1), so nothing here could attach to a new server:
 // the settings go, flows stop instead of failing on every run, and history stays for its retention.
 import type { PrismaClient } from '../generated/prisma/client.js';
-import { TEMP_GROUP_OPEN_STATES, type VirtualServerCleanup } from '@ts6/common';
+import { TEMP_GROUP_OPEN_STATES, type VirtualServerCleanup, type VirtualServerDeleteResult } from '@ts6/common';
 import type { BotEngine } from '../bot-engine/engine.js';
 import type { RaidProtectionService } from './raid-protection.js';
 import { resetQueueState } from './support-queue.js';
+import { readBackupSnapshot } from './backups.js';
+import { readSnapshot } from './ts-snapshot.js';
+
+/**
+ * The change-log entry's part from the handler: the backup, what its snapshot held (channels and
+ * groups; read from the backup, since a stopped server answers no channellist) and the clean-up.
+ */
+export function changeLogResultOf(result: VirtualServerDeleteResult, configId: number, sid: number): Record<string, unknown> {
+  const out: Record<string, unknown> = { backup: result.backup ?? 'skipped' };
+  if (result.backup) {
+    try {
+      const snap = readSnapshot(readBackupSnapshot('before-bulk', result.backup, configId, sid));
+      Object.assign(out, { channels: snap.channels.size, server_groups: snap.serverGroups.size, channel_groups: snap.channelGroups.size });
+    } catch { /* the counts are a nicety; the entry stands without them */ }
+  }
+  const c = result.cleanup;
+  if (!c) return { ...out, cleanup_error: result.cleanupError };
+  return {
+    ...out,
+    removed_access_grants: c.accessGrants,
+    removed_protected_groups: c.protectedGroups,
+    ended_temporary_groups: c.temporaryGroups,
+    disabled_support_queues: c.supportQueues,
+    removed_raid_protection: c.raidProtection ? 'yes' : 'no',
+    disabled_flows: c.flowsDisabled.map((f) => f.name).join(', '),
+    widgets_left: c.widgets.map((w) => w.name).join(', '),
+  };
+}
 
 export interface CleanupDeps {
   prisma: PrismaClient;

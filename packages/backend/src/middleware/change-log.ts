@@ -151,6 +151,7 @@ export function changeLogMiddleware(req: Request, res: Response, next: NextFunct
     if (httpStatus < 400 && res.locals.bulkOutcomes) return bulkDiffJson(res.locals.bulkOutcomes);
     if (!rule || httpStatus >= 400) return null;
     const b = await before;
+    if (b) b.ctx.result = res.locals.changeLogResult;
     return b ? diffJson(rule, b.snap, b.ctx) : null;
   };
 
