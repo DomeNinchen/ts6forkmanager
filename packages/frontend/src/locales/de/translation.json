@@ -1447,6 +1447,27 @@
       "objectCount_other": "{{count}} Unterschiede",
       "permissionCount_one": "{{count}} Recht",
       "permissionCount_other": "{{count}} Rechte",
+      "fromDeletion": "Aus dem Backup zurückholen",
+      "reset": {
+        "hint": "Einzelne Rechte und Felder, die sich seit dem Snapshot geändert haben, kannst du ankreuzen und auf den Stand im Snapshot zurücksetzen.",
+        "open": "Ausgewählte zurücksetzen ({{count}})",
+        "select": "{{name}} zurücksetzen",
+        "title": "Auf den Stand im Snapshot zurücksetzen",
+        "resultTitle": "Ergebnis des Zurücksetzens",
+        "description": "Die angekreuzten Rechte und Felder werden mit den Rechten der Manager-Identität auf den Wert im Snapshot gesetzt; ein Recht, das es im Snapshot nicht gab, wird entfernt. Sonst wird nichts geändert.",
+        "failed": "Das Zurücksetzen ist fehlgeschlagen",
+        "remove": "entfernen",
+        "running": "Wird zurückgesetzt...",
+        "confirm": "Zurücksetzen",
+        "status": {
+          "ready": "Wird gesetzt",
+          "ok": "Gesetzt",
+          "failed": "Fehlgeschlagen",
+          "skipped-not-resettable": "Nicht zurücksetzbar",
+          "skipped-object-gone": "Gibt es nicht mehr",
+          "skipped-not-in-snapshot": "Nicht im Snapshot"
+        }
+      },
       "restore": {
         "hint": "Gruppen und Channels, die nur im Snapshot stehen, kannst du als neue zurückholen.",
         "roleParent": "kommt mit: übergeordneter Channel, ebenfalls gelöscht",

@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { BackupStep, useBackupStep } from '@/components/shared/BackupStep';
+import { useRestoreLink } from '@/components/snapshot/use-restore-link';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -111,10 +112,14 @@ export default function ServerGroups() {
 
   // Both delete dialogs back up first (R9); the parallel deletes then share that one backup.
   const deleteBackup = useBackupStep('groups', 1, !!deleteTarget || showBulkDelete);
+  const restoreLink = useRestoreLink();
   const runDelete = (skipBackup: boolean) => {
     if (!deleteTarget) return;
     deleteGroup.mutate({ sgid: deleteTarget.sgid, skipBackup }, {
-      onSuccess: () => { toast.success(t('pages.serverGroups.groupDeleted')); setDeleteTarget(null); setSelectedGroup(null); },
+      onSuccess: (res) => {
+        toast.success(t('pages.serverGroups.groupDeleted'), restoreLink([res], [`serverGroup:${deleteTarget.sgid}`]));
+        setDeleteTarget(null); setSelectedGroup(null);
+      },
       onError: (err) => { if (!deleteBackup.caught(err, runDelete)) toast.error(tsErrorMessage(err, t('components.bulkResult.unknownError'), t)); },
     });
   };
@@ -126,7 +131,8 @@ export default function ServerGroups() {
     setBulkDeleting(false);
     setShowBulkDelete(false);
     reportBulk(t('pages.serverGroups.deleteSelected'), t('pages.serverGroups.bulkDeleteSuccess', { count: results.length }),
-      settledOutcomes(targets, results, (err) => tsErrorMessage(err, t('components.bulkResult.unknownError'), t)));
+      settledOutcomes(targets, results, (err) => tsErrorMessage(err, t('components.bulkResult.unknownError'), t)),
+      restoreLink(results.map((r) => (r.status === 'fulfilled' ? r.value : undefined)), targets.map((g) => `serverGroup:${g.id}`)));
     if (checkedIds.has(selectedGroup!)) setSelectedGroup(null);
     setCheckedIds(new Set());
   };

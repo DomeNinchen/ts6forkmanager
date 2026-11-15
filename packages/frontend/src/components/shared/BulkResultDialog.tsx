@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { toast, type ExternalToast } from 'sonner';
 import type { TFunction } from 'i18next';
 import type { BulkOutcome, BulkResult } from '@ts6/common';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,8 +12,8 @@ import { useBulkResultStore } from '@/stores/bulk-result.store';
  * Reports a bulk action (R9): a toast when every target went through, otherwise the result
  * dialog with how many did and, for each of the others, why not.
  */
-export function reportBulk(title: string, okText: string, outcomes: BulkOutcome[]): void {
-  if (outcomes.every((o) => o.status === 'ok')) toast.success(okText);
+export function reportBulk(title: string, okText: string, outcomes: BulkOutcome[], toastOptions?: ExternalToast): void {
+  if (outcomes.every((o) => o.status === 'ok')) toast.success(okText, toastOptions);
   else useBulkResultStore.getState().show(title, outcomes);
 }
 

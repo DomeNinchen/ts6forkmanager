@@ -1447,6 +1447,27 @@
       "objectCount_other": "{{count}} differences",
       "permissionCount_one": "{{count}} permission",
       "permissionCount_other": "{{count}} permissions",
+      "fromDeletion": "Bring back from the backup",
+      "reset": {
+        "hint": "Single permissions and fields that changed since the snapshot can be ticked and set back to the snapshot.",
+        "open": "Set selected back ({{count}})",
+        "select": "Set {{name}} back",
+        "title": "Set back to the snapshot",
+        "resultTitle": "Result",
+        "description": "The ticked permissions and fields are set to their value in the snapshot, under the manager identity's rights; a permission the snapshot did not have is removed. Nothing else is changed.",
+        "failed": "Setting back failed",
+        "remove": "remove",
+        "running": "Setting back...",
+        "confirm": "Set back",
+        "status": {
+          "ready": "Will be set",
+          "ok": "Set",
+          "failed": "Failed",
+          "skipped-not-resettable": "Cannot be set back",
+          "skipped-object-gone": "No longer exists",
+          "skipped-not-in-snapshot": "Not in the snapshot"
+        }
+      },
       "restore": {
         "hint": "Groups and channels that are only in the snapshot can be brought back as new ones.",
         "roleParent": "comes along: its parent channel, deleted too",

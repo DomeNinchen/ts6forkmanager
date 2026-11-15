@@ -1,7 +1,7 @@
 // Bringing single server/channel groups (stage 3) and channels (stage 4) back from a snapshot:
 // created again with normal commands under the caller's rights, so they get NEW ids. What still
 // points at the old id (manager settings, bot flows) is listed, never rewritten.
-import type { SnapshotCompareSource, SnapshotObjectKind } from './snapshot-compare.js';
+import type { SnapshotCompareSource, SnapshotObjectKind, SnapshotPermValue } from './snapshot-compare.js';
 
 export type SnapshotGroupKind = 'serverGroup' | 'channelGroup';
 
@@ -27,12 +27,45 @@ export interface SnapshotRestoreGroupChoice {
   newName?: string;
 }
 
+/**
+ * Stage 4b: set single permissions and fields of a group or channel that still exists back to the
+ * snapshot. A permission the snapshot does not have is removed. Keys as the comparison names them.
+ */
+export interface SnapshotResetChoice {
+  kind: SnapshotObjectKind;
+  id: number;
+  perms?: string[];
+  fields?: string[];
+}
+
+/**
+ * Fields that cannot be set back this way: the place in the tree (move the channel instead), the
+ * password (only a hash is in the snapshot) and the default channel (it would move the server's default).
+ */
+export const SNAPSHOT_RESET_EXCLUDED_FIELDS: readonly string[] = ['parent', 'below', 'channel_flag_password', 'channel_flag_default'];
+
+export interface SnapshotResetOutcome {
+  kind: SnapshotObjectKind;
+  id: number;
+  /** The object's name now. */
+  name: string;
+  item: 'perm' | 'field';
+  key: string;
+  /** What it is (or would be) set to; null = the permission is removed. */
+  to: string | SnapshotPermValue | null;
+  status: 'ready' | 'ok' | 'skipped' | 'failed';
+  reason?: 'not-resettable' | 'object-gone' | 'not-in-snapshot';
+  message?: string;
+}
+
 export interface SnapshotRestoreRequest {
   /** The snapshot to take the groups from (a file or a backup; not the live server). */
   source: SnapshotCompareSource;
   groups?: SnapshotRestoreGroupChoice[];
   /** Deleted parents are always added (a channel needs its parent); deleted subchannels only when listed. */
   channels?: SnapshotRestoreChannelChoice[];
+  /** Single permissions and fields of existing groups and channels to set back. */
+  reset?: SnapshotResetChoice[];
   /** Also add the server group members again (only those still in the client database). Off by default. */
   members?: boolean;
   /** Preview only: nothing is created and no backup is taken. */
@@ -90,6 +123,8 @@ export interface SnapshotRestoreOutcome {
 export interface SnapshotRestoreResult {
   dryRun?: true;
   outcomes: SnapshotRestoreOutcome[];
+  /** One line per permission or field that was (or would be) set back. */
+  resets?: SnapshotResetOutcome[];
   /** The before-bulk backup taken first (absent in a preview or with skipBackup). */
   backup?: string;
 }

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requirePermission } from '../middleware/rbac.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
-import { backupBeforeDeleting } from '../utils/bulk-backup.js';
+import { BACKUP_HEADER, backupBeforeDeleting } from '../utils/bulk-backup.js';
 
 export const channelRoutes: Router = Router({ mergeParams: true });
 
@@ -46,7 +46,8 @@ channelRoutes.put('/:cid', requirePermission('channels.edit'), async (req: Reque
 
 channelRoutes.delete('/:cid', requirePermission('channels.delete'), async (req: Request, res: Response, next) => {
   try {
-    await backupBeforeDeleting(req);
+    const backup = await backupBeforeDeleting(req);
+    if (backup) res.setHeader(BACKUP_HEADER, backup);
     const result = await getClient(req).execute(getSid(req), 'channeldelete', {
       cid: String(req.params.cid), force: req.query.force || 1,
     });
