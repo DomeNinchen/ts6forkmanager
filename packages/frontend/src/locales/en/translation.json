@@ -4055,6 +4055,12 @@
             "client-unset": "{{client}} (client permission): remove {{perm}}"
           },
           "temporary": "temporary membership until {{until}}",
+          "fromEditor": {
+            "group": "Why? with these changes",
+            "actor": "Why? with these changes (as the one who acts)",
+            "target": "Why? with these changes (as the target)",
+            "note": "Taken over from the editor. The changes are not saved there yet."
+          },
           "check": "Compare with {{count}} planned change(s)",
           "nothingChanged": "Preview: nothing was changed on the server.",
           "verdictChanged": "The answer changes: {{before}} → {{after}}.",

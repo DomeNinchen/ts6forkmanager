@@ -2954,6 +2954,12 @@
             "client-unset": "{{client}} (permission client) : supprimer {{perm}}"
           },
           "temporary": "appartenance temporaire jusqu’au {{until}}",
+          "fromEditor": {
+            "group": "Pourquoi ? avec ces modifications",
+            "actor": "Pourquoi ? avec ces modifications (comme client qui agit)",
+            "target": "Pourquoi ? avec ces modifications (comme cible)",
+            "note": "Repris de l’éditeur. Les modifications n’y sont pas encore enregistrées."
+          },
           "check": "Comparer avec {{count}} modification(s) prévue(s)",
           "nothingChanged": "Aperçu : rien n’a été modifié sur le serveur.",
           "verdictChanged": "La réponse change : {{before}} → {{after}}.",

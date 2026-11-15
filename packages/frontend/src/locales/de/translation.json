@@ -4055,6 +4055,12 @@
             "client-unset": "{{client}} (Client-Berechtigung): {{perm}} entfernen"
           },
           "temporary": "befristete Mitgliedschaft bis {{until}}",
+          "fromEditor": {
+            "group": "Warum? mit diesen Änderungen",
+            "actor": "Warum? mit diesen Änderungen (als handelnder Client)",
+            "target": "Warum? mit diesen Änderungen (als Ziel)",
+            "note": "Aus dem Editor übernommen. Die Änderungen sind dort noch nicht gespeichert."
+          },
           "check": "Mit {{count}} geplanten Änderung(en) vergleichen",
           "nothingChanged": "Vorschau: Auf dem Server wurde nichts geändert.",
           "verdictChanged": "Die Antwort ändert sich: {{before}} → {{after}}.",
