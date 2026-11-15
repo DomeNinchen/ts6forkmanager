@@ -97,6 +97,9 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         autoplaySongId: b.autoplaySongId,
         autoplayRadioStationId: b.autoplayRadioStationId,
         idlePauseMinutes: b.idlePauseMinutes,
+        voteSkipEnabled: b.voteSkipEnabled,
+        voteSkipPercent: b.voteSkipPercent,
+        voteSkipMinVotes: b.voteSkipMinVotes,
         hasAvatar: b.avatarData != null,
         uid: manager.getIdentityUid(b.id),
         status: runtime?.status ?? 'stopped',
@@ -144,9 +147,10 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
 musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes } = req.body;
+    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes, voteSkipEnabled, voteSkipPercent, voteSkipMinVotes } = req.body;
     if (!name || !serverConfigId) throw new AppError(400, 'name and serverConfigId are required');
     if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
+    requireVoteSkip(voteSkipEnabled, voteSkipPercent, voteSkipMinVotes);
     // The ':id' check above cannot cover a bot that does not exist yet
     if (req.user!.role !== 'admin') {
       const target = { serverConfigId: parseInt(serverConfigId), voicePort: voicePort != null ? parseInt(voicePort) : 9987 }; // 9987: the schema default
@@ -170,6 +174,9 @@ musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
       autoplaySongId: autoplaySongId != null ? parseInt(autoplaySongId) : undefined,
       autoplayRadioStationId: autoplayRadioStationId != null ? parseInt(autoplayRadioStationId) : undefined,
       idlePauseMinutes: idlePauseMinutes ?? undefined,
+      voteSkipEnabled: voteSkipEnabled ?? undefined,
+      voteSkipPercent: voteSkipPercent ?? undefined,
+      voteSkipMinVotes: voteSkipMinVotes ?? undefined,
     });
 
     res.status(201).json(result);
@@ -182,8 +189,9 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const id = parseInt(req.params.id as string);
-    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes } = req.body;
+    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes, voteSkipEnabled, voteSkipPercent, voteSkipMinVotes } = req.body;
     if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
+    requireVoteSkip(voteSkipEnabled, voteSkipPercent, voteSkipMinVotes);
     if (voicePort != null && req.user!.role !== 'admin') {
       // A new port can put the bot on another virtual server; the grant must cover that one too.
       const current = await prisma.musicBot.findUnique({ where: { id }, select: { serverConfigId: true } });
@@ -204,6 +212,9 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(volume != null && { volume: parseInt(volume) }),
         ...(autoStart != null && { autoStart }),
         ...(idlePauseMinutes != null && { idlePauseMinutes }),
+        ...(voteSkipEnabled != null && { voteSkipEnabled }),
+        ...(voteSkipPercent != null && { voteSkipPercent }),
+        ...(voteSkipMinVotes != null && { voteSkipMinVotes }),
         ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || null }),
         // The two ID fields are only ever meaningful together with the mode
         // that names them, so clear both whenever the mode changes away from
@@ -327,6 +338,17 @@ function connectFailure(err: any, manager: VoiceBotManager, id: number): Error {
 function requireIdlePauseMinutes(value: unknown): void {
   if (!Number.isInteger(value) || (value as number) < 0 || (value as number) > 1440) {
     throw new AppError(400, 'idlePauseMinutes must be a whole number between 0 (never) and 1440');
+  }
+}
+
+/** Vote-skip settings, each optional: an on/off switch, "more than X %" (0-100) and at least N votes (1-100). */
+function requireVoteSkip(enabled: unknown, percent: unknown, minVotes: unknown): void {
+  if (enabled != null && typeof enabled !== 'boolean') throw new AppError(400, 'voteSkipEnabled must be true or false');
+  if (percent != null && (!Number.isInteger(percent) || (percent as number) < 0 || (percent as number) > 100)) {
+    throw new AppError(400, 'voteSkipPercent must be a whole number between 0 and 100');
+  }
+  if (minVotes != null && (!Number.isInteger(minVotes) || (minVotes as number) < 1 || (minVotes as number) > 100)) {
+    throw new AppError(400, 'voteSkipMinVotes must be a whole number between 1 and 100');
   }
 }
 

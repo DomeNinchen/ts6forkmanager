@@ -7,6 +7,7 @@ import { saveMusicRequest } from './music-request-history.js';
 import { STREAM_PRESETS } from './streaming/types.js';
 import { getStreamDefaults } from '../utils/stream-defaults.js';
 import { canRunCommand } from '../utils/command-permissions.js';
+import { tallyVotes, type VoteSkipRule } from './vote-skip.js';
 
 const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
 const CMD_PREFIX = '!';
@@ -14,7 +15,7 @@ const CMD_PREFIX = '!';
 const MUSIC_COMMANDS = new Set([
   'radio', 'play', 'stop', 'pause', 'skip', 'next', 'prev',
   'vol', 'volume', 'np', 'nowplaying', 'queue', 'add',
-  'stream', 'stopstream', 'viewers', 'streamqueue', 'streamskip',
+  'stream', 'stopstream', 'viewers', 'streamqueue', 'streamskip', 'voteskip',
   // 'streamnow' is implemented below but deliberately left out: !stream's new
   // queueing behaviour should settle in practice before a second way to
   // switch the source lands in chat. Adding it to this set enables it; the
@@ -87,6 +88,8 @@ async function toYtDlpSource(input: string): Promise<string> {
  */
 export class MusicCommandHandler {
   private registeredBots = new Set<number>();
+  /** !voteskip voters (client IDs) per bot, for the queue entry they voted on; another entry playing = no votes. */
+  private skipVotes = new Map<number, { item: QueueItem; voters: Set<number> }>();
 
   constructor(
     private prisma: PrismaClient,
@@ -107,11 +110,20 @@ export class MusicCommandHandler {
       });
     });
 
+    bot.on('command', (cmd: { name: string }) => {
+      if (/^notifyclient(enterview|leftview|moved)$/.test(cmd.name)) {
+        this.recountSkipVotes(botId, bot).catch((err) => {
+          console.error(`[MusicCmd] Recounting skip votes on bot ${botId} failed: ${err.message}`);
+        });
+      }
+    });
+
     console.log(`[MusicCmd] Registered text command listener on bot ${botId}`);
   }
 
   unregisterBot(botId: number): void {
     this.registeredBots.delete(botId);
+    this.skipVotes.delete(botId);
   }
 
   private async onTextMessage(botId: number, bot: VoiceBot, data: Record<string, string>): Promise<void> {
@@ -166,6 +178,9 @@ export class MusicCommandHandler {
         case 'skip':
         case 'next':
           await this.handleSkip(bot, userClid);
+          break;
+        case 'voteskip':
+          await this.handleVoteSkip(botId, bot, userClid);
           break;
         case 'prev':
           await this.handlePrev(bot, userClid);
@@ -440,6 +455,11 @@ export class MusicCommandHandler {
   }
 
   private async handleSkip(bot: VoiceBot, userClid: number): Promise<void> {
+    this.reply(bot, userClid, await this.skipTrack(bot));
+  }
+
+  /** The one way chat commands skip a track (!skip and a passed !voteskip); returns what to tell the user. */
+  private async skipTrack(bot: VoiceBot): Promise<string> {
     const next = bot.queue.next();
     if (next) {
       if (next.streamUrl) {
@@ -447,11 +467,95 @@ export class MusicCommandHandler {
       } else {
         await bot.play(next);
       }
-      this.reply(bot, userClid, `Skipped to: ${next.title}`);
-    } else {
-      bot.stopAudio();
-      this.reply(bot, userClid, 'Queue empty — playback stopped.');
+      return `Skipped to: ${next.title}`;
     }
+    bot.stopAudio();
+    return 'Queue empty — playback stopped.';
+  }
+
+  private say(bot: VoiceBot, msg: string): void {
+    try {
+      bot.sendChannelMessage(msg);
+    } catch (err: any) {
+      console.error(`[MusicCmd] Failed to send channel message: ${err.message}`);
+    }
+  }
+
+  /** The bot's vote-skip rule, read fresh so a changed setting applies at once; null = switched off. */
+  private async voteSkipRule(botId: number): Promise<VoteSkipRule | null> {
+    const row = await this.prisma.musicBot.findUnique({
+      where: { id: botId },
+      select: { voteSkipEnabled: true, voteSkipPercent: true, voteSkipMinVotes: true },
+    });
+    return row?.voteSkipEnabled ? { percent: row.voteSkipPercent, minVotes: row.voteSkipMinVotes } : null;
+  }
+
+  private async handleVoteSkip(botId: number, bot: VoiceBot, userClid: number): Promise<void> {
+    const rule = await this.voteSkipRule(botId);
+    if (!rule) {
+      this.reply(bot, userClid, 'Vote skip is switched off for this bot.');
+      return;
+    }
+    const item = bot.nowPlaying;
+    if (!item) {
+      this.reply(bot, userClid, 'Nothing is playing.');
+      return;
+    }
+    const people = bot.channelPeopleIds;
+    if (!people?.has(userClid)) {
+      this.reply(bot, userClid, 'Only listeners in my channel can vote.');
+      return;
+    }
+    let entry = this.skipVotes.get(botId);
+    if (entry?.item !== item) this.skipVotes.set(botId, (entry = { item, voters: new Set() }));
+    if (entry.voters.has(userClid)) {
+      const t = tallyVotes(people, entry.voters, rule);
+      // Passed without a new vote = the setting was lowered meanwhile
+      if (!t.passed) {
+        this.reply(bot, userClid, `You already voted. Skip: ${t.votes}/${t.needed} votes`);
+        return;
+      }
+    }
+    entry.voters.add(userClid);
+    await this.announceSkipVotes(botId, bot, people, entry, rule);
+  }
+
+  /** Somebody came, left or moved: votes of people no longer here lapse, and fewer people can complete the quorum. */
+  private async recountSkipVotes(botId: number, bot: VoiceBot): Promise<void> {
+    const entry = this.skipVotes.get(botId);
+    if (!entry) return;
+    const people = bot.channelPeopleIds;
+    if (bot.nowPlaying !== entry.item || !people) {
+      this.skipVotes.delete(botId);
+      return;
+    }
+    let lapsed = false;
+    for (const clid of entry.voters) if (!people.has(clid)) { entry.voters.delete(clid); lapsed = true; }
+    if (entry.voters.size === 0) {
+      this.skipVotes.delete(botId);
+      if (lapsed) this.say(bot, 'Skip vote ended, nobody who voted is left.');
+      return;
+    }
+    const rule = await this.voteSkipRule(botId);
+    if (!rule || this.skipVotes.get(botId) !== entry) return;
+    // A newcomer only raises the bar - no message for that, the next vote shows it
+    if (lapsed || tallyVotes(people, entry.voters, rule).passed) await this.announceSkipVotes(botId, bot, people, entry, rule);
+  }
+
+  private async announceSkipVotes(
+    botId: number, bot: VoiceBot, people: ReadonlySet<number>,
+    entry: { item: QueueItem; voters: Set<number> }, rule: VoteSkipRule,
+  ): Promise<void> {
+    const t = tallyVotes(people, entry.voters, rule);
+    if (!t.passed) {
+      this.say(bot, `Skip: ${t.votes}/${t.needed} votes (!voteskip)`);
+      return;
+    }
+    // Synchronously before the await, so a second vote arriving meanwhile cannot skip twice
+    if (this.skipVotes.get(botId) !== entry) return;
+    this.skipVotes.delete(botId);
+    const result = await this.skipTrack(bot);
+    this.say(bot, `Vote skip passed (${t.votes}/${t.needed}), skipped ${entry.item.title}. ${result}`);
   }
 
   private async handlePrev(bot: VoiceBot, userClid: number): Promise<void> {

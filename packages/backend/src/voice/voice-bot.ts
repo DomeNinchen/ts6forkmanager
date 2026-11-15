@@ -1273,6 +1273,11 @@ export class VoiceBot extends EventEmitter {
     return this.occupancy.countPeople(this.client.getClientId(), this.config.getOtherBotClientIds?.());
   }
 
+  /** Client IDs of the people counted by {@link channelPeopleCount}; null while that is not known. */
+  get channelPeopleIds(): Set<number> | null {
+    return this.occupancy.peopleIds(this.client.getClientId(), this.config.getOtherBotClientIds?.());
+  }
+
   private startIdleWatch(): void {
     this.stopIdleWatch();
     // The occupants are only ever told to the bot, never asked for, so an event
