@@ -3323,6 +3323,9 @@
         "songsCount_other": "{{count}} morceaux"
       },
       "botPlayerCard": {
+        "voteSkipCount": "Votes pour passer {{votes}}/{{needed}}",
+        "voteSkipVetoed": "Passage refusé (veto)",
+        "voteSkipTitle": "On vote dans le salon du bot avec !voteskip",
         "playerWidget": "Widget lecteur",
         "playSongEllipsis": "Lire un morceau...",
         "live": "LIVE",
@@ -3418,6 +3421,8 @@
         "voteSkipPercentError": "Un nombre entier de 0 à 100.",
         "voteSkipMinVotesLabel": "Au moins (votes)",
         "voteSkipMinVotesError": "Un nombre entier de 1 à 100.",
+        "voteSkipHintLabel": "Rappel dans le salon à chaque nouveau titre",
+        "voteSkipHintHint": "Le bot écrit une courte ligne dans le chat du salon à chaque nouveau titre, pour que les auditeurs sachent qu'ils peuvent voter pour le passer.",
         "autoplayOff": "Désactivé",
         "autoplaySong": "Lire un morceau",
         "autoplayRadio": "Lire une station radio",

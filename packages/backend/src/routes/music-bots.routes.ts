@@ -100,6 +100,7 @@ musicBotRoutes.get('/', async (req: Request, res: Response, next) => {
         voteSkipEnabled: b.voteSkipEnabled,
         voteSkipPercent: b.voteSkipPercent,
         voteSkipMinVotes: b.voteSkipMinVotes,
+        voteSkipHint: b.voteSkipHint,
         hasAvatar: b.avatarData != null,
         uid: manager.getIdentityUid(b.id),
         status: runtime?.status ?? 'stopped',
@@ -147,10 +148,10 @@ musicBotRoutes.get('/:id', async (req: Request, res: Response, next) => {
 musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
   try {
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
-    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes, voteSkipEnabled, voteSkipPercent, voteSkipMinVotes } = req.body;
+    const { name, serverConfigId, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes, voteSkipEnabled, voteSkipPercent, voteSkipMinVotes, voteSkipHint } = req.body;
     if (!name || !serverConfigId) throw new AppError(400, 'name and serverConfigId are required');
     if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
-    requireVoteSkip(voteSkipEnabled, voteSkipPercent, voteSkipMinVotes);
+    requireVoteSkip(voteSkipEnabled, voteSkipPercent, voteSkipMinVotes, voteSkipHint);
     // The ':id' check above cannot cover a bot that does not exist yet
     if (req.user!.role !== 'admin') {
       const target = { serverConfigId: parseInt(serverConfigId), voicePort: voicePort != null ? parseInt(voicePort) : 9987 }; // 9987: the schema default
@@ -177,6 +178,7 @@ musicBotRoutes.post('/', async (req: Request, res: Response, next) => {
       voteSkipEnabled: voteSkipEnabled ?? undefined,
       voteSkipPercent: voteSkipPercent ?? undefined,
       voteSkipMinVotes: voteSkipMinVotes ?? undefined,
+      voteSkipHint: voteSkipHint ?? undefined,
     });
 
     res.status(201).json(result);
@@ -189,9 +191,9 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
     const prisma = req.app.locals.prisma;
     const manager: VoiceBotManager = req.app.locals.voiceBotManager;
     const id = parseInt(req.params.id as string);
-    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes, voteSkipEnabled, voteSkipPercent, voteSkipMinVotes } = req.body;
+    const { name, nickname, serverPassword, defaultChannel, channelPassword, voicePort, volume, autoStart, descriptionTemplate, autoplayMode, autoplaySongId, autoplayRadioStationId, idlePauseMinutes, voteSkipEnabled, voteSkipPercent, voteSkipMinVotes, voteSkipHint } = req.body;
     if (idlePauseMinutes != null) requireIdlePauseMinutes(idlePauseMinutes);
-    requireVoteSkip(voteSkipEnabled, voteSkipPercent, voteSkipMinVotes);
+    requireVoteSkip(voteSkipEnabled, voteSkipPercent, voteSkipMinVotes, voteSkipHint);
     if (voicePort != null && req.user!.role !== 'admin') {
       // A new port can put the bot on another virtual server; the grant must cover that one too.
       const current = await prisma.musicBot.findUnique({ where: { id }, select: { serverConfigId: true } });
@@ -215,6 +217,7 @@ musicBotRoutes.put('/:id', async (req: Request, res: Response, next) => {
         ...(voteSkipEnabled != null && { voteSkipEnabled }),
         ...(voteSkipPercent != null && { voteSkipPercent }),
         ...(voteSkipMinVotes != null && { voteSkipMinVotes }),
+        ...(voteSkipHint != null && { voteSkipHint }),
         ...(descriptionTemplate !== undefined && { descriptionTemplate: descriptionTemplate || null }),
         // The two ID fields are only ever meaningful together with the mode
         // that names them, so clear both whenever the mode changes away from
@@ -342,8 +345,9 @@ function requireIdlePauseMinutes(value: unknown): void {
 }
 
 /** Vote-skip settings, each optional: an on/off switch, "more than X %" (0-100) and at least N votes (1-100). */
-function requireVoteSkip(enabled: unknown, percent: unknown, minVotes: unknown): void {
+function requireVoteSkip(enabled: unknown, percent: unknown, minVotes: unknown, hint?: unknown): void {
   if (enabled != null && typeof enabled !== 'boolean') throw new AppError(400, 'voteSkipEnabled must be true or false');
+  if (hint != null && typeof hint !== 'boolean') throw new AppError(400, 'voteSkipHint must be true or false');
   if (percent != null && (!Number.isInteger(percent) || (percent as number) < 0 || (percent as number) > 100)) {
     throw new AppError(400, 'voteSkipPercent must be a whole number between 0 and 100');
   }
@@ -616,6 +620,7 @@ musicBotRoutes.get('/:id/state', async (req: Request, res: Response, next) => {
       isStreaming: bot.isStreaming,
       videoStream: bot.videoStreamStatus,
       lastLiveEnd: bot.lastLiveEnd,
+      voteSkip: manager.getVoteSkipStatus(bot.id),
     });
   } catch (err) { next(err); }
 });
