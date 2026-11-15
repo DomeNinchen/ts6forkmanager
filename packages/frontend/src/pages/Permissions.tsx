@@ -1128,17 +1128,26 @@ export default function Permissions() {
   };
   // R11 stage 4: the unsaved edits of one server group or client go to the Why? tab as planned changes.
   // Only these two layers: channel groups and channel permissions are not simulated.
-  const whyEditId = !compareMode && !bulkMode && selectedIds.size === 1 && (layer === 'server-group' || layer === 'client')
-    ? [...selectedIds][0] : null;
+  const whyEditId = !compareMode && !bulkMode && selectedIds.size === 1 ? [...selectedIds][0] : null;
+  // Layers whose entry is a client (the button asks whether it acts or is the target); the others are one button
+  const whyPerClient = layer === 'client' || layer === 'channel-client';
   const openWhyWithChanges = (who?: WhatIfWho) => {
     if (!whyEditId) return;
+    const [ccCid, ccClient] = whyEditId.split(':');
     const planned: WhatIfChange[] = [...changes.values()].map((ch) => {
       const value = ch.action === 'remove' ? null : { permvalue: ch.permvalue, permnegated: !!ch.permnegated, permskip: !!ch.permskip };
-      return layer === 'server-group'
-        ? { kind: 'group-perm', sgid: Number(whyEditId), permsid: ch.permsid, value }
-        : { kind: 'client-perm', who: who ?? 'actor', permsid: ch.permsid, value: value && { permvalue: value.permvalue, permskip: value.permskip } };
+      // Client and channel values carry no negate flag in TeamSpeak
+      const plain = value && { permvalue: value.permvalue, permskip: value.permskip };
+      switch (layer) {
+        case 'server-group': return { kind: 'group-perm', sgid: Number(whyEditId), permsid: ch.permsid, value };
+        case 'channel-group': return { kind: 'channel-group-perm', cgid: Number(whyEditId), permsid: ch.permsid, value };
+        case 'channel': return { kind: 'channel-perm', cid: Number(whyEditId), permsid: ch.permsid, value: plain };
+        case 'channel-client': return { kind: 'channel-client-perm', who: who ?? 'actor', cid: Number(ccCid), permsid: ch.permsid, value: plain };
+        default: return { kind: 'client-perm', who: who ?? 'actor', permsid: ch.permsid, value: plain };
+      }
     });
-    setWhyPrefill((prev) => ({ seq: (prev?.seq ?? 0) + 1, changes: planned, ...(who ? { [who]: whyEditId } : {}) }));
+    const clientId = layer === 'channel-client' ? ccClient : whyEditId;
+    setWhyPrefill((prev) => ({ seq: (prev?.seq ?? 0) + 1, changes: planned, ...(who ? { [who]: clientId } : {}) }));
     setMode('why');
   };
 
@@ -1188,7 +1197,7 @@ export default function Permissions() {
           {activeChangeCount > 0 && (
             <>
               <Badge variant="secondary" className="font-mono-data">{t('pages.permissions.changesCount', { count: activeChangeCount })}</Badge>
-              {whyEditId && (layer === 'server-group' ? ['group'] as const : ['actor', 'target'] as const).map((role) => (
+              {whyEditId && (whyPerClient ? ['actor', 'target'] as const : ['group'] as const).map((role) => (
                 <Button key={role} variant="outline" size="sm" disabled={changes.size > WHATIF_MAX_CHANGES}
                   title={changes.size > WHATIF_MAX_CHANGES ? t('pages.permissions.why.whatif.missing.tooMany', { max: WHATIF_MAX_CHANGES }) : undefined}
                   onClick={() => openWhyWithChanges(role === 'group' ? undefined : role)}>
@@ -1291,6 +1300,9 @@ export default function Permissions() {
           // Only regular groups take members (templates and query groups do not)
           serverGroups={(Array.isArray(serverGroups) ? serverGroups : []).filter((g: any) => String(g.type) === '1')
             .map((g: any) => ({ sgid: String(g.sgid), name: g.name }))}
+          // Only regular channel groups can be given to a client (template groups answer 2560)
+          channelGroups={(Array.isArray(channelGroups) ? channelGroups : []).filter((g: any) => String(g.type) === '1')
+            .map((g: any) => ({ cgid: String(g.cgid), name: g.name }))}
           permissions={whyPermNames}
           prefill={whyPrefill}
           describeSource={describeExplainSource}
