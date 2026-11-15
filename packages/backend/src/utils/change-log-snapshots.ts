@@ -27,6 +27,8 @@ export interface SnapshotContext {
   /** The path segments below the area, decoded (a privilege key arrives URL-encoded). */
   leaf: string[];
   body: Record<string, unknown>;
+  /** What the handler left for the entry (res.locals.changeLogResult), set once the change went through. */
+  result?: Record<string, unknown>;
 }
 
 interface SnapshotRule {
@@ -149,6 +151,13 @@ export const SNAPSHOT_RULES: readonly SnapshotRule[] = [
     method: 'PUT', pattern: '/servers/:configId/virtual-servers/:id',
     read: (ctx) => ctx.client.execute(Number(id(ctx)), 'serverinfo'),
     diff: (b, ctx) => ({ fields: changedFields(rows(b)[0], ctx.body, (k) => ALLOWED_SERVER_EDIT_PARAMS.has(k)) }),
+  },
+  // A deleted virtual server: its serverlist row (works for a stopped one too), plus what the handler
+  // reports - the backup, the counts from its snapshot and what the manager cleaned up.
+  {
+    method: 'DELETE', pattern: '/servers/:configId/virtual-servers/:id',
+    read: async (ctx) => rows(await ctx.client.execute(0, 'serverlist')).find((s) => String(s.virtualserver_id) === id(ctx)),
+    diff: (b, ctx) => ({ deleted: { ...asDeleted(b as Row | undefined), ...asDeleted(ctx.result) } }),
   },
   {
     method: 'PUT', pattern: '/servers/:configId/instance',
