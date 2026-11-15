@@ -2951,6 +2951,16 @@
       "permissionOverview": "Vue d’ensemble des permissions",
       "why": {
         "tab": "Pourquoi ?",
+        "multi": {
+          "toggle": "Comparer plusieurs clients qui agissent (jusqu’à {{max}})",
+          "actors": "Qui agit (plusieurs)",
+          "selectedCount": "{{count}} sur {{max}} au maximum",
+          "eachActor": "chaque client qui agit",
+          "title": "{{action}} → {{target}} : qui peut ?",
+          "answer": "Réponse",
+          "details": "Justification",
+          "changed": "la réponse change"
+        },
         "whatif": {
           "title": "Et si",
           "explanation": "Planifiez des modifications pour voir la réponse avant de les enregistrer : avant et après côte à côte. Sont pris en compte : l’appartenance aux groupes de serveur, le groupe de canal d’un client dans un canal et les valeurs des groupes de serveur, des clients, des groupes de canal, des canaux et des clients dans un canal. Rien n’est modifié sur le serveur.",
