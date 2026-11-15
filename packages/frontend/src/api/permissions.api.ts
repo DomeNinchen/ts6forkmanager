@@ -25,6 +25,9 @@ export interface WhatIfExplainResult {
   before: PermissionVerdict<ExplainRow>;
   after: PermissionVerdict<ExplainRow>;
   groups: Record<WhatIfWho, { before: number[]; after: number[] }>;
+  channelGroups: { who: WhatIfWho; cid: number; before: number; after: number }[];
+  /** Indexes of channel changes in channels the answer does not read. */
+  unused: number[];
   changes: WhatIfChange[];
   context: ExplainResult['context'] & { defaultSgid: number };
 }

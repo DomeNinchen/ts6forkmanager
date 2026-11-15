@@ -2923,9 +2923,9 @@
         "tab": "Pourquoi ?",
         "whatif": {
           "title": "Et si",
-          "explanation": "Planifiez des modifications pour voir la réponse avant de les enregistrer : avant et après côte à côte. Seules l’appartenance aux groupes de serveur et les valeurs des groupes de serveur et des clients sont prises en compte, pas les groupes de canal ni les permissions de canal. Rien n’est modifié sur le serveur.",
+          "explanation": "Planifiez des modifications pour voir la réponse avant de les enregistrer : avant et après côte à côte. Sont pris en compte : l’appartenance aux groupes de serveur, le groupe de canal d’un client dans un canal et les valeurs des groupes de serveur, des clients, des groupes de canal, des canaux et des clients dans un canal. Rien n’est modifié sur le serveur.",
           "kind": "Modification",
-          "kinds": { "add": "Ajouter au groupe de serveur", "remove": "Retirer du groupe de serveur", "group-perm": "Valeur d’un groupe de serveur", "client-perm": "Valeur d’un client" },
+          "kinds": { "add": "Ajouter au groupe de serveur", "remove": "Retirer du groupe de serveur", "group-perm": "Valeur d’un groupe de serveur", "client-perm": "Valeur d’un client", "cg-assign": "Donner un groupe de canal dans un canal", "cg-perm": "Valeur d’un groupe de canal", "ch-perm": "Valeur d’un canal", "cc-perm": "Valeur client dans le canal" },
           "who": "Concerne",
           "permission": "Permission",
           "value": "Valeur",
@@ -2935,14 +2935,21 @@
           "add": "Ajouter la modification",
           "planned": "Modifications prévues",
           "removeChange": "Retirer la modification prévue {{n}}",
-          "missing": { "group": "Choisissez un groupe de serveur.", "permission": "Saisissez un nom de permission de la liste.", "value": "Saisissez un nombre entier ou cochez « Supprimer la valeur ».", "tooMany": "{{max}} modifications au maximum." },
+          "missing": { "group": "Choisissez un groupe de serveur.", "channelGroup": "Choisissez un groupe de canal.", "channel": "Choisissez un canal.", "permission": "Saisissez un nom de permission de la liste.", "value": "Saisissez un nombre entier ou cochez « Supprimer la valeur ».", "tooMany": "{{max}} modifications au maximum." },
           "describe": {
             "add": "Ajouter {{client}} à {{group}}",
             "remove": "Retirer {{client}} de {{group}}",
             "group-set": "{{group}} : {{perm}} = {{value}}",
             "group-unset": "{{group}} : supprimer {{perm}}",
             "client-set": "{{client}} (permission client) : {{perm}} = {{value}}",
-            "client-unset": "{{client}} (permission client) : supprimer {{perm}}"
+            "client-unset": "{{client}} (permission client) : supprimer {{perm}}",
+            "cg-assign": "{{client}} reçoit le groupe de canal {{group}} dans {{channel}}",
+            "cg-set": "Groupe de canal {{group}} : {{perm}} = {{value}}",
+            "cg-unset": "Groupe de canal {{group}} : supprimer {{perm}}",
+            "ch-set": "Canal {{channel}} : {{perm}} = {{value}}",
+            "ch-unset": "Canal {{channel}} : supprimer {{perm}}",
+            "cc-set": "{{client}} dans {{channel}} : {{perm}} = {{value}}",
+            "cc-unset": "{{client}} dans {{channel}} : supprimer {{perm}}"
           },
           "temporary": "appartenance temporaire jusqu’au {{until}}",
           "fromEditor": {
@@ -2956,6 +2963,10 @@
           "verdictChanged": "La réponse change : {{before}} → {{after}}.",
           "verdictSame": "La réponse reste : {{verdict}}.",
           "groupsChange": "Groupes de serveur de {{client}} : {{before}} → {{after}}",
+          "channelGroupChange": "Groupe de canal de {{client}} dans {{channel}} : {{before}} → {{after}}",
+          "unused": "La modification {{n}} concerne un canal que cette réponse ne lit pas ; elle ne peut pas la changer.",
+          "channel": "Canal",
+          "channelGroup": "Groupe de canal",
           "before": "Maintenant",
           "after": "Avec les modifications prévues",
           "error": {

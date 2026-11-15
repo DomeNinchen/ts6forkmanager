@@ -4024,9 +4024,9 @@
         "tab": "Warum?",
         "whatif": {
           "title": "Was wäre wenn",
-          "explanation": "Plane Änderungen und sieh die Antwort, bevor du sie speicherst: vorher und nachher nebeneinander. Berücksichtigt werden nur Servergruppen-Mitgliedschaften und Werte von Servergruppen und Clients, keine Kanalgruppen oder Kanalrechte. Auf dem Server wird nichts geändert.",
+          "explanation": "Plane Änderungen und sieh die Antwort, bevor du sie speicherst: vorher und nachher nebeneinander. Berücksichtigt werden Servergruppen-Mitgliedschaften, die Kanalgruppe eines Clients in einem Kanal und Werte von Servergruppen, Clients, Kanalgruppen, Kanälen und Clients im Kanal. Auf dem Server wird nichts geändert.",
           "kind": "Änderung",
-          "kinds": { "add": "In Servergruppe aufnehmen", "remove": "Aus Servergruppe entfernen", "group-perm": "Wert einer Servergruppe", "client-perm": "Wert eines Clients" },
+          "kinds": { "add": "In Servergruppe aufnehmen", "remove": "Aus Servergruppe entfernen", "group-perm": "Wert einer Servergruppe", "client-perm": "Wert eines Clients", "cg-assign": "Kanalgruppe in einem Kanal geben", "cg-perm": "Wert einer Kanalgruppe", "ch-perm": "Wert eines Kanals", "cc-perm": "Wert Client im Kanal" },
           "who": "Betrifft",
           "permission": "Berechtigung",
           "value": "Wert",
@@ -4036,14 +4036,21 @@
           "add": "Änderung hinzufügen",
           "planned": "Geplante Änderungen",
           "removeChange": "Geplante Änderung {{n}} entfernen",
-          "missing": { "group": "Wähle eine Servergruppe.", "permission": "Gib einen Berechtigungsnamen aus der Liste ein.", "value": "Gib eine ganze Zahl ein oder setze \"Wert entfernen\".", "tooMany": "Höchstens {{max}} Änderungen." },
+          "missing": { "group": "Wähle eine Servergruppe.", "channelGroup": "Wähle eine Kanalgruppe.", "channel": "Wähle einen Kanal.", "permission": "Gib einen Berechtigungsnamen aus der Liste ein.", "value": "Gib eine ganze Zahl ein oder setze \"Wert entfernen\".", "tooMany": "Höchstens {{max}} Änderungen." },
           "describe": {
             "add": "{{client}} in {{group}} aufnehmen",
             "remove": "{{client}} aus {{group}} entfernen",
             "group-set": "{{group}}: {{perm}} = {{value}}",
             "group-unset": "{{group}}: {{perm}} entfernen",
             "client-set": "{{client}} (Client-Berechtigung): {{perm}} = {{value}}",
-            "client-unset": "{{client}} (Client-Berechtigung): {{perm}} entfernen"
+            "client-unset": "{{client}} (Client-Berechtigung): {{perm}} entfernen",
+            "cg-assign": "{{client}} bekommt in {{channel}} die Kanalgruppe {{group}}",
+            "cg-set": "Kanalgruppe {{group}}: {{perm}} = {{value}}",
+            "cg-unset": "Kanalgruppe {{group}}: {{perm}} entfernen",
+            "ch-set": "Kanal {{channel}}: {{perm}} = {{value}}",
+            "ch-unset": "Kanal {{channel}}: {{perm}} entfernen",
+            "cc-set": "{{client}} in {{channel}}: {{perm}} = {{value}}",
+            "cc-unset": "{{client}} in {{channel}}: {{perm}} entfernen"
           },
           "temporary": "befristete Mitgliedschaft bis {{until}}",
           "fromEditor": {
@@ -4057,6 +4064,10 @@
           "verdictChanged": "Die Antwort ändert sich: {{before}} → {{after}}.",
           "verdictSame": "Die Antwort bleibt: {{verdict}}.",
           "groupsChange": "Servergruppen von {{client}}: {{before}} → {{after}}",
+          "channelGroupChange": "Kanalgruppe von {{client}} in {{channel}}: {{before}} → {{after}}",
+          "unused": "Änderung {{n}} betrifft einen Kanal, den diese Antwort nicht liest; sie kann sie nicht ändern.",
+          "channel": "Kanal",
+          "channelGroup": "Kanalgruppe",
           "before": "Jetzt",
           "after": "Mit den geplanten Änderungen",
           "error": {

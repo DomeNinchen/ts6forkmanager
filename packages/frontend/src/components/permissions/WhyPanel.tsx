@@ -35,6 +35,8 @@ interface Props {
   clientsLoading: boolean;
   channels: { cid: string; name: string }[];
   serverGroups: { sgid: string; name: string }[];
+  /** Regular channel groups (the ones a client can be given). */
+  channelGroups: { cgid: string; name: string }[];
   /** Every permission name (permsid), for the "what if" value changes. */
   permissions: string[];
   describeSource: (row: ExplainRow) => SourceInfo;
@@ -106,13 +108,16 @@ function ClientField({ id, label, clients, loading, value, onChange }: {
   );
 }
 
-type ChangeKind = 'add' | 'remove' | 'group-perm' | 'client-perm';
+const CHANGE_KINDS = ['add', 'remove', 'group-perm', 'client-perm', 'cg-assign', 'cg-perm', 'ch-perm', 'cc-perm'] as const;
+type ChangeKind = typeof CHANGE_KINDS[number];
 
 /** R11 stage 4 "what if": the planned changes, each added from a small form; the list is what gets simulated. */
-function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, tempUntil }: {
+function WhatIfEditor({ changes, onChange, serverGroups, channelGroups, channels, permissions, describe, tempUntil }: {
   changes: WhatIfChange[];
   onChange: (next: WhatIfChange[]) => void;
   serverGroups: Props['serverGroups'];
+  channelGroups: Props['channelGroups'];
+  channels: Props['channels'];
   permissions: string[];
   describe: (c: WhatIfChange) => string;
   tempUntil: (c: WhatIfChange) => string | null;
@@ -121,26 +126,39 @@ function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, 
   const [kind, setKind] = useState<ChangeKind>('add');
   const [who, setWho] = useState<WhatIfWho>('actor');
   const [sgid, setSgid] = useState('');
+  const [cgid, setCgid] = useState('');
+  const [cid, setCid] = useState('');
   const [permsid, setPermsid] = useState('');
   const [value, setValue] = useState('');
   const [removeValue, setRemoveValue] = useState(false);
   const [negated, setNegated] = useState(false);
   const [skip, setSkip] = useState(false);
 
-  const needsGroup = kind !== 'client-perm';
-  const needsWho = kind !== 'group-perm';
-  const isValue = kind === 'group-perm' || kind === 'client-perm';
+  const needsGroup = kind === 'add' || kind === 'remove' || kind === 'group-perm';
+  const needsChannelGroup = kind === 'cg-assign' || kind === 'cg-perm';
+  const needsChannel = kind === 'cg-assign' || kind === 'ch-perm' || kind === 'cc-perm';
+  const needsWho = kind !== 'group-perm' && kind !== 'cg-perm' && kind !== 'ch-perm';
+  const isValue = !['add', 'remove', 'cg-assign'].includes(kind);
+  // Only group values carry a negate flag in TeamSpeak
+  const canNegate = kind === 'group-perm' || kind === 'cg-perm';
   const n = Number(value);
   const problem = needsGroup && !sgid ? 'group'
+    : needsChannelGroup && !cgid ? 'channelGroup'
+    : needsChannel && !cid ? 'channel'
     : isValue && !permissions.includes(permsid.trim()) ? 'permission'
     : isValue && !removeValue && (value.trim() === '' || !Number.isInteger(n)) ? 'value'
     : changes.length >= WHATIF_MAX_CHANGES ? 'tooMany' : null;
 
   const add = () => {
-    const v = removeValue ? null : { permvalue: n, ...(kind === 'group-perm' ? { permnegated: negated } : {}), permskip: skip };
+    const v = removeValue ? null : { permvalue: n, ...(canNegate ? { permnegated: negated } : {}), permskip: skip };
+    const p = permsid.trim();
     const c: WhatIfChange = kind === 'add' || kind === 'remove' ? { kind: 'group-member', who, sgid: Number(sgid), op: kind }
-      : kind === 'group-perm' ? { kind: 'group-perm', sgid: Number(sgid), permsid: permsid.trim(), value: v }
-      : { kind: 'client-perm', who, permsid: permsid.trim(), value: v };
+      : kind === 'group-perm' ? { kind: 'group-perm', sgid: Number(sgid), permsid: p, value: v }
+      : kind === 'client-perm' ? { kind: 'client-perm', who, permsid: p, value: v }
+      : kind === 'cg-assign' ? { kind: 'channel-group-member', who, cid: Number(cid), cgid: Number(cgid) }
+      : kind === 'cg-perm' ? { kind: 'channel-group-perm', cgid: Number(cgid), permsid: p, value: v }
+      : kind === 'ch-perm' ? { kind: 'channel-perm', cid: Number(cid), permsid: p, value: v }
+      : { kind: 'channel-client-perm', who, cid: Number(cid), permsid: p, value: v };
     onChange([...changes, c]);
   };
 
@@ -157,7 +175,7 @@ function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, 
           <Select value={kind} onValueChange={(v) => setKind(v as ChangeKind)}>
             <SelectTrigger id="whatif-kind" className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(['add', 'remove', 'group-perm', 'client-perm'] as const).map((k) => <SelectItem key={k} value={k}>{t(`pages.permissions.why.whatif.kinds.${k}`)}</SelectItem>)}
+              {CHANGE_KINDS.map((k) => <SelectItem key={k} value={k}>{t(`pages.permissions.why.whatif.kinds.${k}`)}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -184,6 +202,28 @@ function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, 
             </Select>
           </div>
         )}
+        {needsChannel && (
+          <div className="space-y-1.5 min-w-0">
+            <Label htmlFor="whatif-channel" className="text-xs">{t('pages.permissions.why.whatif.channel')}</Label>
+            <Select value={cid} onValueChange={setCid}>
+              <SelectTrigger id="whatif-channel" className="h-8 text-xs"><SelectValue placeholder={t('pages.permissions.choosePlaceholder')} /></SelectTrigger>
+              <SelectContent>
+                {channels.map((ch) => <SelectItem key={ch.cid} value={ch.cid}>{ch.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {needsChannelGroup && (
+          <div className="space-y-1.5 min-w-0">
+            <Label htmlFor="whatif-cgroup" className="text-xs">{t('pages.permissions.why.whatif.channelGroup')}</Label>
+            <Select value={cgid} onValueChange={setCgid}>
+              <SelectTrigger id="whatif-cgroup" className="h-8 text-xs"><SelectValue placeholder={t('pages.permissions.choosePlaceholder')} /></SelectTrigger>
+              <SelectContent>
+                {channelGroups.map((g) => <SelectItem key={g.cgid} value={g.cgid}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {isValue && (
           <>
             <div className="space-y-1.5 min-w-0">
@@ -198,7 +238,7 @@ function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, 
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 sm:col-span-2 lg:col-span-3 text-xs">
               <label className="flex items-center gap-1.5"><Checkbox checked={removeValue} onCheckedChange={(v) => setRemoveValue(!!v)} />{t('pages.permissions.why.whatif.removeValue')}</label>
-              {kind === 'group-perm' && <label className="flex items-center gap-1.5"><Checkbox checked={negated} disabled={removeValue} onCheckedChange={(v) => setNegated(!!v)} />{t('pages.permissions.why.whatif.negated')}</label>}
+              {canNegate && <label className="flex items-center gap-1.5"><Checkbox checked={negated} disabled={removeValue} onCheckedChange={(v) => setNegated(!!v)} />{t('pages.permissions.why.whatif.negated')}</label>}
               <label className="flex items-center gap-1.5"><Checkbox checked={skip} disabled={removeValue} onCheckedChange={(v) => setSkip(!!v)} />{t('pages.permissions.why.whatif.skip')}</label>
             </div>
           </>
@@ -230,7 +270,7 @@ function WhatIfEditor({ changes, onChange, serverGroups, permissions, describe, 
   );
 }
 
-export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, channels, serverGroups, permissions, describeSource, permDesc, onJump, onShowOverview }: Props) {
+export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, channels, serverGroups, channelGroups, permissions, describeSource, permDesc, onJump, onShowOverview }: Props) {
   const { t, i18n } = useTranslation();
   const [changes, setChanges] = useState<WhatIfChange[]>([]);
   const [actor, setActor] = useState('');
@@ -275,6 +315,7 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
   const nameOf = (cldbid: number | string) => clients.find((c) => c.id === String(cldbid))?.name ?? t('pages.permissions.clientFallback', { id: cldbid });
   const channelName = (cid: number | string | null) => channels.find((ch) => ch.cid === String(cid))?.name ?? t('pages.permissions.channelFallback', { id: cid });
   const groupName = (id: number | string | null) => serverGroups.find((g) => g.sgid === String(id))?.name ?? t('pages.permissions.serverGroupFallback', { id });
+  const cgName = (id: number | string) => channelGroups.find((g) => g.cgid === String(id))?.name ?? t('pages.permissions.channelGroupFallback', { id });
 
   const whoName = (w: WhatIfWho) => {
     const id = w === 'actor' ? actor : target;
@@ -283,11 +324,18 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
   const describeChange = (c: WhatIfChange): string => {
     const val = (v: { permvalue: number; permnegated?: boolean; permskip?: boolean } | null) => v === null ? ''
       : `${v.permvalue}${v.permnegated ? ' (N)' : ''}${v.permskip ? ' (S)' : ''}`;
-    if (c.kind === 'group-member') return t(`pages.permissions.why.whatif.describe.${c.op}`, { client: whoName(c.who), group: groupName(c.sgid) });
+    const d = (k: string, o: Record<string, unknown>) => t(`pages.permissions.why.whatif.describe.${k}`, o);
+    if (c.kind === 'group-member') return d(c.op, { client: whoName(c.who), group: groupName(c.sgid) });
+    if (c.kind === 'channel-group-member') return d('cg-assign', { client: whoName(c.who), group: cgName(c.cgid), channel: channelName(c.cid) });
     const key = c.value === null ? 'unset' : 'set';
-    return c.kind === 'group-perm'
-      ? t(`pages.permissions.why.whatif.describe.group-${key}`, { group: groupName(c.sgid), perm: c.permsid, value: val(c.value) })
-      : t(`pages.permissions.why.whatif.describe.client-${key}`, { client: whoName(c.who), perm: c.permsid, value: val(c.value) });
+    const common = { perm: c.permsid, value: val(c.value) };
+    switch (c.kind) {
+      case 'group-perm': return d(`group-${key}`, { group: groupName(c.sgid), ...common });
+      case 'client-perm': return d(`client-${key}`, { client: whoName(c.who), ...common });
+      case 'channel-group-perm': return d(`cg-${key}`, { group: cgName(c.cgid), ...common });
+      case 'channel-perm': return d(`ch-${key}`, { channel: channelName(c.cid), ...common });
+      case 'channel-client-perm': return d(`cc-${key}`, { client: whoName(c.who), channel: channelName(c.cid), ...common });
+    }
   };
   // R13: a temporary membership only gets a hint, it does not change the calculation (decision 5)
   const mayMembers = useAuthStore((s) => s.can('groups.members'));
@@ -388,7 +436,7 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
               <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />{t('pages.permissions.why.whatif.fromEditor.note')}
             </p>
           )}
-          <WhatIfEditor changes={changes} onChange={updateChanges} serverGroups={serverGroups} permissions={permissions}
+          <WhatIfEditor changes={changes} onChange={updateChanges} serverGroups={serverGroups} channelGroups={channelGroups} channels={channels} permissions={permissions}
             describe={describeChange} tempUntil={tempUntil} />
         </CardContent>
       </Card>
@@ -415,7 +463,11 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
             client: nameOf(w.context[who].cldbid),
             before: w.groups[who].before.map(groupName).join(', '),
             after: w.groups[who].after.map(groupName).join(', '),
-          }));
+          }))
+          .concat((w.channelGroups ?? []).map((g) => t('pages.permissions.why.whatif.channelGroupChange', {
+            client: nameOf(w.context[g.who].cldbid), channel: channelName(g.cid), before: cgName(g.before), after: cgName(g.after),
+          })))
+          .concat((w.unused ?? []).map((i) => t('pages.permissions.why.whatif.unused', { n: i + 1 })));
         return (
           <div className="space-y-3">
             <div role="status" className={cn('rounded-md border p-3 text-xs space-y-1', changed ? 'border-primary/50 bg-primary/5' : 'border-border/50')}>
