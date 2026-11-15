@@ -676,9 +676,14 @@ function BotsTab() {
   const [form, setForm] = useState({
     name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
     autoplayMode: 'none' as 'none' | 'song' | 'radio', autoplaySongId: '', autoplayRadioStationId: '', idlePauseEnabled: false, idlePauseMinutes: 5,
+    voteSkipEnabled: true, voteSkipPercent: '50', voteSkipMinVotes: '1',
   });
 
   const bots = Array.isArray(data) ? data : [];
+  // Whole numbers in the API's ranges; checked on the text so an emptied field is an error, not 0
+  const inRange = (v: string, min: number, max: number) => /^\d+$/.test(v.trim()) && Number(v) >= min && Number(v) <= max;
+  const voteSkipPercentValid = inRange(form.voteSkipPercent, 0, 100);
+  const voteSkipMinValid = inRange(form.voteSkipMinVotes, 1, 100);
   const serverList = Array.isArray(servers) ? servers : [];
   // The description is set through WebQuery; on a connection without an API key it is never shown (the voice
   // connection itself cannot set it), so the field says so instead of silently doing nothing.
@@ -710,6 +715,9 @@ function BotsTab() {
       autoplaySongId: form.autoplayMode === 'song' && form.autoplaySongId ? parseInt(form.autoplaySongId) : undefined,
       autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
       idlePauseMinutes: form.idlePauseEnabled ? form.idlePauseMinutes : 0,
+      voteSkipEnabled: form.voteSkipEnabled,
+      voteSkipPercent: Number(form.voteSkipPercent),
+      voteSkipMinVotes: Number(form.voteSkipMinVotes),
     }, {
       onSuccess: (result: { id: number }) => {
         toast.success(t('pages.musicBots.botsTab.botCreated'));
@@ -741,6 +749,9 @@ function BotsTab() {
       autoplaySongId: form.autoplayMode === 'song' && form.autoplaySongId ? parseInt(form.autoplaySongId) : undefined,
       autoplayRadioStationId: form.autoplayMode === 'radio' && form.autoplayRadioStationId ? parseInt(form.autoplayRadioStationId) : undefined,
       idlePauseMinutes: form.idlePauseEnabled ? form.idlePauseMinutes : 0,
+      voteSkipEnabled: form.voteSkipEnabled,
+      voteSkipPercent: Number(form.voteSkipPercent),
+      voteSkipMinVotes: Number(form.voteSkipMinVotes),
     }}, {
       onSuccess: () => {
         toast.success(t('pages.musicBots.botsTab.botUpdated'));
@@ -760,6 +771,7 @@ function BotsTab() {
     setForm({
       name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
       autoplayMode: 'none', autoplaySongId: '', autoplayRadioStationId: '', idlePauseEnabled: false, idlePauseMinutes: 5,
+      voteSkipEnabled: true, voteSkipPercent: '50', voteSkipMinVotes: '1',
     });
     setAvatarFile(null);
     setAvatarRemoved(false);
@@ -800,6 +812,9 @@ function BotsTab() {
                   // 0 is stored for "off"; the field then starts at 5 for when it is switched on
                   idlePauseEnabled: (bot.idlePauseMinutes ?? 0) > 0,
                   idlePauseMinutes: bot.idlePauseMinutes || 5,
+                  voteSkipEnabled: bot.voteSkipEnabled,
+                  voteSkipPercent: String(bot.voteSkipPercent),
+                  voteSkipMinVotes: String(bot.voteSkipMinVotes),
                 });
                 setAvatarFile(null);
                 setAvatarRemoved(false);
@@ -978,6 +993,53 @@ function BotsTab() {
               )}
             </div>
             <div>
+              <div className="flex items-center gap-2">
+                <Switch id="bot-vote-skip-enabled" checked={form.voteSkipEnabled} onCheckedChange={(v) => setForm({ ...form, voteSkipEnabled: v })} />
+                <Label className="text-xs" htmlFor="bot-vote-skip-enabled">{t('pages.musicBots.botsTab.voteSkipLabel')}</Label>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">{t('pages.musicBots.botsTab.voteSkipHint')}</p>
+              {form.voteSkipEnabled && (
+                <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs" htmlFor="bot-vote-skip-percent">{t('pages.musicBots.botsTab.voteSkipPercentLabel')}</Label>
+                    <Input
+                      id="bot-vote-skip-percent"
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="max-w-[8rem]"
+                      value={form.voteSkipPercent}
+                      aria-invalid={!voteSkipPercentValid}
+                      aria-describedby={voteSkipPercentValid ? undefined : 'bot-vote-skip-percent-error'}
+                      onChange={(e) => setForm({ ...form, voteSkipPercent: e.target.value })}
+                    />
+                    {!voteSkipPercentValid && (
+                      <p id="bot-vote-skip-percent-error" className="text-[11px] text-destructive mt-1">{t('pages.musicBots.botsTab.voteSkipPercentError')}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-xs" htmlFor="bot-vote-skip-min">{t('pages.musicBots.botsTab.voteSkipMinVotesLabel')}</Label>
+                    <Input
+                      id="bot-vote-skip-min"
+                      type="number"
+                      min={1}
+                      max={100}
+                      step={1}
+                      className="max-w-[8rem]"
+                      value={form.voteSkipMinVotes}
+                      aria-invalid={!voteSkipMinValid}
+                      aria-describedby={voteSkipMinValid ? undefined : 'bot-vote-skip-min-error'}
+                      onChange={(e) => setForm({ ...form, voteSkipMinVotes: e.target.value })}
+                    />
+                    {!voteSkipMinValid && (
+                      <p id="bot-vote-skip-min-error" className="text-[11px] text-destructive mt-1">{t('pages.musicBots.botsTab.voteSkipMinVotesError')}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
               <Label className="text-xs">{t('pages.musicBots.botsTab.descriptionTemplateLabel')}</Label>
               <Textarea
                 value={form.descriptionTemplate}
@@ -1008,6 +1070,7 @@ function BotsTab() {
                 !form.name || (!editBot && !form.serverConfigId) || createBot.isPending || updateBot.isPending
                 || (form.autoplayMode === 'song' && !form.autoplaySongId)
                 || (form.autoplayMode === 'radio' && !form.autoplayRadioStationId)
+                || (form.voteSkipEnabled && (!voteSkipPercentValid || !voteSkipMinValid))
               }
             >
               {editBot ? t('pages.musicBots.botsTab.save') : t('pages.musicBots.shared.create')}
