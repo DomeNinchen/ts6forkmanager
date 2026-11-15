@@ -2951,6 +2951,10 @@
       "permissionOverview": "Vue d’ensemble des permissions",
       "why": {
         "tab": "Pourquoi ?",
+        "export": {
+          "copy": "Copier en texte",
+          "json": "Télécharger le JSON"
+        },
         "multi": {
           "toggle": "Comparer plusieurs clients qui agissent (jusqu’à {{max}})",
           "actors": "Qui agit (plusieurs)",
