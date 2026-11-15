@@ -13,6 +13,7 @@ import { BULK_MAX } from '@ts6/common';
 import { ensureBulkBackup } from '../utils/bulk-backup.js';
 import { restoreGroups } from '../utils/snapshot-restore.js';
 import { restoreChannels } from '../utils/snapshot-restore-channels.js';
+import { resetItems } from '../utils/snapshot-reset.js';
 
 export const virtualServerRoutes: Router = Router({ mergeParams: true });
 
@@ -231,11 +232,15 @@ virtualServerRoutes.post('/:sid/snapshot/restore', requireRole('admin'), async (
     else throw new AppError(400, 'Name the snapshot file or backup to restore from');
     const choices = body.groups === undefined ? [] : body.groups;
     const channelChoices = body.channels === undefined ? [] : body.channels;
+    const resetChoices = body.reset === undefined ? [] : body.reset;
     const optString = (v: unknown) => v === undefined || typeof v === 'string';
-    if (!Array.isArray(choices) || !Array.isArray(channelChoices) || choices.length + channelChoices.length === 0 || choices.length + channelChoices.length > BULK_MAX
+    const strings = (v: unknown) => v === undefined || (Array.isArray(v) && v.length <= 1000 && v.every((x) => typeof x === 'string'));
+    const total = (Array.isArray(choices) ? choices.length : 0) + (Array.isArray(channelChoices) ? channelChoices.length : 0) + (Array.isArray(resetChoices) ? resetChoices.length : 0);
+    if (!Array.isArray(choices) || !Array.isArray(channelChoices) || !Array.isArray(resetChoices) || total === 0 || total > BULK_MAX
       || !choices.every((c) => (c?.kind === 'serverGroup' || c?.kind === 'channelGroup') && Number.isInteger(c.id) && c.id > 0 && optString(c.newName))
-      || !channelChoices.every((c) => Number.isInteger(c?.id) && c.id > 0 && optString(c.newName) && optString(c.password))) {
-      throw new AppError(400, `Name 1 to ${BULK_MAX} groups (kind serverGroup or channelGroup, id, optional newName) or channels (id, optional newName and password) to restore`);
+      || !channelChoices.every((c) => Number.isInteger(c?.id) && c.id > 0 && optString(c.newName) && optString(c.password))
+      || !resetChoices.every((c) => ['serverGroup', 'channelGroup', 'channel'].includes(c?.kind) && Number.isInteger(c.id) && c.id > 0 && strings(c.perms) && strings(c.fields))) {
+      throw new AppError(400, `Name 1 to ${BULK_MAX} groups (kind, id, optional newName), channels (id, optional newName and password) or objects to reset (kind, id, perms, fields)`);
     }
     const snap = readSnapshot(snapshot ?? {});
     const dryRun = body.dryRun === true;
@@ -252,6 +257,7 @@ virtualServerRoutes.post('/:sid/snapshot/restore', requireRole('admin'), async (
       ...(choices.length ? await restoreGroups(getClient(req), req.app.locals.prisma, configId, sid, snap, choices, { dryRun, members: body.members === true }) : []),
       ...(channelChoices.length ? await restoreChannels(getClient(req), req.app.locals.prisma, configId, sid, snap, channelChoices, { dryRun }) : []),
     ];
+    const resets = resetChoices.length ? await resetItems(getClient(req), sid, snap, resetChoices, { dryRun }) : undefined;
     if (dryRun) res.locals.dryRun = true;
     // The change log keeps one line per group, like a bulk action (R9).
     else res.locals.bulkOutcomes = outcomes.map((o): BulkOutcome => ({
@@ -260,8 +266,14 @@ virtualServerRoutes.post('/:sid/snapshot/restore', requireRole('admin'), async (
       status: o.status === 'created' ? 'ok' : o.status === 'failed' ? 'failed' : 'skipped',
       ...(o.status === 'skipped' ? { reason: o.reason === 'not-in-snapshot' ? 'not-found' as const : 'already-there' as const } : {}),
       ...(o.message ? { message: o.message } : o.permFailures ? { message: `${o.permFailures.length} permission(s) not set` } : {}),
-    }));
-    const result: SnapshotRestoreResult = { ...(dryRun ? { dryRun: true as const } : {}), outcomes, ...(backup ? { backup } : {}) };
+    })).concat((resets ?? []).map((r): BulkOutcome => ({
+      id: r.id,
+      name: `${r.name}: ${r.key}`,
+      status: r.status === 'ok' ? 'ok' : r.status === 'failed' ? 'failed' : 'skipped',
+      ...(r.status === 'skipped' ? { reason: 'not-found' as const } : {}),
+      ...(r.message ? { message: r.message } : {}),
+    })));
+    const result: SnapshotRestoreResult = { ...(dryRun ? { dryRun: true as const } : {}), outcomes, ...(resets ? { resets } : {}), ...(backup ? { backup } : {}) };
     res.json(result);
   } catch (err) { next(err); }
 });
