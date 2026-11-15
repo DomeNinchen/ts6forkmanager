@@ -65,6 +65,18 @@ test('virtual server settings list only the fields the handler passes on', async
   assert.deepEqual(diff.fields, [{ field: 'virtualserver_name', before: 'A', after: 'B' }]);
 });
 
+test('a deleted virtual server: its serverlist row plus what the handler reported, empty values left out', async () => {
+  const { diff, calls } = await run('DELETE', '/servers/:configId/virtual-servers/:id', {
+    sid: 0, leaf: ['3'], body: {},
+    result: { backup: 'ts6webui-x-before-bulk.db', channels: 7, removed_access_grants: 0, disabled_flows: '' },
+  }, { serverlist: [{ virtualserver_id: '1', virtualserver_name: 'Main' }, { virtualserver_id: '3', virtualserver_name: 'Old', virtualserver_port: '9988', virtualserver_status: 'offline' }] });
+  assert.deepEqual(calls, ['serverlist']);
+  assert.deepEqual(diff.deleted, {
+    virtualserver_id: '3', virtualserver_name: 'Old', virtualserver_port: '9988', virtualserver_status: 'offline',
+    backup: 'ts6webui-x-before-bulk.db', channels: '7', removed_access_grants: '0',
+  });
+});
+
 test('a deleted privilege key is kept without the key, and the key in the path is never stored', async () => {
   const key = 'Wq+8zK/pT1x=';
   const { diff, json } = await run('DELETE', '/servers/:configId/vs/:sid/tokens/:token', { sid: 1, leaf: [key], body: {} }, {
