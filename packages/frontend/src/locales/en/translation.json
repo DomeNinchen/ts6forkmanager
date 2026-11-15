@@ -4052,6 +4052,16 @@
       "permissionOverview": "Permission Overview",
       "why": {
         "tab": "Why?",
+        "multi": {
+          "toggle": "Compare several actors (up to {{max}})",
+          "actors": "Who acts (several)",
+          "selectedCount": "{{count}} of at most {{max}} chosen",
+          "eachActor": "each acting client",
+          "title": "{{action}} → {{target}}: who may?",
+          "answer": "Answer",
+          "details": "Reasons",
+          "changed": "answer changes"
+        },
         "whatif": {
           "title": "What if",
           "explanation": "Plan changes to see the answer before saving them: before and after side by side. Covered: server group membership, a client's channel group in a channel, and the values of server groups, clients, channel groups, channels and clients in a channel. Nothing is changed on the server.",

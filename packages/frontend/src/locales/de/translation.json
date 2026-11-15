@@ -4052,6 +4052,16 @@
       "permissionOverview": "Berechtigungsübersicht",
       "why": {
         "tab": "Warum?",
+        "multi": {
+          "toggle": "Mehrere Akteure vergleichen (bis {{max}})",
+          "actors": "Wer handelt (mehrere)",
+          "selectedCount": "{{count}} von höchstens {{max}} gewählt",
+          "eachActor": "jeder handelnde Client",
+          "title": "{{action}} → {{target}}: wer darf?",
+          "answer": "Antwort",
+          "details": "Begründung",
+          "changed": "Antwort ändert sich"
+        },
         "whatif": {
           "title": "Was wäre wenn",
           "explanation": "Plane Änderungen und sieh die Antwort, bevor du sie speicherst: vorher und nachher nebeneinander. Berücksichtigt werden Servergruppen-Mitgliedschaften, die Kanalgruppe eines Clients in einem Kanal und Werte von Servergruppen, Clients, Kanalgruppen, Kanälen und Clients im Kanal. Auf dem Server wird nichts geändert.",

@@ -48,8 +48,15 @@ interface Props {
 const BAN_PRESETS = [{ key: 'hour', seconds: 3600 }, { key: 'day', seconds: 86400 }, { key: 'month', seconds: 30 * 86400 }, { key: 'permanent', seconds: 0 }] as const;
 const CLIENT_LIST_LIMIT = 50;
 
+/** Stage 4b: how many actors one comparison may hold (each costs its own set of read commands). */
+export const WHY_MAX_ACTORS = 10;
+
+type One = { plain: ExplainResult } | { whatif: WhatIfExplainResult };
+interface ManyRow { actor: string; data?: One; error?: unknown }
+
+/** One client (value: string) or, in the several-actors comparison, a set of clients (value: string[], click toggles). */
 function ClientField({ id, label, clients, loading, value, onChange }: {
-  id: string; label: string; clients: Props['clients']; loading: boolean; value: string; onChange: (id: string) => void;
+  id: string; label: string; clients: Props['clients']; loading: boolean; value: string | string[]; onChange: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const [q, setQ] = useState('');
@@ -57,10 +64,12 @@ function ClientField({ id, label, clients, loading, value, onChange }: {
     const needle = q.trim().toLowerCase();
     return clients.filter((c) => !needle || c.name.toLowerCase().includes(needle) || c.id === needle);
   }, [clients, q]);
-  const selected = clients.find((c) => c.id === value);
+  const multi = Array.isArray(value);
+  const isSel = (cid: string) => (multi ? value.includes(cid) : value === cid);
+  const selected = multi ? undefined : clients.find((c) => c.id === value);
   const shown = matches.slice(0, CLIENT_LIST_LIMIT);
   // One tab stop for the list (the selected row, else the first); arrow keys move between rows
-  const tabRow = shown.some((c) => c.id === value) ? value : shown[0]?.id;
+  const tabRow = shown.find((c) => isSel(c.id))?.id ?? shown[0]?.id;
   const onListKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     const rows = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role=option]')];
@@ -75,19 +84,20 @@ function ClientField({ id, label, clients, loading, value, onChange }: {
         <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
         <Input id={id} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('pages.permissions.searchClientsPlaceholder')} className="h-8 pl-7 text-xs" />
       </div>
-      <div role="listbox" aria-label={label} onKeyDown={onListKey} className="h-36 overflow-y-auto rounded-md border border-border/50 p-1 space-y-0.5">
+      <div role="listbox" aria-label={label} aria-multiselectable={multi || undefined} onKeyDown={onListKey} className="h-36 overflow-y-auto rounded-md border border-border/50 p-1 space-y-0.5">
         {shown.map((c) => (
           <button
             key={c.id}
             type="button"
             role="option"
             tabIndex={c.id === tabRow ? 0 : -1}
-            aria-selected={value === c.id}
+            aria-selected={isSel(c.id)}
             aria-label={`${c.name} (#${c.id}, ${c.online ? t('common.online') : t('common.offline')})`}
             onClick={() => onChange(c.id)}
             className={cn('w-full text-left px-2 py-1 rounded-sm text-xs flex items-center gap-2 transition-colors',
-              value === c.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50')}
+              isSel(c.id) ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50')}
           >
+            {multi && <Check className={cn('h-3 w-3 shrink-0', isSel(c.id) ? 'opacity-100' : 'opacity-0')} aria-hidden />}
             <span className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', c.online ? 'bg-emerald-500' : 'bg-zinc-500')}
               title={c.online ? t('common.online') : t('common.offline')} />
             <span className="truncate flex-1">{c.name}</span>
@@ -102,7 +112,8 @@ function ClientField({ id, label, clients, loading, value, onChange }: {
         )}
       </div>
       <p className="text-[11px] text-muted-foreground truncate">
-        {selected ? t('pages.permissions.why.selected', { name: selected.name }) : t('pages.permissions.why.noneSelected')}
+        {multi ? t('pages.permissions.why.multi.selectedCount', { count: value.length, max: WHY_MAX_ACTORS })
+          : selected ? t('pages.permissions.why.selected', { name: selected.name }) : t('pages.permissions.why.noneSelected')}
       </p>
     </div>
   );
@@ -281,32 +292,57 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
   const [banPreset, setBanPreset] = useState<string>('day');
   const [customSeconds, setCustomSeconds] = useState('');
 
+  // Stage 4b: several actors against one target; each is asked on its own (planned "actor" changes apply to each)
+  const [multi, setMulti] = useState(false);
+  const [actors, setActors] = useState<string[]>([]);
+  const [detail, setDetail] = useState<string | null>(null);
+
   const isGroup = action === 'group-add' || action === 'group-remove';
   const duration = banPreset === 'custom' ? Number(customSeconds) : BAN_PRESETS.find((p) => p.key === banPreset)!.seconds;
   const durationValid = banPreset !== 'custom' || (Number.isInteger(duration) && duration > 0);
-  const missing = !actor ? 'actor' : !target ? 'target' : actor === target ? 'same'
+  const actorIds = multi ? actors : actor ? [actor] : [];
+  const missing = actorIds.length === 0 ? 'actor' : !target ? 'target' : actorIds.includes(target) ? 'same'
     : isGroup && !sgid ? 'group' : action === 'move' && !destination ? 'destination'
     : action === 'ban' && !durationValid ? 'duration' : null;
 
+  const askOne = async (actorId: string): Promise<One> => {
+    const params = {
+      actor: Number(actorId), target: Number(target), action,
+      ...(isGroup ? { sgid: Number(sgid) } : {}),
+      ...(action === 'move' ? { destination: Number(destination) } : {}),
+      ...(action === 'ban' ? { duration } : {}),
+    };
+    return changes.length > 0
+      ? { whatif: await permissionsApi.explainWhatIf(configId, sid, { ...params, changes }) }
+      : { plain: await permissionsApi.explain(configId, sid, params) };
+  };
   const explain = useMutation({
-    mutationFn: async (): Promise<{ plain: ExplainResult } | { whatif: WhatIfExplainResult }> => {
-      const params = {
-        actor: Number(actor), target: Number(target), action,
-        ...(isGroup ? { sgid: Number(sgid) } : {}),
-        ...(action === 'move' ? { destination: Number(destination) } : {}),
-        ...(action === 'ban' ? { duration } : {}),
-      };
-      return changes.length > 0
-        ? { whatif: await permissionsApi.explainWhatIf(configId, sid, { ...params, changes }) }
-        : { plain: await permissionsApi.explain(configId, sid, params) };
+    mutationFn: async (): Promise<{ single: One } | { many: ManyRow[] }> => {
+      if (!multi) return { single: await askOne(actor) };
+      // Two at a time: each answer costs its own read commands on the server
+      const rows: ManyRow[] = actors.map((a) => ({ actor: a }));
+      for (let i = 0; i < rows.length; i += 2) {
+        await Promise.all(rows.slice(i, i + 2).map(async (r) => {
+          try { r.data = await askOne(r.actor); } catch (err) { r.error = err; }
+        }));
+      }
+      return { many: rows };
     },
+    onMutate: () => setDetail(null),
   });
   const updateChanges = (next: WhatIfChange[]) => { setChanges(next); explain.reset(); };
+  const toggleMulti = (on: boolean) => {
+    setMulti(on);
+    if (on) setActors(actor ? [actor] : []); else setActor(actors[0] ?? '');
+    explain.reset();
+  };
+  const toggleActor = (id: string) => setActors((list) =>
+    list.includes(id) ? list.filter((x) => x !== id) : list.length < WHY_MAX_ACTORS ? [...list, id] : list);
   const [fromEditor, setFromEditor] = useState(false);
   useEffect(() => {
     if (!prefill) return;
     setChanges(prefill.changes);
-    if (prefill.actor) { setActor(prefill.actor); setTarget((t0) => (t0 === prefill.actor ? '' : t0)); }
+    if (prefill.actor) { setActor(prefill.actor); setActors([prefill.actor]); setTarget((t0) => (t0 === prefill.actor ? '' : t0)); }
     if (prefill.target) { setTarget(prefill.target); setActor((a0) => (a0 === prefill.target ? '' : a0)); }
     setFromEditor(true);
     explain.reset();
@@ -318,6 +354,7 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
   const cgName = (id: number | string) => channelGroups.find((g) => g.cgid === String(id))?.name ?? t('pages.permissions.channelGroupFallback', { id });
 
   const whoName = (w: WhatIfWho) => {
+    if (w === 'actor' && multi) return t('pages.permissions.why.multi.eachActor');
     const id = w === 'actor' ? actor : target;
     return id ? nameOf(id) : t(`pages.permissions.why.${w}`);
   };
@@ -342,8 +379,8 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
   const temps = useTemporaryGroups('open', mayMembers && changes.some((c) => c.kind === 'group-member'));
   const tempUntil = (c: WhatIfChange): string | null => {
     if (c.kind !== 'group-member' || c.op !== 'remove') return null;
-    const cldbid = Number(c.who === 'actor' ? actor : target);
-    const hit = (temps.data ?? []).find((e) => e.sgid === c.sgid && e.cldbid === cldbid);
+    const ids = (c.who === 'actor' ? actorIds : [target]).map(Number);
+    const hit = (temps.data ?? []).find((e) => e.sgid === c.sgid && ids.includes(e.cldbid));
     return hit ? new Date(hit.expiresAt).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }) : null;
   };
 
@@ -375,7 +412,14 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-            <ClientField id="why-actor" label={t('pages.permissions.why.actor')} clients={clients} loading={clientsLoading} value={actor} onChange={setActor} />
+            <div className="space-y-2 min-w-0">
+              <ClientField id="why-actor" label={multi ? t('pages.permissions.why.multi.actors') : t('pages.permissions.why.actor')} clients={clients} loading={clientsLoading}
+                value={multi ? actors : actor} onChange={multi ? toggleActor : setActor} />
+              <label className="flex items-center gap-1.5 text-xs">
+                <Checkbox checked={multi} onCheckedChange={(v) => toggleMulti(!!v)} />
+                {t('pages.permissions.why.multi.toggle', { max: WHY_MAX_ACTORS })}
+              </label>
+            </div>
             <div className="space-y-3 min-w-0">
               <div className="space-y-1.5">
                 <Label htmlFor="why-action" className="text-xs">{t('pages.permissions.why.action')}</Label>
@@ -445,15 +489,79 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
       {explain.isError && (
         <Card className="card-hero border-destructive/40"><CardContent className="py-4 text-sm text-destructive" role="alert">{errorText(explain.error)}</CardContent></Card>
       )}
-      {explain.data && !explain.isPending && 'plain' in explain.data && (
+      {explain.data && !explain.isPending && 'single' in explain.data && renderOne(explain.data.single)}
+      {explain.data && !explain.isPending && 'many' in explain.data && (() => {
+        const rows = explain.data.many;
+        const planned = changes.length > 0;
+        const verdictOf = (d: One, side: 'before' | 'after') => ('plain' in d ? d.plain.verdict : d.whatif[side].verdict);
+        const tone = (v: string) => (v === 'allowed' ? 'text-emerald-500' : v === 'denied' ? 'text-destructive' : 'text-amber-500');
+        const cell = (v: string) => <span className={cn('font-medium', tone(v))}>{t(`pages.permissions.why.verdict.${v}`)}</span>;
+        const open = rows.find((r) => r.actor === detail && r.data);
+        return (
+          <div className="space-y-3">
+            <Card className="card-hero">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {t('pages.permissions.why.multi.title', { action: t(`pages.permissions.why.actions.${action}`), target: nameOf(target) })}
+                </CardTitle>
+                {planned && <p className="text-[11px] text-muted-foreground pt-1">{t('pages.permissions.why.whatif.nothingChanged')}</p>}
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-left text-muted-foreground border-b border-border/50">
+                      <th scope="col" className="py-1.5 pr-3 font-medium">{t('pages.permissions.why.actor')}</th>
+                      <th scope="col" className="py-1.5 pr-3 font-medium">{planned ? t('pages.permissions.why.whatif.before') : t('pages.permissions.why.multi.answer')}</th>
+                      {planned && <th scope="col" className="py-1.5 pr-3 font-medium">{t('pages.permissions.why.whatif.after')}</th>}
+                      <th scope="col" className="py-1.5"><span className="sr-only">{t('pages.permissions.why.multi.details')}</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => {
+                      const changed = r.data && planned && verdictOf(r.data, 'before') !== verdictOf(r.data, 'after');
+                      return (
+                        <tr key={r.actor} className={cn('border-b border-border/30', changed && 'bg-primary/5', detail === r.actor && 'outline outline-1 outline-primary/40')}>
+                          <th scope="row" className="py-1.5 pr-3 font-normal text-left">{nameOf(r.actor)}</th>
+                          {r.data ? (
+                            <>
+                              <td className="py-1.5 pr-3">{cell(verdictOf(r.data, 'before'))}</td>
+                              {planned && <td className="py-1.5 pr-3">{cell(verdictOf(r.data, 'after'))}{changed && <span className="sr-only"> ({t('pages.permissions.why.multi.changed')})</span>}</td>}
+                              <td className="py-1.5 text-right">
+                                <Button variant="ghost" size="sm" className="h-6 text-xs" aria-pressed={detail === r.actor}
+                                  onClick={() => setDetail(detail === r.actor ? null : r.actor)}>
+                                  {t('pages.permissions.why.multi.details')}
+                                </Button>
+                              </td>
+                            </>
+                          ) : (
+                            <td colSpan={planned ? 3 : 2} className="py-1.5 text-destructive">{errorText(r.error)}</td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
+            {open?.data && renderOne(open.data)}
+          </div>
+        );
+      })()}
+    </div>
+  );
+
+  function renderOne(data: One) {
+    if ('plain' in data) {
+      return (
         <Result
-          result={explain.data.plain}
+          result={data.plain}
           nameOf={nameOf} channelName={channelName} groupName={groupName}
           describeSource={describeSource} permDesc={permDesc} onJump={onJump} onShowOverview={onShowOverview}
         />
-      )}
-      {explain.data && !explain.isPending && 'whatif' in explain.data && (() => {
-        const w = explain.data.whatif;
+      );
+    }
+    return (() => {
+        const w = data.whatif;
         const wrap = (v: PermissionVerdict<ExplainRow>): ExplainResult => ({ ...v, context: w.context });
         const changed = w.before.verdict !== w.after.verdict;
         const verdictText = (v: string) => t(`pages.permissions.why.verdict.${v}`);
@@ -489,9 +597,8 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
             </div>
           </div>
         );
-      })()}
-    </div>
-  );
+      })();
+  }
 }
 
 function Result({ result, heading, preview, nameOf, channelName, groupName, describeSource, permDesc, onJump, onShowOverview }: {
