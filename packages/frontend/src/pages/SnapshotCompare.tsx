@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
-import type { SnapshotBackupSource, SnapshotCompareResult, SnapshotCompareSource, SnapshotObjectDiff, SnapshotObjectKind, SnapshotPermValue } from '@ts6/common';
+import { SNAPSHOT_RESET_EXCLUDED_FIELDS } from '@ts6/common';
+import type { SnapshotBackupSource, SnapshotCompareResult, SnapshotCompareSource, SnapshotObjectDiff, SnapshotObjectKind, SnapshotPermValue, SnapshotResetChoice } from '@ts6/common';
 import { serversApi } from '@/api/servers.api';
 import { useServerStore } from '@/stores/server.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,9 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Pager } from '@/components/connection-journal/table-parts';
-import { ArrowLeft, GitCompare, RotateCcw, Search, Upload } from 'lucide-react';
+import { ArrowLeft, GitCompare, RotateCcw, Search, Undo2, Upload } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RestoreGroupsDialog, type RestoreTarget } from '@/components/snapshot/RestoreGroupsDialog';
+import { ResetDialog } from '@/components/snapshot/ResetDialog';
 
 const PAGE_SIZE = 25;
 const KINDS: SnapshotObjectKind[] = ['serverGroup', 'channelGroup', 'channel'];
@@ -48,6 +50,9 @@ export default function SnapshotCompare() {
   const [ran, setRan] = useState<{ source: SnapshotCompareSource; against: SnapshotCompareSource } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [restoring, setRestoring] = useState<RestoreTarget[] | null>(null);
+  // Rows of objects that still exist, ticked to be set back: `${kind}:${id}:${perm|field}:${key}`.
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [resetting, setResetting] = useState<SnapshotResetChoice[] | null>(null);
 
   const sources = useQuery({
     queryKey: ['snapshot-compare-sources', selectedConfigId, selectedSid],
@@ -59,6 +64,22 @@ export default function SnapshotCompare() {
     mutationFn: (body: { source: SnapshotCompareSource; against: SnapshotCompareSource }) => serversApi.compareSnapshot(selectedConfigId!, selectedSid!, body),
     onSuccess: () => setPage(1),
   });
+
+  // From a "deleted" notice: ?backup=…&select=kind:id,… compares that backup with the server at once
+  // and ticks the deleted objects that are still missing.
+  const autoRan = useRef(false);
+  useEffect(() => {
+    const select = params.get('select');
+    const b = sources.data?.find((s) => `${s.kind}/${s.name}` === params.get('backup'));
+    if (autoRan.current || !select || !b) return;
+    autoRan.current = true;
+    const body = { source: { type: 'backup' as const, kind: b.kind, name: b.name }, against: { type: 'live' as const } };
+    setLabels([t('pages.snapshotCompare.backupLabel', { time: new Date(b.createdAt).toLocaleString(i18n.language) }), t('pages.snapshotCompare.liveNow')]);
+    setRan(body);
+    compare.mutate(body, {
+      onSuccess: (r) => setSelected(new Set(select.split(',').filter((k) => r.objects.some((o) => o.status === 'removed' && `${o.kind}:${o.id}` === k)))),
+    });
+  }, [sources.data, params, compare, t, i18n.language]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -90,6 +111,7 @@ export default function SnapshotCompare() {
     setLabels([labelOf(before), labelOf(after)]);
     setRan({ source, against });
     setSelected(new Set());
+    setPicked(new Set());
     compare.mutate({ source, against });
   };
   // Groups that are only in the snapshot, compared with the live server: these can be brought back.
@@ -100,6 +122,24 @@ export default function SnapshotCompare() {
     if (next.has(keyOf(o))) next.delete(keyOf(o)); else next.add(keyOf(o));
     return next;
   });
+  // Objects that still exist and differ: single rows can be set back.
+  const canReset = (o: SnapshotObjectDiff) => ran?.against.type === 'live' && ran.source.type !== 'live' && o.status === 'changed';
+  const togglePick = (key: string) => setPicked((s) => {
+    const next = new Set(s);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const openReset = () => {
+    const byObject = new Map<string, SnapshotResetChoice>();
+    for (const key of picked) {
+      const [k, id, item, ...rest] = key.split(':');
+      const name = rest.join(':');
+      const choice = byObject.get(`${k}:${id}`) ?? { kind: k as SnapshotObjectKind, id: Number(id), perms: [], fields: [] };
+      (item === 'perm' ? choice.perms! : choice.fields!).push(name);
+      byObject.set(`${k}:${id}`, choice);
+    }
+    setResetting([...byObject.values()]);
+  };
   const openRestore = () => setRestoring((compare.data?.objects ?? []).filter((o) => canRestore(o) && selected.has(keyOf(o)))
     .map((o): RestoreTarget => ({ kind: o.kind, id: o.id })));
   // A backup named in the link that this virtual server's list does not have (another server selected).
@@ -184,9 +224,18 @@ export default function SnapshotCompare() {
                   </Button>
                 </div>
               )}
+              {result.objects.some(canReset) && (
+                <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 p-2 text-sm" data-testid="reset-bar">
+                  <span className="text-muted-foreground">{t('pages.snapshotCompare.reset.hint')}</span>
+                  <Button size="sm" onClick={openReset} disabled={picked.size === 0} data-testid="reset-open">
+                    <Undo2 className="h-4 w-4 mr-1" /> {t('pages.snapshotCompare.reset.open', { count: picked.size })}
+                  </Button>
+                </div>
+              )}
               {shown.map((o) => (
                 <ObjectDiff key={`${o.kind}-${o.id}`} o={o} labels={labels}
-                  select={canRestore(o) ? { checked: selected.has(keyOf(o)), onChange: () => toggle(o) } : undefined} />
+                  select={canRestore(o) ? { checked: selected.has(keyOf(o)), onChange: () => toggle(o) } : undefined}
+                  pick={canReset(o) ? { has: (item, key) => picked.has(`${keyOf(o)}:${item}:${key}`), toggle: (item, key) => togglePick(`${keyOf(o)}:${item}:${key}`) } : undefined} />
               ))}
               {filtered.length === 0 && <p className="text-sm text-muted-foreground">{t('pages.snapshotCompare.noMatch')}</p>}
               <Pager page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage}
@@ -194,6 +243,14 @@ export default function SnapshotCompare() {
             </>
           )}
         </div>
+      )}
+
+      {resetting && ran && (
+        <ResetDialog configId={selectedConfigId} sid={selectedSid} source={ran.source} items={resetting}
+          onClose={(changed) => {
+            setResetting(null);
+            if (changed) { setPicked(new Set()); compare.mutate(ran); }
+          }} />
       )}
 
       {restoring && ran && (
@@ -210,8 +267,18 @@ export default function SnapshotCompare() {
 
 const STATUS_VARIANT = { added: 'success', removed: 'destructive', changed: 'warning' } as const;
 
-function ObjectDiff({ o, labels, select }: { o: SnapshotObjectDiff; labels: [string, string]; select?: { checked: boolean; onChange: () => void } }) {
+function ObjectDiff({ o, labels, select, pick }: {
+  o: SnapshotObjectDiff;
+  labels: [string, string];
+  select?: { checked: boolean; onChange: () => void };
+  /** An object that still exists: its rows can be ticked to set them back to the snapshot. */
+  pick?: { has: (item: 'perm' | 'field', key: string) => boolean; toggle: (item: 'perm' | 'field', key: string) => void };
+}) {
   const { t } = useTranslation();
+  const rowPick = (item: 'perm' | 'field', key: string, label: string): RowPick =>
+    pick && !(item === 'field' && SNAPSHOT_RESET_EXCLUDED_FIELDS.includes(key))
+      ? { checked: pick.has(item, key), onChange: () => pick.toggle(item, key), label: t('pages.snapshotCompare.reset.select', { name: label }) }
+      : null;
   const fieldLabel = (f: string) => t(`pages.snapshotCompare.fields.${f}`, { defaultValue: f });
   const value = (field: string, v: string | null) => (v === null ? '—' : v !== '' ? v
     : t(field === 'parent' ? 'pages.snapshotCompare.topLevel' : field === 'below' ? 'pages.snapshotCompare.first' : 'pages.snapshotCompare.empty'));
@@ -223,7 +290,8 @@ function ObjectDiff({ o, labels, select }: { o: SnapshotObjectDiff; labels: [str
   // A new or removed group lists all of its permissions: folded away unless opened.
   const foldPerms = o.status !== 'changed' && o.perms.length > 0;
   const permTable = (
-    <DiffTable head={t('pages.snapshotCompare.permission')} labels={labels} rows={o.perms.map((p) => [p.perm, perm(p.before), perm(p.after)])} mono />
+    <DiffTable head={t('pages.snapshotCompare.permission')} labels={labels} rows={o.perms.map((p) => [p.perm, perm(p.before), perm(p.after)])}
+      picks={pick ? o.perms.map((p) => rowPick('perm', p.perm, p.perm)) : undefined} mono />
   );
   return (
     <Card data-testid="snapshot-compare-object">
@@ -239,7 +307,8 @@ function ObjectDiff({ o, labels, select }: { o: SnapshotObjectDiff; labels: [str
           <span className="text-xs text-muted-foreground">#{o.id}</span>
         </div>
         {o.fields.length > 0 && (
-          <DiffTable head={t('pages.snapshotCompare.field')} labels={labels} rows={o.fields.map((f) => [fieldLabel(f.field), value(f.field, f.before), value(f.field, f.after)])} />
+          <DiffTable head={t('pages.snapshotCompare.field')} labels={labels} rows={o.fields.map((f) => [fieldLabel(f.field), value(f.field, f.before), value(f.field, f.after)])}
+            picks={pick ? o.fields.map((f) => rowPick('field', f.field, fieldLabel(f.field))) : undefined} />
         )}
         {foldPerms ? (
           <details>
@@ -320,7 +389,9 @@ function SidePicker({ id, title, side, onChange, allowLive, backups, date }: {
   );
 }
 
-function DiffTable({ head, labels, rows, mono }: { head: string; labels: [string, string]; rows: string[][]; mono?: boolean }) {
+type RowPick = { checked: boolean; onChange: () => void; label: string } | null;
+
+function DiffTable({ head, labels, rows, picks, mono }: { head: string; labels: [string, string]; rows: string[][]; picks?: RowPick[]; mono?: boolean }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
@@ -332,9 +403,14 @@ function DiffTable({ head, labels, rows, mono }: { head: string; labels: [string
           </tr>
         </thead>
         <tbody>
-          {rows.map(([name, before, after]) => (
+          {rows.map(([name, before, after], i) => (
             <tr key={name} className="border-t border-border/50 align-top">
-              <td className={`py-1 pr-3 break-all ${mono ? 'font-mono' : ''}`}>{name}</td>
+              <td className={`py-1 pr-3 break-all ${mono ? 'font-mono' : ''}`}>
+                {picks?.[i] && (
+                  <Checkbox className="mr-2 align-middle" checked={picks[i]!.checked} onCheckedChange={picks[i]!.onChange} aria-label={picks[i]!.label} data-testid="reset-select" />
+                )}
+                {name}
+              </td>
               <td className="py-1 pr-3 whitespace-pre-wrap break-words">{before}</td>
               <td className="py-1 whitespace-pre-wrap break-words">{after}</td>
             </tr>

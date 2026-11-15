@@ -43,6 +43,9 @@ export async function ensureBulkBackup(prisma: PrismaClient, pool: ConnectionPoo
  * `skipBackup: true`, which the change log keeps with the request. `fresh`: no two-minute reuse
  * (a whole virtual server is about to go). Returns the backup's name, or null when none was taken.
  */
+/** Response header of a delete route naming the before-bulk backup taken (or reused) for it. */
+export const BACKUP_HEADER = 'X-Before-Bulk-Backup';
+
 export async function backupBeforeDeleting(req: Request, count?: number, fresh = false): Promise<string | null> {
   if (req.body?.skipBackup === true) return null;
   const prisma = req.app.locals.prisma as PrismaClient;

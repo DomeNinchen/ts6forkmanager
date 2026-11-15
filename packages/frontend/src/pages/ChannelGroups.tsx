@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { BackupStep, useBackupStep } from '@/components/shared/BackupStep';
+import { useRestoreLink } from '@/components/snapshot/use-restore-link';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -62,6 +63,7 @@ export default function ChannelGroups() {
 
   // Backed up first (R9); the parallel deletes then share that one backup.
   const deleteBackup = useBackupStep('groups', 1, showBulkDelete);
+  const restoreLink = useRestoreLink();
   const runBulkDelete = async (skipBackup: boolean) => {
     setBulkDeleting(true);
     const targets = [...checkedIds].map((cgid) => ({ id: cgid, name: (Array.isArray(data) ? data : []).find((g: any) => Number(g.cgid) === cgid)?.name ?? `#${cgid}` }));
@@ -69,7 +71,8 @@ export default function ChannelGroups() {
     setBulkDeleting(false);
     setShowBulkDelete(false);
     reportBulk(t('pages.channelGroups.deleteSelected'), t('pages.channelGroups.bulkDeleteSuccess', { count: results.length }),
-      settledOutcomes(targets, results, (err) => tsErrorMessage(err, t('components.bulkResult.unknownError'), t)));
+      settledOutcomes(targets, results, (err) => tsErrorMessage(err, t('components.bulkResult.unknownError'), t)),
+      restoreLink(results.map((r) => (r.status === 'fulfilled' ? r.value : undefined)), targets.map((g) => `channelGroup:${g.id}`)));
     setCheckedIds(new Set());
   };
 

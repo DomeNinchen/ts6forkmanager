@@ -740,6 +740,27 @@
       "objectCount_other": "{{count}} différences",
       "permissionCount_one": "{{count}} permission",
       "permissionCount_other": "{{count}} permissions",
+      "fromDeletion": "Récupérer depuis la sauvegarde",
+      "reset": {
+        "hint": "Les permissions et champs modifiés depuis le snapshot peuvent être cochés et remis à leur état du snapshot.",
+        "open": "Rétablir la sélection ({{count}})",
+        "select": "Rétablir {{name}}",
+        "title": "Rétablir l'état du snapshot",
+        "resultTitle": "Résultat",
+        "description": "Les permissions et champs cochés reçoivent leur valeur du snapshot, avec les droits de l'identité du manager ; une permission absente du snapshot est supprimée. Rien d'autre n'est modifié.",
+        "failed": "Le rétablissement a échoué",
+        "remove": "supprimer",
+        "running": "Rétablissement...",
+        "confirm": "Rétablir",
+        "status": {
+          "ready": "Sera défini",
+          "ok": "Défini",
+          "failed": "Échec",
+          "skipped-not-resettable": "Non rétablissable",
+          "skipped-object-gone": "N'existe plus",
+          "skipped-not-in-snapshot": "Pas dans le snapshot"
+        }
+      },
       "restore": {
         "hint": "Les groupes et salons présents uniquement dans le snapshot peuvent être restaurés comme nouveaux.",
         "roleParent": "vient aussi : son salon parent, également supprimé",
