@@ -8,6 +8,7 @@ import { flowGroupReferences, GROUP_NAME_MAX } from '@ts6/common';
 import type {
   SnapshotGroupKind,
   SnapshotGroupReference,
+  SnapshotObjectKind,
   SnapshotRestoreGroupChoice,
   SnapshotRestoreOutcome,
   SnapshotRestorePermFailure,
@@ -23,8 +24,8 @@ const DUPLICATE = 1282;
 const CLIENT_GONE = 512;
 const ALREADY_MEMBER = 2561;
 
-const codeOf = (err: unknown) => (err as { code?: number })?.code;
-const messageOf = (err: unknown) => {
+export const codeOf = (err: unknown) => (err as { code?: number })?.code;
+export const messageOf = (err: unknown) => {
   const e = err as { code?: number; message?: string; failedPermission?: string };
   return `${e.message ?? String(err)}${e.code !== undefined && e.code > 0 ? ` (${e.code}${e.failedPermission ? `, ${e.failedPermission}` : ''})` : ''}`;
 };
@@ -36,9 +37,21 @@ const CMD = {
 
 const parseIds = (v: unknown): number[] => (Array.isArray(v) ? v.map(Number) : []);
 
-/** Every place in the manager that names this group id on this virtual server. */
-export async function groupReferences(prisma: PrismaClient, configId: number, sid: number, kind: SnapshotGroupKind, id: number): Promise<SnapshotGroupReference[]> {
+/** Every place in the manager that names this group (or channel) id on this virtual server. */
+export async function groupReferences(prisma: PrismaClient, configId: number, sid: number, kind: SnapshotObjectKind, id: number): Promise<SnapshotGroupReference[]> {
   const out: SnapshotGroupReference[] = [];
+  if (kind === 'channel') {
+    for (const q of await prisma.supportQueue.findMany({ where: { serverConfigId: configId, sid } })) {
+      if (q.channelId === id) out.push({ where: 'support-queue', detail: `${q.channelId}:channelId` });
+      let s: Record<string, unknown> = {};
+      try { s = JSON.parse(q.settings); } catch { /* unreadable settings name nothing */ }
+      if (parseIds(s.afkChannelIds).includes(id)) out.push({ where: 'support-queue', detail: `${q.channelId}:afkChannelIds` });
+    }
+    // A music bot's default channel is per connection and may also be a name; only an exact id counts.
+    for (const b of await prisma.musicBot.findMany({ where: { serverConfigId: configId, defaultChannel: String(id) }, select: { name: true } })) {
+      out.push({ where: 'music-bot', detail: b.name });
+    }
+  }
   if (kind === 'serverGroup') {
     if (await prisma.protectedServerGroup.findFirst({ where: { serverConfigId: configId, sid, sgid: id } })) out.push({ where: 'protected-group', detail: '' });
     const temporary = await prisma.temporaryServerGroup.count({ where: { serverConfigId: configId, sid, sgid: id, state: 'active' } });
@@ -64,7 +77,7 @@ export async function groupReferences(prisma: PrismaClient, configId: number, si
   for (const flow of await prisma.botFlow.findMany({ where: { serverConfigId: configId, virtualServerId: sid }, select: { name: true, flowData: true } })) {
     let nodes: unknown[] = [];
     try { nodes = JSON.parse(flow.flowData).nodes ?? []; } catch { /* unreadable flow names nothing */ }
-    for (const r of flowGroupReferences(nodes, kind === 'serverGroup' ? 'servergroup' : 'channelgroup', id)) {
+    for (const r of flowGroupReferences(nodes, kind === 'serverGroup' ? 'servergroup' : kind === 'channelGroup' ? 'channelgroup' : 'channel', id)) {
       out.push({ where: 'flow', detail: `${flow.name} / ${r.node} / ${r.field}` });
     }
   }

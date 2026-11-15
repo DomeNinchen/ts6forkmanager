@@ -93,8 +93,7 @@ export default function SnapshotCompare() {
     compare.mutate({ source, against });
   };
   // Groups that are only in the snapshot, compared with the live server: these can be brought back.
-  const canRestore = (o: SnapshotObjectDiff) => ran?.against.type === 'live' && ran.source.type !== 'live'
-    && o.status === 'removed' && (o.kind === 'serverGroup' || o.kind === 'channelGroup');
+  const canRestore = (o: SnapshotObjectDiff) => ran?.against.type === 'live' && ran.source.type !== 'live' && o.status === 'removed';
   const keyOf = (o: { kind: string; id: number }) => `${o.kind}:${o.id}`;
   const toggle = (o: SnapshotObjectDiff) => setSelected((s) => {
     const next = new Set(s);
@@ -102,7 +101,7 @@ export default function SnapshotCompare() {
     return next;
   });
   const openRestore = () => setRestoring((compare.data?.objects ?? []).filter((o) => canRestore(o) && selected.has(keyOf(o)))
-    .map((o) => ({ kind: o.kind as RestoreTarget['kind'], id: o.id })));
+    .map((o): RestoreTarget => ({ kind: o.kind, id: o.id })));
   // A backup named in the link that this virtual server's list does not have (another server selected).
   const linkedMissing = before.type === 'backup' && !!before.backup && !!sources.data && !backupOf(before);
 

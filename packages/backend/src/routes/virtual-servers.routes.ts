@@ -4,7 +4,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 import type { ConnectionPool } from '../ts-client/connection-pool.js';
 import { grantCovers, grantOf } from '../utils/vs-access.js';
 import { backupBeforeDeleting } from '../utils/bulk-backup.js';
-import { cleanUpDeletedVirtualServer } from '../utils/virtual-server-cleanup.js';
+import { changeLogResultOf, cleanUpDeletedVirtualServer } from '../utils/virtual-server-cleanup.js';
 import type { VirtualServerDeleteResult } from '@ts6/common';
 import { backupsWithSnapshot, readBackupSnapshot } from '../utils/backups.js';
 import { compareSnapshots, readSnapshot } from '../utils/ts-snapshot.js';
@@ -12,6 +12,7 @@ import type { BulkOutcome, SnapshotBackupSource, SnapshotCompareRequest, Snapsho
 import { BULK_MAX } from '@ts6/common';
 import { ensureBulkBackup } from '../utils/bulk-backup.js';
 import { restoreGroups } from '../utils/snapshot-restore.js';
+import { restoreChannels } from '../utils/snapshot-restore-channels.js';
 
 export const virtualServerRoutes: Router = Router({ mergeParams: true });
 
@@ -147,6 +148,7 @@ virtualServerRoutes.delete('/:sid', requireRole('admin'), async (req: Request, r
       result.cleanupError = (err as Error).message;
       console.error(`[VirtualServers] Clean-up after deleting ${configId}/${sid} failed: ${result.cleanupError}`);
     }
+    res.locals.changeLogResult = changeLogResultOf(result, configId, sid);
     res.json(result);
   } catch (err) {
     if (err instanceof TSApiError && err.code === 1035) {
@@ -214,10 +216,11 @@ virtualServerRoutes.post('/:sid/snapshot/compare', requireRole('admin'), async (
   } catch (err) { next(err); }
 });
 
-// Brings single groups back from a snapshot (a file or a backup) as new groups. dryRun = the preview
-// (nothing created, no backup, no change-log row). Otherwise a before-bulk backup of this virtual
-// server is taken first; when it fails nothing happens unless the dialog sends skipBackup.
-virtualServerRoutes.post('/:sid/snapshot/restore-groups', requireRole('admin'), async (req: Request, res: Response, next) => {
+// Brings single groups and channels back from a snapshot (a file or a backup) as new ones. dryRun = the
+// preview (nothing created, no backup, no change-log row). Otherwise a before-bulk backup of this virtual
+// server is taken first; when it fails nothing happens unless the dialog sends skipBackup. Groups come
+// first, then channels (whose permissions may name a group).
+virtualServerRoutes.post('/:sid/snapshot/restore', requireRole('admin'), async (req: Request, res: Response, next) => {
   try {
     const configId = parseInt(String(req.params.configId));
     const sid = parseInt(String(req.params.sid));
@@ -227,10 +230,13 @@ virtualServerRoutes.post('/:sid/snapshot/restore-groups', requireRole('admin'), 
     if (source?.type === 'file') snapshot = source.snapshot;
     else if (source?.type === 'backup' && typeof source.kind === 'string' && typeof source.name === 'string') snapshot = readBackupSnapshot(source.kind, source.name, configId, sid);
     else throw new AppError(400, 'Name the snapshot file or backup to restore from');
-    const choices = Array.isArray(body.groups) ? body.groups : [];
-    if (choices.length === 0 || choices.length > BULK_MAX
-      || !choices.every((c) => (c?.kind === 'serverGroup' || c?.kind === 'channelGroup') && Number.isInteger(c.id) && c.id > 0 && (c.newName === undefined || typeof c.newName === 'string'))) {
-      throw new AppError(400, `Name 1 to ${BULK_MAX} groups to restore (kind serverGroup or channelGroup, id, optional newName)`);
+    const choices = body.groups === undefined ? [] : body.groups;
+    const channelChoices = body.channels === undefined ? [] : body.channels;
+    const optString = (v: unknown) => v === undefined || typeof v === 'string';
+    if (!Array.isArray(choices) || !Array.isArray(channelChoices) || choices.length + channelChoices.length === 0 || choices.length + channelChoices.length > BULK_MAX
+      || !choices.every((c) => (c?.kind === 'serverGroup' || c?.kind === 'channelGroup') && Number.isInteger(c.id) && c.id > 0 && optString(c.newName))
+      || !channelChoices.every((c) => Number.isInteger(c?.id) && c.id > 0 && optString(c.newName) && optString(c.password))) {
+      throw new AppError(400, `Name 1 to ${BULK_MAX} groups (kind serverGroup or channelGroup, id, optional newName) or channels (id, optional newName and password) to restore`);
     }
     const snap = readSnapshot(snapshot ?? {});
     const dryRun = body.dryRun === true;
@@ -243,7 +249,10 @@ virtualServerRoutes.post('/:sid/snapshot/restore-groups', requireRole('admin'), 
         throw new AppError(409, 'The backup before restoring failed, so nothing was restored', reason, 'BACKUP_FAILED');
       }
     }
-    const outcomes = await restoreGroups(getClient(req), req.app.locals.prisma, configId, sid, snap, choices, { dryRun, members: body.members === true });
+    const outcomes = [
+      ...(choices.length ? await restoreGroups(getClient(req), req.app.locals.prisma, configId, sid, snap, choices, { dryRun, members: body.members === true }) : []),
+      ...(channelChoices.length ? await restoreChannels(getClient(req), req.app.locals.prisma, configId, sid, snap, channelChoices, { dryRun }) : []),
+    ];
     if (dryRun) res.locals.dryRun = true;
     // The change log keeps one line per group, like a bulk action (R9).
     else res.locals.bulkOutcomes = outcomes.map((o): BulkOutcome => ({
