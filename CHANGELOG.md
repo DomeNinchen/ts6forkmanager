@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.131.0 · frontend 3.154.0 · sidecar 2.4.0**
+Versions at the end of the month: **backend 2.131.0 · frontend 3.154.0 · sidecar 2.4.1**
 
 ### New Features
 
@@ -49,6 +49,7 @@ Versions at the end of the month: **backend 2.131.0 · frontend 3.154.0 · sidec
 
 ### Security
 
+- **Sidecar Go modules updated** — `golang.org/x/net` 0.62.0 and `golang.org/x/crypto` 0.59.0 (pulled in through the WebRTC library) close three Trivy findings of the sidecar (one high, one medium, one note); the `openpgp` package behind the note is not used by the sidecar. *sidecar 2.4.1*
 - **Longest runtime of a flow execution** — An execution now ends as failed ("Time limit: …", shown in the editor's execution list) once it has run longer than a set time in total, counted from its start and also across a backend restart. It is checked before every node and when a Delay ends; a WebQuery command or HTTP call already under way still finishes. Set on the Bot Flows page under **Executions: retention and limit** (default 30 minutes, 0 = no limit). *backend 2.118.0, frontend 3.137.0* [#409](https://github.com/DomeNinchen/ts6forkmanager/pull/409)
 - **Webhook secret in the X-Webhook-Secret header** — The header is now the documented way to send a webhook secret: the editor shows an example call with it, and each flow counts the calls that still send the secret as `?secret=` in the address, shown as a badge on **Bot Flows** and as a warning at the webhook trigger. A new switch under **Bot Flows → Webhooks**, "Allow ?secret= in the address" (on by default), turns the address form off; such calls then get 404. *backend 2.117.0, frontend 3.135.0* [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
 - **Limits on incoming webhook calls** — The webhook route now checks, before reading the body, how many calls an address makes per minute (valid ones and ones with an unknown path or wrong secret counted apart, the latter much stricter) and how large the body is; beyond that it answers 429 with `Retry-After` or 413. Too many failed calls from one address show up in the Connection Journal, once per address and minute. The limits (default 1 MB, 120 valid and 10 failed calls per address and minute) are set by an admin on the Bot Flows page under **Webhooks**. The secret check takes the same time whatever the length of the secret sent. *backend 2.116.0, frontend 3.134.0* [#405](https://github.com/DomeNinchen/ts6forkmanager/pull/405)
