@@ -471,6 +471,12 @@ model MusicBot {
   // before it pauses (and picks up again when somebody comes back); 0 = never,
   // which is how a bot always behaved.
   idlePauseMinutes       Int           @default(0)
+  // !voteskip: the people in the bot's channel can vote the current track away
+  // when more than voteSkipPercent % of them, and at least voteSkipMinVotes,
+  // vote for it. On for new bots; the migration switched it off for existing ones.
+  voteSkipEnabled        Boolean       @default(true)
+  voteSkipPercent        Int           @default(50)
+  voteSkipMinVotes       Int           @default(1)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

@@ -96,13 +96,18 @@ export class ChannelOccupancy {
    * claim about an empty channel the bot has no basis for.
    */
   countPeople(ownClid: number, excluded?: ReadonlySet<number>): number | null {
+    return this.peopleIds(ownClid, excluded)?.size ?? null;
+  }
+
+  /** The client IDs behind {@link countPeople}. */
+  peopleIds(ownClid: number, excluded?: ReadonlySet<number>): Set<number> | null {
     if (!this.ownChannel || !ownClid) return null;
-    let n = 0;
+    const ids = new Set<number>();
     for (const [clid, c] of this.known) {
       if (clid === ownClid || excluded?.has(clid)) continue;
-      if (c.cid === this.ownChannel && c.type === CLIENT_TYPE_VOICE) n++;
+      if (c.cid === this.ownChannel && c.type === CLIENT_TYPE_VOICE) ids.add(clid);
     }
-    return n;
+    return ids;
   }
 }
 

@@ -47,6 +47,12 @@ export interface MusicBotSummary {
   autoplayRadioStationId: number | null;
   /** Minutes alone in its channel before the bot pauses; 0 = never. */
   idlePauseMinutes: number;
+  /** !voteskip: listeners in the bot's channel can vote the current track away. */
+  voteSkipEnabled: boolean;
+  /** Votes needed: more than this share (%) of the people in the channel... */
+  voteSkipPercent: number;
+  /** ...and at least this many. */
+  voteSkipMinVotes: number;
   hasAvatar: boolean;
   /** The bot's TeamSpeak unique ID (client_unique_identifier); null when it has no stored identity. */
   uid: string | null;
@@ -76,6 +82,9 @@ export interface CreateMusicBotRequest {
   autoplaySongId?: number;
   autoplayRadioStationId?: number;
   idlePauseMinutes?: number;
+  voteSkipEnabled?: boolean;
+  voteSkipPercent?: number;
+  voteSkipMinVotes?: number;
 }
 
 export interface UpdateMusicBotRequest {
@@ -92,6 +101,9 @@ export interface UpdateMusicBotRequest {
   autoplaySongId?: number;
   autoplayRadioStationId?: number;
   idlePauseMinutes?: number;
+  voteSkipEnabled?: boolean;
+  voteSkipPercent?: number;
+  voteSkipMinVotes?: number;
 }
 
 // === Song Types ===
@@ -238,6 +250,7 @@ export const RESTRICTABLE_COMMANDS: { command: string; label: string }[] = [
   { command: 'stop', label: '!stop' },
   { command: 'pause', label: '!pause' },
   { command: 'skip', label: '!skip / !next' },
+  { command: 'voteskip', label: '!voteskip' },
   { command: 'prev', label: '!prev' },
   { command: 'vol', label: '!vol / !volume' },
   { command: 'np', label: '!np / !nowplaying' },
@@ -258,7 +271,7 @@ export const RESTRICTABLE_COMMANDS: { command: string; label: string }[] = [
  * up privileged commands (!stop, !skip, !queue, ...) before an admin has
  * had a chance to configure this feature at all.
  */
-export const OPEN_BY_DEFAULT_COMMANDS: ReadonlySet<string> = new Set(['play', 'stream', 'np']);
+export const OPEN_BY_DEFAULT_COMMANDS: ReadonlySet<string> = new Set(['play', 'stream', 'np', 'voteskip']);
 
 export interface BotCommandPermissionInfo {
   id: number;

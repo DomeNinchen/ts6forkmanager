@@ -322,6 +322,9 @@ export class VoiceBotManager extends EventEmitter {
     autoplaySongId?: number;
     autoplayRadioStationId?: number;
     idlePauseMinutes?: number;
+    voteSkipEnabled?: boolean;
+    voteSkipPercent?: number;
+    voteSkipMinVotes?: number;
   }): Promise<{ id: number }> {
     // Enforce bot limit
     const limitSetting = await this.prisma.appSetting.findUnique({ where: { key: 'max_music_bots' } });
@@ -360,6 +363,9 @@ export class VoiceBotManager extends EventEmitter {
         autoplaySongId: data.autoplayMode === 'song' ? data.autoplaySongId : undefined,
         autoplayRadioStationId: data.autoplayMode === 'radio' ? data.autoplayRadioStationId : undefined,
         idlePauseMinutes: data.idlePauseMinutes ?? 0,
+        voteSkipEnabled: data.voteSkipEnabled,
+        voteSkipPercent: data.voteSkipPercent,
+        voteSkipMinVotes: data.voteSkipMinVotes,
       },
     });
 
