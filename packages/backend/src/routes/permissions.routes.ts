@@ -4,7 +4,7 @@ import { AppError, TSApiError } from '../middleware/error-handler.js';
 import { requireRole, requirePermission } from '../middleware/rbac.js';
 import {
   evaluatePermissionAction, evaluateWhatIf, OVERVIEW_TIER_RANK, PERMISSION_ACTIONS, WHATIF_MAX_CHANGES, WhatIfError,
-  type PermissionAction, type PermissionActionInput, type WhatIfChange, type WhatIfGroupPerm, type WhatIfRow, type WhatIfValue, type WhatIfWho,
+  type PermissionAction, type PermissionActionInput, type WhatIfChange, type WhatIfChannels, type WhatIfGroupPerm, type WhatIfRow, type WhatIfValue, type WhatIfWho,
 } from '@ts6/common';
 
 export const permissionRoutes: Router = Router({ mergeParams: true });
@@ -144,13 +144,15 @@ async function gatherExplain(req: Request, q: Record<string, unknown>) {
       target: { cldbid: targetDbid, online: !!targetOn, cid: targetCid },
       destination: destination ?? null, sgid: sgid ?? null, banDuration, defaultCid,
     };
-    return { input, context, client, sid, permNames: new Set(permName.values()), targetGroups };
+    const channelIds = new Set(channels.map((c) => Number(c.cid)));
+    return { input, context, client, sid, permNames: new Set(permName.values()), targetGroups, channelIds };
 }
 
-/** A server group's own permissions with their flags; null when the group does not exist. */
-async function groupPermList(client: ReturnType<typeof getClient>, sid: number, sgid: number): Promise<WhatIfGroupPerm[] | null> {
+/** A server or channel group's own permissions with their flags; null when the group does not exist. */
+async function groupPermList(client: ReturnType<typeof getClient>, sid: number, id: number, kind: 'server' | 'channel' = 'server'): Promise<WhatIfGroupPerm[] | null> {
   try {
-    return list(await client.execute(sid, 'servergrouppermlist', { sgid, '-permsid': '' })).map((p) => ({
+    const cmd = kind === 'server' ? 'servergrouppermlist' : 'channelgrouppermlist';
+    return list(await client.execute(sid, cmd, { [kind === 'server' ? 'sgid' : 'cgid']: id, '-permsid': '' })).map((p) => ({
       permsid: String(p.permsid), permvalue: Number(p.permvalue) || 0, permnegated: Number(p.permnegated) || 0, permskip: Number(p.permskip) || 0,
     }));
   } catch (err) {
@@ -174,10 +176,22 @@ permissionRoutes.get('/explain', async (req: Request, res: Response, next) => {
   } catch (err) { next(err); }
 });
 
-// R11 stage 4 "what if": the same evaluation before and after planned changes to server group memberships and
-// to server group / client permission values. Reads only - nothing is written to TeamSpeak.
+/** The channel group a client holds in a channel; undefined = none assigned (the default channel group applies). */
+async function channelGroupOf(client: ReturnType<typeof getClient>, sid: number, cid: number, cldbid: number): Promise<number | undefined> {
+  try {
+    const hit = list(await client.execute(sid, 'channelgroupclientlist', { cid, cldbid }))[0];
+    return hit ? Number(hit.cgid) : undefined;
+  } catch (err) {
+    if (err instanceof TSApiError && err.code === 1281) return undefined;
+    throw err;
+  }
+}
+
+// R11 stage 4 "what if": the same evaluation before and after planned changes to server group memberships,
+// channel group assignments and permission values of server groups, clients, channel groups, channels and
+// channel clients. Reads only - nothing is written to TeamSpeak.
 const WHO = new Set(['actor', 'target']);
-function parseChanges(raw: unknown, permNames: Set<string>): WhatIfChange[] {
+function parseChanges(raw: unknown, permNames: Set<string>, channelIds: Set<number>): WhatIfChange[] {
   if (!Array.isArray(raw) || raw.length === 0) throw new AppError(400, 'changes must be a non-empty list');
   if (raw.length > WHATIF_MAX_CHANGES) throw new AppError(400, `At most ${WHATIF_MAX_CHANGES} changes`);
   const perm = (v: unknown, i: number) => {
@@ -194,6 +208,11 @@ function parseChanges(raw: unknown, permNames: Set<string>): WhatIfChange[] {
     if (!Number.isInteger(v?.permvalue)) throw new AppError(400, `Change ${i + 1}: permvalue must be a whole number`);
     return { permvalue: v.permvalue, permnegated: !!v.permnegated, permskip: !!v.permskip };
   };
+  const cid = (v: unknown, i: number) => {
+    const n = asId(v, `Change ${i + 1}: cid`)!;
+    if (!channelIds.has(n)) throw new AppError(400, `Change ${i + 1}: unknown channel`);
+    return n;
+  };
   return raw.map((c: any, i): WhatIfChange => {
     switch (c?.kind) {
       case 'group-member':
@@ -203,6 +222,14 @@ function parseChanges(raw: unknown, permNames: Set<string>): WhatIfChange[] {
         return { kind: 'group-perm', sgid: asId(c.sgid, `Change ${i + 1}: sgid`)!, permsid: perm(c.permsid, i), value: value(c.value, i) };
       case 'client-perm':
         return { kind: 'client-perm', who: who(c.who, i), permsid: perm(c.permsid, i), value: value(c.value, i) };
+      case 'channel-group-member':
+        return { kind: 'channel-group-member', who: who(c.who, i), cid: cid(c.cid, i), cgid: asId(c.cgid, `Change ${i + 1}: cgid`)! };
+      case 'channel-group-perm':
+        return { kind: 'channel-group-perm', cgid: asId(c.cgid, `Change ${i + 1}: cgid`)!, permsid: perm(c.permsid, i), value: value(c.value, i) };
+      case 'channel-perm':
+        return { kind: 'channel-perm', cid: cid(c.cid, i), permsid: perm(c.permsid, i), value: value(c.value, i) };
+      case 'channel-client-perm':
+        return { kind: 'channel-client-perm', who: who(c.who, i), cid: cid(c.cid, i), permsid: perm(c.permsid, i), value: value(c.value, i) };
       default:
         throw new AppError(400, `Change ${i + 1}: unknown kind`);
     }
@@ -212,8 +239,8 @@ function parseChanges(raw: unknown, permNames: Set<string>): WhatIfChange[] {
 permissionRoutes.post('/explain-whatif', async (req: Request, res: Response, next) => {
   try {
     const body = req.body ?? {};
-    const { input, context, client, sid, permNames, targetGroups } = await gatherExplain(req, body);
-    const changes = parseChanges(body.changes, permNames);
+    const { input, context, client, sid, permNames, targetGroups, channelIds } = await gatherExplain(req, body);
+    const changes = parseChanges(body.changes, permNames, channelIds);
     const [info, serverGroups, actorGroups, tGroups] = await Promise.all([
       client.execute(sid, 'serverinfo'),
       client.execute(sid, 'servergrouplist').then(list),
@@ -231,10 +258,38 @@ permissionRoutes.post('/explain-whatif', async (req: Request, res: Response, nex
       const perms = await groupPermList(client, sid, g);
       if (perms) groupPerms[g] = perms;
     }
+    // Channel context only when a change is about channels (keeps the plain case at its command count)
+    let channels: WhatIfChannels | undefined;
+    if (changes.some((c) => c.kind.startsWith('channel-'))) {
+      const cids = {
+        actorInOwnChannel: context.actor.cid,
+        actorInTargetChannel: input.actorInTargetChannel ? context.target.cid : undefined,
+        actorInDestination: input.actorInDestination ? context.destination ?? undefined : undefined,
+        target: context.target.cid,
+      };
+      const pairs: [WhatIfWho, number][] = [...new Set([cids.actorInOwnChannel, cids.actorInTargetChannel, cids.actorInDestination]
+        .filter((x): x is number => x !== undefined))].map((x) => ['actor', x] as [WhatIfWho, number]);
+      pairs.push(['target', cids.target]);
+      const [channelGroups, held] = await Promise.all([
+        client.execute(sid, 'channelgrouplist').then(list),
+        Promise.all(pairs.map(([w, x]) => channelGroupOf(client, sid, x, context[w].cldbid))),
+      ]);
+      const groups: WhatIfChannels['groups'] = { actor: {}, target: {} };
+      pairs.forEach(([w, x], i) => { if (held[i] !== undefined) groups[w][x] = held[i]!; });
+      const defaultCgid = Number(list(info)[0]?.virtualserver_default_channel_group);
+      // Only regular channel groups (type 1) can be assigned; template groups answer 2560
+      const regularCg = new Set(channelGroups.filter((g) => Number(g.type) === 1).map((g) => Number(g.cgid)));
+      const cgPerms: Record<number, WhatIfGroupPerm[]> = {};
+      for (const g of new Set(changes.flatMap((c) => (c.kind === 'channel-group-member' && regularCg.has(c.cgid) ? [c.cgid] : [])))) {
+        const perms = await groupPermList(client, sid, g, 'channel');
+        if (perms) cgPerms[g] = perms;
+      }
+      channels = { cids, defaultCgid, groups, groupPerms: cgPerms };
+    }
     let result;
     try {
       result = evaluateWhatIf({
-        base: input, changes, defaultSgid, groupPerms,
+        base: input, changes, defaultSgid, groupPerms, channels,
         actor: { cldbid: context.actor.cldbid, groups: actorGroups },
         target: { cldbid: context.target.cldbid, groups: tGroups },
       });

@@ -4052,11 +4052,21 @@
       "permissionOverview": "Permission Overview",
       "why": {
         "tab": "Why?",
+        "multi": {
+          "toggle": "Compare several actors (up to {{max}})",
+          "actors": "Who acts (several)",
+          "selectedCount": "{{count}} of at most {{max}} chosen",
+          "eachActor": "each acting client",
+          "title": "{{action}} → {{target}}: who may?",
+          "answer": "Answer",
+          "details": "Reasons",
+          "changed": "answer changes"
+        },
         "whatif": {
           "title": "What if",
-          "explanation": "Plan changes to see the answer before saving them: before and after side by side. Only server group membership and the values of server groups and clients are covered, not channel groups or channel permissions. Nothing is changed on the server.",
+          "explanation": "Plan changes to see the answer before saving them: before and after side by side. Covered: server group membership, a client's channel group in a channel, and the values of server groups, clients, channel groups, channels and clients in a channel. Nothing is changed on the server.",
           "kind": "Change",
-          "kinds": { "add": "Add to server group", "remove": "Remove from server group", "group-perm": "Server group value", "client-perm": "Client value" },
+          "kinds": { "add": "Add to server group", "remove": "Remove from server group", "group-perm": "Server group value", "client-perm": "Client value", "cg-assign": "Give a channel group in a channel", "cg-perm": "Channel group value", "ch-perm": "Channel value", "cc-perm": "Client-in-channel value" },
           "who": "Applies to",
           "permission": "Permission",
           "value": "Value",
@@ -4066,14 +4076,21 @@
           "add": "Add change",
           "planned": "Planned changes",
           "removeChange": "Remove planned change {{n}}",
-          "missing": { "group": "Pick a server group.", "permission": "Enter a permission name from the list.", "value": "Enter a whole number, or tick \"Remove the value\".", "tooMany": "At most {{max}} changes." },
+          "missing": { "group": "Pick a server group.", "channelGroup": "Pick a channel group.", "channel": "Pick a channel.", "permission": "Enter a permission name from the list.", "value": "Enter a whole number, or tick \"Remove the value\".", "tooMany": "At most {{max}} changes." },
           "describe": {
             "add": "Add {{client}} to {{group}}",
             "remove": "Remove {{client}} from {{group}}",
             "group-set": "{{group}}: {{perm}} = {{value}}",
             "group-unset": "{{group}}: remove {{perm}}",
             "client-set": "{{client}} (client permission): {{perm}} = {{value}}",
-            "client-unset": "{{client}} (client permission): remove {{perm}}"
+            "client-unset": "{{client}} (client permission): remove {{perm}}",
+            "cg-assign": "Give {{client}} the channel group {{group}} in {{channel}}",
+            "cg-set": "Channel group {{group}}: {{perm}} = {{value}}",
+            "cg-unset": "Channel group {{group}}: remove {{perm}}",
+            "ch-set": "Channel {{channel}}: {{perm}} = {{value}}",
+            "ch-unset": "Channel {{channel}}: remove {{perm}}",
+            "cc-set": "{{client}} in {{channel}}: {{perm}} = {{value}}",
+            "cc-unset": "{{client}} in {{channel}}: remove {{perm}}"
           },
           "temporary": "temporary membership until {{until}}",
           "fromEditor": {
@@ -4087,6 +4104,10 @@
           "verdictChanged": "The answer changes: {{before}} → {{after}}.",
           "verdictSame": "The answer stays: {{verdict}}.",
           "groupsChange": "Server groups of {{client}}: {{before}} → {{after}}",
+          "channelGroupChange": "Channel group of {{client}} in {{channel}}: {{before}} → {{after}}",
+          "unused": "Change {{n}} is about a channel this answer does not read, so it cannot change it.",
+          "channel": "Channel",
+          "channelGroup": "Channel group",
           "before": "Now",
           "after": "With the planned changes",
           "error": {
