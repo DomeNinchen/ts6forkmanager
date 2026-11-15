@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Search, Check, X, Ban, ArrowRight, Info, Layers, Lightbulb, Plus, Trash2, FlaskConical, Clock } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import { Search, Check, X, Ban, ArrowRight, Info, Layers, Lightbulb, Plus, Trash2, FlaskConical, Clock, Copy, Download } from 'lucide-react';
 import { PERMISSION_ACTIONS, WHATIF_MAX_CHANGES, type PermissionAction, type PermissionCheck, type PermissionVerdict, type WhatIfChange, type WhatIfWho } from '@ts6/common';
 import { permissionsApi, type ExplainResult, type ExplainRow, type WhatIfExplainResult } from '@/api/permissions.api';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { tsErrorMessage } from '@/lib/ts-errors';
+import { downloadTextFile } from '@/lib/console/events';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 // R11 "Why?": pick who acts, what, and on whom; the backend evaluates it from the Permission Overview
@@ -53,6 +56,7 @@ export const WHY_MAX_ACTORS = 10;
 
 type One = { plain: ExplainResult } | { whatif: WhatIfExplainResult };
 interface ManyRow { actor: string; data?: One; error?: unknown }
+interface Asked { action: PermissionAction; actors: string[]; target: string; changes: WhatIfChange[]; sgid?: number; destination?: number; duration?: number }
 
 /** One client (value: string) or, in the several-actors comparison, a set of clients (value: string[], click toggles). */
 function ClientField({ id, label, clients, loading, value, onChange }: {
@@ -317,8 +321,15 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
       : { plain: await permissionsApi.explain(configId, sid, params) };
   };
   const explain = useMutation({
-    mutationFn: async (): Promise<{ single: One } | { many: ManyRow[] }> => {
-      if (!multi) return { single: await askOne(actor) };
+    mutationFn: async (): Promise<({ single: One } | { many: ManyRow[] }) & { asked: Asked }> => {
+      // The question as asked: the pickers may change afterwards, the answer (and its export) must not
+      const asked: Asked = {
+        action, actors: actorIds, target, changes,
+        ...(isGroup ? { sgid: Number(sgid) } : {}),
+        ...(action === 'move' ? { destination: Number(destination) } : {}),
+        ...(action === 'ban' ? { duration } : {}),
+      };
+      if (!multi) return { single: await askOne(actor), asked };
       // Two at a time: each answer costs its own read commands on the server
       const rows: ManyRow[] = actors.map((a) => ({ actor: a }));
       for (let i = 0; i < rows.length; i += 2) {
@@ -326,7 +337,7 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
           try { r.data = await askOne(r.actor); } catch (err) { r.error = err; }
         }));
       }
-      return { many: rows };
+      return { many: rows, asked };
     },
     onMutate: () => setDetail(null),
   });
@@ -401,6 +412,95 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
     // The backend's TSApiError for a request that never reached TeamSpeak
     if (code === -1) return t('pages.permissions.why.error.tsUnreachable');
     return tsErrorMessage(err, t('pages.permissions.why.error.generic'), t);
+  };
+
+  const verdictText = (v: string) => t(`pages.permissions.why.verdict.${v}`);
+  const wrapOf = (w: WhatIfExplainResult) => (v: PermissionVerdict<ExplainRow>): ExplainResult => ({ ...v, context: w.context });
+  const whatifSummary = (w: WhatIfExplainResult) => {
+    const changed = w.before.verdict !== w.after.verdict;
+    const headline = changed
+      ? t('pages.permissions.why.whatif.verdictChanged', { before: verdictText(w.before.verdict), after: verdictText(w.after.verdict) })
+      : t('pages.permissions.why.whatif.verdictSame', { verdict: verdictText(w.after.verdict) });
+    const groupLines = (['actor', 'target'] as const)
+      .filter((who) => w.groups[who].before.join() !== w.groups[who].after.join())
+      .map((who) => t('pages.permissions.why.whatif.groupsChange', {
+        client: nameOf(w.context[who].cldbid),
+        before: w.groups[who].before.map(groupName).join(', '),
+        after: w.groups[who].after.map(groupName).join(', '),
+      }))
+      .concat((w.channelGroups ?? []).map((g) => t('pages.permissions.why.whatif.channelGroupChange', {
+        client: nameOf(w.context[g.who].cldbid), channel: channelName(g.cid), before: cgName(g.before), after: cgName(g.after),
+      })))
+      .concat((w.unused ?? []).map((i) => t('pages.permissions.why.whatif.unused', { n: i + 1 })));
+    return { changed, headline, groupLines };
+  };
+
+  // Stage 4c: the answer as text or as a JSON file, built in the browser from what was answered (no extra request)
+  const answerLines = (r: ExplainResult): string[] => {
+    const x = explainTexts(r, t, nameOf, channelName, groupName);
+    const src = (row: ExplainRow | null, scope: string) => {
+      const s = row ? describeSource(row) : null;
+      const where = s ? `${s.tierLabel}: ${s.name}${row!.permnegated ? ' (N)' : ''}${row!.permskip ? ' (S)' : ''}` : t('pages.permissions.why.notSet');
+      return `${where} · ${x.scopeText(scope)}`;
+    };
+    return [
+      `${verdictText(r.verdict)}: ${x.actor} → ${t(`pages.permissions.why.actions.${r.action}`)} → ${x.target}`,
+      ...r.notes.map((n) => `  i ${x.noteText(n)}`),
+      ...r.checks.flatMap((c) => [
+        `  ${c.ok ? '✓' : '✗'} ${x.checkText(c)}`,
+        `      ${c.have.permission} = ${x.value(c.have.value, c.have.permission)} – ${src(c.have.source, c.have.scope)}`,
+        ...(!c.need ? [] : [`      ${c.need.permission} = ${c.need.value} – ${c.need.scope === 'group'
+          ? `${t('pages.permissions.why.groupSetting')}: ${groupName((c.need as { sgid: number }).sgid)}`
+          : src(c.need.source as ExplainRow | null, c.need.scope)}`]),
+      ]),
+    ];
+  };
+  const oneLines = (d: One): string[] => {
+    if ('plain' in d) return answerLines(d.plain);
+    const { headline, groupLines } = whatifSummary(d.whatif);
+    const wrap = wrapOf(d.whatif);
+    return [headline, ...groupLines, '',
+      `${t('pages.permissions.why.whatif.before')}:`, ...answerLines(wrap(d.whatif.before)), '',
+      `${t('pages.permissions.why.whatif.after')}:`, ...answerLines(wrap(d.whatif.after))];
+  };
+  const exportText = (data: NonNullable<typeof explain.data>): string => {
+    const { asked } = data;
+    const lines = [`${t('pages.permissions.why.title')} – ${new Date().toLocaleString(i18n.language)}`];
+    if (asked.changes.length > 0) {
+      lines.push('', `${t('pages.permissions.why.whatif.planned')}:`, ...asked.changes.map((c, i) => `  ${i + 1}. ${describeChange(c)}`), t('pages.permissions.why.whatif.nothingChanged'));
+    }
+    lines.push('');
+    if ('single' in data) return [...lines, ...oneLines(data.single)].join('\n');
+    const planned = asked.changes.length > 0;
+    const v = (d: One, side: 'before' | 'after') => verdictText('plain' in d ? d.plain.verdict : d.whatif[side].verdict);
+    lines.push(t('pages.permissions.why.multi.title', { action: t(`pages.permissions.why.actions.${asked.action}`), target: nameOf(asked.target) }));
+    for (const r of data.many) {
+      lines.push(`  ${nameOf(r.actor)}: ${!r.data ? errorText(r.error) : planned ? `${v(r.data, 'before')} → ${v(r.data, 'after')}` : v(r.data, 'before')}`);
+    }
+    for (const r of data.many) if (r.data) lines.push('', `${t('pages.permissions.why.multi.details')} – ${nameOf(r.actor)}`, ...oneLines(r.data));
+    return lines.join('\n');
+  };
+  const exportJson = (data: NonNullable<typeof explain.data>) => {
+    const { asked } = data;
+    const rows: ManyRow[] = 'single' in data ? [{ actor: asked.actors[0], data: data.single }] : data.many;
+    const client = (id: string) => ({ cldbid: Number(id), name: nameOf(id) });
+    const json = {
+      format: 'ts6-manager-why', version: 1, exportedAt: new Date().toISOString(), sid,
+      question: { action: asked.action, target: client(asked.target), sgid: asked.sgid, destination: asked.destination, duration: asked.duration },
+      changes: asked.changes,
+      answers: rows.map((r) => ({
+        actor: client(r.actor),
+        ...(!r.data ? { error: errorText(r.error) } : 'plain' in r.data ? { result: r.data.plain } : { whatif: r.data.whatif }),
+      })),
+    };
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    downloadTextFile(`why-${asked.action}-${stamp}.json`, JSON.stringify(json, null, 2), 'application/json');
+  };
+  const copyText = (text: string) => {
+    // The browser only offers the clipboard on https and on localhost
+    const failed = () => toast.error(t('pages.console.result.copyFailed'));
+    if (!navigator.clipboard) return failed();
+    navigator.clipboard.writeText(text).then(() => toast.success(t('common.copied')), failed);
   };
 
   return (
@@ -489,10 +589,20 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
       {explain.isError && (
         <Card className="card-hero border-destructive/40"><CardContent className="py-4 text-sm text-destructive" role="alert">{errorText(explain.error)}</CardContent></Card>
       )}
+      {explain.data && !explain.isPending && (
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => copyText(exportText(explain.data!))}>
+            <Copy className="h-3.5 w-3.5 mr-1" aria-hidden />{t('pages.permissions.why.export.copy')}
+          </Button>
+          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => exportJson(explain.data!)}>
+            <Download className="h-3.5 w-3.5 mr-1" aria-hidden />{t('pages.permissions.why.export.json')}
+          </Button>
+        </div>
+      )}
       {explain.data && !explain.isPending && 'single' in explain.data && renderOne(explain.data.single)}
       {explain.data && !explain.isPending && 'many' in explain.data && (() => {
         const rows = explain.data.many;
-        const planned = changes.length > 0;
+        const planned = explain.data.asked.changes.length > 0;
         const verdictOf = (d: One, side: 'before' | 'after') => ('plain' in d ? d.plain.verdict : d.whatif[side].verdict);
         const tone = (v: string) => (v === 'allowed' ? 'text-emerald-500' : v === 'denied' ? 'text-destructive' : 'text-amber-500');
         const cell = (v: string) => <span className={cn('font-medium', tone(v))}>{t(`pages.permissions.why.verdict.${v}`)}</span>;
@@ -502,7 +612,7 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
             <Card className="card-hero">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  {t('pages.permissions.why.multi.title', { action: t(`pages.permissions.why.actions.${action}`), target: nameOf(target) })}
+                  {t('pages.permissions.why.multi.title', { action: t(`pages.permissions.why.actions.${explain.data.asked.action}`), target: nameOf(explain.data.asked.target) })}
                 </CardTitle>
                 {planned && <p className="text-[11px] text-muted-foreground pt-1">{t('pages.permissions.why.whatif.nothingChanged')}</p>}
               </CardHeader>
@@ -562,29 +672,15 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
     }
     return (() => {
         const w = data.whatif;
-        const wrap = (v: PermissionVerdict<ExplainRow>): ExplainResult => ({ ...v, context: w.context });
-        const changed = w.before.verdict !== w.after.verdict;
-        const verdictText = (v: string) => t(`pages.permissions.why.verdict.${v}`);
-        const groupLines = (['actor', 'target'] as const)
-          .filter((who) => w.groups[who].before.join() !== w.groups[who].after.join())
-          .map((who) => t('pages.permissions.why.whatif.groupsChange', {
-            client: nameOf(w.context[who].cldbid),
-            before: w.groups[who].before.map(groupName).join(', '),
-            after: w.groups[who].after.map(groupName).join(', '),
-          }))
-          .concat((w.channelGroups ?? []).map((g) => t('pages.permissions.why.whatif.channelGroupChange', {
-            client: nameOf(w.context[g.who].cldbid), channel: channelName(g.cid), before: cgName(g.before), after: cgName(g.after),
-          })))
-          .concat((w.unused ?? []).map((i) => t('pages.permissions.why.whatif.unused', { n: i + 1 })));
+        const wrap = wrapOf(w);
+        const { changed, headline, groupLines } = whatifSummary(w);
         return (
           <div className="space-y-3">
             <div role="status" className={cn('rounded-md border p-3 text-xs space-y-1', changed ? 'border-primary/50 bg-primary/5' : 'border-border/50')}>
               <p className="flex items-center gap-2 font-medium">
                 <FlaskConical className="h-4 w-4 text-primary" aria-hidden />{t('pages.permissions.why.whatif.nothingChanged')}
               </p>
-              <p>{changed
-                ? t('pages.permissions.why.whatif.verdictChanged', { before: verdictText(w.before.verdict), after: verdictText(w.after.verdict) })
-                : t('pages.permissions.why.whatif.verdictSame', { verdict: verdictText(w.after.verdict) })}</p>
+              <p>{headline}</p>
               {groupLines.map((l) => <p key={l} className="text-muted-foreground">{l}</p>)}
             </div>
             <div className="grid gap-3 grid-cols-1 xl:grid-cols-2">
@@ -601,6 +697,27 @@ export function WhyPanel({ prefill, configId, sid, clients, clientsLoading, chan
   }
 }
 
+/** The wording of one answer, shared by the result card and the text export so both say the same. */
+function explainTexts(result: ExplainResult, t: TFunction, nameOf: (id: number | string) => string,
+  channelName: (cid: number | string | null) => string, groupName: (id: number | string | null) => string) {
+  const ctx = result.context;
+  const actor = nameOf(ctx.actor.cldbid);
+  const target = nameOf(ctx.target.cldbid);
+  const scopeCid = (scope: string) => scope === 'target-channel' ? ctx.target.cid : scope === 'destination' ? ctx.destination : ctx.actor.cid;
+  const scopeText = (scope: string): string => {
+    if (scope === 'group') return t('pages.permissions.why.scope.group', { group: groupName(ctx.sgid) });
+    if (scope === 'server') return t('pages.permissions.why.scope.server');
+    return t(`pages.permissions.why.scope.${scope}`, { actor, target, channel: channelName(scopeCid(scope)) });
+  };
+  const value = (v: number, permsid: string) => permsid.startsWith('b_') ? (v >= 1 ? t('pages.permissions.why.yes') : t('pages.permissions.why.no')) : String(v);
+  const checkText = (c: PermissionCheck<ExplainRow>) => t(`pages.permissions.why.checkText.${c.kind === 'ban-time' && c.duration === 0 ? 'ban-time-permanent' : c.kind}`, {
+    actor, have: value(c.have.value, c.have.permission), need: c.need ? value(c.need.value, c.need.permission) : '',
+    duration: c.duration === 0 ? t('pages.permissions.why.durations.permanent') : t('pages.permissions.why.seconds', { count: c.duration ?? 0 }),
+  });
+  const noteText = (n: string) => t(`pages.permissions.why.notes.${n}`, { actor, target, channel: channelName(ctx.defaultCid), group: groupName(ctx.sgid) });
+  return { actor, target, scopeCid, scopeText, value, checkText, noteText };
+}
+
 function Result({ result, heading, preview, nameOf, channelName, groupName, describeSource, permDesc, onJump, onShowOverview }: {
   result: ExplainResult;
   /** "Before" / "after" in a what-if comparison. */
@@ -613,18 +730,9 @@ function Result({ result, heading, preview, nameOf, channelName, groupName, desc
 } & Pick<Props, 'describeSource' | 'permDesc' | 'onJump' | 'onShowOverview'>) {
   const { t } = useTranslation();
   const { context: ctx } = result;
-  const actor = nameOf(ctx.actor.cldbid);
-  const target = nameOf(ctx.target.cldbid);
-  const scopeCid = (scope: string) => scope === 'target-channel' ? ctx.target.cid : scope === 'destination' ? ctx.destination : ctx.actor.cid;
-  const scopeText = (scope: string): string => {
-    if (scope === 'group') return t('pages.permissions.why.scope.group', { group: groupName(ctx.sgid) });
-    if (scope === 'server') return t('pages.permissions.why.scope.server');
-    return t(`pages.permissions.why.scope.${scope}`, { actor, target, channel: channelName(scopeCid(scope)) });
-  };
+  const { actor, target, scopeCid, scopeText, value, checkText, noteText } = explainTexts(result, t, nameOf, channelName, groupName);
   const tone = result.verdict === 'allowed' ? 'text-emerald-500' : result.verdict === 'denied' ? 'text-destructive' : 'text-amber-500';
   const Icon = result.verdict === 'allowed' ? Check : result.verdict === 'denied' ? X : Ban;
-
-  const value = (v: number, permsid: string) => permsid.startsWith('b_') ? (v >= 1 ? t('pages.permissions.why.yes') : t('pages.permissions.why.no')) : String(v);
 
   const fixFor = (c: PermissionCheck<ExplainRow>): { text: string; hit: SourceInfo['hit'] } | null => {
     if (c.ok) return null;
@@ -699,7 +807,7 @@ function Result({ result, heading, preview, nameOf, channelName, groupName, desc
             {result.notes.map((n) => (
               <li key={n} className="flex gap-2 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" aria-hidden />
-                <span>{t(`pages.permissions.why.notes.${n}`, { actor, target, channel: channelName(ctx.defaultCid), group: groupName(ctx.sgid) })}</span>
+                <span>{noteText(n)}</span>
               </li>
             ))}
           </ul>
@@ -711,10 +819,7 @@ function Result({ result, heading, preview, nameOf, channelName, groupName, desc
               <div className="flex items-start gap-2">
                 {c.ok ? <Check className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" aria-label={t('pages.permissions.why.checkOk')} />
                   : <X className="h-4 w-4 text-destructive shrink-0 mt-0.5" aria-label={t('pages.permissions.why.checkFailed')} />}
-                <p className="text-xs">{t(`pages.permissions.why.checkText.${c.kind === 'ban-time' && c.duration === 0 ? 'ban-time-permanent' : c.kind}`, {
-                  actor, have: value(c.have.value, c.have.permission), need: c.need ? value(c.need.value, c.need.permission) : '',
-                  duration: c.duration === 0 ? t('pages.permissions.why.durations.permanent') : t('pages.permissions.why.seconds', { count: c.duration ?? 0 }),
-                })}</p>
+                <p className="text-xs">{checkText(c)}</p>
               </div>
               <div className="grid gap-2 sm:grid-cols-2 pl-6">
                 <div className="min-w-0">

@@ -4052,6 +4052,10 @@
       "permissionOverview": "Permission Overview",
       "why": {
         "tab": "Why?",
+        "export": {
+          "copy": "Copy as text",
+          "json": "Download JSON"
+        },
         "multi": {
           "toggle": "Compare several actors (up to {{max}})",
           "actors": "Who acts (several)",
