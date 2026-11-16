@@ -4,10 +4,10 @@ name: Crowdin
 # translations PR on its own: pulling translations back in means a version
 # bump + CHANGELOG entry too, same as every other change in this repo, so
 # that step only runs when someone deliberately triggers it via "Run
-# workflow". skip_untranslated_files keeps a language with zero real
-# translations out of the PR entirely - Crowdin's own export otherwise fills
-# an untranslated string with the English source text, which would silently
-# add a "new language" that's actually just English under a different code.
+# workflow". skip_untranslated_strings downloads unfinished languages too but
+# leaves their untranslated strings out, so the app falls back to English for
+# those - Crowdin's own export otherwise fills them with the English source
+# text. (skip_untranslated_files would drop every not fully translated file.)
 # The upload_translations input is the opposite direction, for catching
 # Crowdin up with the repo: the English source strings reach Crowdin on every
 # push, but the French (and Polish) text written next to them in the repo
@@ -86,7 +86,7 @@ jobs:
           upload_sources: false
           upload_translations: false
           download_translations: true
-          skip_untranslated_files: true
+          skip_untranslated_strings: true
           localization_branch_name: l10n_crowdin_translations
           create_pull_request: true
           pull_request_title: "New Crowdin translations"
