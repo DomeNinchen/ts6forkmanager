@@ -127,11 +127,13 @@
       "statistics": "Statistiques",
       "channels": "Salons",
       "clients": "Utilisateurs",
+      "clientDatabase": "",
       "serverGroups": "Groupes serveur",
       "channelGroups": "Groupes de salon",
       "permissions": "Autorisations",
       "bans": "Bannissements",
       "tokens": "Jetons",
+      "connectionJournal": "",
       "changeLog": "Journal des modifications",
       "backups": "Sauvegardes",
       "files": "Fichiers",
@@ -141,6 +143,7 @@
       "raidProtection": "Protection anti-raid",
       "messages": "Messages",
       "serverLogs": "Logs serveur",
+      "queryConsole": "",
       "instance": "Instance",
       "miscellaneous": "Divers",
       "advancedSettings": "Paramètres avancés",
@@ -152,261 +155,6 @@
   "layout": {},
   "pages": {
     "noServerSelected": "Aucun serveur sélectionné",
-    "changeLog": {
-      "title": "Journal des modifications",
-      "subtitle": "Ce que les utilisateurs web ont modifié via cette interface : qui, sur quelle cible, avec quelles valeurs et avec quel résultat. Les secrets comme les mots de passe et les clés API n'y figurent jamais, seulement le fait qu'ils ont été modifiés. Réservé aux admins ; les commandes de la console query ont leur propre journal.",
-      "tabs": {
-        "log": "Journal",
-        "settings": "Paramètres"
-      },
-      "searchPlaceholder": "Rechercher un utilisateur, une route ou un ID cible",
-      "filters": {
-        "range": "Période",
-        "area": "Domaine",
-        "anyArea": "Tous les domaines",
-        "method": "Méthode",
-        "anyMethod": "Toutes les méthodes",
-        "result": "Résultat",
-        "anyResult": "Tous les résultats",
-        "server": "Serveur",
-        "anyServer": "Tous les serveurs",
-        "pageSize": "Entrées par page",
-        "reset": "Réinitialiser les filtres"
-      },
-      "range": {
-        "24h": "Dernières 24 heures",
-        "7d": "7 derniers jours",
-        "30d": "30 derniers jours",
-        "all": "Toute la période"
-      },
-      "status": {
-        "pending": "en attente",
-        "ok": "réussi",
-        "error": "échoué",
-        "denied": "refusé"
-      },
-      "columns": {
-        "time": "Heure",
-        "user": "Utilisateur",
-        "action": "Modification",
-        "target": "Cible",
-        "result": "Résultat",
-        "address": "Adresse"
-      },
-      "virtualServer": "Serveur virtuel {{id}}",
-      "body": "Valeurs envoyées",
-      "tsLogged": "Également noté dans le log du serveur TeamSpeak",
-      "ipNotRecorded": "non enregistrée",
-      "empty": "Aucune modification pour ces filtres.",
-      "loadFailed": "Le journal des modifications n'a pas pu être chargé.",
-      "diff": {
-        "title": "Avant / après",
-        "before": "Avant",
-        "after": "Après",
-        "notSet": "non défini",
-        "noField": "Aucun champ n'a changé.",
-        "deleted": "Supprimé :",
-        "deletedList_one": "{{count}} entrée supprimée, dont {{shown}} conservée ici :",
-        "deletedList_other": "{{count}} entrées supprimées, dont {{shown}} conservées ici :",
-        "bulk": "Action groupée : {{ok}} effectué(s), {{skipped}} ignoré(s), {{failed}} échec(s). Les {{shown}} premiers :",
-        "unavailable": "L'état avant n'a pas pu être lu ({{reason}}) ; la modification a quand même été effectuée."
-      },
-      "resultCount_one": "{{count}} entrée",
-      "resultCount_other": "{{count}} entrées",
-      "perPage": "{{count}} par page",
-      "settings": {
-        "title": "Enregistrement et conservation",
-        "description": "Pour chaque modification faite via l'interface, le journal conserve l'heure, l'utilisateur et son rôle, le domaine et la cible, les valeurs envoyées (les secrets seulement comme « modifié »), le résultat et, si activé, l'adresse. Dans de nombreux pays, les adresses sont des données personnelles : ne les conserve que le temps nécessaire. Ceci n'est pas un conseil juridique.",
-        "enabledLabel": "Enregistrer les modifications",
-        "enabledHint": "Désactivé, rien de nouveau n'est enregistré ; ce qui est stocké reste jusqu'à son nettoyage ou sa suppression. Tant qu'il est actif, une modification des utilisateurs, des connexions serveur, de l'instance ou des paramètres de l'application est refusée si son entrée ne peut pas être écrite.",
-        "recordIpLabel": "Enregistrer l'adresse de l'utilisateur web",
-        "recordIpHint": "L'adresse d'où vient une modification (voir TRUST_PROXY). S'applique aux nouvelles entrées.",
-        "tsLogLabel": "Écrire aussi dans le log du serveur TeamSpeak",
-        "tsLogHint": "Désactivé par défaut : chaque modification réussie sur un serveur TeamSpeak ajoute une ligne à son log. Cela coûte une requête supplémentaire par modification, qui compte dans la limite anti-flood du serveur.",
-        "retentionLabel": "Conserver pendant (jours)",
-        "retentionHint": "{{min}} à {{max}} jours. Les entrées plus anciennes sont supprimées toutes les heures.",
-        "maxRowsLabel": "Conserver au maximum (entrées)",
-        "maxRowsHint": "{{min}} à {{max}}. Au-delà, les entrées les plus anciennes partent en premier, quel que soit leur âge.",
-        "saved": "Paramètres du journal des modifications enregistrés",
-        "saveFailed": "Les paramètres du journal des modifications n'ont pas pu être enregistrés",
-        "storedTitle": "Stocké",
-        "stored_one": "{{count}} entrée stockée.",
-        "stored_other": "{{count}} entrées stockées.",
-        "oldest": "La plus ancienne date du {{date}}.",
-        "clear": "Vider le journal",
-        "clearTitle": "Vider le journal des modifications ?",
-        "clearDescription_one": "{{count}} entrée sera supprimée définitivement. Le vidage est ensuite enregistré comme une nouvelle modification.",
-        "clearDescription_other": "{{count}} entrées seront supprimées définitivement. Le vidage est ensuite enregistré comme une nouvelle modification.",
-        "cleared_one": "{{count}} entrée supprimée",
-        "cleared_other": "{{count}} entrées supprimées",
-        "clearFailed": "Le journal n'a pas pu être vidé"
-      }
-    },
-    "backups": {
-      "title": "Sauvegardes",
-      "subtitle": "Sauvegardes de la base de données du manager : utilisateurs, connexions aux serveurs, flows, bots musicaux, paramètres et journaux. Réservé aux admins, car une sauvegarde contient les hachages des mots de passe et les identifiants TeamSpeak chiffrés. Les fichiers musicaux eux-mêmes n'en font pas partie.",
-      "loadFailed": "Impossible de charger les sauvegardes.",
-      "created": "Sauvegarde écrite ({{size}}).",
-      "createFailed": "La sauvegarde a échoué.",
-      "checkFailed": "Impossible de tester la sauvegarde.",
-      "downloadStarted": "Le téléchargement démarre.",
-      "downloadFailed": "Impossible de lancer le téléchargement.",
-      "deleted": "Sauvegarde supprimée.",
-      "deleteFailed": "Impossible de supprimer la sauvegarde.",
-      "deleteTitle": "Supprimer la sauvegarde ?",
-      "deleteDescription": "La sauvegarde du {{time}} sera supprimée définitivement.",
-      "empty": "Aucune sauvegarde pour l'instant.",
-      "beforeVersion": "avant {{version}}",
-      "tsSnapshotCount_one": "{{count}} snapshot TeamSpeak",
-      "tsSnapshotCount_other": "{{count}} snapshots TeamSpeak",
-      "beforeUpdateNote": "Les copies « Avant mise à jour » sont faites par le conteneur lui-même avant d'appliquer des migrations de la base. Il en garde DB_BACKUP_KEEP ; ici, on peut les tester et les télécharger, mais pas les supprimer.",
-      "lastFailed": {
-        "manual": "La sauvegarde du {{time}} a échoué.",
-        "scheduled": "La sauvegarde planifiée du {{time}} a échoué.",
-        "before-bulk": "La sauvegarde avant une suppression de {{time}} a échoué."
-      },
-      "now": {
-        "title": "Sauvegarder maintenant",
-        "description": "Écrit une copie de la base en cours d'utilisation dans data/backups/managed/ du volume backend-data. L'application continue de tourner. Elle vérifie d'abord qu'au moins deux fois la taille de la base est libre.",
-        "databaseSize": "Base de données",
-        "freeSpace": "Libre dans le volume",
-        "lastRun": "Dernière sauvegarde",
-        "keyNote": "La clé (ENCRYPTION_KEY, sinon JWT_SECRET du .env) n'est pas dans la sauvegarde. Sans elle, les identifiants et secrets 2FA d'une sauvegarde sont inutilisables : conservez-la ailleurs. Une sauvegarde dans le volume disparaît avec le volume, téléchargez celles qui comptent.",
-        "tsSnapshotsLabel": "Inclure les snapshots TeamSpeak",
-        "tsSnapshotsHint": "Ajoute à chaque sauvegarde un snapshot de chaque serveur virtuel de toutes les connexions avec WebQuery (paramètres, canaux, groupes, permissions, identités client connues). Un snapshot se déploie sur la page « Divers ».",
-        "button": "Sauvegarder maintenant",
-        "running": "Sauvegarde …"
-      },
-      "schedule": {
-        "title": "Planification",
-        "enabledLabel": "Sauvegarder automatiquement",
-        "enabledHint": "À l'heure choisie (heure du serveur), les jours choisis.",
-        "timeLabel": "Heure",
-        "daysLabel": "Jours",
-        "serverTime": "Heure du serveur, actuellement {{time}}.",
-        "keepLabel": "Sauvegardes planifiées à garder",
-        "keepHint": "Les {{min}} à {{max}} plus récentes. Les sauvegardes manuelles restent jusqu'à ce que vous les supprimiez.",
-        "maxAgeLabel": "Âge maximal en jours",
-        "maxAgeNone": "pas d'âge maximal",
-        "maxAgeHint": "Vide = seulement par nombre. Sinon {{min}} à {{max}} ; les sauvegardes planifiées plus anciennes sont supprimées.",
-        "noDays": "Choisissez au moins un jour.",
-        "save": "Enregistrer",
-        "saved": "Planification enregistrée.",
-        "saveFailed": "Impossible d'enregistrer la planification."
-      },
-      "restore": {
-        "title": "Restaurer une sauvegarde",
-        "whatHappens": "Ce qui se passe",
-        "replaces": "La base actuelle ({{now}}) est remplacée par la sauvegarde du {{time}} ({{size}}) : utilisateurs, connexions, flows, bots musicaux, paramètres et journaux reviennent à l'état de la sauvegarde.",
-        "savesCurrent": "L'état actuel est d'abord enregistré comme sauvegarde « Avant restauration », pour pouvoir revenir en arrière.",
-        "migrates_one": "La sauvegarde vient d'une version plus ancienne : {{count}} migration est appliquée au démarrage. En cas d'échec, l'état précédent est remis automatiquement.",
-        "migrates_other": "La sauvegarde vient d'une version plus ancienne : {{count}} migrations sont appliquées au démarrage. En cas d'échec, l'état précédent est remis automatiquement.",
-        "signsOut": "Tout le monde est déconnecté, vous aussi. Les appareils mémorisés pour la connexion à deux facteurs sont oubliés.",
-        "restarts": "Le backend redémarre pour cela et reste injoignable environ une minute.",
-        "acceptKey": "La clé en cours ne peut pas lire des valeurs de cette sauvegarde. Je sais qu'il faudra alors saisir à nouveau les clés API et mots de passe SSH concernés, que les bots musicaux concernés ne seront pas chargés et que les utilisateurs avec connexion à deux facteurs auront besoin d'un code de récupération.",
-        "understood": "J'ai compris que la base actuelle sera remplacée.",
-        "noHistory": "Les sauvegardes d'avant les migrations versionnées ne peuvent pas être restaurées ici. Le wiki (Troubleshooting) décrit la marche à suivre à la main.",
-        "confirm": "Restaurer et redémarrer",
-        "running": "Enregistrement …",
-        "failed": "La restauration n'a pas pu être programmée.",
-        "started": "La restauration est programmée, le backend redémarre.",
-        "startedHint": "Au démarrage, l'état actuel est d'abord sauvegardé, puis la sauvegarde est mise en place. Reconnectez-vous ensuite. Si le backend ne redémarre pas tout seul (hors Docker), démarrez-le vous-même.",
-        "pending": "Une restauration est programmée ({{time}}, {{user}}).",
-        "pendingHint": "Elle sera appliquée au prochain démarrage du backend.",
-        "cancel": "Annuler",
-        "cancelled": "La restauration programmée est annulée.",
-        "cancelFailed": "La restauration n'a pas pu être annulée.",
-        "lastOk": "Restaurée le {{time}} (demandée par {{user}}).",
-        "lastRolledBack": "La restauration du {{time}} a échoué, l'état précédent a été remis.",
-        "lastFailed": "La restauration du {{time}} n'a pas été appliquée.",
-        "beforeRestoreSaved": "L'état d'avant est conservé comme sauvegarde « Avant restauration » : {{name}}"
-      },
-      "bulk": {
-        "title": "Sauvegarde avant les suppressions",
-        "description": "Avant qu'un groupe de serveur ou de canal, un canal ou de nombreux profils clients soient supprimés, le gestionnaire fait une sauvegarde : la base de données et un snapshot de ce serveur virtuel, même si les snapshots sont désactivés plus haut. Les 10 plus récentes sont conservées, à part des sauvegardes planifiées. Un snapshot ne rétablit ni bannissements, ni icônes, ni expulsions, ni déplacements ; ces actions n'ont donc pas d'étape de sauvegarde.",
-        "thresholdLabel": "Sauvegarder à partir de ce nombre de profils à la fois",
-        "thresholdHint": "{{min}} à {{max}}. En dessous, la boîte de dialogue affiche la dernière sauvegarde et « Sauvegarder maintenant ».",
-        "saved": "Seuil enregistré"
-      },
-      "upload": {
-        "title": "Téléverser une sauvegarde",
-        "description": "Un ZIP téléchargé depuis cette page (chiffré aussi, .zip.enc), ou un fichier .db. Il apparaît ensuite dans la liste comme « Téléversée » et peut être testé et restauré. Les fichiers chiffrés s'ouvrent avec la phrase secrète définie ici.",
-        "button": "Choisir un fichier",
-        "running": "Téléversement …",
-        "done": "Sauvegarde téléversée.",
-        "failed": "Le téléversement a échoué.",
-        "proxyTooLarge": "Un reverse proxy devant l'application a refusé le fichier (HTTP 413). Augmentez sa limite de taille des requêtes (nginx : client_max_body_size).",
-        "tooLarge": "Le fichier fait {{size}}, la limite est de {{limit}} Mo.",
-        "limitLabel": "Plus grande sauvegarde téléversable (Mo)",
-        "limitHint": "{{min}} à {{max}} Mo. Un reverse proxy devant l'application doit avoir une limite au moins aussi élevée.",
-        "limitSaved": "Limite de téléversement enregistrée."
-      },
-      "target": {
-        "title": "Copies hors du volume",
-        "description": "Un répertoire hors du volume où chaque sauvegarde est aussi copiée en ZIP (les copies avant mise à jour restent dans le volume). La conservation et la suppression s'appliquent aux deux endroits. Les sauvegardes survivent ainsi à la perte du volume ; elles apparaissent alors comme « Externe » dans la liste.",
-        "dirLabel": "Répertoire cible (chemin dans le conteneur)",
-        "dirHint": "Le répertoire doit être monté dans le conteneur, par exemple en bind mount ou partage NFS via votre propre docker-compose.override.yml, et accessible en écriture au backend (uid 1000). L'enregistrer vide désactive les copies.",
-        "ok": "Accessible en écriture, {{free}} libres.",
-        "saved": "Répertoire cible enregistré.",
-        "copyFailed": "La sauvegarde du {{time}} a été écrite, mais pas copiée dans le répertoire cible.",
-        "alsoThere": "aussi dans le répertoire cible",
-        "passphraseLabel": "Phrase secrète pour les copies et téléchargements",
-        "passphraseOn": "Définie : les copies du répertoire cible et les téléchargements sont chiffrés.",
-        "passphraseOff": "Non définie : copies et téléchargements ne sont pas chiffrés.",
-        "passphraseSet": "Définir la phrase secrète",
-        "passphraseRemove": "Supprimer",
-        "passphraseSaved": "Phrase secrète définie.",
-        "passphraseRemoved": "Phrase secrète supprimée.",
-        "passphraseHint": "Au moins 12 caractères. Elle est stockée chiffrée ici mais jamais affichée : conservez-la ailleurs. Sans elle, une sauvegarde chiffrée ne peut pas être ouverte, même par cette application.",
-        "decryptHint": "Sans cette application, openssl ouvre un fichier chiffré :"
-      },
-      "columns": {
-        "time": "Date",
-        "kind": "Type",
-        "size": "Taille",
-        "version": "Version du backend",
-        "actions": "Actions"
-      },
-      "kind": {
-        "manual": "Manuelle",
-        "scheduled": "Planifiée",
-        "uploaded": "Téléversée",
-        "external": "Externe",
-        "before-restore": "Avant restauration",
-        "before-bulk": "Avant suppression",
-        "before-update": "Avant mise à jour"
-      },
-      "actions": {
-        "check": "Tester",
-        "checking": "Test …",
-        "download": "Télécharger",
-        "compare": "Comparer",
-        "restore": "Restaurer",
-        "delete": "Supprimer"
-      },
-      "check": {
-        "title": "Tester la sauvegarde",
-        "integrityOk": "Le fichier est une base de données complète et intacte.",
-        "integrityFailed": "Le fichier est endommagé ou n'est pas une base de données.",
-        "checksumOk": "La somme de contrôle correspond au manifeste.",
-        "checksumFailed": "La somme de contrôle ne correspond pas au manifeste : le fichier a été modifié ou est incomplet.",
-        "noManifest": "Pas de manifeste (copie avant une mise à jour ou fichier .db téléversé), aucune somme de contrôle à comparer.",
-        "migrations": {
-          "ok": "Correspond exactement à cette version du backend.",
-          "older_one": "D'une version plus ancienne : {{count}} migration serait appliquée lors de la restauration.",
-          "older_other": "D'une version plus ancienne : {{count}} migrations seraient appliquées lors de la restauration.",
-          "newer_one": "D'une version plus récente du backend ({{count}} migration inconnue) : cette version ne peut pas la restaurer.",
-          "newer_other": "D'une version plus récente du backend ({{count}} migrations inconnues) : cette version ne peut pas la restaurer.",
-          "no-history": "D'avant les migrations versionnées : le démarrage vérifie si son schéma correspond."
-        },
-        "keyOk_one": "La clé en cours déchiffre la valeur testée.",
-        "keyOk_other": "La clé en cours déchiffre les {{count}} valeurs testées.",
-        "keyFailed": "La clé en cours ne déchiffre pas {{failed}} des {{count}} valeurs : cette sauvegarde a été écrite avec un autre ENCRYPTION_KEY/JWT_SECRET.",
-        "keyNothing": "La sauvegarde ne contient aucune valeur chiffrée.",
-        "verdictOk": "Ce backend peut restaurer cette sauvegarde.",
-        "verdictFailed": "Cette sauvegarde ne peut pas être restaurée telle quelle."
-      }
-    },
     "bans": {
       "lastNickname": "Dernier pseudo",
       "reason": "Raison",
@@ -469,8 +217,6 @@
     "botList": {
       "selectServerFirst": "Veuillez d'abord sélectionner un serveur",
       "querySecretHint": "Appels webhook avec le secret dans l’adresse au lieu de l’en-tête X-Webhook-Secret, dernier le {{date}}. Détails dans l’éditeur, au déclencheur webhook.",
-      "querySecret_other": "{{count}} appels avec ?secret=",
-      "querySecret_one": "{{count}} appel avec ?secret=",
       "created": "Bot créé",
       "createFailed": "Échec de la création du bot",
       "fromTemplate": "Depuis un modèle",
@@ -482,8 +228,6 @@
       "noDescription": "Aucune description",
       "serverHash": "Serveur n° {{id}}",
       "updated": "Mis à jour {{time}}",
-      "dropped_one": "{{count}} déclenchement rejeté (24 h)",
-      "dropped_other": "{{count}} déclenchements rejetés (24 h)",
       "droppedHint": "Au cours des dernières 24 heures, ce flux exécutait déjà son nombre maximal d'exécutions simultanées ; les déclenchements supplémentaires n'ont pas été exécutés.",
       "approvalPending": "Approbation en attente",
       "approvalPendingHint": "Flow importé : seul un admin peut l'approuver, en l'activant.",
@@ -529,7 +273,11 @@
         "saveFailed": "Impossible d'enregistrer les paramètres",
         "restoreDefaults": "Rétablir les valeurs par défaut",
         "unsaved": "Modifications non enregistrées"
-      }
+      },
+      "querySecret_other": "{{count}} appels avec ?secret=",
+      "querySecret_one": "{{count}} appel avec ?secret=",
+      "dropped_one": "{{count}} déclenchement rejeté (24 h)",
+      "dropped_other": "{{count}} déclenchements rejetés (24 h)"
     },
     "instance": {
       "updated": "Paramètres de l'instance mis à jour",
@@ -605,7 +353,187 @@
       "received": "Reçu",
       "total": "Total",
       "overview": "Vue d'ensemble",
-      "selectedServer": "Serveur sélectionné"
+      "selectedServer": "Serveur sélectionné",
+      "history": {
+        "tab": "",
+        "rangeLabel": "",
+        "ranges": {
+          "24h": "",
+          "3d": "",
+          "7d": "",
+          "14d": "",
+          "31d": ""
+        },
+        "timeZone": {
+          "label": "",
+          "local": "",
+          "utc": ""
+        },
+        "chartTitle": "",
+        "pointSize": "",
+        "chartAria": "",
+        "chartAriaEmpty": "",
+        "kpi": {
+          "current": "",
+          "peak": "",
+          "average": "",
+          "averageHint": "",
+          "availability": "",
+          "availabilityHint": "",
+          "peakOfSlots": "",
+          "lastSample": ""
+        },
+        "states": {
+          "online": "",
+          "stopped": "",
+          "unreachable": "",
+          "nodata": ""
+        },
+        "tooltip": {
+          "mean": "",
+          "peak": "",
+          "min": "",
+          "avg24h": "",
+          "slots": "",
+          "unreachable": "",
+          "stopped": "",
+          "nodata": ""
+        },
+        "legend": {
+          "mean": "",
+          "peak": "",
+          "avg24h": "",
+          "slots": "",
+          "saturday": "",
+          "sunday": "",
+          "unreachable": "",
+          "stopped": "",
+          "nodata": ""
+        },
+        "metric": {
+          "label": "",
+          "users": "",
+          "bandwidth": "",
+          "ping": "",
+          "quality": ""
+        },
+        "metricNoDataYetHint": "",
+        "metricRecordingSince": "",
+        "bandwidth": {
+          "chartTitle": "",
+          "chartAria": "",
+          "chartAriaEmpty": "",
+          "kpi": {
+            "current": "",
+            "peak": "",
+            "average": "",
+            "volume": ""
+          },
+          "tooltip": {
+            "avgIn": "",
+            "peakIn": "",
+            "avgOut": "",
+            "peakOut": "",
+            "avg24hIn": "",
+            "avg24hOut": ""
+          },
+          "legend": {
+            "down": "",
+            "up": "",
+            "peak": ""
+          },
+          "note": ""
+        },
+        "ping": {
+          "chartTitle": "",
+          "chartAria": "",
+          "chartAriaEmpty": "",
+          "kpi": {
+            "current": "",
+            "peak": "",
+            "average": "",
+            "timeouts": "",
+            "timeoutsCount_one": "",
+            "timeoutsCount_other": ""
+          },
+          "tooltip": {
+            "mean": "",
+            "peak": "",
+            "min": "",
+            "avg24h": "",
+            "timeouts_one": "",
+            "timeouts_other": ""
+          },
+          "legend": {
+            "mean": "",
+            "peak": "",
+            "timeout": ""
+          },
+          "note": ""
+        },
+        "quality": {
+          "chartTitle": "",
+          "chartAria": "",
+          "chartAriaEmpty": "",
+          "kpi": {
+            "current": "",
+            "currentPing": "",
+            "noClients": "",
+            "lossPeak": "",
+            "lossAverage": "",
+            "lossTotal": "",
+            "pingAverage": "",
+            "pingPeak": ""
+          },
+          "tooltip": {
+            "lossSpeech": "",
+            "lossSpeechMax": "",
+            "lossTotal": "",
+            "clientPing": "",
+            "clientPingMax": "",
+            "noClients": ""
+          },
+          "legend": {
+            "lossSpeech": "",
+            "lossPeak": "",
+            "lossTotal": "",
+            "clientPing": ""
+          },
+          "note": ""
+        },
+        "recordingSince": "",
+        "slots": {
+          "toggle": "",
+          "unavailable": ""
+        },
+        "recordingOff": "",
+        "recordingOffHint": "",
+        "noDataYet": "",
+        "noDataYetHint": "",
+        "loadFailed": "",
+        "loadFailedHint": "",
+        "settings": {
+          "title": "",
+          "description": "",
+          "intervalLabel": "",
+          "intervalOptions": {
+            "30": "",
+            "60": "",
+            "120": "",
+            "300": ""
+          },
+          "retentionLabel": "",
+          "retentionHint": "",
+          "estimate": "",
+          "restoreDefaults": "",
+          "unsaved": "",
+          "saved": "",
+          "saveFailed": "",
+          "confirmShorterTitle": "",
+          "confirmShorterDescription": "",
+          "confirmShorterAction": ""
+        }
+      }
     },
     "login": {
       "ssoErrors": {
@@ -630,6 +558,785 @@
       "signingIn": "Connexion...",
       "signIn": "Se connecter",
       "or": "ou"
+    },
+    "changeLog": {
+      "title": "Journal des modifications",
+      "subtitle": "Ce que les utilisateurs web ont modifié via cette interface : qui, sur quelle cible, avec quelles valeurs et avec quel résultat. Les secrets comme les mots de passe et les clés API n'y figurent jamais, seulement le fait qu'ils ont été modifiés. Réservé aux admins ; les commandes de la console query ont leur propre journal.",
+      "tabs": {
+        "log": "Journal",
+        "settings": "Paramètres"
+      },
+      "searchPlaceholder": "Rechercher un utilisateur, une route ou un ID cible",
+      "filters": {
+        "range": "Période",
+        "area": "Domaine",
+        "anyArea": "Tous les domaines",
+        "method": "Méthode",
+        "anyMethod": "Toutes les méthodes",
+        "result": "Résultat",
+        "anyResult": "Tous les résultats",
+        "server": "Serveur",
+        "anyServer": "Tous les serveurs",
+        "pageSize": "Entrées par page",
+        "reset": "Réinitialiser les filtres"
+      },
+      "range": {
+        "24h": "Dernières 24 heures",
+        "7d": "7 derniers jours",
+        "30d": "30 derniers jours",
+        "all": "Toute la période"
+      },
+      "status": {
+        "pending": "en attente",
+        "ok": "réussi",
+        "error": "échoué",
+        "denied": "refusé"
+      },
+      "columns": {
+        "time": "Heure",
+        "user": "Utilisateur",
+        "action": "Modification",
+        "target": "Cible",
+        "result": "Résultat",
+        "address": "Adresse"
+      },
+      "virtualServer": "Serveur virtuel {{id}}",
+      "body": "Valeurs envoyées",
+      "tsLogged": "Également noté dans le log du serveur TeamSpeak",
+      "ipNotRecorded": "non enregistrée",
+      "empty": "Aucune modification pour ces filtres.",
+      "loadFailed": "Le journal des modifications n'a pas pu être chargé.",
+      "diff": {
+        "title": "Avant / après",
+        "before": "Avant",
+        "after": "Après",
+        "notSet": "non défini",
+        "noField": "Aucun champ n'a changé.",
+        "deleted": "Supprimé :",
+        "bulk": "Action groupée : {{ok}} effectué(s), {{skipped}} ignoré(s), {{failed}} échec(s). Les {{shown}} premiers :",
+        "unavailable": "L'état avant n'a pas pu être lu ({{reason}}) ; la modification a quand même été effectuée.",
+        "deletedList_one": "{{count}} entrée supprimée, dont {{shown}} conservée ici :",
+        "deletedList_other": "{{count}} entrées supprimées, dont {{shown}} conservées ici :"
+      },
+      "perPage": "{{count}} par page",
+      "settings": {
+        "title": "Enregistrement et conservation",
+        "description": "Pour chaque modification faite via l'interface, le journal conserve l'heure, l'utilisateur et son rôle, le domaine et la cible, les valeurs envoyées (les secrets seulement comme « modifié »), le résultat et, si activé, l'adresse. Dans de nombreux pays, les adresses sont des données personnelles : ne les conserve que le temps nécessaire. Ceci n'est pas un conseil juridique.",
+        "enabledLabel": "Enregistrer les modifications",
+        "enabledHint": "Désactivé, rien de nouveau n'est enregistré ; ce qui est stocké reste jusqu'à son nettoyage ou sa suppression. Tant qu'il est actif, une modification des utilisateurs, des connexions serveur, de l'instance ou des paramètres de l'application est refusée si son entrée ne peut pas être écrite.",
+        "recordIpLabel": "Enregistrer l'adresse de l'utilisateur web",
+        "recordIpHint": "L'adresse d'où vient une modification (voir TRUST_PROXY). S'applique aux nouvelles entrées.",
+        "tsLogLabel": "Écrire aussi dans le log du serveur TeamSpeak",
+        "tsLogHint": "Désactivé par défaut : chaque modification réussie sur un serveur TeamSpeak ajoute une ligne à son log. Cela coûte une requête supplémentaire par modification, qui compte dans la limite anti-flood du serveur.",
+        "retentionLabel": "Conserver pendant (jours)",
+        "retentionHint": "{{min}} à {{max}} jours. Les entrées plus anciennes sont supprimées toutes les heures.",
+        "maxRowsLabel": "Conserver au maximum (entrées)",
+        "maxRowsHint": "{{min}} à {{max}}. Au-delà, les entrées les plus anciennes partent en premier, quel que soit leur âge.",
+        "saved": "Paramètres du journal des modifications enregistrés",
+        "saveFailed": "Les paramètres du journal des modifications n'ont pas pu être enregistrés",
+        "storedTitle": "Stocké",
+        "oldest": "La plus ancienne date du {{date}}.",
+        "clear": "Vider le journal",
+        "clearTitle": "Vider le journal des modifications ?",
+        "clearFailed": "Le journal n'a pas pu être vidé",
+        "stored_one": "{{count}} entrée stockée.",
+        "stored_other": "{{count}} entrées stockées.",
+        "clearDescription_one": "{{count}} entrée sera supprimée définitivement. Le vidage est ensuite enregistré comme une nouvelle modification.",
+        "clearDescription_other": "{{count}} entrées seront supprimées définitivement. Le vidage est ensuite enregistré comme une nouvelle modification.",
+        "cleared_one": "{{count}} entrée supprimée",
+        "cleared_other": "{{count}} entrées supprimées"
+      },
+      "resultCount_one": "{{count}} entrée",
+      "resultCount_other": "{{count}} entrées"
+    },
+    "backups": {
+      "title": "Sauvegardes",
+      "subtitle": "Sauvegardes de la base de données du manager : utilisateurs, connexions aux serveurs, flows, bots musicaux, paramètres et journaux. Réservé aux admins, car une sauvegarde contient les hachages des mots de passe et les identifiants TeamSpeak chiffrés. Les fichiers musicaux eux-mêmes n'en font pas partie.",
+      "loadFailed": "Impossible de charger les sauvegardes.",
+      "created": "Sauvegarde écrite ({{size}}).",
+      "createFailed": "La sauvegarde a échoué.",
+      "checkFailed": "Impossible de tester la sauvegarde.",
+      "downloadStarted": "Le téléchargement démarre.",
+      "downloadFailed": "Impossible de lancer le téléchargement.",
+      "deleted": "Sauvegarde supprimée.",
+      "deleteFailed": "Impossible de supprimer la sauvegarde.",
+      "deleteTitle": "Supprimer la sauvegarde ?",
+      "deleteDescription": "La sauvegarde du {{time}} sera supprimée définitivement.",
+      "empty": "Aucune sauvegarde pour l'instant.",
+      "beforeVersion": "avant {{version}}",
+      "beforeUpdateNote": "Les copies « Avant mise à jour » sont faites par le conteneur lui-même avant d'appliquer des migrations de la base. Il en garde DB_BACKUP_KEEP ; ici, on peut les tester et les télécharger, mais pas les supprimer.",
+      "lastFailed": {
+        "manual": "La sauvegarde du {{time}} a échoué.",
+        "scheduled": "La sauvegarde planifiée du {{time}} a échoué.",
+        "before-bulk": "La sauvegarde avant une suppression de {{time}} a échoué."
+      },
+      "now": {
+        "title": "Sauvegarder maintenant",
+        "description": "Écrit une copie de la base en cours d'utilisation dans data/backups/managed/ du volume backend-data. L'application continue de tourner. Elle vérifie d'abord qu'au moins deux fois la taille de la base est libre.",
+        "databaseSize": "Base de données",
+        "freeSpace": "Libre dans le volume",
+        "lastRun": "Dernière sauvegarde",
+        "keyNote": "La clé (ENCRYPTION_KEY, sinon JWT_SECRET du .env) n'est pas dans la sauvegarde. Sans elle, les identifiants et secrets 2FA d'une sauvegarde sont inutilisables : conservez-la ailleurs. Une sauvegarde dans le volume disparaît avec le volume, téléchargez celles qui comptent.",
+        "tsSnapshotsLabel": "Inclure les snapshots TeamSpeak",
+        "tsSnapshotsHint": "Ajoute à chaque sauvegarde un snapshot de chaque serveur virtuel de toutes les connexions avec WebQuery (paramètres, canaux, groupes, permissions, identités client connues). Un snapshot se déploie sur la page « Divers ».",
+        "button": "Sauvegarder maintenant",
+        "running": "Sauvegarde …"
+      },
+      "schedule": {
+        "title": "Planification",
+        "enabledLabel": "Sauvegarder automatiquement",
+        "enabledHint": "À l'heure choisie (heure du serveur), les jours choisis.",
+        "timeLabel": "Heure",
+        "daysLabel": "Jours",
+        "serverTime": "Heure du serveur, actuellement {{time}}.",
+        "keepLabel": "Sauvegardes planifiées à garder",
+        "keepHint": "Les {{min}} à {{max}} plus récentes. Les sauvegardes manuelles restent jusqu'à ce que vous les supprimiez.",
+        "maxAgeLabel": "Âge maximal en jours",
+        "maxAgeNone": "pas d'âge maximal",
+        "maxAgeHint": "Vide = seulement par nombre. Sinon {{min}} à {{max}} ; les sauvegardes planifiées plus anciennes sont supprimées.",
+        "noDays": "Choisissez au moins un jour.",
+        "save": "Enregistrer",
+        "saved": "Planification enregistrée.",
+        "saveFailed": "Impossible d'enregistrer la planification."
+      },
+      "restore": {
+        "title": "Restaurer une sauvegarde",
+        "whatHappens": "Ce qui se passe",
+        "replaces": "La base actuelle ({{now}}) est remplacée par la sauvegarde du {{time}} ({{size}}) : utilisateurs, connexions, flows, bots musicaux, paramètres et journaux reviennent à l'état de la sauvegarde.",
+        "savesCurrent": "L'état actuel est d'abord enregistré comme sauvegarde « Avant restauration », pour pouvoir revenir en arrière.",
+        "signsOut": "Tout le monde est déconnecté, vous aussi. Les appareils mémorisés pour la connexion à deux facteurs sont oubliés.",
+        "restarts": "Le backend redémarre pour cela et reste injoignable environ une minute.",
+        "acceptKey": "La clé en cours ne peut pas lire des valeurs de cette sauvegarde. Je sais qu'il faudra alors saisir à nouveau les clés API et mots de passe SSH concernés, que les bots musicaux concernés ne seront pas chargés et que les utilisateurs avec connexion à deux facteurs auront besoin d'un code de récupération.",
+        "understood": "J'ai compris que la base actuelle sera remplacée.",
+        "noHistory": "Les sauvegardes d'avant les migrations versionnées ne peuvent pas être restaurées ici. Le wiki (Troubleshooting) décrit la marche à suivre à la main.",
+        "confirm": "Restaurer et redémarrer",
+        "running": "Enregistrement …",
+        "failed": "La restauration n'a pas pu être programmée.",
+        "started": "La restauration est programmée, le backend redémarre.",
+        "startedHint": "Au démarrage, l'état actuel est d'abord sauvegardé, puis la sauvegarde est mise en place. Reconnectez-vous ensuite. Si le backend ne redémarre pas tout seul (hors Docker), démarrez-le vous-même.",
+        "pending": "Une restauration est programmée ({{time}}, {{user}}).",
+        "pendingHint": "Elle sera appliquée au prochain démarrage du backend.",
+        "cancel": "Annuler",
+        "cancelled": "La restauration programmée est annulée.",
+        "cancelFailed": "La restauration n'a pas pu être annulée.",
+        "lastOk": "Restaurée le {{time}} (demandée par {{user}}).",
+        "lastRolledBack": "La restauration du {{time}} a échoué, l'état précédent a été remis.",
+        "lastFailed": "La restauration du {{time}} n'a pas été appliquée.",
+        "beforeRestoreSaved": "L'état d'avant est conservé comme sauvegarde « Avant restauration » : {{name}}",
+        "migrates_one": "La sauvegarde vient d'une version plus ancienne : {{count}} migration est appliquée au démarrage. En cas d'échec, l'état précédent est remis automatiquement.",
+        "migrates_other": "La sauvegarde vient d'une version plus ancienne : {{count}} migrations sont appliquées au démarrage. En cas d'échec, l'état précédent est remis automatiquement."
+      },
+      "bulk": {
+        "title": "Sauvegarde avant les suppressions",
+        "description": "Avant qu'un groupe de serveur ou de canal, un canal ou de nombreux profils clients soient supprimés, le gestionnaire fait une sauvegarde : la base de données et un snapshot de ce serveur virtuel, même si les snapshots sont désactivés plus haut. Les 10 plus récentes sont conservées, à part des sauvegardes planifiées. Un snapshot ne rétablit ni bannissements, ni icônes, ni expulsions, ni déplacements ; ces actions n'ont donc pas d'étape de sauvegarde.",
+        "thresholdLabel": "Sauvegarder à partir de ce nombre de profils à la fois",
+        "thresholdHint": "{{min}} à {{max}}. En dessous, la boîte de dialogue affiche la dernière sauvegarde et « Sauvegarder maintenant ».",
+        "saved": "Seuil enregistré"
+      },
+      "upload": {
+        "title": "Téléverser une sauvegarde",
+        "description": "Un ZIP téléchargé depuis cette page (chiffré aussi, .zip.enc), ou un fichier .db. Il apparaît ensuite dans la liste comme « Téléversée » et peut être testé et restauré. Les fichiers chiffrés s'ouvrent avec la phrase secrète définie ici.",
+        "button": "Choisir un fichier",
+        "running": "Téléversement …",
+        "done": "Sauvegarde téléversée.",
+        "failed": "Le téléversement a échoué.",
+        "proxyTooLarge": "Un reverse proxy devant l'application a refusé le fichier (HTTP 413). Augmentez sa limite de taille des requêtes (nginx : client_max_body_size).",
+        "tooLarge": "Le fichier fait {{size}}, la limite est de {{limit}} Mo.",
+        "limitLabel": "Plus grande sauvegarde téléversable (Mo)",
+        "limitHint": "{{min}} à {{max}} Mo. Un reverse proxy devant l'application doit avoir une limite au moins aussi élevée.",
+        "limitSaved": "Limite de téléversement enregistrée."
+      },
+      "target": {
+        "title": "Copies hors du volume",
+        "description": "Un répertoire hors du volume où chaque sauvegarde est aussi copiée en ZIP (les copies avant mise à jour restent dans le volume). La conservation et la suppression s'appliquent aux deux endroits. Les sauvegardes survivent ainsi à la perte du volume ; elles apparaissent alors comme « Externe » dans la liste.",
+        "dirLabel": "Répertoire cible (chemin dans le conteneur)",
+        "dirHint": "Le répertoire doit être monté dans le conteneur, par exemple en bind mount ou partage NFS via votre propre docker-compose.override.yml, et accessible en écriture au backend (uid 1000). L'enregistrer vide désactive les copies.",
+        "ok": "Accessible en écriture, {{free}} libres.",
+        "saved": "Répertoire cible enregistré.",
+        "copyFailed": "La sauvegarde du {{time}} a été écrite, mais pas copiée dans le répertoire cible.",
+        "alsoThere": "aussi dans le répertoire cible",
+        "passphraseLabel": "Phrase secrète pour les copies et téléchargements",
+        "passphraseOn": "Définie : les copies du répertoire cible et les téléchargements sont chiffrés.",
+        "passphraseOff": "Non définie : copies et téléchargements ne sont pas chiffrés.",
+        "passphraseSet": "Définir la phrase secrète",
+        "passphraseRemove": "Supprimer",
+        "passphraseSaved": "Phrase secrète définie.",
+        "passphraseRemoved": "Phrase secrète supprimée.",
+        "passphraseHint": "Au moins 12 caractères. Elle est stockée chiffrée ici mais jamais affichée : conservez-la ailleurs. Sans elle, une sauvegarde chiffrée ne peut pas être ouverte, même par cette application.",
+        "decryptHint": "Sans cette application, openssl ouvre un fichier chiffré :"
+      },
+      "columns": {
+        "time": "Date",
+        "kind": "Type",
+        "size": "Taille",
+        "version": "Version du backend",
+        "actions": "Actions"
+      },
+      "kind": {
+        "manual": "Manuelle",
+        "scheduled": "Planifiée",
+        "uploaded": "Téléversée",
+        "external": "Externe",
+        "before-restore": "Avant restauration",
+        "before-bulk": "Avant suppression",
+        "before-update": "Avant mise à jour"
+      },
+      "actions": {
+        "check": "Tester",
+        "checking": "Test …",
+        "download": "Télécharger",
+        "compare": "Comparer",
+        "restore": "Restaurer",
+        "delete": "Supprimer"
+      },
+      "check": {
+        "title": "Tester la sauvegarde",
+        "integrityOk": "Le fichier est une base de données complète et intacte.",
+        "integrityFailed": "Le fichier est endommagé ou n'est pas une base de données.",
+        "checksumOk": "La somme de contrôle correspond au manifeste.",
+        "checksumFailed": "La somme de contrôle ne correspond pas au manifeste : le fichier a été modifié ou est incomplet.",
+        "noManifest": "Pas de manifeste (copie avant une mise à jour ou fichier .db téléversé), aucune somme de contrôle à comparer.",
+        "migrations": {
+          "ok": "Correspond exactement à cette version du backend.",
+          "no-history": "D'avant les migrations versionnées : le démarrage vérifie si son schéma correspond.",
+          "older_one": "D'une version plus ancienne : {{count}} migration serait appliquée lors de la restauration.",
+          "older_other": "D'une version plus ancienne : {{count}} migrations seraient appliquées lors de la restauration.",
+          "newer_one": "D'une version plus récente du backend ({{count}} migration inconnue) : cette version ne peut pas la restaurer.",
+          "newer_other": "D'une version plus récente du backend ({{count}} migrations inconnues) : cette version ne peut pas la restaurer."
+        },
+        "keyFailed": "La clé en cours ne déchiffre pas {{failed}} des {{count}} valeurs : cette sauvegarde a été écrite avec un autre ENCRYPTION_KEY/JWT_SECRET.",
+        "keyNothing": "La sauvegarde ne contient aucune valeur chiffrée.",
+        "verdictOk": "Ce backend peut restaurer cette sauvegarde.",
+        "verdictFailed": "Cette sauvegarde ne peut pas être restaurée telle quelle.",
+        "keyOk_one": "La clé en cours déchiffre la valeur testée.",
+        "keyOk_other": "La clé en cours déchiffre les {{count}} valeurs testées."
+      },
+      "tsSnapshotCount_one": "{{count}} snapshot TeamSpeak",
+      "tsSnapshotCount_other": "{{count}} snapshots TeamSpeak"
+    },
+    "connectionJournal": {
+      "title": "",
+      "subtitle": "",
+      "source": {
+        "web": "",
+        "ts": ""
+      },
+      "ts": {
+        "online": "",
+        "leftAfter": "",
+        "endNotSeen": "",
+        "recordingStopped": "",
+        "virtualServer": ""
+      },
+      "scope": {
+        "private": "",
+        "loopback": ""
+      },
+      "noCountryHint": "",
+      "geoip": {
+        "title": "",
+        "description": "",
+        "sourceDbip": "",
+        "sourceCustom": "",
+        "release": "",
+        "built": "",
+        "installedAt": "",
+        "none": "",
+        "backfill": "",
+        "editionLabel": "",
+        "edition": {
+          "country": "",
+          "city": "",
+          "custom": ""
+        },
+        "editionHint": {
+          "country": "",
+          "city": ""
+        },
+        "downloadNow": "",
+        "updateNow": "",
+        "upload": "",
+        "remove": "",
+        "downloading": "",
+        "installing": "",
+        "errors": {
+          "not-published": "",
+          "download-failed": "",
+          "too-large": "",
+          "invalid-file": "",
+          "not-a-geo-database": ""
+        },
+        "autoUpdateLabel": "",
+        "autoUpdateHint": "",
+        "lastCheck": "",
+        "privacy": "",
+        "uploaded": "",
+        "removed": "",
+        "removeTitle": "",
+        "removeDescription": "",
+        "saveFailed": "",
+        "downloadFailed": "",
+        "uploadFailed": "",
+        "removeFailed": ""
+      },
+      "unknownAddress": "",
+      "unknownAddressHint": "",
+      "ban": {
+        "banThis": "",
+        "title": "",
+        "description": "",
+        "web": {
+          "label": "",
+          "hint": ""
+        },
+        "ts": {
+          "label": "",
+          "hint": "",
+          "connection": "",
+          "virtualServer": "",
+          "allServers": ""
+        },
+        "protected": {
+          "own": "",
+          "loopback": "",
+          "private": "",
+          "invalid": ""
+        },
+        "disabled": "",
+        "alreadyUntil": "",
+        "alreadyForever": "",
+        "adminWarning": "",
+        "submit": "",
+        "failed": "",
+        "webDone": "",
+        "tsDone": "",
+        "tsFailed": "",
+        "tsPartial": "",
+        "errors": {
+          "ban-protected-own": "",
+          "ban-protected-loopback": "",
+          "ban-protected-private": "",
+          "ban-invalid-address": "",
+          "ban-confirm-admin": "",
+          "bans-disabled": ""
+        },
+        "badge": {
+          "web": "",
+          "ts": "",
+          "tsHint": "",
+          "until": "",
+          "forever": ""
+        }
+      },
+      "bans": {
+        "description": "",
+        "tsBansLink": "",
+        "empty": "",
+        "columns": {
+          "address": "",
+          "country": "",
+          "reason": "",
+          "setBy": "",
+          "setAt": "",
+          "ends": "",
+          "turnedAway": ""
+        },
+        "lastBlocked": "",
+        "lift": "",
+        "liftTitle": "",
+        "liftDescription": "",
+        "lifted": "",
+        "liftFailed": ""
+      },
+      "tabs": {
+        "journal": "",
+        "byIp": "",
+        "bans": "",
+        "settings": ""
+      },
+      "searchPlaceholder": "",
+      "filters": {
+        "range": "",
+        "event": "",
+        "result": "",
+        "anyEvent": "",
+        "anyResult": "",
+        "source": "",
+        "anySource": "",
+        "country": "",
+        "anyCountry": "",
+        "server": "",
+        "anyServer": "",
+        "onlineNow": "",
+        "removeAddress": "",
+        "reset": ""
+      },
+      "range": {
+        "24h": "",
+        "7d": "",
+        "30d": "",
+        "all": ""
+      },
+      "columns": {
+        "time": "",
+        "source": "",
+        "event": "",
+        "result": "",
+        "account": "",
+        "address": "",
+        "country": "",
+        "details": "",
+        "entries": "",
+        "failures": "",
+        "successes": "",
+        "accountsTried": "",
+        "lastSeen": ""
+      },
+      "event": {
+        "login": "",
+        "totp": "",
+        "sso": "",
+        "rate-limit": "",
+        "ts-session": ""
+      },
+      "result": {
+        "success": "",
+        "failure": ""
+      },
+      "reason": {
+        "wrong-password": "",
+        "unknown-user": "",
+        "disabled": "",
+        "sso-account": "",
+        "totp-required": "",
+        "trusted-device": "",
+        "wrong-code": "",
+        "recovery-code": "",
+        "ticket-invalid": "",
+        "sso-not-configured": "",
+        "sso-invalid-state": "",
+        "sso-no-subject": "",
+        "sso-failed": "",
+        "login-limit": "",
+        "refresh-limit": "",
+        "webhook-limit": ""
+      },
+      "unknownAccount": "",
+      "unknownAccountHint": "",
+      "filterByAddress": "",
+      "showEntries": "",
+      "empty": "",
+      "loadFailed": "",
+      "perPage": "",
+      "settings": {
+        "title": "",
+        "description": "",
+        "enabledLabel": "",
+        "enabledHint": "",
+        "queryClientsLabel": "",
+        "queryClientsHint": "",
+        "ownBotsLabel": "",
+        "ownBotsHint": "",
+        "retentionLabel": "",
+        "retentionHint": "",
+        "maxRowsLabel": "",
+        "maxRowsHint": "",
+        "saved": "",
+        "saveFailed": "",
+        "watchedTitle": "",
+        "watchedDescription": "",
+        "watchedNone": "",
+        "mode": {
+          "events": "",
+          "polling": "",
+          "idle": ""
+        },
+        "problem": {
+          "no-access": "",
+          "ssh-unavailable": "",
+          "unreachable": "",
+          "no-address-permission": ""
+        },
+        "storedTitle": "",
+        "oldest": "",
+        "clear": "",
+        "clearTitle": "",
+        "clearFailed": "",
+        "openSessions_one": "",
+        "openSessions_other": "",
+        "stored_one": "",
+        "stored_other": "",
+        "clearDescription_one": "",
+        "clearDescription_other": "",
+        "cleared_one": "",
+        "cleared_other": ""
+      },
+      "resultCount_one": "",
+      "resultCount_other": ""
+    },
+    "console": {
+      "tabs": {
+        "console": "",
+        "log": "",
+        "settings": ""
+      },
+      "virtualServer": "",
+      "instance": "",
+      "clearScreen": "",
+      "empty": "",
+      "mode": {
+        "label": "",
+        "command": "",
+        "server": "",
+        "channel": "",
+        "private": "",
+        "client": "",
+        "pickClient": "",
+        "noClients": "",
+        "channelHint": ""
+      },
+      "events": {
+        "toggle": "",
+        "intro": "",
+        "noSsh": "",
+        "needVirtualServer": "",
+        "categories": {
+          "server": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "channel": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "textserver": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "textchannel": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "textprivate": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "bans": {
+            "label": "",
+            "short": "",
+            "help": ""
+          }
+        },
+        "other": "",
+        "channelLabel": "",
+        "pickChannel": "",
+        "start": "",
+        "apply": "",
+        "stop": "",
+        "state": {
+          "idle": "",
+          "connecting": "",
+          "live": "",
+          "reconnecting": "",
+          "closed": ""
+        },
+        "listeningTo": "",
+        "hearingChannel": "",
+        "collected": "",
+        "dropped": "",
+        "save": "",
+        "saveTxt": "",
+        "saveJson": "",
+        "clearCollected": "",
+        "refused": "",
+        "notice": {
+          "started": "",
+          "alreadyListening": "",
+          "stopped": "",
+          "notListening": "",
+          "pickChannel": "",
+          "channelNeedsId": "",
+          "channelAll": "",
+          "usage": ""
+        },
+        "failure": {
+          "lost": "",
+          "UNAUTHORIZED": "",
+          "FORBIDDEN": "",
+          "SESSION_FAILED": "",
+          "SSH_CONNECT_FAILED": "",
+          "SSH_AUTH_FAILED": "",
+          "VIRTUAL_SERVER_UNAVAILABLE": "",
+          "TEXT_CHANNEL_IN_USE": "",
+          "RATE_LIMITED": "",
+          "TOO_MANY_STREAMS": "",
+          "TOO_MANY_LISTENERS": "",
+          "generic": ""
+        },
+        "summary": {
+          "clientEnter": "",
+          "clientLeft": "",
+          "clientMoved": "",
+          "serverEdited": "",
+          "channelCreated": "",
+          "channelEdited": "",
+          "channelDescription": "",
+          "channelPassword": "",
+          "channelMoved": "",
+          "channelDeleted": "",
+          "textServer": "",
+          "textChannel": "",
+          "textPrivate": "",
+          "banAdded": "",
+          "banRemoved": "",
+          "unknown": ""
+        }
+      },
+      "history": {
+        "menu": "",
+        "clear": "",
+        "cleared": ""
+      },
+      "input": {
+        "label": "",
+        "placeholder": "",
+        "messagePlaceholder": "",
+        "shortcuts": ""
+      },
+      "suggest": {
+        "danger": "",
+        "hidden": "",
+        "alias": "",
+        "required": ""
+      },
+      "notice": {
+        "using": "",
+        "useUsage": "",
+        "unknownVirtualServer": "",
+        "pickClient": "",
+        "noChannel": ""
+      },
+      "errors": {
+        "rateLimited": "",
+        "noConnection": "",
+        "generic": ""
+      },
+      "parse": {
+        "empty": "",
+        "invalid_command": "",
+        "invalid_option": "",
+        "invalid_key": "",
+        "empty_block": ""
+      },
+      "help": {
+        "required": "",
+        "optional": "",
+        "repeatable": "",
+        "aliasOf": "",
+        "hidden": "",
+        "hiddenHint": "",
+        "needsConfirmation": "",
+        "readOnly": "",
+        "properties": "",
+        "noParameters": "",
+        "integer": "",
+        "range": "",
+        "defaultValue": "",
+        "orOther": "",
+        "permissions": "",
+        "unknownTopic": "",
+        "intro": "",
+        "introHelp": "",
+        "introUse": "",
+        "introKeys": "",
+        "introEscapes": "",
+        "legend": ""
+      },
+      "result": {
+        "emptyResult": "",
+        "records": "",
+        "loggedToTeamSpeak": "",
+        "truncated": "",
+        "tableView": "",
+        "rawView": "",
+        "revealSecrets": "",
+        "hideSecrets": "",
+        "copyRaw": "",
+        "copyJson": "",
+        "copyFailed": "",
+        "showAll": ""
+      },
+      "hints": {
+        "outOfScope": "",
+        "noAnswer": "",
+        "unknownCommand": ""
+      },
+      "explain": {
+        "none": "",
+        "notFound": "",
+        "empty": "",
+        "nothingToExplain": "",
+        "queryClient": "",
+        "voiceClient": ""
+      },
+      "danger": {
+        "title": "",
+        "generic": "",
+        "willRun": "",
+        "typeToConfirm": "",
+        "run": "",
+        "reasons": {
+          "processStop": "",
+          "serverStop": "",
+          "serverDelete": "",
+          "instanceEdit": "",
+          "snapshotDeploy": "",
+          "permReset": "",
+          "massDelete": "",
+          "dataDelete": "",
+          "credentialsRevoke": "",
+          "credentialsReset": ""
+        }
+      },
+      "log": {
+        "ok": "",
+        "pending": "",
+        "pendingHint": "",
+        "error": "",
+        "search": "",
+        "searchPlaceholder": "",
+        "allStatuses": "",
+        "dangerOnly": "",
+        "thisServerOnly": "",
+        "empty": "",
+        "emptyHint": "",
+        "time": "",
+        "where": "",
+        "command": "",
+        "result": "",
+        "duration": "",
+        "teamSpeakLog": "",
+        "teamSpeakLogHint": "",
+        "instance": "",
+        "danger": "",
+        "loadMore": ""
+      },
+      "settings": {
+        "title": "",
+        "retentionLabel": "",
+        "retentionHint": "",
+        "floodGuardLabel": "",
+        "floodGuardHint": "",
+        "restoreDefaults": "",
+        "unsaved": "",
+        "saved": "",
+        "saveFailed": ""
+      }
     },
     "serverLogs": {
       "entryAdded": "Entrée de log ajoutée",
@@ -736,10 +1443,6 @@
       "kindFilter": "Type",
       "allKinds": "Tous les types",
       "noMatch": "Rien ne correspond à la recherche.",
-      "objectCount_one": "{{count}} différence",
-      "objectCount_other": "{{count}} différences",
-      "permissionCount_one": "{{count}} permission",
-      "permissionCount_other": "{{count}} permissions",
       "fromDeletion": "Récupérer depuis la sauvegarde",
       "reset": {
         "hint": "Les permissions et champs modifiés depuis le snapshot peuvent être cochés et remis à leur état du snapshot.",
@@ -772,17 +1475,11 @@
         "defaultDropped": "Était le salon par défaut ; ce réglage n'est pas repris, le serveur garde son salon par défaut actuel.",
         "open": "Restaurer la sélection ({{count}})",
         "select": "Sélectionner {{name}} pour la restauration",
-        "title_one": "Restaurer depuis le snapshot ({{count}})",
-        "title_other": "Restaurer depuis le snapshot ({{count}})",
         "description": "Les groupes et salons sont recréés avec leurs permissions du snapshot, avec les droits de l'identité du manager. Rien d'autre n'est modifié sur le serveur.",
         "resultTitle": "Résultat de la restauration",
         "resultDescription": "Ce qui a été créé, ignoré ou n'a pas été possible.",
         "checking": "Préparation de l'aperçu...",
         "failed": "La restauration a échoué",
-        "permissions_one": "{{count}} permission",
-        "permissions_other": "{{count}} permissions",
-        "membersInSnapshot_one": "{{count}} membre dans le snapshot",
-        "membersInSnapshot_other": "{{count}} membres dans le snapshot",
         "nameTaken": "Ce nom est déjà pris à cet endroit sur le serveur. Que faire ?",
         "skipIt": "L'ignorer",
         "otherName": "Le créer sous un autre nom",
@@ -808,15 +1505,9 @@
         },
         "backupTaken": "Sauvegarde faite avant : {{name}}",
         "noBackup": "Restauré sans sauvegarde.",
-        "createdHeading_one": "{{count}} créé",
-        "createdHeading_other": "{{count}} créés",
         "idMap": "ancien ID #{{oldId}} → nouvel ID #{{newId}}",
         "permsSet": "{{count}} permissions sur {{total}} définies",
         "membersResult": "Membres : {{added}} ajoutés, {{missing}} plus dans la base de données clients, {{failed}} en échec",
-        "skippedHeading_one": "{{count}} ignoré",
-        "skippedHeading_other": "{{count}} ignorés",
-        "failedHeading_one": "{{count}} impossible",
-        "failedHeading_other": "{{count}} impossibles",
         "status": {
           "ready": "Sera créé",
           "name-taken": "Nom pris",
@@ -827,7 +1518,19 @@
           "skipped-not-in-snapshot": "Pas dans le snapshot",
           "skipped-invalid-name": "Nom invalide",
           "skipped-parent-missing": "Salon parent manquant"
-        }
+        },
+        "title_one": "Restaurer depuis le snapshot ({{count}})",
+        "title_other": "Restaurer depuis le snapshot ({{count}})",
+        "permissions_one": "{{count}} permission",
+        "permissions_other": "{{count}} permissions",
+        "membersInSnapshot_one": "{{count}} membre dans le snapshot",
+        "membersInSnapshot_other": "{{count}} membres dans le snapshot",
+        "createdHeading_one": "{{count}} créé",
+        "createdHeading_other": "{{count}} créés",
+        "skippedHeading_one": "{{count}} ignoré",
+        "skippedHeading_other": "{{count}} ignorés",
+        "failedHeading_one": "{{count}} impossible",
+        "failedHeading_other": "{{count}} impossibles"
       },
       "kinds": {
         "serverGroup": "Groupe serveur",
@@ -861,7 +1564,11 @@
         "channel_maxfamilyclients": "Clients max. avec sous-salons",
         "channel_codec": "Codec",
         "channel_codec_quality": "Qualité du codec"
-      }
+      },
+      "objectCount_one": "{{count}} différence",
+      "objectCount_other": "{{count}} différences",
+      "permissionCount_one": "{{count}} permission",
+      "permissionCount_other": "{{count}} permissions"
     },
     "misc": {
       "identityUpdated": "Identité mise à jour",
@@ -936,6 +1643,7 @@
       "banFailed": "Échec du bannissement des clients",
       "descriptionApplied": "Description (appliquée à tous les clients sélectionnés)",
       "descriptionUpdateFailed": "Échec de la mise à jour des descriptions",
+      "pokeFailed": "Échec du poke",
       "onlineCount_one": "{{count}} en ligne",
       "onlineCount_other": "{{count}} en ligne",
       "selectedCount_one": "{{count}} sélectionné",
@@ -955,8 +1663,217 @@
       "describeCount_one": "Décrire {{count}} client",
       "describeCount_other": "Décrire {{count}} clients",
       "descriptionUpdated_one": "Description mise à jour pour {{count}} client",
-      "pokeFailed": "Échec du poke",
       "descriptionUpdated_other": "Description mise à jour pour {{count}} clients"
+    },
+    "clientDatabase": {
+      "subtitle": "",
+      "filterPlaceholder": "",
+      "loadedCount": "",
+      "loadMore": "",
+      "loadAll": "",
+      "loadingAll": "",
+      "stop": "",
+      "loadFailed": "",
+      "truncatedCap": "",
+      "truncatedList": "",
+      "onlineNow": "",
+      "columns": {
+        "nickname": "",
+        "dbId": "",
+        "uid": "",
+        "lastSeen": "",
+        "connections": "",
+        "lastIp": "",
+        "description": "",
+        "match": "",
+        "status": "",
+        "created": "",
+        "loginName": ""
+      },
+      "actions": {
+        "details": "",
+        "ban": "",
+        "delete": ""
+      },
+      "groupMode": {
+        "label": "",
+        "loadFailed": ""
+      },
+      "groups": {
+        "unavailable": "",
+        "added": "",
+        "removed": "",
+        "undo": "",
+        "changeFailed": ""
+      },
+      "columnsMenu": {
+        "title": "",
+        "columns": "",
+        "reset": "",
+        "groups": "",
+        "groupsOff": "",
+        "noGroups": "",
+        "showAll": "",
+        "hideAll": ""
+      },
+      "export": {
+        "button": "",
+        "title": "",
+        "columnsHint": "",
+        "format": "",
+        "formats": {
+          "csv": "",
+          "html": "",
+          "json": ""
+        },
+        "encoding": "",
+        "encodings": {
+          "utf8-bom": "",
+          "utf8": "",
+          "utf16le": ""
+        },
+        "delimiter": "",
+        "delimiters": {
+          "comma": "",
+          "semicolon": "",
+          "tab": ""
+        },
+        "dateFormat": "",
+        "dateFormats": {
+          "iso-local": "",
+          "iso-utc": "",
+          "locale": "",
+          "unix": ""
+        },
+        "scope": "",
+        "scopes": {
+          "selected": "",
+          "visible": "",
+          "loaded": "",
+          "database": ""
+        },
+        "databaseHint": "",
+        "jsonNote": "",
+        "loading": "",
+        "run": "",
+        "failed": "",
+        "htmlTitle": "",
+        "htmlSubtitle": "",
+        "online": "",
+        "banned": "",
+        "done_one": "",
+        "done_other": ""
+      },
+      "search": {
+        "mode": "",
+        "modes": {
+          "name": "",
+          "uid": "",
+          "dbid": "",
+          "custom": "",
+          "channelgroup": ""
+        },
+        "query": "",
+        "value": "",
+        "identifier": "",
+        "placeholders": {
+          "name": "",
+          "uid": "",
+          "dbid": "",
+          "custom": "",
+          "ident": ""
+        },
+        "channel": "",
+        "group": "",
+        "allChannels": "",
+        "anyGroup": "",
+        "run": "",
+        "clear": "",
+        "failed": "",
+        "hints": {
+          "name": "",
+          "uid": "",
+          "dbid": "",
+          "custom": "",
+          "channelgroup": ""
+        }
+      },
+      "detail": {
+        "title": "",
+        "subtitle": "",
+        "loadFailed": "",
+        "banned": "",
+        "identity": "",
+        "firstSeen": "",
+        "avatar": "",
+        "onlineIn": "",
+        "traffic": "",
+        "monthUp": "",
+        "monthDown": "",
+        "totalUp": "",
+        "totalDown": "",
+        "serverGroups": "",
+        "channelGroups": "",
+        "customInfo": "",
+        "bans": "",
+        "noBans": "",
+        "banRule": "",
+        "banUntil": "",
+        "banName": "",
+        "unavailable": "",
+        "uidCopied": "",
+        "copyFailed": ""
+      },
+      "ban": {
+        "banBy": "",
+        "targets": {
+          "uid": {
+            "label": "",
+            "hint": "",
+            "short": ""
+          },
+          "name": {
+            "label": "",
+            "hint": "",
+            "short": ""
+          },
+          "ip": {
+            "label": "",
+            "hint": "",
+            "short": ""
+          }
+        },
+        "nothingToBan": "",
+        "failed": "",
+        "title_one": "",
+        "title_other": "",
+        "someMissing_one": "",
+        "someMissing_other": "",
+        "done_one": "",
+        "done_other": ""
+      },
+      "delete": {
+        "newProfile": "",
+        "failed": "",
+        "title_one": "",
+        "title_other": "",
+        "consequences_one": "",
+        "consequences_other": "",
+        "connectedSkipped_one": "",
+        "connectedSkipped_other": "",
+        "confirm_one": "",
+        "confirm_other": "",
+        "done_one": "",
+        "done_other": ""
+      },
+      "searchResults_one": "",
+      "searchResults_other": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "bannedBy_one": "",
+      "bannedBy_other": "",
+      "andMore_one": "",
+      "andMore_other": ""
     },
     "tokens": {
       "createdAndCopied": "Token créé et copié dans le presse-papiers",
@@ -1140,6 +2057,7 @@
         "roles": "Rôles",
         "youtube": "YouTube",
         "streaming": "Diffusion",
+        "network": "",
         "debug": "Débogage",
         "restart": "Redémarrage",
         "sso": "SSO",
@@ -1280,10 +2198,20 @@
         "apiKeyLabel": "Clé API",
         "apiKeyUnchangedPlaceholder": "(inchangée — saisissez une nouvelle clé pour mettre à jour)",
         "apiKeyPlaceholder": "Clé API WebQuery",
+        "apiKeyOptionalHint": "",
+        "removeApiKey": "",
+        "removeApiKeyHint": "",
+        "noWebQueryBadge": "",
+        "noWebQueryHint": "",
+        "needsApiKey": "",
         "useHttps": "Utiliser HTTPS",
         "pingTargetLabel": "Cible du ping du tableau de bord (facultatif)",
         "pingTargetPlaceholder": "Par défaut, l'hôte ci-dessus ({{host}})",
         "pingTargetHint": "Affecte uniquement la mesure du ping du tableau de bord — utile si l'hôte ci-dessus est une adresse interne mais que le domaine public doit réellement être testé. Les flux de bot utilisent toujours l'hôte, jamais ceci.",
+        "recordConnectionJournal": "",
+        "recordConnectionJournalHint": "",
+        "recordUserHistory": "",
+        "recordUserHistoryHint": "",
         "sshPortLabel": "Port SSH",
         "sshUserLabel": "Utilisateur SSH",
         "sshUserPlaceholder": "serveradmin",
@@ -1392,10 +2320,6 @@
         "fixedTitle": "Rôles intégrés",
         "adminFixed": "Tout. Le rôle admin ne peut pas être modifié.",
         "changed": "modifié",
-        "permissionCount_one": "{{count}} droit",
-        "permissionCount_other": "{{count}} droits",
-        "usersCount_one": "{{count}} utilisateur",
-        "usersCount_other": "{{count}} utilisateurs",
         "noUsers": "aucun utilisateur",
         "reset": "Rétablir par défaut",
         "customTitle": "Rôles personnalisés",
@@ -1417,7 +2341,11 @@
         "name": "Nom",
         "namePlaceholder": "p. ex. Support",
         "customNoEscalating": "Les rôles personnalisés ne peuvent pas recevoir de droits permettant d'étendre des privilèges.",
-        "fixedAppliesNow": "S'applique immédiatement à tous ceux qui ont ce rôle ; les pages ouvertes le prennent en compte en une minute."
+        "fixedAppliesNow": "S'applique immédiatement à tous ceux qui ont ce rôle ; les pages ouvertes le prennent en compte en une minute.",
+        "permissionCount_one": "{{count}} droit",
+        "permissionCount_other": "{{count}} droits",
+        "usersCount_one": "{{count}} utilisateur",
+        "usersCount_other": "{{count}} utilisateurs"
       },
       "serverAccess": {
         "wholeConnection": "Cette connexion n'a pas de WebQuery ni de liste de serveurs virtuels : l'accès couvre toute la connexion.",
@@ -1490,24 +2418,50 @@
         "idleStopHint": "Durée pendant laquelle un stream vidéo peut tourner sans spectateur avant que le bot ne l'arrête, pour qu'un stream oublié n'occupe pas en permanence l'upstream et le CPU du serveur. Le décompte démarre quand le dernier spectateur part, ou au démarrage du stream si personne ne s'est jamais connecté ; l'arrivée d'un spectateur le remet à zéro. 0 laisse le stream tourner jusqu'à ce que quelqu'un l'arrête. L'aperçu de cette interface web ne compte pas comme spectateur.",
         "maxVideoLabel": "Vidéo la plus longue pour un stream (minutes)",
         "maxVideoHint": "La vidéo YouTube ou Twitch la plus longue qu'un stream accepte. Par défaut 15 minutes ; elle peut être augmentée ici jusqu'à 240 minutes (4 heures). Une vidéo plus longue est refusée avec un message. La vidéo est entièrement téléchargée avant la lecture, une longue vidéo met donc un moment à démarrer.",
-
         "liveAudioLabel": "Lire les streams en direct (son)",
-
         "liveAudioHint": "Un bot musical lit une chaîne en direct (chaîne Twitch, live YouTube) avec !play ou le lecteur web, son uniquement. Ne diffusez que des contenus que vous avez le droit de partager.",
-
-
         "liveVideoLabel": "Lire les streams en direct en vidéo",
-
-
         "liveVideoHint": "!stream et l’onglet Vidéo acceptent une chaîne en direct et la diffusent avec image et son jusqu’à ce que quelqu’un l’arrête ou la passe, ou que la chaîne passe hors ligne. Désactivé par défaut : une vidéo en direct occupe l’encodeur et le débit montant tant qu’elle tourne.",
-
         "liveMaxLabel": "Limite des streams en direct (minutes)",
-
         "liveMaxHint": "Un stream en direct continue jusqu’à ce que quelqu’un l’arrête ou que la chaîne passe hors ligne. Avec un nombre ici, il s’arrête après autant de minutes ; 0 signifie aucune limite. Le bot se met aussi en pause quand il reste seul, si c’est activé pour lui.",
         "restoreShippedValues": "Restaurer les valeurs fournies",
         "unsavedChanges": "Modifications non enregistrées",
         "streamDefaultsSaved": "Paramètres par défaut du stream enregistrés",
         "streamDefaultsSaveFailed": "Échec de l'enregistrement des paramètres par défaut du stream"
+      },
+      "network": {
+        "title": "",
+        "checkAgain": "",
+        "loadFailed": "",
+        "description": "",
+        "detectedLabel": "",
+        "detectedHint": "",
+        "settingLabel": "",
+        "settingFromEnv": "",
+        "settingDefault": "",
+        "suggestionNone": "",
+        "suggestionMatches": "",
+        "suggestionDiffers": "",
+        "suggestionCheck": "",
+        "chainTitle": "",
+        "chainHint": "",
+        "origin": {
+          "socket": "",
+          "forwarded": ""
+        },
+        "scope": {
+          "public": "",
+          "private": "",
+          "loopback": "",
+          "unknown": ""
+        },
+        "role": {
+          "proxy": "",
+          "client": "",
+          "ignored": ""
+        },
+        "notSent": "",
+        "howToChange": ""
       },
       "debug": {
         "loggingTitle": "Logs de debug",
@@ -1679,7 +2633,129 @@
       "emptyDirectory": "Répertoire vide",
       "emptyDirectoryDescription": "Aucun fichier dans ce répertoire.",
       "moveToAnotherChannel": "Déplacer vers un autre salon",
-      "uploadDownloadNotice": "L'upload/download de fichiers n'est pas disponible via l'API WebQuery. Utilisez le client TS3 pour les transferts de fichiers.",
+      "uploadFiles": "",
+      "download": "",
+      "downloadFolder": "",
+      "downloadStarted": "",
+      "dropToUpload": "",
+      "uploadLimitNotice": "",
+      "uploadDialog": {
+        "title": "",
+        "description": "",
+        "dropHint": "",
+        "dropMore": "",
+        "choose": "",
+        "chooseFolder": "",
+        "addMore": "",
+        "addFolder": "",
+        "reading": "",
+        "readFailed": "",
+        "nothingInFolder": "",
+        "tooMany": "",
+        "remove": "",
+        "originalName": "",
+        "adjustLabel": "",
+        "keepWarning": "",
+        "keepWarningFolder": "",
+        "bannerTitle": "",
+        "adjustAll": "",
+        "keepAll": "",
+        "duplicate": "",
+        "emptyFolderMark": "",
+        "uploadEmpty": "",
+        "adjustLabelFolder_one": "",
+        "adjustLabelFolder_other": "",
+        "banner_one": "",
+        "banner_other": "",
+        "summary_one": "",
+        "summary_other": "",
+        "folderEmpty_one": "",
+        "folderEmpty_other": "",
+        "showContents_one": "",
+        "showContents_other": "",
+        "listMore_one": "",
+        "listMore_other": "",
+        "moreProblems_one": "",
+        "moreProblems_other": "",
+        "leftOut_one": "",
+        "leftOut_other": "",
+        "upload_one": "",
+        "upload_other": "",
+        "makeFolders_one": "",
+        "makeFolders_other": ""
+      },
+      "preview": {
+        "title": "",
+        "previous": "",
+        "next": "",
+        "position": "",
+        "dimensions": "",
+        "loading": "",
+        "retry": "",
+        "notAnImage": "",
+        "tooLarge": "",
+        "busy": ""
+      },
+      "problem": {
+        "empty": "",
+        "not-absolute": "",
+        "control-character": "",
+        "backslash": "",
+        "slash-in-name": "",
+        "empty-segment": "",
+        "dot-segment": "",
+        "name-too-long": "",
+        "path-too-long": ""
+      },
+      "errors": {
+        "network": "",
+        "exists": "",
+        "notFound": "",
+        "nonAscii": "",
+        "io": "",
+        "invalidPath": "",
+        "invalidName": "",
+        "tooLarge": "",
+        "tooLargeFor": "",
+        "folderBlocked": "",
+        "folderFailed": "",
+        "folderTooLarge": "",
+        "proxyTooLarge": "",
+        "generic": ""
+      },
+      "conflict": {
+        "title": "",
+        "description": "",
+        "applyToAll": "",
+        "skip": "",
+        "overwrite": ""
+      },
+      "transfers": {
+        "title": "",
+        "clearFinished": "",
+        "counter": "",
+        "queued": "",
+        "makingFolders": "",
+        "folderMade": "",
+        "preparing": "",
+        "waitingForAnswer": "",
+        "finishing": "",
+        "skipped": "",
+        "canceled": "",
+        "failed": "",
+        "more_one": "",
+        "more_other": "",
+        "summaryUploaded_one": "",
+        "summaryUploaded_other": "",
+        "summaryFolders_one": "",
+        "summaryFolders_other": "",
+        "summarySkipped_one": "",
+        "summarySkipped_other": "",
+        "summaryFailed_one": "",
+        "summaryFailed_other": "",
+        "summaryCanceled_one": "",
+        "summaryCanceled_other": ""
+      },
       "createDirectory": "Créer un répertoire",
       "directoryName": "Nom du répertoire",
       "newFolderPlaceholder": "Nouveau dossier",
@@ -1690,12 +2766,16 @@
       "move": "Déplacer",
       "deleteFileTitle": "Supprimer le fichier",
       "deleteFileDescription": "Voulez-vous vraiment supprimer \"{{name}}\" ? Impossible à annuler.",
+      "deleteFolderTitle": "",
+      "deleteFolderDescription": "",
       "directoryCreated": "Répertoire créé",
       "directoryCreateFailed": "Échec de la création du répertoire",
       "fileDeleted": "Fichier supprimé",
       "fileDeleteFailed": "Échec de la suppression du fichier",
       "fileMoved": "Fichier déplacé",
       "fileMoveFailed": "Échec du déplacement du fichier",
+      "downloadFolderStarted_one": "",
+      "downloadFolderStarted_other": "",
       "itemCount_one": "{{count}} élément",
       "itemCount_other": "{{count}} éléments"
     },
@@ -1709,9 +2789,9 @@
       "liveMonitoring": "Surveillance en direct",
       "onlineCount": "Comptage en ligne",
       "lead": {
+        "nobodyHere": "Personne n'est là en ce moment",
         "peopleHere_one": "{{count}} personne est là en ce moment",
         "peopleHere_other": "{{count}} personnes sont là en ce moment",
-        "nobodyHere": "Personne n'est là en ce moment",
         "upDays_one": "En ligne depuis {{count}} jour",
         "upDays_other": "En ligne depuis {{count}} jours",
         "upHours_one": "En ligne depuis {{count}} heure",
@@ -1734,6 +2814,16 @@
       "download": "Téléchargement",
       "upload": "Téléversement",
       "collectingData": "Collecte des données...",
+      "userHistory": {
+        "title": "",
+        "peak": "",
+        "average": "",
+        "moreInHistory": "",
+        "noData": "",
+        "recordingOff": "",
+        "recordingOffNote": "",
+        "loadFailed": ""
+      },
       "in": "Entrant :",
       "out": "Sortant :",
       "serverCapacity": "Capacité du serveur",
@@ -1994,8 +3084,6 @@
       "off": "désactivée",
       "vip": "VIP",
       "vipHint": "Dans un groupe VIP : passe avant tous les autres",
-      "supportersOnline_one": "{{count}} agent de support disponible",
-      "supportersOnline_other": "{{count}} agents de support disponibles",
       "checkedAt": "Vérifié {{time}}",
       "waitingTitle": "En attente ({{count}})",
       "emptyQueue": "Personne n'attend.",
@@ -2024,8 +3112,6 @@
       "stats": {
         "title": "Statistiques",
         "period": "Période",
-        "lastDays_one": "Dernier jour",
-        "lastDays_other": "{{count}} derniers jours",
         "empty": "Aucun cas terminé sur cette période.",
         "cases": "Cas",
         "taken": "Pris en charge",
@@ -2040,7 +3126,9 @@
         "perDay": "Par jour",
         "perDayTitle": "Par jour",
         "day": "Jour",
-        "note": "Cas terminés sur la période, selon le jour d'arrivée (votre fuseau horaire). Les attentes comptent les cas pris en charge à l'arrivée connue ; un cas avec plusieurs agents compte pour chacun."
+        "note": "Cas terminés sur la période, selon le jour d'arrivée (votre fuseau horaire). Les attentes comptent les cas pris en charge à l'arrivée connue ; un cas avec plusieurs agents compte pour chacun.",
+        "lastDays_one": "Dernier jour",
+        "lastDays_other": "{{count}} derniers jours"
       },
       "absent": "absent depuis {{time}}",
       "takenBy": "avec {{names}}",
@@ -2062,7 +3150,11 @@
       "takeFailedClientIn": "Ensuite, le client était dans le canal {{cid}}.",
       "takeFailedClientOffline": "Ensuite, le client n'était pas en ligne.",
       "takeFailedRoom": "La salle existe encore.",
-      "takeSteps": { "create-room": "créer la salle", "move-client": "déplacer le client", "move-supporter": "déplacer le support" },
+      "takeSteps": {
+        "create-room": "créer la salle",
+        "move-client": "déplacer le client",
+        "move-supporter": "déplacer le support"
+      },
       "errors": {
         "CASE_NOT_WAITING": "Ce client n'attend plus.",
         "CASE_NOT_IN_PROGRESS": "Ce cas n'est plus en cours.",
@@ -2134,7 +3226,9 @@
         "retentionHint": "S'applique à tous les serveurs virtuels.",
         "retentionRange": "Entre {{min}} et {{max}} jours.",
         "saved": "File de support enregistrée"
-      }
+      },
+      "supportersOnline_one": "{{count}} agent de support disponible",
+      "supportersOnline_other": "{{count}} agents de support disponibles"
     },
     "temporaryGroups": {
       "notice": {
@@ -2533,8 +3627,6 @@
         "notVisited": "Non atteint pendant le test",
         "fieldsUnknown": "Les champs de cet événement ne sont pas encore mesurés ; ajoutez ceux que votre flux lit.",
         "fieldsChanges": "Cet événement contient aussi chaque réglage modifié sous son propre nom (p. ex. channel_name).",
-        "fieldsMore_one": "{{count}} autre champ de cet événement est proposé lors de la saisie d'un nom de champ.",
-        "fieldsMore_other": "{{count}} autres champs de cet événement sont proposés lors de la saisie d'un nom de champ.",
         "filters": "Filtres",
         "filterOk": "correspond",
         "filterFail": "ne correspond pas",
@@ -2543,15 +3635,17 @@
         "forceTrue": "Tester comme vrai",
         "forceFalse": "Tester comme faux",
         "forceClear": "Laisser l'expression décider",
-        "forcedActive_one": "{{count}} condition forcée.",
-        "forcedActive_other": "{{count}} conditions forcées.",
         "forcedReset": "Tout réinitialiser",
         "animations": "Salons animés",
         "animationsHint": "Ils tournent avec leur propre minuteur une fois le flux activé, quel que soit le déclencheur. Les noms d'un cycle, à l'instant :",
-        "animationMeta_one": "Salon {{channel}} · toutes les {{seconds}} s · {{count}} image",
-        "animationMeta_other": "Salon {{channel}} · toutes les {{seconds}} s · {{count}} images",
         "frameSkipped": "(ignorée, le nom reste)",
-        "clear": "Masquer le résultat"
+        "clear": "Masquer le résultat",
+        "fieldsMore_one": "{{count}} autre champ de cet événement est proposé lors de la saisie d'un nom de champ.",
+        "fieldsMore_other": "{{count}} autres champs de cet événement sont proposés lors de la saisie d'un nom de champ.",
+        "forcedActive_one": "{{count}} condition forcée.",
+        "forcedActive_other": "{{count}} conditions forcées.",
+        "animationMeta_one": "Salon {{channel}} · toutes les {{seconds}} s · {{count}} image",
+        "animationMeta_other": "Salon {{channel}} · toutes les {{seconds}} s · {{count}} images"
       },
       "executions": {
         "button": "Exécutions",
@@ -2560,10 +3654,6 @@
         "pickOne": "Cliquez sur une exécution pour voir son journal.",
         "logTitle": "Journal de #{{id}}",
         "noLogs": "Aucune ligne de journal.",
-        "droppedRow_one": "{{count}} déclenchement {{trigger}} rejeté",
-        "droppedRow_other": "{{count}} déclenchements {{trigger}} rejetés",
-        "droppedDetail_one": "{{count}} déclenchement de cette minute n'a pas été exécuté : le flux exécutait déjà son nombre maximal d'exécutions simultanées.",
-        "droppedDetail_other": "{{count}} déclenchements de cette minute n'ont pas été exécutés : le flux exécutait déjà son nombre maximal d'exécutions simultanées.",
         "status": {
           "running": "En cours",
           "waiting": "En attente",
@@ -2573,7 +3663,11 @@
           "interrupted": "Interrompue",
           "cancelled": "Annulée"
         },
-        "waitingUntil": "jusqu'à {{time}}"
+        "waitingUntil": "jusqu'à {{time}}",
+        "droppedRow_one": "{{count}} déclenchement {{trigger}} rejeté",
+        "droppedRow_other": "{{count}} déclenchements {{trigger}} rejetés",
+        "droppedDetail_one": "{{count}} déclenchement de cette minute n'a pas été exécuté : le flux exécutait déjà son nombre maximal d'exécutions simultanées.",
+        "droppedDetail_other": "{{count}} déclenchements de cette minute n'ont pas été exécutés : le flux exécutait déjà son nombre maximal d'exécutions simultanées."
       },
       "nodeLabels": {
         "trigger_event": "Événement TS",
@@ -2655,7 +3749,11 @@
       "gotIt": "Compris",
       "flowSaved": "Flux enregistré",
       "approvalRevoked": "Flow enregistré. Ce flow importé fait maintenant autre chose : son approbation a été retirée et il a été désactivé ; un admin doit le réactiver.",
-      "templateConfig": "Configurer le modèle",      "flowSaveFailed": "Échec de l’enregistrement du flux",
+      "templateConfig": "Configurer le modèle",
+      "needsSshHint": "",
+      "noSshNotice": "",
+      "noWebQueryNotice": "",
+      "flowSaveFailed": "Échec de l’enregistrement du flux",
       "placeholderReference": "Référence des placeholders",
       "save": "Enregistrer",
       "connectHint": "Cliquez sur un port d’entrée ou un nœud pour connecter — Échap pour annuler",
@@ -2730,13 +3828,13 @@
           "signedExampleLabel": "Exemple d’appel, signé",
           "requireSignatureHint": "Protège contre les appels répétés : l’appelant envoie X-Webhook-Timestamp (secondes Unix) et X-Webhook-Signature = sha256= suivi du HMAC-SHA256 de « <horodatage>.<contenu> », avec le secret comme clé. Seuls les appels dont l’horodatage s’écarte d’au plus 5 minutes sont acceptés, et chaque signature une seule fois. Activé, le secret seul ne suffit plus ; les appels signés sont acceptés aussi quand il est désactivé.",
           "requireSignatureLabel": "Exiger une signature",
-          "querySecretWarning_other": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez les appelants à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès.",
-          "querySecretWarning_one": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez l’appelant à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès.",
           "exampleLabel": "Exemple d’appel",
           "httpMethodLabel": "Méthode HTTP",
           "secretLabel": "Secret",
           "secretPlaceholder": "Obligatoire : sans secret, le webhook ne se déclenche jamais",
-          "secretHint": "L’appelant envoie le secret dans l’en-tête X-Webhook-Secret."
+          "secretHint": "L’appelant envoie le secret dans l’en-tête X-Webhook-Secret.",
+          "querySecretWarning_other": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez les appelants à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès.",
+          "querySecretWarning_one": "Ce flux a été appelé {{count}} fois avec ?secret= dans l’adresse, dernier appel le {{date}}. Passez l’appelant à l’en-tête X-Webhook-Secret : les adresses finissent dans les journaux d’accès."
         },
         "triggerCommand": {
           "listenChannelIdLabel": "ID du salon d’écoute (facultatif)",
@@ -2969,7 +4067,16 @@
           "title": "Et si",
           "explanation": "Planifiez des modifications pour voir la réponse avant de les enregistrer : avant et après côte à côte. Sont pris en compte : l’appartenance aux groupes de serveur, le groupe de canal d’un client dans un canal et les valeurs des groupes de serveur, des clients, des groupes de canal, des canaux et des clients dans un canal. Rien n’est modifié sur le serveur.",
           "kind": "Modification",
-          "kinds": { "add": "Ajouter au groupe de serveur", "remove": "Retirer du groupe de serveur", "group-perm": "Valeur d’un groupe de serveur", "client-perm": "Valeur d’un client", "cg-assign": "Donner un groupe de canal dans un canal", "cg-perm": "Valeur d’un groupe de canal", "ch-perm": "Valeur d’un canal", "cc-perm": "Valeur client dans le canal" },
+          "kinds": {
+            "add": "Ajouter au groupe de serveur",
+            "remove": "Retirer du groupe de serveur",
+            "group-perm": "Valeur d’un groupe de serveur",
+            "client-perm": "Valeur d’un client",
+            "cg-assign": "Donner un groupe de canal dans un canal",
+            "cg-perm": "Valeur d’un groupe de canal",
+            "ch-perm": "Valeur d’un canal",
+            "cc-perm": "Valeur client dans le canal"
+          },
           "who": "Concerne",
           "permission": "Permission",
           "value": "Valeur",
@@ -2979,7 +4086,14 @@
           "add": "Ajouter la modification",
           "planned": "Modifications prévues",
           "removeChange": "Retirer la modification prévue {{n}}",
-          "missing": { "group": "Choisissez un groupe de serveur.", "channelGroup": "Choisissez un groupe de canal.", "channel": "Choisissez un canal.", "permission": "Saisissez un nom de permission de la liste.", "value": "Saisissez un nombre entier ou cochez « Supprimer la valeur ».", "tooMany": "{{max}} modifications au maximum." },
+          "missing": {
+            "group": "Choisissez un groupe de serveur.",
+            "channelGroup": "Choisissez un groupe de canal.",
+            "channel": "Choisissez un canal.",
+            "permission": "Saisissez un nom de permission de la liste.",
+            "value": "Saisissez un nombre entier ou cochez « Supprimer la valeur ».",
+            "tooMany": "{{max}} modifications au maximum."
+          },
           "describe": {
             "add": "Ajouter {{client}} à {{group}}",
             "remove": "Retirer {{client}} de {{group}}",
@@ -3060,8 +4174,6 @@
           "permanent": "Permanent",
           "custom": "Durée personnalisée"
         },
-        "seconds_one": "{{count}} seconde",
-        "seconds_other": "{{count}} secondes",
         "verdict": {
           "allowed": "Autorisé",
           "denied": "Refusé",
@@ -3117,7 +4229,9 @@
           "network": "Le gestionnaire est injoignable.",
           "tsUnreachable": "Le serveur TeamSpeak est injoignable.",
           "generic": "La vérification a échoué."
-        }
+        },
+        "seconds_one": "{{count}} seconde",
+        "seconds_other": "{{count}} secondes"
       },
       "automatic": {
         "tab": "Groupes automatiques",
@@ -3142,8 +4256,6 @@
         "nothingSelected": "Cochez des permissions à gauche pour les appliquer.",
         "colPermission": "Permission",
         "colValue": "Valeur",
-        "selectedCount_one": "{{count}} permission sélectionnée",
-        "selectedCount_other": "{{count}} permissions sélectionnées",
         "applyAdd": "Ajouter à tous les groupes de ce type...",
         "applyRemove": "Retirer de tous les groupes de ce type...",
         "confirmAddTitle": "Appliquer à toute l’instance ?",
@@ -3152,11 +4264,13 @@
         "confirmRemoveBody": "Cela retire {{count}} permission(s) ({{permissions}}) de TOUS les groupes de serveur réguliers du type « {{type}} », sur TOUS les serveurs virtuels de cette instance TeamSpeak - pas seulement celui sélectionné.",
         "confirmButton": "Appliquer à toute l’instance",
         "andMore": " et {{count}} de plus",
+        "failed": "Impossible d’appliquer aux groupes automatiques",
+        "selectedCount_one": "{{count}} permission sélectionnée",
+        "selectedCount_other": "{{count}} permissions sélectionnées",
         "addedToast_one": "Permission définie sur tous les groupes « {{type}} »",
         "addedToast_other": "{{count}} permissions définies sur tous les groupes « {{type}} »",
         "removedToast_one": "Permission retirée de tous les groupes « {{type}} »",
-        "removedToast_other": "{{count}} permissions retirées de tous les groupes « {{type}} »",
-        "failed": "Impossible d’appliquer aux groupes automatiques"
+        "removedToast_other": "{{count}} permissions retirées de tous les groupes « {{type}} »"
       },
       "selectClient": "Sélectionner un client",
       "searchClientsPlaceholder": "Rechercher des clients...",
@@ -3337,7 +4451,11 @@
         "botStarted": "Bot démarré",
         "startFailed": "Échec du démarrage du bot",
         "connection": {
-          "badge": { "connecting": "Connexion", "retrying": "Nouvel essai", "failed": "Échec" },
+          "badge": {
+            "connecting": "Connexion",
+            "retrying": "Nouvel essai",
+            "failed": "Échec"
+          },
           "connecting": "Connexion au serveur…",
           "connectingRetry": "Connexion au serveur… (essai {{attempt}} sur {{max}})",
           "retrying": "Connexion impossible. Nouvel essai {{attempt}} sur {{max}} dans {{time}}.",
@@ -3403,6 +4521,11 @@
         "selectServerPlaceholder": "Sélectionner un serveur...",
         "voicePortLabel": "Port vocal",
         "nicknameLabel": "Pseudo",
+        "uidLabel": "",
+        "uidHint": "",
+        "uidMissing": "",
+        "uidCopied": "",
+        "uidCopyFailed": "",
         "serverPasswordLabel": "Mot de passe du serveur",
         "defaultChannelLabel": "Salon par défaut",
         "defaultChannelPlaceholder": "Nom ou ID du salon (facultatif)",
@@ -3430,6 +4553,7 @@
         "chooseStationPlaceholder": "Choisir une station...",
         "descriptionTemplateLabel": "Modèle de description",
         "descriptionTemplatePlaceholder": "p. ex. En cours : {title} ({remaining} restantes)",
+        "descriptionNeedsWebQuery": "",
         "save": "Enregistrer",
         "deleteBotTitle": "Supprimer le bot musical ?",
         "deleteBotDescription": "Cela supprimera définitivement ce bot musical et le déconnectera du serveur.",
@@ -3586,6 +4710,8 @@
       "permissionsTab": {
         "adminBypassGroups": "Groupes de contournement admin",
         "adminBypassHint": "Les membres de tout groupe coché ici peuvent utiliser toutes les commandes de chat ci-dessous, quelle que soit leur restriction individuelle.",
+        "noWebQueryTitle": "",
+        "noWebQueryHint": "",
         "chatCommandPermissions": "Permissions des commandes de chat",
         "everyone": "Tout le monde",
         "noGroupAssigned": "Aucun groupe attribué - inutilisable",
@@ -4389,23 +5515,75 @@
             "{{temp.client.0.client_totalconnections}} — connexions totales"
           ],
           "fields": {
-            "supportChannelId": { "label": "ID du salon de support (attente)" },
-            "parentChannelId": { "label": "Salon parent pour les salons créés (optionnel)" },
-            "supporterGroupIds": { "label": "ID des groupes de support (séparés par des virgules)" },
-            "afkChannelIds": { "label": "Salons AFK, séparés par des virgules — les supports qui s’y trouvent ne comptent pas comme disponibles (optionnel)" },
-            "roomName": { "label": "Nom du salon de support" },
-            "roomType": { "label": "Type de salon de support", "options": ["Temporaire (supprimé quand vide)", "Semi-permanent", "Permanent"] },
-            "notifyMethod": { "label": "Comment notifier l’utilisateur", "options": ["Poke", "Chat"] },
-            "userMessage": { "label": "Message à l’utilisateur (vide = aucun)" },
-            "supporterMessage": { "label": "Poke aux supports (vide = aucun)" },
-            "offlineMessage": { "label": "Message quand aucun support n’est en ligne (vide = aucun)" },
-            "listMode": { "label": "Filtre par groupe", "options": ["Désactivé", "Liste blanche (seulement ces groupes)", "Liste noire (bloquer ces groupes)"] },
-            "listGroupIdsWhitelist": { "label": "ID des groupes autorisés (séparés par des virgules)" },
-            "listGroupIdsBlacklist": { "label": "ID des groupes bloqués (séparés par des virgules)" },
-            "blockedMessage": { "label": "Message à un utilisateur bloqué (vide = aucun)" },
-            "waitingRoomToggle": { "label": "Renommer la salle d’attente selon la disponibilité", "options": ["Non", "Oui"] },
-            "waitingRoomOpenName": { "label": "Nom de la salle d’attente quand un support est en ligne" },
-            "waitingRoomClosedName": { "label": "Nom de la salle d’attente quand aucun support n’est en ligne" }
+            "supportChannelId": {
+              "label": "ID du salon de support (attente)"
+            },
+            "parentChannelId": {
+              "label": "Salon parent pour les salons créés (optionnel)"
+            },
+            "supporterGroupIds": {
+              "label": "ID des groupes de support (séparés par des virgules)"
+            },
+            "afkChannelIds": {
+              "label": "Salons AFK, séparés par des virgules — les supports qui s’y trouvent ne comptent pas comme disponibles (optionnel)"
+            },
+            "roomName": {
+              "label": "Nom du salon de support"
+            },
+            "roomType": {
+              "label": "Type de salon de support",
+              "options": [
+                "Temporaire (supprimé quand vide)",
+                "Semi-permanent",
+                "Permanent"
+              ]
+            },
+            "notifyMethod": {
+              "label": "Comment notifier l’utilisateur",
+              "options": [
+                "Poke",
+                "Chat"
+              ]
+            },
+            "userMessage": {
+              "label": "Message à l’utilisateur (vide = aucun)"
+            },
+            "supporterMessage": {
+              "label": "Poke aux supports (vide = aucun)"
+            },
+            "offlineMessage": {
+              "label": "Message quand aucun support n’est en ligne (vide = aucun)"
+            },
+            "listMode": {
+              "label": "Filtre par groupe",
+              "options": [
+                "Désactivé",
+                "Liste blanche (seulement ces groupes)",
+                "Liste noire (bloquer ces groupes)"
+              ]
+            },
+            "listGroupIdsWhitelist": {
+              "label": "ID des groupes autorisés (séparés par des virgules)"
+            },
+            "listGroupIdsBlacklist": {
+              "label": "ID des groupes bloqués (séparés par des virgules)"
+            },
+            "blockedMessage": {
+              "label": "Message à un utilisateur bloqué (vide = aucun)"
+            },
+            "waitingRoomToggle": {
+              "label": "Renommer la salle d’attente selon la disponibilité",
+              "options": [
+                "Non",
+                "Oui"
+              ]
+            },
+            "waitingRoomOpenName": {
+              "label": "Nom de la salle d’attente quand un support est en ligne"
+            },
+            "waitingRoomClosedName": {
+              "label": "Nom de la salle d’attente quand aucun support n’est en ligne"
+            }
           }
         },
         "privateChannelCreator": {
