@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.132.0 · frontend 3.155.0 · sidecar 2.4.1**
+Versions at the end of the month: **backend 2.133.0 · frontend 3.156.0 · sidecar 2.4.1**
 
 ### New Features
 
@@ -39,6 +39,7 @@ Versions at the end of the month: **backend 2.132.0 · frontend 3.155.0 · sidec
 
 ### Improvements
 
+- **Ready for Polish** — Polish is now a translation language on [Crowdin](https://crowdin.com/project/ts6forkmanager) (next to French) and shows up in the language switcher once its translation arrives. Community flow templates may carry a Polish name and description (`translations.pl`), the client database export uses a semicolon between CSV fields for Polish like for German and French, and the global search treats ł as l. *backend 2.133.0, frontend 3.156.0*
 - **Live stream titles and preview pictures** — A live stream shows the broadcaster's current stream title, with the channel as the artist, instead of "<channel> (live)" plus date and time; a live video shows its title instead of the link. The bot looks title and preview picture up again every 5 minutes, so the bot's nickname, its description and the web interface follow when the broadcaster changes the title. The bot card and the Video tab show the preview picture; the backend loads it, so Twitch or Kick never see the addresses of people viewing the manager. *backend 2.113.0, frontend 3.131.0* [#398](https://github.com/DomeNinchen/ts6forkmanager/pull/398)
 - **Live streams in the web interface** — A channel that is live shows a red LIVE badge instead of a length in the bot card, the Queue tab, the Video tab and the music request history; playing a live entry from the history again starts the channel anew (it has to be live at that moment). Whoever has the bot open gets a notice when a live stream ends and why (channel offline, time limit, could not be reached again), and "live streams are switched off" or "the channel is not live" now show as readable messages, for admins with a link to Settings -> Streaming. All texts in German, English and French; the badge says LIVE in every language. *backend 2.112.0, frontend 3.130.0* [#397](https://github.com/DomeNinchen/ts6forkmanager/pull/397)
 - **Example override file for local Docker changes** — `docker-compose.override.example.yml` shows how to change the stack without touching `docker-compose.yml`, using the example of a LAN IP per container (macvlan/ipvlan, such as Unraid's `br0`), plus optional video tuning for the sidecar. `docker-compose.override.yml` is now ignored by git, so `git pull` keeps working with local changes. ([Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment#own-lan-ips-per-container)) [#380](https://github.com/DomeNinchen/ts6forkmanager/pull/380)
