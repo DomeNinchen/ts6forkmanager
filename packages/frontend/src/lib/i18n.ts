@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { pruneUntranslated } from './i18n-resources';
 
 // Every locale folder under src/locales/<code>/translation.json becomes a
 // supported language automatically - adding one (e.g. a Crowdin sync PR
@@ -14,7 +15,8 @@ const localeModules = import.meta.glob('../locales/*/translation.json', { eager:
 const resources: Record<string, { translation: Record<string, unknown> }> = {};
 for (const path in localeModules) {
   const code = path.match(/\/locales\/([^/]+)\/translation\.json$/)?.[1];
-  if (code) resources[code] = { translation: localeModules[path].default };
+  // Untranslated Crowdin strings arrive as "" - drop them so they fall back to English.
+  if (code) resources[code] = { translation: pruneUntranslated(localeModules[path].default) };
 }
 
 export const SUPPORTED_LANGUAGES = Object.keys(resources).sort();
