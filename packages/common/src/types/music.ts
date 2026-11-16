@@ -53,6 +53,8 @@ export interface MusicBotSummary {
   voteSkipPercent: number;
   /** ...and at least this many. */
   voteSkipMinVotes: number;
+  /** Posts a short !voteskip reminder to the channel on every new track. */
+  voteSkipHint: boolean;
   hasAvatar: boolean;
   /** The bot's TeamSpeak unique ID (client_unique_identifier); null when it has no stored identity. */
   uid: string | null;
@@ -85,6 +87,7 @@ export interface CreateMusicBotRequest {
   voteSkipEnabled?: boolean;
   voteSkipPercent?: number;
   voteSkipMinVotes?: number;
+  voteSkipHint?: boolean;
 }
 
 export interface UpdateMusicBotRequest {
@@ -104,6 +107,7 @@ export interface UpdateMusicBotRequest {
   voteSkipEnabled?: boolean;
   voteSkipPercent?: number;
   voteSkipMinVotes?: number;
+  voteSkipHint?: boolean;
 }
 
 // === Song Types ===
@@ -149,6 +153,8 @@ export interface PlaybackState {
   shuffle: boolean;
   repeat: RepeatMode;
   isStreaming?: boolean;
+  /** The running !voteskip vote on the current track; null when there is none. */
+  voteSkip?: { votes: number; needed: number; vetoed: boolean } | null;
 }
 
 // === Playlist Types ===
@@ -251,6 +257,7 @@ export const RESTRICTABLE_COMMANDS: { command: string; label: string }[] = [
   { command: 'pause', label: '!pause' },
   { command: 'skip', label: '!skip / !next' },
   { command: 'voteskip', label: '!voteskip' },
+  { command: 'veto', label: '!veto' },
   { command: 'prev', label: '!prev' },
   { command: 'vol', label: '!vol / !volume' },
   { command: 'np', label: '!np / !nowplaying' },

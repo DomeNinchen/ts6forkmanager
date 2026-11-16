@@ -4424,6 +4424,9 @@
         "songsCount_other": "{{count}} songs"
       },
       "botPlayerCard": {
+        "voteSkipCount": "Skip votes {{votes}}/{{needed}}",
+        "voteSkipVetoed": "Skip vetoed",
+        "voteSkipTitle": "Vote in the bot's channel with !voteskip",
         "playerWidget": "Player Widget",
         "playSongEllipsis": "Play Song...",
         "live": "LIVE",
@@ -4524,6 +4527,8 @@
         "voteSkipPercentError": "A whole number from 0 to 100.",
         "voteSkipMinVotesLabel": "At least (votes)",
         "voteSkipMinVotesError": "A whole number from 1 to 100.",
+        "voteSkipHintLabel": "Hint in the channel on every new track",
+        "voteSkipHintHint": "The bot writes one short line to the channel chat when a new track starts, so listeners know they can vote it away.",
         "autoplayOff": "Off",
         "autoplaySong": "Play a song",
         "autoplayRadio": "Play a radio station",

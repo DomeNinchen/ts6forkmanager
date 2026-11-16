@@ -210,6 +210,13 @@ function BotPlayerCard({ bot, onEdit, onDelete, onPlay }: {
               {isStreaming && (
                 <Badge variant="destructive" className="text-[9px] shrink-0 animate-pulse">{t('pages.musicBots.botPlayerCard.live')}</Badge>
               )}
+              {state.voteSkip && (
+                <Badge variant="outline" className="text-[9px] shrink-0" title={t('pages.musicBots.botPlayerCard.voteSkipTitle')}>
+                  {state.voteSkip.vetoed
+                    ? t('pages.musicBots.botPlayerCard.voteSkipVetoed')
+                    : t('pages.musicBots.botPlayerCard.voteSkipCount', { votes: state.voteSkip.votes, needed: state.voteSkip.needed })}
+                </Badge>
+              )}
             </div>
             {/* Progress bar (hidden for streams) */}
             {!isStreaming && (
@@ -676,7 +683,7 @@ function BotsTab() {
   const [form, setForm] = useState({
     name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
     autoplayMode: 'none' as 'none' | 'song' | 'radio', autoplaySongId: '', autoplayRadioStationId: '', idlePauseEnabled: false, idlePauseMinutes: 5,
-    voteSkipEnabled: true, voteSkipPercent: '50', voteSkipMinVotes: '1',
+    voteSkipEnabled: true, voteSkipPercent: '50', voteSkipMinVotes: '1', voteSkipHint: false,
   });
 
   const bots = Array.isArray(data) ? data : [];
@@ -718,6 +725,7 @@ function BotsTab() {
       voteSkipEnabled: form.voteSkipEnabled,
       voteSkipPercent: Number(form.voteSkipPercent),
       voteSkipMinVotes: Number(form.voteSkipMinVotes),
+      voteSkipHint: form.voteSkipHint,
     }, {
       onSuccess: (result: { id: number }) => {
         toast.success(t('pages.musicBots.botsTab.botCreated'));
@@ -752,6 +760,7 @@ function BotsTab() {
       voteSkipEnabled: form.voteSkipEnabled,
       voteSkipPercent: Number(form.voteSkipPercent),
       voteSkipMinVotes: Number(form.voteSkipMinVotes),
+      voteSkipHint: form.voteSkipHint,
     }}, {
       onSuccess: () => {
         toast.success(t('pages.musicBots.botsTab.botUpdated'));
@@ -771,7 +780,7 @@ function BotsTab() {
     setForm({
       name: '', serverConfigId: '', nickname: 'MusicBot', serverPassword: '', defaultChannel: '', channelPassword: '', voicePort: 9987, volume: 50, autoStart: false, descriptionTemplate: '',
       autoplayMode: 'none', autoplaySongId: '', autoplayRadioStationId: '', idlePauseEnabled: false, idlePauseMinutes: 5,
-      voteSkipEnabled: true, voteSkipPercent: '50', voteSkipMinVotes: '1',
+      voteSkipEnabled: true, voteSkipPercent: '50', voteSkipMinVotes: '1', voteSkipHint: false,
     });
     setAvatarFile(null);
     setAvatarRemoved(false);
@@ -815,6 +824,7 @@ function BotsTab() {
                   voteSkipEnabled: bot.voteSkipEnabled,
                   voteSkipPercent: String(bot.voteSkipPercent),
                   voteSkipMinVotes: String(bot.voteSkipMinVotes),
+                  voteSkipHint: bot.voteSkipHint,
                 });
                 setAvatarFile(null);
                 setAvatarRemoved(false);
@@ -1035,6 +1045,13 @@ function BotsTab() {
                     {!voteSkipMinValid && (
                       <p id="bot-vote-skip-min-error" className="text-[11px] text-destructive mt-1">{t('pages.musicBots.botsTab.voteSkipMinVotesError')}</p>
                     )}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center gap-2">
+                      <Switch id="bot-vote-skip-hint" checked={form.voteSkipHint} onCheckedChange={(v) => setForm({ ...form, voteSkipHint: v })} />
+                      <Label className="text-xs" htmlFor="bot-vote-skip-hint">{t('pages.musicBots.botsTab.voteSkipHintLabel')}</Label>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">{t('pages.musicBots.botsTab.voteSkipHintHint')}</p>
                   </div>
                 </div>
               )}

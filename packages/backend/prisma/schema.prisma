@@ -477,6 +477,8 @@ model MusicBot {
   voteSkipEnabled        Boolean       @default(true)
   voteSkipPercent        Int           @default(50)
   voteSkipMinVotes       Int           @default(1)
+  // Posts a short "!voteskip" reminder to the channel on every new track (only while vote skip is on)
+  voteSkipHint           Boolean       @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

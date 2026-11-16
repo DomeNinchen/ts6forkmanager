@@ -103,6 +103,12 @@ export class VoiceBotManager extends EventEmitter {
     }
   }
 
+  /** The running !voteskip vote of a bot, for its playback state; null when there is none. */
+  getVoteSkipStatus(id: number): { votes: number; needed: number; vetoed: boolean } | null {
+    const bot = this.bots.get(id);
+    return bot && this.musicCmdHandler ? this.musicCmdHandler.voteSkipStatus(id, bot) : null;
+  }
+
   setMusicCommandHandler(handler: MusicCommandHandler): void {
     this.musicCmdHandler = handler;
     // Register all existing bots
@@ -325,6 +331,7 @@ export class VoiceBotManager extends EventEmitter {
     voteSkipEnabled?: boolean;
     voteSkipPercent?: number;
     voteSkipMinVotes?: number;
+    voteSkipHint?: boolean;
   }): Promise<{ id: number }> {
     // Enforce bot limit
     const limitSetting = await this.prisma.appSetting.findUnique({ where: { key: 'max_music_bots' } });
@@ -366,6 +373,7 @@ export class VoiceBotManager extends EventEmitter {
         voteSkipEnabled: data.voteSkipEnabled,
         voteSkipPercent: data.voteSkipPercent,
         voteSkipMinVotes: data.voteSkipMinVotes,
+        voteSkipHint: data.voteSkipHint,
       },
     });
 
