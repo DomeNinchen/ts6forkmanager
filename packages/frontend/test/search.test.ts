@@ -10,6 +10,7 @@ test('foldText: case, accents, ß and spelled-out umlauts', () => {
   assert.equal(foldText('ueber'), 'uber');
   assert.equal(foldText('Paramètres'), 'parametres');
   assert.equal(foldText('Straße'), 'strasse');
+  assert.equal(foldText('Użytkownicy Łączność'), 'uzytkownicy lacznosc');
 });
 
 test('matches part of a word, ignoring case and umlauts', () => {

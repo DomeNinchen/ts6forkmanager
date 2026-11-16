@@ -1,10 +1,11 @@
 // Pure matching and ranking for the global search. No imports, so `node --test` can run it as is.
 
-/** Lower case, accents dropped, ß as ss and spelled-out umlauts (ae/oe/ue) as plain vowels - "uber", "ueber" and "Über" all match. */
+/** Lower case, accents dropped (Polish ł as l), ß as ss and spelled-out umlauts (ae/oe/ue) as plain vowels - "uber", "ueber" and "Über" all match. */
 export function foldText(text: string): string {
   return text
     .toLowerCase()
     .replace(/ß/g, 'ss')
+    .replace(/ł/g, 'l')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/([aou])e/g, '$1');

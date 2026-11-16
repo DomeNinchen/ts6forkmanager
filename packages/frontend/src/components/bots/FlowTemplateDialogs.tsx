@@ -6,7 +6,7 @@ import { AlertTriangle, KeyRound, FileUp, RefreshCw, ShieldAlert } from 'lucide-
 import {
   checkFlowTemplate, flowCapabilities, parseFlowTemplate, FLOW_TEMPLATE_OBJECT_TYPES,
   type FlowCapability, type FlowDiff, type FlowTemplateFile, type FlowTemplateInput, type FlowTemplateInputType,
-  type FlowTemplateTarget, type FlowTemplateUpdate, type FlowTemplateWarning,
+  type FlowTemplateLanguage, type FlowTemplateTarget, type FlowTemplateUpdate, type FlowTemplateWarning,
 } from '@ts6/common';
 import { botsApi } from '@/api/bots.api';
 import { channelsApi } from '@/api/channels.api';
@@ -347,7 +347,7 @@ export function ImportTemplateDialog({ open, onOpenChange, serverConfigId, sid, 
   const basis = updates?.find((u) => u.flowId === basisId) ?? null;
   const capabilities = useMemo(() => (template ? flowCapabilities(template.flow.nodes) : []), [template]);
   const objects = useServerObjects(serverConfigId, sid, open && !!template?.inputs.some((i) => isObjectType(i.type)));
-  const lang = i18n.language.slice(0, 2) as 'de' | 'en' | 'fr';
+  const lang = i18n.language.slice(0, 2) as FlowTemplateLanguage;
   const shownName = template?.translations?.[lang]?.name || template?.name;
   const shownDescription = template?.translations?.[lang]?.description || template?.description;
 
