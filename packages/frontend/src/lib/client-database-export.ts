@@ -44,7 +44,7 @@ export interface ExportFile {
 }
 
 /** Spreadsheet programs that expect a semicolon between CSV fields because their decimal separator is a comma. */
-const SEMICOLON_LANGUAGES = ['de', 'fr'];
+const SEMICOLON_LANGUAGES = ['de', 'fr', 'pl'];
 
 export function defaultDelimiter(language: string): CsvDelimiter {
   return SEMICOLON_LANGUAGES.includes(language.toLowerCase().split('-')[0]) ? ';' : ',';
