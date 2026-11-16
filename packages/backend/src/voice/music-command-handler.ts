@@ -11,6 +11,12 @@ import { tallyVotes, type VoteSkipRule } from './vote-skip.js';
 
 const MUSIC_DIR = process.env.MUSIC_DIR || '/data/music';
 
+/** Radio stations and live streams are never voted away; only tracks are. */
+function isStreamEntry(item: QueueItem): boolean {
+  return item.source === 'radio' || item.source === 'live' || !!item.streamUrl;
+}
+const NO_VOTE_ON_STREAMS = 'Vote skip is not available for radio stations and live streams.';
+
 /** The vote on one queue entry: who voted, whether an admin vetoed it, and the rule it was last counted with (for the web player). */
 interface SkipVote {
   item: QueueItem;
@@ -523,7 +529,7 @@ export class MusicCommandHandler {
 
   /** One short line per new track, only when the bot has vote skip and its hint switched on. */
   private async postVoteSkipHint(botId: number, bot: VoiceBot, item: QueueItem): Promise<void> {
-    if (!item || this.hinted.get(botId) === item) return;
+    if (!item || isStreamEntry(item) || this.hinted.get(botId) === item) return;
     this.hinted.set(botId, item);
     const row = await this.prisma.musicBot.findUnique({ where: { id: botId }, select: { voteSkipEnabled: true, voteSkipHint: true } });
     if (row?.voteSkipEnabled && row.voteSkipHint) this.say(bot, `Now playing: ${item.title}. Type !voteskip to vote to skip it.`);
@@ -534,6 +540,10 @@ export class MusicCommandHandler {
     const item = bot.nowPlaying;
     if (!item) {
       this.reply(bot, userClid, 'Nothing is playing.');
+      return;
+    }
+    if (isStreamEntry(item)) {
+      this.reply(bot, userClid, NO_VOTE_ON_STREAMS);
       return;
     }
     const entry = this.skipVotes.get(botId);
@@ -555,6 +565,10 @@ export class MusicCommandHandler {
     const item = bot.nowPlaying;
     if (!item) {
       this.reply(bot, userClid, 'Nothing is playing.');
+      return;
+    }
+    if (isStreamEntry(item)) {
+      this.reply(bot, userClid, NO_VOTE_ON_STREAMS);
       return;
     }
     const people = bot.channelPeopleIds;
