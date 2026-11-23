@@ -14,7 +14,7 @@ export const FLOW_TEMPLATE_MAX_INPUTS = 200;
 export type FlowTemplateInputType = 'channel' | 'servergroup' | 'channelgroup' | 'bot' | 'text' | 'number' | 'select';
 export const FLOW_TEMPLATE_INPUT_TYPES: readonly FlowTemplateInputType[] = ['channel', 'servergroup', 'channelgroup', 'bot', 'text', 'number', 'select'];
 
-export type FlowTemplateLanguage = 'de' | 'en' | 'fr' | 'pl';
+export type FlowTemplateLanguage = 'de' | 'en' | 'fr' | 'pl' | 'pt' | 'zh';
 
 /** A spot in one node's settings; `field` is a dot path into `config` (e.g. `params.cid`, `headers.Authorization`). */
 export interface FlowTemplateTarget { node: string; field: string }
