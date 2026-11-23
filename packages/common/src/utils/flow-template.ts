@@ -327,7 +327,7 @@ export function checkFlowTemplate(raw: unknown): FlowTemplateCheck {
   if (raw.translations !== undefined) {
     if (!isObj(raw.translations)) errors.push('"translations" must be an object.');
     else for (const [lang, tr] of Object.entries(raw.translations)) {
-      if (!['de', 'en', 'fr', 'pl'].includes(lang)) errors.push(`"translations.${lang}": only de, en, fr and pl are supported.`);
+      if (!['de', 'en', 'fr', 'pl', 'pt', 'zh'].includes(lang)) errors.push(`"translations.${lang}": only de, en, fr, pl, pt and zh are supported.`);
       else if (!isObj(tr) || !optString(tr.name, 100) || !optString(tr.description, 2000)) errors.push(`"translations.${lang}" must hold a name (max 100) and/or description (max 2000).`);
     }
   }
