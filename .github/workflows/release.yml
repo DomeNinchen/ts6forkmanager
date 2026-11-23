@@ -19,7 +19,10 @@ name: Monthly release
 # workflow existed. A fine-grained personal access token for this repository
 # only, with Contents and Workflows set to read and write, stored as the
 # Actions secret RELEASE_TOKEN, lets those months through; without it they
-# are reported and skipped, and the other months are published anyway.
+# are reported and skipped, and the other months are published anyway. Only
+# runs by hand and on a change to the release setup use it: the monthly run
+# tags the month that just ended, which the built-in token may, so an expired
+# or deleted RELEASE_TOKEN never stops it.
 on:
   schedule:
     # 03:17 UTC on the 1st: the previous month is over in Berlin time too, and
@@ -60,7 +63,7 @@ jobs:
 
       - name: Publish the release
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          GH_TOKEN: ${{ github.event_name != 'schedule' && secrets.RELEASE_TOKEN || github.token }}
           # Scheduled: empty, i.e. the month that just ended. Otherwise the
           # month given by hand, or every finished month without a release.
           MONTH: ${{ github.event_name != 'schedule' && (inputs.month || 'all') || '' }}
