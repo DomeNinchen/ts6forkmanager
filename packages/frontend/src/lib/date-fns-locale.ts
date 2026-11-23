@@ -1,4 +1,4 @@
-import { de, enUS } from 'date-fns/locale';
+import { de, enUS, zhCN } from 'date-fns/locale';
 import i18n from '@/lib/i18n';
 
 /** Locale object for date-fns calls (formatDistanceToNow, etc.), matching the
@@ -8,5 +8,8 @@ import i18n from '@/lib/i18n';
  * newly added via Crowdin) falls back to English formatting until its own
  * date-fns locale is added below. */
 export function getDateFnsLocale() {
-  return i18n.language?.startsWith('de') ? de : enUS;
+  const language = i18n.language ?? '';
+  if (language.startsWith('de')) return de;
+  if (language.startsWith('zh')) return zhCN;
+  return enUS;
 }
