@@ -53,7 +53,7 @@ All five permission layers, with a side-by-side comparison that highlights the d
 
 ## Why This Fork Exists
 
-Upstream had a video/audio streaming stutter that was never resolved and security findings nobody had triaged. This fork fixed the stutter at its root, hardened the security and has since added many features and fixes of its own. [CHANGELOG.md](CHANGELOG.md) lists every change, newest first.
+Upstream had a video/audio streaming stutter that was never resolved and security findings nobody had triaged. This fork fixed the stutter at its root, hardened the security and has since added many features and fixes of its own. [CHANGELOG.md](CHANGELOG.md) lists every change, newest first, and each finished month is also published under [Releases](https://github.com/DomeNinchen/ts6forkmanager/releases).
 
 ## Requirements
 
@@ -162,4 +162,4 @@ The [Wiki](https://github.com/DomeNinchen/ts6forkmanager/wiki) has the full docu
 
 ## License
 
-GPLv3
+GPLv3, see [LICENSE](LICENSE). The fork notice and the terms that still apply to the code of the original project are in [NOTICE](NOTICE).
