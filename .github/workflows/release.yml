@@ -1,0 +1,46 @@
+name: Monthly release
+
+# Publishes one GitHub release per month, so the monthly CHANGELOG.md sections
+# also show up under Releases and people can watch the repository for them.
+# The tag (vYYYY.MM) marks main at the end of the month, the title names the
+# backend, frontend and sidecar versions of that commit and the notes are the
+# month's CHANGELOG section. The work is done by
+# .github/scripts/monthly-release.sh, which skips a month that already has a
+# release, so a second run changes nothing. Nothing is built or uploaded:
+# installations are still built from source (git pull + docker compose).
+on:
+  schedule:
+    # 03:17 UTC on the 1st: the previous month is over in Berlin time too, and
+    # away from the full hour, when scheduled runs queue up on GitHub.
+    - cron: "17 3 1 * *"
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "Month as YYYY-MM, or 'all' for every finished month without a release. Empty: the previous month."
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monthly-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # The notes come from the CHANGELOG.md of the checked-out branch, so only main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The script looks for the last commit of each month on origin/main.
+          fetch-depth: 0
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MONTH: ${{ inputs.month }}
+        run: .github/scripts/monthly-release.sh "$MONTH"
