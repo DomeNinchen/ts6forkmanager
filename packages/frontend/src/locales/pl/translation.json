@@ -244,7 +244,7 @@
       "deleteDescription": "Spowoduje to trwałe usunięcie przepływu bota i całej jego historii.",
       "deleted": "Bot usunięty",
       "webhooks": {
-        "title": "Webhook: limity przychodzące",
+        "title": "Webhooks: limity przychodzące",
         "allowQuerySecretHint": "Zalecanym sposobem jest użycie nagłówka X-Webhook-Secret. Chociaż jest to dozwolone, każdy przepływ jest liczony i wyświetla swoje wywołania z parametrem ?secret=; po wyłączeniu tej opcji takie wywołania zwracają kod 404.",
         "allowQuerySecretLabel": "Zezwól na ?secret= w adresie",
         "description": "Ograniczenia dotyczące przychodzących wywołań webhooków, sprawdzane przed odczytaniem treści. Prawidłowe wywołania (zgodne z kluczem tajnym) i nieudane (nieznana ścieżka lub nieprawidłowy klucz tajny) są liczone oddzielnie dla każdego adresu. Dotyczy całej instancji.",
@@ -269,10 +269,10 @@
         "maxConcurrentLabel": "Jednoczesne wykonywania na przepływ",
         "maxConcurrentHint": "Od {{min}} do {{max}}; kolejne wyzwalacze są pomijane i pokazywane przy przepływie, a webhook odpowiada wtedy kodem 429.",
         "stats": "Obecnie przechowywanych jest {{executions}} wykonań i {{logs}} wierszy logów.",
-        "saved": "Ustawienia zapisane.",
+        "saved": "Ustawienia zapisane",
         "saveFailed": "Nie udało się zapisać ustawień",
         "restoreDefaults": "Przywróć ustawienia domyślne",
-        "unsaved": "Zmiany nie zostały zapisane!"
+        "unsaved": "Zmiany nie zostały zapisane"
       },
       "querySecret_few": "{{count}} wywołania z ?secret=",
       "querySecret_many": "{{count}} wywołań z ?secret=",
@@ -287,14 +287,14 @@
       "updated": "Uaktualniono ustawienia instancji",
       "updateFailed": "Nie udało się zaktualizować ustawień instancji",
       "fields": {
-        "guestServerqueryGroup": " Grupa gościa ServerQuery",
+        "guestServerqueryGroup": "Grupa gościa ServerQuery",
         "templateServerAdminGroup": "Szablon grupy administratorów serwera",
         "templateServerDefaultGroup": "Szablonowa domyślna grupa serwera",
         "templateChannelDefaultGroup": "Szablon kanału – grupa domyślna",
         "templateChannelAdminGroup": "Szablon grupy administratorów kanału",
         "filetransferPort": "Port przesyłania plików",
-        "floodCommands": "Polecenia dotyczące powodzi",
-        "floodTime": "Czas floodu",
+        "floodCommands": "Polecenia floodu",
+        "floodTime": "Czas floodu (sek.)",
         "floodBanTime": "Czas bana za flood (sek.)"
       },
       "version": "Wersja",
@@ -1288,9 +1288,9 @@
         "orOther": "lub inne wartości",
         "permissions": "Sprawdzane uprawnienia",
         "unknownTopic": "Nie ma polecenia o nazwie „{{name}}”.",
-        "intro": "Znanych jest {{count}} poleceń ServerQuery. Wpisz „help ”, aby sprawdzić sposób użycia wybranego polecenia, lub kliknij jedno z poniższych, aby zacząć je wpisywać.",
+        "intro": "Znanych jest {{count}} poleceń ServerQuery. Wpisz „help <command>”, aby sprawdzić sposób użycia wybranego polecenia, lub kliknij jedno z poniższych, aby zacząć je wpisywać.",
         "introHelp": "Polecenia help oraz use są wbudowane w tę konsolę: WebQuery nie posiada żadnego z nich.",
-        "introUse": "Polecenie use sid= przełącza serwer wirtualny, na którym wykonywane są polecenia; use sid=0 oznacza samą instancję.",
+        "introUse": "Polecenie use sid=<id> przełącza serwer wirtualny, na którym wykonywane są polecenia; use sid=0 oznacza samą instancję.",
         "introKeys": "Skrót Ctrl+Spacja wyświetla listę pasujących elementów w miejscu kursora: parametry, stałe wartości oraz kanały, klientów lub grupy, które może oznaczać dany identyfikator.",
         "introEscapes": "Wartości używają znaków ucieczki ServerQuery: \\s oznacza spację, \\p kreskę pionową, a \\ ukośnik wsteczny.",
         "legend": "Czerwony: wymaga potwierdzenia przed uruchomieniem. Przerywana ramka: niewymienione we wbudowanej pomocy TeamSpeak."
@@ -2513,7 +2513,7 @@
       },
       "streaming": {
         "title": "Domyślne ustawienia strumienia",
-        "descriptionUsage": "stosuje się, gdy nikt nie wskaże jakości. Wskazanie jakości na czacie ({{{names}}}) nadal ma pierwszeństwo dla tego strumienia. Wyższe wartości wymagają większej przepustowości wysyłania oraz większego obciążenia procesora na tej maszynie, więc jeśli widzowie zgłaszają zacinanie się obrazu, wróć tutaj i zmniejsz te wartości.",
+        "descriptionUsage": "stosuje się, gdy nikt nie wskaże jakości. Wskazanie jakości na czacie ({{names}}) nadal ma pierwszeństwo dla tego strumienia. Wyższe wartości wymagają większej przepustowości wysyłania oraz większego obciążenia procesora na tej maszynie, więc jeśli widzowie zgłaszają zacinanie się obrazu, wróć tutaj i zmniejsz te wartości.",
         "resolutionLabel": "Rozdzielczość",
         "pixelsSuffix": "{{width}}x{{height}} pikseli",
         "frameRateLabel": "Liczba klatek na sekundę",
