@@ -9,15 +9,22 @@ The original project and the code derived from it were released under the MIT Li
 
 The original copyright notices and MIT License terms applicable to the original code are preserved. The MIT License text is reproduced below.
 
+The video pre-download was ported from uniskela/ts6-manager, itself adapted from uniplayer1/ts6-manager. Both are forks of ts6-manager, released under the MIT License as well:
+
+https://github.com/uniskela/ts6-manager
+https://github.com/uniplayer1/ts6-manager
+
 This fork contains modifications and original contributions by DomeNinchen. Unless otherwise stated, the modifications and original contributions in this fork are licensed under the GNU General Public License v3.0, whose full text is in the LICENSE file.
 
 For the original code, the permissions granted by the MIT License remain applicable. Nothing in this notice removes or restricts rights granted by the original MIT License.
 
 -------------------------------------------------------------------------------
 
-MIT License (applies to the original ts6-manager code)
+MIT License (applies to the code from ts6-manager and the forks named above)
 
 Copyright (c) 2026 clusterzx
+Copyright (c) 2026 uniplayer1
+Copyright (c) 2026 uniskela
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
