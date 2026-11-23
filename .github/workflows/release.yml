@@ -9,8 +9,17 @@ name: Monthly release
 # release, so a second run changes nothing. Nothing is built or uploaded:
 # installations are still built from source (git pull + docker compose).
 #
-# Every run without a month publishes every finished month that has no release
-# yet, so a run that failed or was skipped is caught up by the next one.
+# The monthly run publishes the month that just ended. A run by hand without a
+# month, and a change to the release setup, publish every finished month that
+# has no release yet.
+#
+# RELEASE_TOKEN (optional secret): GitHub refuses the built-in token a new tag
+# on a commit whose workflow files differ from main's (403 "Resource not
+# accessible by integration"), which is the case for every month before this
+# workflow existed. A fine-grained personal access token for this repository
+# only, with Contents and Workflows set to read and write, stored as the
+# Actions secret RELEASE_TOKEN, lets those months through; without it they
+# are reported and skipped, and the other months are published anyway.
 on:
   schedule:
     # 03:17 UTC on the 1st: the previous month is over in Berlin time too, and
@@ -51,6 +60,8 @@ jobs:
 
       - name: Publish the release
         env:
-          GH_TOKEN: ${{ github.token }}
-          MONTH: ${{ inputs.month || 'all' }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          # Scheduled: empty, i.e. the month that just ended. Otherwise the
+          # month given by hand, or every finished month without a release.
+          MONTH: ${{ github.event_name != 'schedule' && (inputs.month || 'all') || '' }}
         run: .github/scripts/monthly-release.sh "$MONTH"

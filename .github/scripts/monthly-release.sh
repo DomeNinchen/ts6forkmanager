@@ -10,8 +10,17 @@
 #   all          every finished month in CHANGELOG.md that has no release yet
 #
 # A month that already has a release, or has no CHANGELOG section, is skipped,
-# so running it twice changes nothing. DRY_RUN=1 prints what would be
-# published instead of calling gh (no GitHub access needed).
+# so running it twice changes nothing. A month that cannot be published does
+# not stop the others; the script names it and exits 1 at the end. DRY_RUN=1
+# prints what would be published instead of calling gh (no GitHub access
+# needed).
+#
+# GitHub counts a new tag on a commit whose workflow files differ from main's
+# as creating workflows, and the built-in GITHUB_TOKEN never gets the
+# Workflows permission for that: it answers 403 "Resource not accessible by
+# integration". That is the case for every month before this workflow existed
+# (September and October 2026); those need the RELEASE_TOKEN secret described
+# in .github/workflows/release.yml.
 set -euo pipefail
 
 export TZ=Europe/Berlin
@@ -48,6 +57,7 @@ case "$arg" in
     ;;
 esac
 
+failed=()
 for month in $months; do
   tag="v${month/-/.}"
   heading=$(date -d "$month-01" '+%B %Y')
@@ -88,10 +98,18 @@ for month in $months; do
     echo "=== $tag -> ${sha:0:7} ($(git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M' "$sha")), latest=$latest"
     echo "    $title"
     echo "    notes: $(wc -l <"$notes_file") lines, $(wc -c <"$notes_file") bytes"
-  else
-    gh release create "$tag" --repo "$repo" --target "$sha" --title "$title" \
-      --notes-file "$notes_file" --latest="$latest"
+  elif gh release create "$tag" --repo "$repo" --target "$sha" --title "$title" \
+    --notes-file "$notes_file" --latest="$latest"; then
     echo "$tag: published at ${sha:0:7}."
+  else
+    echo "::warning::$tag: not published, see the gh error above."
+    failed+=("$tag")
   fi
   rm -f "$notes_file"
 done
+
+if ((${#failed[@]})); then
+  echo "Not published: ${failed[*]}. A 403 \"Resource not accessible by integration\" on a month" >&2
+  echo "before this workflow existed needs the RELEASE_TOKEN secret (see release.yml)." >&2
+  exit 1
+fi
