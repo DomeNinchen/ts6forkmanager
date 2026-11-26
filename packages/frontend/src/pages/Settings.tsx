@@ -1845,7 +1845,7 @@ function DebugTab() {
   });
 
   const setFlag = useMutation({
-    mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck' | 'query' | 'streamSignaling'; enabled: boolean }) =>
+    mutationFn: ({ name, enabled }: { name: 'voice' | 'rankCheck' | 'query' | 'streamSignaling' | 'streamAudio'; enabled: boolean }) =>
       settingsApi.setDebugFlag(name, enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['debug-flags'] }),
     onError: () => toast.error(t('pages.settings.debug.debugFlagUpdateFailed')),
@@ -1925,6 +1925,17 @@ function DebugTab() {
             <Switch
               checked={!!flags?.streamSignaling}
               onCheckedChange={(v) => setFlag.mutate({ name: 'streamSignaling', enabled: v })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-xs">{t('pages.settings.debug.streamAudioDebugLabel')}</Label>
+              <p className="text-[11px] text-muted-foreground">{t('pages.settings.debug.streamAudioDebugHint')}</p>
+            </div>
+            <Switch
+              checked={!!flags?.streamAudio}
+              onCheckedChange={(v) => setFlag.mutate({ name: 'streamAudio', enabled: v })}
             />
           </div>
         </CardContent>

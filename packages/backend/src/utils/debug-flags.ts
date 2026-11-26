@@ -1,12 +1,13 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
 
-export type DebugFlagName = 'voice' | 'rankCheck' | 'query' | 'streamSignaling';
+export type DebugFlagName = 'voice' | 'rankCheck' | 'query' | 'streamSignaling' | 'streamAudio';
 
 const ENV_VAR_MAP: Record<DebugFlagName, string> = {
   voice: 'VOICE_DEBUG',
   rankCheck: 'RANK_CHECK_DEBUG',
   query: 'QUERY_DEBUG',
   streamSignaling: 'STREAM_SIGNALING_DEBUG',
+  streamAudio: 'STREAM_AUDIO_DEBUG',
 };
 
 const DB_KEY_MAP: Record<DebugFlagName, string> = {
@@ -14,6 +15,7 @@ const DB_KEY_MAP: Record<DebugFlagName, string> = {
   rankCheck: 'debug_rank_check',
   query: 'debug_query',
   streamSignaling: 'debug_stream_signaling',
+  streamAudio: 'debug_stream_audio',
 };
 
 const cache: Record<DebugFlagName, boolean> = {
@@ -21,6 +23,7 @@ const cache: Record<DebugFlagName, boolean> = {
   rankCheck: false,
   query: false,
   streamSignaling: false,
+  streamAudio: false,
 };
 
 /**

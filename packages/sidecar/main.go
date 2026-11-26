@@ -797,6 +797,12 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 	if err := webrtc.RegisterDefaultInterceptors(m, i); err != nil {
 		return "", err
 	}
+	audioNack, err := newAudioNackResponder()
+	if err != nil {
+		return "", err
+	}
+	i.Add(audioNack)
+	i.Add(audioNackCounterFactory{peerID: id})
 
 	// Pin ICE candidate gathering to a fixed UDP range so it can actually be
 	// firewalled -- the vserver's firewall only allows explicitly listed
@@ -1427,6 +1433,19 @@ func main() {
 			return
 		}
 		sidecar.ClosePeer(req.ID)
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
+	// POST /debug - the backend's debug switches that concern the sidecar (2.5.0+).
+	mux.HandleFunc("POST /debug", func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			AudioNack bool `json:"audioNack"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		audioNackDebug.Store(req.AudioNack)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
