@@ -25,7 +25,8 @@
     "overrides": {
       "qs": "^6.16.1",
       "mysql2": "^3.23.1",
-      "deepmerge-ts": "^8.0.2"
+      "deepmerge-ts": "^8.0.2",
+      "effect": "^3.22.1"
     },
     "onlyBuiltDependencies": [
       "@prisma/engines",
