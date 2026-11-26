@@ -1353,6 +1353,7 @@
       "levelWarning": "Warning",
       "levelInfo": "Info",
       "levelDebug": "Debug",
+      "exportTitle": "Server log export",
       "noEntriesFound": "No log entries found.",
       "skippingFirst": "skipping first {{count}}",
       "newer": "Newer",
@@ -2009,6 +2010,19 @@
         },
         "darkGroup": "Dark",
         "lightGroup": "Light",
+        "themeDescriptions": {
+          "command-deck": "Deep navy - the default look.",
+          "oled": "True black background - saves power on OLED screens.",
+          "graphite": "Neutral grey with no colour cast.",
+          "carbon": "Warm anthracite with a faint brown cast.",
+          "frost": "Cool blue-grey, lower contrast.",
+          "deep-forest": "Dark green-black.",
+          "petrol": "Deep blue-green, made for the Lounge layout.",
+          "daylight": "Neutral light grey and white.",
+          "paper": "Warm off-white with a light sepia cast.",
+          "frost-light": "Cool light blue-grey.",
+          "chalk": "Light grey-green with a dark petrol bar."
+        },
         "myBaseTheme": "My Base Theme",
         "myDesign": "My Layout",
         "designDescription": "How the interface is laid out and set, independent of base theme and accent. Overrides the installation default below, just for you - stored in this browser only.",
@@ -2237,6 +2251,7 @@
         "noIdentityDescription": "Optional: give bot flows their own separate ServerQuery identity, so their actions (e.g. renaming a channel) show up under this name in TeamSpeak's own logs instead of blurring together with your own manual actions in this app. Nothing changes for bot flows until you create one.",
         "scopeFixHint": "Bot flow actions failing with a permission or \"out of scope\" error? This identity may have been created before a scope fix - use \"Fix Permissions\" below to reissue its key without changing anything else.",
         "displayNameLabel": "Display Name",
+        "displayNamePlaceholder": "Caretaker",
         "fixing": "Fixing...",
         "fixPermissions": "Fix Permissions",
         "createBotIdentityButton": "Create Bot Identity"
@@ -2405,6 +2420,7 @@
       },
       "streaming": {
         "title": "Stream Defaults",
+        "descriptionLead": "What",
         "descriptionUsage": "uses when nobody names a quality. Naming one in the chat ({{names}}) still wins for that stream. Higher values need more upload bandwidth and more CPU on this machine, so if viewers report stuttering, come back here and lower them.",
         "resolutionLabel": "Resolution",
         "pixelsSuffix": "{{width}}x{{height}} pixels",
@@ -5367,6 +5383,7 @@
   },
   "data": {
     "botTemplates": {
+      "examplePlaceholder": "e.g. {{value}}",
       "categories": {
         "infoChannels": {
           "label": "Info Channels",
@@ -5480,7 +5497,8 @@
               }
             },
             "ignoreGroupIds": {
-              "label": "Ignore Groups (comma-separated, optional)"
+              "label": "Ignore Groups (comma-separated, optional)",
+              "placeholder": "e.g. Music Bot / Team server group IDs - these clients never get a welcome message"
             },
             "teamGroupIds": {
               "label": "Team Groups for {{temp.teamOnline}} (comma-separated, optional)"
@@ -5544,7 +5562,8 @@
               "label": "Channel Name Template"
             },
             "channelDescriptionTemplate": {
-              "label": "Channel Description Template (optional)"
+              "label": "Channel Description Template (optional)",
+              "placeholder": "e.g. Private channel of {{temp.joinerInfo.0.client_nickname}}, created {{time.date}}"
             },
             "privateChannelType": {
               "label": "Private Channel Type",
@@ -5606,7 +5625,8 @@
               }
             },
             "excludeGroupIds": {
-              "label": "Exclude Group IDs (comma-separated, optional)"
+              "label": "Exclude Group IDs (comma-separated, optional)",
+              "placeholder": "e.g. Bot group ID"
             },
             "pollInterval": {
               "label": "Check Interval",
