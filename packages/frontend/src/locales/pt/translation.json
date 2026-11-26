@@ -1,0 +1,5839 @@
+{
+  "common": {
+    "live": "",
+    "save": "",
+    "saving": "",
+    "cancel": "",
+    "delete": "",
+    "deleting": "",
+    "edit": "",
+    "create": "",
+    "creating": "",
+    "add": "",
+    "remove": "",
+    "close": "",
+    "confirm": "",
+    "back": "",
+    "next": "",
+    "search": "",
+    "loading": "",
+    "refresh": "",
+    "actions": "",
+    "name": "",
+    "description": "",
+    "status": "",
+    "enabled": "",
+    "disabled": "",
+    "yes": "",
+    "no": "",
+    "none": "",
+    "unknown": "",
+    "error": "",
+    "success": "",
+    "warning": "",
+    "copy": "",
+    "copied": "",
+    "download": "",
+    "upload": "",
+    "submit": "",
+    "reset": "",
+    "apply": "",
+    "select": "",
+    "selectAll": "",
+    "clear": "",
+    "clearAll": "",
+    "noResults": "",
+    "noData": "",
+    "somethingWentWrong": "",
+    "areYouSure": "",
+    "actionCannotBeUndone": "",
+    "optional": "",
+    "required": "",
+    "on": "",
+    "off": "",
+    "active": "",
+    "inactive": "",
+    "online": "",
+    "offline": "",
+    "id": "",
+    "type": "",
+    "date": "",
+    "time": "",
+    "username": "",
+    "password": "",
+    "email": "",
+    "role": "",
+    "logout": "",
+    "settings": "",
+    "language": "",
+    "duration": {
+      "permanent": "",
+      "justNow": "",
+      "minutesAgo": "",
+      "hoursAgo": "",
+      "daysAgo": ""
+    },
+    "roles": {
+      "admin": "",
+      "viewer": "",
+      "botOperator": "",
+      "serverAdmin": "",
+      "moderator": "",
+      "musicOperator": "",
+      "custom": ""
+    }
+  },
+  "nav": {
+    "collapse": "",
+    "menu": "",
+    "openMenu": "",
+    "search": {
+      "open": "",
+      "title": "",
+      "placeholder": "",
+      "recent": "",
+      "pages": "",
+      "empty": "",
+      "ctrl": "",
+      "hint": "",
+      "noWebQuery": "",
+      "offlineAll": "",
+      "searchingDatabase": "",
+      "types": {
+        "clients": "",
+        "client": "",
+        "channels": "",
+        "channel": "",
+        "serverGroup": "",
+        "channelGroup": "",
+        "flow": "",
+        "musicBot": "",
+        "offlineClients": "",
+        "offlineClient": ""
+      }
+    },
+    "closeMenu": "",
+    "sections": {
+      "overview": "",
+      "management": "",
+      "security": "",
+      "content": "",
+      "system": "",
+      "automation": ""
+    },
+    "items": {
+      "dashboard": "",
+      "virtualServers": "",
+      "statistics": "",
+      "channels": "",
+      "clients": "",
+      "clientDatabase": "",
+      "serverGroups": "",
+      "channelGroups": "",
+      "permissions": "",
+      "bans": "",
+      "tokens": "",
+      "connectionJournal": "",
+      "changeLog": "",
+      "backups": "",
+      "files": "",
+      "icons": "",
+      "complaints": "",
+      "support": "",
+      "raidProtection": "",
+      "messages": "",
+      "serverLogs": "",
+      "queryConsole": "",
+      "instance": "",
+      "miscellaneous": "",
+      "advancedSettings": "",
+      "musicRequestHistory": "",
+      "botFlows": "",
+      "musicBots": ""
+    }
+  },
+  "layout": {},
+  "pages": {
+    "noServerSelected": "",
+    "bans": {
+      "lastNickname": "",
+      "reason": "",
+      "duration": "",
+      "created": "",
+      "by": "",
+      "removed": "",
+      "added": "",
+      "addFailed": "",
+      "addBan": "",
+      "searchPlaceholder": "",
+      "banType": "",
+      "ipAddress": "",
+      "nameRegex": "",
+      "uniqueId": "",
+      "value": "",
+      "reasonPlaceholder": "",
+      "oneHour": "",
+      "oneDay": "",
+      "oneWeek": "",
+      "thirtyDays": ""
+    },
+    "messages": {
+      "title": "",
+      "compose": "",
+      "hint": "",
+      "searchPlaceholder": "",
+      "from": "",
+      "subject": "",
+      "date": "",
+      "read": "",
+      "unread": "",
+      "deleted": "",
+      "sent": "",
+      "sendFailed": "",
+      "message": "",
+      "noContent": "",
+      "loadFailed": "",
+      "composeTitle": "",
+      "recipientUid": "",
+      "recipientUidPlaceholder": "",
+      "subjectPlaceholder": "",
+      "bodyPlaceholder": "",
+      "send": ""
+    },
+    "setup": {
+      "passwordMismatch": "",
+      "setupFailed": "",
+      "title": "",
+      "subtitle": "",
+      "intro": "",
+      "displayName": "",
+      "displayNamePlaceholder": "",
+      "passwordHint": "",
+      "confirmPassword": "",
+      "repeatPassword": "",
+      "creatingAccount": "",
+      "createAdminAccount": ""
+    },
+    "botList": {
+      "selectServerFirst": "",
+      "querySecretHint": "",
+      "created": "",
+      "createFailed": "",
+      "fromTemplate": "",
+      "newBot": "",
+      "noneYetTitle": "",
+      "noneYetDescription": "",
+      "enabled": "",
+      "disabled": "",
+      "noDescription": "",
+      "serverHash": "",
+      "updated": "",
+      "droppedHint": "",
+      "approvalPending": "",
+      "approvalPendingHint": "",
+      "approvedBy": "",
+      "approved": "",
+      "approvalRequired": "",
+      "editFlow": "",
+      "newBotFlow": "",
+      "namePlaceholder": "",
+      "descriptionPlaceholder": "",
+      "createdFromTemplate": "",
+      "createFromTemplateFailed": "",
+      "deleteTitle": "",
+      "deleteDescription": "",
+      "deleted": "",
+      "webhooks": {
+        "title": "",
+        "allowQuerySecretHint": "",
+        "allowQuerySecretLabel": "",
+        "description": "",
+        "bodyLimitKbLabel": "",
+        "bodyLimitKbHint": "",
+        "validPerMinuteLabel": "",
+        "validPerMinuteHint": "",
+        "failedPerMinuteLabel": "",
+        "failedPerMinuteHint": "",
+        "saved": "",
+        "saveFailed": ""
+      },
+      "retention": {
+        "title": "",
+        "maxRuntimeHint": "",
+        "maxRuntimeLabel": "",
+        "description": "",
+        "retentionLabel": "",
+        "retentionHint": "",
+        "maxRowsLabel": "",
+        "maxRowsHint": "",
+        "maxConcurrentLabel": "",
+        "maxConcurrentHint": "",
+        "stats": "",
+        "saved": "",
+        "saveFailed": "",
+        "restoreDefaults": "",
+        "unsaved": ""
+      },
+      "querySecret_other": "",
+      "querySecret_one": "",
+      "dropped_one": "",
+      "dropped_other": ""
+    },
+    "instance": {
+      "updated": "",
+      "updateFailed": "",
+      "fields": {
+        "guestServerqueryGroup": "",
+        "templateServerAdminGroup": "",
+        "templateServerDefaultGroup": "",
+        "templateChannelDefaultGroup": "",
+        "templateChannelAdminGroup": "",
+        "filetransferPort": "",
+        "floodCommands": "",
+        "floodTime": "",
+        "floodBanTime": ""
+      },
+      "version": "",
+      "build": "",
+      "platform": "",
+      "host": "",
+      "uptime": "",
+      "bytesSent": "",
+      "bytesReceived": "",
+      "database": "",
+      "dbPlugin": "",
+      "ftPort": "",
+      "permissionsVersion": "",
+      "instanceSettings": "",
+      "saveChanges": "",
+      "ipBindings": "",
+      "subsystem": {
+        "voice": "",
+        "query": "",
+        "filetransfer": ""
+      }
+    },
+    "serverStats": {
+      "noConnectionSelected": "",
+      "serversOnline": "",
+      "users": "",
+      "instanceUptime": "",
+      "currentBandwidth": "",
+      "uploadSecond": "",
+      "uploadMinute": "",
+      "downloadSecond": "",
+      "downloadMinute": "",
+      "transferredSinceStart": "",
+      "dataSent": "",
+      "dataReceived": "",
+      "packetsSent": "",
+      "packetsReceived": "",
+      "fileTransfersSinceStart": "",
+      "filesSent": "",
+      "filesReceived": "",
+      "selectServerFirst": "",
+      "noData": "",
+      "couldNotLoad": "",
+      "general": "",
+      "port": "",
+      "autostart": "",
+      "uptime": "",
+      "created": "",
+      "connections": "",
+      "regularClients": "",
+      "queryClients": "",
+      "slots": "",
+      "network": "",
+      "packetLoss": "",
+      "ping": "",
+      "currentUpload": "",
+      "currentDownload": "",
+      "trafficSinceStart": "",
+      "sent": "",
+      "received": "",
+      "total": "",
+      "overview": "",
+      "selectedServer": "",
+      "history": {
+        "tab": "",
+        "rangeLabel": "",
+        "ranges": {
+          "24h": "",
+          "3d": "",
+          "7d": "",
+          "14d": "",
+          "31d": ""
+        },
+        "timeZone": {
+          "label": "",
+          "local": "",
+          "utc": ""
+        },
+        "chartTitle": "",
+        "pointSize": "",
+        "chartAria": "",
+        "chartAriaEmpty": "",
+        "kpi": {
+          "current": "",
+          "peak": "",
+          "average": "",
+          "averageHint": "",
+          "availability": "",
+          "availabilityHint": "",
+          "peakOfSlots": "",
+          "lastSample": ""
+        },
+        "states": {
+          "online": "",
+          "stopped": "",
+          "unreachable": "",
+          "nodata": ""
+        },
+        "tooltip": {
+          "mean": "",
+          "peak": "",
+          "min": "",
+          "avg24h": "",
+          "slots": "",
+          "unreachable": "",
+          "stopped": "",
+          "nodata": ""
+        },
+        "legend": {
+          "mean": "",
+          "peak": "",
+          "avg24h": "",
+          "slots": "",
+          "saturday": "",
+          "sunday": "",
+          "unreachable": "",
+          "stopped": "",
+          "nodata": ""
+        },
+        "metric": {
+          "label": "",
+          "users": "",
+          "bandwidth": "",
+          "ping": "",
+          "quality": ""
+        },
+        "metricNoDataYetHint": "",
+        "metricRecordingSince": "",
+        "bandwidth": {
+          "chartTitle": "",
+          "chartAria": "",
+          "chartAriaEmpty": "",
+          "kpi": {
+            "current": "",
+            "peak": "",
+            "average": "",
+            "volume": ""
+          },
+          "tooltip": {
+            "avgIn": "",
+            "peakIn": "",
+            "avgOut": "",
+            "peakOut": "",
+            "avg24hIn": "",
+            "avg24hOut": ""
+          },
+          "legend": {
+            "down": "",
+            "up": "",
+            "peak": ""
+          },
+          "note": ""
+        },
+        "ping": {
+          "chartTitle": "",
+          "chartAria": "",
+          "chartAriaEmpty": "",
+          "kpi": {
+            "current": "",
+            "peak": "",
+            "average": "",
+            "timeouts": "",
+            "timeoutsCount_one": "",
+            "timeoutsCount_other": ""
+          },
+          "tooltip": {
+            "mean": "",
+            "peak": "",
+            "min": "",
+            "avg24h": "",
+            "timeouts_one": "",
+            "timeouts_other": ""
+          },
+          "legend": {
+            "mean": "",
+            "peak": "",
+            "timeout": ""
+          },
+          "note": ""
+        },
+        "quality": {
+          "chartTitle": "",
+          "chartAria": "",
+          "chartAriaEmpty": "",
+          "kpi": {
+            "current": "",
+            "currentPing": "",
+            "noClients": "",
+            "lossPeak": "",
+            "lossAverage": "",
+            "lossTotal": "",
+            "pingAverage": "",
+            "pingPeak": ""
+          },
+          "tooltip": {
+            "lossSpeech": "",
+            "lossSpeechMax": "",
+            "lossTotal": "",
+            "clientPing": "",
+            "clientPingMax": "",
+            "noClients": ""
+          },
+          "legend": {
+            "lossSpeech": "",
+            "lossPeak": "",
+            "lossTotal": "",
+            "clientPing": ""
+          },
+          "note": ""
+        },
+        "recordingSince": "",
+        "slots": {
+          "toggle": "",
+          "unavailable": ""
+        },
+        "recordingOff": "",
+        "recordingOffHint": "",
+        "noDataYet": "",
+        "noDataYetHint": "",
+        "loadFailed": "",
+        "loadFailedHint": "",
+        "settings": {
+          "title": "",
+          "description": "",
+          "intervalLabel": "",
+          "intervalOptions": {
+            "30": "",
+            "60": "",
+            "120": "",
+            "300": ""
+          },
+          "retentionLabel": "",
+          "retentionHint": "",
+          "estimate": "",
+          "restoreDefaults": "",
+          "unsaved": "",
+          "saved": "",
+          "saveFailed": "",
+          "confirmShorterTitle": "",
+          "confirmShorterDescription": "",
+          "confirmShorterAction": ""
+        }
+      }
+    },
+    "login": {
+      "ssoErrors": {
+        "notConfigured": "",
+        "failed": "",
+        "invalidState": "",
+        "noSubject": "",
+        "accountDisabled": "",
+        "generic": ""
+      },
+      "twoFactorAuth": "",
+      "enterCode": "",
+      "codeOrRecovery": "",
+      "rememberDevice": "",
+      "invalidCode": "",
+      "verifying": "",
+      "verify": "",
+      "backToLogin": "",
+      "subtitle": "",
+      "signInToContinue": "",
+      "invalidCredentials": "",
+      "signingIn": "",
+      "signIn": "",
+      "or": ""
+    },
+    "changeLog": {
+      "title": "",
+      "subtitle": "",
+      "tabs": {
+        "log": "",
+        "settings": ""
+      },
+      "searchPlaceholder": "",
+      "filters": {
+        "range": "",
+        "area": "",
+        "anyArea": "",
+        "method": "",
+        "anyMethod": "",
+        "result": "",
+        "anyResult": "",
+        "server": "",
+        "anyServer": "",
+        "pageSize": "",
+        "reset": ""
+      },
+      "range": {
+        "24h": "",
+        "7d": "",
+        "30d": "",
+        "all": ""
+      },
+      "status": {
+        "pending": "",
+        "ok": "",
+        "error": "",
+        "denied": ""
+      },
+      "columns": {
+        "time": "",
+        "user": "",
+        "action": "",
+        "target": "",
+        "result": "",
+        "address": ""
+      },
+      "virtualServer": "",
+      "body": "",
+      "tsLogged": "",
+      "ipNotRecorded": "",
+      "empty": "",
+      "loadFailed": "",
+      "diff": {
+        "title": "",
+        "before": "",
+        "after": "",
+        "notSet": "",
+        "noField": "",
+        "deleted": "",
+        "bulk": "",
+        "unavailable": "",
+        "deletedList_one": "",
+        "deletedList_other": ""
+      },
+      "perPage": "",
+      "settings": {
+        "title": "",
+        "description": "",
+        "enabledLabel": "",
+        "enabledHint": "",
+        "recordIpLabel": "",
+        "recordIpHint": "",
+        "tsLogLabel": "",
+        "tsLogHint": "",
+        "retentionLabel": "",
+        "retentionHint": "",
+        "maxRowsLabel": "",
+        "maxRowsHint": "",
+        "saved": "",
+        "saveFailed": "",
+        "storedTitle": "",
+        "oldest": "",
+        "clear": "",
+        "clearTitle": "",
+        "clearFailed": "",
+        "stored_one": "",
+        "stored_other": "",
+        "clearDescription_one": "",
+        "clearDescription_other": "",
+        "cleared_one": "",
+        "cleared_other": ""
+      },
+      "resultCount_one": "",
+      "resultCount_other": ""
+    },
+    "backups": {
+      "title": "",
+      "subtitle": "",
+      "loadFailed": "",
+      "created": "",
+      "createFailed": "",
+      "checkFailed": "",
+      "downloadStarted": "",
+      "downloadFailed": "",
+      "deleted": "",
+      "deleteFailed": "",
+      "deleteTitle": "",
+      "deleteDescription": "",
+      "empty": "",
+      "beforeVersion": "",
+      "beforeUpdateNote": "",
+      "lastFailed": {
+        "manual": "",
+        "scheduled": "",
+        "before-bulk": ""
+      },
+      "now": {
+        "title": "",
+        "description": "",
+        "databaseSize": "",
+        "freeSpace": "",
+        "lastRun": "",
+        "keyNote": "",
+        "tsSnapshotsLabel": "",
+        "tsSnapshotsHint": "",
+        "button": "",
+        "running": ""
+      },
+      "schedule": {
+        "title": "",
+        "enabledLabel": "",
+        "enabledHint": "",
+        "timeLabel": "",
+        "daysLabel": "",
+        "serverTime": "",
+        "keepLabel": "",
+        "keepHint": "",
+        "maxAgeLabel": "",
+        "maxAgeNone": "",
+        "maxAgeHint": "",
+        "noDays": "",
+        "save": "",
+        "saved": "",
+        "saveFailed": ""
+      },
+      "restore": {
+        "title": "",
+        "whatHappens": "",
+        "replaces": "",
+        "savesCurrent": "",
+        "signsOut": "",
+        "restarts": "",
+        "acceptKey": "",
+        "understood": "",
+        "noHistory": "",
+        "confirm": "",
+        "running": "",
+        "failed": "",
+        "started": "",
+        "startedHint": "",
+        "pending": "",
+        "pendingHint": "",
+        "cancel": "",
+        "cancelled": "",
+        "cancelFailed": "",
+        "lastOk": "",
+        "lastRolledBack": "",
+        "lastFailed": "",
+        "beforeRestoreSaved": "",
+        "migrates_one": "",
+        "migrates_other": ""
+      },
+      "bulk": {
+        "title": "",
+        "description": "",
+        "thresholdLabel": "",
+        "thresholdHint": "",
+        "saved": ""
+      },
+      "upload": {
+        "title": "",
+        "description": "",
+        "button": "",
+        "running": "",
+        "done": "",
+        "failed": "",
+        "proxyTooLarge": "",
+        "tooLarge": "",
+        "limitLabel": "",
+        "limitHint": "",
+        "limitSaved": ""
+      },
+      "target": {
+        "title": "",
+        "description": "",
+        "dirLabel": "",
+        "dirHint": "",
+        "ok": "",
+        "saved": "",
+        "copyFailed": "",
+        "alsoThere": "",
+        "passphraseLabel": "",
+        "passphraseOn": "",
+        "passphraseOff": "",
+        "passphraseSet": "",
+        "passphraseRemove": "",
+        "passphraseSaved": "",
+        "passphraseRemoved": "",
+        "passphraseHint": "",
+        "decryptHint": ""
+      },
+      "columns": {
+        "time": "",
+        "kind": "",
+        "size": "",
+        "version": "",
+        "actions": ""
+      },
+      "kind": {
+        "manual": "",
+        "scheduled": "",
+        "uploaded": "",
+        "external": "",
+        "before-restore": "",
+        "before-bulk": "",
+        "before-update": ""
+      },
+      "actions": {
+        "check": "",
+        "checking": "",
+        "download": "",
+        "compare": "",
+        "restore": "",
+        "delete": ""
+      },
+      "check": {
+        "title": "",
+        "integrityOk": "",
+        "integrityFailed": "",
+        "checksumOk": "",
+        "checksumFailed": "",
+        "noManifest": "",
+        "migrations": {
+          "ok": "",
+          "no-history": "",
+          "older_one": "",
+          "older_other": "",
+          "newer_one": "",
+          "newer_other": ""
+        },
+        "keyFailed": "",
+        "keyNothing": "",
+        "verdictOk": "",
+        "verdictFailed": "",
+        "keyOk_one": "",
+        "keyOk_other": ""
+      },
+      "tsSnapshotCount_one": "",
+      "tsSnapshotCount_other": ""
+    },
+    "connectionJournal": {
+      "title": "",
+      "subtitle": "",
+      "source": {
+        "web": "",
+        "ts": ""
+      },
+      "ts": {
+        "online": "",
+        "leftAfter": "",
+        "endNotSeen": "",
+        "recordingStopped": "",
+        "virtualServer": ""
+      },
+      "scope": {
+        "private": "",
+        "loopback": ""
+      },
+      "noCountryHint": "",
+      "geoip": {
+        "title": "",
+        "description": "",
+        "sourceDbip": "",
+        "sourceCustom": "",
+        "release": "",
+        "built": "",
+        "installedAt": "",
+        "none": "",
+        "backfill": "",
+        "editionLabel": "",
+        "edition": {
+          "country": "",
+          "city": "",
+          "custom": ""
+        },
+        "editionHint": {
+          "country": "",
+          "city": ""
+        },
+        "downloadNow": "",
+        "updateNow": "",
+        "upload": "",
+        "remove": "",
+        "downloading": "",
+        "installing": "",
+        "errors": {
+          "not-published": "",
+          "download-failed": "",
+          "too-large": "",
+          "invalid-file": "",
+          "not-a-geo-database": ""
+        },
+        "autoUpdateLabel": "",
+        "autoUpdateHint": "",
+        "lastCheck": "",
+        "privacy": "",
+        "uploaded": "",
+        "removed": "",
+        "removeTitle": "",
+        "removeDescription": "",
+        "saveFailed": "",
+        "downloadFailed": "",
+        "uploadFailed": "",
+        "removeFailed": ""
+      },
+      "unknownAddress": "",
+      "unknownAddressHint": "",
+      "ban": {
+        "banThis": "",
+        "title": "",
+        "description": "",
+        "web": {
+          "label": "",
+          "hint": ""
+        },
+        "ts": {
+          "label": "",
+          "hint": "",
+          "connection": "",
+          "virtualServer": "",
+          "allServers": ""
+        },
+        "protected": {
+          "own": "",
+          "loopback": "",
+          "private": "",
+          "invalid": ""
+        },
+        "disabled": "",
+        "alreadyUntil": "",
+        "alreadyForever": "",
+        "adminWarning": "",
+        "submit": "",
+        "failed": "",
+        "webDone": "",
+        "tsDone": "",
+        "tsFailed": "",
+        "tsPartial": "",
+        "errors": {
+          "ban-protected-own": "",
+          "ban-protected-loopback": "",
+          "ban-protected-private": "",
+          "ban-invalid-address": "",
+          "ban-confirm-admin": "",
+          "bans-disabled": ""
+        },
+        "badge": {
+          "web": "",
+          "ts": "",
+          "tsHint": "",
+          "until": "",
+          "forever": ""
+        }
+      },
+      "bans": {
+        "description": "",
+        "tsBansLink": "",
+        "empty": "",
+        "columns": {
+          "address": "",
+          "country": "",
+          "reason": "",
+          "setBy": "",
+          "setAt": "",
+          "ends": "",
+          "turnedAway": ""
+        },
+        "lastBlocked": "",
+        "lift": "",
+        "liftTitle": "",
+        "liftDescription": "",
+        "lifted": "",
+        "liftFailed": ""
+      },
+      "tabs": {
+        "journal": "",
+        "byIp": "",
+        "bans": "",
+        "settings": ""
+      },
+      "searchPlaceholder": "",
+      "filters": {
+        "range": "",
+        "event": "",
+        "result": "",
+        "anyEvent": "",
+        "anyResult": "",
+        "source": "",
+        "anySource": "",
+        "country": "",
+        "anyCountry": "",
+        "server": "",
+        "anyServer": "",
+        "onlineNow": "",
+        "removeAddress": "",
+        "reset": ""
+      },
+      "range": {
+        "24h": "",
+        "7d": "",
+        "30d": "",
+        "all": ""
+      },
+      "columns": {
+        "time": "",
+        "source": "",
+        "event": "",
+        "result": "",
+        "account": "",
+        "address": "",
+        "country": "",
+        "details": "",
+        "entries": "",
+        "failures": "",
+        "successes": "",
+        "accountsTried": "",
+        "lastSeen": ""
+      },
+      "event": {
+        "login": "",
+        "totp": "",
+        "sso": "",
+        "rate-limit": "",
+        "ts-session": ""
+      },
+      "result": {
+        "success": "",
+        "failure": ""
+      },
+      "reason": {
+        "wrong-password": "",
+        "unknown-user": "",
+        "disabled": "",
+        "sso-account": "",
+        "totp-required": "",
+        "trusted-device": "",
+        "wrong-code": "",
+        "recovery-code": "",
+        "ticket-invalid": "",
+        "sso-not-configured": "",
+        "sso-invalid-state": "",
+        "sso-no-subject": "",
+        "sso-failed": "",
+        "login-limit": "",
+        "refresh-limit": "",
+        "webhook-limit": ""
+      },
+      "unknownAccount": "",
+      "unknownAccountHint": "",
+      "filterByAddress": "",
+      "showEntries": "",
+      "empty": "",
+      "loadFailed": "",
+      "perPage": "",
+      "settings": {
+        "title": "",
+        "description": "",
+        "enabledLabel": "",
+        "enabledHint": "",
+        "queryClientsLabel": "",
+        "queryClientsHint": "",
+        "ownBotsLabel": "",
+        "ownBotsHint": "",
+        "retentionLabel": "",
+        "retentionHint": "",
+        "maxRowsLabel": "",
+        "maxRowsHint": "",
+        "saved": "",
+        "saveFailed": "",
+        "watchedTitle": "",
+        "watchedDescription": "",
+        "watchedNone": "",
+        "mode": {
+          "events": "",
+          "polling": "",
+          "idle": ""
+        },
+        "problem": {
+          "no-access": "",
+          "ssh-unavailable": "",
+          "unreachable": "",
+          "no-address-permission": ""
+        },
+        "storedTitle": "",
+        "oldest": "",
+        "clear": "",
+        "clearTitle": "",
+        "clearFailed": "",
+        "openSessions_one": "",
+        "openSessions_other": "",
+        "stored_one": "",
+        "stored_other": "",
+        "clearDescription_one": "",
+        "clearDescription_other": "",
+        "cleared_one": "",
+        "cleared_other": ""
+      },
+      "resultCount_one": "",
+      "resultCount_other": ""
+    },
+    "console": {
+      "tabs": {
+        "console": "",
+        "log": "",
+        "settings": ""
+      },
+      "virtualServer": "",
+      "instance": "",
+      "clearScreen": "",
+      "empty": "",
+      "mode": {
+        "label": "",
+        "command": "",
+        "server": "",
+        "channel": "",
+        "private": "",
+        "client": "",
+        "pickClient": "",
+        "noClients": "",
+        "channelHint": ""
+      },
+      "events": {
+        "toggle": "",
+        "intro": "",
+        "noSsh": "",
+        "needVirtualServer": "",
+        "categories": {
+          "server": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "channel": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "textserver": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "textchannel": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "textprivate": {
+            "label": "",
+            "short": "",
+            "help": ""
+          },
+          "bans": {
+            "label": "",
+            "short": "",
+            "help": ""
+          }
+        },
+        "other": "",
+        "channelLabel": "",
+        "pickChannel": "",
+        "start": "",
+        "apply": "",
+        "stop": "",
+        "state": {
+          "idle": "",
+          "connecting": "",
+          "live": "",
+          "reconnecting": "",
+          "closed": ""
+        },
+        "listeningTo": "",
+        "hearingChannel": "",
+        "collected": "",
+        "dropped": "",
+        "save": "",
+        "saveTxt": "",
+        "saveJson": "",
+        "clearCollected": "",
+        "refused": "",
+        "notice": {
+          "started": "",
+          "alreadyListening": "",
+          "stopped": "",
+          "notListening": "",
+          "pickChannel": "",
+          "channelNeedsId": "",
+          "channelAll": "",
+          "usage": ""
+        },
+        "failure": {
+          "lost": "",
+          "UNAUTHORIZED": "",
+          "FORBIDDEN": "",
+          "SESSION_FAILED": "",
+          "SSH_CONNECT_FAILED": "",
+          "SSH_AUTH_FAILED": "",
+          "VIRTUAL_SERVER_UNAVAILABLE": "",
+          "TEXT_CHANNEL_IN_USE": "",
+          "RATE_LIMITED": "",
+          "TOO_MANY_STREAMS": "",
+          "TOO_MANY_LISTENERS": "",
+          "generic": ""
+        },
+        "summary": {
+          "clientEnter": "",
+          "clientLeft": "",
+          "clientMoved": "",
+          "serverEdited": "",
+          "channelCreated": "",
+          "channelEdited": "",
+          "channelDescription": "",
+          "channelPassword": "",
+          "channelMoved": "",
+          "channelDeleted": "",
+          "textServer": "",
+          "textChannel": "",
+          "textPrivate": "",
+          "banAdded": "",
+          "banRemoved": "",
+          "unknown": ""
+        }
+      },
+      "history": {
+        "menu": "",
+        "clear": "",
+        "cleared": ""
+      },
+      "input": {
+        "label": "",
+        "placeholder": "",
+        "messagePlaceholder": "",
+        "shortcuts": ""
+      },
+      "suggest": {
+        "danger": "",
+        "hidden": "",
+        "alias": "",
+        "required": ""
+      },
+      "notice": {
+        "using": "",
+        "useUsage": "",
+        "unknownVirtualServer": "",
+        "pickClient": "",
+        "noChannel": ""
+      },
+      "errors": {
+        "rateLimited": "",
+        "noConnection": "",
+        "generic": ""
+      },
+      "parse": {
+        "empty": "",
+        "invalid_command": "",
+        "invalid_option": "",
+        "invalid_key": "",
+        "empty_block": ""
+      },
+      "help": {
+        "required": "",
+        "optional": "",
+        "repeatable": "",
+        "aliasOf": "",
+        "hidden": "",
+        "hiddenHint": "",
+        "needsConfirmation": "",
+        "readOnly": "",
+        "properties": "",
+        "noParameters": "",
+        "integer": "",
+        "range": "",
+        "defaultValue": "",
+        "orOther": "",
+        "permissions": "",
+        "unknownTopic": "",
+        "intro": "",
+        "introHelp": "",
+        "introUse": "",
+        "introKeys": "",
+        "introEscapes": "",
+        "legend": ""
+      },
+      "result": {
+        "emptyResult": "",
+        "records": "",
+        "loggedToTeamSpeak": "",
+        "truncated": "",
+        "tableView": "",
+        "rawView": "",
+        "revealSecrets": "",
+        "hideSecrets": "",
+        "copyRaw": "",
+        "copyJson": "",
+        "copyFailed": "",
+        "showAll": ""
+      },
+      "hints": {
+        "outOfScope": "",
+        "noAnswer": "",
+        "unknownCommand": ""
+      },
+      "explain": {
+        "none": "",
+        "notFound": "",
+        "empty": "",
+        "nothingToExplain": "",
+        "queryClient": "",
+        "voiceClient": ""
+      },
+      "danger": {
+        "title": "",
+        "generic": "",
+        "willRun": "",
+        "typeToConfirm": "",
+        "run": "",
+        "reasons": {
+          "processStop": "",
+          "serverStop": "",
+          "serverDelete": "",
+          "instanceEdit": "",
+          "snapshotDeploy": "",
+          "permReset": "",
+          "massDelete": "",
+          "dataDelete": "",
+          "credentialsRevoke": "",
+          "credentialsReset": ""
+        }
+      },
+      "log": {
+        "ok": "",
+        "pending": "",
+        "pendingHint": "",
+        "error": "",
+        "search": "",
+        "searchPlaceholder": "",
+        "allStatuses": "",
+        "dangerOnly": "",
+        "thisServerOnly": "",
+        "empty": "",
+        "emptyHint": "",
+        "time": "",
+        "where": "",
+        "command": "",
+        "result": "",
+        "duration": "",
+        "teamSpeakLog": "",
+        "teamSpeakLogHint": "",
+        "instance": "",
+        "danger": "",
+        "loadMore": ""
+      },
+      "settings": {
+        "title": "",
+        "retentionLabel": "",
+        "retentionHint": "",
+        "floodGuardLabel": "",
+        "floodGuardHint": "",
+        "restoreDefaults": "",
+        "unsaved": "",
+        "saved": "",
+        "saveFailed": ""
+      }
+    },
+    "serverLogs": {
+      "entryAdded": "",
+      "addFailed": "",
+      "addEntry": "",
+      "export": "",
+      "asTxt": "",
+      "asHtml": "",
+      "filterPlaceholder": "",
+      "thisServer": "",
+      "instanceLog": "",
+      "allLevels": "",
+      "levelError": "",
+      "levelWarning": "",
+      "levelInfo": "",
+      "levelDebug": "",
+      "noEntriesFound": "",
+      "skippingFirst": "",
+      "newer": "",
+      "older": "",
+      "level": "",
+      "nLines_one": "",
+      "nLines_other": "",
+      "entriesShown_one": "",
+      "entriesShown_other": ""
+    },
+    "virtualServers": {
+      "started": "",
+      "startFailed": "",
+      "stopped": "",
+      "stopFailed": "",
+      "created": "",
+      "createFailed": "",
+      "createServer": "",
+      "servers": "",
+      "onlineOffline": "",
+      "autostarting": "",
+      "slots": "",
+      "autostartSlots": "",
+      "selected": "",
+      "deselect": "",
+      "stop": "",
+      "start": "",
+      "createDialogTitle": "",
+      "createDialogDescription": "",
+      "namePlaceholder": "",
+      "portOptional": "",
+      "portPlaceholder": "",
+      "autostartWithInstance": "",
+      "deleteStopFirst": "",
+      "deleteDialogTitle": "",
+      "deleteDialogDescription": "",
+      "deleteWhatGoes": "",
+      "deleteSnapshotNote": "",
+      "deleteManagerData": "",
+      "deleteLastWarning": "",
+      "deleteFirstWarning": "",
+      "deleteTypeName": "",
+      "deleteConfirm": "",
+      "deleted": "",
+      "deleteFailed": "",
+      "deleteRunning": "",
+      "deleteNotFound": "",
+      "deleteNoPermission": "",
+      "deleteResultBackup": "",
+      "deleteResultNoBackup": "",
+      "cleanupDone": "",
+      "cleanupAccess": "",
+      "cleanupProtected": "",
+      "cleanupTempGroups": "",
+      "cleanupQueues": "",
+      "cleanupRaid": "",
+      "cleanupFlows": "",
+      "cleanupNothing": "",
+      "cleanupWidgets": "",
+      "cleanupHistory": "",
+      "cleanupFailed": ""
+    },
+    "snapshotCompare": {
+      "title": "",
+      "whatToCompare": "",
+      "sideBefore": "",
+      "sideAfter": "",
+      "fromLive": "",
+      "liveNow": "",
+      "fileLabel": "",
+      "backupLabel": "",
+      "linkedMissing": "",
+      "description": "",
+      "sourceType": "",
+      "fromBackup": "",
+      "fromFile": "",
+      "backup": "",
+      "pickBackup": "",
+      "pickFile": "",
+      "noBackups": "",
+      "scope": "",
+      "compare": "",
+      "comparing": "",
+      "failed": "",
+      "countLine": "",
+      "noDifferences": "",
+      "searchPlaceholder": "",
+      "kindFilter": "",
+      "allKinds": "",
+      "noMatch": "",
+      "fromDeletion": "",
+      "reset": {
+        "hint": "",
+        "open": "",
+        "select": "",
+        "title": "",
+        "resultTitle": "",
+        "description": "",
+        "failed": "",
+        "remove": "",
+        "running": "",
+        "confirm": "",
+        "status": {
+          "ready": "",
+          "ok": "",
+          "failed": "",
+          "skipped-not-resettable": "",
+          "skipped-object-gone": "",
+          "skipped-not-in-snapshot": ""
+        }
+      },
+      "restore": {
+        "hint": "",
+        "roleParent": "",
+        "roleChild": "",
+        "newPassword": "",
+        "passwordNote": "",
+        "passwordNone": "",
+        "passwordSet": "",
+        "defaultDropped": "",
+        "open": "",
+        "select": "",
+        "description": "",
+        "resultTitle": "",
+        "resultDescription": "",
+        "checking": "",
+        "failed": "",
+        "nameTaken": "",
+        "skipIt": "",
+        "otherName": "",
+        "newName": "",
+        "nameLimit": "",
+        "members": "",
+        "newIdsNote": "",
+        "backupNote": "",
+        "withoutBackup": "",
+        "running": "",
+        "confirm": "",
+        "references": "",
+        "referencesAfter": "",
+        "where": {
+          "protected-group": "",
+          "temporary-group": "",
+          "support-queue": "",
+          "raid-protection": "",
+          "command-permission": "",
+          "command-admin-group": "",
+          "flow": "",
+          "music-bot": ""
+        },
+        "backupTaken": "",
+        "noBackup": "",
+        "idMap": "",
+        "permsSet": "",
+        "membersResult": "",
+        "status": {
+          "ready": "",
+          "name-taken": "",
+          "created": "",
+          "failed": "",
+          "skipped-name-taken": "",
+          "skipped-still-exists": "",
+          "skipped-not-in-snapshot": "",
+          "skipped-invalid-name": "",
+          "skipped-parent-missing": ""
+        },
+        "title_one": "",
+        "title_other": "",
+        "permissions_one": "",
+        "permissions_other": "",
+        "membersInSnapshot_one": "",
+        "membersInSnapshot_other": "",
+        "createdHeading_one": "",
+        "createdHeading_other": "",
+        "skippedHeading_one": "",
+        "skippedHeading_other": "",
+        "failedHeading_one": "",
+        "failedHeading_other": ""
+      },
+      "kinds": {
+        "serverGroup": "",
+        "channelGroup": "",
+        "channel": ""
+      },
+      "status": {
+        "added": "",
+        "removed": "",
+        "changed": ""
+      },
+      "field": "",
+      "permission": "",
+      "empty": "",
+      "topLevel": "",
+      "first": "",
+      "negated": "",
+      "skip": "",
+      "fields": {
+        "name": "",
+        "parent": "",
+        "below": "",
+        "channel_name": "",
+        "channel_topic": "",
+        "channel_description": "",
+        "channel_flag_password": "",
+        "channel_flag_permanent": "",
+        "channel_flag_semi_permanent": "",
+        "channel_flag_default": "",
+        "channel_maxclients": "",
+        "channel_maxfamilyclients": "",
+        "channel_codec": "",
+        "channel_codec_quality": ""
+      },
+      "objectCount_one": "",
+      "objectCount_other": "",
+      "permissionCount_one": "",
+      "permissionCount_other": ""
+    },
+    "misc": {
+      "identityUpdated": "",
+      "identityUpdateFailed": "",
+      "snapshotCreated": "",
+      "snapshotCreateFailed": "",
+      "snapshotRestored": "",
+      "snapshotRestoreFailed": "",
+      "permissionsReset": "",
+      "permissionsResetFailed": "",
+      "messageSent": "",
+      "messageSendFailed": "",
+      "notValidSnapshot": "",
+      "globalMessage": "",
+      "announcementPlaceholder": "",
+      "allServers": "",
+      "thisServerOnly": "",
+      "sentAnonymously": "",
+      "sentUnderIdentity": "",
+      "identity": "",
+      "identityDescription": "",
+      "current": "",
+      "newNickname": "",
+      "snapshots": "",
+      "snapshotsDescription": "",
+      "creating": "",
+      "createAndDownload": "",
+      "restoreFromFile": "",
+      "compareWithServer": "",
+      "restoreWarning": "",
+      "dangerZone": "",
+      "dangerZoneDescription": "",
+      "resetAllPermissions": "",
+      "restoreSnapshotTitle": "",
+      "restoreSnapshotDescription": "",
+      "deployReplaces": "",
+      "deployNewChannelIds": "",
+      "deployNoPermissionCheck": "",
+      "deployKeepFiles": "",
+      "deployTypeName": "",
+      "restore": "",
+      "resetAllPermissionsTitle": "",
+      "resetAllPermissionsDescription": ""
+    },
+    "clients": {
+      "nickname": "",
+      "country": "",
+      "idle": "",
+      "away": "",
+      "muted": "",
+      "poke": "",
+      "kickedName": "",
+      "kickFromServer": "",
+      "bannedName": "",
+      "banOneHour": "",
+      "move": "",
+      "kick": "",
+      "ban": "",
+      "describe": "",
+      "searchPlaceholder": "",
+      "pokeName": "",
+      "pokePlaceholder": "",
+      "pokedName": "",
+      "targetChannel": "",
+      "chooseChannel": "",
+      "moveFailed": "",
+      "reasonOptional": "",
+      "kickedByAdmin": "",
+      "kickFailed": "",
+      "durationSeconds": "",
+      "bannedByAdmin": "",
+      "banFailed": "",
+      "descriptionApplied": "",
+      "descriptionUpdateFailed": "",
+      "pokeFailed": "",
+      "onlineCount_one": "",
+      "onlineCount_other": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "moveCount_one": "",
+      "moveCount_other": "",
+      "movedCount_one": "",
+      "movedCount_other": "",
+      "kickCount_one": "",
+      "kickCount_other": "",
+      "kickedCount_one": "",
+      "kickedCount_other": "",
+      "banCount_one": "",
+      "banCount_other": "",
+      "bannedCount_one": "",
+      "bannedCount_other": "",
+      "describeCount_one": "",
+      "describeCount_other": "",
+      "descriptionUpdated_one": "",
+      "descriptionUpdated_other": ""
+    },
+    "clientDatabase": {
+      "subtitle": "",
+      "filterPlaceholder": "",
+      "loadedCount": "",
+      "loadMore": "",
+      "loadAll": "",
+      "loadingAll": "",
+      "stop": "",
+      "loadFailed": "",
+      "truncatedCap": "",
+      "truncatedList": "",
+      "onlineNow": "",
+      "columns": {
+        "nickname": "",
+        "dbId": "",
+        "uid": "",
+        "lastSeen": "",
+        "connections": "",
+        "lastIp": "",
+        "description": "",
+        "match": "",
+        "status": "",
+        "created": "",
+        "loginName": ""
+      },
+      "actions": {
+        "details": "",
+        "ban": "",
+        "delete": ""
+      },
+      "groupMode": {
+        "label": "",
+        "loadFailed": ""
+      },
+      "groups": {
+        "unavailable": "",
+        "added": "",
+        "removed": "",
+        "undo": "",
+        "changeFailed": ""
+      },
+      "columnsMenu": {
+        "title": "",
+        "columns": "",
+        "reset": "",
+        "groups": "",
+        "groupsOff": "",
+        "noGroups": "",
+        "showAll": "",
+        "hideAll": ""
+      },
+      "export": {
+        "button": "",
+        "title": "",
+        "columnsHint": "",
+        "format": "",
+        "formats": {
+          "csv": "",
+          "html": "",
+          "json": ""
+        },
+        "encoding": "",
+        "encodings": {
+          "utf8-bom": "",
+          "utf8": "",
+          "utf16le": ""
+        },
+        "delimiter": "",
+        "delimiters": {
+          "comma": "",
+          "semicolon": "",
+          "tab": ""
+        },
+        "dateFormat": "",
+        "dateFormats": {
+          "iso-local": "",
+          "iso-utc": "",
+          "locale": "",
+          "unix": ""
+        },
+        "scope": "",
+        "scopes": {
+          "selected": "",
+          "visible": "",
+          "loaded": "",
+          "database": ""
+        },
+        "databaseHint": "",
+        "jsonNote": "",
+        "loading": "",
+        "run": "",
+        "failed": "",
+        "htmlTitle": "",
+        "htmlSubtitle": "",
+        "online": "",
+        "banned": "",
+        "done_one": "",
+        "done_other": ""
+      },
+      "search": {
+        "mode": "",
+        "modes": {
+          "name": "",
+          "uid": "",
+          "dbid": "",
+          "custom": "",
+          "channelgroup": ""
+        },
+        "query": "",
+        "value": "",
+        "identifier": "",
+        "placeholders": {
+          "name": "",
+          "uid": "",
+          "dbid": "",
+          "custom": "",
+          "ident": ""
+        },
+        "channel": "",
+        "group": "",
+        "allChannels": "",
+        "anyGroup": "",
+        "run": "",
+        "clear": "",
+        "failed": "",
+        "hints": {
+          "name": "",
+          "uid": "",
+          "dbid": "",
+          "custom": "",
+          "channelgroup": ""
+        }
+      },
+      "detail": {
+        "title": "",
+        "subtitle": "",
+        "loadFailed": "",
+        "banned": "",
+        "identity": "",
+        "firstSeen": "",
+        "avatar": "",
+        "onlineIn": "",
+        "traffic": "",
+        "monthUp": "",
+        "monthDown": "",
+        "totalUp": "",
+        "totalDown": "",
+        "serverGroups": "",
+        "channelGroups": "",
+        "customInfo": "",
+        "bans": "",
+        "noBans": "",
+        "banRule": "",
+        "banUntil": "",
+        "banName": "",
+        "unavailable": "",
+        "uidCopied": "",
+        "copyFailed": ""
+      },
+      "ban": {
+        "banBy": "",
+        "targets": {
+          "uid": {
+            "label": "",
+            "hint": "",
+            "short": ""
+          },
+          "name": {
+            "label": "",
+            "hint": "",
+            "short": ""
+          },
+          "ip": {
+            "label": "",
+            "hint": "",
+            "short": ""
+          }
+        },
+        "nothingToBan": "",
+        "failed": "",
+        "title_one": "",
+        "title_other": "",
+        "someMissing_one": "",
+        "someMissing_other": "",
+        "done_one": "",
+        "done_other": ""
+      },
+      "delete": {
+        "newProfile": "",
+        "failed": "",
+        "title_one": "",
+        "title_other": "",
+        "consequences_one": "",
+        "consequences_other": "",
+        "connectedSkipped_one": "",
+        "connectedSkipped_other": "",
+        "confirm_one": "",
+        "confirm_other": "",
+        "done_one": "",
+        "done_other": ""
+      },
+      "searchResults_one": "",
+      "searchResults_other": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "bannedBy_one": "",
+      "bannedBy_other": "",
+      "andMore_one": "",
+      "andMore_other": ""
+    },
+    "tokens": {
+      "createdAndCopied": "",
+      "created": "",
+      "createFailed": "",
+      "tempCreated": "",
+      "tempCreateFailed": "",
+      "tempDeleted": "",
+      "defaultChannel": "",
+      "token": "",
+      "serverGroup": "",
+      "channelGroup": "",
+      "groupId": "",
+      "tokenDeleted": "",
+      "targetChannel": "",
+      "expires": "",
+      "expired": "",
+      "createdBy": "",
+      "title": "",
+      "createToken": "",
+      "searchTokens": "",
+      "temporaryPasswords": "",
+      "noTempPasswords": "",
+      "searchTempPasswords": "",
+      "groupType": "",
+      "group": "",
+      "chooseGroup": "",
+      "iconForGroup": "",
+      "createTempPassword": "",
+      "enterOrGenerate": "",
+      "generateRandom": "",
+      "validFor": "",
+      "unit": "",
+      "minutes": "",
+      "hours": "",
+      "days": ""
+    },
+    "advancedSettings": {
+      "title": "",
+      "saveFailed": "",
+      "saved": "",
+      "tabs": {
+        "appearance": "",
+        "access": "",
+        "moderation": "",
+        "limits": ""
+      },
+      "welcomeHostMessage": "",
+      "welcomeMessage": "",
+      "welcomeMessagePlaceholder": "",
+      "hostMessage": "",
+      "hostMessageMode": "",
+      "dontShow": "",
+      "showInChatLog": "",
+      "showAsModal": "",
+      "showAsModalThenQuit": "",
+      "hostBanner": "",
+      "linkUrl": "",
+      "imageUrl": "",
+      "rotationInterval": "",
+      "displayMode": "",
+      "noAdjust": "",
+      "stretchIgnoreAspect": "",
+      "keepAspectRatio": "",
+      "hostButton": "",
+      "linkUrlOnClick": "",
+      "tooltip": "",
+      "defaultGroups": "",
+      "defaultServerGroup": "",
+      "defaultChannelGroup": "",
+      "defaultChannelAdminGroup": "",
+      "accessSecurity": "",
+      "serverPassword": "",
+      "minIdentitySecurityLevel": "",
+      "minClientBuild": "",
+      "reservedSlots": "",
+      "codecEncryption": "",
+      "perChannelSetting": "",
+      "forcedOff": "",
+      "forcedOn": "",
+      "showOnGlobalWeblist": "",
+      "complaintsBeforeBan": "",
+      "banDurationSeconds": "",
+      "complaintRemovedAfter": "",
+      "prioritySilence": "",
+      "clientsBeforeForcedSilence": "",
+      "prioritySpeakerReduction": "",
+      "antiFlood": "",
+      "pointsReducedGood": "",
+      "pointsToBlockCommands": "",
+      "pointsToBlockConnections": "",
+      "eventLogging": "",
+      "serverqueryClients": "",
+      "serverChanges": "",
+      "fileTransfers": "",
+      "fileTransferLimitsPerUser": "",
+      "uploadQuotaMb": "",
+      "downloadQuotaMb": "",
+      "uploadBandwidth": "",
+      "downloadBandwidth": "",
+      "quotaUnlimitedHint": "",
+      "bandwidthUnlimitedHint": ""
+    },
+    "notFound": {
+      "title": "",
+      "description": "",
+      "backToDashboard": ""
+    },
+    "complaints": {
+      "from": "",
+      "about": "",
+      "when": "",
+      "searchPlaceholder": ""
+    },
+    "widgetPage": {
+      "title": "",
+      "notAvailable": ""
+    },
+    "musicRequests": {
+      "description": "",
+      "noneYetTitle": "",
+      "noneYetDescription": "",
+      "requested": "",
+      "botPlaceholder": "",
+      "noConnectedBot": "",
+      "openLink": ""
+    },
+    "settings": {
+      "webgui": {
+        "language": {
+          "title": "",
+          "description": ""
+        },
+        "darkGroup": "",
+        "lightGroup": "",
+        "myBaseTheme": "",
+        "myDesign": "",
+        "designDescription": "",
+        "installDefaultDesign": "",
+        "installDefaultDesignDescription": "",
+        "designSetToast": "",
+        "designSetFailed": "",
+        "designs": {
+          "cockpit": {
+            "label": "",
+            "description": ""
+          },
+          "lounge": {
+            "label": "",
+            "description": ""
+          }
+        },
+        "baseThemeDescription": "",
+        "resetToInstallDefault": "",
+        "myAccent": "",
+        "accentDescription": "",
+        "installDefaultBaseTheme": "",
+        "installDefaultBaseThemeDescription": "",
+        "installDefaultAccent": "",
+        "installDefaultAccentDescription": "",
+        "baseThemeSetToast": "",
+        "baseThemeSetFailed": "",
+        "accentSetToast": "",
+        "accentSetFailed": "",
+        "pairingHint": "",
+        "privacyNotice": {
+          "title": "",
+          "description": "",
+          "label": "",
+          "onToast": "",
+          "offToast": "",
+          "failed": ""
+        }
+      },
+      "title": "",
+      "tabs": {
+        "connections": "",
+        "account": "",
+        "webgui": "",
+        "users": "",
+        "roles": "",
+        "youtube": "",
+        "streaming": "",
+        "network": "",
+        "debug": "",
+        "restart": "",
+        "sso": "",
+        "updateStatus": ""
+      },
+      "account": {
+        "passwordMinLength": "",
+        "passwordMismatch": "",
+        "passwordChangedSuccess": "",
+        "passwordChangeFailed": "",
+        "changePasswordTitle": "",
+        "currentPasswordLabel": "",
+        "currentPasswordPlaceholder": "",
+        "newPasswordLabel": "",
+        "newPasswordPlaceholder": "",
+        "confirmNewPasswordLabel": "",
+        "confirmNewPasswordPlaceholder": "",
+        "changing": ""
+      },
+      "twoFactor": {
+        "title": "",
+        "description": "",
+        "disable2fa": "",
+        "starting": "",
+        "enable2fa": "",
+        "setupTitle": "",
+        "scanInstructions": "",
+        "qrAlt": "",
+        "manualEntryLabel": "",
+        "confirmationCodeLabel": "",
+        "verifying": "",
+        "verifyAndEnable": "",
+        "recoveryCodesHint": "",
+        "savedCodesConfirm": "",
+        "twoFaEnabledToast": "",
+        "disableTitle": "",
+        "disableConfirmHint": "",
+        "disablePasswordPlaceholder": "",
+        "disabling": "",
+        "setupFailed": "",
+        "invalidCode": "",
+        "twoFaDisabledToast": "",
+        "disableFailed": "",
+        "disableAction": ""
+      },
+      "connections": {
+        "manageDescription": "",
+        "addConnection": "",
+        "host": "",
+        "protocol": "",
+        "ssh": "",
+        "test": "",
+        "botIdentityFallback": "",
+        "causes": {
+          "ok": "",
+          "dns": "",
+          "refused": "",
+          "timeout": "",
+          "unreachable": "",
+          "reset": "",
+          "tls-name": "",
+          "tls-untrusted": "",
+          "tls-expired": "",
+          "tls-other": "",
+          "key-rejected": "",
+          "ts-error": "",
+          "unexpected-response": "",
+          "ssh-auth-rejected": "",
+          "ssh-closed": "",
+          "not-configured": "",
+          "prerequisite-failed": "",
+          "rate-limited": "",
+          "unknown": ""
+        },
+        "diagnosis": {
+          "title": "",
+          "description": "",
+          "running": "",
+          "failedToRun": "",
+          "again": "",
+          "copy": "",
+          "copyManually": "",
+          "testValues": "",
+          "ok": "",
+          "okLiveSession": "",
+          "port": "",
+          "virtualServer": "",
+          "reportTitle": "",
+          "reportTime": "",
+          "reportVersion": "",
+          "status": {
+            "ok": "",
+            "failed": "",
+            "skipped": ""
+          },
+          "steps": {
+            "webquery": "",
+            "ssh": "",
+            "filetransfer": "",
+            "voice": "",
+            "sidecar": ""
+          },
+          "remedies": {
+            "webquery": {
+              "not-configured": ""
+            },
+            "ssh": {
+              "refused": "",
+              "timeout": "",
+              "not-configured": ""
+            },
+            "filetransfer": {
+              "refused": "",
+              "timeout": "",
+              "not-configured": "",
+              "prerequisite-failed": ""
+            },
+            "voice": {
+              "timeout": "",
+              "refused": "",
+              "unexpected-response": "",
+              "not-configured": "",
+              "prerequisite-failed": ""
+            },
+            "sidecar": {
+              "not-configured": "",
+              "refused": "",
+              "dns": "",
+              "timeout": "",
+              "unexpected-response": ""
+            }
+          }
+        },
+        "editConnectionTitle": "",
+        "namePlaceholder": "",
+        "hostPlaceholder": "",
+        "webqueryPortLabel": "",
+        "apiKeyLabel": "",
+        "apiKeyUnchangedPlaceholder": "",
+        "apiKeyPlaceholder": "",
+        "apiKeyOptionalHint": "",
+        "removeApiKey": "",
+        "removeApiKeyHint": "",
+        "noWebQueryBadge": "",
+        "noWebQueryHint": "",
+        "needsApiKey": "",
+        "useHttps": "",
+        "pingTargetLabel": "",
+        "pingTargetPlaceholder": "",
+        "pingTargetHint": "",
+        "recordConnectionJournal": "",
+        "recordConnectionJournalHint": "",
+        "recordUserHistory": "",
+        "recordUserHistoryHint": "",
+        "sshPortLabel": "",
+        "sshUserLabel": "",
+        "sshUserPlaceholder": "",
+        "unchanged": "",
+        "sshPasswordLabel": "",
+        "update": "",
+        "connectionUpdated": "",
+        "updateFailed": "",
+        "connectionAdded": "",
+        "createFailed": "",
+        "deleteConnectionTitle": "",
+        "deleteConnectionDescription": "",
+        "connectionDeleted": ""
+      },
+      "botIdentity": {
+        "apiKeyReissued": "",
+        "createdToast": "",
+        "createFailed": "",
+        "renamedToast": "",
+        "renameFailed": "",
+        "dialogTitle": "",
+        "hasIdentityDescription": "",
+        "noIdentityDescription": "",
+        "scopeFixHint": "",
+        "displayNameLabel": "",
+        "fixing": "",
+        "fixPermissions": "",
+        "createBotIdentityButton": ""
+      },
+      "users": {
+        "manageDescription": "",
+        "searchPlaceholder": "",
+        "addUser": "",
+        "colUsername": "",
+        "colDisplayName": "",
+        "colLastLogin": "",
+        "noUsersMatch": "",
+        "ssoBadge": "",
+        "cantChangeOwnRole": "",
+        "cantDisableOwnAccount": "",
+        "never": "",
+        "serverAccessTitle": "",
+        "sessionsTitle": "",
+        "resetPasswordTitle": "",
+        "cantDeleteOwnAccount": "",
+        "usernamePlaceholder": "",
+        "displayNamePlaceholder": "",
+        "passwordPlaceholder": "",
+        "userCreated": "",
+        "createUserFailed": "",
+        "roleUpdated": "",
+        "roleUpdateFailed": "",
+        "userEnabledToast": "",
+        "userDisabledToast": "",
+        "statusUpdateFailed": "",
+        "resetPasswordMinLength": "",
+        "passwordResetSuccess": "",
+        "resetPasswordFailed": "",
+        "userUpdated": "",
+        "updateUserFailed": "",
+        "setNewPasswordFor": "",
+        "deleteUserTitle": "",
+        "deleteUserDescription": "",
+        "userDeleted": "",
+        "deleteUserFailed": "",
+        "resetting": "",
+        "permissions": {
+          "heading": "",
+          "adminAll": "",
+          "escalating": "",
+          "protectedInfo": "",
+          "unprotectedWarning": "",
+          "changeRoleTitle": "",
+          "changeRoleConfirm": "",
+          "none": "",
+          "labels": {
+            "server_view": "",
+            "groups_view": "",
+            "clients_message": "",
+            "clients_move": "",
+            "clients_kick": "",
+            "clients_ban": "",
+            "clients_manage": "",
+            "clients_database": "",
+            "bans_view": "",
+            "bans_manage": "",
+            "complaints_manage": "",
+            "channels_edit": "",
+            "channels_delete": "",
+            "groups_members": "",
+            "groups_edit": "",
+            "permissions_edit": "",
+            "tokens_manage": "",
+            "files_manage": "",
+            "icons_manage": "",
+            "messages_manage": "",
+            "vserver_edit": "",
+            "music_manage": "",
+            "bots_manage": ""
+          }
+        },
+        "editUserTitle": ""
+      },
+      "roles": {
+        "description": "",
+        "fixedTitle": "",
+        "adminFixed": "",
+        "changed": "",
+        "noUsers": "",
+        "reset": "",
+        "customTitle": "",
+        "add": "",
+        "noCustom": "",
+        "saved": "",
+        "saveFailed": "",
+        "resetDone": "",
+        "deleted": "",
+        "deleteFailed": "",
+        "inUse": "",
+        "resetTitle": "",
+        "resetDescription": "",
+        "deleteTitle": "",
+        "deleteDescription": "",
+        "editFixedTitle": "",
+        "addTitle": "",
+        "editCustomTitle": "",
+        "name": "",
+        "namePlaceholder": "",
+        "customNoEscalating": "",
+        "fixedAppliesNow": "",
+        "permissionCount_one": "",
+        "permissionCount_other": "",
+        "usersCount_one": "",
+        "usersCount_other": ""
+      },
+      "serverAccess": {
+        "wholeConnection": "",
+        "pickVirtualServer": "",
+        "listFailed": "",
+        "virtualServer": "",
+        "updated": "",
+        "updateFailed": "",
+        "title": "",
+        "noConnections": ""
+      },
+      "sessions": {
+        "title": "",
+        "description": "",
+        "selfWarning": "",
+        "noActiveSessions": "",
+        "signedIn": "",
+        "expires": "",
+        "revoke": "",
+        "revoked": "",
+        "revokeFailed": "",
+        "revokedAllToast": "",
+        "revokeAllFailed": "",
+        "revoking": "",
+        "revokeAll": ""
+      },
+      "youtube": {
+        "title": "",
+        "description": "",
+        "extensionName": "",
+        "extensionSuffix": "",
+        "noCookiesConfigured": "",
+        "cookiesRejected": "",
+        "cookiesWorking": "",
+        "cookiesNotChecked": "",
+        "checking": "",
+        "recheck": "",
+        "uploading": "",
+        "uploadCookiesFile": "",
+        "pasteCookies": "",
+        "settingSaved": "",
+        "settingSaveFailed": "",
+        "uploadedButRejected": "",
+        "cookieFileUploaded": "",
+        "uploadFailed": "",
+        "savedButRejected": "",
+        "cookiesSaved": "",
+        "saveCookiesFailed": "",
+        "cookieFileRemoved": "",
+        "removeCookiesFailed": "",
+        "playedSongStorageTitle": "",
+        "playedSongStorageDescriptionPart1": "",
+        "playedSongStorageDescriptionPart2": "",
+        "keepPlayedSongsLabel": "",
+        "keepOnDescription": "",
+        "keepOffDescription": ""
+      },
+      "streaming": {
+        "title": "",
+        "descriptionUsage": "",
+        "resolutionLabel": "",
+        "pixelsSuffix": "",
+        "frameRateLabel": "",
+        "frameRateHint": "",
+        "bitrateLabel": "",
+        "bitrateHintPrefix": "",
+        "volumeLabel": "",
+        "volumeHint": "",
+        "idleStopLabel": "",
+        "idleStopHint": "",
+        "maxVideoLabel": "",
+        "maxVideoHint": "",
+        "liveAudioLabel": "",
+        "liveAudioHint": "",
+        "liveVideoLabel": "",
+        "liveVideoHint": "",
+        "liveMaxLabel": "",
+        "liveMaxHint": "",
+        "restoreShippedValues": "",
+        "unsavedChanges": "",
+        "streamDefaultsSaved": "",
+        "streamDefaultsSaveFailed": ""
+      },
+      "network": {
+        "title": "",
+        "checkAgain": "",
+        "loadFailed": "",
+        "description": "",
+        "detectedLabel": "",
+        "detectedHint": "",
+        "settingLabel": "",
+        "settingFromEnv": "",
+        "settingDefault": "",
+        "suggestionNone": "",
+        "suggestionMatches": "",
+        "suggestionDiffers": "",
+        "suggestionCheck": "",
+        "chainTitle": "",
+        "chainHint": "",
+        "origin": {
+          "socket": "",
+          "forwarded": ""
+        },
+        "scope": {
+          "public": "",
+          "private": "",
+          "loopback": "",
+          "unknown": ""
+        },
+        "role": {
+          "proxy": "",
+          "client": "",
+          "ignored": ""
+        },
+        "notSent": "",
+        "howToChange": ""
+      },
+      "debug": {
+        "loggingTitle": "",
+        "loggingDescription": "",
+        "voiceBotDebugLabel": "",
+        "voiceBotDebugHint": "",
+        "rankCheckDebugLabel": "",
+        "rankCheckDebugHint": "",
+        "serverQueryDebugLabel": "",
+        "serverQueryDebugHint": "",
+        "streamSignalingDebugLabel": "",
+        "streamSignalingDebugHint": "",
+        "debugFlagUpdateFailed": "",
+        "dangerZone": "",
+        "idResetHint": "",
+        "resetRadioIdsLabel": "",
+        "resetRadioIdsHint": "",
+        "reset": "",
+        "resetBotIdsLabel": "",
+        "resetBotIdsHint": "",
+        "radioIdsResetFailed": "",
+        "botIdsResetFailed": "",
+        "resetRadioTitle": "",
+        "resetBotsTitle": "",
+        "resetRadioDescription": "",
+        "resetBotsDescription": "",
+        "radioIdsResetToast_one": "",
+        "radioIdsResetToast_other": "",
+        "botIdsResetToast_one": "",
+        "botIdsResetToast_other": ""
+      },
+      "restart": {
+        "title": "",
+        "descriptionPart1": "",
+        "descriptionPart2": "",
+        "restartBackendLabel": "",
+        "restartBackendHint": "",
+        "restartSidecarLabel": "",
+        "restartSidecarHint": "",
+        "timeLabel": "",
+        "daysLabel": "",
+        "restartScheduleSaved": "",
+        "restartScheduleSaveFailed": "",
+        "days": {
+          "sun": "",
+          "mon": "",
+          "tue": "",
+          "wed": "",
+          "thu": "",
+          "fri": "",
+          "sat": ""
+        },
+        "notEmphasis": ""
+      },
+      "sso": {
+        "title": "",
+        "descriptionPart1": "",
+        "descriptionPart2": "",
+        "viewerEmphasis": "",
+        "enabledHint": "",
+        "issuerUrlLabel": "",
+        "issuerUrlHint": "",
+        "clientIdLabel": "",
+        "clientSecretLabel": "",
+        "clientSecretPlaceholderExisting": "",
+        "clientSecretPlaceholder": "",
+        "buttonLabelLabel": "",
+        "redirectUriHint": "",
+        "ssoSettingsSaved": "",
+        "ssoSettingsSaveFailed": ""
+      },
+      "updateStatus": {
+        "title": "",
+        "recheckNow": "",
+        "checkingForUpdates": "",
+        "updateAvailable": "",
+        "allUpToDate": "",
+        "checkFailed": "",
+        "comparisonHintPrefix": "",
+        "comparisonHintSuffix": "",
+        "backend": "",
+        "sidecar": "",
+        "frontend": "",
+        "installed": "",
+        "latestMain": "",
+        "unreachable": "",
+        "unknown": "",
+        "updateAvailableBadge": "",
+        "upToDate": "",
+        "lastChecked": "",
+        "notCheckedYet": "",
+        "githubTokenTitle": "",
+        "githubTokenDescriptionPrefix": "",
+        "githubTokenLinkText": "",
+        "githubTokenDescriptionSuffix": "",
+        "tokenLabel": "",
+        "tokenConfiguredPlaceholder": "",
+        "tokenPlaceholder": "",
+        "tokenConfiguredHint": "",
+        "noTokenConfiguredHint": "",
+        "tokenSaved": "",
+        "tokenSaveFailed": "",
+        "tokenRemoved": "",
+        "tokenRemoveFailed": "",
+        "removing": ""
+      }
+    },
+    "icons": {
+      "title": "",
+      "searchPlaceholder": "",
+      "uploading": "",
+      "uploadIcons": "",
+      "iconPool": "",
+      "maxSize": "",
+      "clear": "",
+      "deleteSelected": "",
+      "unavailableTitle": "",
+      "unavailableSsh": "",
+      "loadFailed": "",
+      "noMatching": "",
+      "noIcons": "",
+      "noMatchingDescription": "",
+      "uploadHintAdmin": "",
+      "uploadHintViewer": "",
+      "inUse": "",
+      "poolFooter": "",
+      "poolFooterMaxSize": "",
+      "poolFooterNoPermission": "",
+      "deleteDescription": "",
+      "uploadFailed": "",
+      "deleteFailed": "",
+      "usage": {
+        "virtualserver": "",
+        "servergroup": "",
+        "channelgroup": "",
+        "channel": ""
+      },
+      "iconCount_one": "",
+      "iconCount_other": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "deleteTitle_one": "",
+      "deleteTitle_other": "",
+      "deleteWarning_one": "",
+      "deleteWarning_other": "",
+      "uploadedToast_one": "",
+      "uploadedToast_other": "",
+      "duplicateToast_one": "",
+      "duplicateToast_other": "",
+      "deletedToast_one": "",
+      "deletedToast_other": "",
+      "tooLargeToast_one": "",
+      "tooLargeToast_other": ""
+    },
+    "files": {
+      "title": "",
+      "newFolder": "",
+      "channels": "",
+      "noChannels": "",
+      "selectChannelHint": "",
+      "unavailableTitle": "",
+      "unavailableSsh": "",
+      "sshConnectFailed": "",
+      "loadFailed": "",
+      "ts3ErrorCode": "",
+      "colName": "",
+      "colSize": "",
+      "colModified": "",
+      "emptyDirectory": "",
+      "emptyDirectoryDescription": "",
+      "moveToAnotherChannel": "",
+      "uploadFiles": "",
+      "download": "",
+      "downloadFolder": "",
+      "downloadStarted": "",
+      "dropToUpload": "",
+      "uploadLimitNotice": "",
+      "uploadDialog": {
+        "title": "",
+        "description": "",
+        "dropHint": "",
+        "dropMore": "",
+        "choose": "",
+        "chooseFolder": "",
+        "addMore": "",
+        "addFolder": "",
+        "reading": "",
+        "readFailed": "",
+        "nothingInFolder": "",
+        "tooMany": "",
+        "remove": "",
+        "originalName": "",
+        "adjustLabel": "",
+        "keepWarning": "",
+        "keepWarningFolder": "",
+        "bannerTitle": "",
+        "adjustAll": "",
+        "keepAll": "",
+        "duplicate": "",
+        "emptyFolderMark": "",
+        "uploadEmpty": "",
+        "adjustLabelFolder_one": "",
+        "adjustLabelFolder_other": "",
+        "banner_one": "",
+        "banner_other": "",
+        "summary_one": "",
+        "summary_other": "",
+        "folderEmpty_one": "",
+        "folderEmpty_other": "",
+        "showContents_one": "",
+        "showContents_other": "",
+        "listMore_one": "",
+        "listMore_other": "",
+        "moreProblems_one": "",
+        "moreProblems_other": "",
+        "leftOut_one": "",
+        "leftOut_other": "",
+        "upload_one": "",
+        "upload_other": "",
+        "makeFolders_one": "",
+        "makeFolders_other": ""
+      },
+      "preview": {
+        "title": "",
+        "previous": "",
+        "next": "",
+        "position": "",
+        "dimensions": "",
+        "loading": "",
+        "retry": "",
+        "notAnImage": "",
+        "tooLarge": "",
+        "busy": ""
+      },
+      "problem": {
+        "empty": "",
+        "not-absolute": "",
+        "control-character": "",
+        "backslash": "",
+        "slash-in-name": "",
+        "empty-segment": "",
+        "dot-segment": "",
+        "name-too-long": "",
+        "path-too-long": ""
+      },
+      "errors": {
+        "network": "",
+        "exists": "",
+        "notFound": "",
+        "nonAscii": "",
+        "io": "",
+        "invalidPath": "",
+        "invalidName": "",
+        "tooLarge": "",
+        "tooLargeFor": "",
+        "folderBlocked": "",
+        "folderFailed": "",
+        "folderTooLarge": "",
+        "proxyTooLarge": "",
+        "generic": ""
+      },
+      "conflict": {
+        "title": "",
+        "description": "",
+        "applyToAll": "",
+        "skip": "",
+        "overwrite": ""
+      },
+      "transfers": {
+        "title": "",
+        "clearFinished": "",
+        "counter": "",
+        "queued": "",
+        "makingFolders": "",
+        "folderMade": "",
+        "preparing": "",
+        "waitingForAnswer": "",
+        "finishing": "",
+        "skipped": "",
+        "canceled": "",
+        "failed": "",
+        "more_one": "",
+        "more_other": "",
+        "summaryUploaded_one": "",
+        "summaryUploaded_other": "",
+        "summaryFolders_one": "",
+        "summaryFolders_other": "",
+        "summarySkipped_one": "",
+        "summarySkipped_other": "",
+        "summaryFailed_one": "",
+        "summaryFailed_other": "",
+        "summaryCanceled_one": "",
+        "summaryCanceled_other": ""
+      },
+      "createDirectory": "",
+      "directoryName": "",
+      "newFolderPlaceholder": "",
+      "moveTitle": "",
+      "moveHint": "",
+      "targetChannel": "",
+      "chooseChannelPlaceholder": "",
+      "move": "",
+      "deleteFileTitle": "",
+      "deleteFileDescription": "",
+      "deleteFolderTitle": "",
+      "deleteFolderDescription": "",
+      "directoryCreated": "",
+      "directoryCreateFailed": "",
+      "fileDeleted": "",
+      "fileDeleteFailed": "",
+      "fileMoved": "",
+      "fileMoveFailed": "",
+      "downloadFolderStarted_one": "",
+      "downloadFolderStarted_other": "",
+      "itemCount_one": "",
+      "itemCount_other": ""
+    },
+    "dashboard": {
+      "noAccessTitle": "",
+      "noAccessDescription": "",
+      "noServerDescription": "",
+      "connectionFailedTitle": "",
+      "connectionFailedDescription": "",
+      "widgets": "",
+      "liveMonitoring": "",
+      "onlineCount": "",
+      "lead": {
+        "nobodyHere": "",
+        "peopleHere_one": "",
+        "peopleHere_other": "",
+        "upDays_one": "",
+        "upDays_other": "",
+        "upHours_one": "",
+        "upHours_other": "",
+        "upMinutes_one": "",
+        "upMinutes_other": "",
+        "channelsPing_one": "",
+        "channelsPing_other": "",
+        "channelsNoPing_one": "",
+        "channelsNoPing_other": ""
+      },
+      "onlineUsers": "",
+      "ofSlots": "",
+      "channels": "",
+      "uptime": "",
+      "ping": "",
+      "timeout": "",
+      "bandwidth": "",
+      "last20Minutes": "",
+      "download": "",
+      "upload": "",
+      "collectingData": "",
+      "userHistory": {
+        "title": "",
+        "peak": "",
+        "average": "",
+        "moreInHistory": "",
+        "noData": "",
+        "recordingOff": "",
+        "recordingOffNote": "",
+        "loadFailed": ""
+      },
+      "in": "",
+      "out": "",
+      "serverCapacity": "",
+      "userSlots": "",
+      "utilized": "",
+      "serverVersion": "",
+      "platform": "",
+      "botFlows": "",
+      "supportQueue": {
+        "title": "",
+        "waiting": "",
+        "supporters": "",
+        "longest": "",
+        "queue": "",
+        "perQueue": ""
+      },
+      "tiles": {
+        "customise": "",
+        "editHint": "",
+        "dragHandle": "",
+        "moveEarlier": "",
+        "moveLater": "",
+        "hide": "",
+        "show": "",
+        "hiddenBadge": "",
+        "inLeadBadge": "",
+        "inLeadHint": "",
+        "width": "",
+        "widthLabel": "",
+        "width1": "",
+        "width2": "",
+        "width3": "",
+        "botFlowsHint": "",
+        "supportQueueHint": "",
+        "saved": "",
+        "saveFailed": "",
+        "dnd": {
+          "instructions": "",
+          "start": "",
+          "over": "",
+          "end": "",
+          "cancel": ""
+        }
+      }
+    },
+    "raid": {
+      "acting": "",
+      "actOn": "",
+      "actOff": "",
+      "actingNote": "",
+      "actionsDisabled": "",
+      "actionError": "",
+      "wouldHave": "",
+      "actions": {
+        "none": "",
+        "warn": "",
+        "restrict": "",
+        "kick": "",
+        "ban": ""
+      },
+      "outcomes": {
+        "pending": "",
+        "running": "",
+        "done": "",
+        "failed": "",
+        "gone": "",
+        "skipped": "",
+        "stopped": ""
+      },
+      "stop": {
+        "button": "",
+        "title": "",
+        "description": "",
+        "last": ""
+      },
+      "actConfirm": {
+        "title": "",
+        "description": "",
+        "early": ""
+      },
+      "toasts": {
+        "actOn": "",
+        "actOff": "",
+        "stopped": ""
+      },
+      "loadError": "",
+      "retry": "",
+      "off": "",
+      "offHint": "",
+      "offHintAdmin": "",
+      "statusTitle": "",
+      "observeOnly": "",
+      "openIncident": "",
+      "detection": {
+        "live": "",
+        "delayed": "",
+        "journal-off": "",
+        "unreachable": ""
+      },
+      "detectionHint": {
+        "live": "",
+        "delayed": "",
+        "journal-off": "",
+        "unreachable": ""
+      },
+      "journalOff": "",
+      "paused": {
+        "server-start": "",
+        "watching-again": ""
+      },
+      "observeUntil": "",
+      "stageNote": "",
+      "incidentsTitle": "",
+      "noIncidents": "",
+      "states": {
+        "open": "",
+        "closed": ""
+      },
+      "clientCount": "",
+      "hits": {
+        "total": "",
+        "subnet": "",
+        "country": "",
+        "name": "",
+        "new": ""
+      },
+      "hidden": "",
+      "lastHit": "",
+      "ended": "",
+      "nothingDone": "",
+      "clientsCaption": "",
+      "columns": {
+        "action": "",
+        "wouldAction": "",
+        "nickname": "",
+        "joined": "",
+        "ip": "",
+        "country": "",
+        "identity": ""
+      },
+      "newIdentity": "",
+      "seenBefore": "",
+      "moreClients": "",
+      "notice": {
+        "none": "",
+        "nobody": "",
+        "poke": "",
+        "message": "",
+        "failed": "",
+        "notes": {
+          "nobodyOnline": "",
+          "noClientList": ""
+        }
+      },
+      "presets": {
+        "lax": "",
+        "medium": "",
+        "strict": "",
+        "custom": ""
+      },
+      "rules": {
+        "total": "",
+        "totalHint": "",
+        "subnet": "",
+        "subnetHint": "",
+        "country": "",
+        "countryHint": "",
+        "name": "",
+        "nameHint": "",
+        "new": "",
+        "newHint": ""
+      },
+      "notifyModes": {
+        "off": "",
+        "poke": "",
+        "message": ""
+      },
+      "settings": {
+        "action": "",
+        "actionsTitle": "",
+        "actionsHint": "",
+        "warnText": "",
+        "restrictGroup": "",
+        "chooseGroup": "",
+        "restrictGroupHint": "",
+        "restrictMinutes": "",
+        "kickReason": "",
+        "kickReasonHint": "",
+        "banMinutes": "",
+        "banMinutesHint": "",
+        "banReason": "",
+        "banIp": "",
+        "banIpHint": "",
+        "banIpWarning": "",
+        "maxActionsPerMin": "",
+        "maxActionsPerMinHint": "",
+        "open": "",
+        "title": "",
+        "description": "",
+        "enabled": "",
+        "enabledHint": "",
+        "rulesTitle": "",
+        "preset": "",
+        "presetHint": "",
+        "count": "",
+        "windowSec": "",
+        "sharePct": "",
+        "exemptTitle": "",
+        "exemptGroups": "",
+        "exemptGroupsHint": "",
+        "knownSessions": "",
+        "knownSessionsHint": "",
+        "graceMin": "",
+        "graceMinHint": "",
+        "observeDays": "",
+        "observeDaysHint": "",
+        "observeDaysSet": "",
+        "notifyTitle": "",
+        "notify": "",
+        "notifyGroups": "",
+        "notifyGroupsHint": "",
+        "notifyText": "",
+        "pokeMax": "",
+        "historyTitle": "",
+        "retention": "",
+        "retentionHint": "",
+        "retentionRange": "",
+        "saved": "",
+        "needNotifyGroup": ""
+      }
+    },
+    "support": {
+      "duration": {
+        "hours": "",
+        "minutes": "",
+        "seconds": ""
+      },
+      "states": {
+        "waiting": "",
+        "in-progress": "",
+        "done": "",
+        "cancelled": ""
+      },
+      "paused": {
+        "title": "",
+        "since": "",
+        "connectionInactive": "",
+        "unreachable": ""
+      },
+      "loadError": "",
+      "retry": "",
+      "notSetUp": "",
+      "switchedOff": "",
+      "setUpHint": "",
+      "setUpHintAdmin": "",
+      "addQueue": "",
+      "queuesLabel": "",
+      "off": "",
+      "vip": "",
+      "vipHint": "",
+      "checkedAt": "",
+      "waitingTitle": "",
+      "emptyQueue": "",
+      "historyTitle": "",
+      "emptyHistory": "",
+      "removeTitle": "",
+      "removeDescription": "",
+      "actions": {
+        "take": "",
+        "remove": "",
+        "close": "",
+        "bringBack": ""
+      },
+      "toasts": {
+        "take": "",
+        "remove": "",
+        "close": "",
+        "bringBack": ""
+      },
+      "positionLabel": "",
+      "arrivalUnknownHint": "",
+      "waited": "",
+      "waitedAtLeast": "",
+      "historyWaited": "",
+      "historyWaitedAtLeast": "",
+      "stats": {
+        "title": "",
+        "period": "",
+        "empty": "",
+        "cases": "",
+        "taken": "",
+        "cancelled": "",
+        "avgWait": "",
+        "scope": "",
+        "allQueues": "",
+        "vipAvgWait": "",
+        "otherAvgWait": "",
+        "maxWait": "",
+        "perSupporter": "",
+        "perDay": "",
+        "perDayTitle": "",
+        "day": "",
+        "note": "",
+        "lastDays_one": "",
+        "lastDays_other": ""
+      },
+      "absent": "",
+      "takenBy": "",
+      "takenByWeb": "",
+      "endReasons": {
+        "left-server": "",
+        "left-channel": "",
+        "finished": "",
+        "removed": "",
+        "closed": "",
+        "queue-changed": ""
+      },
+      "takeTitle": "",
+      "takeDescription": "",
+      "noSupporterOnline": "",
+      "supporter": "",
+      "chooseSupporter": "",
+      "takeFailed": "",
+      "takeFailedClientIn": "",
+      "takeFailedClientOffline": "",
+      "takeFailedRoom": "",
+      "takeSteps": {
+        "create-room": "",
+        "move-client": "",
+        "move-supporter": ""
+      },
+      "errors": {
+        "CASE_NOT_WAITING": "",
+        "CASE_NOT_IN_PROGRESS": "",
+        "CLIENT_OFFLINE": "",
+        "NOT_A_SUPPORTER": "",
+        "CHANNEL_NOT_FOUND": "",
+        "CHANNEL_IN_USE": "",
+        "QUEUE_NOT_FOUND": "",
+        "TAKE_FAILED_CREATE_ROOM": "",
+        "TAKE_FAILED_MOVE_CLIENT": "",
+        "TAKE_FAILED_MOVE_SUPPORTER": "",
+        "TAKE_FAILED_NOT_BACK": "",
+        "NOTHING_TO_BRING_BACK": ""
+      },
+      "settings": {
+        "open": "",
+        "title": "",
+        "newTitle": "",
+        "name": "",
+        "nameHint": "",
+        "delete": "",
+        "deleteTitle": "",
+        "deleteDescription": "",
+        "deleted": "",
+        "description": "",
+        "conflictTitle": "",
+        "conflictText": "",
+        "enabled": "",
+        "channel": "",
+        "chooseChannel": "",
+        "channelHint": "",
+        "groups": "",
+        "vipGroups": "",
+        "vipGroupsHint": "",
+        "afk": "",
+        "grace": "",
+        "graceHint": "",
+        "withoutSupporter": "",
+        "withoutSupporterHint": "",
+        "roomName": "",
+        "roomNameHint": "",
+        "roomType": "",
+        "roomTypes": {
+          "temporary": "",
+          "semipermanent": "",
+          "permanent": ""
+        },
+        "needChannel": "",
+        "needGroup": "",
+        "messagesTitle": "",
+        "clientMessages": "",
+        "clientMessagesHint": "",
+        "enterText": "",
+        "noSupporterText": "",
+        "estimateText": "",
+        "estimateHint": "",
+        "takenText": "",
+        "repeatMin": "",
+        "repeatHint": "",
+        "pokeSupporters": "",
+        "pokeHint": "",
+        "supporterPokeText": "",
+        "remind": "",
+        "remindHint": "",
+        "remindAfterMin": "",
+        "remindText": "",
+        "historyTitle": "",
+        "retention": "",
+        "retentionHint": "",
+        "retentionRange": "",
+        "saved": ""
+      },
+      "supportersOnline_one": "",
+      "supportersOnline_other": ""
+    },
+    "temporaryGroups": {
+      "notice": {
+        "warning": "",
+        "expired": "",
+        "nothingSent": "",
+        "waiting": "",
+        "channels": {
+          "message": "",
+          "offline": "",
+          "poke": ""
+        }
+      },
+      "notices": {
+        "title": "",
+        "intro": "",
+        "enabled": "",
+        "warnTimes": "",
+        "warnTimesHint": "",
+        "warnTimesInvalid": "",
+        "warnTimesRange": "",
+        "notifyExpired": "",
+        "channelsTitle": "",
+        "channels": {
+          "privateMessage": "",
+          "offlineMessage": "",
+          "poke": ""
+        },
+        "channelsHint": "",
+        "warningText": "",
+        "expiredText": "",
+        "preview": "",
+        "placeholders": "",
+        "timeZone": "",
+        "timeZoneHint": "",
+        "timeZoneInvalid": "",
+        "textEmpty": "",
+        "saved": "",
+        "defaults": ""
+      },
+      "retention": {
+        "label": "",
+        "days": "",
+        "saved": ""
+      },
+      "notes": {
+        "connectionInactive": "",
+        "unreachable": "",
+        "notMember": "",
+        "groupGone": "",
+        "clientGone": "",
+        "otherIdentity": "",
+        "noPower": "",
+        "teamspeakError": ""
+      },
+      "tabs": {
+        "groups": "",
+        "temporary": ""
+      },
+      "scopeLabel": "",
+      "scope": {
+        "open": "",
+        "history": ""
+      },
+      "accuracyHint": "",
+      "loadFailed": "",
+      "columns": {
+        "client": "",
+        "group": "",
+        "granted": "",
+        "expires": "",
+        "ended": "",
+        "state": ""
+      },
+      "empty": {
+        "open": "",
+        "history": ""
+      },
+      "by": "",
+      "wasMember": "",
+      "until": "",
+      "clientBadge": "",
+      "remaining": {
+        "overdue": "",
+        "days": "",
+        "hours": "",
+        "minutes": ""
+      },
+      "states": {
+        "active": "",
+        "waiting": "",
+        "error": "",
+        "revoked": "",
+        "already-removed": "",
+        "permanent": ""
+      },
+      "errors": {
+        "ALREADY_MEMBER": "",
+        "TEMP_GROUP_EXISTS": "",
+        "GROUP_NOT_ASSIGNABLE": "",
+        "CLIENT_NOT_FOUND": "",
+        "TEMP_GROUP_ENDED": ""
+      },
+      "deadline": {
+        "mode": "",
+        "for": "",
+        "until": "",
+        "extendBy": "",
+        "amount": "",
+        "unit": "",
+        "units": {
+          "minutes": "",
+          "hours": "",
+          "days": ""
+        },
+        "endsAt": "",
+        "tooShort": "",
+        "tooLong": "",
+        "invalid": ""
+      },
+      "addTemporary": "",
+      "grant": "",
+      "grantTitle": "",
+      "setDeadline": "",
+      "setDeadlineTitle": "",
+      "setDeadlineWarning": "",
+      "grantDescription": "",
+      "granted": "",
+      "change": "",
+      "changeTitle": "",
+      "changeDescription": "",
+      "changed": "",
+      "extend": {
+        "fromExpiry": "",
+        "fromNow": "",
+        "applies": ""
+      },
+      "makePermanent": "",
+      "permanentTitle": "",
+      "permanentDescription": "",
+      "madePermanent": "",
+      "revokeNow": "",
+      "revokeTitle": "",
+      "revokeDescription": "",
+      "revokeRetrying": "",
+      "ended": {
+        "revoked": "",
+        "already-removed": ""
+      }
+    },
+    "serverGroups": {
+      "protectedLabel": "",
+      "protectedHint": "",
+      "protectedBadge": "",
+      "protectedOn": "",
+      "protectedOff": "",
+      "protectedFailed": "",
+      "exportSelected": "",
+      "deleteSelected": "",
+      "import": "",
+      "createGroup": "",
+      "groupsHeading": "",
+      "selectForBulkDelete": "",
+      "iconAlt": "",
+      "members": "",
+      "sgidLabel": "",
+      "addMember": "",
+      "deleteGroup": "",
+      "selectGroupHint": "",
+      "noMembers": "",
+      "dbidLabel": "",
+      "removeFromGroup": "",
+      "memberRemoved": "",
+      "memberRemoveFailed": "",
+      "searchClientsPlaceholder": "",
+      "noMatchingClients": "",
+      "added": "",
+      "genericClient": "",
+      "addMemberFailed": "",
+      "createServerGroupTitle": "",
+      "groupNameLabel": "",
+      "newGroupPlaceholder": "",
+      "groupCreated": "",
+      "deleteServerGroupTitle": "",
+      "deleteGroupDescription": "",
+      "groupDeleted": "",
+      "deleteServerGroupsTitle": "",
+      "invalidJson": "",
+      "notValidGroupExport": "",
+      "wrongExportTypeChannel": "",
+      "notValidServerExport": "",
+      "emptyExportFile": "",
+      "createFailedFallback": "",
+      "importFailedNoGroups": "",
+      "importFailed": "",
+      "importSummary": "",
+      "importPermSkipped": "",
+      "importSkippedList": "",
+      "exportFailed": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "bulkDeleteDescription_one": "",
+      "bulkDeleteDescription_other": "",
+      "bulkDeleteSuccess_one": "",
+      "bulkDeleteSuccess_other": "",
+      "exportedCount_one": "",
+      "exportedCount_other": ""
+    },
+    "channelGroups": {
+      "exportSelected": "",
+      "deleteSelected": "",
+      "import": "",
+      "createGroup": "",
+      "tabGroups": "",
+      "tabByClient": "",
+      "groupsHeading": "",
+      "selectForBulkDelete": "",
+      "iconAlt": "",
+      "cgidLabel": "",
+      "typeLabel": "",
+      "selectClient": "",
+      "searchClientsPlaceholder": "",
+      "showOfflineClients": "",
+      "noClientsFound": "",
+      "clientChannelGroupsHeading": "",
+      "selectAClient": "",
+      "selectClientHint": "",
+      "noAssignmentsTitle": "",
+      "noAssignmentsDescription": "",
+      "moveAllToPlaceholder": "",
+      "applyToCount": "",
+      "selectAllChannels": "",
+      "selectChannelForBulk": "",
+      "colChannel": "",
+      "colChannelGroup": "",
+      "clientFallback": "",
+      "createChannelGroupTitle": "",
+      "groupNameLabel": "",
+      "newGroupPlaceholder": "",
+      "groupCreated": "",
+      "deleteChannelGroupsTitle": "",
+      "channelGroupUpdated": "",
+      "channelGroupUpdateFailed": "",
+      "channelGroupsUpdateFailed": "",
+      "invalidJson": "",
+      "notValidGroupExport": "",
+      "wrongExportTypeServer": "",
+      "notValidChannelExport": "",
+      "emptyExportFile": "",
+      "createFailedFallback": "",
+      "importFailedNoGroups": "",
+      "importFailed": "",
+      "importSummary": "",
+      "importPermSkipped": "",
+      "importSkippedList": "",
+      "exportFailed": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "channelsSelectedCount_one": "",
+      "channelsSelectedCount_other": "",
+      "bulkDeleteDescription_one": "",
+      "bulkDeleteDescription_other": "",
+      "bulkDeleteSuccess_one": "",
+      "bulkDeleteSuccess_other": "",
+      "channelGroupsUpdatedForCount_one": "",
+      "channelGroupsUpdatedForCount_other": "",
+      "exportedCount_one": "",
+      "exportedCount_other": ""
+    },
+    "channels": {
+      "selectChannel": "",
+      "useAsTemplate": "",
+      "query": "",
+      "away": "",
+      "muted": "",
+      "createChannel": "",
+      "editSelected": "",
+      "channelTree": "",
+      "channelNamesLabel": "",
+      "channelNamesPlaceholder": "",
+      "bulkEditHint": "",
+      "codec": "",
+      "opusVoice": "",
+      "opusMusic": "",
+      "codecQuality": "",
+      "neededTalkPower": "",
+      "permanent": "",
+      "duplicateTitle": "",
+      "duplicateHint": "",
+      "newChannelNameLabel": "",
+      "duplicateNamePlaceholder": "",
+      "duplicate": "",
+      "deleteChannelTitle": "",
+      "deleteChannelDescription": "",
+      "duplicateCreated": "",
+      "duplicateFailed": "",
+      "channelDeleted": "",
+      "channelDeleteFailed": "",
+      "channelMoved": "",
+      "channelMoveFailed": "",
+      "channelCount_one": "",
+      "channelCount_other": "",
+      "clientsOnlineCount_one": "",
+      "clientsOnlineCount_other": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "editCountTitle_one": "",
+      "editCountTitle_other": "",
+      "channelsCreated_one": "",
+      "channelsCreated_other": "",
+      "bulkUpdatedCount_one": "",
+      "bulkUpdatedCount_other": ""
+    },
+    "botEditor": {
+      "test": {
+        "button": "",
+        "title": "",
+        "intro": "",
+        "trigger": "",
+        "noTrigger": "",
+        "sample": "",
+        "field": "",
+        "value": "",
+        "addField": "",
+        "removeField": "",
+        "body": "",
+        "query": "",
+        "method": "",
+        "cronNoData": "",
+        "fromLast": "",
+        "fromLastNone": "",
+        "fromLastDone": "",
+        "run": "",
+        "running": "",
+        "failedRequest": "",
+        "invalidJson": "",
+        "status": {
+          "completed": "",
+          "failed": "",
+          "notTriggered": ""
+        },
+        "errorCode": {
+          "readLimit": "",
+          "nodeVisits": ""
+        },
+        "mismatch": {
+          "filter": "",
+          "missing": "",
+          "listener": "",
+          "command": ""
+        },
+        "summary": "",
+        "steps": "",
+        "stepTitle": "",
+        "iteration": "",
+        "branch": {
+          "true": "",
+          "false": "",
+          "error": ""
+        },
+        "conditionError": "",
+        "actionError": "",
+        "emptyPlaceholder": "",
+        "effect": {
+          "write": "",
+          "read": "",
+          "http": "",
+          "blocked": "",
+          "voice": "",
+          "variable": "",
+          "delay": ""
+        },
+        "note": {
+          "animationManagedByEngine": "",
+          "rankCheckCapped": "",
+          "responseUnknown": ""
+        },
+        "commands": {
+          "clientkick": "",
+          "banclient": "",
+          "clientmove": "",
+          "sendtextmessage": "",
+          "clientpoke": "",
+          "channelcreate": "",
+          "channeledit": "",
+          "channeldelete": "",
+          "servergroupaddclient": "",
+          "servergroupdelclient": ""
+        },
+        "variables": "",
+        "before": "",
+        "after": "",
+        "temp": "",
+        "simulated": "",
+        "simulatedHint": "",
+        "notVisited": "",
+        "fieldsUnknown": "",
+        "fieldsChanges": "",
+        "filters": "",
+        "filterOk": "",
+        "filterFail": "",
+        "filterActual": "",
+        "forced": "",
+        "forceTrue": "",
+        "forceFalse": "",
+        "forceClear": "",
+        "forcedReset": "",
+        "animations": "",
+        "animationsHint": "",
+        "frameSkipped": "",
+        "clear": "",
+        "fieldsMore_one": "",
+        "fieldsMore_other": "",
+        "forcedActive_one": "",
+        "forcedActive_other": "",
+        "animationMeta_one": "",
+        "animationMeta_other": ""
+      },
+      "executions": {
+        "button": "",
+        "title": "",
+        "empty": "",
+        "pickOne": "",
+        "logTitle": "",
+        "noLogs": "",
+        "status": {
+          "running": "",
+          "waiting": "",
+          "completed": "",
+          "failed": "",
+          "dropped": "",
+          "interrupted": "",
+          "cancelled": ""
+        },
+        "waitingUntil": "",
+        "droppedRow_one": "",
+        "droppedRow_other": "",
+        "droppedDetail_one": "",
+        "droppedDetail_other": ""
+      },
+      "nodeLabels": {
+        "trigger_event": "",
+        "trigger_cron": "",
+        "trigger_webhook": "",
+        "trigger_command": "",
+        "trigger_support": "",
+        "action_message": "",
+        "action_poke": "",
+        "action_kick": "",
+        "action_ban": "",
+        "action_move": "",
+        "action_channelCreate": "",
+        "action_channelEdit": "",
+        "action_channelDelete": "",
+        "action_groupAdd": "",
+        "action_groupRemove": "",
+        "action_webquery": "",
+        "action_webhook": "",
+        "action_httpRequest": "",
+        "action_voicePlay": "",
+        "action_voiceStop": "",
+        "action_voiceJoinChannel": "",
+        "action_voiceLeaveChannel": "",
+        "action_voiceVolume": "",
+        "action_voicePauseResume": "",
+        "action_voiceSkip": "",
+        "action_voiceSeek": "",
+        "action_voiceTts": "",
+        "action_afkMover": "",
+        "action_idleKicker": "",
+        "action_pokeGroup": "",
+        "action_rankCheck": "",
+        "action_tempChannelCleanup": "",
+        "action_supportEnqueue": "",
+        "action_animatedChannel": "",
+        "condition": "",
+        "loop": "",
+        "delay": "",
+        "variable": "",
+        "log": "",
+        "action_generateCode": "",
+        "action_countOnlineInGroups": "",
+        "action_listMembership": ""
+      },
+      "categories": {
+        "triggers": "",
+        "actions": "",
+        "voice": "",
+        "smartActions": "",
+        "logic": ""
+      },
+      "editFullscreen": "",
+      "hidePlaceholders": "",
+      "showPlaceholders": "",
+      "gestureAddStep": "",
+      "gestureAddStepHow": "",
+      "gestureMoveStep": "",
+      "gestureMoveStepHow": "",
+      "gestureConfigureStep": "",
+      "gestureConfigureStepHow": "",
+      "gestureConnectSteps": "",
+      "gestureConnectStepsHow": "",
+      "gestureDeleteConnection": "",
+      "gestureDeleteConnectionHow": "",
+      "gestureBendConnection": "",
+      "gestureBendConnectionHow": "",
+      "gestureAddBend": "",
+      "gestureAddBendHow": "",
+      "gestureMoveBend": "",
+      "gestureMoveBendHow": "",
+      "gestureRemoveBend": "",
+      "gestureRemoveBendHow": "",
+      "gestureKeepChanges": "",
+      "gestureKeepChangesHow": "",
+      "usingTheFlowEditor": "",
+      "routingExplanation": "",
+      "dontShowAgain": "",
+      "gotIt": "",
+      "flowSaved": "",
+      "approvalRevoked": "",
+      "templateConfig": "",
+      "needsSshHint": "",
+      "noSshNotice": "",
+      "noWebQueryNotice": "",
+      "flowSaveFailed": "",
+      "placeholderReference": "",
+      "save": "",
+      "connectHint": "",
+      "canvasHint": "",
+      "inputPortTitle": "",
+      "outputPortTitle": "",
+      "clickToBend": "",
+      "dragBendPoint": "",
+      "nodeProperties": "",
+      "labelField": "",
+      "typeField": "",
+      "inPorts": "",
+      "outPorts": "",
+      "configuration": "",
+      "connections": "",
+      "noConnections": "",
+      "config": {
+        "support": {
+          "queueLabel": "",
+          "chooseQueue": "",
+          "anyQueue": "",
+          "noQueue": "",
+          "triggerHint": "",
+          "enqueueHint": ""
+        },
+        "shared": {
+          "commandLabel": "",
+          "channelIdLabel": "",
+          "channelIdOrTemplatePlaceholder": "",
+          "clientIdLabel": "",
+          "clientIdOrTemplatePlaceholder": "",
+          "clientOption": "",
+          "channelOption": "",
+          "serverOption": "",
+          "messageLabel": "",
+          "reasonLabel": "",
+          "channelNameLabel": "",
+          "parentChannelIdLabel": "",
+          "channelPasswordLabel": "",
+          "optionalPlaceholder": "",
+          "serverGroupIdLabel": "",
+          "storeAsTempLabel": "",
+          "storeAsLabel": "",
+          "urlLabel": "",
+          "methodLabel": "",
+          "bodyJsonLabel": "",
+          "idleThresholdLabel": "",
+          "exemptGroupIdsLabel": "",
+          "textLabel": "",
+          "operationLabel": "",
+          "valueLabel": "",
+          "useAsHintPrefix": "",
+          "botIdLabel": "",
+          "channelPasswordExamplePlaceholder": ""
+        },
+        "triggerEvent": {
+          "eventNameLabel": "",
+          "selectEventPlaceholder": "",
+          "clientEnter": "",
+          "clientLeave": "",
+          "textMessage": "",
+          "clientMoved": "",
+          "serverEdited": "",
+          "channelDescChanged": ""
+        },
+        "triggerCron": {
+          "cronExpressionLabel": "",
+          "timezoneLabel": ""
+        },
+        "triggerWebhook": {
+          "webhookPathLabel": "",
+          "signedExampleLabel": "",
+          "requireSignatureHint": "",
+          "requireSignatureLabel": "",
+          "exampleLabel": "",
+          "httpMethodLabel": "",
+          "secretLabel": "",
+          "secretPlaceholder": "",
+          "secretHint": "",
+          "querySecretWarning_other": "",
+          "querySecretWarning_one": ""
+        },
+        "triggerCommand": {
+          "listenChannelIdLabel": "",
+          "listenChannelHint": ""
+        },
+        "actionMessage": {
+          "targetModeLabel": "",
+          "editMessageDialogTitle": "",
+          "messagePlaceholder": "",
+          "messageHint": ""
+        },
+        "actionKick": {
+          "kickFromLabel": "",
+          "reasonPlaceholder": ""
+        },
+        "actionBan": {
+          "durationLabel": "",
+          "reasonPlaceholder": ""
+        },
+        "actionMove": {
+          "targetChannelIdLabel": "",
+          "exampleHint": ""
+        },
+        "actionPoke": {
+          "messagePlaceholder": ""
+        },
+        "actionChannelCreate": {
+          "temporaryLabel": "",
+          "permanentOption": "",
+          "temporaryOption": ""
+        },
+        "actionChannelEdit": {
+          "channelTopicLabel": "",
+          "channelDescriptionLabel": "",
+          "editDescriptionDialogTitle": "",
+          "passwordHint": ""
+        },
+        "actionChannelDelete": {
+          "forceDeleteLabel": "",
+          "forceNoOption": "",
+          "forceYesOption": ""
+        },
+        "actionWebquery": {
+          "accessHintPrefix": ""
+        },
+        "actionHttpRequest": {
+          "headersLabel": "",
+          "headersHint": ""
+        },
+        "actionAfkMover": {
+          "afkChannelIdLabel": "",
+          "exemptChannelIdsLabel": ""
+        },
+        "actionIdleKicker": {
+          "kickReasonLabel": "",
+          "kickReasonPlaceholder": ""
+        },
+        "actionPokeGroup": {
+          "messagePlaceholder": ""
+        },
+        "actionRankCheck": {
+          "ranksLabel": "",
+          "ranksHint": "",
+          "hoursMeasuredAsLabel": "",
+          "accumulatedTimeOption": "",
+          "firstConnectionAgeOption": "",
+          "excludeGroupIdsLabel": "",
+          "excludeGroupIdsPlaceholder": "",
+          "excludeGroupIdsHint": ""
+        },
+        "actionTempChannelCleanup": {
+          "protectedChannelIdsLabel": "",
+          "protectedChannelIdsHint": ""
+        },
+        "actionAnimatedChannel": {
+          "displayTextLabel": "",
+          "displayTextPlaceholder": "",
+          "displayTextHint": "",
+          "animationStyleLabel": "",
+          "styleScroll": "",
+          "styleTypewriter": "",
+          "styleBounce": "",
+          "styleBlink": "",
+          "styleWave": "",
+          "styleAlternateCase": "",
+          "speedLabel": "",
+          "speedInsane": "",
+          "speedUltra": "",
+          "speedVeryFast": "",
+          "speedFast": "",
+          "speedMedium": "",
+          "speedSlow": "",
+          "prefixLabel": "",
+          "prefixHint": ""
+        },
+        "actionVoicePlay": {
+          "songIdLabel": "",
+          "songIdPlaceholder": "",
+          "playlistIdLabel": "",
+          "playlistIdPlaceholder": ""
+        },
+        "actionVoiceVolume": {
+          "volumeLabel": ""
+        },
+        "actionVoicePauseResume": {
+          "actionLabel": "",
+          "pauseOption": "",
+          "resumeOption": "",
+          "toggleOption": ""
+        },
+        "actionVoiceSkip": {
+          "directionLabel": "",
+          "nextOption": "",
+          "previousOption": ""
+        },
+        "actionVoiceSeek": {
+          "positionLabel": ""
+        },
+        "actionVoiceTts": {
+          "textPlaceholder": "",
+          "languageLabel": "",
+          "notConfiguredHint": ""
+        },
+        "condition": {
+          "expressionLabel": "",
+          "expressionHint": ""
+        },
+        "loop": {
+          "arrayVariableLabel": "",
+          "arrayVariableHint": "",
+          "itemVariableLabel": "",
+          "inLoopBodyPrefix": "",
+          "indexLabel": "",
+          "maxIterationsLabel": "",
+          "maxIterationsHint": "",
+          "bodyAfterHint": ""
+        },
+        "delay": {
+          "delayLabel": ""
+        },
+        "variable": {
+          "setOption": "",
+          "incrementOption": "",
+          "appendOption": "",
+          "getOption": "",
+          "variableNameLabel": "",
+          "valueExpressionLabel": ""
+        },
+        "actionGenerateCode": {
+          "lengthLabel": "",
+          "charactersLabel": "",
+          "digitsOnlyOption": "",
+          "alphanumericOption": ""
+        },
+        "actionCountOnlineInGroups": {
+          "groupIdsLabel": "",
+          "excludeChannelIdsLabel": ""
+        },
+        "actionListMembership": {
+          "listNameLabel": "",
+          "listNameHintPrefix": "",
+          "listNameHintSuffix": "",
+          "addOption": "",
+          "removeOption": ""
+        },
+        "log": {
+          "logLevelLabel": "",
+          "debugOption": "",
+          "infoOption": "",
+          "warnOption": "",
+          "errorOption": "",
+          "messagePlaceholder": ""
+        }
+      },
+      "paletteButton": "",
+      "nodesCount_one": "",
+      "nodesCount_other": "",
+      "edgesCount_one": "",
+      "edgesCount_other": ""
+    },
+    "permissions": {
+      "categories": {
+        "b_virtualserver": "",
+        "b_serverinstance": "",
+        "b_serverquery": "",
+        "b_channel": "",
+        "b_client": "",
+        "b_group": "",
+        "b_ft": "",
+        "i_channel": "",
+        "i_group": "",
+        "i_client": "",
+        "i_ft": "",
+        "i_max": "",
+        "i_needed": "",
+        "other": ""
+      },
+      "layers": {
+        "serverGroups": "",
+        "serverGroup": "",
+        "channelGroups": "",
+        "channelGroup": "",
+        "channel": "",
+        "client": "",
+        "clientInChannel": ""
+      },
+      "title": "",
+      "discard": "",
+      "save": "",
+      "applyToCount": "",
+      "findPermission": "",
+      "permissionOverview": "",
+      "why": {
+        "tab": "",
+        "export": {
+          "copy": "",
+          "json": ""
+        },
+        "multi": {
+          "toggle": "",
+          "actors": "",
+          "selectedCount": "",
+          "eachActor": "",
+          "title": "",
+          "answer": "",
+          "details": "",
+          "changed": ""
+        },
+        "whatif": {
+          "title": "",
+          "explanation": "",
+          "kind": "",
+          "kinds": {
+            "add": "",
+            "remove": "",
+            "group-perm": "",
+            "client-perm": "",
+            "cg-assign": "",
+            "cg-perm": "",
+            "ch-perm": "",
+            "cc-perm": ""
+          },
+          "who": "",
+          "permission": "",
+          "value": "",
+          "removeValue": "",
+          "negated": "",
+          "skip": "",
+          "add": "",
+          "planned": "",
+          "removeChange": "",
+          "missing": {
+            "group": "",
+            "channelGroup": "",
+            "channel": "",
+            "permission": "",
+            "value": "",
+            "tooMany": ""
+          },
+          "describe": {
+            "add": "",
+            "remove": "",
+            "group-set": "",
+            "group-unset": "",
+            "client-set": "",
+            "client-unset": "",
+            "cg-assign": "",
+            "cg-set": "",
+            "cg-unset": "",
+            "ch-set": "",
+            "ch-unset": "",
+            "cc-set": "",
+            "cc-unset": ""
+          },
+          "temporary": "",
+          "fromEditor": {
+            "group": "",
+            "actor": "",
+            "target": "",
+            "note": ""
+          },
+          "check": "",
+          "nothingChanged": "",
+          "verdictChanged": "",
+          "verdictSame": "",
+          "groupsChange": "",
+          "channelGroupChange": "",
+          "unused": "",
+          "channel": "",
+          "channelGroup": "",
+          "before": "",
+          "after": "",
+          "error": {
+            "conflict": "",
+            "already-member": "",
+            "not-member": "",
+            "default-group": "",
+            "invalid-group": "",
+            "too-many": ""
+          }
+        },
+        "title": "",
+        "explanation": "",
+        "actor": "",
+        "target": "",
+        "action": "",
+        "group": "",
+        "destination": "",
+        "duration": "",
+        "durationSeconds": "",
+        "check": "",
+        "selected": "",
+        "noneSelected": "",
+        "moreClients": "",
+        "missing": {
+          "actor": "",
+          "target": "",
+          "same": "",
+          "group": "",
+          "destination": "",
+          "duration": ""
+        },
+        "actions": {
+          "kick-server": "",
+          "kick-channel": "",
+          "ban": "",
+          "move": "",
+          "poke": "",
+          "message-private": "",
+          "group-add": "",
+          "group-remove": ""
+        },
+        "durations": {
+          "hour": "",
+          "day": "",
+          "month": "",
+          "permanent": "",
+          "custom": ""
+        },
+        "verdict": {
+          "allowed": "",
+          "denied": "",
+          "impossible": ""
+        },
+        "checkText": {
+          "power": "",
+          "flag": "",
+          "ban-time": "",
+          "ban-time-permanent": ""
+        },
+        "scope": {
+          "target-channel": "",
+          "actor-channel": "",
+          "destination": "",
+          "server": "",
+          "group": ""
+        },
+        "notes": {
+          "target-offline": "",
+          "already-member": "",
+          "not-member": "",
+          "move-join-not-checked": "",
+          "move-same-channel": "",
+          "actor-offline-default-channel": ""
+        },
+        "fix": {
+          "where": "",
+          "raise": "",
+          "raiseUnset": "",
+          "banTime": "",
+          "banTimeUnset": "",
+          "banPermanent": "",
+          "banPermanentUnset": "",
+          "flag": "",
+          "flagUnset": "",
+          "negated": "",
+          "channelScoped": ""
+        },
+        "showOverview": "",
+        "openInEditor": "",
+        "notSet": "",
+        "groupSetting": "",
+        "yes": "",
+        "no": "",
+        "checkOk": "",
+        "checkFailed": "",
+        "error": {
+          "actor-not-found": "",
+          "target-not-found": "",
+          "group-not-found": "",
+          "destination-not-found": "",
+          "network": "",
+          "tsUnreachable": "",
+          "generic": ""
+        },
+        "seconds_one": "",
+        "seconds_other": ""
+      },
+      "automatic": {
+        "tab": "",
+        "title": "",
+        "pickerTitle": "",
+        "explanation": "",
+        "add": "",
+        "remove": "",
+        "groupType": "",
+        "groupTypePlaceholder": "",
+        "types": {
+          "10": "",
+          "15": "",
+          "20": "",
+          "25": "",
+          "30": "",
+          "35": "",
+          "40": "",
+          "45": "",
+          "50": ""
+        },
+        "nothingSelected": "",
+        "colPermission": "",
+        "colValue": "",
+        "applyAdd": "",
+        "applyRemove": "",
+        "confirmAddTitle": "",
+        "confirmRemoveTitle": "",
+        "confirmAddBody": "",
+        "confirmRemoveBody": "",
+        "confirmButton": "",
+        "andMore": "",
+        "failed": "",
+        "selectedCount_one": "",
+        "selectedCount_other": "",
+        "addedToast_one": "",
+        "addedToast_other": "",
+        "removedToast_one": "",
+        "removedToast_other": ""
+      },
+      "selectClient": "",
+      "searchClientsPlaceholder": "",
+      "noClientsFound": "",
+      "choosePlaceholder": "",
+      "searchPermissionsPlaceholder": "",
+      "overviewExplanation": "",
+      "selectClientHint": "",
+      "chooseChannelHint": "",
+      "noPermissionsApply": "",
+      "colPermission": "",
+      "colComesFrom": "",
+      "colValue": "",
+      "selectPermission": "",
+      "assignmentsOf": "",
+      "findExplanation": "",
+      "selectPermissionHint": "",
+      "notAssignedAnywhere": "",
+      "colTier": "",
+      "colAssignedTo": "",
+      "openInEditor": "",
+      "addClientInChannel": "",
+      "channelLabel": "",
+      "showOfflineClients": "",
+      "chooseChannelFirst": "",
+      "addEntity": "",
+      "addedCount": "",
+      "pickChannelThenClient": "",
+      "selectLayer": "",
+      "iconAlt": "",
+      "selectForBulkEdit": "",
+      "noEntitiesFound": "",
+      "bulkApply": "",
+      "compare": "",
+      "permissionsTitle": "",
+      "selectAnEntity": "",
+      "labelModeHint": "",
+      "advanced": "",
+      "simple": "",
+      "onlyShowSet": "",
+      "onlyShowDiffering": "",
+      "addRemovePerm": "",
+      "addTarget": "",
+      "setMultipleHint": "",
+      "setMultiple": "",
+      "importFileHint": "",
+      "importFile": "",
+      "bulkApplyHint": "",
+      "mixed": "",
+      "notSet": "",
+      "compareHintAutoRank": "",
+      "compareHintPivot": "",
+      "compareHintSuffix": "",
+      "selectAllShown": "",
+      "clear": "",
+      "setValuesEllipsis": "",
+      "remove": "",
+      "stagedEditHint": "",
+      "selectEntityHint": "",
+      "removeFileTarget": "",
+      "removeFromComparison": "",
+      "chooseIcon": "",
+      "skip": "",
+      "negate": "",
+      "colSkip": "",
+      "colNegate": "",
+      "removePermission": "",
+      "modified": "",
+      "noPermissionsDiffer": "",
+      "noPermissionsSetAny": "",
+      "noPermissionsMatchSearch": "",
+      "noPermissionsSetEntity": "",
+      "all": "",
+      "selectAllCount": "",
+      "shownInComparison": "",
+      "done": "",
+      "setCountPermissions": "",
+      "setMultipleExplanation": "",
+      "booleanPermsHint": "",
+      "integerPermsHint": "",
+      "valuePlaceholder": "",
+      "leaveEmptySkipInt": "",
+      "cancel": "",
+      "importPermissionFile": "",
+      "groupInFile": "",
+      "source": "",
+      "permissionsInFile": "",
+      "target": "",
+      "targetCount": "",
+      "mode": "",
+      "merge": "",
+      "mergeDescription": "",
+      "replace": "",
+      "replaceDescription": "",
+      "replaceWarningPrefix": "",
+      "replaceWarningTargetHas": "",
+      "replaceWarningTargetsHave": "",
+      "replaceWarningSuffix": "",
+      "importing": "",
+      "clientFallback": "",
+      "channelFallback": "",
+      "serverGroupFallback": "",
+      "channelGroupFallback": "",
+      "notValidGroupExport": "",
+      "failedToReadFile": "",
+      "notValidPermissionExport": "",
+      "fileContainsNoGroups": "",
+      "importFailed": "",
+      "permissionsSaved": "",
+      "saveFailed": "",
+      "unnamed": "",
+      "entitiesSelected_one": "",
+      "entitiesSelected_other": "",
+      "changesCount_one": "",
+      "changesCount_other": "",
+      "selectedCount_one": "",
+      "selectedCount_other": "",
+      "booleanCount_one": "",
+      "booleanCount_other": "",
+      "integerCount_one": "",
+      "integerCount_other": "",
+      "groupPermissionsCount_one": "",
+      "groupPermissionsCount_other": "",
+      "loadedFromFile_one": "",
+      "loadedFromFile_other": "",
+      "stagedForApply_one": "",
+      "stagedForApply_other": "",
+      "stagedForRemoval_one": "",
+      "stagedForRemoval_other": "",
+      "importedIntoTargets_one": "",
+      "importedIntoTargets_other": "",
+      "removedNotInFile_one": "",
+      "removedNotInFile_other": "",
+      "appliedToEntities_one": "",
+      "appliedToEntities_other": "",
+      "changesSavedAcross_one": "",
+      "changesSavedAcross_other": ""
+    },
+    "musicBots": {
+      "title": "",
+      "tabBots": "",
+      "tabQueue": "",
+      "tabVideo": "",
+      "tabLibrary": "",
+      "tabPlaylists": "",
+      "tabRadio": "",
+      "tabPermissions": "",
+      "shared": {
+        "serverPlaceholder": "",
+        "playOn": "",
+        "noRunningBots": "",
+        "selectBotPlaceholder": "",
+        "filterSongsPlaceholder": "",
+        "cancel": "",
+        "create": "",
+        "done": "",
+        "add": "",
+        "name": "",
+        "title": "",
+        "duration": "",
+        "source": "",
+        "noServerGroupsFound": "",
+        "songsCount_one": "",
+        "songsCount_other": ""
+      },
+      "botPlayerCard": {
+        "voteSkipCount": "",
+        "voteSkipVetoed": "",
+        "voteSkipTitle": "",
+        "playerWidget": "",
+        "playSongEllipsis": "",
+        "live": "",
+        "stop": "",
+        "playEllipsis": "",
+        "stopAudio": "",
+        "start": "",
+        "botStopped": "",
+        "botStarted": "",
+        "startFailed": "",
+        "connection": {
+          "badge": {
+            "connecting": "",
+            "retrying": "",
+            "failed": ""
+          },
+          "connecting": "",
+          "connectingRetry": "",
+          "retrying": "",
+          "gaveUp": "",
+          "final": "",
+          "pressStart": "",
+          "details": "",
+          "kind": {
+            "flood": "",
+            "banned": "",
+            "password": "",
+            "serverFull": ""
+          }
+        },
+        "queueCount": "",
+        "moreCount": "",
+        "widgetDescription": "",
+        "bbcodeUrlLabel": "",
+        "jsonUrlLabel": "",
+        "tokenLabel": "",
+        "copy": "",
+        "copied": ""
+      },
+      "playSongDialog": {
+        "title": "",
+        "description": "",
+        "tabSongs": "",
+        "tabPlaylists": "",
+        "tabHistory": "",
+        "noSongsFound": "",
+        "play": "",
+        "queue": "",
+        "noPlaylists": "",
+        "loadAndPlay": "",
+        "noHistory": "",
+        "playNowHint": "",
+        "queueAfterHint": "",
+        "loading": "",
+        "close": ""
+      },
+      "avatarPicker": {
+        "alt": "",
+        "change": "",
+        "upload": "",
+        "remove": "",
+        "sizeHint": ""
+      },
+      "botsTab": {
+        "newBot": "",
+        "noBotsYetTitle": "",
+        "noBotsYetDescription": "",
+        "selectServerError": "",
+        "botCreated": "",
+        "createFailed": "",
+        "botUpdated": "",
+        "updateFailed": "",
+        "editBotTitle": "",
+        "newBotTitle": "",
+        "avatarBugNoticePrefix": "",
+        "reportedUpstream": "",
+        "avatarLabel": "",
+        "serverLabel": "",
+        "selectServerPlaceholder": "",
+        "voicePortLabel": "",
+        "nicknameLabel": "",
+        "uidLabel": "",
+        "uidHint": "",
+        "uidMissing": "",
+        "uidCopied": "",
+        "uidCopyFailed": "",
+        "serverPasswordLabel": "",
+        "defaultChannelLabel": "",
+        "defaultChannelPlaceholder": "",
+        "channelPasswordLabel": "",
+        "leaveEmptyIfNone": "",
+        "volumeLabel": "",
+        "autoStartLabel": "",
+        "autoplayLabel": "",
+        "autoplayHint": "",
+        "idlePauseLabel": "",
+        "idlePauseMinutesLabel": "",
+        "idlePauseHint": "",
+        "voteSkipLabel": "",
+        "voteSkipHint": "",
+        "voteSkipPercentLabel": "",
+        "voteSkipPercentError": "",
+        "voteSkipMinVotesLabel": "",
+        "voteSkipMinVotesError": "",
+        "voteSkipHintLabel": "",
+        "voteSkipHintHint": "",
+        "autoplayOff": "",
+        "autoplaySong": "",
+        "autoplayRadio": "",
+        "chooseSongPlaceholder": "",
+        "chooseStationPlaceholder": "",
+        "descriptionTemplateLabel": "",
+        "descriptionTemplatePlaceholder": "",
+        "descriptionNeedsWebQuery": "",
+        "save": "",
+        "deleteBotTitle": "",
+        "deleteBotDescription": "",
+        "botDeleted": "",
+        "playing": "",
+        "playSongFailed": "",
+        "playingUrl": "",
+        "playUrlFailed": "",
+        "addedToQueuePosition": "",
+        "queueUrlFailed": "",
+        "addedToQueue": "",
+        "enqueueFailed": "",
+        "playlistLoaded": "",
+        "loadPlaylistFailed": "",
+        "namePlaceholder": "",
+        "botsCount_one": "",
+        "botsCount_other": ""
+      },
+      "libraryTab": {
+        "selectServerTitle": "",
+        "selectServerDescription": "",
+        "filterAll": "",
+        "filterAudio": "",
+        "filterVideo": "",
+        "uploading": "",
+        "upload": "",
+        "scanHint": "",
+        "scanning": "",
+        "scanForNewFiles": "",
+        "noNewFilesFound": "",
+        "scanFailed": "",
+        "pasteUrlPlaceholder": "",
+        "load": "",
+        "playlistVideosCount": "",
+        "singleVideo": "",
+        "selectAll": "",
+        "deselectAll": "",
+        "downloading": "",
+        "downloadSelectedCount": "",
+        "downloadingProgress": "",
+        "downloadedCount": "",
+        "failedCount": "",
+        "batchDownloadFailed": "",
+        "download": "",
+        "searchYoutubePlaceholder": "",
+        "search": "",
+        "youtubeResultsCount": "",
+        "startBotToPlayHint": "",
+        "noFilesYetTitle": "",
+        "noFilesYetDescription": "",
+        "colType": "",
+        "colSize": "",
+        "refreshing": "",
+        "noBotSelectedHint": "",
+        "streamOptions": "",
+        "playOptions": "",
+        "stream": "",
+        "addToStreamQueue": "",
+        "startStreamFirst": "",
+        "addToQueue": "",
+        "deleteFileTitle": "",
+        "deleteFileDescription": "",
+        "songDeleted": "",
+        "playingTitle": "",
+        "addedToQueueTitle": "",
+        "addToQueueFailed": "",
+        "switchedStreamTo": "",
+        "switchStreamFailed": "",
+        "streamingTitle": "",
+        "startStreamFailed": "",
+        "addedToStreamQueue": "",
+        "addToStreamQueueFailed": "",
+        "uploadedFile": "",
+        "uploadFileFailed": "",
+        "youtubeSearchFailed": "",
+        "downloadStarted": "",
+        "downloadFailed": "",
+        "loadUrlInfoFailed": "",
+        "foundNewFiles_one": "",
+        "foundNewFiles_other": "",
+        "fixedTitles_one": "",
+        "fixedTitles_other": ""
+      },
+      "playlistsTab": {
+        "newPlaylist": "",
+        "noPlaylistsTitle": "",
+        "noPlaylistsDescription": "",
+        "addSongs": "",
+        "noSongsInPlaylist": "",
+        "songRemoved": "",
+        "selectPlaylistHint": "",
+        "newPlaylistTitle": "",
+        "namePlaceholder": "",
+        "playlistCreated": "",
+        "createPlaylistFailed": "",
+        "addSongsToPlaylistTitle": "",
+        "noSongsAvailable": "",
+        "songAdded": "",
+        "deletePlaylistTitle": "",
+        "deletePlaylistDescription": "",
+        "playlistDeleted": "",
+        "playlistsCount_one": "",
+        "playlistsCount_other": ""
+      },
+      "radioTab": {
+        "selectServerTitle": "",
+        "selectServerDescription": "",
+        "presets": "",
+        "addStation": "",
+        "startBotToPlayHint": "",
+        "noStationsTitle": "",
+        "noStationsDescription": "",
+        "selectRunningBotFirst": "",
+        "playingRadio": "",
+        "playRadioFailed": "",
+        "stationAdded": "",
+        "addStationFailed": "",
+        "addedName": "",
+        "addFailedName": "",
+        "addStationTitle": "",
+        "addStationDescription": "",
+        "streamUrlLabel": "",
+        "streamUrlPlaceholder": "",
+        "genreLabel": "",
+        "genrePlaceholder": "",
+        "stationNamePlaceholder": "",
+        "presetsTitle": "",
+        "presetsDescription": "",
+        "noPresetsAvailable": "",
+        "deleteStationTitle": "",
+        "deleteStationDescription": "",
+        "stationRemoved": ""
+      },
+      "videoTab": {
+        "noBotsTitle": "",
+        "noBotsDescription": "",
+        "selectBotLabel": "",
+        "chooseBotPlaceholder": "",
+        "selectBotHint": ""
+      },
+      "queueTab": {
+        "botLabel": "",
+        "selectBotPlaceholder": "",
+        "tracksCount": "",
+        "clear": "",
+        "selectBotHint": "",
+        "queueEmpty": "",
+        "clickToPlay": "",
+        "playQueue": "",
+        "moveUp": "",
+        "moveDown": "",
+        "removeFromQueue": ""
+      },
+      "permissionsTab": {
+        "adminBypassGroups": "",
+        "adminBypassHint": "",
+        "noWebQueryTitle": "",
+        "noWebQueryHint": "",
+        "chatCommandPermissions": "",
+        "everyone": "",
+        "noGroupAssigned": "",
+        "permissionUpdated": "",
+        "permissionUpdateFailed": "",
+        "adminGroupsUpdateFailed": "",
+        "openByDefaultHint": "",
+        "restrictedHint": ""
+      }
+    }
+  },
+  "components": {
+    "live": {
+      "openSettings": "",
+      "thumbnailAlt": "",
+      "replayHint": "",
+      "errors": {
+        "disabled": "",
+        "videoDisabled": "",
+        "offline": ""
+      },
+      "ended": {
+        "offline": "",
+        "time_limit": "",
+        "unreachable": ""
+      }
+    },
+    "flowTemplates": {
+      "import": "",
+      "importTitle": "",
+      "importHint": "",
+      "file": "",
+      "invalid": "",
+      "byAuthor": "",
+      "summary": "",
+      "importDisabledNote": "",
+      "secretsToEnter": "",
+      "imported": "",
+      "importFailed": "",
+      "steps": {
+        "file": "",
+        "map": "",
+        "test": ""
+      },
+      "stepOf": "",
+      "capabilitiesTitle": "",
+      "capabilitiesNone": "",
+      "capabilities": {
+        "kick": "",
+        "ban": "",
+        "move": "",
+        "poke": "",
+        "message": "",
+        "groups": "",
+        "channels": "",
+        "serverquery": "",
+        "http": "",
+        "webhookTrigger": "",
+        "voice": "",
+        "supportQueue": ""
+      },
+      "mapHint": "",
+      "types": {
+        "channel": "",
+        "servergroup": "",
+        "channelgroup": "",
+        "bot": ""
+      },
+      "choose": "",
+      "originalNames": "",
+      "originalId": "",
+      "noObjects": "",
+      "optional": "",
+      "missingCount": "",
+      "testHint": "",
+      "enable": "",
+      "keepDisabled": "",
+      "testFirst": "",
+      "enabled": "",
+      "enableFailed": "",
+      "updateTitle": "",
+      "updateBasis": "",
+      "updateOf": "",
+      "updateRelation": {
+        "same": "",
+        "older": ""
+      },
+      "updateMajor": "",
+      "updateNewCapabilities": "",
+      "diffPrevious": "",
+      "diffPreviousUnknown": "",
+      "diffLocal": "",
+      "diffSummary": "",
+      "diffHeading": "",
+      "diffNone": "",
+      "diffAdded": "",
+      "diffRemoved": "",
+      "diffChanged": "",
+      "diffEdges": "",
+      "updateCopyNote": "",
+      "updateCheckFailed": "",
+      "exportTitle": "",
+      "exportHint": "",
+      "exportFailed": "",
+      "id": "",
+      "version": "",
+      "author": "",
+      "download": "",
+      "secretsRemoved": "",
+      "warningsTitle": "",
+      "reasons": {
+        "expression": "",
+        "event-filter": "",
+        "webquery": "",
+        "rank-list": "",
+        "support-queue": ""
+      }
+    },
+    "onlineCountFilter": {
+      "title": {
+        "dashboard": "",
+        "widgets": ""
+      },
+      "description": {
+        "dashboard": "",
+        "widgets": ""
+      },
+      "excludeMusicBots": "",
+      "groupsLabel": "",
+      "noGroups": "",
+      "saved": "",
+      "saveFailed": ""
+    },
+    "serverSelector": {
+      "selectServer": "",
+      "selectVirtualServer": ""
+    },
+    "updateBanner": {
+      "updateAvailable": "",
+      "copyDeployCommand": "",
+      "postpone": ""
+    },
+    "privacyNotice": {
+      "title": "",
+      "message": "",
+      "dismiss": ""
+    },
+    "restartNotice": {
+      "title": "",
+      "message": ""
+    },
+    "ytCookieBanner": {
+      "message": ""
+    },
+    "confirmDialog": {
+      "processing": ""
+    },
+    "backupStep": {
+      "auto": "",
+      "last": "",
+      "none": "",
+      "scope": "",
+      "now": "",
+      "done": "",
+      "failed": "",
+      "skip": ""
+    },
+    "bulkResult": {
+      "summary": "",
+      "counts": "",
+      "status": {
+        "ok": "",
+        "skipped": "",
+        "failed": ""
+      },
+      "reason": {
+        "protected": "",
+        "not-connected": "",
+        "already-there": "",
+        "online": "",
+        "no-value": "",
+        "not-found": ""
+      },
+      "unknownError": "",
+      "preview": {
+        "summary": "",
+        "nothing": "",
+        "skip": "",
+        "check": ""
+      }
+    },
+    "dataTable": {
+      "searchPlaceholder": "",
+      "selectRow": "",
+      "previous": "",
+      "next": "",
+      "resultCount_one": "",
+      "resultCount_other": ""
+    },
+    "themeToggle": {
+      "switchTo": ""
+    },
+    "iconImage": {
+      "builtinTitle": "",
+      "couldNotLoad": "",
+      "iconAlt": ""
+    },
+    "iconPickerDialog": {
+      "title": "",
+      "searchPlaceholder": "",
+      "poolUnavailable": "",
+      "sshRequired": "",
+      "loadFailed": "",
+      "sshRequiredPickOnly": "",
+      "loadFailedPickOnly": "",
+      "noMatchingIcons": "",
+      "noIconsUploaded": "",
+      "noMatchDescription": "",
+      "noIconsDescription": ""
+    },
+    "widget": {
+      "away": "",
+      "muted": "",
+      "clickToJoin": "",
+      "online": "",
+      "userCount": "",
+      "uptime": "",
+      "footer": ""
+    },
+    "widgetManager": {
+      "title": {
+        "list": "",
+        "create": "",
+        "edit": "",
+        "embed": ""
+      },
+      "newWidget": "",
+      "noWidgets": "",
+      "serverLabel": "",
+      "embed": "",
+      "preview": "",
+      "namePlaceholder": "",
+      "server": "",
+      "virtualServerId": "",
+      "theme": "",
+      "showChannelTree": "",
+      "showClients": "",
+      "hideEmptyChannels": "",
+      "maxChannelDepth": "",
+      "regenerateToken": "",
+      "imageUrls": "",
+      "pasteIntoHtml": "",
+      "svgLabel": "",
+      "pngLabel": "",
+      "htmlImgLabel": "",
+      "bbcodeLabel": ""
+    },
+    "videoPlayer": {
+      "failedToConnect": "",
+      "noActiveStream": "",
+      "unmute": "",
+      "mute": "",
+      "connecting": "",
+      "retry": "",
+      "live": ""
+    },
+    "videoStreamTab": {
+      "title": "",
+      "botMustBeConnected": "",
+      "sourceUrl": "",
+      "sourceUrlPlaceholder": "",
+      "queue": "",
+      "queueTitle": "",
+      "switchNow": "",
+      "switchNowTitle": "",
+      "sourceHint": "",
+      "pickFromLibrary": "",
+      "chooseUploadedVideo": "",
+      "qualityPreset": "",
+      "frameRate": "",
+      "videoBitrate": "",
+      "bitratePlaceholder": "",
+      "bitrateHint": "",
+      "starting": "",
+      "startStream": "",
+      "stopping": "",
+      "stopStream": "",
+      "upNext": "",
+      "playNextNow": "",
+      "nothingQueuedStops": "",
+      "skip": "",
+      "now": "",
+      "nothingQueuedHint": "",
+      "livePreview": "",
+      "volume": "",
+      "volumeHint": "",
+      "source": "",
+      "uptime": "",
+      "viewersCount": "",
+      "noViewers": "",
+      "clientHash": "",
+      "kick": ""
+    },
+    "templateGallery": {
+      "title": "",
+      "configureTitle": "",
+      "availableVariables": "",
+      "noConfigNeeded": "",
+      "createBot": "",
+      "rebuildWarning": "",
+      "rebuildFlow": ""
+    },
+    "placeholderReference": {
+      "dialogTitle": "",
+      "dialogIntro": "",
+      "tabs": {
+        "event": "",
+        "time": "",
+        "var": "",
+        "temp": "",
+        "exec": "",
+        "filter": "",
+        "functions": "",
+        "templates": ""
+      },
+      "event": {
+        "intro": "",
+        "h1": "",
+        "clid": {
+          "desc": "",
+          "example": ""
+        },
+        "clientNickname": {
+          "desc": "",
+          "example": ""
+        },
+        "clientDatabaseId": {
+          "desc": "",
+          "example": ""
+        },
+        "clientUid": {
+          "desc": "",
+          "example": ""
+        },
+        "clientType": {
+          "desc": "",
+          "example": ""
+        },
+        "clientServergroups": {
+          "desc": "",
+          "example": ""
+        },
+        "cidJoined": {
+          "desc": "",
+          "example": ""
+        },
+        "h2": "",
+        "clidDisc": {
+          "desc": ""
+        },
+        "cfidDisc": {
+          "desc": ""
+        },
+        "reasonidDisc": {
+          "desc": "",
+          "example": ""
+        },
+        "reasonmsg": {
+          "desc": "",
+          "example": ""
+        },
+        "h3": "",
+        "clidMoved": {
+          "desc": ""
+        },
+        "ctid": {
+          "desc": "",
+          "example": ""
+        },
+        "cfidMoved": {
+          "desc": ""
+        },
+        "reasonidMoved": {
+          "desc": ""
+        },
+        "h4": "",
+        "clidMsg": {
+          "desc": ""
+        },
+        "clientNicknameMsg": {
+          "desc": ""
+        },
+        "msg": {
+          "desc": "",
+          "example": ""
+        },
+        "targetmode": {
+          "desc": ""
+        },
+        "h5": "",
+        "commandName": {
+          "desc": "",
+          "example": ""
+        },
+        "commandArgs": {
+          "desc": "",
+          "example": ""
+        },
+        "clidCmd": {
+          "desc": ""
+        },
+        "clientNicknameCmd": {
+          "desc": ""
+        },
+        "h6": "",
+        "cidChannel": {
+          "desc": ""
+        },
+        "invokerid": {
+          "desc": ""
+        },
+        "invokername": {
+          "desc": ""
+        },
+        "h7": "",
+        "webhookPath": {
+          "desc": ""
+        },
+        "webhookMethod": {
+          "desc": "",
+          "example": ""
+        },
+        "webhookBody": {
+          "desc": ""
+        },
+        "webhookBodyField": {
+          "desc": "",
+          "example": ""
+        },
+        "webhookQuery": {
+          "desc": ""
+        }
+      },
+      "time": {
+        "intro": "",
+        "time": {
+          "desc": "",
+          "example": ""
+        },
+        "date": {
+          "desc": "",
+          "example": ""
+        },
+        "hours": {
+          "desc": "",
+          "example": ""
+        },
+        "minutes": {
+          "desc": ""
+        },
+        "seconds": {
+          "desc": ""
+        },
+        "day": {
+          "desc": ""
+        },
+        "month": {
+          "desc": "",
+          "example": ""
+        },
+        "year": {
+          "desc": ""
+        },
+        "dayOfWeek": {
+          "desc": "",
+          "example": ""
+        },
+        "timestamp": {
+          "desc": ""
+        }
+      },
+      "var": {
+        "intro": "",
+        "name": {
+          "desc": "",
+          "example": ""
+        },
+        "h1": "",
+        "actionSet": "",
+        "actionIncrement": "",
+        "actionAppend": "",
+        "h2": "",
+        "example1": "",
+        "example2": "",
+        "example3": ""
+      },
+      "temp": {
+        "intro": "",
+        "h1": "",
+        "lastCreatedChannelId": {
+          "desc": "",
+          "example": ""
+        },
+        "lastResult": {
+          "desc": ""
+        },
+        "afkMovedCount": {
+          "desc": "",
+          "example": ""
+        },
+        "idleKickedCount": {
+          "desc": ""
+        },
+        "pokedCount": {
+          "desc": ""
+        },
+        "rankPromotedCount": {
+          "desc": ""
+        },
+        "tempChannelsDeleted": {
+          "desc": ""
+        },
+        "h2": "",
+        "storeAsIntro": "",
+        "serverOnline": {
+          "desc": "",
+          "example": ""
+        },
+        "serverUptime": {
+          "desc": "",
+          "example": ""
+        },
+        "clientNickname": {
+          "desc": ""
+        },
+        "h3": "",
+        "loopIntro": "",
+        "loopItem": {
+          "desc": ""
+        },
+        "loopField": {
+          "desc": ""
+        },
+        "loopIndex": {
+          "desc": ""
+        }
+      },
+      "exec": {
+        "intro": "",
+        "flowId": {
+          "desc": ""
+        },
+        "executionId": {
+          "desc": ""
+        },
+        "configId": {
+          "desc": ""
+        },
+        "sid": {
+          "desc": ""
+        },
+        "triggerType": {
+          "desc": "",
+          "example": ""
+        }
+      },
+      "filter": {
+        "intro": "",
+        "uptime": {
+          "desc": ""
+        },
+        "round": {
+          "desc": ""
+        },
+        "floor": {
+          "desc": ""
+        }
+      },
+      "functions": {
+        "intro": "",
+        "contains": {
+          "desc": ""
+        },
+        "startsWith": {
+          "desc": ""
+        },
+        "endsWith": {
+          "desc": ""
+        },
+        "lower": {
+          "desc": ""
+        },
+        "upper": {
+          "desc": ""
+        },
+        "length": {
+          "desc": ""
+        },
+        "split": {
+          "desc": ""
+        },
+        "hasGroup": {
+          "desc": ""
+        },
+        "count": {
+          "desc": ""
+        },
+        "h1": "",
+        "condition1": "",
+        "condition2": "",
+        "condition3": "",
+        "condition4": "",
+        "condition5": ""
+      },
+      "templates": {
+        "intro": ""
+      }
+    },
+    "editChannelDialog": {
+      "title": "",
+      "loadFailed": "",
+      "updated": "",
+      "updateFailed": "",
+      "loadingSettings": "",
+      "tabs": {
+        "general": "",
+        "voice": "",
+        "limits": "",
+        "advanced": ""
+      },
+      "channelName": "",
+      "icon": "",
+      "iconNone": "",
+      "iconChoose": "",
+      "iconRemove": "",
+      "iconHint": "",
+      "iconSaveFailed": "",
+      "iconChangeFailed": "",
+      "topic": "",
+      "leaveEmptyToKeep": "",
+      "codec": "",
+      "codecQuality": "",
+      "codecQualityHint": "",
+      "encryptVoice": "",
+      "type": {
+        "permanent": "",
+        "semipermanent": "",
+        "temporary": ""
+      },
+      "deleteDelay": "",
+      "defaultChannel": "",
+      "defaultChannelHint": "",
+      "maxClients": "",
+      "limited": "",
+      "unlimited": "",
+      "maxFamilyClients": "",
+      "inherited": "",
+      "maxFamilyClientsHint": "",
+      "neededTalkPower": "",
+      "sortPosition": "",
+      "sortPositionHint": "",
+      "phoneticName": "",
+      "phoneticNamePlaceholder": "",
+      "bannerImageUrl": "",
+      "bannerMode": "",
+      "bannerMode0": "",
+      "bannerMode1": "",
+      "bannerMode2": ""
+    }
+  },
+  "data": {
+    "botTemplates": {
+      "categories": {
+        "infoChannels": {
+          "label": "",
+          "description": ""
+        },
+        "moderation": {
+          "label": "",
+          "description": ""
+        },
+        "automation": {
+          "label": "",
+          "description": ""
+        },
+        "integration": {
+          "label": "",
+          "description": ""
+        }
+      },
+      "items": {
+        "clockChannel": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "channelId": {
+              "label": ""
+            },
+            "timezone": {
+              "label": ""
+            }
+          }
+        },
+        "onlineCounter": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "channelId": {
+              "label": ""
+            }
+          }
+        },
+        "serverStats": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "uptimeChannelId": {
+              "label": ""
+            },
+            "clientsChannelId": {
+              "label": ""
+            },
+            "channelCountChannelId": {
+              "label": ""
+            }
+          }
+        },
+        "animatedChannel": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "channelId": {
+              "label": ""
+            },
+            "text": {
+              "label": ""
+            },
+            "style": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": "",
+                "2": "",
+                "3": "",
+                "4": "",
+                "5": ""
+              }
+            },
+            "intervalSeconds": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": "",
+                "2": "",
+                "3": "",
+                "4": "",
+                "5": ""
+              }
+            },
+            "prefix": {
+              "label": ""
+            }
+          }
+        },
+        "welcomeMessage": {
+          "name": "",
+          "description": "",
+          "variablesHint": [
+            "",
+            "",
+            "",
+            ""
+          ],
+          "fields": {
+            "message": {
+              "label": ""
+            },
+            "usePokeInstead": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": ""
+              }
+            },
+            "ignoreGroupIds": {
+              "label": ""
+            },
+            "teamGroupIds": {
+              "label": ""
+            }
+          }
+        },
+        "supportSystem": {
+          "name": "",
+          "description": "",
+          "variablesHint": [
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "fields": {
+            "supportChannelId": {
+              "label": ""
+            },
+            "parentChannelId": {
+              "label": ""
+            },
+            "supporterGroupIds": {
+              "label": ""
+            },
+            "afkChannelIds": {
+              "label": ""
+            },
+            "roomName": {
+              "label": ""
+            },
+            "roomType": {
+              "label": "",
+              "options": [
+                "",
+                "",
+                ""
+              ]
+            },
+            "notifyMethod": {
+              "label": "",
+              "options": [
+                "",
+                ""
+              ]
+            },
+            "userMessage": {
+              "label": ""
+            },
+            "supporterMessage": {
+              "label": ""
+            },
+            "offlineMessage": {
+              "label": ""
+            },
+            "listMode": {
+              "label": "",
+              "options": [
+                "",
+                "",
+                ""
+              ]
+            },
+            "listGroupIdsWhitelist": {
+              "label": ""
+            },
+            "listGroupIdsBlacklist": {
+              "label": ""
+            },
+            "blockedMessage": {
+              "label": ""
+            },
+            "waitingRoomToggle": {
+              "label": "",
+              "options": [
+                "",
+                ""
+              ]
+            },
+            "waitingRoomOpenName": {
+              "label": ""
+            },
+            "waitingRoomClosedName": {
+              "label": ""
+            }
+          }
+        },
+        "privateChannelCreator": {
+          "name": "",
+          "description": "",
+          "variablesHint": [
+            ""
+          ],
+          "fields": {
+            "lobbyChannelId": {
+              "label": ""
+            },
+            "parentChannelId": {
+              "label": ""
+            },
+            "channelPlacement": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": ""
+              }
+            },
+            "channelAdminGroupId": {
+              "label": ""
+            },
+            "channelNameTemplate": {
+              "label": ""
+            },
+            "channelDescriptionTemplate": {
+              "label": ""
+            },
+            "privateChannelType": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": "",
+                "2": ""
+              }
+            },
+            "autoGeneratePassword": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": ""
+              }
+            },
+            "spamProtectionEnabled": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": ""
+              }
+            },
+            "spamProtectionMaxStrikes": {
+              "label": ""
+            },
+            "spamProtectionBanSeconds": {
+              "label": ""
+            },
+            "channelCreateMessage": {
+              "label": ""
+            },
+            "channelMoveMessage": {
+              "label": ""
+            },
+            "channelErrorMessage": {
+              "label": ""
+            },
+            "channelPasswordMessage": {
+              "label": ""
+            },
+            "spamProtectionBanMessage": {
+              "label": ""
+            }
+          }
+        },
+        "autoRank": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "ranks": {
+              "label": ""
+            },
+            "mode": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": ""
+              }
+            },
+            "excludeGroupIds": {
+              "label": ""
+            },
+            "pollInterval": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": "",
+                "2": ""
+              }
+            }
+          }
+        },
+        "lastSeenTracker": {
+          "name": "",
+          "description": ""
+        },
+        "afkMover": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "afkChannelId": {
+              "label": ""
+            },
+            "idleThresholdSeconds": {
+              "label": ""
+            },
+            "exemptGroupIds": {
+              "label": ""
+            },
+            "exemptChannelIds": {
+              "label": ""
+            }
+          }
+        },
+        "idleKicker": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "idleThresholdSeconds": {
+              "label": ""
+            },
+            "reason": {
+              "label": ""
+            },
+            "exemptGroupIds": {
+              "label": ""
+            }
+          }
+        },
+        "badNameChecker": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "badWords": {
+              "label": ""
+            },
+            "reason": {
+              "label": ""
+            }
+          }
+        },
+        "groupProtector": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "protectedGroupId": {
+              "label": ""
+            },
+            "allowedGroupId": {
+              "label": ""
+            },
+            "action": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": ""
+              }
+            }
+          }
+        },
+        "webhookServerMessage": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "path": {
+              "label": ""
+            },
+            "secret": {
+              "label": ""
+            }
+          }
+        },
+        "webhookGroupAssign": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "path": {
+              "label": ""
+            },
+            "groupId": {
+              "label": ""
+            },
+            "secret": {
+              "label": ""
+            }
+          }
+        },
+        "webhookChannelRename": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "path": {
+              "label": ""
+            },
+            "channelId": {
+              "label": ""
+            },
+            "nameTemplate": {
+              "label": ""
+            },
+            "secret": {
+              "label": ""
+            }
+          }
+        },
+        "antiVpn": {
+          "name": "",
+          "description": "",
+          "fields": {
+            "apiUrl": {
+              "label": ""
+            },
+            "action": {
+              "label": "",
+              "options": {
+                "0": "",
+                "1": ""
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "errors": {
+    "protectedTarget": "",
+    "ts": {
+      "groupNameExists": "",
+      "invalidGroup": "",
+      "permAlreadySet": "",
+      "unknownPermission": "",
+      "cannotModifyDefaultGroup": "",
+      "invalidPermValueSize": "",
+      "invalidPermValue": "",
+      "insufficientModifyPower": "",
+      "channelIconChannelPower": "",
+      "channelIconMissingPermission": "",
+      "channelIconNoRights": "",
+      "channelIconModifyPower": ""
+    }
+  }
+}
