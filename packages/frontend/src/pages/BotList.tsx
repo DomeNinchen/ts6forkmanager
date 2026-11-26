@@ -106,7 +106,7 @@ export default function BotList() {
                     <Badge
                       variant="warning"
                       className="text-[10px] gap-1"
-                      title={t('pages.botList.querySecretHint', { date: new Date(bot.querySecretLastAt).toLocaleString() })}
+                      title={t('pages.botList.querySecretHint', { date: new Date(bot.querySecretLastAt).toLocaleString(i18n.language) })}
                     >
                       <AlertTriangle className="h-3 w-3" aria-hidden /> {t('pages.botList.querySecret', { count: bot.querySecretCalls })}
                     </Badge>

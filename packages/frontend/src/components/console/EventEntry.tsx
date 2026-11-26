@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { ChevronRight, Copy, Eye, EyeOff } from 'lucide-react';
 import { isSecretKey, type ConsoleEvent } from '@ts6/common';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,7 @@ export const EventEntry = memo(function EventEntry({ event, sid, configId }: Eve
         onClick={() => setOpen((value) => !value)}
       >
         <ChevronRight className={cn('h-3 w-3 shrink-0 self-center text-muted-foreground transition-transform', open && 'rotate-90')} />
-        <span className="shrink-0 text-muted-foreground">{new Date(event.at).toLocaleTimeString()}</span>
+        <span className="shrink-0 text-muted-foreground">{new Date(event.at).toLocaleTimeString(i18n.language)}</span>
         <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
           {category ? t(`pages.console.events.categories.${category}.short`) : t('pages.console.events.other')}
         </Badge>

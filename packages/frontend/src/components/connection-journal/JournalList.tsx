@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { Ban as BanIcon, Filter } from 'lucide-react';
 import {
   JOURNAL_LEAVE_RECORDING_STOPPED,
@@ -133,7 +134,7 @@ function JournalRow({
   return (
     <tr className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors" data-testid="journal-row" data-source={entry.source}>
       <td className="px-3 py-2.5 align-middle whitespace-nowrap font-mono-data text-xs">
-        {new Date(entry.at).toLocaleString()}
+        {new Date(entry.at).toLocaleString(i18n.language)}
       </td>
       <td className="px-3 py-2.5 align-middle">
         <Badge variant={entry.source === 'ts' ? 'default' : 'outline'}>{t(`pages.connectionJournal.source.${entry.source}`)}</Badge>

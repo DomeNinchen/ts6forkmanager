@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { Ban as BanIcon, Filter } from 'lucide-react';
 import type { JournalIpSortColumn } from '@ts6/common';
 import { connectionJournalApi } from '@/api/connection-journal.api';
@@ -108,7 +109,7 @@ export function JournalByIp({
                   <td className={row.failures > 0 ? 'px-3 py-2.5 align-middle font-mono-data text-destructive' : 'px-3 py-2.5 align-middle font-mono-data'}>{row.failures}</td>
                   <td className="px-3 py-2.5 align-middle font-mono-data">{row.successes}</td>
                   <td className="px-3 py-2.5 align-middle font-mono-data">{row.usernames}</td>
-                  <td className="px-3 py-2.5 align-middle whitespace-nowrap font-mono-data text-xs">{new Date(row.lastAt).toLocaleString()}</td>
+                  <td className="px-3 py-2.5 align-middle whitespace-nowrap font-mono-data text-xs">{new Date(row.lastAt).toLocaleString(i18n.language)}</td>
                 </tr>
               ))
             )}

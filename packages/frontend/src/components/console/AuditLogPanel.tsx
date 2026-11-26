@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { Check, RefreshCw, ScrollText } from 'lucide-react';
 import type { ConsoleAuditEntry, ConsoleAuditStatus } from '@ts6/common';
 import { consoleApi } from '@/api/console.api';
@@ -128,7 +129,7 @@ export function AuditLogPanel({ configId }: AuditLogPanelProps) {
               <tbody>
                 {entries.map((entry) => (
                   <tr key={entry.id} className="border-t border-border/60 align-top hover:bg-muted/20">
-                    <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">{new Date(entry.createdAt).toLocaleString()}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">{new Date(entry.createdAt).toLocaleString(i18n.language)}</td>
                     <td className="whitespace-nowrap px-3 py-1.5">{entry.username}</td>
                     <td className="whitespace-nowrap px-3 py-1.5">
                       {entry.serverName}{' '}

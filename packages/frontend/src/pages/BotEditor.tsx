@@ -31,6 +31,7 @@ import { PlaceholderReference, PlaceholderReferenceContent } from '@/components/
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import type { TFunction } from 'i18next';
 
 // --- Node type definitions ---
@@ -1622,7 +1623,7 @@ export default function BotEditor() {
                       {bot?.querySecretCalls > 0 && (
                         <p role="status" className="flex gap-1 rounded border border-amber-500/30 bg-amber-500/10 p-1.5 text-[10px] text-amber-600 dark:text-amber-400">
                           <AlertTriangle className="h-3 w-3 shrink-0 mt-px" aria-hidden />
-                          {t('pages.botEditor.config.triggerWebhook.querySecretWarning', { count: bot.querySecretCalls, date: new Date(bot.querySecretLastAt).toLocaleString() })}
+                          {t('pages.botEditor.config.triggerWebhook.querySecretWarning', { count: bot.querySecretCalls, date: new Date(bot.querySecretLastAt).toLocaleString(i18n.language) })}
                         </p>
                       )}
                     </>

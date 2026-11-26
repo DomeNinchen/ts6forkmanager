@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import type { JournalBanState } from '@ts6/common';
 import { Badge } from '@/components/ui/badge';
 
@@ -12,7 +13,7 @@ export function BanBadges({ web, ts }: { web: JournalBanState['web']; ts?: boole
         <Badge
           variant="destructive"
           data-testid="journal-web-banned"
-          title={web.expiresAt ? t('pages.connectionJournal.ban.badge.until', { date: new Date(web.expiresAt).toLocaleString() }) : t('pages.connectionJournal.ban.badge.forever')}
+          title={web.expiresAt ? t('pages.connectionJournal.ban.badge.until', { date: new Date(web.expiresAt).toLocaleString(i18n.language) }) : t('pages.connectionJournal.ban.badge.forever')}
         >
           {t('pages.connectionJournal.ban.badge.web')}
         </Badge>

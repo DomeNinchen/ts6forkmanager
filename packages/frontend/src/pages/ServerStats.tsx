@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { useSearchParams } from 'react-router';
 import { useVirtualServerInfo, useConnectionInfo, useHostInfo, useVirtualServers } from '@/hooks/use-servers';
 import { useServerStore } from '@/stores/server.store';
@@ -122,7 +123,7 @@ function SelectedServerTab() {
             </Badge>
           } />
           <StatRow label={t('pages.serverStats.uptime')} value={formatUptime(Number(s.virtualserver_uptime || 0))} />
-          <StatRow label={t('pages.serverStats.created')} value={s.virtualserver_created ? new Date(Number(s.virtualserver_created) * 1000).toLocaleString() : '-'} />
+          <StatRow label={t('pages.serverStats.created')} value={s.virtualserver_created ? new Date(Number(s.virtualserver_created) * 1000).toLocaleString(i18n.language) : '-'} />
         </CardContent>
       </Card>
 

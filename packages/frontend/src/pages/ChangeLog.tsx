@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { Search } from 'lucide-react';
 import {
   UI_CHANGE_METHODS,
@@ -313,7 +314,7 @@ function ChangeRow({ entry }: { entry: UiChangeLogEntry }) {
 
   return (
     <tr className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors align-top" data-testid="change-log-row" data-status={entry.status}>
-      <td className="px-3 py-2.5 whitespace-nowrap font-mono-data text-xs">{new Date(entry.createdAt).toLocaleString()}</td>
+      <td className="px-3 py-2.5 whitespace-nowrap font-mono-data text-xs">{new Date(entry.createdAt).toLocaleString(i18n.language)}</td>
       <td className="px-3 py-2.5">
         <div className="font-mono-data whitespace-nowrap">{entry.username}</div>
         <div className="text-[11px] text-muted-foreground">{roles.nameOf(entry.role)}</div>

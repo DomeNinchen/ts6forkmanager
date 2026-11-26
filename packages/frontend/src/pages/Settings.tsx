@@ -32,7 +32,7 @@ import { useSetWebguiTheme, useSetWebguiBaseTheme, useSetWebguiDesign } from '@/
 import { usePublicConfig, useSetPrivacyNotice } from '@/hooks/use-public-config';
 import { useUiStore } from '@/stores/ui.store';
 import { useLanguagePreference } from '@/hooks/use-language';
-import { SUPPORTED_LANGUAGES, nativeLanguageName } from '@/lib/i18n';
+import i18n, { SUPPORTED_LANGUAGES, nativeLanguageName } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { settingsTabsFor, resolveSettingsTab } from '@/lib/settings-tabs';
 import { useSearchParams } from 'react-router';
@@ -1077,7 +1077,7 @@ function UsersTab() {
                     />
                   </td>
                   <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                    {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : t('pages.settings.users.never')}
+                    {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString(i18n.language) : t('pages.settings.users.never')}
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="inline-flex items-center gap-0.5">
@@ -1386,8 +1386,8 @@ function SessionsDialog({ userId, username, isSelf, onClose }: { userId: number;
             {sessions.map((s) => (
               <div key={s.id} className="flex items-center justify-between gap-4 py-1.5 border-b border-border last:border-0">
                 <div>
-                  <p className="text-xs">{t('pages.settings.sessions.signedIn', { date: new Date(s.createdAt).toLocaleString() })}</p>
-                  <p className="text-[11px] text-muted-foreground">{t('pages.settings.sessions.expires', { date: new Date(s.expiresAt).toLocaleString() })}</p>
+                  <p className="text-xs">{t('pages.settings.sessions.signedIn', { date: new Date(s.createdAt).toLocaleString(i18n.language) })}</p>
+                  <p className="text-[11px] text-muted-foreground">{t('pages.settings.sessions.expires', { date: new Date(s.expiresAt).toLocaleString(i18n.language) })}</p>
                 </div>
                 <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" disabled={revokeOne.isPending} onClick={() => revokeOne.mutate(s.id)}>
                   {t('pages.settings.sessions.revoke')}
@@ -2264,7 +2264,7 @@ function UpdateStatusTab() {
           })}
 
           <p className="text-[11px] text-muted-foreground pt-3">
-            {data.checkedAt ? t('pages.settings.updateStatus.lastChecked', { date: new Date(data.checkedAt).toLocaleString() }) : t('pages.settings.updateStatus.notCheckedYet')}
+            {data.checkedAt ? t('pages.settings.updateStatus.lastChecked', { date: new Date(data.checkedAt).toLocaleString(i18n.language) }) : t('pages.settings.updateStatus.notCheckedYet')}
           </p>
         </CardContent>
       </Card>

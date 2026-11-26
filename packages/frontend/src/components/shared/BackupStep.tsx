@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BulkBackupScope } from '@ts6/common';
 import { DatabaseBackup } from 'lucide-react';
@@ -90,7 +91,7 @@ export function BackupStep({ step, disabled }: { step: BackupStepState; disabled
         <DatabaseBackup className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         <span>
           {step.auto ? t('components.backupStep.auto') : last
-            ? t('components.backupStep.last', { time: new Date(last.createdAt).toLocaleString() })
+            ? t('components.backupStep.last', { time: new Date(last.createdAt).toLocaleString(i18n.language) })
             : t('components.backupStep.none')}
         </span>
       </p>

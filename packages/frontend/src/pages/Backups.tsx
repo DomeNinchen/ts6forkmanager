@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, Download, Info, RotateCcw, ShieldCheck, Trash2, Upload, XCircle } from 'lucide-react';
 import type { BackupCheckResult, BackupEntry, BackupOverview, BackupSettings } from '@ts6/common';
@@ -108,7 +109,7 @@ export default function Backups() {
         <div className="flex flex-wrap items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm" role="status" data-testid="backup-pending-restore">
           <Info className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
           <div className="flex-1 min-w-[200px]">
-            <p className="font-medium">{t('pages.backups.restore.pending', { time: new Date(data.pendingRestore.requestedAt).toLocaleString(), user: data.pendingRestore.requestedBy })}</p>
+            <p className="font-medium">{t('pages.backups.restore.pending', { time: new Date(data.pendingRestore.requestedAt).toLocaleString(i18n.language), user: data.pendingRestore.requestedBy })}</p>
             <p className="text-xs text-muted-foreground break-all">{data.pendingRestore.name}</p>
             <p className="text-xs text-muted-foreground">{t('pages.backups.restore.pendingHint')}</p>
           </div>
@@ -129,10 +130,10 @@ export default function Backups() {
           <div className="min-w-0">
             <p className="font-medium">
               {last.ok
-                ? t('pages.backups.restore.lastOk', { time: new Date(last.at).toLocaleString(), user: last.requestedBy })
+                ? t('pages.backups.restore.lastOk', { time: new Date(last.at).toLocaleString(i18n.language), user: last.requestedBy })
                 : last.rolledBack
-                  ? t('pages.backups.restore.lastRolledBack', { time: new Date(last.at).toLocaleString() })
-                  : t('pages.backups.restore.lastFailed', { time: new Date(last.at).toLocaleString() })}
+                  ? t('pages.backups.restore.lastRolledBack', { time: new Date(last.at).toLocaleString(i18n.language) })
+                  : t('pages.backups.restore.lastFailed', { time: new Date(last.at).toLocaleString(i18n.language) })}
             </p>
             <p className="text-xs text-muted-foreground break-all">{last.name}</p>
             {last.error && <p className="text-xs text-muted-foreground break-words">{last.error}</p>}
@@ -145,7 +146,7 @@ export default function Backups() {
         <div className="flex gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm" role="alert" data-testid="backup-last-failed">
           <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
           <div>
-            <p className="font-medium">{t(`pages.backups.lastFailed.${data.lastRun.kind}`, { time: new Date(data.lastRun.at).toLocaleString() })}</p>
+            <p className="font-medium">{t(`pages.backups.lastFailed.${data.lastRun.kind}`, { time: new Date(data.lastRun.at).toLocaleString(i18n.language) })}</p>
             <p className="text-xs text-muted-foreground break-words">{data.lastRun.error}</p>
           </div>
         </div>
@@ -155,7 +156,7 @@ export default function Backups() {
         <div className="flex gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm" role="alert" data-testid="backup-external-failed">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
           <div>
-            <p className="font-medium">{t('pages.backups.target.copyFailed', { time: new Date(data.lastRun.at).toLocaleString() })}</p>
+            <p className="font-medium">{t('pages.backups.target.copyFailed', { time: new Date(data.lastRun.at).toLocaleString(i18n.language) })}</p>
             <p className="text-xs text-muted-foreground break-words">{data.lastRun.externalError}</p>
           </div>
         </div>
@@ -176,7 +177,7 @@ export default function Backups() {
               {data.lastRun?.ok && (
                 <>
                   <dt className="text-muted-foreground">{t('pages.backups.now.lastRun')}</dt>
-                  <dd className="font-mono-data">{new Date(data.lastRun.at).toLocaleString()}</dd>
+                  <dd className="font-mono-data">{new Date(data.lastRun.at).toLocaleString(i18n.language)}</dd>
                 </>
               )}
             </dl>
@@ -219,7 +220,7 @@ export default function Backups() {
               data.backups.map((entry) => (
                 <tr key={`${entry.kind}/${entry.name}`} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors" data-testid="backup-row" data-kind={entry.kind}>
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono-data text-xs">
-                    {new Date(entry.createdAt).toLocaleString()}
+                    {new Date(entry.createdAt).toLocaleString(i18n.language)}
                     {entry.createdBy && <div className="text-[11px] text-muted-foreground">{entry.createdBy}</div>}
                   </td>
                   <td className="px-3 py-2.5">
@@ -267,7 +268,7 @@ export default function Backups() {
         open={toDelete !== null}
         onOpenChange={(open) => !open && setToDelete(null)}
         title={t('pages.backups.deleteTitle')}
-        description={t('pages.backups.deleteDescription', { time: toDelete ? new Date(toDelete.createdAt).toLocaleString() : '' })}
+        description={t('pages.backups.deleteDescription', { time: toDelete ? new Date(toDelete.createdAt).toLocaleString(i18n.language) : '' })}
         confirmLabel={t('pages.backups.actions.delete')}
         destructive
         loading={remove.isPending}
@@ -376,7 +377,7 @@ function RestoreDialog({ entry, databaseBytes, onClose }: { entry: BackupEntry; 
                 <div className="space-y-1">
                   <p className="font-medium">{t('pages.backups.restore.whatHappens')}</p>
                   <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-1">
-                    <li>{t('pages.backups.restore.replaces', { now: formatBytes(databaseBytes), time: new Date(entry.createdAt).toLocaleString(), size: formatBytes(entry.size) })}</li>
+                    <li>{t('pages.backups.restore.replaces', { now: formatBytes(databaseBytes), time: new Date(entry.createdAt).toLocaleString(i18n.language), size: formatBytes(entry.size) })}</li>
                     <li>{t('pages.backups.restore.savesCurrent')}</li>
                     {result.migrations.state === 'older' && <li>{t('pages.backups.restore.migrates', { count: result.migrations.pending.length })}</li>}
                     <li>{t('pages.backups.restore.signsOut')}</li>
