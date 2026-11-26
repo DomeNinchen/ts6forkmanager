@@ -797,6 +797,7 @@ func (s *Sidecar) CreatePeer(id string) (sdp string, err error) {
 	if err := webrtc.RegisterDefaultInterceptors(m, i); err != nil {
 		return "", err
 	}
+	registerAudioNack(m)
 	audioNack, err := newAudioNackResponder()
 	if err != nil {
 		return "", err

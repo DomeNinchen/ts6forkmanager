@@ -10,19 +10,37 @@ import (
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/nack"
 	"github.com/pion/rtcp"
+	"github.com/pion/webrtc/v4"
 )
 
-// The default NACK responder only resends for streams whose answer
-// negotiated "nack", and that is never the sound: the offer has no nack for
-// audio, and the TeamSpeak 6 client and Chromium leave it out of their answer
-// anyway - yet both ask for lost sound packets and play a resend that arrives
-// in time. This second responder serves only audio, so the two never overlap.
+// The TeamSpeak 6 client and Chromium ask for lost sound packets only when the
+// offer lists "nack" for audio (registerAudioNack), but leave it out of their
+// answer, and the default NACK responder serves only negotiated streams. This
+// second responder takes the sound streams the default one leaves alone, so a
+// viewer that does negotiate it never gets a packet twice.
 func newAudioNackResponder() (*nack.ResponderInterceptorFactory, error) {
-	return nack.NewResponderInterceptor(nack.ResponderStreamsFilter(isAudioStream))
+	return nack.NewResponderInterceptor(nack.ResponderStreamsFilter(func(info *interceptor.StreamInfo) bool {
+		return isAudioStream(info) && !negotiatedNack(info)
+	}))
+}
+
+// registerAudioNack offers nack for every audio codec registered so far.
+func registerAudioNack(m *webrtc.MediaEngine) {
+	m.RegisterFeedback(webrtc.RTCPFeedback{Type: "nack"}, webrtc.RTPCodecTypeAudio)
 }
 
 func isAudioStream(info *interceptor.StreamInfo) bool {
 	return strings.HasPrefix(strings.ToLower(info.MimeType), "audio/")
+}
+
+// negotiatedNack is the default responder's own test (pion's streamSupportNack).
+func negotiatedNack(info *interceptor.StreamInfo) bool {
+	for _, fb := range info.RTCPFeedback {
+		if fb.Type == "nack" && fb.Parameter == "" {
+			return true
+		}
+	}
+	return false
 }
 
 // audioNackDebug is the backend's "Stream Audio Debug" switch (POST /debug).
