@@ -12,7 +12,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Cpu, Save, Server, Globe, Network } from 'lucide-react';
 import { formatBytes, formatUptime } from '@/lib/utils';
+import { countOf, countPair } from '@/lib/host-info';
+import { useVirtualServers } from '@/hooks/use-servers';
 import { toast } from 'sonner';
+
+const bytesOrDash = (value: unknown) => {
+  const n = countOf(value);
+  return n === null ? '-' : formatBytes(n);
+};
 
 export default function Instance() {
   const { t } = useTranslation();
@@ -40,6 +47,8 @@ export default function Instance() {
     queryFn: () => serversApi.bindings(c!),
     enabled: !!c,
   });
+
+  const { data: serverList } = useVirtualServers();
 
   const editMutation = useMutation({
     mutationFn: (data: any) => serversApi.instanceEdit(c!, data),
@@ -105,9 +114,10 @@ export default function Instance() {
           </CardHeader>
           <CardContent className="space-y-2">
             <InfoRow label={t('pages.instance.uptime')} value={hostData?.instance_uptime ? formatUptime(hostData.instance_uptime) : '-'} />
-            <InfoRow label={t('pages.instance.bytesSent')} value={hostData?.connection_bytes_sent_total ? formatBytes(hostData.connection_bytes_sent_total) : '-'} />
-            <InfoRow label={t('pages.instance.bytesReceived')} value={hostData?.connection_bytes_received_total ? formatBytes(hostData.connection_bytes_received_total) : '-'} />
-            <InfoRow label={t('nav.items.virtualServers')} value={hostData?.virtualservers_total_maxclients ? `${hostData.virtualservers_total_clients_online || 0} / ${hostData.virtualservers_total_maxclients}` : '-'} />
+            <InfoRow label={t('pages.instance.bytesSent')} value={bytesOrDash(hostData?.connection_bytes_sent_total)} />
+            <InfoRow label={t('pages.instance.bytesReceived')} value={bytesOrDash(hostData?.connection_bytes_received_total)} />
+            <InfoRow label={t('nav.items.virtualServers')} value={countPair(hostData?.virtualservers_running_total, Array.isArray(serverList) ? serverList.length : undefined)} />
+            <InfoRow label={t('pages.dashboard.userSlots')} value={countPair(hostData?.virtualservers_total_clients_online, hostData?.virtualservers_total_maxclients)} />
           </CardContent>
         </Card>
 
