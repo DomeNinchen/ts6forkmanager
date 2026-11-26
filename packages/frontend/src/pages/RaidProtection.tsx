@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { TFunction } from 'i18next';
@@ -259,7 +260,7 @@ function IncidentRow({ incident: i }: { incident: RaidIncidentEntry }) {
                 {i.clients.map((cl) => (
                   <tr key={`${cl.uid}|${cl.joinedAt}`} className="border-t border-border">
                     <td className="max-w-[12rem] truncate py-1" title={cl.uid}>{cl.nickname}</td>
-                    <td className="pl-2 tabular-nums">{new Date(cl.joinedAt).toLocaleTimeString()}</td>
+                    <td className="pl-2 tabular-nums">{new Date(cl.joinedAt).toLocaleTimeString(i18n.language)}</td>
                     {showIp && <td className="pl-2 tabular-nums">{cl.ip ?? '–'}</td>}
                     <td className="pl-2">{cl.country || '–'}</td>
                     <td className="pl-2">{cl.isNew ? t('pages.raid.newIdentity') : t('pages.raid.seenBefore')}</td>

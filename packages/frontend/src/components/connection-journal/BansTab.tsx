@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Filter, ShieldOff } from 'lucide-react';
@@ -83,14 +84,14 @@ export function BansTab({ onFilterIp }: { onFilterIp: (ip: string) => void }) {
                   </td>
                   <td className="px-3 py-2.5 align-middle text-xs max-w-[240px] break-words">{ban.reason ?? <span className="text-muted-foreground">–</span>}</td>
                   <td className="px-3 py-2.5 align-middle text-xs">{ban.createdBy}</td>
-                  <td className="px-3 py-2.5 align-middle whitespace-nowrap font-mono-data text-xs">{new Date(ban.createdAt).toLocaleString()}</td>
+                  <td className="px-3 py-2.5 align-middle whitespace-nowrap font-mono-data text-xs">{new Date(ban.createdAt).toLocaleString(i18n.language)}</td>
                   <td className="px-3 py-2.5 align-middle whitespace-nowrap font-mono-data text-xs">
-                    {ban.expiresAt ? new Date(ban.expiresAt).toLocaleString() : t('common.duration.permanent')}
+                    {ban.expiresAt ? new Date(ban.expiresAt).toLocaleString(i18n.language) : t('common.duration.permanent')}
                   </td>
                   <td className="px-3 py-2.5 align-middle text-xs">
                     <div className="font-mono-data">{ban.blockedCount}</div>
                     {ban.lastBlockedAt && (
-                      <div className="text-muted-foreground">{t('pages.connectionJournal.bans.lastBlocked', { date: new Date(ban.lastBlockedAt).toLocaleString() })}</div>
+                      <div className="text-muted-foreground">{t('pages.connectionJournal.bans.lastBlocked', { date: new Date(ban.lastBlockedAt).toLocaleString(i18n.language) })}</div>
                     )}
                   </td>
                   <td className="px-3 py-2.5 align-middle text-right">

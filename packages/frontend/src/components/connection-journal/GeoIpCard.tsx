@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { toast } from 'sonner';
 import { Download, Trash2, Upload } from 'lucide-react';
 import { GEOIP_EDITIONS, type GeoIpEdition } from '@ts6/common';
@@ -97,9 +98,9 @@ export function GeoIpCard() {
               {status.version && <span className="text-muted-foreground">{t('pages.connectionJournal.geoip.release', { version: status.version })}</span>}
             </div>
             <div className="text-muted-foreground">
-              {status.builtAt && <>{t('pages.connectionJournal.geoip.built', { date: new Date(status.builtAt).toLocaleDateString() })} · </>}
+              {status.builtAt && <>{t('pages.connectionJournal.geoip.built', { date: new Date(status.builtAt).toLocaleDateString(i18n.language) })} · </>}
               {status.sizeBytes !== null && <>{formatBytes(status.sizeBytes)} · </>}
-              {status.installedAt && t('pages.connectionJournal.geoip.installedAt', { date: new Date(status.installedAt).toLocaleString() })}
+              {status.installedAt && t('pages.connectionJournal.geoip.installedAt', { date: new Date(status.installedAt).toLocaleString(i18n.language) })}
             </div>
           </div>
         ) : (
@@ -189,7 +190,7 @@ export function GeoIpCard() {
         </div>
 
         {status.lastCheckAt && (
-          <p className="text-[11px] text-muted-foreground">{t('pages.connectionJournal.geoip.lastCheck', { date: new Date(status.lastCheckAt).toLocaleString() })}</p>
+          <p className="text-[11px] text-muted-foreground">{t('pages.connectionJournal.geoip.lastCheck', { date: new Date(status.lastCheckAt).toLocaleString(i18n.language) })}</p>
         )}
         <p className="text-[11px] text-muted-foreground">{t('pages.connectionJournal.geoip.privacy')}</p>
       </CardContent>

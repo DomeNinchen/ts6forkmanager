@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { AlertTriangle, Ban, CheckCircle2, CircleSlash, Hourglass, Loader2, X, XCircle } from 'lucide-react';
 import { botsApi } from '@/api/bots.api';
 import { Badge } from '@/components/ui/badge';
@@ -116,11 +117,11 @@ export function ExecutionsPanel({ botId, onClose }: { botId: number; onClose: ()
                         ? t('pages.botEditor.executions.droppedRow', { count: droppedCount(e), trigger: e.triggeredBy })
                         : `#${e.id} · ${e.triggeredBy}`}
                     </span>
-                    <span className="shrink-0 text-[10px] text-muted-foreground">{new Date(e.startedAt).toLocaleString()}</span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">{new Date(e.startedAt).toLocaleString(i18n.language)}</span>
                   </span>
                   <span className="block text-[10px] text-muted-foreground">
                     {t(`pages.botEditor.executions.status.${e.status}`, { defaultValue: e.status })}
-                    {e.status === 'waiting' && e.resumeAt && ` · ${t('pages.botEditor.executions.waitingUntil', { time: new Date(e.resumeAt).toLocaleTimeString() })}`}
+                    {e.status === 'waiting' && e.resumeAt && ` · ${t('pages.botEditor.executions.waitingUntil', { time: new Date(e.resumeAt).toLocaleTimeString(i18n.language) })}`}
                     {/* Only for these: an interrupted or cancelled row's endedAt can be the next start after a crash, not when it stopped. */}
                     {took && (e.status === 'completed' || e.status === 'failed') && ` · ${took}`}
                   </span>
@@ -158,7 +159,7 @@ export function ExecutionsPanel({ botId, onClose }: { botId: number; onClose: ()
                 <div key={l.id} className="space-y-0.5 text-[11px]">
                   <div className="flex items-center gap-1.5">
                     <span className="font-mono-data text-[10px] text-muted-foreground">
-                      {new Date(l.timestamp).toLocaleTimeString()}
+                      {new Date(l.timestamp).toLocaleTimeString(i18n.language)}
                     </span>
                     <Badge variant={LEVEL_VARIANT[l.level] ?? 'secondary'} className="px-1 py-0 text-[9px]">{l.level}</Badge>
                     {l.nodeName && <span className="truncate text-muted-foreground">{l.nodeName}</span>}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 import { changeLogApi } from '@/api/change-log.api';
@@ -141,7 +142,7 @@ export function ChangeLogSettings() {
         <CardContent className="space-y-3">
           <p className="text-xs" data-testid="change-log-stored">
             {t('pages.changeLog.settings.stored', { count: data.entryCount })}
-            {data.oldestAt && <> {t('pages.changeLog.settings.oldest', { date: new Date(data.oldestAt).toLocaleString() })}</>}
+            {data.oldestAt && <> {t('pages.changeLog.settings.oldest', { date: new Date(data.oldestAt).toLocaleString(i18n.language) })}</>}
           </p>
           <Button variant="destructive" size="sm" onClick={() => setConfirmClear(true)} disabled={data.entryCount === 0}>
             <Trash2 className="h-3.5 w-3.5 mr-1" /> {t('pages.changeLog.settings.clear')}

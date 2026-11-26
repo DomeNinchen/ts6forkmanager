@@ -65,7 +65,7 @@ function Meaning({ meaning, configId, sid }: { meaning: ValueMeaning; configId: 
     case 'clientType':
       return <span>{meaning.query ? t('pages.console.explain.queryClient') : t('pages.console.explain.voiceClient')}</span>;
     case 'timestamp':
-      return <span>{meaning.date.toLocaleString()}</span>;
+      return <span>{meaning.date.toLocaleString(i18n.language)}</span>;
     case 'duration':
       return <span>{meaning.text}</span>;
     case 'bytes':

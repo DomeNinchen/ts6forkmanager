@@ -21,7 +21,7 @@ import { LiveBadge, useLiveErrorToast } from '@/components/shared/Live';
 const CONNECTED = ['connected', 'playing', 'paused'];
 
 export default function MusicRequests() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { selectedConfigId: c } = useServerStore();
 
     const { data: requests = [], isLoading } = useQuery({
@@ -120,7 +120,7 @@ export default function MusicRequests() {
                                         <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
                                             <span className="flex items-center gap-1.5 font-mono-data">
                                                 <Clock className="w-3.5 h-3.5" />
-                                                {t('pages.musicRequests.requested', { time: formatDistanceToNow(new Date(req.requestedAt), { addSuffix: true, locale: getDateFnsLocale() }) })}
+                                                {t('pages.musicRequests.requested', { time: formatDistanceToNow(new Date(req.requestedAt), { addSuffix: true, locale: getDateFnsLocale(i18n.language) }) })}
                                             </span>
                                         </div>
                                     </div>

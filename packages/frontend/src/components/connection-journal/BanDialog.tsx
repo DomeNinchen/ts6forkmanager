@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 import { toast } from 'sonner';
 import { Ban as BanIcon } from 'lucide-react';
 import { BAN_DURATION_DEFAULT, BAN_REASON_MAX_LENGTH, type JournalBanState } from '@ts6/common';
@@ -144,7 +145,7 @@ export function BanDialog({ target, onClose }: { target: BanTarget; onClose: () 
           {check?.webBan && (
             <p className="text-xs text-muted-foreground" data-testid="ban-already">
               {check.webBan.expiresAt
-                ? t('pages.connectionJournal.ban.alreadyUntil', { date: new Date(check.webBan.expiresAt).toLocaleString() })
+                ? t('pages.connectionJournal.ban.alreadyUntil', { date: new Date(check.webBan.expiresAt).toLocaleString(i18n.language) })
                 : t('pages.connectionJournal.ban.alreadyForever')}
             </p>
           )}
