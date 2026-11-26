@@ -11,6 +11,14 @@ test('foldText: case, accents, ß and spelled-out umlauts', () => {
   assert.equal(foldText('Paramètres'), 'parametres');
   assert.equal(foldText('Straße'), 'strasse');
   assert.equal(foldText('Użytkownicy Łączność'), 'uzytkownicy lacznosc');
+  assert.equal(foldText('Usuários Ação'), 'usuarios acao');
+});
+
+test('Portuguese without accents and Chinese without spaces still match', () => {
+  const entries = [e('Configurações'), e('Usuários'), e('虚拟服务器'), e('服务器组')];
+  assert.deepEqual(names(searchEntries(entries, 'configura')), ['Configurações']);
+  assert.deepEqual(names(searchEntries(entries, 'usuarios')), ['Usuários']);
+  assert.deepEqual(names(searchEntries(entries, '服务器')), ['服务器组', '虚拟服务器']);
 });
 
 test('matches part of a word, ignoring case and umlauts', () => {
