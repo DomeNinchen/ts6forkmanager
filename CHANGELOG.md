@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.134.1 · frontend 3.158.4 · sidecar 2.4.1**
+Versions at the end of the month: **backend 2.134.2 · frontend 3.158.4 · sidecar 2.4.1**
 
 ### New Features
 
@@ -54,6 +54,7 @@ Versions at the end of the month: **backend 2.134.1 · frontend 3.158.4 · sidec
 
 ### Security
 
+- **`effect` updated to 3.22.5** — A pnpm override lifts `effect` (pulled in by Prisma's config loader, which pins 3.20.0) to the fixed 3.22 line and closes a high Dependabot alert (#75, a slow regular expression in `Schema.TemplateLiteral`); it was not reachable here, since only the Prisma CLI uses it to read the project's own `prisma.config.ts`. *backend 2.134.2* [#455](https://github.com/DomeNinchen/ts6forkmanager/pull/455)
 - **Sidecar Go modules updated** — `golang.org/x/net` 0.62.0 and `golang.org/x/crypto` 0.59.0 (pulled in through the WebRTC library) close three Trivy findings of the sidecar (one high, one medium, one note); the `openpgp` package behind the note is not used by the sidecar. *sidecar 2.4.1* [#431](https://github.com/DomeNinchen/ts6forkmanager/pull/431)
 - **Longest runtime of a flow execution** — An execution now ends as failed ("Time limit: …", shown in the editor's execution list) once it has run longer than a set time in total, counted from its start and also across a backend restart. It is checked before every node and when a Delay ends; a WebQuery command or HTTP call already under way still finishes. Set on the Bot Flows page under **Executions: retention and limit** (default 30 minutes, 0 = no limit). *backend 2.118.0, frontend 3.137.0* [#409](https://github.com/DomeNinchen/ts6forkmanager/pull/409)
 - **Webhook secret in the X-Webhook-Secret header** — The header is now the documented way to send a webhook secret: the editor shows an example call with it, and each flow counts the calls that still send the secret as `?secret=` in the address, shown as a badge on **Bot Flows** and as a warning at the webhook trigger. A new switch under **Bot Flows → Webhooks**, "Allow ?secret= in the address" (on by default), turns the address form off; such calls then get 404. *backend 2.117.0, frontend 3.135.0* [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
