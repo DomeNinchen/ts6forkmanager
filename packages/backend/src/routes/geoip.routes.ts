@@ -25,6 +25,8 @@ const upload = multer({
     filename: (_req, _file, cb) => cb(null, 'upload.tmp'),
   }),
   limits: { fileSize: MAX_UPLOAD_BYTES },
+  // Browsers send the file name as UTF-8; busboy would read it as latin1.
+  defParamCharset: 'utf8',
 });
 
 // GET /api/connection-journal/geoip - what is installed, what is going on

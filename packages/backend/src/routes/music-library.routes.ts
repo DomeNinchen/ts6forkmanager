@@ -26,6 +26,9 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: MAX_FILE_SIZE },
+  // Browsers send multipart filenames as UTF-8, whereas busboy defaults to
+  // latin1 when decoding header parameters.
+  defParamCharset: 'utf8',
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (ALL_EXTENSIONS.includes(ext)) {

@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.134.0 · frontend 3.158.2 · sidecar 2.4.1**
+Versions at the end of the month: **backend 2.134.1 · frontend 3.158.2 · sidecar 2.4.1**
 
 ### New Features
 
@@ -62,6 +62,7 @@ Versions at the end of the month: **backend 2.134.0 · frontend 3.158.2 · sidec
 
 ### Bug Fixes
 
+- Fixed uploaded songs whose file name is not pure ASCII getting a garbled title and artist in the music library: `Für Elise.mp3` became `FÃ¼r Elise`, and Chinese, Cyrillic or Greek names fell apart the same way. File names are now read as UTF-8, the way browsers send them (also for an uploaded GeoIP database); songs uploaded before keep their old title until they are uploaded again. *backend 2.134.1* [#442](https://github.com/DomeNinchen/ts6forkmanager/pull/442), thanks to [@Sorkai](https://github.com/Sorkai)
 - Fixed the **Host** card on the Instance page: **Virtual Servers** showed the online clients and slots of all servers instead of the virtual servers. It now shows the running virtual servers out of all created ones, the clients online and slots moved to their own **User Slots** row, and **Bytes Sent/Received** show 0 B instead of "NaN undefined" when nothing was transferred yet. *frontend 3.158.2* [#453](https://github.com/DomeNinchen/ts6forkmanager/pull/453), reported in [#443](https://github.com/DomeNinchen/ts6forkmanager/issues/443)
 - Fixed the hints under **Advanced Settings → File Transfer Limits** saying "0 = unlimited": TeamSpeak takes 0 as a 0 MB quota, so uploads and downloads failed with "file transfer server quota exceeded". The hints now say -1 = unlimited (TeamSpeak then shows the highest possible number) and that a quota of 0 blocks file transfers. *frontend 3.141.1* [#414](https://github.com/DomeNinchen/ts6forkmanager/pull/414), reported in [#404](https://github.com/DomeNinchen/ts6forkmanager/issues/404)
 - Fixed the webhook trigger and the three webhook templates presenting the secret as optional ("leave empty for no auth"): a webhook without a secret never fires. The secret is now a required field of the templates and the editor says so. *frontend 3.135.0* [#406](https://github.com/DomeNinchen/ts6forkmanager/pull/406)
