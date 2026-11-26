@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.134.2 · frontend 3.158.5 · sidecar 2.4.1**
+Versions at the end of the month: **backend 2.134.2 · frontend 3.158.6 · sidecar 2.4.1**
 
 ### New Features
 
@@ -41,6 +41,7 @@ Versions at the end of the month: **backend 2.134.2 · frontend 3.158.5 · sidec
 
 ### Improvements
 
+- **French translation complete, forgotten texts translatable** — The French interface had 887 untranslated texts (about a fifth of it, mostly Statistics history, Connection Journal, Query Console, Client Database and Files) and one outdated text; all are translated now. Texts that were written into the code and stayed English (or German) in every language are now translated too: the theme descriptions under Settings → WebGui, the hint placeholders of the flow templates, the example name in the bot identity dialog and the title of the HTML server log export. The Crowdin upload switch now also pushes the German texts. *frontend 3.158.6* [#458](https://github.com/DomeNinchen/ts6forkmanager/pull/458)
 - **Dates and times in the interface language** — Relative times such as "about 2 hours ago" on the Music Requests page now appear in Chinese, French, Polish and Portuguese too, not only in German and English (thanks to @Sorkai for the Chinese case). Dates and times across the interface (connection journal, bans, backups, change log, sessions, bot executions, console and more) follow the selected interface language instead of the browser's own setting. *frontend 3.158.4* [#445](https://github.com/DomeNinchen/ts6forkmanager/pull/445)
 - **Monthly releases on GitHub** — Each finished month of this changelog is also published under [Releases](https://github.com/DomeNinchen/ts6forkmanager/releases), tagged `vYYYY.MM` at the state of `main` when the month ended and titled with the backend, frontend and sidecar versions, so you can watch the repository for releases only. A month appears on the 1st of the next; September and October 2026 were added afterwards. Updating stays the same. The license files are split as well: `LICENSE` is the plain GPL-3.0 text, so GitHub recognises the license, and `NOTICE` holds the fork notice and the MIT License of the original code. [#446](https://github.com/DomeNinchen/ts6forkmanager/pull/446), [#447](https://github.com/DomeNinchen/ts6forkmanager/pull/447)
 - **Ready for Polish** — Polish is now a translation language on [Crowdin](https://crowdin.com/project/ts6forkmanager) (next to French) and shows up in the language switcher once its translation arrives. Community flow templates may carry a Polish name and description (`translations.pl`), the client database export uses a semicolon between CSV fields for Polish like for German and French, and the global search treats ł as l. *backend 2.133.0, frontend 3.156.0* [#433](https://github.com/DomeNinchen/ts6forkmanager/pull/433)
@@ -64,6 +65,7 @@ Versions at the end of the month: **backend 2.134.2 · frontend 3.158.5 · sidec
 
 ### Bug Fixes
 
+- Fixed the description under Settings → Streaming starting with the English word "What" in every language. *frontend 3.158.6* [#458](https://github.com/DomeNinchen/ts6forkmanager/pull/458)
 - Fixed the **Status** column on the Clients page showing every connected client as **Away**. Away clients show **Away**, clients with microphone or speakers muted show **Muted**, all others **Active**. *frontend 3.158.3* [#454](https://github.com/DomeNinchen/ts6forkmanager/pull/454), reported in [#452](https://github.com/DomeNinchen/ts6forkmanager/issues/452) together with the cause, thanks to [@bemoworobert-spec](https://github.com/bemoworobert-spec)
 - Fixed uploaded songs whose file name is not pure ASCII getting a garbled title and artist in the music library: `Für Elise.mp3` became `FÃ¼r Elise`, and Chinese, Cyrillic or Greek names fell apart the same way. File names are now read as UTF-8, the way browsers send them (also for an uploaded GeoIP database); songs uploaded before keep their old title until they are uploaded again. *backend 2.134.1* [#442](https://github.com/DomeNinchen/ts6forkmanager/pull/442), thanks to [@Sorkai](https://github.com/Sorkai)
 - Fixed the **Host** card on the Instance page: **Virtual Servers** showed the online clients and slots of all servers instead of the virtual servers. It now shows the running virtual servers out of all created ones, the clients online and slots moved to their own **User Slots** row, and **Bytes Sent/Received** show 0 B instead of "NaN undefined" when nothing was transferred yet. *frontend 3.158.2* [#453](https://github.com/DomeNinchen/ts6forkmanager/pull/453), reported in [#443](https://github.com/DomeNinchen/ts6forkmanager/issues/443)

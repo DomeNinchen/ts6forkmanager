@@ -15,18 +15,18 @@ export const ACCENT_PRESETS: { value: AccentPreset; label: string; swatch: strin
 ];
 
 /** Preview colours are each theme's own --background. */
-export const BASE_THEME_PRESETS: { value: BaseTheme; label: string; description: string; preview: string }[] = [
-  { value: 'command-deck', label: 'Command Deck', description: 'Deep navy - the default look.', preview: 'hsl(225 38% 6%)' },
-  { value: 'oled', label: 'OLED-Black', description: 'True black background - saves power on OLED screens.', preview: 'hsl(0 0% 0%)' },
-  { value: 'graphite', label: 'Graphite', description: 'Neutral grey with no colour cast.', preview: 'hsl(0 0% 9%)' },
-  { value: 'carbon', label: 'Carbon', description: 'Warm anthracite with a faint brown cast.', preview: 'hsl(20 10% 8%)' },
-  { value: 'frost', label: 'Frost', description: 'Cool blue-grey, lower contrast.', preview: 'hsl(220 17% 13%)' },
-  { value: 'deep-forest', label: 'Deep Forest', description: 'Dark green-black.', preview: 'hsl(155 28% 6%)' },
-  { value: 'petrol', label: 'Petrol', description: 'Deep blue-green, made for the Lounge layout.', preview: 'hsl(189 46% 12%)' },
-  { value: 'daylight', label: 'Daylight', description: 'Neutral light grey and white.', preview: 'hsl(210 20% 98%)' },
-  { value: 'paper', label: 'Paper', description: 'Warm off-white with a light sepia cast.', preview: 'hsl(40 30% 95%)' },
-  { value: 'frost-light', label: 'Frost Light', description: 'Cool light blue-grey.', preview: 'hsl(218 27% 94%)' },
-  { value: 'chalk', label: 'Chalk', description: 'Light grey-green with a dark petrol bar.', preview: 'hsl(156 17% 94%)' },
+export const BASE_THEME_PRESETS: { value: BaseTheme; label: string; preview: string }[] = [
+  { value: 'command-deck', label: 'Command Deck', preview: 'hsl(225 38% 6%)' },
+  { value: 'oled', label: 'OLED-Black', preview: 'hsl(0 0% 0%)' },
+  { value: 'graphite', label: 'Graphite', preview: 'hsl(0 0% 9%)' },
+  { value: 'carbon', label: 'Carbon', preview: 'hsl(20 10% 8%)' },
+  { value: 'frost', label: 'Frost', preview: 'hsl(220 17% 13%)' },
+  { value: 'deep-forest', label: 'Deep Forest', preview: 'hsl(155 28% 6%)' },
+  { value: 'petrol', label: 'Petrol', preview: 'hsl(189 46% 12%)' },
+  { value: 'daylight', label: 'Daylight', preview: 'hsl(210 20% 98%)' },
+  { value: 'paper', label: 'Paper', preview: 'hsl(40 30% 95%)' },
+  { value: 'frost-light', label: 'Frost Light', preview: 'hsl(218 27% 94%)' },
+  { value: 'chalk', label: 'Chalk', preview: 'hsl(156 17% 94%)' },
 ];
 
 export const DARK_THEME_PRESETS = BASE_THEME_PRESETS.filter((t) =>

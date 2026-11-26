@@ -361,21 +361,21 @@ function BaseThemeSwatchPicker({ value, onChange, disabled }: { value: BaseTheme
         <div key={group.title} className="space-y-1.5">
           <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{group.title}</p>
           <div className="flex flex-wrap gap-2">
-            {group.items.map((t) => (
+            {group.items.map((p) => (
               <button
-                key={t.value}
+                key={p.value}
                 type="button"
                 disabled={disabled}
-                onClick={() => onChange(t.value)}
-                title={t.description}
+                onClick={() => onChange(p.value)}
+                title={t(`pages.settings.webgui.themeDescriptions.${p.value}`)}
                 className={cn(
                   'flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors',
-                  value === t.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
+                  value === p.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
                   disabled && 'opacity-50 cursor-not-allowed',
                 )}
               >
-                <span className="h-3 w-3 rounded-full border border-border/50" style={{ background: t.preview }} />
-                {t.label}
+                <span className="h-3 w-3 rounded-full border border-border/50" style={{ background: p.preview }} />
+                {p.label}
               </button>
             ))}
           </div>
@@ -904,7 +904,7 @@ function BotIdentityDialog({ server, onClose }: { server: any; onClose: () => vo
           )}
           <div>
             <Label className="text-xs">{t('pages.settings.botIdentity.displayNameLabel')}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Hausmeister" autoFocus />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('pages.settings.botIdentity.displayNamePlaceholder')} autoFocus />
           </div>
         </div>
         <DialogFooter>
@@ -1667,7 +1667,7 @@ function StreamingTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            What <code className="text-[11px]">!stream &lt;url&gt;</code> {t('pages.settings.streaming.descriptionUsage', { names: data.presets.map((p) => p.name).join(', ') })}
+            {t('pages.settings.streaming.descriptionLead')} <code className="text-[11px]">!stream &lt;url&gt;</code> {t('pages.settings.streaming.descriptionUsage', { names: data.presets.map((p) => p.name).join(', ') })}
           </p>
 
           <div className="space-y-2">

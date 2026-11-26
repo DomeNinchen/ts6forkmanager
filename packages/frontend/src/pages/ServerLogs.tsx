@@ -81,7 +81,7 @@ export default function ServerLogs() {
     const blob = format === 'txt'
       ? new Blob([lines.join('\n')], { type: 'text/plain' })
       : new Blob([
-          `<!doctype html><html><head><meta charset="utf-8"><title>Server Log Export</title></head><body><pre>${
+          `<!doctype html><html><head><meta charset="utf-8"><title>${t('pages.serverLogs.exportTitle')}</title></head><body><pre>${
             lines.map((l) => l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('\n')
           }</pre></body></html>`,
         ], { type: 'text/html' });

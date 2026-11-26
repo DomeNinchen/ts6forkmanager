@@ -10,9 +10,9 @@ name: Crowdin
 # text. (skip_untranslated_files would drop every not fully translated file.)
 # The upload_translations input is the opposite direction, for catching
 # Crowdin up with the repo: the English source strings reach Crowdin on every
-# push, but the French (and Polish) text written next to them in the repo
-# does not, so after a stretch of new features Crowdin shows those languages
-# as only partly translated. Ticking it pushes the repo's fr and pl files up
+# push, but the German, French and Polish text written next to them in the
+# repo does not, so after a stretch of new features Crowdin shows those languages
+# as only partly translated. Ticking it pushes the repo's de, fr and pl files up
 # instead of pulling anything down.
 # Needs three repo secrets (Settings -> Secrets and variables -> Actions):
 # CROWDIN_PROJECT_ID, CROWDIN_PERSONAL_TOKEN, and GH_TOKEN (see below).
@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
     inputs:
       upload_translations:
-        description: "Push the repo's fr and pl translations up to Crowdin instead of pulling translations down"
+        description: "Push the repo's de, fr and pl translations up to Crowdin instead of pulling translations down"
         type: boolean
         default: false
 
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [fr, pl]
+        language: [de, fr, pl]
     steps:
       - uses: actions/checkout@v7
 

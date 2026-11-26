@@ -1353,6 +1353,7 @@
       "levelWarning": "Warnung",
       "levelInfo": "Info",
       "levelDebug": "Debug",
+      "exportTitle": "Server-Log-Export",
       "noEntriesFound": "Keine Logeinträge gefunden.",
       "skippingFirst": "erste {{count}} übersprungen",
       "newer": "Neuer",
@@ -2009,6 +2010,19 @@
         },
         "darkGroup": "Dunkel",
         "lightGroup": "Hell",
+        "themeDescriptions": {
+          "command-deck": "Tiefes Marineblau - das Standard-Aussehen.",
+          "oled": "Echtes Schwarz als Hintergrund - spart Strom auf OLED-Bildschirmen.",
+          "graphite": "Neutrales Grau ohne Farbstich.",
+          "carbon": "Warmes Anthrazit mit leichtem Braunstich.",
+          "frost": "Kühles Blaugrau, geringerer Kontrast.",
+          "deep-forest": "Dunkles Grünschwarz.",
+          "petrol": "Tiefes Blaugrün, gemacht für das Lounge-Layout.",
+          "daylight": "Neutrales Hellgrau und Weiß.",
+          "paper": "Warmes Cremeweiß mit leichtem Sepiastich.",
+          "frost-light": "Kühles helles Blaugrau.",
+          "chalk": "Helles Graugrün mit dunkler Petrol-Leiste."
+        },
         "myBaseTheme": "Mein Grunddesign",
         "myDesign": "Mein Layout",
         "designDescription": "Aufbau und Schrift der Oberfläche, unabhängig von Grunddesign und Akzent. Überschreibt den Installationsstandard unten, nur für dich - nur in diesem Browser gespeichert.",
@@ -2237,6 +2251,7 @@
         "noIdentityDescription": "Optional: Gib Bot-Flows eine eigene, separate ServerQuery-Identität, sodass ihre Aktionen (z. B. das Umbenennen eines Channels) in TeamSpeaks eigenen Logs unter diesem Namen erscheinen, statt mit deinen eigenen manuellen Aktionen in dieser App zu verschmelzen. Für Bot-Flows ändert sich nichts, bis du eine erstellst.",
         "scopeFixHint": "Schlagen Bot-Flow-Aktionen mit einem Berechtigungs- oder \"out of scope\"-Fehler fehl? Diese Identität wurde möglicherweise vor einer Scope-Korrektur erstellt - verwende unten \"Berechtigungen reparieren\", um ihren Schlüssel neu auszustellen, ohne sonst etwas zu ändern.",
         "displayNameLabel": "Anzeigename",
+        "displayNamePlaceholder": "Hausmeister",
         "fixing": "Wird repariert...",
         "fixPermissions": "Berechtigungen reparieren",
         "createBotIdentityButton": "Bot-Identität erstellen"
@@ -2405,6 +2420,7 @@
       },
       "streaming": {
         "title": "Stream-Standardwerte",
+        "descriptionLead": "Was",
         "descriptionUsage": "verwendet wird, wenn niemand eine Qualität angibt. Eine Angabe im Chat ({{names}}) gewinnt weiterhin für diesen Stream. Höhere Werte benötigen mehr Upload-Bandbreite und mehr CPU auf dieser Maschine - falls Zuschauer Ruckler melden, hier zurückkommen und die Werte senken.",
         "resolutionLabel": "Auflösung",
         "pixelsSuffix": "{{width}}x{{height}} Pixel",
@@ -5367,6 +5383,7 @@
   },
   "data": {
     "botTemplates": {
+      "examplePlaceholder": "z. B. {{value}}",
       "categories": {
         "infoChannels": {
           "label": "Info-Channels",
@@ -5480,7 +5497,8 @@
               }
             },
             "ignoreGroupIds": {
-              "label": "Ignorierte Gruppen (kommagetrennt, optional)"
+              "label": "Ignorierte Gruppen (kommagetrennt, optional)",
+              "placeholder": "z. B. IDs der Musikbot- oder Team-Servergruppen - diese Clients bekommen nie eine Willkommensnachricht"
             },
             "teamGroupIds": {
               "label": "Team-Gruppen für {{temp.teamOnline}} (kommagetrennt, optional)"
@@ -5544,7 +5562,8 @@
               "label": "Channel-Namens-Template"
             },
             "channelDescriptionTemplate": {
-              "label": "Channel-Beschreibungs-Template (optional)"
+              "label": "Channel-Beschreibungs-Template (optional)",
+              "placeholder": "z. B. Privater Channel von {{temp.joinerInfo.0.client_nickname}}, erstellt am {{time.date}}"
             },
             "privateChannelType": {
               "label": "Typ des privaten Channels",
@@ -5606,7 +5625,8 @@
               }
             },
             "excludeGroupIds": {
-              "label": "Ausgeschlossene Gruppen-IDs (kommagetrennt, optional)"
+              "label": "Ausgeschlossene Gruppen-IDs (kommagetrennt, optional)",
+              "placeholder": "z. B. ID der Bot-Gruppe"
             },
             "pollInterval": {
               "label": "Prüfintervall",
