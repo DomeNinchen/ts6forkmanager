@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.134.1 · frontend 3.158.3 · sidecar 2.4.1**
+Versions at the end of the month: **backend 2.134.1 · frontend 3.158.4 · sidecar 2.4.1**
 
 ### New Features
 
@@ -41,6 +41,7 @@ Versions at the end of the month: **backend 2.134.1 · frontend 3.158.3 · sidec
 
 ### Improvements
 
+- **Dates and times in the interface language** — Relative times such as "about 2 hours ago" on the Music Requests page now appear in Chinese, French, Polish and Portuguese too, not only in German and English (thanks to @Sorkai for the Chinese case). Dates and times across the interface (connection journal, bans, backups, change log, sessions, bot executions, console and more) follow the selected interface language instead of the browser's own setting. *frontend 3.158.4* [#445](https://github.com/DomeNinchen/ts6forkmanager/pull/445)
 - **Monthly releases on GitHub** — Each finished month of this changelog is also published under [Releases](https://github.com/DomeNinchen/ts6forkmanager/releases), tagged `vYYYY.MM` at the state of `main` when the month ended and titled with the backend, frontend and sidecar versions, so you can watch the repository for releases only. A month appears on the 1st of the next; September and October 2026 were added afterwards. Updating stays the same. The license files are split as well: `LICENSE` is the plain GPL-3.0 text, so GitHub recognises the license, and `NOTICE` holds the fork notice and the MIT License of the original code. [#446](https://github.com/DomeNinchen/ts6forkmanager/pull/446), [#447](https://github.com/DomeNinchen/ts6forkmanager/pull/447)
 - **Ready for Polish** — Polish is now a translation language on [Crowdin](https://crowdin.com/project/ts6forkmanager) (next to French) and shows up in the language switcher once its translation arrives. Community flow templates may carry a Polish name and description (`translations.pl`), the client database export uses a semicolon between CSV fields for Polish like for German and French, and the global search treats ł as l. *backend 2.133.0, frontend 3.156.0* [#433](https://github.com/DomeNinchen/ts6forkmanager/pull/433)
 - **Live stream titles and preview pictures** — A live stream shows the broadcaster's current stream title, with the channel as the artist, instead of "<channel> (live)" plus date and time; a live video shows its title instead of the link. The bot looks title and preview picture up again every 5 minutes, so the bot's nickname, its description and the web interface follow when the broadcaster changes the title. The bot card and the Video tab show the preview picture; the backend loads it, so Twitch or Kick never see the addresses of people viewing the manager. *backend 2.113.0, frontend 3.131.0* [#398](https://github.com/DomeNinchen/ts6forkmanager/pull/398)
