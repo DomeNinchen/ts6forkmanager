@@ -21,6 +21,7 @@ import { PageLoader } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatUptime } from '@/lib/utils';
 import { tsErrorMessage } from '@/lib/ts-errors';
+import { clientStatus } from '@/lib/client-status';
 import { BulkPreview, reportBulk, useBulkPreview } from '@/components/shared/BulkResultDialog';
 import { clientsApi } from '@/api/clients.api';
 import type { BulkOutcome } from '@ts6/common';
@@ -126,8 +127,9 @@ export default function Clients() {
         accessorKey: 'client_away',
         header: t('common.status'),
         cell: ({ row }) => {
-          if (row.original.client_away) return <Badge variant="warning" className="text-[10px]">{t('pages.clients.away')}</Badge>;
-          if (row.original.client_input_muted) return <Badge variant="secondary" className="text-[10px]">{t('pages.clients.muted')}</Badge>;
+          const status = clientStatus(row.original);
+          if (status === 'away') return <Badge variant="warning" className="text-[10px]">{t('pages.clients.away')}</Badge>;
+          if (status === 'muted') return <Badge variant="secondary" className="text-[10px]">{t('pages.clients.muted')}</Badge>;
           return <Badge variant="success" className="text-[10px]">{t('common.active')}</Badge>;
         },
       },
