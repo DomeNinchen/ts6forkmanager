@@ -300,7 +300,7 @@
       "version": "Wersja",
       "build": "Kompilacja",
       "platform": "Platforma",
-      "host": "Gospodarz",
+      "host": "Host",
       "uptime": "Czas pracy",
       "bytesSent": "Wysłane bajty",
       "bytesReceived": "Odebrane bajty",
