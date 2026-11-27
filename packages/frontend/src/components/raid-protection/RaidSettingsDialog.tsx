@@ -220,7 +220,7 @@ export function RaidSettingsDialog({ config, onClose, onSaved }: { config: RaidP
 
           {(problem || noNotifyGroup || retentionProblem) && <p role="alert" className="text-sm text-destructive">{noNotifyGroup ?? problem ?? retentionProblem}</p>}
         </div>
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 sm:gap-4">
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={save} disabled={!!problem || !!noNotifyGroup || !!retentionProblem || saving}>
             {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />}{t('common.save')}

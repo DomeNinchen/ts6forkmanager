@@ -122,7 +122,7 @@ export function ConnectionDiagnosisDialog({ name, run, onClose }: { name: string
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2">
           <Button variant="outline" size="sm" disabled={running} onClick={start}>
             <RefreshCw className="mr-1 h-3.5 w-3.5" aria-hidden /> {t(`${P}.again`)}
           </Button>

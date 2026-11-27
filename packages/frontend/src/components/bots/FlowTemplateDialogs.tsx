@@ -482,7 +482,7 @@ export function ImportTemplateDialog({ open, onOpenChange, serverConfigId, sid, 
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 sm:gap-4">
           {step === 1 && <>
             <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
             {/* Nothing to map: import straight away. */}

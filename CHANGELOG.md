@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.135.0 · frontend 3.159.0 · sidecar 2.5.0**
+Versions at the end of the month: **backend 2.135.0 · frontend 3.159.1 · sidecar 2.5.0**
 
 ### New Features
 
@@ -68,6 +68,7 @@ Versions at the end of the month: **backend 2.135.0 · frontend 3.159.0 · sidec
 
 ### Bug Fixes
 
+- Fixed dialogs growing wider than their frame when the buttons at the bottom did not fit on one row, as in the German "Edit connection" and the German and French "Bot identity" dialogs: help texts, fields and buttons stuck out on the right. The buttons now wrap onto a second row and every dialog keeps its width. *frontend 3.159.1* [#464](https://github.com/DomeNinchen/ts6forkmanager/pull/464)
 - Fixed the description under Settings → Streaming starting with the English word "What" in every language. *frontend 3.158.6* [#458](https://github.com/DomeNinchen/ts6forkmanager/pull/458)
 - Fixed the **Status** column on the Clients page showing every connected client as **Away**. Away clients show **Away**, clients with microphone or speakers muted show **Muted**, all others **Active**. *frontend 3.158.3* [#454](https://github.com/DomeNinchen/ts6forkmanager/pull/454), reported in [#452](https://github.com/DomeNinchen/ts6forkmanager/issues/452) together with the cause, thanks to [@bemoworobert-spec](https://github.com/bemoworobert-spec)
 - Fixed uploaded songs whose file name is not pure ASCII getting a garbled title and artist in the music library: `Für Elise.mp3` became `FÃ¼r Elise`, and Chinese, Cyrillic or Greek names fell apart the same way. File names are now read as UTF-8, the way browsers send them (also for an uploaded GeoIP database); songs uploaded before keep their old title until they are uploaded again. *backend 2.134.1* [#442](https://github.com/DomeNinchen/ts6forkmanager/pull/442), thanks to [@Sorkai](https://github.com/Sorkai)
