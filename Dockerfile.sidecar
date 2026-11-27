@@ -6,6 +6,17 @@ RUN go mod download
 COPY packages/sidecar/*.go ./
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /sidecar .
 
+# A fingerprint of Debian's package indexes: only the file hashes, without the
+# date and signature that Debian refreshes every few days. It changes exactly
+# when Debian publishes new packages, and copying it in below makes Docker
+# rerun the apt-get step then, so an ordinary cached rebuild picks up Debian's
+# fixes instead of keeping the packages from whenever the layer was first built.
+FROM debian:trixie-slim AS apt-index
+ADD https://deb.debian.org/debian/dists/trixie/InRelease /idx/trixie
+ADD https://deb.debian.org/debian/dists/trixie-updates/InRelease /idx/trixie-updates
+ADD https://deb.debian.org/debian-security/dists/trixie-security/InRelease /idx/trixie-security
+RUN for f in /idx/*; do sed -n '/^SHA256:/,/^-----BEGIN PGP SIGNATURE/p' "$f"; done | sha256sum > /apt-index.stamp
+
 # Debian 13 (trixie), not 12: bookworm left the Debian security team's regular
 # support in July 2026 and only gets LTS updates now, while trixie is the
 # current stable release (and ships ffmpeg 7.1 instead of 5.1).
@@ -13,6 +24,7 @@ FROM debian:trixie-slim
 # `apt-get upgrade` first: the base image is only rebuilt every now and then, so
 # security fixes that are already published would otherwise ride along until the
 # next base image.
+COPY --from=apt-index /apt-index.stamp /tmp/apt-index.stamp
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get install -y --no-install-recommends ffmpeg ca-certificates fonts-dejavu-core && \
