@@ -122,7 +122,7 @@ settingsRoutes.delete('/yt-cookies', requireAdmin, async (_req: Request, res: Re
   } catch (err) { next(err); }
 });
 
-const VALID_DEBUG_FLAGS: DebugFlagName[] = ['voice', 'rankCheck', 'query', 'streamSignaling'];
+const VALID_DEBUG_FLAGS: DebugFlagName[] = ['voice', 'rankCheck', 'query', 'streamSignaling', 'streamAudio'];
 
 // GET /api/settings/debug-flags — Current debug-logging toggle states
 settingsRoutes.get('/debug-flags', requireAdmin, (_req: Request, res: Response) => {
@@ -143,6 +143,7 @@ settingsRoutes.put('/debug-flags/:name', requireAdmin, async (req: Request, res:
     const prisma = req.app.locals.prisma;
     await setDebugFlag(prisma, name, enabled);
     console.log(`[Settings] Debug flag '${name}' set to ${enabled}`);
+    if (name === 'streamAudio') await req.app.locals.voiceBotManager?.pushSidecarDebug();
     res.json(getDebugFlags());
   } catch (err) { next(err); }
 });

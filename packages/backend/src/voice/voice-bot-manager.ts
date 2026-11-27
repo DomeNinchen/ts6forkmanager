@@ -421,6 +421,11 @@ export class VoiceBotManager extends EventEmitter {
    * tells a bot from a person in a client list. A bot without a stored identity
    * has a different one each time it connects, so the live one counts too.
    */
+  /** After the "Stream Audio Debug" switch changed: every bot's sidecar takes it at once. */
+  async pushSidecarDebug(): Promise<void> {
+    await Promise.all([...this.bots.values()].map((bot) => bot.pushSidecarDebug()));
+  }
+
   ownIdentityUids(): Set<string> {
     const uids = new Set<string>();
     for (const bot of this.bots.values()) {

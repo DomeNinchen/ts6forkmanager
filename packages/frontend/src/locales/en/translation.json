@@ -2498,6 +2498,8 @@
         "serverQueryDebugHint": "Every WebQuery/SSH command sent to a TeamSpeak server and its raw response, including errors (e.g. insufficient permissions) - useful when a bot flow action silently doesn't do what's expected.",
         "streamSignalingDebugLabel": "Stream Signaling Debug",
         "streamSignalingDebugHint": "Every video stream signaling message between the TeamSpeak client and the stream bot (join, offer, answer, ICE candidates) and whether it reached the video sidecar - useful when Watch Stream stays black. IP addresses are masked.",
+        "streamAudioDebugLabel": "Stream Audio Debug",
+        "streamAudioDebugHint": "Every 10 s, the video sidecar logs how many lost sound packets each viewer asked for again (they are resent automatically) - shows whether a viewer's connection drops packets.",
         "debugFlagUpdateFailed": "Failed to update debug flag",
         "dangerZone": "Danger Zone",
         "idResetHint": "SQLite's id counters never go back down on their own, even after deleting everything - these wipe a table entirely (across every server, not just the one selected above) so its next entry starts back at #1.",
