@@ -259,10 +259,10 @@ export default function ChannelGroups() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">{t('nav.items.channelGroups')}</h1>
         {tab === 'groups' && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {checkedIds.size > 0 && (
               <>
                 <Badge variant="secondary" className="font-mono-data">{t('pages.channelGroups.selectedCount', { count: checkedIds.size })}</Badge>

@@ -64,8 +64,6 @@ interface DataTableProps<TData extends RowData> {
   rowClassName?: (row: TData) => string | undefined;
   /** Makes rows clickable. Clicks on a control inside the row (checkbox, button, link, menu) do not count. */
   onRowClick?: (row: TData) => void;
-  /** Let a table that is wider than its container scroll sideways instead of cutting off its last columns. */
-  horizontalScroll?: boolean;
   /** Reports every row the table shows across all its pages, in display order (after the text filter and the sort), whenever that changes. */
   onVisibleRowsChange?: (rows: TData[]) => void;
   /** Text for the search field, e.g. from the address; a new value replaces what is typed there. */
@@ -75,7 +73,7 @@ interface DataTableProps<TData extends RowData> {
 export function DataTable<TData extends RowData>({
   columns, data, searchKey, searchPlaceholder, pageSize = 20,
   enableRowSelection = false, getRowId, onSelectionChange,
-  selectionResetKey, rowClassName, onRowClick, horizontalScroll = false, onVisibleRowsChange, searchValue,
+  selectionResetKey, rowClassName, onRowClick, onVisibleRowsChange, searchValue,
 }: DataTableProps<TData>) {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -150,7 +148,8 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className={cn('card-hero rounded-md border border-border lounge:border-0', horizontalScroll ? 'overflow-x-auto' : 'overflow-hidden')}>
+      {/* A table wider than its container scrolls sideways instead of cutting off its last columns. */}
+      <div className="card-hero rounded-md border border-border lounge:border-0 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map((hg) => (

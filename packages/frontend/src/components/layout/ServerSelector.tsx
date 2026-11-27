@@ -31,7 +31,7 @@ export function ServerSelector() {
   }, [virtualServers, selectedConfigId, selectedSid, setSid]);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <Server className="h-4 w-4 text-muted-foreground lounge:hidden lounge:text-sidebar-foreground/70 lounge:sm:block" />
       <Select
         value={selectedConfigId?.toString() || ''}

@@ -1428,7 +1428,7 @@ function LibraryTab() {
           value={selectedBotId ? String(selectedBotId) : ''}
           onValueChange={(v) => setSelectedBotId(parseInt(v))}
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-auto min-w-44">
             <SelectValue placeholder={runningBots.length === 0 ? t('pages.musicBots.shared.noRunningBots') : t('pages.musicBots.shared.selectBotPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
@@ -1633,7 +1633,7 @@ function LibraryTab() {
       {isLoading ? <PageLoader /> : filtered.length === 0 ? (
         <EmptyState icon={Music} title={t('pages.musicBots.libraryTab.noFilesYetTitle')} description={t('pages.musicBots.libraryTab.noFilesYetDescription')} />
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-x-auto">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto] gap-2 px-3 py-2 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             <button
               type="button"
@@ -2034,7 +2034,7 @@ function RadioTab() {
           value={selectedBotId ? String(selectedBotId) : ''}
           onValueChange={(v) => setSelectedBotId(parseInt(v))}
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-auto min-w-48">
             <SelectValue placeholder={runningBots.length === 0 ? t('pages.musicBots.shared.noRunningBots') : t('pages.musicBots.shared.selectBotPlaceholder')} />
           </SelectTrigger>
           <SelectContent>

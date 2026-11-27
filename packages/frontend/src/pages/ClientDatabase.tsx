@@ -578,7 +578,6 @@ export default function ClientDatabase() {
             searchKey="nickname"
             searchPlaceholder={t('pages.clientDatabase.filterPlaceholder')}
             pageSize={50}
-            horizontalScroll
             enableRowSelection
             getRowId={(p: ClientDbProfile) => String(p.cldbid)}
             onSelectionChange={setSelected}

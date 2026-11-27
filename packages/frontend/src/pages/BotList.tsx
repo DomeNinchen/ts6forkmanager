@@ -60,9 +60,9 @@ export default function BotList() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">{t('nav.items.botFlows')}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowImport(true)}><FileUp className="h-4 w-4 mr-1" /> {t('components.flowTemplates.import')}</Button>}
           <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}><LayoutTemplate className="h-4 w-4 mr-1" /> {t('pages.botList.fromTemplate')}</Button>
           <Button size="sm" onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.botList.newBot')}</Button>

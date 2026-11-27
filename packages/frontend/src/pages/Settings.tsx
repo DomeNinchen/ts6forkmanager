@@ -728,7 +728,7 @@ function ConnectionsTab() {
               {server.hasWebQuery === false && (
                 <p className="text-[11px] text-muted-foreground">{t('pages.settings.connections.noWebQueryHint')}</p>
               )}
-              <div className="flex items-center gap-1 pt-2">
+              <div className="flex flex-wrap items-center gap-1 pt-2">
                 <Button variant="outline" size="sm" className="h-7 text-xs"
                   onClick={() => setDiagnosis({ name: server.name, run: () => serversApi.diagnose(server.id) })}>
                   <TestTube className="h-3 w-3 mr-1" /> {t('pages.settings.connections.test')}
@@ -1020,9 +1020,9 @@ function UsersTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground shrink-0">{t('pages.settings.users.manageDescription')}</p>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{t('pages.settings.users.manageDescription')}</p>
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('pages.settings.users.searchPlaceholder')} className="h-8 w-48 pl-7 text-xs" />
@@ -1031,7 +1031,7 @@ function UsersTab() {
         </div>
       </div>
 
-      <div className="card-hero rounded-md border border-border overflow-hidden lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
+      <div className="card-hero rounded-md border border-border overflow-x-auto lounge:rounded-none lounge:border-0 lounge:border-t-2 lounge:border-foreground/80 lounge:bg-transparent lounge:shadow-none">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30 lounge:bg-transparent">
@@ -1814,7 +1814,7 @@ function StreamingTab() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={() => save.mutate(active)} disabled={save.isPending || !draft}>
               {t('common.save')}
             </Button>
