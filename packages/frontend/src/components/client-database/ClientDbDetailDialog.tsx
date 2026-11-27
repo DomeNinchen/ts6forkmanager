@@ -173,7 +173,7 @@ export function ClientDbDetailDialog({ cldbid, banIndex, channels, channelGroups
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2">
           {profile && (
             <>
               <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => onBan(profile)}>

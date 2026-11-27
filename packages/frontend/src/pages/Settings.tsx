@@ -815,7 +815,7 @@ function ConnectionsTab() {
               <div><Label className="text-xs">{t('pages.settings.connections.sshPasswordLabel')}</Label><Input type="password" value={form.sshPassword} onChange={(e) => setForm({ ...form, sshPassword: e.target.value })} placeholder={editingServer?.hasSshCredentials ? t('pages.settings.connections.unchanged') : ''} /></div>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2">
             <Button variant="outline" className="sm:mr-auto" disabled={!form.host}
               onClick={() => setDiagnosis({
                 name: form.name || form.host,
