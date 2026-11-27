@@ -8,6 +8,18 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends curl unzip ca-certificates && \
     curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 
+# A fingerprint of Debian's package indexes: only the file hashes, without the
+# date and signature that Debian refreshes every few days. It changes exactly
+# when Debian publishes new packages, and copying it into the runtime stage
+# makes Docker rerun the apt-get step then, so an ordinary cached rebuild picks
+# up Debian's fixes instead of keeping the packages from whenever the layer was
+# first built.
+FROM node:24-trixie-slim AS apt-index
+ADD https://deb.debian.org/debian/dists/trixie/InRelease /idx/trixie
+ADD https://deb.debian.org/debian/dists/trixie-updates/InRelease /idx/trixie-updates
+ADD https://deb.debian.org/debian-security/dists/trixie-security/InRelease /idx/trixie-security
+RUN for f in /idx/*; do sed -n '/^SHA256:/,/^-----BEGIN PGP SIGNATURE/p' "$f"; done | sha256sum > /apt-index.stamp
+
 # What the running backend needs, and nothing that only building it needed:
 # openssl (Prisma), ffmpeg (audio), python3+pip (yt-dlp and its update check at
 # start), ca-certificates, Deno.
@@ -21,6 +33,7 @@ RUN apt-get update && \
 #     prisma CLI directly), and its bundled libraries (ip-address, undici, tar,
 #     ...) were a steady source of scanner findings.
 FROM node:24-trixie-slim AS runtime
+COPY --from=apt-index /apt-index.stamp /tmp/apt-index.stamp
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get install -y --no-install-recommends \
