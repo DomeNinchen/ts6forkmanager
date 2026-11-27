@@ -701,3 +701,18 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+/* An input placeholder wider than its field scrolls back and forth (components/ui/input.tsx sets the vars). */
+@keyframes placeholder-marquee {
+  0%, 15% { text-indent: 0; }
+  85%, 100% { text-indent: calc(-1 * var(--ph-shift)); }
+}
+input[data-ph-overflow]:placeholder-shown:not(:focus) {
+  animation: placeholder-marquee var(--ph-duration, 4s) ease-in-out 1s infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  input[data-ph-overflow]:placeholder-shown {
+    animation: none;
+    text-overflow: ellipsis;
+  }
+}

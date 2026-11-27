@@ -67,7 +67,7 @@ export function AuditLogPanel({ configId }: AuditLogPanelProps) {
     <div className="space-y-3">
       <Card className="card-hero">
         <CardContent className="flex flex-wrap items-end gap-4 pt-5">
-          <div className="min-w-48 flex-1">
+          <div className="min-w-64 flex-1">
             <Label className="text-xs">{t('pages.console.log.search')}</Label>
             <Input
               value={searchInput}
