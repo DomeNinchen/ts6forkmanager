@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.135.0 · frontend 3.159.1 · sidecar 2.5.0**
+Versions at the end of the month: **backend 2.135.0 · frontend 3.159.2 · sidecar 2.5.0**
 
 ### New Features
 
@@ -68,6 +68,7 @@ Versions at the end of the month: **backend 2.135.0 · frontend 3.159.1 · sidec
 
 ### Bug Fixes
 
+- Fixed pages that were wider than the screen on phones and narrow windows: wide tables (Bans, Settings → Users, Tokens, Clients, Complaints, Messages, the music library) cut off their last columns and now scroll sideways; toolbars (Bot Flows, Settings → Users, connection cards, Streaming, Bans, Channel Groups) wrap instead of pushing the page sideways; in the Lounge layout on a phone the account button no longer sits partly off-screen; long words in the flow template gallery, the permission lists and select fields no longer get cut off. *frontend 3.159.2* [#465](https://github.com/DomeNinchen/ts6forkmanager/pull/465)
 - Fixed dialogs growing wider than their frame when the buttons at the bottom did not fit on one row, as in the German "Edit connection" and the German and French "Bot identity" dialogs: help texts, fields and buttons stuck out on the right. The buttons now wrap onto a second row and every dialog keeps its width. *frontend 3.159.1* [#464](https://github.com/DomeNinchen/ts6forkmanager/pull/464)
 - Fixed the description under Settings → Streaming starting with the English word "What" in every language. *frontend 3.158.6* [#458](https://github.com/DomeNinchen/ts6forkmanager/pull/458)
 - Fixed the **Status** column on the Clients page showing every connected client as **Away**. Away clients show **Away**, clients with microphone or speakers muted show **Muted**, all others **Active**. *frontend 3.158.3* [#454](https://github.com/DomeNinchen/ts6forkmanager/pull/454), reported in [#452](https://github.com/DomeNinchen/ts6forkmanager/issues/452) together with the cause, thanks to [@bemoworobert-spec](https://github.com/bemoworobert-spec)

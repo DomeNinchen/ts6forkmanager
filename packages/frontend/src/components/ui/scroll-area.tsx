@@ -7,7 +7,8 @@ const ScrollArea = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
 >(({ className, children, ...props }, ref) => (
   <ScrollAreaPrimitive.Root ref={ref} className={cn('relative overflow-hidden', className)} {...props}>
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    {/* Radix lays the content out as a table that grows past the viewport; block keeps it at the viewport's width so long rows truncate or wrap. */}
+    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit] [&>div]:block!">
       {children}
     </ScrollAreaPrimitive.Viewport>
     <ScrollBar />

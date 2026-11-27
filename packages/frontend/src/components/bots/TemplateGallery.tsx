@@ -125,7 +125,7 @@ export function TemplateGallery({ open, onOpenChange, onSelect, reconfigure }: T
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-medium">{tpl.name}</p>
-                              <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{tpl.description}</p>
+                              <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5 break-words">{tpl.description}</p>
                               {tpl.configFields.length > 0 && (
                                 <div className="flex gap-1 mt-1.5 flex-wrap">
                                   {tpl.configFields.filter(f => f.required).map(f => (
