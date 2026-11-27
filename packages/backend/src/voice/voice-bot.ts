@@ -1465,6 +1465,7 @@ export class VoiceBot extends EventEmitter {
     // Wait for sidecar to be healthy
     await this.sidecarHttp.waitHealthy();
     console.log(`[VoiceBot ${this.config.id}] Sidecar ready`);
+    await this.pushSidecarDebug();
 
     // Setup stream signaling on the TS3 client (a leftover one from a failed start must not keep listening)
     this.signaling?.dispose();
@@ -1894,6 +1895,11 @@ export class VoiceBot extends EventEmitter {
     this.signaling.sendRemoveClient(clid, this._activeStreamId);
     this._viewers.delete(clid);
     this.emit('videoViewerLeft', clid);
+  }
+
+  /** Hands the "Stream Audio Debug" switch to this bot's sidecar; one that is older or gone is left alone. */
+  async pushSidecarDebug(): Promise<void> {
+    await this.sidecarHttp?.setDebug(isDebugEnabled('streamAudio')).catch(() => {});
   }
 
   /** Get WebRTC offer for WebUI preview player */

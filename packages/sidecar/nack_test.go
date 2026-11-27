@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -13,6 +14,33 @@ import (
 // second time. Before the sidecar read its senders' RTCP, every such request
 // was ignored and each lost packet left the picture frozen until the next keyframe.
 func TestNackedVideoPacketIsSentAgain(t *testing.T) {
+	if n := nackRoundTrip(t, webrtc.RTPCodecTypeVideo, false); n < 2 {
+		t.Fatalf("video packet was not sent again after the NACK (seen %d times)", n)
+	}
+}
+
+// The same for the sound, although the answer does not negotiate nack for
+// audio (pion's default Opus has only transport-cc, like the TeamSpeak 6
+// client and Chromium): before 2.5.0 such a request was ignored and became a
+// short gap in the sound.
+func TestNackedAudioPacketIsSentAgain(t *testing.T) {
+	if n := nackRoundTrip(t, webrtc.RTPCodecTypeAudio, false); n < 2 {
+		t.Fatalf("audio packet was not sent again after the NACK (seen %d times)", n)
+	}
+}
+
+// A viewer that does negotiate nack for audio is served by the default
+// responder alone: the packet comes once more, not twice more.
+func TestNegotiatedAudioNackResendsOnce(t *testing.T) {
+	if n := nackRoundTrip(t, webrtc.RTPCodecTypeAudio, true); n != 2 {
+		t.Fatalf("audio packet arrived %d times, want 2 (original + one resend)", n)
+	}
+}
+
+// nackRoundTrip sends ten packets of one kind to a bare receiver, NACKs one of
+// them and returns how often that one arrived.
+func nackRoundTrip(t *testing.T, kind webrtc.RTPCodecType, rxAudioNack bool) int {
+	t.Helper()
 	t.Setenv("STUN_SERVERS", "stun:127.0.0.1:1")
 	s := NewSidecar()
 	offer, err := s.CreatePeer("nack-test")
@@ -20,6 +48,10 @@ func TestNackedVideoPacketIsSentAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.ClosePeer("nack-test")
+	// Viewers only ask for lost sound packets when the offer lists nack for it.
+	if !strings.Contains(offer, "a=rtcp-fb:111 nack\r\n") {
+		t.Fatalf("offer has no nack for Opus")
+	}
 
 	// A bare receiver: default codecs, but no interceptors, so it never sends NACKs by itself.
 	// Here the packet was not really lost, so the resend is a duplicate that SRTP replay
@@ -27,6 +59,9 @@ func TestNackedVideoPacketIsSentAgain(t *testing.T) {
 	m := &webrtc.MediaEngine{}
 	if err := m.RegisterDefaultCodecs(); err != nil {
 		t.Fatal(err)
+	}
+	if rxAudioNack {
+		m.RegisterFeedback(webrtc.RTCPFeedback{Type: "nack"}, webrtc.RTPCodecTypeAudio)
 	}
 	se := webrtc.SettingEngine{}
 	se.DisableSRTPReplayProtection(true)
@@ -38,12 +73,12 @@ func TestNackedVideoPacketIsSentAgain(t *testing.T) {
 
 	const nacked = uint16(1003)
 	seen := make(chan uint16, 256)
-	videoSSRC := make(chan uint32, 1)
+	remoteSSRC := make(chan uint32, 1)
 	rx.OnTrack(func(track *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
-		if track.Kind() != webrtc.RTPCodecTypeVideo {
+		if track.Kind() != kind {
 			return
 		}
-		videoSSRC <- uint32(track.SSRC())
+		remoteSSRC <- uint32(track.SSRC())
 		for {
 			pkt, _, err := track.ReadRTP()
 			if err != nil {
@@ -80,21 +115,25 @@ func TestNackedVideoPacketIsSentAgain(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 	}
 
+	track, pt, step := peer.VideoTrack, uint8(96), uint32(3000)
+	if kind == webrtc.RTPCodecTypeAudio {
+		track, pt, step = peer.AudioTrack, 111, 960
+	}
 	for i := uint16(0); i < 10; i++ {
 		pkt := &rtp.Packet{
-			Header:  rtp.Header{Version: 2, PayloadType: 96, SequenceNumber: 1000 + i, Timestamp: 90000 + uint32(i)*3000},
+			Header:  rtp.Header{Version: 2, PayloadType: pt, SequenceNumber: 1000 + i, Timestamp: 90000 + uint32(i)*step},
 			Payload: []byte{0x10, 0x00, 0x00, 0x00, byte(i)},
 		}
-		if err := peer.VideoTrack.WriteRTP(pkt); err != nil {
+		if err := track.WriteRTP(pkt); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	var ssrc uint32
 	select {
-	case ssrc = <-videoSSRC:
+	case ssrc = <-remoteSSRC:
 	case <-time.After(5 * time.Second):
-		t.Fatal("no video track arrived")
+		t.Fatalf("no %s track arrived", kind)
 	}
 	count := map[uint16]int{}
 	collect := func(d time.Duration) {
@@ -119,7 +158,5 @@ func TestNackedVideoPacketIsSentAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	collect(2 * time.Second)
-	if count[nacked] < 2 {
-		t.Fatalf("packet %d was not sent again after the NACK (seen %d times)", nacked, count[nacked])
-	}
+	return count[nacked]
 }

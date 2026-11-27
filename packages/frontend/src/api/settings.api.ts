@@ -30,10 +30,10 @@ export const settingsApi = {
 
   deleteYtCookies: () => api.delete('/settings/yt-cookies').then((r) => r.data),
 
-  getDebugFlags: (): Promise<{ voice: boolean; rankCheck: boolean; query: boolean; streamSignaling: boolean }> =>
+  getDebugFlags: (): Promise<{ voice: boolean; rankCheck: boolean; query: boolean; streamSignaling: boolean; streamAudio: boolean }> =>
     api.get('/settings/debug-flags').then((r) => r.data),
 
-  setDebugFlag: (name: 'voice' | 'rankCheck' | 'query' | 'streamSignaling', enabled: boolean) =>
+  setDebugFlag: (name: 'voice' | 'rankCheck' | 'query' | 'streamSignaling' | 'streamAudio', enabled: boolean) =>
     api.put(`/settings/debug-flags/${name}`, { enabled }).then((r) => r.data),
 
   getClientIp: (): Promise<ClientIpDiagnostics> =>

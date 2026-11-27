@@ -77,6 +77,11 @@ export class SidecarClient {
     await this.call('POST', '/source/stop');
   }
 
+  /** Debug switches that live in the sidecar (2.5.0+; an older one answers 404). */
+  async setDebug(audioNack: boolean): Promise<void> {
+    await this.call('POST', '/debug', { audioNack });
+  }
+
   async getStats(): Promise<SidecarStats> {
     return this.call('GET', '/stats');
   }
