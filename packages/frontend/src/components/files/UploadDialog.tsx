@@ -238,7 +238,7 @@ export function UploadDialog({ open, initialItems, target, channelName, maxUploa
           </ul>
         )}
 
-        <DialogFooter className="sm:items-center sm:justify-between sm:space-x-0">
+        <DialogFooter className="sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
             {fileCount > 0 && t('pages.files.uploadDialog.summary', { count: fileCount, size: formatBytes(totalSize) })}
             {leftOut > 0 && (

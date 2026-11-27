@@ -266,7 +266,7 @@ export function SupportQueueSettingsDialog({ queueId, onClose, onSaved, onDelete
             {(problem || missing || retentionProblem) && <p role="alert" className="text-sm text-destructive">{missing ?? problem ?? retentionProblem}</p>}
           </div>
         )}
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 sm:gap-4">
           {!isNew && (
             <Button variant="destructive" className="sm:mr-auto" onClick={() => setConfirmDelete(true)} disabled={saving || deleting}>
               {t('pages.support.settings.delete')}
