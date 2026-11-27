@@ -4,7 +4,7 @@ Every user-visible or behaviour-affecting change of this fork, grouped by the mo
 
 ## November 2026
 
-Versions at the end of the month: **backend 2.134.2 · frontend 3.158.6 · sidecar 2.4.1**
+Versions at the end of the month: **backend 2.134.3 · frontend 3.158.6 · sidecar 2.4.2**
 
 ### New Features
 
@@ -55,6 +55,7 @@ Versions at the end of the month: **backend 2.134.2 · frontend 3.158.6 · sidec
 
 ### Security
 
+- **Debian fixes arrive with a normal update** — The backend and sidecar images now notice when Debian has published new packages and then reinstall theirs on the next `docker compose up -d --build`. Before, Docker's build cache could keep the system packages from the first build until the cache was cleared, so Debian security fixes did not reach an installation that was only ever updated with the usual command. Updates without new Debian packages stay as fast as before. *backend 2.134.3, sidecar 2.4.2*
 - **`effect` updated to 3.22.5** — A pnpm override lifts `effect` (pulled in by Prisma's config loader, which pins 3.20.0) to the fixed 3.22 line and closes a high Dependabot alert (#75, a slow regular expression in `Schema.TemplateLiteral`); it was not reachable here, since only the Prisma CLI uses it to read the project's own `prisma.config.ts`. *backend 2.134.2* [#455](https://github.com/DomeNinchen/ts6forkmanager/pull/455)
 - **Sidecar Go modules updated** — `golang.org/x/net` 0.62.0 and `golang.org/x/crypto` 0.59.0 (pulled in through the WebRTC library) close three Trivy findings of the sidecar (one high, one medium, one note); the `openpgp` package behind the note is not used by the sidecar. *sidecar 2.4.1* [#431](https://github.com/DomeNinchen/ts6forkmanager/pull/431)
 - **Longest runtime of a flow execution** — An execution now ends as failed ("Time limit: …", shown in the editor's execution list) once it has run longer than a set time in total, counted from its start and also across a backend restart. It is checked before every node and when a Delay ends; a WebQuery command or HTTP call already under way still finishes. Set on the Bot Flows page under **Executions: retention and limit** (default 30 minutes, 0 = no limit). *backend 2.118.0, frontend 3.137.0* [#409](https://github.com/DomeNinchen/ts6forkmanager/pull/409)
@@ -105,6 +106,7 @@ Versions at the end of the month: **backend 2.134.2 · frontend 3.158.6 · sidec
 
 **Docker & reverse proxy**
 
+- The first update to backend 2.134.3 / sidecar 2.4.2, and later updates whenever Debian has published new packages, reinstall the system packages of both images and take a few minutes longer than usual. The build has to reach `deb.debian.org`, which the package install already needed.
 - Changed `docker-compose.yml` yourself (networks, ports, environment)? Move those changes into a `docker-compose.override.yml` next to it and restore the original file with `git checkout docker-compose.yml`; Compose loads the override automatically, and updates no longer run into conflicts there. Replacing a list such as `networks:` or `ports:` needs the `!override` tag (Docker Compose 2.24.4 or later). ([Deployment](https://github.com/DomeNinchen/ts6forkmanager/wiki/Deployment#own-lan-ips-per-container)) [#380](https://github.com/DomeNinchen/ts6forkmanager/pull/380)
 - A reverse proxy of your own in front of the manager (host nginx, Caddy, Traefik) may cut long requests too. If "Start Stream" still shows a 504 after updating, give `/api/music-bots/<id>/stream/start` and `/stream/source` a read timeout of several minutes there as well. [#379](https://github.com/DomeNinchen/ts6forkmanager/pull/379)
 - Running the manager at home or behind NAT and the video stays black? Set `ICE_ANNOUNCE_IPS` in `.env` to the host's LAN IP (e.g. `192.168.1.50`) and recreate the sidecar. A server with its public IP on its own network card needs nothing. [#360](https://github.com/DomeNinchen/ts6forkmanager/pull/360)
