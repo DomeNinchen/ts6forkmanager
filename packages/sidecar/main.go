@@ -24,16 +24,13 @@ import (
 	"time"
 )
 
+// Every new viewer connection waits until each server answered or timed out
+// (~5 s), so only servers that answer belong here: the eight fixed IPs listed
+// before 2.5.1 never answered (measured 2026-11-28, issue #467).
 var defaultStunServers = []string{
-	"stun:49.13.204.141:3478",
-	"stun:176.58.93.154:3478",
-	"stun:185.40.234.113:3478",
-	"stun:68.183.90.120:3478",
-	"stun:45.159.97.233:3478",
-	"stun:172.105.166.103:3478",
-	"stun:172.237.28.183:3478",
-	"stun:208.72.155.133:3478",
 	"stun:stun.l.google.com:19302",
+	"stun:stun1.l.google.com:19302",
+	"stun:stun.cloudflare.com:3478",
 }
 
 func getStunServers() []string {
