@@ -1054,6 +1054,40 @@ func (s *Sidecar) SetAnswer(id, sdp string) (ignored string, err error) {
 	})
 }
 
+// AnswerOffer applies an offer the viewer sent on its own and returns the
+// sidecar's answer with all candidates. The TS6 client sends one with a new
+// ufrag (an ICE restart) ~22 s after its path fails and every 15 s after that;
+// unanswered, all its new candidates were dropped and the viewer never recovered.
+func (s *Sidecar) AnswerOffer(id, sdp string) (string, error) {
+	s.peersLock.RLock()
+	peer, exists := s.peers[id]
+	s.peersLock.RUnlock()
+	if !exists {
+		return "", fmt.Errorf("peer %s not found", id)
+	}
+
+	peer.mu.Lock()
+	if err := peer.PC.SetRemoteDescription(webrtc.SessionDescription{Type: webrtc.SDPTypeOffer, SDP: sdp}); err != nil {
+		peer.mu.Unlock()
+		return "", fmt.Errorf("set remote offer: %w", err)
+	}
+	answer, err := peer.PC.CreateAnswer(nil)
+	if err != nil {
+		peer.mu.Unlock()
+		return "", fmt.Errorf("create answer: %w", err)
+	}
+	gatherComplete := webrtc.GatheringCompletePromise(peer.PC)
+	if err := peer.PC.SetLocalDescription(answer); err != nil {
+		peer.mu.Unlock()
+		return "", fmt.Errorf("set local answer: %w", err)
+	}
+	// Not held while gathering: the ICE state callback takes peer.mu too.
+	peer.mu.Unlock()
+	<-gatherComplete
+	log.Printf("[Peer %s] Answered the viewer's offer (ICE restart)", id)
+	return peer.PC.LocalDescription().SDP, nil
+}
+
 func (s *Sidecar) AddICECandidate(id string, candidate string, sdpMid string, sdpMLineIndex uint16) error {
 	s.peersLock.RLock()
 	peer, exists := s.peers[id]
@@ -1403,6 +1437,26 @@ func main() {
 			resp["reason"] = ignored
 		}
 		json.NewEncoder(w).Encode(resp)
+	})
+
+	// POST /peer/offer - a viewer's own offer (ICE restart); answers with {"sdp": ...} (2.6.0+).
+	mux.HandleFunc("POST /peer/offer", func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID  string `json:"id"`
+			SDP string `json:"sdp"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		sdp, err := sidecar.AnswerOffer(req.ID, req.SDP)
+		if err != nil {
+			log.Printf("[API] AnswerOffer error: %v", err)
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"sdp": sdp})
 	})
 
 	mux.HandleFunc("POST /peer/ice", func(w http.ResponseWriter, r *http.Request) {

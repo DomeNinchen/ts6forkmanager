@@ -46,6 +46,11 @@ export class SidecarClient {
     return this.call('POST', '/peer/answer', { id, sdp });
   }
 
+  /** A viewer's own offer (its ICE restart); returns the sidecar's answer. Sidecar 2.6.0+. */
+  async answerOffer(id: string, sdp: string): Promise<{ sdp: string }> {
+    return this.call('POST', '/peer/offer', { id, sdp });
+  }
+
   async addIceCandidate(id: string, candidate: string, sdpMid: string, sdpMLineIndex: number): Promise<void> {
     await this.call('POST', '/peer/ice', { id, candidate, sdpMid, sdpMLineIndex });
   }
