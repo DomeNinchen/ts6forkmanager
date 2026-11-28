@@ -114,7 +114,7 @@ export default function ChangeLog() {
             <div className="relative w-full sm:w-auto">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                className="h-9 w-full sm:w-56 pl-8"
+                className="h-9 w-full sm:w-96 pl-8"
                 placeholder={t('pages.changeLog.searchPlaceholder')}
                 aria-label={t('pages.changeLog.searchPlaceholder')}
                 value={search}

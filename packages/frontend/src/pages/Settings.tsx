@@ -752,7 +752,7 @@ function ConnectionsTab() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showAdd} onOpenChange={(v) => { if (!v) { setShowAdd(false); setEditId(null); resetForm(); } else setShowAdd(true); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editId ? t('pages.settings.connections.editConnectionTitle') : t('pages.settings.connections.addConnection')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label className="text-xs">{t('common.name')}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('pages.settings.connections.namePlaceholder')} /></div>
@@ -1025,7 +1025,7 @@ function UsersTab() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('pages.settings.users.searchPlaceholder')} className="h-8 w-48 pl-7 text-xs" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('pages.settings.users.searchPlaceholder')} className="h-8 w-56 pl-7 text-xs" />
           </div>
           <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" /> {t('pages.settings.users.addUser')}</Button>
         </div>
