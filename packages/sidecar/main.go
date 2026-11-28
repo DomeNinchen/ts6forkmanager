@@ -1067,6 +1067,11 @@ func (s *Sidecar) AnswerOffer(id, sdp string) (string, error) {
 	}
 
 	peer.mu.Lock()
+	// The viewer's first answer fixed the DTLS roles; pion's answer always says
+	// "active", and a viewer that is already the DTLS client (libwebrtc: the TS6
+	// client, Chromium) refuses that ("Failed to set SSL role for the transport").
+	prev := peer.PC.CurrentRemoteDescription()
+	viewerIsDTLSClient := prev != nil && strings.Contains(prev.SDP, "a=setup:active")
 	if err := peer.PC.SetRemoteDescription(webrtc.SessionDescription{Type: webrtc.SDPTypeOffer, SDP: sdp}); err != nil {
 		peer.mu.Unlock()
 		return "", fmt.Errorf("set remote offer: %w", err)
@@ -1085,7 +1090,13 @@ func (s *Sidecar) AnswerOffer(id, sdp string) (string, error) {
 	peer.mu.Unlock()
 	<-gatherComplete
 	log.Printf("[Peer %s] Answered the viewer's offer (ICE restart)", id)
-	return peer.PC.LocalDescription().SDP, nil
+	reply := peer.PC.LocalDescription().SDP
+	if viewerIsDTLSClient {
+		// Only in the copy for the viewer: pion refuses an edited local answer, and
+		// its running DTLS association is not renegotiated by an ICE restart.
+		reply = strings.ReplaceAll(reply, "a=setup:active", "a=setup:passive")
+	}
+	return reply, nil
 }
 
 func (s *Sidecar) AddICECandidate(id string, candidate string, sdpMid string, sdpMLineIndex uint16) error {

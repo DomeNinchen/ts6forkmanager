@@ -42,7 +42,8 @@ func viewerRecoversAfterRestart(t *testing.T, answered bool) bool {
 		t.Fatal(err)
 	}
 	<-gathered
-	if ignored, err := s.SetAnswer("restart-test", withoutCandidates(viewer.LocalDescription().SDP)); err != nil || ignored != "" {
+	firstAnswer := viewer.LocalDescription().SDP
+	if ignored, err := s.SetAnswer("restart-test", withoutCandidates(firstAnswer)); err != nil || ignored != "" {
 		t.Fatalf("answer not applied: err=%v ignored=%q", err, ignored)
 	}
 	s.peersLock.RLock()
@@ -67,6 +68,11 @@ func viewerRecoversAfterRestart(t *testing.T, answered bool) bool {
 		reply, err := s.AnswerOffer("restart-test", restartSDP)
 		if err != nil {
 			t.Fatal(err)
+		}
+		// The viewer answered "active" (DTLS client); libwebrtc refuses a restart
+		// answer that wants that role too, pion here would not notice.
+		if !strings.Contains(firstAnswer, "a=setup:active") || !strings.Contains(reply, "a=setup:passive") || strings.Contains(reply, "a=setup:active") {
+			t.Fatal("the sidecar's restart answer does not keep the DTLS roles (viewer active, sidecar passive)")
 		}
 		if iceUfrag.FindString(reply) == iceUfrag.FindString(offer) {
 			t.Fatal("the sidecar's answer kept its old ufrag")
