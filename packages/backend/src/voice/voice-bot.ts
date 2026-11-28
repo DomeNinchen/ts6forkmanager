@@ -214,6 +214,8 @@ export class VoiceBot extends EventEmitter {
   private _lastLiveEnd: LiveEnd | null = null;
   private _videoLiveTimer: ReturnType<typeof setInterval> | null = null;
   private _viewers: Map<number, VideoViewerInfo> = new Map();
+  /** Viewers sent a reconnectOffer whose answer has not come back yet. */
+  private _awaitingAnswer = new Set<number>();
   private signalingQueue: Promise<void> = Promise.resolve();
 
   constructor(config: VoiceBotConfig) {
@@ -1941,6 +1943,7 @@ export class VoiceBot extends EventEmitter {
 
     this.signaling.on('streamClientLeft', (params: Record<string, string>) => {
       const clid = parseInt(params.clid) || 0;
+      this._awaitingAnswer.delete(clid);
       if (this._viewers.has(clid)) {
         console.log(`[VoiceBot ${this.config.id}] Viewer left: clid=${clid}`);
         this.sidecarHttp?.closePeer(String(clid)).catch(() => { });
@@ -1959,22 +1962,32 @@ export class VoiceBot extends EventEmitter {
 
     switch (msg.type) {
       case 'offer':
+      case 'reconnect': {
         // The TS6 client restarts ICE with its own offer ~22 s after its path
-        // fails and every 15 s after that; unanswered, it never recovered.
-        if (!msg.sdp || !msg.clid || !this._viewers.has(msg.clid)) {
-          logStreamSignaling(`${tag} offer dropped: ${!msg.sdp ? 'no SDP' : !msg.clid ? 'no clid' : 'not a viewer of this bot'}`);
+        // fails, every 15 s after that, and asks to reconnect after ~75 s. It does
+        // not take an answer to its offer, only a fresh reconnectOffer (measured,
+        // issue #467); a second respondjoinstreamrequest is refused by the server.
+        const what = msg.type === 'offer' ? 'restart offer' : 'reconnect';
+        if (!msg.clid || !this._activeStreamId || (msg.type === 'offer' && !this._viewers.has(msg.clid))) {
+          logStreamSignaling(`${tag} ${what} dropped: ${!msg.clid ? 'no clid' : !this._activeStreamId ? 'no active stream' : 'not a viewer of this bot'}`);
           break;
         }
+        console.log(`[VoiceBot ${this.config.id}] Reconnect from clid=${msg.clid} (${what})`);
+        // Its candidates until the next answer belong to the abandoned restart.
+        this._awaitingAnswer.add(msg.clid);
         try {
-          const { sdp } = await this.sidecarHttp.answerOffer(String(msg.clid), msg.sdp);
-          this.signaling?.sendSignaling(msg.clid, { cmd: 'answer', args: { answer: sdp } }, msg.streamId || this._activeStreamId || undefined);
-          logStreamSignaling(`${tag} viewer's offer (ICE restart) answered`);
+          try { await this.sidecarHttp.closePeer(String(msg.clid)); } catch { /* ignore */ }
+          const { sdp } = await this.sidecarHttp.createPeer(String(msg.clid));
+          this._viewers.set(msg.clid, { clid: msg.clid, joinedAt: Date.now(), iceState: 'new' });
+          this.signaling?.sendSignaling(msg.clid, { cmd: 'reconnectOffer', args: { offer: sdp } }, this._activeStreamId);
         } catch (err: any) {
-          console.error(`[VoiceBot ${this.config.id}] answerOffer error (clid=${msg.clid}): ${err.message}`);
-          logStreamSignaling(`${tag} offer refused by the sidecar: ${sidecarRefusalReason(err)}`);
+          console.error(`[VoiceBot ${this.config.id}] reconnect error (clid=${msg.clid}): ${err.message}`);
+          logStreamSignaling(`${tag} ${what} refused by the sidecar: ${sidecarRefusalReason(err)}`);
         }
         break;
+      }
       case 'answer':
+        if (msg.clid) this._awaitingAnswer.delete(msg.clid);
         if (msg.sdp && msg.clid) {
           try {
             const res = await this.sidecarHttp.setAnswer(String(msg.clid), msg.sdp);
@@ -1988,7 +2001,9 @@ export class VoiceBot extends EventEmitter {
         }
         break;
       case 'ice_candidate':
-        if (msg.candidate && msg.clid) {
+        if (msg.clid && this._awaitingAnswer.has(msg.clid)) {
+          logStreamSignaling(`${tag} ICE candidate dropped: belongs to the abandoned ICE restart`);
+        } else if (msg.candidate && msg.clid) {
           try {
             await this.sidecarHttp.addIceCandidate(
               String(msg.clid),
@@ -2003,24 +2018,6 @@ export class VoiceBot extends EventEmitter {
           }
         } else {
           logStreamSignaling(`${tag} ICE candidate dropped: ${msg.candidate ? 'no clid' : 'no candidate'}`);
-        }
-        break;
-      case 'reconnect':
-        if (!msg.clid || !this._activeStreamId) {
-          logStreamSignaling(`${tag} reconnect dropped: ${!msg.clid ? 'no clid' : 'no active stream'}`);
-          break;
-        }
-        console.log(`[VoiceBot ${this.config.id}] Reconnect from clid=${msg.clid}`);
-        // A fresh offer as streamsignaling: the TS server refuses a second
-        // respondjoinstreamrequest ("The join request was redacted").
-        try {
-          try { await this.sidecarHttp.closePeer(String(msg.clid)); } catch { /* ignore */ }
-          const { sdp } = await this.sidecarHttp.createPeer(String(msg.clid));
-          this._viewers.set(msg.clid, { clid: msg.clid, joinedAt: Date.now(), iceState: 'new' });
-          this.signaling?.sendSignaling(msg.clid, { cmd: 'reconnectOffer', args: { offer: sdp } }, this._activeStreamId);
-        } catch (err: any) {
-          console.error(`[VoiceBot ${this.config.id}] reconnect error (clid=${msg.clid}): ${err.message}`);
-          logStreamSignaling(`${tag} reconnect refused by the sidecar: ${sidecarRefusalReason(err)}`);
         }
         break;
     }
